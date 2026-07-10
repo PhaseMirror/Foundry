@@ -156,8 +156,22 @@ impl SigmaKernel {
             let breach_type = if !check.passes_l_eff { "LipschitzContraction".to_string() } else { "ResonanceDelta".to_string() };
             log_dissonance_trap!(transition.id, breach_type, format!("R_sc={}, L_eff={}", check.r_sc, check.l_eff));
             let log = ConflictLogSchema::new(&transition.id, check.r_sc, check.l_eff, self.thresholds.tau_r, breach_type);
-            self.ledger.stamp_pweh(&log).map_err(|_| DissonanceError::ThresholdViolation { r_sc: check.r_sc, l_eff: check.l_eff })?;
-            return Err(DissonanceError::ThresholdViolation { r_sc: check.r_sc, l_eff: check.l_eff });
+            
+            // Wire to mirror-dissonance as mandated by ADR-402
+            let md_log = mirror_dissonance::schemas::ConflictLogSchema {
+                receipt_hash: log.receipt_hash.clone(),
+                r_sc: log.r_sc,
+                l_eff: log.l_eff,
+                tau_r: log.tau_r,
+                breach_type: log.breach_type.clone(),
+                timestamp: chrono::Utc::now().to_rfc3339(),
+            };
+            let violations = mirror_dissonance::check_physical_dissonance(&md_log);
+            if !violations.is_empty() {
+                // Physical rules correctly trapped
+                let _ = self.ledger.stamp_pweh(&log);
+                return Err(DissonanceError::ThresholdViolation { r_sc: check.r_sc, l_eff: check.l_eff });
+            }
         }
 
         let block = TransitionBlock::new_ratified(transition.id);

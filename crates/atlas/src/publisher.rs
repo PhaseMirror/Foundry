@@ -22,6 +22,10 @@ pub struct WitnessBundle {
     pub guardian_witness: String,
     pub examiner_witness: String,
     pub state_commitment: String,
+    #[serde(default)]
+    pub retry_nonce: u64,
+    #[serde(default)]
+    pub status: String,
 }
 
 #[derive(Parser)]
@@ -35,6 +39,7 @@ struct Cli {
 }
 
 const P_KERNEL_KEY: &str = "P_KERNEL_AUTHORITATIVE_SIGNATURE_KEY";
+const MAX_RETRY_NONCE: u64 = 3;
 
 fn main() -> Result<()> {
     let args = Cli::parse();
@@ -44,13 +49,25 @@ fn main() -> Result<()> {
     io::stdin().read_to_string(&mut buffer).context("Failed to read witness bundle from stdin")?;
     let bundle: WitnessBundle = serde_json::from_str(&buffer).context("Failed to parse witness bundle JSON")?;
 
-    // 2. Validate Witness Integrity (Basic check)
+    // 2. Validate Witness Integrity and State Machine
     if !bundle.guardian_witness.starts_with("GUARDIAN-WITNESS") {
         eprintln!("[PUBLISHER] REJECT: Invalid Guardian witness.");
         std::process::exit(1);
     }
     if !bundle.examiner_witness.starts_with("EXAMINER-WITNESS") {
         eprintln!("[PUBLISHER] REJECT: Invalid Examiner witness.");
+        std::process::exit(1);
+    }
+
+    // 2a. Examine Retry Loops
+    if bundle.retry_nonce > MAX_RETRY_NONCE {
+        eprintln!("[PUBLISHER] REJECT: Mathematical retry loop bounds exceeded (nonce: {} > {}).", bundle.retry_nonce, MAX_RETRY_NONCE);
+        std::process::exit(1);
+    }
+
+    // 2b. Examine Provisional States
+    if bundle.status == "PROVISIONAL" {
+        eprintln!("[PUBLISHER] REJECT: Cannot ratify a PROVISIONAL witness state into the Triple-Lock.");
         std::process::exit(1);
     }
 

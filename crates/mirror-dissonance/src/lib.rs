@@ -2,11 +2,13 @@ pub mod schemas;
 pub mod policy;
 pub mod rules;
 pub mod clinical_rules;
+pub mod physics_rules;
 
 pub use schemas::*;
 pub use policy::*;
 pub use rules::*;
 pub use clinical_rules::*;
+pub use physics_rules::*;
 
 #[cfg(test)]
 mod tests {

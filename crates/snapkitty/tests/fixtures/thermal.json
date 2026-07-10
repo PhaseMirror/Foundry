@@ -1,0 +1,47 @@
+{
+  "friction_ema": [
+    { "current": 0.0, "score": 1.0, "expected": 0.2, "note": "first failure from clean state" },
+    { "current": 1.0, "score": 0.0, "expected": 0.8, "note": "one clean decision from max friction" },
+    { "current": 0.5, "score": 0.5, "expected": 0.5, "note": "stable equilibrium point" },
+    { "current": 0.0, "score": 0.0, "expected": 0.0, "note": "clean system stays clean" },
+    { "current": 0.2, "score": 0.0, "expected": 0.16, "note": "cooling by one clean decision" }
+  ],
+  "thermal_window": [
+    { "friction": 0.0, "lo": 0, "hi": 65535, "span": 65535, "note": "full range (Cool)" },
+    { "friction": 0.5, "lo": 8192, "hi": 57343, "span": 49151, "note": "mid friction (Warm)" },
+    { "friction": 1.0, "lo": 16383, "hi": 49151, "span": 32768, "note": "sovereign center (Hot)" }
+  ],
+  "thermal_window_proof": {
+    "claim": "lo(f) < hi(f) for all f in [0,1]",
+    "lo_max": 16383,
+    "hi_min": 49151,
+    "gap": 32768,
+    "proven_in": "bridges/haskell/thermal.hs (mkThermalWindow smart constructor + type system)"
+  },
+  "thermal_mode": [
+    { "friction": 0.0,  "mode": "Cool" },
+    { "friction": 0.32, "mode": "Cool" },
+    { "friction": 0.33, "mode": "Warm" },
+    { "friction": 0.65, "mode": "Warm" },
+    { "friction": 0.66, "mode": "Hot" },
+    { "friction": 1.0,  "mode": "Hot" }
+  ],
+  "sample_count": [
+    { "friction": 0.0, "expected": 2 },
+    { "friction": 0.5, "expected": 5 },
+    { "friction": 1.0, "expected": 8 }
+  ],
+  "normalize_within_window": [
+    { "raw": 0, "window": { "lo": 0, "hi": 65535, "span": 65535 }, "expected": 0.0 },
+    { "raw": 65535, "window": { "lo": 0, "hi": 65535, "span": 65535 }, "expected": 1.0 },
+    { "raw": 32767, "window": { "lo": 0, "hi": 65535, "span": 65535 }, "expected_approx": 0.4999 }
+  ],
+  "constants": {
+    "friction_alpha": 0.2,
+    "cool_threshold": 0.33,
+    "warm_threshold": 0.66,
+    "lo_factor": 16383,
+    "hi_factor": 16384,
+    "uint16_max": 65535
+  }
+}

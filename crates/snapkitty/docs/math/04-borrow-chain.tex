@@ -1,0 +1,87 @@
+\documentclass{article}
+\usepackage{amsmath, amssymb}
+\title{RESONANCE-CORE: Borrow Chain \& Verdict Algebra}
+\author{Ahmad Ali Parr (Architect) \\ SnapKitty Sovereign OS --- SEIT NGO}
+\date{2026}
+
+\begin{document}
+\maketitle
+
+\section{Linear Type Theory}
+A resource $r$ has type $A$ with \emph{multiplicity} $m \in \{0, 1, \omega\}$:
+\begin{itemize}
+  \item $m = 0$: erased (never used)
+  \item $m = 1$: \textbf{linear} (used exactly once --- \texttt{GHC LinearTypes})
+  \item $m = \omega$: unrestricted
+\end{itemize}
+
+The typing rule for a linear term $e : A\, \%1$:
+\begin{equation}
+  \frac{\Gamma \vdash e : A\, \%1}{\Gamma \text{ must consume } e \text{ exactly once}}
+\end{equation}
+
+\subsection{No-Cloning Theorem (Haskell)}
+\texttt{QuantumPipelineState} carries \texttt{QuantumTemp \%1} in its \texttt{Superposed} constructor:
+\begin{equation}
+  \texttt{Superposed} :: \texttt{QuantumTemp \%1} \to \texttt{QuantumPipelineState}
+\end{equation}
+Pattern-matching yields a \texttt{QuantumTemp} that must be used exactly once. The compiler rejects any attempt to observe the same state twice.
+
+\section{Verdict Algebra}
+Priority ordering $\prec$ over the verdict set $V = \{\texttt{approve}, \texttt{defer}, \texttt{reject}, \texttt{human\_required}, \texttt{escalate}\}$:
+\begin{equation}
+  \texttt{approve} \prec \texttt{defer} \prec \texttt{reject} \prec \texttt{human\_required} \prec \texttt{escalate}
+\end{equation}
+Numerically: $p(\texttt{approve}) = 0,\; p(\texttt{defer}) = 1,\; p(\texttt{reject}) = 2,\; p(\texttt{human\_required}) = 3,\; p(\texttt{escalate}) = 4$.
+
+\subsection{Combination}
+For a list of verdicts $v_1, \ldots, v_n$:
+\begin{equation}
+  \operatorname{combine}(v_1, \ldots, v_n) = \underset{i}{\arg\max_\prec}\; \{v_i\}
+\end{equation}
+Special case: multiple \texttt{human\_required} verdicts \emph{merge} their policy ID lists (not overwrite).
+
+\subsection{NATS Subject Routing}
+\begin{align}
+  v \in \{\texttt{approve}, \texttt{reject}\} &\Rightarrow \texttt{sovereign.audit.bifrost.commit.v1} \\
+  v \in \{\texttt{defer}, \texttt{escalate}, \texttt{human\_required}\} &\Rightarrow \texttt{sovereign.governance.decision.pending.v1}
+\end{align}
+
+\section{Borrow Chain Depth Bound}
+Maximum chain depth $d_{\max} = 32$. A valid borrow chain of depth $d$ satisfies:
+\begin{equation}
+  \forall d' \leq d:\; \operatorname{valid}(\operatorname{chain}[d'])
+\end{equation}
+
+\section{WORM Seal Invariant}
+For any CID $c$ sealed in WORM\_FS:
+\begin{equation}
+  \operatorname{wormSealed}(c) = \top \Rightarrow \nexists\, c':\; \operatorname{modify}(c, c')
+\end{equation}
+Sealed state is append-only and immutable.
+
+\section{Event Validity (Bifrost Policy)}
+
+\subsection{JitCompile}
+\begin{equation}
+  \operatorname{validJitCompile}(e, s) \iff \operatorname{wormSealed}(e.\texttt{souliir}) \wedge \neg\operatorname{wormSealed}(e.\texttt{wasm})
+\end{equation}
+The SoulIR source must be sealed; the WASM output must be fresh.
+
+\subsection{CapTransfer}
+\begin{equation}
+  \operatorname{validCapTransfer}(e, s) \iff \bigl(\operatorname{isZero}(e.\texttt{policyCid}) \vee \operatorname{wormSealed}(e.\texttt{policyCid})\bigr) \wedge \bigl(\operatorname{isZero}(e.\texttt{capHash}) \vee \operatorname{capExists}(e.\texttt{capHash})\bigr)
+\end{equation}
+
+\subsection{Attestation}
+\begin{equation}
+  \operatorname{validAttestation}(e, s) \iff s.\operatorname{epochRoot}(e.\texttt{epoch}) = e.\texttt{rootCid}
+\end{equation}
+
+\subsection{Soundness Theorem}
+\begin{equation}
+  \operatorname{decide}(e, s) = \top \Rightarrow \operatorname{validEvent}(e, s)
+\end{equation}
+This theorem has a tracked \texttt{sorry} in \texttt{bifrost-policy/lean/Bifrost/Policy.lean} (Week 3 proof obligation for Policy Engineer).
+
+\end{document}

@@ -1,0 +1,33 @@
+# Action that runs the MCP evaluator inside a Docker container
+# It spawns the MCP server, evaluates the PR, and posts a GitHub check run.
+# The action expects the following inputs:
+#   github_token   - a PAT with repo and checks permissions (usually \
+#                    secrets.GITHUB_TOKEN)
+#   evaluation_mode - "simulate" (default) or "commit"
+# Environment variables for ngrok are not needed here; the action runs
+# locally in the workflow runner.
+
+name: "Sigma Governance MCP Evaluator"
+description: "Runs the Sedona Spine (MCP server) to evaluate a PR and posts a GitHub check run."
+author: "PhaseSpace Team"
+
+inputs:
+  github_token:
+    description: "GitHub token with repo and checks scopes"
+    required: true
+    default: "${{ secrets.GITHUB_TOKEN }}"
+  evaluation_mode:
+    description: "Evaluation mode: simulate (default) or commit"
+    required: false
+    default: "simulate"
+
+runs:
+  using: "docker"
+  image: "Dockerfile"
+  env:
+    GITHUB_ACCESS_TOKEN: "${{ inputs.github_token }}"
+    EVALUATION_MODE: "${{ inputs.evaluation_mode }}"
+
+# The Dockerfile in the same directory builds the image.
+# The entrypoint script starts the MCP server, waits for it, runs the
+# evaluation, and exits with the appropriate status.

@@ -1,0 +1,16 @@
+/home/ruth/Multiplicity/tmp/agios_logs/audit_archive.log {
+    su root root
+    daily
+    rotate 2190
+    missingok
+    notifempty
+    compress
+    delaycompress
+    sharedscripts
+    prerotate
+        /home/ruth/Multiplicity/tmp/bin/agios-log-anchor.sh /home/ruth/Multiplicity/tmp/agios_logs/audit_archive.log
+    endscript
+    postrotate
+        systemctl kill -s HUP agios-paas-integration.service
+    endscript
+}

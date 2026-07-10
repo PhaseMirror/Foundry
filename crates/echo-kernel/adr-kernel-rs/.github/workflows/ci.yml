@@ -1,0 +1,27 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Format
+        run: cargo fmt --all -- --check
+      - name: Lint
+        run: cargo clippy --workspace --all-targets --all-features -- -D warnings
+      # Enforcement of the no‑Mathlib invariant – see ADR 005 “Enforcement Mechanism” in docs/adr/ADR_Lean4_Proofing.md
+- name: Enforce Mathlib Exemption
+        run: |
+          # Fail if any import Mathlib without mathlib_exempt attribute
+          if git grep -n 'import Mathlib' | grep -v '@\[mathlib_exempt\]'; then
+            echo "Non‑exempt Mathlib import detected"
+            exit 1
+          fi
+      - name: Test
+        run: cargo test --workspace

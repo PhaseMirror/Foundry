@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: phase-mirror-operator
+  namespace: phase-mirror
+  labels:
+    app: phase-mirror-operator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: phase-mirror-operator
+  template:
+    metadata:
+      labels:
+        app: phase-mirror-operator
+    spec:
+      containers:
+        - name: pirtm-engine
+          image: phasemirror/pirtm-engine:latest
+          imagePullPolicy: Always
+          command: ["/bin/pirtm-engine"]
+          args: [
+            "--atlas-config", "/etc/operator-atlas/tier5_social_physics.yaml",
+            "--emit-witness", "/var/run/phase-mirror/witness.json"
+          ]
+          env:
+            # Wire up the execution to the AnchorContract address deployed in Pathway 3
+            - name: ANCHOR_CONTRACT_ADDRESS
+              valueFrom:
+                secretKeyRef:
+                  name: phase-mirror-secrets
+                  key: anchor_contract_address
+            # Enable strict L3 checking backed by UORMatMul.lean
+            - name: ENFORCE_L3_CONFINEMENT
+              value: "true"
+          volumeMounts:
+            - name: atlas-volume
+              mountPath: /etc/operator-atlas
+              readOnly: true
+            - name: witness-volume
+              mountPath: /var/run/phase-mirror
+      volumes:
+        - name: atlas-volume
+          configMap:
+            name: operator-atlas-config
+        # Ephemeral volume to hold the CRMFWitness trace before it is piped to the ZK Prover sidecar
+        - name: witness-volume
+          emptyDir: {}

@@ -1,0 +1,125 @@
+name: Benchmark
+
+on:
+  push:
+    branches: [bench]
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: "-C target-cpu=native"
+  # Disable sccache wrapper (not installed on runners)
+  RUSTC_WRAPPER: ""
+
+jobs:
+  benchmark:
+    name: Run Benchmarks
+    runs-on: ubuntu-latest
+    # Run on bench branch pushes and manual dispatch
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-bench-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-bench-
+            ${{ runner.os }}-cargo-
+
+      - name: Run benchmarks
+        run: |
+          # Run all benchmarks (Monster data is cached, no GAP needed)
+          set +e  # Continue on individual benchmark failures
+
+          echo "=== Running compiler benchmarks ==="
+          cargo bench -p hologram-compiler 2>&1 | tee benchmark-output.txt
+
+          echo "=== Running core benchmarks ==="
+          cargo bench -p hologram-core 2>&1 | tee -a benchmark-output.txt
+
+          echo "=== Running backends benchmarks ==="
+          cargo bench -p hologram-backends 2>&1 | tee -a benchmark-output.txt
+
+          echo "=== Running e2e benchmarks ==="
+          cargo bench -p hologram --bench e2e_benchmarks 2>&1 | tee -a benchmark-output.txt
+
+          set -e
+
+          # Check if any benchmarks ran
+          if [ ! -d "target/criterion" ]; then
+            echo "ERROR: No benchmark results found in target/criterion"
+            echo "Check benchmark-output.txt for errors"
+            exit 1
+          fi
+
+      - name: Aggregate benchmark results to JSON
+        run: |
+          echo "Found criterion results:"
+          ls -la target/criterion/
+
+          python3 scripts/aggregate-benchmarks.py target/criterion bench.json
+
+          # Display summary
+          echo "=== Benchmark Results Summary ==="
+          cat bench.json | python3 -m json.tool | head -100
+
+      - name: Push benchmarks to website repository
+        if: github.event_name == 'push' && github.ref == 'refs/heads/bench'
+        env:
+          WEBSITE_DEPLOY_TOKEN: ${{ secrets.WEBSITE_DEPLOY_TOKEN }}
+        run: |
+          # Skip if no token configured
+          if [ -z "$WEBSITE_DEPLOY_TOKEN" ]; then
+            echo "WEBSITE_DEPLOY_TOKEN not configured, skipping website deploy"
+            exit 0
+          fi
+
+          # Generate timestamp for filename (URL-safe format)
+          TIMESTAMP=$(date -u +"%Y-%m-%dT%H-%M-%SZ")
+
+          # Clone the website repository
+          git clone --depth 1 "https://x-access-token:${WEBSITE_DEPLOY_TOKEN}@github.com/UOR-Foundation/hologram-website.git" /tmp/website
+
+          # Create benchmarks directory if it doesn't exist
+          mkdir -p /tmp/website/public/benches
+
+          # Copy benchmark file with timestamp
+          cp bench.json "/tmp/website/public/benches/${TIMESTAMP}.json"
+
+          # Also update current.json
+          cp bench.json /tmp/website/public/benches/current.json
+
+          # Commit and push to website repo
+          cd /tmp/website
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add public/benches/
+          git commit -m "Update benchmark results from hologramapp@${{ github.sha }}"
+          git push origin Multiplicity
+
+      - name: Upload benchmark artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: |
+            bench.json
+            benchmark-output.txt
+          retention-days: 30

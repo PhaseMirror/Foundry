@@ -1,0 +1,33 @@
+name: Dual-Gate CI (Rust-L0 Invariants)
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  lean-formal-verification:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Lean 4
+        uses: leanprover/lean-action@v1
+        with:
+          lean-version: leanprover/lean4:v4.6.0
+      - name: Verify L0 Invariants (Zero-drift)
+        run: |
+          cd substrates/atomic-calculator/lean
+          lake build
+          
+  rust-read-only-facts-audit:
+    runs-on: ubuntu-latest
+    needs: lean-formal-verification
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Cargo Test (Phase Mirror Negation Audit on Prime Encoded Signatures)
+        run: |
+          # Verify the read-only facts module explicitly against prime-encoded test cases
+          cargo test --manifest-path substrates/atomic-calculator/rust/Cargo.toml test_phase_mirror_negation_observational

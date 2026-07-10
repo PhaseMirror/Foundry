@@ -1,0 +1,46 @@
+name: Publish PDF Documentation
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install mdBook
+        run: cargo install mdbook --version 0.4.52
+
+      - name: Install wkhtmltopdf
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wkhtmltopdf
+
+      - name: Build all books (HTML)
+        run: cd docs && make build-all
+
+      - name: Build all PDFs
+        run: cd docs && make pdf-all
+
+      - name: Collect PDFs
+        run: |
+          mkdir -p pdfs
+          find docs -name "*.pdf" -exec cp {} pdfs/ \;
+          ls -lh pdfs/
+
+      - name: Upload PDFs to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: pdfs/*.pdf
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

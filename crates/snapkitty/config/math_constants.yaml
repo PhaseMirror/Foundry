@@ -1,0 +1,94 @@
+# RESONANCE-CORE — Sovereign Math Constants
+# All physical and computational constants used across the sovereign math engine.
+# Source of truth: these values are mirrored exactly in each language implementation.
+# Changes here require corresponding updates in thermal.hs, quantum_monad.pl, ere.mjs.
+
+version: "1.0.0"
+last_updated: "2026-06-14"
+
+physical:
+  planck_reduced: 1.054571817e-34      # ℏ (J·s)
+  boltzmann: 1.380649e-23              # k_B (J/K)
+  avogadro: 6.02214076e23             # N_A (mol⁻¹)
+  electron_volt: 1.602176634e-19      # eV (J)
+
+thermal:
+  friction_alpha: 0.2                  # EMA decay rate α (ThermalEngine.hs: frictionAlpha)
+  friction_cool_threshold: 0.33        # f < 0.33 → Cool
+  friction_warm_threshold: 0.66        # 0.33 ≤ f < 0.66 → Warm, f ≥ 0.66 → Hot
+  sample_count_min: 2                  # ANU samples at f=0.0 (Cool)
+  sample_count_max: 8                  # ANU samples at f=1.0 (Hot)
+  sample_count_formula: "2 + round(f × 6)"
+  window_lo_cold: 0                    # ThermalWindow.lo at f=0.0
+  window_hi_cold: 65535                # ThermalWindow.hi at f=0.0
+  window_lo_hot: 16383                 # ThermalWindow.lo at f=1.0 (25% of 65535)
+  window_hi_hot: 49151                 # ThermalWindow.hi at f=1.0 (75% of 65535)
+  interpolation_lo_factor: 16383.0     # lo(f) = round(f × lo_factor)
+  interpolation_hi_factor: 16384.0     # hi(f) = 65535 − round(f × hi_factor)
+  proof: "lo(f) ≤ 16383 < 49151 ≤ hi(f) for all f ∈ [0,1] — Haskell type system enforces"
+
+quantum:
+  watchtower_count: 4                  # Enochian Great Table: East/South/West/North
+  watchtowers:
+    east:  { enochian: EXARP, element: Air,   mode: analytical }
+    south: { enochian: BITOM, element: Fire,  mode: creative }
+    west:  { enochian: HCOMA, element: Water, mode: receptive }
+    north: { enochian: NANTA, element: Earth, mode: grounding }
+  subleq_threshold: 0.3                # SUBLEQ gate amplitude cutoff (B in SUBLEQ(A,B,C))
+  metatron_threshold: 0.5              # weighted majority for METATRON certification
+  anu_uint16_max: 65535                # max uint16 value from ANU quantum random source
+  sovereign_defaults:                  # Al-Hamid defaults when ANU unavailable
+    r0: 53                             # Al-Hamid abjad value (الحميد)
+    r1: 49                             # 49th epithet
+    r2: 106                            # mirror sum (53+53)
+    r3: 7                              # digital root — hidden letters
+  call_49: "reverse — The 49th Enochian Call. APL:⌽X  Prolog:reverse/2  Haskell:reverse"
+  mirror_identity: "call_49(call_49(X)) = X for any list X"
+
+ere:
+  pass_count: 5
+  pass_names:
+    1: "structural"                    # Enochian LTR — non-empty, well-formed
+    2: "scholarly"                     # Latin LTR — non-fabricated
+    3: "invariants"                    # Hebrew RTL — reverse read holds
+    4: "mission"                       # Arabic RTL — aligned to sovereign mission
+    5: "root"                          # Aramaic RTL — ancestor structure valid
+  fabrication_markers:
+    - "fabricat"
+    - "invent"
+    - "i made up"
+    - "i cannot provide"
+    - "as an ai"
+  mission_violations:
+    - "null"
+    - "undefined"
+    - "none"
+    - "void"
+  score_formula: "failures / 5  ∈ [0,1]  (0.0 = all pass, 1.0 = all fail)"
+  metatron_cert: "YES"                 # token on full pass
+  watchtower_search_orders:
+    analytical: [1, 2, 3, 4, 5]       # forward
+    creative:   [5, 4, 3, 2, 1]       # reverse
+    receptive:  [1, 3, 5, 2, 4]       # interleaved
+    grounding:  [5, 4, 3, 2, 1]       # reverse (same as creative — earth mirrors fire)
+
+borrow_chain:
+  max_depth: 32                        # maximum borrow chain depth
+  linear_multiplicity: 1               # GHC LinearTypes — used exactly once
+  affine: true                         # resources may be dropped but not cloned
+  verdict_priority:
+    approve: 0
+    defer: 1
+    reject: 2
+    human_required: 3
+    escalate: 4
+  default_pass_id: "SOV-DEFAULT-PASS"
+  nats_subjects:
+    terminal: "sovereign.audit.bifrost.commit.v1"
+    pending:  "sovereign.governance.decision.pending.v1"
+
+entropy:
+  log_base: 2                          # Shannon entropy in bits
+  epsilon: 1.0e-10                     # guard against log(0)
+  collapse_entropy_max: 6.0            # max allowed superposition entropy (bits)
+  superposition_depth_max: 8           # max branches in quantum superposition

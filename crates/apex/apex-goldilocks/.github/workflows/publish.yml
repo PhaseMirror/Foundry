@@ -1,0 +1,225 @@
+name: Publish
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+env:
+  CARGO_TERM_COLOR: always
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  # Verify version matches tag
+  verify:
+    name: Verify Version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract version from tag
+        id: tag_version
+        run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Extract version from Cargo.toml
+        id: version
+        run: |
+          VERSION=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[] | select(.name == "hologram") | .version')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Verify versions match
+        run: |
+          if [ "${{ steps.tag_version.outputs.version }}" != "${{ steps.version.outputs.version }}" ]; then
+            echo "❌ Tag version (${{ steps.tag_version.outputs.version }}) does not match Cargo.toml version (${{ steps.version.outputs.version }})"
+            exit 1
+          fi
+          echo "✅ Version check passed: v${{ steps.version.outputs.version }}"
+
+  # Run full test suite before publishing
+  test:
+    name: Test Before Publish
+    needs: verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run tests
+        run: cargo test --workspace --all-features
+
+      - name: Run clippy
+        run: cargo clippy --workspace --all-targets --all-features -- -D warnings
+
+      - name: Check formatting
+        run: cargo fmt --all --check
+
+  # Build release binaries for multiple platforms
+  build-binaries:
+    name: Build Binary (${{ matrix.target }})
+    needs: test
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            artifact_name: hologram-compile
+            asset_name: hologram-compile-linux-amd64
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            artifact_name: hologram-compile
+            asset_name: hologram-compile-macos-amd64
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            artifact_name: hologram-compile
+            asset_name: hologram-compile-macos-arm64
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            artifact_name: hologram-compile.exe
+            asset_name: hologram-compile-windows-amd64.exe
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.target }}
+
+      - name: Build release binary
+        run: cargo build --release --bin hologram-compile --target ${{ matrix.target }}
+
+      - name: Package binary (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          cd target/${{ matrix.target }}/release
+          tar czf ../../../${{ matrix.asset_name }}.tar.gz ${{ matrix.artifact_name }}
+
+      - name: Package binary (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          cd target/${{ matrix.target }}/release
+          7z a ../../../${{ matrix.asset_name }}.zip ${{ matrix.artifact_name }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset_name }}
+          path: |
+            ${{ matrix.asset_name }}.tar.gz
+            ${{ matrix.asset_name }}.zip
+          if-no-files-found: error
+
+  # Create GitHub Release with binaries
+  release:
+    name: Create GitHub Release
+    needs: [verify, build-binaries]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Display artifact structure
+        run: ls -R artifacts
+
+      - name: Prepare release assets
+        run: |
+          mkdir -p release-assets
+          find artifacts -type f \( -name "*.tar.gz" -o -name "*.zip" \) -exec cp {} release-assets/ \;
+          ls -lh release-assets/
+
+      - name: Generate release notes
+        id: release_notes
+        run: |
+          VERSION=${{ needs.verify.outputs.version }}
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+
+          cat > release_notes.md << 'EOF'
+          ## Hologram v${{ needs.verify.outputs.version }}
+
+          ### Installation
+
+          #### Via Git Dependency
+
+          Add to your `Cargo.toml`:
+
+          ```toml
+          [dependencies]
+          hologram = { git = "https://github.com/UOR-Foundation/hologramapp", tag = "v${{ needs.verify.outputs.version }}" }
+
+          # Or for specific crates:
+          hologram-core = { git = "https://github.com/UOR-Foundation/hologramapp", tag = "v${{ needs.verify.outputs.version }}" }
+          hologram-compiler = { git = "https://github.com/UOR-Foundation/hologramapp", tag = "v${{ needs.verify.outputs.version }}" }
+          ```
+
+          #### CLI Binary
+
+          Download the appropriate binary for your platform from the assets below and add it to your PATH.
+
+          ### Changes
+
+          EOF
+
+          if [ -n "$PREV_TAG" ]; then
+            echo "#### Commits since ${PREV_TAG}" >> release_notes.md
+            echo "" >> release_notes.md
+            git log ${PREV_TAG}..HEAD --pretty=format:"- %s (%h)" >> release_notes.md
+          else
+            echo "Initial release" >> release_notes.md
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release-assets/*
+          body_path: release_notes.md
+          draft: false
+          prerelease: ${{ contains(needs.verify.outputs.version, 'alpha') || contains(needs.verify.outputs.version, 'beta') || contains(needs.verify.outputs.version, 'rc') }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Release Summary
+        run: |
+          echo "## ✅ Release Published Successfully" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** v${{ needs.verify.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Distribution Methods" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "1. **Git Dependency** (Recommended for Libraries)" >> $GITHUB_STEP_SUMMARY
+          echo "   ```toml" >> $GITHUB_STEP_SUMMARY
+          echo "   hologram = { git = \"https://github.com/UOR-Foundation/hologramapp\", tag = \"v${{ needs.verify.outputs.version }}\" }" >> $GITHUB_STEP_SUMMARY
+          echo "   ```" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "2. **Binary Download** (For CLI Tool)" >> $GITHUB_STEP_SUMMARY
+          echo "   - Download from [GitHub Releases](https://github.com/UOR-Foundation/hologramapp/releases/tag/v${{ needs.verify.outputs.version }})" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Note on GitHub Packages" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "GitHub Packages does not currently support native Cargo/Rust registries." >> $GITHUB_STEP_SUMMARY
+          echo "The git dependency approach above is the recommended method for private Rust crates." >> $GITHUB_STEP_SUMMARY

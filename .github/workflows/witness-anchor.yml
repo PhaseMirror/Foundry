@@ -1,0 +1,40 @@
+name: Witness-to-Ledger Anchoring
+
+on:
+  push:
+    branches:
+      - main
+      - 'release/**'
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  anchor-witnesses:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Rust Toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Validate UnifiedWitness Protocol
+        run: cargo test -p governance --lib witness
+        
+      - name: Verify Archivum Ledger State
+        run: |
+          if [ ! -f "state/archivum/witnesses.jsonl" ]; then
+            echo "Archivum ledger missing!"
+            exit 1
+          fi
+          echo "Ledger verified."
+
+      - name: Enforce Dissonance Thresholds
+        run: |
+          # Executes the CLI orchestrator to ensure bounded compliance
+          cargo run -p commander-cli -- sigma evaluate '{"id": "ci-check", "r_sc": 47.06998778, "l_eff": 0.15}'

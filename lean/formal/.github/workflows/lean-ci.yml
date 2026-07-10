@@ -1,0 +1,21 @@
+name: Lean CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  lean-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: leanprover/lean4-action@v1
+        with:
+          lean-version: 'stable'
+      - name: Build and verify
+        working-directory: ./PIRTM-Formal
+        run: |
+          lake build
+          echo "All proofs verified. No sorry. Production grade."

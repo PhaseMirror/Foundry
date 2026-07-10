@@ -1,0 +1,90 @@
+\documentclass{article}
+\usepackage{amsmath, amssymb}
+\title{RESONANCE-CORE: Thermodynamic Window Engine}
+\author{Ahmad Ali Parr (Architect) \\ SnapKitty Sovereign OS --- SEIT NGO \\ \small{Mirrors \texttt{bridges/haskell/thermal.hs} exactly.}}
+\date{2026}
+
+\begin{document}
+\maketitle
+
+\section{Design Principle}
+\textit{TypeScript adopted from Java cannot prove that lo $<$ hi. Haskell can. The type system enforces it.} --- ThermalEngine.hs
+
+The math lives in Haskell (compiler-proven). This document is the specification. \texttt{lib/math/thermal.mjs} implements the same math in JS for cross-platform use.
+
+\section{Friction Model}
+Friction $f \in [0, 1]$ accumulates decision error. High friction = hot = narrow sampling window.
+
+\subsection{EMA Decay}
+\begin{equation}
+  f_{n+1} = \alpha\, s_n + (1-\alpha)\, f_n, \quad \alpha = 0.2
+\end{equation}
+where $s_n \in [0,1]$ is the ERE failure score for decision $n$:
+\[
+  s_n = \frac{\text{failed ERE passes}}{5}
+\]
+One hot spike ($s=1$) cools over $\approx 5$ clean decisions ($s=0$).
+
+\subsection{Cooling Rate}
+Clean decisions required to cool below $f = 0.1$ from current $f$:
+\begin{equation}
+  n_{\text{cool}}(f) = \left\lceil \frac{\ln(0.1)}{\ln(1-\alpha)} \right\rceil \approx 10 \text{ decisions}
+\end{equation}
+
+\section{Thermal Window}
+The ANU sampling band in uint16 space $[0, 65535]$:
+\begin{align}
+  \mathrm{lo}(f) &= \operatorname{round}(f \times 16383) \\
+  \mathrm{hi}(f) &= 65535 - \operatorname{round}(f \times 16384)
+\end{align}
+
+\subsection{Proof: $\mathrm{lo}(f) < \mathrm{hi}(f)$ for all $f \in [0,1]$}
+\begin{align}
+  \mathrm{lo}(f) &\leq \operatorname{round}(16383) = 16383 \\
+  \mathrm{hi}(f) &\geq 65535 - \operatorname{round}(16384) = 49151 \\
+  \therefore\; \mathrm{lo}(f) &\leq 16383 < 49151 \leq \mathrm{hi}(f) \quad \square
+\end{align}
+The Haskell smart constructor \texttt{mkThermalWindow} handles the impossible edge case defensively; the proof above shows it is never triggered by \texttt{computeThermalWindow}.
+
+\subsection{Boundary Values}
+\begin{align}
+  f = 0:&\quad [0,\; 65535] \quad \text{(full range --- maximum diversity)} \\
+  f = 1:&\quad [16383,\; 49151] \quad \text{(sovereign center --- 25\%--75\%)}
+\end{align}
+
+\section{ANU Normalization}
+For raw ANU sample $r \in [0, 65535]$:
+\begin{equation}
+  T_{\mathrm{norm}} = \frac{\operatorname{clamp}(r,\, \mathrm{lo},\, \mathrm{hi}) - \mathrm{lo}}{\mathrm{hi} - \mathrm{lo}} \in [0, 1]
+\end{equation}
+
+\section{Sample Count}
+\begin{equation}
+  n_{\mathrm{samples}}(f) = 2 + \operatorname{round}(6f), \quad n \in [2, 8]
+\end{equation}
+More samples when hot: CLT contracts the effective distribution, matching the narrower ThermalWindow.
+
+\section{Thermal Modes}
+\begin{equation}
+  \mathrm{mode}(f) = \begin{cases}
+    \text{Cool} & f < 0.33 \\
+    \text{Warm} & 0.33 \leq f < 0.66 \\
+    \text{Hot}  & f \geq 0.66
+  \end{cases}
+\end{equation}
+
+\section{Boltzmann Connection}
+The ThermalWindow maps the Boltzmann principle physically:
+\begin{equation}
+  P(E_i) = \frac{e^{-E_i / k_B T}}{Z}, \quad Z = \sum_j e^{-E_j / k_B T}
+\end{equation}
+Hot $f$ contracts the window, emulating low-temperature Boltzmann concentration around the ground state. Cool $f$ opens the window, emulating high-temperature uniform sampling.
+
+\section{Thermodynamic Feedback Loop}
+The loop closes at every decision:
+\begin{equation}
+  f_{n+1} = \mathrm{EMA}(f_n, \mathrm{ERE\_score}(q_n))
+\end{equation}
+Friction feeds back on itself across decisions, narrowing the ANU window as the system heats.
+
+\end{document}

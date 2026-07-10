@@ -1,0 +1,28 @@
+{{- if .Values.rbac.create }}
+{{- if eq .Values.rbac.scope "Cluster" }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "phase-mirror-operator.fullname" . }}
+subjects:
+- kind: ServiceAccount
+  name: {{ include "phase-mirror-operator.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: ClusterRole
+  name: {{ include "phase-mirror-operator.fullname" . }}
+  apiGroup: rbac.authorization.k8s.io
+{{- else }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "phase-mirror-operator.fullname" . }}
+subjects:
+- kind: ServiceAccount
+  name: {{ include "phase-mirror-operator.fullname" . }}
+roleRef:
+  kind: Role
+  name: {{ include "phase-mirror-operator.fullname" . }}
+  apiGroup: rbac.authorization.k8s.io
+{{- end }}
+{{- end }}

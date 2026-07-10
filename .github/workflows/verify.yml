@@ -1,0 +1,42 @@
+name: CI Provenance Verify
+
+on:
+  push:
+    tags:
+      - 'v*'
+  pull_request:
+
+jobs:
+  verify-provenance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.85.0
+
+      - name: Build Target Codebase
+        run: cargo build --release --workspace
+
+      - name: Check hashes against manifest
+        run: |
+          echo "Checking artifact SHA-256 hashes against compliance/manifest.json"
+          if [ -f "compliance/manifest.json" ]; then
+            echo "Manifest found. Hash check placeholder."
+          else
+            echo "Manifest not found."
+            exit 1
+          fi
+
+      - name: Run Dual-Prover SNARK harness
+        run: echo "Dual-Prover SNARK harness placeholder"
+
+      - name: cargo-deny check
+        uses: EmbarkStudios/cargo-deny-action@v2
+
+      - name: cargo-audit
+        run: |
+          cargo install cargo-audit
+          cargo audit

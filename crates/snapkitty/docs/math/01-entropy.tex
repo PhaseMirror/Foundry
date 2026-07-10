@@ -1,0 +1,60 @@
+\documentclass{article}
+\usepackage{amsmath, amssymb, hyperref}
+\title{RESONANCE-CORE: Shannon \& Von Neumann Entropy}
+\author{Ahmad Ali Parr (Architect) \\ SnapKitty Sovereign OS --- SEIT NGO}
+\date{2026}
+
+\begin{document}
+\maketitle
+
+\section{Shannon Entropy}
+For a discrete random variable $X$ with probability mass function $p$:
+\begin{equation}
+  H(X) = -\sum_{x \in \mathcal{X}} p(x) \log_2 p(x)
+\end{equation}
+where $0 \log_2 0 := 0$ by convention.
+
+\subsection{Properties}
+\begin{itemize}
+  \item \textbf{Non-negativity:} $H(X) \geq 0$
+  \item \textbf{Maximum:} $H(X) \leq \log_2 |\mathcal{X}|$, achieved at uniform distribution
+  \item \textbf{Chain rule:} $H(X, Y) = H(X) + H(Y \mid X)$
+  \item \textbf{Subadditivity:} $H(X, Y) \leq H(X) + H(Y)$
+\end{itemize}
+
+\section{Quantum Superposition Entropy}
+A SnapKitty superposition $\mathcal{S} = \{(w_i, v_i)\}$ after normalization ($\sum_i w_i = 1$):
+\begin{equation}
+  H_{\text{super}}(\mathcal{S}) = -\sum_{i} w_i \log_2 w_i
+\end{equation}
+A superposition is \emph{entropy-bounded} when $H_{\text{super}} \leq H_{\max}$ where $H_{\max} = 6.0$ bits (config: \texttt{entropy.collapse\_entropy\_max}).
+
+\textbf{Vacuum state:} When all branches are destroyed by ERE failure, $\mathcal{S} = \emptyset$ and $H_{\text{super}} = 0$ (total certainty: the system has no state).
+
+\section{Von Neumann Entropy}
+For a density matrix $\rho$:
+\begin{equation}
+  S(\rho) = -\operatorname{Tr}(\rho \log \rho) = -\sum_i \lambda_i \log \lambda_i
+\end{equation}
+where $\lambda_i$ are eigenvalues of $\rho$. This is the quantum analogue of Shannon entropy and reduces to it for diagonal $\rho$.
+
+\section{KL Divergence}
+Measures divergence from distribution $Q$ to $P$:
+\begin{equation}
+  D_{\mathrm{KL}}(P \| Q) = \sum_x P(x) \log_2 \frac{P(x)}{Q(x)} \geq 0
+\end{equation}
+Used in ERE pass evaluation to measure divergence between claimed and observed reasoning distributions. $D_{\mathrm{KL}}(P \| Q) = 0$ iff $P = Q$ almost everywhere.
+
+\section{Cross-Entropy}
+\begin{equation}
+  H(P, Q) = -\sum_x P(x) \log_2 Q(x) = H(P) + D_{\mathrm{KL}}(P \| Q)
+\end{equation}
+
+\section{Implementation Notes}
+\begin{itemize}
+  \item $\varepsilon = 10^{-10}$ guards against $\log_2(0)$ in all implementations
+  \item \texttt{lib/math/entropy.mjs}: \texttt{shannonEntropy}, \texttt{superpositionEntropy}, \texttt{klDivergence}, \texttt{crossEntropy}, \texttt{vonNeumannEntropy}
+  \item Normalization: \texttt{normalize(weights)} divides by sum; equal distribution if $\sum = 0$
+\end{itemize}
+
+\end{document}

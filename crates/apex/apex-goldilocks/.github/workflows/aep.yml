@@ -1,0 +1,27 @@
+name: AEP Two-Lane
+on: [push, pull_request]
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.11"}
+      - run: pip install jsonschema tomli tomli-w pyyaml
+      - run: python cli/lint_aep.py aep.toml .
+        working-directory: embeddings
+  sim:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.11"}
+      - run: pip install -e embeddings numpy
+      - name: Install test deps
+        run: pip install pytest numpy
+      - run: pytest -q tests/test_runner.py
+  device:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "second backend run placeholder"

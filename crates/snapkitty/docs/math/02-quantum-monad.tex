@@ -1,0 +1,93 @@
+\documentclass{article}
+\usepackage{amsmath, amssymb, listings}
+\title{RESONANCE-CORE: Quantum Monad Formalism}
+\author{Ahmad Ali Parr (Architect) \\ SnapKitty Sovereign OS --- SEIT NGO}
+\date{2026}
+
+\begin{document}
+\maketitle
+
+\section{Quantum Superposition}
+A superposition $\mathcal{S}$ is a list of amplitude-value pairs:
+\begin{equation}
+  \mathcal{S} = \{(w_1, v_1), (w_2, v_2), \ldots, (w_n, v_n)\}, \quad w_i \geq 0, \quad \sum_i w_i = 1
+\end{equation}
+The empty superposition $\mathcal{S} = \emptyset$ is the \emph{vacuum state} --- no temperature survives.
+
+\section{Monad Operations}
+
+\subsection{Unit (return)}
+\begin{equation}
+  \eta(v) = \{(1.0, v)\}
+\end{equation}
+Lifts a classical value into a fully-determined superposition.
+
+\subsection{Bind (>>=)}
+\begin{equation}
+  \mathcal{S} \mathbin{>\!\!>=} f = \{(w \cdot w',\, v') \mid (w, x) \in \mathcal{S},\ (w', v') \in f(x)\}
+\end{equation}
+Failed branches (where $f(x) = \emptyset$) are destroyed. This is the \textbf{no-cloning corollary}: failed paths do not survive bind.
+
+\subsection{Born-Rule Collapse}
+\begin{equation}
+  \operatorname{collapse}(\mathcal{S}) = \underset{(w_i, v_i) \in \mathcal{S}}{\arg\max}\; w_i
+\end{equation}
+The highest-amplitude branch wins. Vacuum ($\mathcal{S} = \emptyset$) collapses to $\bot$ (Nothing).
+
+\section{The Four Watchtowers}
+The Enochian Great Table defines four simultaneous search paths:
+\begin{align}
+  T_E &= (\text{EXARP},\ \text{Air},\ \text{analytical}) \\
+  T_S &= (\text{BITOM},\ \text{Fire},\ \text{creative}) \\
+  T_W &= (\text{HCOMA},\ \text{Water},\ \text{receptive}) \\
+  T_N &= (\text{NANTA},\ \text{Earth},\ \text{grounding})
+\end{align}
+
+\subsection{ANU Amplitude Vector}
+From raw uint16 values $r_0, r_1, r_2, r_3 \in [0, 65535]$:
+\begin{equation}
+  \hat{w}_i = \frac{r_i / 65535}{\sum_j r_j / 65535}
+\end{equation}
+Sovereign defaults (Al-Ham\=id abjad): $r_0 = 53,\ r_1 = 49,\ r_2 = 106,\ r_3 = 7$.
+
+\section{SUBLEQ Gate}
+SUBLEQ$(A, B, C)$ expressed over a superposition (threshold $B = 0.3$):
+\begin{equation}
+  \operatorname{SUBLEQ}(\mathcal{S}, B) = \{(w, v) \in \mathcal{S} \mid w \geq B\}
+\end{equation}
+The branch fires ($C$ executes) iff the filtered set is non-empty.
+
+\section{METATRON Certification}
+Let $\mathcal{C} \subseteq \{T_E, T_S, T_W, T_N\}$ be certifying towers. METATRON certifies if:
+\begin{equation}
+  \sum_{T_i \in \mathcal{C}} \hat{w}_i \geq \theta_{\text{METATRON}} = 0.5
+\end{equation}
+The dominant collapsed tower is $\arg\max_{T_i \in \mathcal{C}} \hat{w}_i$.
+
+\section{The 49th Call}
+\begin{equation}
+  \operatorname{call}_{49}(\mathcal{S}) = \operatorname{reverse}(\mathcal{S})
+\end{equation}
+Reading backward reveals what reading forward conceals. In three languages, one truth:
+\begin{align}
+  \text{APL (1962):}&\quad {\tt \char18 X} \\
+  \text{Prolog (1972):}&\quad {\tt call\_49(X,Y) :- reverse(X,Y).} \\
+  \text{Haskell (1990):}&\quad {\tt call49 = reverse}
+\end{align}
+
+\textbf{Mirror Identity:}
+\begin{equation}
+  \operatorname{call}_{49}(\operatorname{call}_{49}(\mathcal{S})) = \mathcal{S}
+\end{equation}
+This is the structural proof of coherence: the system is self-consistent.
+
+\section{Implementation}
+\begin{itemize}
+  \item \texttt{lib/math/quantum.mjs}: \texttt{qUnit}, \texttt{qBind}, \texttt{qMap}, \texttt{qNormalize}, \texttt{qMeasure}
+  \item \texttt{watchtowerAmplitudes([r0,r1,r2,r3])} normalizes ANU vector to tower weights
+  \item \texttt{subleqGate(amps, 0.3)} --- SUBLEQ threshold gate
+  \item \texttt{call49(amps)} --- The 49th Call
+  \item \texttt{mirrorIdentity(amps)} --- structural coherence check
+\end{itemize}
+
+\end{document}

@@ -1,0 +1,65 @@
+name: Sigma Kernel + CLI CI
+
+on:
+  push:
+    branches:
+      - main
+      - 'release/**'
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  sigma-kernel-cli:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Rust Toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Verify Archivum Crate
+        run: cargo check -p archivum --offline
+
+      - name: Verify Sigma Crate
+        run: cargo check -p sigma --offline
+
+      - name: Run Sigma Kernel Tests
+        run: cargo test -p sigma --offline
+
+      - name: Verify Commander CLI
+        run: cargo check -p commander-cli --offline
+
+      - name: CLI Smoke Test — Pass Case
+        run: |
+          echo '{"id":"ci-pass-001","r_sc":47.06998778,"l_eff":0.15}' | cargo run -p commander-cli -- sigma evaluate
+
+      - name: CLI Smoke Test — Violation Case
+        run: |
+          echo '{"id":"ci-fail-001","r_sc":47.06998778,"l_eff":1.5}' | cargo run -p commander-cli -- sigma evaluate || true
+
+      - name: Verify Ledger Append-Only
+        run: |
+          if [ ! -f "state/archivum/witnesses.jsonl" ]; then
+            echo "Archivum ledger missing!"
+            exit 1
+          fi
+          echo "Ledger verified."
+          tail -3 state/archivum/witnesses.jsonl
+
+      - name: Verify Alerting Config
+        run: |
+          if [ ! -f "observability/prometheus/sigma_rules.yml" ]; then
+            echo "Prometheus alert rules missing!"
+            exit 1
+          fi
+          if [ ! -f "observability/alertmanager/alertmanager.yml" ]; then
+            echo "Alertmanager config missing!"
+            exit 1
+          fi
+          echo "Alerting configs verified."

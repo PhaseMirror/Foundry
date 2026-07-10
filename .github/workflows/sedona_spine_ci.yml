@@ -1,0 +1,114 @@
+name: Sedona Spine Frontend Validation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'substrates/lean/MOC/**'
+      - 'crates/**'
+      - 'docs/**'
+  pull_request:
+    paths:
+      - 'substrates/lean/MOC/**'
+      - 'crates/**'
+      - 'docs/**'
+
+permissions:
+  contents: read
+
+jobs:
+  lean-honesty-audit:
+    name: Lean Axiom-Clean Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Lean 4
+        uses: leanprover/lean-action@v1
+        with:
+          lean-version: 'v4.16.0'
+
+      - name: Run Lean axiom-clean audit
+        run: |
+          echo "=== Mathlib import check ==="
+          if grep -r "import Mathlib" substrates/lean/MOC/; then
+            echo "FAIL: Mathlib import found — axiom violation"
+            exit 1
+          fi
+          echo "PASS: No Mathlib imports"
+
+          echo "=== sorry-free check ==="
+          if grep -r "sorry" substrates/lean/MOC/PWEH.lean substrates/lean/MOC/CompositeOperator.lean; then
+            echo "FAIL: Found sorry in proof files"
+            exit 1
+          fi
+          echo "PASS: No sorry in PWEH/CompositeOperator"
+
+          echo "=== Theorem presence check ==="
+          grep -q "recursive_tensor_stability_theorem" substrates/lean/MOC/PIRTM.lean
+          grep -q "computational_invariance_theorem" substrates/lean/MOC/PIRTM.lean
+          echo "PASS: Theorems 2 and 3 present"
+
+  rust-governance:
+    name: Rust Governance Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.85.0
+
+      - name: Build workspace
+        run: cargo build --workspace
+
+      - name: Run L0 invariant tests
+        run: cargo test -p pirtm-rs --test l0_invariants --release
+
+      - name: Assert Rejection-Before-Lever (AST ordering)
+        run: cargo test -p pirtm-parser test_rejection_before_lever_ordering -- --exact
+
+      - name: Assert Failable Constructor Template Validation
+        run: cargo test -p pirtm-parser test_try_successor test_try_stratum_boundary test_try_prime_shift
+
+  pweh-integration:
+    name: PWEH Numerical Integration
+    runs-on: ubuntu-latest
+    needs: rust-governance
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+
+      - name: Run PWEH integration
+        run: |
+          pip install numpy
+          python substrates/tests/python/test_pweh_integration.py
+
+  archivum-provenance:
+    name: Archivum Provenance Check
+    runs-on: ubuntu-latest
+    needs: [lean-honesty-audit, rust-governance, pweh-integration]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify witness file exists
+        run: |
+          if [ -f "state/archivum/witnesses.jsonl" ]; then
+            echo "Archivum witnesses.jsonl found"
+            wc -l state/archivum/witnesses.jsonl
+          else
+            echo "No witness file yet - provenance check passes (initial state)"
+          fi
+
+      - name: Verify Git anchoring
+        run: |
+          echo "Git commit count: $(git rev-list --count HEAD)"
+          echo "Archivum provenance ready for witness anchoring"

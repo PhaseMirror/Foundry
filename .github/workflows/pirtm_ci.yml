@@ -1,0 +1,108 @@
+name: pirtm-ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  LLVM_PREFIX: ${{ github.workspace }}/.ci/llvm15_prefix
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Rust (1.85.0)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.85.0
+          components: rustfmt,clippy
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Provision LLVM 15 prefix
+        run: |
+          if [ ! -x "${LLVM_PREFIX}/bin/llvm-config" ]; then
+            echo "Sealed LLVM 15 prefix not found — provisioning..."
+            mkdir -p "${LLVM_PREFIX}"
+            apt-get update
+            apt-get install -y llvm-15 llvm-15-dev mlir-15 libmlir-15-dev clang-15
+            # Symlink system LLVM 15 into the sealed prefix
+            ln -sfn /usr/lib/llvm-15 "${LLVM_PREFIX}"
+            ln -sfn /usr/bin/llvm-config-15 "${LLVM_PREFIX}/bin/llvm-config"
+            ln -sfn /usr/bin/mlir-opt-15 "${LLVM_PREFIX}/bin/mlir-opt"
+            ln -sfn /usr/bin/mlir-translate-15 "${LLVM_PREFIX}/bin/mlir-translate"
+            ln -sfn /usr/include/llvm-15 "${LLVM_PREFIX}/include"
+            mkdir -p "${LLVM_PREFIX}/lib"
+            ln -sfn /usr/lib/llvm-15/lib "${LLVM_PREFIX}/lib"
+          fi
+          echo "LLVM version: $(${LLVM_PREFIX}/bin/llvm-config --version)"
+          echo "MLIR prefix: ${LLVM_PREFIX}"
+      - name: Export LLVM 15 environment
+        run: |
+          echo "MLIR_SYS_150_PREFIX=${LLVM_PREFIX}" >> "$GITHUB_ENV"
+          echo "LLVM_CONFIG_PATH=${LLVM_PREFIX}/bin/llvm-config" >> "$GITHUB_ENV"
+          echo "LD_LIBRARY_PATH=${LLVM_PREFIX}/lib:${LD_LIBRARY_PATH:-}" >> "$GITHUB_ENV"
+      - name: Verify LLVM 15
+        run: |
+          test "$(${LLVM_PREFIX}/bin/llvm-config --version)" = "15" || {
+            echo "FATAL: Expected LLVM 15, got $(${LLVM_PREFIX}/bin/llvm-config --version)"
+            exit 1
+          }
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-registry-
+      - name: Cache cargo index
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-index-
+      - name: Install Python dependencies
+        run: |
+          pip install numpy
+      - name: Build and test Rust
+        run: |
+          cargo build --release --all
+          cargo test --all --release
+      - name: Run PWEH integration
+        run: |
+          python substrates/tests/python/test_pweh_integration.py
+
+  clippy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.85.0
+          components: clippy
+      - name: Clippy check
+        run: |
+          cargo clippy --all --release -- -D warnings
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.85.0
+      - name: Format check
+        run: cargo fmt --all -- --check
+      - name: Build
+        run: |
+          cargo build --all
+      - name: Test
+        run: |
+          cargo test --all

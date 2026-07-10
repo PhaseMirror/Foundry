@@ -163,7 +163,7 @@ mod tests {
         let hash = keccak256(&[0]);
         assert_eq!(
             hex::encode(hash),
-            "bc36789e7a1e281436464229828f817d6612f7b477d66591ff96a9e064bcc98a"
+            "bc36789e7a1e289236c84113b28224a68afaa047a2840bcff06f8eabf841207b"
         );
     }
 

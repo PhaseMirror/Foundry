@@ -9,7 +9,7 @@ use num_rational::BigRational;
 use std::collections::HashMap;
 
 /// A read-only representation of a prime-indexed signature.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct ReadOnlySignatureFact {
     // The internal map is strictly private, preventing external mutation.
     map: HashMap<u64, i64>,

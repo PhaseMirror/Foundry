@@ -107,3 +107,11 @@ and the current release tag (e.g. `v0.21.0`).
 ## License
 
 [MIT](LICENSE) © 2026 Alex Flom.
+
+## Sedona Spine Compliance
+
+All constructions within the F1-Square model strictly adhere to the **Sedona Spine** mandate. Any discrete state representations or topological findings proven here are rigorously bound to the `ALP` engine policy gates and  resonance core. The F1-Square intersection theory forms the axiomatic bedrock, but runtime decisions must always pass through the unified Sedona logic paths to prevent drift.
+
+## Sedona Spine Compliance
+
+All constructions within the F1-Square model strictly adhere to the **Sedona Spine** mandate. Any discrete state representations or topological findings proven here are rigorously bound to the `ALP` engine policy gates and `MOC` resonance core. The F1-Square intersection theory forms the axiomatic bedrock, but runtime decisions must always pass through the unified Sedona logic paths to prevent drift.

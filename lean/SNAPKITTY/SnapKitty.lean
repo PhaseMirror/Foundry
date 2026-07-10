@@ -1,4 +1,5 @@
 import SnapKitty.Core
+import SnapKitty.SedonaSpine
 
 -- Top‑level namespace for SnapKitty Lean artifacts.
 namespace SnapKitty

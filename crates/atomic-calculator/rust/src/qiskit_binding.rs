@@ -31,5 +31,5 @@ pub fn fetch_qiskit_uac_output(job_id: &str) -> ReadOnlySignatureFact {
     }
     
     // Hand-off completely isolates Sedona Spine from Qiskit's mutability.
-    ReadOnlySignatureFact::new(parsed_map)
+    ReadOnlySignatureFact::new(parsed_map, None)
 }

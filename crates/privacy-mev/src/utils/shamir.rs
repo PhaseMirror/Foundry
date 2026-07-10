@@ -41,13 +41,13 @@ pub fn mul_mod(a: u128, b: u128) -> u128 {
     let carry1 = z0 >> 64;
     let val0 = z0 as u64;
 
-    let sum1 = z1 + z2 + carry1;
+    let sum1 = (z1 as u64) + (z2 as u64) + carry1;
     let val1 = sum1 as u64;
-    let carry2 = sum1 >> 64;
+    let carry2 = (sum1 >> 64) + (z1 >> 64) + (z2 >> 64);
 
-    let sum2 = z3 + carry2;
+    let sum2 = (z3 as u64) + carry2;
     let val2 = sum2 as u64;
-    let carry3 = sum2 >> 64;
+    let carry3 = (sum2 >> 64) + (z3 >> 64);
     let val3 = carry3 as u64;
 
     let x_lo = (val0 as u128) | (((val1 as u128) & 0x7FFFFFFFFFFFFFFF) << 64);

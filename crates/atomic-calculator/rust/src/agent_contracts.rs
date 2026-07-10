@@ -28,20 +28,32 @@ pub struct NarrativeAuditor;
 
 impl NarrativeAuditor {
     /// Audits the agent's output to ensure it matches the engine's ground truth,
-    /// and ensures the norm_preservation_value does not exceed the H2 Error Witness bound of 3900.
+    /// ensures the norm_preservation_value does not exceed the H2 Error Witness bound of 3900,
+    /// and verifies the presence and stability of SQD signatures.
     pub fn audit_agent_output(
         engine_truth: &RiskLevel,
         agent_output: &AgentTemplate,
         witness: &H2ErrorWitness,
+        sqd_payload: Option<&crate::sqd::QSqdSignature>,
     ) -> Result<(), &'static str> {
         if agent_output.norm_preservation_value > witness.upper_bound {
             return Err("Agent hallucination detected: norm_preservation_value exceeds exact H2 bound of 3900.");
         }
         
-        if *engine_truth == agent_output.declared_risk {
-            Ok(())
-        } else {
-            Err("Agent hallucination detected: Declared risk does not match ground truth.")
+        if *engine_truth != agent_output.declared_risk {
+            return Err("Agent hallucination detected: Declared risk does not match ground truth.");
         }
+        
+        // SQD Validation
+        match sqd_payload {
+            Some(sig) => {
+                if !sig.eta.unstable.is_empty() {
+                    return Err("Critical Escalate: Q-SQD signature contains unstable Pauli features. Hardware noise breached guard-band.");
+                }
+            }
+            None => return Err("Critical Escalate: Missing mandatory SQD signature payload."),
+        }
+        
+        Ok(())
     }
 }

@@ -5,6 +5,7 @@ import logging
 from collections import deque
 import numpy as np
 from sklearn.ensemble import IsolationForest
+from joblib import load
 import nats
 from nats.errors import ConnectionClosedError, TimeoutError, NoServersError
 
@@ -21,29 +22,13 @@ WINDOW_SIZE = 100  # Number of recent runs to keep in the rolling window
 ANOMALY_THRESHOLD = float(os.getenv("ANOMALY_GOV_THRESHOLD", 0.0006))
 CONTAMINATION = 0.01 # Expected proportion of outliers in the data
 
-# Pre-warm the model with "healthy" baseline synthetic data 
-# Features: [Entropy, Unstable_Rate, Utilization, d16_frac, thermal_slope]
-HEALTHY_BASELINE = np.array([
-    [5.4, 0.0, 0.84, 0.87, 0.0],
-    [5.2, 0.0, 0.82, 0.88, 0.01],
-    [5.5, 0.0, 0.85, 0.86, -0.01],
-    [5.3, 0.0, 0.81, 0.89, 0.02],
-    [5.6, 0.0, 0.87, 0.85, -0.02],
-    [5.4, 0.0, 0.83, 0.87, 0.0]
-] * 20)
-
 class ObservabilitySentinel:
     def __init__(self):
         self.nc = None
         self.window = deque(maxlen=WINDOW_SIZE)
-        self.model = IsolationForest(
-            contamination=CONTAMINATION, 
-            random_state=42, 
-            n_estimators=100
-        )
-        # Warm start the model
-        self.model.fit(HEALTHY_BASELINE)
-        logger.info("Isolation Forest initialized and warmed up with baseline.")
+        # Load the calibrated model
+        self.model = load('observability/anomaly_model.pkl')
+        logger.info("Isolation Forest loaded from observability/anomaly_model.pkl.")
 
     async def connect(self):
         try:
@@ -91,12 +76,8 @@ class ObservabilitySentinel:
             # Update the sliding window
             self.window.append(feature_vector)
             
-            # Periodically retrain the model if we have a full window of "normal" data
-            # (In production, you'd only retrain on explicitly validated healthy epochs)
-            if len(self.window) == WINDOW_SIZE:
-                # Online updating requires partial_fit (not natively supported by standard IsolationForest),
-                # so we can rebuild the tree ensemble periodically in the background.
-                pass
+            # removed window refitting to maintain strict model versioning
+            pass
                 
         except json.JSONDecodeError:
             logger.error("Failed to decode telemetry JSON.")

@@ -9,6 +9,7 @@ from sklearn.ensemble import IsolationForest
 import json
 import random
 from pathlib import Path
+from joblib import dump
 
 # --- Configuration ---
 FEATURES = ['entropy', 'unstable_rate', 'utilization', 'd16_frac', 'thermal_slope']
@@ -91,5 +92,7 @@ config_export = {
 with open("observability/anomaly_config.json", "w") as f:
     json.dump(config_export, f, indent=2)
 
+dump(model, 'observability/anomaly_model.pkl')
 print("\n✅ Config exported to observability/anomaly_config.json")
+print("✅ Model serialized to observability/anomaly_model.pkl")
 print(f"🔄 Update ANOMALY_THRESHOLD in anomaly_monitor.py to: {THRESHOLD:.4f}")

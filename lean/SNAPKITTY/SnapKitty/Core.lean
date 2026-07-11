@@ -107,6 +107,28 @@ def thermalWindowScaled (eps_scaled : Nat) (d_max : Nat) (h_dmax : d_max ≥ 1) 
         exact Nat.le_trans h1 h2
   }
 
+-- 1.1 Predictive Thermal Window
+structure PredictiveThermalWindow extends ThermalWindow where
+  util_pred_scaled : Nat
+  conf_scaled : Nat
+  is_safe : Bool
+  safety_proof : is_safe = true → util_pred_scaled < 9000 ∧ conf_scaled ≥ 9950
+
+def mkPredictiveThermalWindow (base : ThermalWindow) (util_pred : Nat) (conf : Nat) : PredictiveThermalWindow :=
+  let safe := (util_pred < 9000) && (conf ≥ 9950)
+  { toThermalWindow := base,
+    util_pred_scaled := util_pred,
+    conf_scaled := conf,
+    is_safe := safe,
+    safety_proof := by
+      intro h
+      dsimp [safe] at h
+      have h1 : decide (util_pred < 9000) = true ∧ decide (conf ≥ 9950) = true := by
+        rw [Bool.and_eq_true] at h
+        exact h
+      exact ⟨of_decide_eq_true h1.1, of_decide_eq_true h1.2⟩
+  }
+
 -- 2. QuantumM Monad
 inductive QuantumM (α : Type) : Type where
   | pure (a : α)

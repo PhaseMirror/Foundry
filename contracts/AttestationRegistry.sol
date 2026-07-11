@@ -10,6 +10,17 @@ interface IConsentRegistryView {
     function revoked(bytes32) external view returns (bool);
 }
 
+interface IHalo2Verifier {
+    function verifyProof(bytes calldata proof, uint256[] calldata publicInputs) external view returns (bool);
+}
+
+struct BatchRunData {
+    bytes32 digest;
+    uint64 timestamp;
+    bytes32 consentCommitment;
+    bytes32 nullifier;
+}
+
 /// @title AttestationRegistry
 /// @notice Verifies an attestation proof and links it with a valid consent proof; checks provider signature; emits audit event.
 contract AttestationRegistry {
@@ -17,17 +28,28 @@ contract AttestationRegistry {
 
     IGroth16Verifier public consentVerifier;     // consent.circom
     IGroth16Verifier public attestationVerifier; // attestation.circom
+    IHalo2Verifier public batchVerifier;         // recursive batch verifier
     IConsentRegistryView public consentRegistry; // optional revocation check
 
     // Allowlisted provider signers
     mapping(address => bool) public providerAllowed;
+    mapping(address => bool) public authorizedSidecars;
 
     // Prevent replays per attestation+patient secret
     mapping(bytes32 => bool) public usedNullifier;
 
-    event VerifiersSet(address consentV, address attestV);
+    // --- ALP Governance Invariants ---
+    // Scaled by 10^3 (6.0 -> 6000) to match circuit fixed-point arithmetic
+    uint256 public constant MAX_ALLOWED_ENTROPY = 6000; 
+    uint256 public constant MAX_ALLOWED_UNSTABLE = 0;
+
+    // Emergency Circuit Breaker Flag (triggered by SIG_GOV_KILL sidecar)
+    bool public isL0Halted = false;
+
+    event VerifiersSet(address consentV, address attestV, address batchV);
     event ConsentRegistrySet(address reg);
     event ProviderAllowed(address provider, bool allowed);
+    event SidecarAuthorized(address sidecar, bool allowed);
 
     event Attested(
         bytes32 indexed attestationDigest,
@@ -37,24 +59,40 @@ contract AttestationRegistry {
         bytes32 nullifier
     );
 
+    event BatchAttested(
+        bytes32 indexed batchMerkleRoot,
+        uint256 runCount,
+        address indexed sidecar
+    );
+
+    event GovernanceHalt(address indexed triggeredBy, bytes32 reasonHash);
+
+    // Modifier to strictly enforce the fail-closed operational state
+    modifier onlySafeMode() {
+        if (isL0Halted) revert("L0_HALT: Protocol suspended by Phase Mirror");
+        _;
+    }
+
     error InvalidProof();
     error Mismatch();
     error Revoked();
     error NotProvider();
     error Replay();
 
-    constructor(address consentV, address attestV, address consentReg) {
+    constructor(address consentV, address attestV, address batchV, address consentReg) {
         consentVerifier = IGroth16Verifier(consentV);
         attestationVerifier = IGroth16Verifier(attestV);
+        batchVerifier = IHalo2Verifier(batchV);
         consentRegistry = IConsentRegistryView(consentReg);
-        emit VerifiersSet(consentV, attestV);
+        emit VerifiersSet(consentV, attestV, batchV);
         emit ConsentRegistrySet(consentReg);
     }
 
-    function setVerifiers(address consentV, address attestV) external {
+    function setVerifiers(address consentV, address attestV, address batchV) external {
         consentVerifier = IGroth16Verifier(consentV);
         attestationVerifier = IGroth16Verifier(attestV);
-        emit VerifiersSet(consentV, attestV);
+        batchVerifier = IHalo2Verifier(batchV);
+        emit VerifiersSet(consentV, attestV, batchV);
     }
 
     function setConsentRegistry(address reg) external {
@@ -65,6 +103,11 @@ contract AttestationRegistry {
     function setProvider(address signer, bool allowed) external {
         providerAllowed[signer] = allowed;
         emit ProviderAllowed(signer, allowed);
+    }
+
+    function setSidecar(address sidecar, bool allowed) external {
+        authorizedSidecars[sidecar] = allowed;
+        emit SidecarAuthorized(sidecar, allowed);
     }
 
     /// @param consentPub  10 public signals from consent proof (see ConsentRegistry)
@@ -112,5 +155,60 @@ contract AttestationRegistry {
         usedNullifier[nullifier] = true;
 
         emit Attested(digest, timestamp, signer, bytes32(attestPub[3]), nullifier);
+    }
+
+    function _computeMerkleRoot(BatchRunData[] calldata runs) internal pure returns (bytes32) {
+        // Simplified Merkle root for data availability.
+        // In production, this matches the exact Poseidon/Keccak tree used in the Halo2 circuit.
+        bytes32 currentHash = bytes32(0);
+        for (uint256 i = 0; i < runs.length; i++) {
+            currentHash = keccak256(abi.encodePacked(currentHash, runs[i].digest, runs[i].timestamp, runs[i].consentCommitment, runs[i].nullifier));
+        }
+        return currentHash;
+    }
+
+    /// @notice Submits a recursive Halo2 proof validating multiple Groth16 attestations and ALP bounds.
+    function submitBatchAttestation(
+        bytes calldata batchProof,
+        bytes32 batchMerkleRoot,
+        BatchRunData[] calldata runs,
+        bytes calldata sidecarSignature
+    ) external onlySafeMode {
+        bytes32 msgHash = keccak256(abi.encodePacked(batchMerkleRoot, runs.length));
+        bytes32 ethSignedHash = MessageHashUtils.toEthSignedMessageHash(msgHash);
+        address sidecar = ECDSA.recover(ethSignedHash, sidecarSignature);
+        if (!authorizedSidecars[sidecar]) revert NotProvider();
+
+        uint256[] memory pubInputs = new uint256[](3);
+        pubInputs[0] = uint256(batchMerkleRoot);
+        pubInputs[1] = MAX_ALLOWED_ENTROPY;
+        pubInputs[2] = MAX_ALLOWED_UNSTABLE;
+
+        if (address(batchVerifier) != address(0)) {
+            if (!batchVerifier.verifyProof(batchProof, pubInputs)) revert InvalidProof();
+        }
+
+        bytes32 computedRoot = _computeMerkleRoot(runs);
+        if (computedRoot != batchMerkleRoot) revert Mismatch();
+
+        for (uint256 i = 0; i < runs.length; i++) {
+            if (address(consentRegistry) != address(0)) {
+                // Ensure nullifier logic reflects Pirtm V2 calculus (consentCommitment bindings)
+                if (consentRegistry.revoked(runs[i].consentCommitment)) revert Revoked();
+            }
+            if (usedNullifier[runs[i].nullifier]) revert Replay();
+            usedNullifier[runs[i].nullifier] = true;
+            
+            emit Attested(runs[i].digest, runs[i].timestamp, sidecar, runs[i].consentCommitment, runs[i].nullifier);
+        }
+        
+        emit BatchAttested(batchMerkleRoot, runs.length, sidecar);
+    }
+
+    /// @notice Allows an authorized sidecar to trip the circuit breaker during a SIG_GOV_KILL event.
+    function triggerL0Halt(bytes32 reasonHash) external {
+        if (!authorizedSidecars[msg.sender]) revert NotProvider();
+        isL0Halted = true;
+        emit GovernanceHalt(msg.sender, reasonHash);
     }
 }

@@ -41,4 +41,4 @@ The Sedona Spine CI (`sedona_spine_ci.yml`) enforces:
 
 ---
 *Governed by: ADR-044 Sedona Spine Front-Matter Hardening*
-*LawfulRecursionVersion: 1.0*
+*LawfulRecursionVersion: 1.1*

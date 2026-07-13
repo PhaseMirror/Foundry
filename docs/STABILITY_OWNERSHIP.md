@@ -40,4 +40,4 @@ No "just-in-case" or "heuristic" stability logic is permitted outside this crate
 ---
 *Reference: [ADR-004: pirtm MLIR Dialect — Type System, Governance Architecture, and Two-Phase Compilation](../PIRTM-v1-Multiplicity/PIRTM-v1-Multiplicity/docs/adr/ADR-004-pirtm-mlir-dialect.md)*
 
-<!-- LawfulRecursionVersion:1.0 -->
+<!-- LawfulRecursionVersion:1.1 -->

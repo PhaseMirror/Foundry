@@ -95,5 +95,5 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-// LawfulRecursionVersion:1.0
+// LawfulRecursionVersion:1.1
 // ADR-004 Publisher implementation (Triple-Lock completion)

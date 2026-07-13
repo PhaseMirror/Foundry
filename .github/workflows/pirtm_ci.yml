@@ -69,6 +69,29 @@ jobs:
       - name: Install Python dependencies
         run: |
           pip install numpy
+      - name: Install Lean 4
+        run: |
+          curl -sSfL https://github.com/leanprover/lean4/releases/download/v4.9.0/lean-4.9.0-linux-x86_64.tar.gz | tar xz
+          echo "$PWD/lean-4.9.0-linux-x86_64/bin" >> $GITHUB_PATH
+      - name: Check Lean version
+        run: lean --version
+      - name: Enforce zero-sorry across pirtm-*/moc-* Lean files
+        run: |
+          set -e
+          LEAN_FILES=$(find . -type f -name "*.lean" \
+            \( -path "*/pirtm-*" -o -path "*/moc-*" \) \
+            -not -path "*/.lake/*" -not -path "*/target/*" -not -path "*/build/*" -not -path "*/out/*")
+          if [ -z "$LEAN_FILES" ]; then
+            echo "No Lean files found; skipping."
+            exit 0
+          fi
+          for file in $LEAN_FILES; do
+            if ! lean --reject-sorry "$file" 2>/dev/null; then
+              echo "❌ $file contains 'sorry'."
+              exit 1
+            fi
+          done
+          echo "✅ All Lean files are sorry-free."
       - name: Build and test Rust
         run: |
           cargo build --release --all

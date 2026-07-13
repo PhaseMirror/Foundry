@@ -113,4 +113,4 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-// LawfulRecursionVersion:1.0
+// LawfulRecursionVersion:1.1

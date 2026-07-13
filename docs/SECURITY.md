@@ -103,4 +103,4 @@ security:
     X-Frame-Options: DENY
     Content-Security-Policy: "default-src 'self'"
 
-<!-- LawfulRecursionVersion:1.0 -->
+<!-- LawfulRecursionVersion:1.1 -->

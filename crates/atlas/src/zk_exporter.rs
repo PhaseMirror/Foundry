@@ -82,5 +82,5 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-// LawfulRecursionVersion:1.0
+// LawfulRecursionVersion:1.1
 // zk-STARKs Exporter for PWEH traces

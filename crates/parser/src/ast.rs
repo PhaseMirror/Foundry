@@ -80,6 +80,12 @@ pub enum Expr {
     StratumBoundary(Box<Expr>),
     /// Prime Shift operation, explicitly modeled for Sedona Spine (Third Operator Stress Test)
     PrimeShift(Box<Expr>),
+    /// Transcendental sine operation
+    Sin(Box<Expr>),
+    /// Transcendental cosine operation
+    Cos(Box<Expr>),
+    /// Transcendental logarithm operation
+    Log(Box<Expr>),
 }
 
 pub struct DomainConfig {
@@ -364,6 +370,9 @@ impl fmt::Display for Expr {
             Expr::Successor(inner) => write!(f, "succ({})", inner),
             Expr::StratumBoundary(inner) => write!(f, "stratum_boundary({})", inner),
             Expr::PrimeShift(inner) => write!(f, "prime_shift({})", inner),
+            Expr::Sin(inner) => write!(f, "sin({})", inner),
+            Expr::Cos(inner) => write!(f, "cos({})", inner),
+            Expr::Log(inner) => write!(f, "log({})", inner),
         }
     }
 }

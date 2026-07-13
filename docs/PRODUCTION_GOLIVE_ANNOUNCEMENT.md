@@ -81,3 +81,11 @@ Please review the **Production Go‑Live Checklist** (attached) and ensure your 
 **Ryan**  
 UAC Production Lead  
 *Sedona Spine – Immutable, Auditable, Unstoppable.*
+
+---
+
+### Language Surface Readiness Classification (Addendum)
+
+Per **ADR 012: PIRTM/MOC Language Surface Readiness**, we are explicitly scoping this production go-live claim. The **UAC substrate, Sedona Spine kernel, and underlying rust/MOC execution engine are production-ready** and certified for operational use.
+
+However, the high-level **PIRTM/MOC user-facing language surface** (grammar, complete stdlib, and compiler type-checking soundness) is currently classified as **pre-production / research-grade**. A dedicated external audit and Lean 4 type-checker verification phase will occur over the next 30 days before public API language capabilities are un-gated.

@@ -1,4 +1,8 @@
 pub mod kani_invariants;
+pub mod sigma_layer;
+pub mod state;
+pub mod crmf_binding;
+pub mod ledger;
 
 /// The mathematical maximum dimension length `k` for a W8A8 accumulation
 /// into an `i32` register, as formally proven in `UORMatMul.lean` (CL-MM03').

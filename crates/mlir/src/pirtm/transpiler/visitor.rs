@@ -232,6 +232,30 @@ impl MlirEmitterVisitor {
             Expr::Successor(inner) => self.visit_expression(inner, ops),
             Expr::StratumBoundary(inner) => self.visit_expression(inner, ops),
             Expr::PrimeShift(inner) => self.visit_expression(inner, ops),
+            Expr::Sin(inner) => {
+                self.visit_expression(inner, ops);
+                ops.push(PirtmOp::OperatorAtom {
+                    prime_index: 0,
+                    result_id: self.fresh_id(),
+                    receipt_hash: "sin".to_string(),
+                });
+            }
+            Expr::Cos(inner) => {
+                self.visit_expression(inner, ops);
+                ops.push(PirtmOp::OperatorAtom {
+                    prime_index: 0,
+                    result_id: self.fresh_id(),
+                    receipt_hash: "cos".to_string(),
+                });
+            }
+            Expr::Log(inner) => {
+                self.visit_expression(inner, ops);
+                ops.push(PirtmOp::OperatorAtom {
+                    prime_index: 0,
+                    result_id: self.fresh_id(),
+                    receipt_hash: "log".to_string(),
+                });
+            }
         }
     }
 }

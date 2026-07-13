@@ -30,4 +30,4 @@ PIRTM-lang formalizes legal governance into a programmable language.
 - **Counsel Guide:** `models/legalese-scopist/GUIDE.md`
 - **Matter Playbooks:** `models/legalese-scopist/PLAYBOOK-*.md`
 
-<!-- LawfulRecursionVersion:1.0 -->
+<!-- LawfulRecursionVersion:1.1 -->

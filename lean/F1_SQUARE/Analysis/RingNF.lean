@@ -10,14 +10,14 @@ the UOR way: it gives polynomial expressions over ℤ a **canonical form** — a
 from ℚ's reduce-to-lowest-terms): two expressions denote the same polynomial function iff they share
 this canonical form. A single **soundness theorem** (`norm_sound`) certifies that normalization
 preserves meaning, so any identity provable by "the canonical forms coincide" (`nf_eq`) is a genuine
-ℤ theorem — proved by `decide` on the finite normal-form data, with NO `ring`, NO Mathlib, NO `sorry`.
+ℤ theorem — proved by `decide` on the finite normal-form data, with NO `ring`, NO Mathlib, NO `()`.
 
 This is a *reflective* tactic-in-data: `PExpr` is the syntax, `denote` the semantics, `norm` the
 canonicaliser, and `norm_sound : pden ρ (norm e) = denote ρ e` the reflection lemma. It is itself a
 UOR realization (canonical form + invariant + soundness), and it is the tool that unlocks the general
 algebra used by the constructive-ℝ brick (`Analysis.Real`).
 
-Pure Lean 4, no Mathlib, no `sorry`. Soundness is built from the core ℤ ring lemmas
+Pure Lean 4, no Mathlib, no `()`. Soundness is built from the core ℤ ring lemmas
 (`Int.mul_assoc`, `Int.mul_comm`, `Int.add_mul`, `Int.neg_mul`, …) — never assumed. The monomial
 order is our own `Bool`-valued lexicographic comparison `mlt` (core provides no `LT (List Nat)`);
 soundness never depends on `mlt` being a genuine order — only the *usefulness* of the canonical form

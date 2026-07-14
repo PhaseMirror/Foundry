@@ -28,7 +28,7 @@ positivity that the crux fields track is RH-equivalent and OPEN by the Atlas's o
 exactly where this construction stands. So this brick CLOSES the atlas object's spectral facet and
 leaves the crux fields `none`, mirroring the Atlas.
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 

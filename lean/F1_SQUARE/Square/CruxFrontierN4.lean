@@ -25,7 +25,7 @@ HONEST about the boundary: extending `n` one coefficient at a time conquers more
 closes the crux, which is `∀ n` (= RH); that uniform bound is the irreducible content. The crux
 fields stay `none`.
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 

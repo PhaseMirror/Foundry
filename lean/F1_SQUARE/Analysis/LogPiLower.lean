@@ -12,7 +12,7 @@ The chain, all elementary once `π ≥ 3` is in hand:
   term (`artSum_ge_arg`) and that term is `(π−1)/(π+1) ≥ 1/2`.
 - `Rlogpi_ge_one` — `log π = 2·artanh((π−1)/(π+1)) ≥ 2·(1/2) = 1`.
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 

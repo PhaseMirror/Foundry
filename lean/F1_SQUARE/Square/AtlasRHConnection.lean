@@ -20,7 +20,7 @@ So the Atlas is not a parallel curiosity: its addressing IS the explicit-formula
 spectral signature IS the crux's negative direction, and the bridge between them is exactly where RH
 sits. The crux fields stay `none`.
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 

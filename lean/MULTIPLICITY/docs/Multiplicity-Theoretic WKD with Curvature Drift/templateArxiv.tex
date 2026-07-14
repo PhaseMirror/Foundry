@@ -1,0 +1,1153 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{enumitem}
+\usepackage{hyperref}
+
+\title{Multiplicity-Theoretic WKD / I-WKD with Curvature Drift:\\
+A Defensive Publication and Mathematical Report}
+\author{Citizen Gardens \\ The Foundation of Multiplicity}
+\date{April 27, 2026}
+
+\theoremstyle{definition}
+\newtheorem{defn}{Definition}[section]
+\newtheorem{assump}[defn]{Assumption}
+\newtheorem{example}[defn]{Example}
+
+\theoremstyle{plain}
+\newtheorem{thm}[defn]{Theorem}
+\newtheorem{lem}[defn]{Lemma}
+\newtheorem{prop}[defn]{Proposition}
+\newtheorem{cor}[defn]{Corollary}
+
+\theoremstyle{remark}
+\newtheorem{remark}[defn]{Remark}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This document presents a multiplicity-theoretic formalization of Wasserstein Knowledge Distillation (WKD) and its adversarial mirror, Inverted WKD (I-WKD), as a system of prime-indexed multiplicity morphisms between teacher and student models for ACID/CRMF health predicates. It introduces a curvature-based drift detector defined over discrete structural invariants (implication-tree depth, prime-weighted commutators, categorical truth-scale boundaries, and governance gain regimes), and sketches a multiplicity-space Taylor-type inequality that bounds composite error under distillation and adversarial inversion by a linear combination of scalar Wasserstein distance and curvature. The report is written in theorem--lemma style to serve as a defensive publication, providing both conceptual clarity and an actionable engineering blueprint.
+\end{abstract}
+\newpage        
+\tableofcontents
+\newpage
+\section{Executive Summary}
+
+\subsection{Narrative Overview}
+
+We consider a medical AI system where a server-side teacher ensemble (with full ACID/CRMF safety stack) is distilled into an edge-deployable student model (resource-constrained, e.g.\ ARM Cortex-M-class devices). Knowledge transfer is performed via a discrete Wasserstein-like distance (WD) between teacher and student logits for five ACID/CRMF health predicates, organized into a five-phase WKD pipeline.
+
+The WKD framework is extended multiplicity-theoretically as follows:
+\begin{itemize}[leftmargin=2em]
+  \item Teacher and student are modeled as multiplicity modules over a health-state multiplicity space.
+  \item Each ACID/CRMF predicate is lifted to a prime-indexed morphism, with compensation realized as a non-commutative product in a prime-weighted multiplicity algebra.
+  \item Forward WKD is reinterpreted as a minimal-cost multiplicity transport problem under discrete Wasserstein distance.
+  \item I-WKD is framed as a maximal-cost anti-transport problem over the same multiplicity structure, serving as an adversarial mirror.
+\end{itemize}
+
+Beyond distance-based drift metrics, we introduce a discrete multiplicity curvature functional:
+\begin{itemize}[leftmargin=2em]
+  \item It measures second-order structural changes across the teacher-to-student path in terms of: implication-tree depth, prime-weighted commutators, categorical truth-scale transitions, and CCR gain-regime dynamics.
+  \item Drift detection is refined to trigger when either scalar WD or multiplicity curvature exceeds appropriate thresholds.
+\end{itemize}
+
+Finally, we propose a Taylor-like inequality in multiplicity space:
+\[
+  E_{\text{total}}(h) \;\le\; c_1 \, WD(F^T,F^S) \;+\; c_2 \, \mathcal{K}(h),
+\]
+bounding total governance-level error at state \(h\) by a combination of first-order WD and second-order curvature, with constants \(c_1,c_2\) parameterized in terms of contraction certification coefficients and Lipschitz bounds of ACID/CRMF and governance operators.
+
+\subsection{Defensive Publication Claims (Informal)}
+
+The developments in this document, considered together, yield the following defensive claims:
+\begin{enumerate}[label=(C\arabic*), leftmargin=2em]
+  \item A prime-indexed multiplicity-theoretic formulation of ACID/CRMF predicates and their compensation, integrated with a discrete Wasserstein knowledge distillation pipeline.
+  \item A curvature-based drift detector over discrete structural invariants (implication-tree depth, prime-weighted commutators, truth-scale categories, and CCR gain regimes) for WKD/I-WKD.
+  \item A dual-threshold drift regime combining scalar WD and multiplicity curvature, including a two-tier threshold design: hard structural bounds vs.\ empirically tuned soft bounds.
+  \item A Taylor-type composition inequality bounding adversarial+distillation error by WD and curvature, with constants tied to disclosed contraction-like coefficients and operator Lipschitz constants.
+  \item A concrete modular architecture for integrating curvature into existing WKD/I-WKD modules (fidelity, drift detection, adversarial harness, governance) without breaking discrete test suites.
+\end{enumerate}
+
+These elements, taken together, define a technical space that is intended to be prior art for any substantially similar system.
+
+\section{Multiplicity-Theoretic Framework}
+
+\subsection{Health-State Multiplicity Space}
+
+\begin{defn}[Health-State Multiplicity Space]
+Let \(\mathcal{H}\) be the health-state multiplicity space. Concretely, \(\mathcal{H}\) can be:
+\begin{itemize}[leftmargin=2em]
+  \item a finite set of observable patient states, or
+  \item a measurable space of feature vectors, such as combinations of biosensors, genomics, and questionnaire features.
+\end{itemize}
+We do not commit to a particular cardinality; only that \(\mathcal{H}\) is a well-defined underlying domain for predicates and models.
+\end{defn}
+
+\begin{defn}[Teacher and Student Multiplicity Modules]
+Let \(\mathcal{M}_T\) and \(\mathcal{M}_S\) be multiplicity modules over \(\mathcal{H}\), representing the teacher and student models, respectively. An element of \(\mathcal{M}_T\) or \(\mathcal{M}_S\) at \(h\in\mathcal{H}\) is a tuple of logit vectors, scores, or truth-values corresponding to a fixed set of predicates.
+\end{defn}
+
+\subsection{Prime-Indexed ACID/CRMF Predicates}
+
+\begin{defn}[Prime-Indexed Predicate System]
+Let \(P=\{p_1,\dots,p_5\}\) denote the five ACID/CRMF predicates (e.g.\ from a patent claim set). Assign a distinct prime \(q_i\) to each predicate \(p_i\).
+
+Define teacher and student predicate morphisms
+\[
+  f_i^T : \mathcal{H} \to [0,1],
+  \qquad
+  f_i^S : \mathcal{H} \to [0,1],
+\]
+where \(f_i^T(h)\) and \(f_i^S(h)\) are the teacher and student truth-values (or scores) for predicate \(p_i\) at state \(h\).
+\end{defn}
+
+\begin{defn}[Prime-Indexed ACID/CRMF Bundle]
+The prime-indexed ACID/CRMF bundle is
+\[
+  F^T = (f_1^T,\dots,f_5^T),
+  \qquad
+  F^S = (f_1^S,\dots,f_5^S),
+\]
+equipped with the prime-labeling \(q_1,\dots,q_5\). We interpret \((f_i^T, f_i^S)\) as the \(q_i\)-channel in a prime-labeled communication between teacher and student.
+\end{defn}
+
+\begin{defn}[Compensatory Non-Commutative Product]
+Let \(\otimes\) be an Archimedean t-norm-based compensatory conjunction. Define composite teacher and student morphisms
+\[
+  C^T \;=\; f_1^T \otimes f_2^T \otimes \dots \otimes f_5^T,
+  \qquad
+  C^S \;=\; f_1^S \otimes f_2^S \otimes \dots \otimes f_5^S.
+\]
+In general, \(\otimes\) is non-commutative, with order controlled by the prime indices \(q_i\), i.e.
+\[
+  f_i^T \otimes f_j^T \;\neq\; f_j^T \otimes f_i^T
+\]
+for some pairs \((i,j)\). Non-commutativity encodes positional sensitivity and prime-weighted logic constraints.
+\end{defn}
+
+\begin{defn}[Veto Axiom and Truth-Scale]
+Let \(\tau : [0,1] \to \{\text{somewhat true}, \text{enough true}, \text{almost true}, \text{true}\}\) be a categorical truth-scale map, with a veto threshold \(s_0 \in (0,0.1]\).
+
+For state \(h\in\mathcal{H}\), if there exists \(i\in\{1,\dots,5\}\) such that
+\[
+  f_i^S(h) < s_0,
+\]
+then we say the veto axiom is triggered at \(h\), and the multiplicity flow is forced into a special veto object in the governance category. Compensation cannot override this veto.
+\end{defn}
+
+\section{Wasserstein Transport as Multiplicity Morphism}
+
+\subsection{Local Discrepancy Morphisms and WD}
+
+\begin{defn}[Local Discrepancy Morphism]
+For each prime \(q_i\), define a local discrepancy morphism
+\[
+  d_{q_i} : \mathcal{M}_T \times \mathcal{M}_S \to \mathbb{R}_{\ge 0},
+\]
+which measures a discrete Wasserstein-type distance between the teacher and student distributions/logits for predicate \(p_i\).
+\end{defn}
+
+\begin{defn}[Prime-Summed Wasserstein Distance]
+Given weights \(w_i>0\) for each predicate \(p_i\), define the total Wasserstein distance
+\[
+  WD(F^T, F^S)
+  \;=\;
+  \sum_{i=1}^5 w_i \, d_{q_i}(f_i^T, f_i^S).
+\]
+The weights \(w_i\) may encode clinical importance, scale normalization, or be absorbed into the transport cost matrix.
+\end{defn}
+
+\subsection{Forward and Adversarial Transport}
+
+\begin{defn}[Forward WKD Transport]
+A forward WKD transport plan is a morphism
+\[
+  \pi : \mathcal{M}_T \to \mathcal{M}_S
+\]
+in the category of prime-indexed modules, such that
+\[
+  \pi(F^T) \approx F^S
+\]
+and \(\pi\) minimizes \(WD(F^T,F^S)\) subject to:
+\begin{itemize}[leftmargin=2em]
+  \item capacity constraints (e.g.\ edge memory and latency),
+  \item categorical truth-scale fidelity constraints,
+  \item veto preservation and governance constraints.
+\end{itemize}
+The optimal forward transport is
+\[
+  \pi^* \;=\; \arg\min_{\pi} \, WD(F^T,F^S),
+\]
+under these constraints.
+\end{defn}
+
+\begin{defn}[Inverted WKD Transport]
+An inverted WKD (I-WKD) transport plan is a morphism \(\pi_{\text{adv}}\) that seeks
+\[
+  \pi^*_{\text{adv}} \;=\; \arg\max_{\pi} \, WD(F^T,F^S),
+\]
+under the same constraints. Equivalently, it solves a minimal-cost optimal transport problem with negated cost matrix. This anti-transport plan identifies input regions where distillation produces maximal teacher–student divergence and thus acts as an adversarial stress engine.
+\end{defn}
+
+\section{Discrete Multiplicity Curvature}
+
+\subsection{Distillation Path and Connection}
+
+\begin{defn}[Discrete Distillation Path]
+Let \(t \in \{0,1,\dots,n\}\) be an index representing discrete distillation steps (e.g.\ epochs, interface versions, or phase transitions). For each predicate \(p_i\), define a path
+\[
+  f_i(t) : \mathcal{H} \to [0,1],
+\]
+with initial and final states
+\[
+  f_i(0) = f_i^T,
+  \qquad
+  f_i(n) = f_i^S.
+\]
+The tuple \(F(t) = (f_1(t),\dots,f_5(t))\) is the distillation path in prime-indexed multiplicity space.
+\end{defn}
+
+\begin{defn}[Discrete Multiplicity Connection]
+A discrete multiplicity connection \(\nabla\) assigns forward differences to the path:
+\[
+  (\nabla_t f_i)(t) := f_i(t+1) - f_i(t),
+\]
+and second differences
+\[
+  (\nabla_t^2 f_i)(t) := (\nabla_t f_i)(t+1) - (\nabla_t f_i)(t),
+\]
+interpreted in the non-commutative, prime-weighted multiplicity structure. We do not require smoothness; all differences are discrete.
+\end{defn}
+
+\subsection{Structural Invariants}
+
+We introduce three structural invariants that are observable in the discrete system.
+
+\begin{defn}[Implication-Tree Depth]
+For each predicate \(p_i\) at step \(t\), let \(\text{depth}_i(t,h)\in\mathbb{N}\) denote the depth of the S-implication tree for \(p_i\) at state \(h\), as represented in the knowledge graph and rule engine. Differences in depth across steps measure structural simplification/complication of logical dependencies.
+\end{defn}
+
+\begin{defn}[Prime-Weighted Commutators]
+For each pair of predicates \((p_i,p_j)\), define a commutator at step \(t\) and state \(h\) by
+\[
+  [f_i,f_j](t,h) := f_i(t,h) \otimes f_j(t,h) - f_j(t,h) \otimes f_i(t,h),
+\]
+evaluated in a suitable normed space. The magnitude
+\[
+  \text{comm}_{ij}(t,h) := \big\| [f_i,f_j](t,h) \big\|
+\]
+measures the degree of non-commutativity under the current distillation state.
+\end{defn}
+
+\begin{defn}[Categorical Truth-Scale Label]
+Let \(\text{cat}_i(t,h)\) denote the categorical label (e.g.\ \texttt{somewhat\_true}, \texttt{enough\_true}, \texttt{almost\_true}, \texttt{true}, \texttt{veto}) of \(f_i(t,h)\) under the truth-scale map \(\tau\). These labels drive governance decisions and veto triggers.
+\end{defn}
+
+\subsection{Discrete Curvature Components}
+
+\begin{defn}[Depth Curvature]
+The discrete second difference in depth for predicate \(p_i\) at state \(h\) is
+\[
+  \kappa_i^{\text{depth}}(h)
+  \;:=\;
+  \sum_{t=0}^{n-2}
+  \left|
+    \big(\text{depth}_i(t+2,h) - \text{depth}_i(t+1,h)\big)
+    -
+    \big(\text{depth}_i(t+1,h) - \text{depth}_i(t,h)\big)
+  \right|.
+\]
+This measures the acceleration of depth changes along the path.
+\end{defn}
+
+\begin{defn}[Commutator Curvature]
+For each pair \((i,j)\), define
+\[
+  \kappa_{ij}^{\text{comm}}(h)
+  \;:=\;
+  \sum_{t=0}^{n-2}
+  \left|
+    \big(\text{comm}_{ij}(t+2,h) - \text{comm}_{ij}(t+1,h)\big)
+    -
+    \big(\text{comm}_{ij}(t+1,h) - \text{comm}_{ij}(t,h)\big)
+  \right|.
+\]
+This measures second-order variation in non-commutative structure along the path.
+\end{defn}
+
+\begin{defn}[Categorical Curvature]
+At the level of categories, define a category distance
+\[
+  d_{\text{cat}}(a,b) := |r(a) - r(b)|,
+\]
+where \(r\) assigns integer ranks to categories (e.g.\ \texttt{veto}=0, \texttt{somewhat\_true}=1, etc.).
+
+Then the categorical curvature for predicate \(p_i\) at \(h\) is
+\[
+  \kappa_i^{\text{cat}}(h)
+  \;:=\;
+  \sum_{t=0}^{n-2}
+  \left|
+    d_{\text{cat}}(\text{cat}_i(t+1,h),\text{cat}_i(t,h))
+    -
+    d_{\text{cat}}(\text{cat}_i(t,h),\text{cat}_i(t-1,h))
+  \right|
+\]
+(with appropriate handling at boundaries). This counts accelerated crossing of categorical boundaries.
+\end{defn}
+
+\subsection{Aggregate Curvature Functional}
+
+\begin{defn}[Multiplicity Curvature]
+Let \(\alpha_i,\gamma_i>0\) and \(\beta_{ij}>0\) be weights (possibly derived from prime indices or clinical importance). The multiplicity curvature at state \(h\) is
+\[
+  \mathcal{K}(h)
+  :=
+  \sum_{i=1}^5 \alpha_i \kappa_i^{\text{depth}}(h)
+  +
+  \sum_{1\le i<j\le 5} \beta_{ij} \kappa_{ij}^{\text{comm}}(h)
+  +
+  \sum_{i=1}^5 \gamma_i \kappa_i^{\text{cat}}(h).
+\]
+\end{defn}
+
+\begin{remark}
+Curvature \(\mathcal{K}(h)\) is second-order in discrete time and captures structural changes that may not be visible in scalar WD alone. It is explicitly defined using finite differences and finite invariants, preserving the system's discrete, test-driven character.
+\end{remark}
+
+\section{Curvature-Enhanced Drift Detection}
+
+\subsection{Drift Criteria}
+
+\begin{defn}[Drift Thresholds]
+Let \(\theta_{\text{WD}}>0\) be the WD drift threshold, and \(\theta_{\mathcal{K}}>0\) be the curvature drift threshold. We consider both:
+\begin{itemize}[leftmargin=2em]
+  \item Hard structural bounds, e.g.\ maximum allowable tree-depth reduction or commutator change.
+  \item Soft empirically tuned bounds for curvature magnitude in observed safe operation.
+\end{itemize}
+\end{defn}
+
+\begin{defn}[Curvature-Enhanced Drift]
+A state \(h\in\mathcal{H}\) is flagged as drifted if
+\[
+  WD(F^T,F^S) > \theta_{\text{WD}}
+  \quad \text{or} \quad
+  \mathcal{K}(h) > \theta_{\mathcal{K}}.
+\]
+\end{defn}
+
+\begin{remark}
+The second condition captures ``stealth drift'' where scalar WD remains small but structural changes (e.g.\ tree collapse, commutator flattening, frequent category flips) are large.
+\end{remark}
+
+\subsection{Structural Hard Bounds}
+
+\begin{assump}[Depth Preservation Bound]
+For each predicate \(p_i\), there exists a maximum allowed depth decrease \(\Delta_{\text{depth}}^{\max}\) such that
+\[
+  \text{depth}_i(n,h) \ge \text{depth}_i(0,h) - \Delta_{\text{depth}}^{\max}
+\]
+for all certified states \(h\). In strict applications, \(\Delta_{\text{depth}}^{\max} = 1\).
+\end{assump}
+
+\begin{assump}[Non-Commutativity Preservation]
+There exists a tolerance \(\varepsilon_{\text{comm}}>0\) such that, for certified operation,
+\[
+  \big|\text{comm}_{ij}(n,h) - \text{comm}_{ij}(0,h)\big|
+  \le \varepsilon_{\text{comm}}
+\]
+for all pairs \((i,j)\) and states \(h\).
+\end{assump}
+
+\begin{defn}[Structural Feasible Region]
+The set of states \(h \in \mathcal{H}\) that satisfy the depth and non-commutativity bounds and avoid veto-category outputs is called the structural feasible region \(\Omega_{\text{struc}}\).
+\end{defn}
+
+\begin{prop}[Curvature in Structural Feasible Region]
+If \(h \in \Omega_{\text{struc}}\), then
+\[
+  \kappa_i^{\text{depth}}(h) \le K_{\text{depth}},
+  \quad
+  \kappa_{ij}^{\text{comm}}(h) \le K_{\text{comm}},
+\]
+for finite constants \(K_{\text{depth}}, K_{\text{comm}}\) determined by \(\Delta_{\text{depth}}^{\max}, \varepsilon_{\text{comm}}\) and the number of discrete steps.
+\end{prop}
+
+\begin{proof}[Sketch]
+Each second difference is bounded in terms of the total variation of depth and commutator over the path; the hard bounds constrain this total variation. Summing over a finite number of steps yields finiteness of \(\kappa_i^{\text{depth}}\) and \(\kappa_{ij}^{\text{comm}}\), with explicit upper bounds depending on the maximum depth and commutator changes allowed per step.
+\end{proof}
+
+\section{Code-Level Curvature Module (Illustrative)}
+
+In this section we provide high-level pseudo-code sketches as part of the defensive publication. They illustrate how \(\mathcal{K}(h)\) can be implemented without breaking existing fidelity, drift, and adversarial modules. These are not bound to a specific programming language but resemble modern typed pseudo-code.
+
+\subsection{Core Types}
+
+\begin{verbatim}
+data PredicateSpec:
+    name: String                # predicate name
+    prime: Int                  # prime index q_i
+    weight_wd: Float            # WD weight w_i
+    weight_depth: Float         # alpha_i
+    weight_cat: Float           # gamma_i
+
+data PredicateSnapshot:
+    state_id: String
+    step_id: Int
+    predicate: String
+    teacher_score: Float
+    student_score: Float
+    category_teacher: String
+    category_student: String
+    tree_depth_teacher: Int
+    tree_depth_student: Int
+
+data CommutatorSnapshot:
+    state_id: String
+    step_id: Int
+    pred_i: String
+    pred_j: String
+    teacher_comm_value: Float
+    student_comm_value: Float
+
+data GainSnapshot:
+    state_id: String
+    step_id: Int
+    gain_regime: String  # e.g. "attenuate", "safe", "amplify", "freeze"
+    gain_value: Float
+    froze_output: Bool
+
+data CurvatureConfig:
+    theta_wd: Float
+    theta_curvature: Float
+\end{verbatim}
+
+\subsection{Curvature Engine Sketch}
+
+\begin{verbatim}
+class CurvatureEngine:
+    def __init__(self, predicate_specs, config, fidelity_provider,
+                 commutator_provider, gain_provider=None):
+        ...
+
+    def compute_depth_curvature(self, hist, spec):
+        # hist: List[PredicateSnapshot] for a predicate and state
+        sort hist by step_id
+        if length(hist) < 3: return 0.0
+        total = 0.0
+        for (a, b, c) in consecutive triples(hist):
+            dd = abs((c.tree_depth_student - b.tree_depth_student) -
+                     (b.tree_depth_student - a.tree_depth_student))
+            total += spec.weight_depth * dd
+        return total
+
+    def compute_comm_curvature(self, hist):
+        sort hist by step_id
+        if length(hist) < 3: return 0.0
+        total = 0.0
+        for (a, b, c) in consecutive triples(hist):
+            v0 = a.student_comm_value
+            v1 = b.student_comm_value
+            v2 = c.student_comm_value
+            dd = abs((v2 - v1) - (v1 - v0))
+            total += dd
+        return total
+
+    def compute_category_curvature(self, hist, spec):
+        sort hist by step_id
+        if length(hist) < 3: return 0.0
+        total = 0.0
+        for (a, b, c) in consecutive triples(hist):
+            d1 = cat_distance(a.category_student, b.category_student)
+            d2 = cat_distance(b.category_student, c.category_student)
+            total += spec.weight_cat * abs(d2 - d1)
+        return total
+
+    def aggregate_wd(self, state_id, step_id):
+        total = 0.0
+        for (pred, spec) in predicate_specs:
+            wd_local = fidelity_provider.get_local_wd(state_id, step_id, pred)
+            total += spec.weight_wd * wd_local
+        return total
+
+    def compute_state_curvature(self, state_id, step_id):
+        snaps = fidelity_provider.get_predicate_snapshots(state_id, step_id)
+        comms = commutator_provider.get_commutator_snapshots(state_id, step_id)
+
+        k_depth = 0.0
+        k_cat = 0.0
+        fragile = set()
+
+        group by predicate: hist_p
+        for pred, hist in hist_p:
+            spec = predicate_specs[pred]
+            kd = compute_depth_curvature(hist, spec)
+            kc = compute_category_curvature(hist, spec)
+            k_depth += kd
+            k_cat += kc
+            if kd + kc > 0: fragile.add(pred)
+
+        k_comm = 0.0
+        group by unordered pair (pred_i, pred_j): hist_pair
+        for pair, hist in hist_pair:
+            k_comm += compute_comm_curvature(hist)
+
+        wd_value = aggregate_wd(state_id, step_id)
+        k_total = k_depth + k_cat + k_comm
+
+        wd_flag = wd_value > config.theta_wd
+        curvature_flag = k_total > config.theta_curvature
+
+        return {
+            "state_id": state_id,
+            "step_id": step_id,
+            "wd_value": wd_value,
+            "k_depth": k_depth,
+            "k_cat": k_cat,
+            "k_comm": k_comm,
+            "k_total": k_total,
+            "wd_flag": wd_flag,
+            "curvature_flag": curvature_flag,
+            "fragile_predicates": list(fragile)
+        }
+\end{verbatim}
+
+This pseudo-code is intended as a direct plug-in module that consumes existing fidelity and commutator logs, adds curvature, and returns a curvature-enhanced drift report.
+
+\section{Multiplicity-Space Taylor Inequality}
+
+We now sketch the main conceptual result: a Taylor-like inequality relating total governance-level error, scalar Wasserstein distance, and multiplicity curvature.
+
+\subsection{Total Error Definition}
+
+\begin{defn}[Composition Map]
+Let
+\begin{itemize}[leftmargin=2em]
+  \item \(F^T(h)\) and \(F^S(h)\) be the teacher and student prime bundles at state \(h\),
+  \item \(I\) be the inversion/adversarial operator (I-WKD),
+  \item \(G\) be the governance/CCR map that takes predicate bundles to final outputs (e.g.\ interventions, risk categories).
+\end{itemize}
+Define the governed outputs
+\[
+  Y^T(h) := G(I(F^T(h))),
+  \qquad
+  Y^S(h) := G(I(F^S(h))).
+\]
+\end{defn}
+
+\begin{defn}[Total Error at State \(h\)]
+Let \(E_{\text{total}}(h)\) be the normed difference
+\[
+  E_{\text{total}}(h) := \big\| Y^T(h) - Y^S(h) \big\|.
+\]
+The norm is chosen to reflect the governance-relevant metric (e.g.\ maximum absolute difference in critical outputs).
+\end{defn}
+
+\subsection{Lipschitz Assumptions}
+
+\begin{assump}[Operator Lipschitz Bounds]
+There exist constants \(L_G,L_I>0\) such that for all relevant inputs
+\[
+  \|G(x) - G(y)\| \le L_G \, \|x-y\|,
+  \qquad
+  \|I(u) - I(v)\| \le L_I \, \|u-v\|.
+\]
+\end{assump}
+
+\begin{assump}[Representation vs.\ WD]
+There exists \(a_1>0\) such that
+\[
+  \|F^T(h) - F^S(h)\| \le a_1 \, WD(F^T,F^S)
+\]
+for all states \(h\) in a certified region of operation.
+\end{assump}
+
+\subsection{First-Order Bound}
+
+\begin{lem}[First-Order WD Bound]
+Under the above assumptions,
+\[
+  E_{\text{total}}(h)
+  \;\le\;
+  L_G L_I a_1 \, WD(F^T,F^S).
+\]
+\end{lem}
+
+\begin{proof}
+We have
+\[
+  E_{\text{total}}(h) = \| G(I(F^T(h))) - G(I(F^S(h))) \|.
+\]
+By Lipschitz of \(G\),
+\[
+  E_{\text{total}}(h)
+  \le L_G \, \| I(F^T(h)) - I(F^S(h)) \|.
+\]
+By Lipschitz of \(I\),
+\[
+  \| I(F^T(h)) - I(F^S(h)) \|
+  \le L_I \, \|F^T(h) - F^S(h)\|.
+\]
+By representation vs.\ WD,
+\[
+  \|F^T(h) - F^S(h)\|
+  \le a_1 \, WD(F^T,F^S).
+\]
+Combining yields
+\[
+  E_{\text{total}}(h)
+  \le L_G L_I a_1 \, WD(F^T,F^S).
+\]
+\end{proof}
+
+\begin{defn}
+Set 
+\[
+  c_1 := L_G L_I a_1.
+\]
+\end{defn}
+
+\subsection{Second-Order Remainder and Curvature}
+
+\begin{assump}[Second-Order Sensitivity]
+Along the discrete path \(F(t;h)\) from \(F^T(h)\) to \(F^S(h)\), the second-order remainder of the composition \(G\circ I\) at \(h\) satisfies
+\[
+  \|R_2(h)\| \le
+  L_{\text{depth}} \sum_{i} \alpha_i \kappa_i^{\text{depth}}(h)
+  + L_{\text{comm}} \sum_{i<j} \beta_{ij} \kappa_{ij}^{\text{comm}}(h)
+  + L_{\text{cat}} \sum_{i} \gamma_i \kappa_i^{\text{cat}}(h)
+\]
+for some non-negative constants \(L_{\text{depth}},L_{\text{comm}},L_{\text{cat}}\).
+\end{assump}
+
+\begin{defn}[Curvature Constant]
+Define
+\[
+  c_2 := \max\big(
+    L_{\text{depth}} \max_i \alpha_i,
+    L_{\text{comm}} \max_{i<j} \beta_{ij},
+    L_{\text{cat}} \max_i \gamma_i
+  \big).
+\]
+Then by bounding each sum individually, we obtain
+\[
+  \|R_2(h)\|
+  \le c_2 \, \mathcal{K}(h).
+\]
+\end{defn}
+
+\subsection{Taylor-Type Inequality}
+
+\begin{thm}[Multiplicity-Space Taylor Inequality]
+Under the stated assumptions, for states \(h\) in a certified region of operation,
+\[
+  E_{\text{total}}(h)
+  \;\le\;
+  c_1 \, WD(F^T,F^S)
+  \;+\;
+  c_2 \, \mathcal{K}(h).
+\]
+\end{thm}
+
+\begin{proof}[Sketch]
+Decompose the change in \((G\circ I)(F(h))\) between teacher and student into a ``first-order'' term controlled by WD and a ``second-order'' remainder controlled by curvature.
+
+Formally:
+\[
+  (G\circ I)(F^S(h)) = (G\circ I)(F^T(h)) + D(G\circ I)\cdot \Delta F + R_2(h),
+\]
+where \(\Delta F = F^S(h) - F^T(h)\) and \(R_2(h)\) is a discrete remainder. By the first-order bound,
+\[
+  \| D(G\circ I)\cdot \Delta F \|
+  \le c_1 \, WD(F^T,F^S).
+\]
+By the second-order sensitivity assumption and curvature definition,
+\[
+  \|R_2(h)\| \le c_2 \, \mathcal{K}(h).
+\]
+Triangle inequality then yields
+\[
+  E_{\text{total}}(h)
+  = \big\| (G\circ I)(F^T(h)) - (G\circ I)(F^S(h)) \big\|
+  \le c_1 \, WD(F^T,F^S) + c_2 \, \mathcal{K}(h).
+\]
+\end{proof}
+
+\section{Expected Outcomes and Validation Path}
+
+\subsection{Predictions}
+
+Assuming curvature-enhanced drift detection is implemented as described, we expect:
+
+\begin{itemize}[leftmargin=2em]
+  \item \textbf{Fragility alignment:} predicates with deeper implication trees (e.g.\ those singled out in the underlying specification) will exhibit higher curvature \(\mathcal{K}(h)\), explaining their empirical fragility in a structural manner.
+  \item \textbf{Stealth drift detection:} there exist input regions where \(WD(F^T,F^S)\) remains below \(\theta_{\text{WD}}\) but \(\mathcal{K}(h)\) exceeds \(\theta_{\mathcal{K}}\), revealing structural distortions (tree collapse, commutator flattening, frequent category flips) that would be invisible to WD alone.
+  \item \textbf{Sharper governance triggers:} combining WD and curvature thresholds reduces false positives (noisy WD-only deviations) while retaining or improving true positive detection of failure modes.
+  \item \textbf{Ontology sensitivity:} curvature fingerprints remain stable across model retraining for a fixed ontology snapshot, but detectably shift when ontology updates alter implication trees, giving a natural audit signal around knowledge graph evolution.
+\end{itemize}
+
+\subsection{Fastest Path to Validation}
+
+A practical validation workflow is:
+\begin{enumerate}[leftmargin=2em]
+  \item Instrument existing regression and adversarial tests to log implication-tree depths, commutators, and categories across distillation steps.
+  \item Implement curvature computation as a non-invasive module consuming these logs.
+  \item Compare curvature-enhanced drift reports against known WKD/I-WKD stress tests:
+  \begin{itemize}
+      \item Check that high-WD adversarial cases also have elevated curvature.
+      \item Search for low-WD, high-curvature cases to confirm detection of structural drift.
+  \end{itemize}
+  \item Empirically estimate constants \(c_1,c_2\) such that
+  \[
+    E_{\text{total}}(h) \lesssim c_1 WD + c_2 \mathcal{K}
+  \]
+  holds on all tested inputs, using CCR outputs as proxy for \(E_{\text{total}}(h)\).
+  \item Iteratively refine thresholds and constants, then pursue a formal proof for restricted certified regions.
+\end{enumerate}
+
+\section{Conclusion}
+
+This document has recast WKD and I-WKD as a prime-indexed multiplicity transport system, introduced a discrete multiplicity curvature functional over structural invariants, and articulated a Taylor-type inequality bounding total governance error by WD and curvature. The design is intentionally aligned with discrete, test-driven architectures and aims to serve as prior art against any subsequent claim to essentially the same combination of prime-labeled distillation, anti-transport adversarial stress, and curvature-based drift certification.
+
+\appendix
+\section*{Mathematical Appendix}
+\renewcommand{\thesubsection}{A.\arabic{subsection}}
+\renewcommand{\thedefn}{A.\arabic{defn}}
+\renewcommand{\thethm}{A.\arabic{thm}}
+\renewcommand{\thelem}{A.\arabic{lem}}
+\renewcommand{\theassump}{A.\arabic{assump}}
+\setcounter{section}{0}
+\setcounter{defn}{0}
+\setcounter{thm}{0}
+\setcounter{lem}{0}
+\setcounter{assump}{0}
+
+\theoremstyle{definition}
+\newtheorem{adefn}{Definition}[section]
+\newtheorem{aassump}[adefn]{Assumption}
+
+\theoremstyle{plain}
+\newtheorem{athm}[adefn]{Theorem}
+\newtheorem{alem}[adefn]{Lemma}
+\newtheorem{aprop}[adefn]{Proposition}
+\newtheorem{acor}[adefn]{Corollary}
+
+\theoremstyle{remark}
+\newtheorem{aremark}[adefn]{Remark}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Normed Spaces and Operator Norms}
+
+\begin{adefn}[Underlying Normed Spaces]
+Let \((\mathcal{X},\|\cdot\|_{\mathcal{X}})\) be a normed vector space in which the prime-indexed bundles
+\[
+  F(h) = (f_1(h),\dots,f_5(h))
+\]
+live for each state \(h\). Let \((\mathcal{Y},\|\cdot\|_{\mathcal{Y}})\) be a normed vector space representing governance-level outputs (e.g.\ categorical risk scores, intervention vectors), and \((\mathcal{Z},\|\cdot\|_{\mathcal{Z}})\) an intermediate space for inversion outputs.
+\end{adefn}
+
+\begin{adefn}[Operator Norm]
+For a linear (or locally Lipschitz) operator \(T: \mathcal{X} \to \mathcal{Y}\), define the operator norm
+\[
+  \|T\|_{\text{op}} := \sup_{\|x\|_{\mathcal{X}} \neq 0} \frac{\|T(x)\|_{\mathcal{Y}}}{\|x\|_{\mathcal{X}}}.
+\]
+When \(T\) is not linear but globally Lipschitz, we write
+\[
+  \text{Lip}(T) := \sup_{x\neq y} \frac{\|T(x)-T(y)\|_{\mathcal{Y}}}{\|x-y\|_{\mathcal{X}}}.
+\]
+\end{adefn}
+
+In what follows, we use \(\|T\|_{\text{op}}\) and \(\text{Lip}(T)\) interchangeably when the context is clear, since all bounds are multiplicative in the operator constant.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Wasserstein Representation Bounds}
+
+We formalize the relationship between the discrete Wasserstein distance and normed differences in the multiplicity bundle \(F\).
+
+\begin{adefn}[Prime-Summed Wasserstein Distance]
+Given local discrepancy morphisms
+\[
+  d_{q_i} : \mathcal{X} \times \mathcal{X} \to \mathbb{R}_{\ge 0}
+\]
+and weights \(w_i>0\), define
+\[
+  WD(F^T,F^S) := \sum_{i=1}^{5} w_i\, d_{q_i}(f_i^T,f_i^S).
+\]
+\end{adefn}
+
+\begin{aassump}[Local Equivalence of Norm and Discrepancy]
+There exist constants \(a_i>0\) such that, for all states \(h\),
+\[
+  d_{q_i}(f_i^T,f_i^S) \;\ge\; \frac{1}{a_i}\,\|f_i^T(h)-f_i^S(h)\|_{\mathcal{X}_i},
+\]
+where \(\mathcal{X}_i\) is the one-dimensional (or low-dimensional) component associated to predicate \(p_i\) and \(\|\cdot\|_{\mathcal{X}_i}\) is the induced norm.
+\end{aassump}
+
+\begin{adefn}[Block Norm on Prime Bundle]
+Define a norm on \(\mathcal{X} = \mathcal{X}_1 \times \dots \times \mathcal{X}_5\) by
+\[
+  \|F^T(h) - F^S(h)\|_{\mathcal{X}}
+  :=
+  \sum_{i=1}^5 \lambda_i\, \|f_i^T(h)-f_i^S(h)\|_{\mathcal{X}_i},
+\]
+for some fixed weights \(\lambda_i>0\).
+\end{adefn}
+
+\begin{alem}[Representation vs.\ WD: Lower Bound]
+Under the above assumptions, we have
+\[
+  WD(F^T,F^S)
+  \;\ge\;
+  \sum_{i=1}^5 w_i\,\frac{1}{a_i} \|f_i^T(h)-f_i^S(h)\|_{\mathcal{X}_i}
+  =
+  \sum_{i=1}^5 \frac{w_i}{a_i \lambda_i} \lambda_i \|f_i^T(h)-f_i^S(h)\|.
+\]
+In particular, if we choose \(\lambda_i = \frac{w_i}{a_i}\), then
+\[
+  WD(F^T,F^S)
+  \;\ge\;
+  \|F^T(h)-F^S(h)\|_{\mathcal{X}}.
+\]
+\end{alem}
+
+\begin{proof}
+By Assumption,
+\[
+  d_{q_i}(f_i^T,f_i^S) \ge \frac{1}{a_i}\|f_i^T(h)-f_i^S(h)\|_{\mathcal{X}_i}.
+\]
+Therefore
+\[
+  WD(F^T,F^S)
+  =
+  \sum_{i=1}^5 w_i d_{q_i}(f_i^T,f_i^S)
+  \ge
+  \sum_{i=1}^5 w_i \frac{1}{a_i} \|f_i^T(h)-f_i^S(h)\|.
+\]
+Rewriting with \(\lambda_i\) gives the stated form. The choice \(\lambda_i = \frac{w_i}{a_i}\) yields direct equivalence with the block norm.
+\end{proof}
+
+\begin{acor}[Upper Bound of Norm by WD]
+With \(\lambda_i = \frac{w_i}{a_i}\), we obtain
+\[
+  \|F^T(h)-F^S(h)\|_{\mathcal{X}}
+  \;\le\;
+  WD(F^T,F^S).
+\]
+Thus
+\[
+  \|F^T(h)-F^S(h)\|_{\mathcal{X}}
+  \;\le\;
+  a_1\, WD(F^T,F^S)
+\]
+with \(a_1=1\) (or \(a_1\ge1\) in more general norms).
+\end{acor}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Proof of First-Order WD Bound}
+
+We recall the composition
+\[
+  Y^T(h) = G(I(F^T(h))),
+  \qquad
+  Y^S(h) = G(I(F^S(h))),
+\]
+and total error
+\[
+  E_{\text{total}}(h) = \|Y^T(h) - Y^S(h)\|_{\mathcal{Y}}.
+\]
+
+\begin{aassump}[Lipschitz Bounds for Governance and Inversion]
+There exist constants \(L_G, L_I > 0\) such that
+\[
+  \|G(x) - G(y)\|_{\mathcal{Y}} \le L_G \|x-y\|_{\mathcal{Z}},
+\]
+\[
+  \|I(u) - I(v)\|_{\mathcal{Z}} \le L_I \|u-v\|_{\mathcal{X}}
+\]
+for all relevant \(x,y\in\mathcal{Z}\) and \(u,v\in\mathcal{X}\).
+\end{aassump}
+
+\begin{athm}[First-Order Wasserstein Error Bound]
+Under the Lipschitz and representation assumptions,
+\[
+  E_{\text{total}}(h)
+  \;\le\;
+  c_1 \, WD(F^T,F^S),
+\]
+with
+\[
+  c_1 := L_G L_I a_1,
+\]
+where \(a_1\) is any constant satisfiying \(\|F^T-F^S\|_{\mathcal{X}} \le a_1 WD(F^T,F^S)\).
+\end{athm}
+
+\begin{proof}
+We have
+\begin{align*}
+  E_{\text{total}}(h)
+  &= \|G(I(F^T(h))) - G(I(F^S(h)))\|_{\mathcal{Y}} \\
+  &\le L_G \|I(F^T(h)) - I(F^S(h))\|_{\mathcal{Z}} \\
+  &\le L_I L_G \|F^T(h)-F^S(h)\|_{\mathcal{X}} \\
+  &\le L_I L_G a_1 \, WD(F^T,F^S),
+\end{align*}
+as claimed.
+\end{proof}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Discrete Curvature and Second-Order Remainder}
+
+We formalize the curvature-like quantity \(\mathcal{K}(h)\) and its relation to second-order changes of the composite operator \(G\circ I\).
+
+\begin{adefn}[Discrete Path and Increment]
+Given a path \(F(t;h)\), \(t=0,1,\dots,n\), define the discrete increments
+\[
+  \Delta F(t;h) := F(t+1;h) - F(t;h),
+\]
+\[
+  \Delta^2 F(t;h) := \Delta F(t+1;h) - \Delta F(t;h)
+  = F(t+2;h) - 2F(t+1;h)+F(t;h).
+\]
+\end{adefn}
+
+\begin{adefn}[Discrete Second-Order Operator Increment]
+Define the second-order increment of the composition \(H := G\circ I\) as
+\[
+  \Delta^2 H(t;h) := H(F(t+2;h)) - 2H(F(t+1;h)) + H(F(t;h)).
+\]
+\end{adefn}
+
+\begin{aassump}[Second-Order Lipschitz Bounds Aligned with Structural Invariants]
+There exist constants \(L_{\text{depth}},L_{\text{comm}},L_{\text{cat}} \ge 0\) and weights \(\alpha_i,\beta_{ij},\gamma_i\) such that for each \(t,h\),
+\[
+  \|\Delta^2 H(t;h)\|_{\mathcal{Y}}
+  \;\le\;
+  L_{\text{depth}} \sum_i \alpha_i |\Delta^2 \text{depth}_i(t,h)|
+  + L_{\text{comm}} \sum_{i<j} \beta_{ij} |\Delta^2 \text{comm}_{ij}(t,h)|
+  + L_{\text{cat}} \sum_i \gamma_i |\Delta^2_{\text{cat},i}(t,h)|,
+\]
+where \(\Delta^2 \text{depth}, \Delta^2 \text{comm}, \Delta^2_{\text{cat}}\) are the second differences underlying the curvature components.
+\end{aassump}
+
+\begin{adefn}[Curvature Components and Aggregate Curvature]
+Define
+\[
+  \kappa_i^{\text{depth}}(h) := \sum_{t=0}^{n-2} |\Delta^2 \text{depth}_i(t,h)|,
+\]
+\[
+  \kappa_{ij}^{\text{comm}}(h) := \sum_{t=0}^{n-2} |\Delta^2 \text{comm}_{ij}(t,h)|,
+\]
+\[
+  \kappa_i^{\text{cat}}(h) := \sum_{t=0}^{n-2} |\Delta^2_{\text{cat},i}(t,h)|,
+\]
+and
+\[
+  \mathcal{K}(h) :=
+  \sum_i \alpha_i \kappa_i^{\text{depth}}(h)
+  + \sum_{i<j} \beta_{ij} \kappa_{ij}^{\text{comm}}(h)
+  + \sum_i \gamma_i \kappa_i^{\text{cat}}(h).
+\]
+\end{adefn}
+
+\begin{alem}[Bound on Second-Order Remainder by Curvature]
+Let \(R_2(h)\) denote the cumulative second-order remainder of the discrete path:
+\[
+  R_2(h) := \sum_{t=0}^{n-2} \Delta^2 H(t;h).
+\]
+Under the second-order Lipschitz assumption,
+\[
+  \|R_2(h)\|_{\mathcal{Y}}
+  \;\le\;
+  c_2 \, \mathcal{K}(h),
+\]
+for
+\[
+  c_2 :=
+  \max\left(
+    L_{\text{depth}}, L_{\text{comm}}, L_{\text{cat}}
+  \right).
+\]
+More precisely, one can take
+\[
+  \|R_2(h)\|
+  \le
+  L_{\text{depth}} \sum_i \alpha_i \kappa_i^{\text{depth}}(h)
+  + L_{\text{comm}} \sum_{i<j} \beta_{ij} \kappa_{ij}^{\text{comm}}(h)
+  + L_{\text{cat}} \sum_i \gamma_i \kappa_i^{\text{cat}}(h).
+\]
+\end{alem}
+
+\begin{proof}
+By definition,
+\[
+  R_2(h) = \sum_{t=0}^{n-2} \Delta^2 H(t;h).
+\]
+Thus
+\[
+  \|R_2(h)\| \le \sum_{t=0}^{n-2} \|\Delta^2 H(t;h)\|.
+\]
+Applying the second-order Lipschitz bound to each term and summing over \(t\) yields
+\[
+  \|R_2(h)\|
+  \le
+  L_{\text{depth}} \sum_i \alpha_i \sum_{t} |\Delta^2 \text{depth}_i(t,h)|
+  + L_{\text{comm}} \sum_{i<j} \beta_{ij} \sum_t |\Delta^2 \text{comm}_{ij}(t,h)|
+  + L_{\text{cat}} \sum_i \gamma_i \sum_t |\Delta^2_{\text{cat},i}(t,h)|.
+\]
+Recognizing the sums over \(t\) as the \(\kappa\)-components gives the claimed inequality.
+\end{proof}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Full Taylor-Type Inequality}
+
+\begin{athm}[Multiplicity-Space Taylor Inequality, Detailed]
+Assume:
+\begin{itemize}[leftmargin=2em]
+  \item Lipschitz bounds for \(G,I\) with constants \(L_G,L_I\),
+  \item Representation bound \(\|F^T-F^S\|_{\mathcal{X}} \le a_1 WD(F^T,F^S)\),
+  \item Second-order Lipschitz bounds aligned with curvature invariants.
+\end{itemize}
+Then, for each state \(h\) in the certified region,
+\[
+  E_{\text{total}}(h)
+  \;\le\;
+  c_1 \, WD(F^T,F^S)
+  \;+\;
+  c_2 \,\mathcal{K}(h),
+\]
+where \(c_1 = L_G L_I a_1\) and \(c_2\) is as above.
+\end{athm}
+
+\begin{proof}
+We conceptually decompose the effect of moving from \(F^T(h)\) to \(F^S(h)\) along the discrete path into:
+\begin{enumerate}[leftmargin=2em]
+  \item A first-order contribution controlled by the net difference \(F^S - F^T\).
+  \item A second-order remainder controlled by cumulative second differences \(\Delta^2 F\).
+\end{enumerate}
+Formally, we may write
+\[
+  H(F^S(h)) - H(F^T(h))
+  = \sum_{t=0}^{n-1} \big( H(F(t+1;h)) - H(F(t;h)) \big),
+\]
+and decompose the telescoping sum into
+\[
+  H(F^S(h)) - H(F^T(h)) = \underbrace{D_1(h)}_{\text{first order}} + \underbrace{R_2(h)}_{\text{second order}},
+\]
+where \(D_1(h)\) is controlled by Lipschitz constants and \(\|F^S-F^T\|\), and \(R_2(h)\) is as above.
+
+By the first-order Wasserstein bound,
+\[
+  \|D_1(h)\| \le c_1\, WD(F^T,F^S).
+\]
+By the lemma on second-order remainder,
+\[
+  \|R_2(h)\| \le c_2 \mathcal{K}(h).
+\]
+Combining via the triangle inequality,
+\[
+  E_{\text{total}}(h)
+  = \|H(F^S(h)) - H(F^T(h))\|
+  \le \|D_1(h)\| + \|R_2(h)\|
+  \le c_1 WD(F^T,F^S) + c_2 \mathcal{K}(h).
+\]
+\end{proof}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Parameterization of Constants via Contraction Coefficients}
+
+In many practical implementations, the governance layer includes contraction-like gates (e.g.\ CCR gain functions, Lipschitz-style certification). We now outline how such coefficients inform \(c_1\) and \(c_2\).
+
+\begin{aassump}[Contraction Certification Coefficient]
+Suppose the governance map \(G\) can be decomposed as
+\[
+  G = C \circ B,
+\]
+where \(B\) is a base map and \(C\) is a contraction gate with operator norm (or Lipschitz constant) bounded by \(c_r\in[c_r^{\min},c_r^{\max}]\), e.g.\ \(c_r^{\max}\in[0.25,0.40]\) in some disclosed range. Then
+\[
+  \text{Lip}(G) \le \text{Lip}(C)\,\text{Lip}(B) \le c_r^{\max} \,\text{Lip}(B).
+\]
+\end{aassump}
+
+\begin{aprop}[First-Order Constant via Contraction Gate]
+Under this decomposition,
+\[
+  c_1 \le c_r^{\max} \, \text{Lip}(B)\, L_I \, a_1.
+\]
+\end{aprop}
+
+\begin{proof}
+We have \(L_G \le c_r^{\max} \,\text{Lip}(B)\). Thus
+\[
+  c_1 = L_G L_I a_1 \le c_r^{\max}\,\text{Lip}(B)\,L_I\,a_1.
+\]
+\end{proof}
+
+\begin{aremark}
+In practice, \(\text{Lip}(B)\) may be bounded by the maximum slope of truth-scale mapping, the maximum gain of ACID/CRMF aggregators, or other system-specific constants. The product yields a concrete envelope for \(c_1\) in terms of disclosed system parameters.
+\end{aremark}
+
+\begin{aremark}[Second-Order Constants]
+Analogously, the second-order constants \(L_{\text{depth}},L_{\text{comm}},L_{\text{cat}}\) can be expressed in terms of how sensitively the contraction gate and ACID/CRMF logic respond to changes in depth, commutators, and category boundaries. For example, if depth changes only affect outputs through bounded changes in intermediate scores scaled by contraction coefficients, then each \(L_{\bullet}\) can be factored into a product of local slopes and contraction bounds.
+\end{aremark}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Certified Regions and Local Validity}
+
+\begin{adefn}[Certified Region \(\Omega\)]
+Let \(\Omega \subseteq \mathcal{H}\) be the set of states for which:
+\begin{itemize}[leftmargin=2em]
+  \item No predicate is in veto category at the teacher state, and veto preservation holds along the path.
+  \item Depth and non-commutator bounds are satisfied (structural feasible region).
+  \item The ontology snapshot and model interface contracts are fixed.
+\end{itemize}
+\end{adefn}
+
+\begin{athm}[Local Validity of Bounds]
+The Taylor inequality
+\[
+  E_{\text{total}}(h)
+  \;\le\;
+  c_1\, WD(F^T,F^S)
+  \;+\;
+  c_2 \,\mathcal{K}(h)
+\]
+holds for all \(h \in \Omega\), with \(c_1,c_2\) determined as above.
+\end{athm}
+
+\begin{proof}[Sketch]
+All assumptions (Lipschitz, representation, second-order structural bounds) are imposed on the restricted domain \(\Omega\), where the behavior of \(G,I,F\) is controlled and the ontology and interfaces are stable. Within this region, the proofs given above are valid verbatim. Outside \(\Omega\), some assumptions may fail (e.g.\ ontology shifts, veto-related discontinuities), so no global guarantee is asserted.
+\end{proof}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Summary of Constants and Relations}
+
+For clarity, we summarize the main constants and relations:
+
+\begin{itemize}[leftmargin=2em]
+  \item \(WD(F^T,F^S)\): discrete Wasserstein distance on prime bundles.
+  \item \(\mathcal{K}(h)\): multiplicity curvature at state \(h\), aggregating second-order structural changes.
+  \item \(a_1\): representation constant relating norm difference in \(F\) to WD.
+  \item \(L_G\): Lipschitz constant of governance map \(G\), bounded by contraction coefficients and base map slopes.
+  \item \(L_I\): Lipschitz constant of inversion map \(I\).
+  \item \(L_{\text{depth}},L_{\text{comm}},L_{\text{cat}}\): second-order sensitivity constants for depth, commutators, and categories.
+  \item \(c_1 = L_G L_I a_1\): first-order bound coefficient.
+  \item \(c_2\): scalar coefficient dominating \(L_{\text{depth}},L_{\text{comm}},L_{\text{cat}}\) in the curvature remainder bound.
+\end{itemize}
+
+These quantities jointly determine the envelope
+\[
+  E_{\text{total}}(h)
+  \;\le\;
+  c_1\, WD(F^T,F^S)
+  \;+\;
+  c_2\, \mathcal{K}(h),
+\]
+which is the core inequality underpinning curvature-enhanced drift guarantees in the multiplicity-theoretic WKD/I-WKD system.
+
+\end{document}
+\nocite{*}
+\bibliographystyle{unsrt}  
+\bibliography{references}  
+
+
+\end{document}

@@ -15,7 +15,7 @@ The agreements below are the evidence. A genuine discovery falls out: the trace 
 "coincidence" (`24 = T·O`) is forced by the extremal `T = 3` — the parametric trace is
 `T·O − (T−3)`, whose correction vanishes EXACTLY at the minimal cyclic order.
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 

@@ -1,0 +1,1080 @@
+\documentclass[11pt]{article}
+
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{mathrsfs}
+\usepackage{bm}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usepackage{booktabs}
+\usepackage{mathtools}
+\usepackage{tocloft}
+\setlength{\cftbeforesecskip}{4pt}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  citecolor=blue,
+  urlcolor=blue
+}
+
+\title{Multiplicity Moonshine:\\
+Prime-Resolved Fixed-Point Dynamics and Modular Invariants}
+\author{%
+  \textbf{Ryan O. van Gelder \& Tyler van Osdol} \\ \\
+  Citizen Gardens \\ \\ The Foundation of Multiplicity
+}
+\date{April 4, 2026}
+
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+\theoremstyle{plain}
+\newtheorem{theorem}[definition]{Theorem}
+\newtheorem{conjecture}[definition]{Conjecture}
+\newtheorem{proposition}[definition]{Proposition}
+\newtheorem{corollary}[definition]{Corollary}
+\theoremstyle{remark}
+\newtheorem{remark}[definition]{Remark}
+
+\newcommand{\Hcal}{\mathcal{H}}
+\newcommand{\Mcal}{\mathcal{M}}
+\newcommand{\Vcal}{\mathcal{V}}
+\newcommand{\Pcal}{\mathcal{P}}
+\newcommand{\Nbb}{\mathbb{N}}
+\newcommand{\Zbb}{\mathbb{Z}}
+\newcommand{\Qbb}{\mathbb{Q}}
+\newcommand{\Rbb}{\mathbb{R}}
+\newcommand{\Cbb}{\mathbb{C}}
+\newcommand{\SL}{\mathrm{SL}}
+\newcommand{\Aut}{\mathrm{Aut}}
+\newcommand{\Tr}{\mathrm{Tr}}
+\newcommand{\diag}{\mathrm{diag}}
+\newcommand{\norm}[1]{\left\lVert #1 \right\rVert}
+\newcommand{\ip}[2]{\left\langle #1, #2 \right\rangle}
+\newcommand{\OmegaVal}{\Omega}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This report synthesizes a series of developments linking Multiplicity Theory---a prime-indexed, recursively stable operator framework---with Monstrous Moonshine and modular forms.
+We formulate a precise ``Multiplicity Moonshine'' principle: modular $q$--series emerge as invariants of a prime-graded fixed-point dynamical system driven by Hecke-type operators under strict projector, conservation, and contraction constraints.
+We define the associated computational validation engine, including (i) a prime-word and $\Zbb_{\ge 0}^P$--graded state space, (ii) an ACE+projector+PETC iteration admitting a unique fixed point, (iii) a Hecke algebra layer over this space, and (iv) a modularity test suite based on $S$ and Fricke transforms.
+We present a strong conjectural bridge between the prime-resolved multiplicity field and classical Moonshine coefficients, and specify a production-grade protocol for falsifying or confirming this bridge.
+Code-level sketches for a validation package are included.
+\end{abstract}
+\newpage
+\tableofcontents
+\newpage
+\section{Executive Summary}
+
+The core claim of this work is that Multiplicity Theory, as developed in recent Multiplicity Foundation / Citizen Gardens preprints, already contains the structural skeleton of a generalized Moonshine theory:
+\begin{itemize}[leftmargin=1.5em]
+  \item Classical Moonshine uses a $\Zbb$--graded vector space $V = \bigoplus_{n=-1}^\infty V_n$ equipped with a Monster action, whose graded traces produce modular functions (e.g.\ the $j$--function).
+  \item Multiplicity Theory uses a prime-indexed, projector-structured Hilbert space
+  \[
+    \Hcal = \bigoplus_{p \in P} \Hcal_p
+  \]
+  together with a runtime-safe evolution
+  \[
+    T_{t+1} = \Pi\bigl(F_t + K_t T_t\bigr)
+  \]
+  in which each $K_t$ is a prime-weighted operator constrained by ACE budgets and PETC conservation, and $\Pi$ is a lawfulness projector enforcing on-manifold evolution.
+\end{itemize}
+
+The novelty is not a vague analogy but a precise refactor:
+\begin{itemize}[leftmargin=1.5em]
+  \item The $\Zbb$--grading of classical Moonshine is replaced by a $\Zbb_{\ge 0}^P$--grading over prime exponent vectors (``prime words'').
+  \item The integer index $n$ underlying the $q$--expansion is interpreted as a compressed observable $\OmegaVal(W)$ of an underlying prime-word $W$, with $\OmegaVal$ typically taken as the total prime exponent count.
+  \item Moonshine coefficients become emergent \emph{resonance weights} computed from a fixed-point of the multiplicity evolution.
+\end{itemize}
+
+We formulate a \emph{Multiplicity Moonshine} conjecture: under explicit operator, projector, and Hecke-algebra conditions, the $q$--series obtained by $\OmegaVal$--compressing the prime-word fixed point is a modular form on a congruence subgroup, and in special cases matches known Moonshine series.
+
+Operationally, we specify a validation engine:
+\begin{enumerate}[leftmargin=1.5em]
+  \item Construct a prime-word graded state space and a projector family $\{\Pi_p\}$.
+  \item Run a projected fixed-point iteration with ACE budget and PETC bookkeeping.
+  \item Lift the converged float fixed point to exact rationals and certify the residual.
+  \item Build exact Hecke matrices $T_m$, verify multiplicativity and simultaneous eigenfunction behavior on the fixed point.
+  \item Compress to a $q$--series and run a modularity suite (S-transform, weight fit, Fricke, comparison with known forms).
+  \item Correlate modularity with runtime diagnostics $(\Delta_{p,t}, \mathrm{ME}(t), H[q_t])$ as an ``order parameter'' for emergent modular symmetry.
+\end{enumerate}
+
+This document consolidates the mathematics and the computational design of such a validator.
+
+\section{Prime-Graded State Space and Projectors}
+
+We start from the Multiplicity Core blueprint, where the state space and projector structure are defined.
+
+\subsection{Prime-Graded Hilbert Space}
+
+Let $P$ be a finite set of primes. We work in a (real or complex) Hilbert space $\Hcal$ with norm $\norm{\cdot}$ and inner product $\ip{\cdot}{\cdot}$.
+We assume a prime-sector decomposition:
+\begin{equation}
+  \Hcal = \bigoplus_{p \in P} \Hcal_p,
+\end{equation}
+where each $\Hcal_p$ is a closed subspace corresponding to the ``$p$--sector.''
+
+\begin{definition}[Prime Projectors]
+For each $p \in P$ we assume a bounded linear projector
+\[
+  \Pi_p : \Hcal \to \Hcal
+\]
+satisfying, on a ``certified window'' of states,
+\begin{equation}
+  \Pi_p^2 = \Pi_p,\qquad
+  \Pi_p \Pi_q = 0 \ \ (p \neq q),\qquad
+  \sum_{p \in P} \Pi_p = \Pi_P,
+\end{equation}
+where $\Pi_P$ projects onto the prime sector span.
+We also assume nonexpansiveness $\norm{\Pi_p} \le 1$, $\norm{\Pi_P} \le 1$.
+\end{definition}
+
+An optional scalar projector $\Pi_S$ can project onto a certified subspace (e.g.\ a lawfulness manifold).
+We write $\Pi \in \{\Pi_P,\Pi_S\}$ for the projector used in the core iteration.
+
+\subsection{Prime Signatures and $\Zbb^P$--Grading}
+
+Multiplicity Theory associates a \emph{prime signature} vector $e \in \Zbb^P$ to typed operators and states.
+Composition and aggregation are additive in this signature; at runtime PETC enforces that signatures and sector totals update additively.
+
+In the Moonshine setting we refine this into a full-grading picture.
+
+\begin{definition}[Prime Words and Exponent Vectors]
+Fix an ordering of $P = \{p_1,\dotsc,p_r\}$.
+A \emph{prime word} is an exponent vector
+\[
+  e = (k_1,\dotsc,k_r) \in \Zbb_{\ge 0}^r.
+\]
+We identify the associated integer
+\[
+  W(e) := \prod_{i=1}^r p_i^{k_i}.
+\]
+Define the \emph{prime-word space}
+\[
+  \Zbb_{\ge 0}^P \cong \Zbb_{\ge 0}^r.
+\]
+\end{definition}
+
+\begin{definition}[$\OmegaVal$--Grading]
+Define the $\OmegaVal$--value of a prime word by
+\begin{equation}
+  \OmegaVal(e) := \sum_{i=1}^r k_i.
+\end{equation}
+We obtain an induced grading
+\begin{equation}
+  \Hcal = \bigoplus_{n \ge 0} \Hcal_n^{(\OmegaVal)},\qquad
+  \Hcal_n^{(\OmegaVal)} := \bigoplus_{\OmegaVal(e)=n} \Hcal_e,
+\end{equation}
+where $\Hcal_e$ denotes the subspace corresponding to exponent vector $e$ (or, in practice, the subspace spanned by basis vectors indexed by $e$).
+\end{definition}
+
+In this way, the $\Zbb$--grading familiar from Moonshine is a \emph{compression} of a richer $\Zbb_{\ge 0}^P$--grading.
+
+\section{ACE+Projector+PETC Runtime and Fixed Point}
+
+We now recall the runtime iteration and its convergence guarantee.
+
+\subsection{Channels, Gains, ACE Constraint}
+
+Let $\{B_p\}_{p \in P} \subset L(\Hcal)$ be a family of bounded linear operators (channels) with known bounds $\norm{B_p} \le b_p$.
+For each step $t$, a PETC-derived weight vector $w_{p,t} \in \Rbb$ defines the gain operator
+\begin{equation}
+  K_t = \sum_{p \in P} w_{p,t} B_p.
+\end{equation}
+The ACE budget imposes
+\begin{equation}
+  \sum_{p \in P} b_p |w_{p,t}| \le \tau_t,\qquad 0 \le \tau_t < 1,
+\end{equation}
+with a global cap $\tau_t \le \tau_{\max} < 1$ on the certified window.
+
+An external term $F_t : \Hcal \to \Hcal$ is assumed bounded and Lipschitz on the certified window (often instantiated as a Hecke/replicability mixer).
+
+\subsection{Block Commutation and Invariants}
+
+For each audited update operator $U_t$ used to build $F_t$ or $K_t$, we enforce block commutation with prime projectors:
+\begin{equation}
+  U_t \Pi_p = \Pi_p U_t \quad \text{for all } p \in P
+\end{equation}
+on the certified window, up to a controllable residual
+\begin{equation}
+  \Delta_{p,t} := \norm{U_t \Pi_p - \Pi_p U_t},\qquad
+  \max_{p \in P} \Delta_{p,t} \le \eta.
+\end{equation}
+
+\subsection{Projected Fixed-Point Iteration}
+
+Let $T_t \in \Hcal$ denote the state at time $t$.
+The core iteration is
+\begin{equation}\label{eq:iteration}
+  T_{t+1} = \Pi\bigl(F_t + K_t T_t\bigr).
+\end{equation}
+
+Define sector shares
+\begin{equation}
+  q_{p,t} = \frac{\norm{\Pi_p T_t}^2}{\sum_{r \in P} \norm{\Pi_r T_t}^2},\qquad
+  \sum_{p \in P} q_{p,t} = 1,
+\end{equation}
+with the convention $0/0 := 0$.
+Define manifold energy
+\begin{equation}
+  \mathrm{ME}(t) = \frac{\norm{\Pi_P T_t}^2}{\norm{T_t}^2 + \varepsilon}
+\end{equation}
+and sector entropy
+\begin{equation}
+  H[q_t] = - \sum_{p \in P} q_{p,t} \log q_{p,t}.
+\end{equation}
+Acceptance gates enforce
+\begin{equation}
+  \tau_t \le \tau_{\max} < 1,\quad
+  \mathrm{ME}(t) \ge 1 - \epsilon_{\mathrm{ME}},\quad
+  H[q_t] \in [H_{\min}, H_{\max}],\quad
+  \max_{p} \Delta_{p,t} \le \eta.
+\end{equation}
+
+\begin{theorem}[Stepwise Contraction and Fixed Point]
+Assume that the ACE budget holds with margin $1-\tau_t>0$, $\Pi$ is nonexpansive, $F_t$ is Lipschitz and bounded on the certified window, and all operators in the step commute with $\{\Pi_p\}$ up to bounded residuals as above.
+Let $\widehat{K}_t$ denote the realized linear part at step $t$, and suppose $\norm{\widehat{K}_t} \le \tau_t < 1$ for all $t$.
+Then, restricted to the certified window, the iteration \eqref{eq:iteration} defines a contraction mapping admitting a unique fixed point $T^*$, and for any two trajectories $T_t,\widetilde{T}_t$ driven by the same schedule,
+\[
+  \norm{T_{t+1} - \widetilde{T}_{t+1}}
+  \le \tau_t \norm{T_t - \widetilde{T}_t}.
+\]
+\end{theorem}
+
+This provides the rigorous foundation for using $T^*$ as the multiplicity field from which Moonshine coefficients will be derived.
+
+\section{Prime-Word Representation and $\OmegaVal$–Projection}
+
+We now make the prime-word structure explicit.
+
+\subsection{Prime-Word Representation of the Fixed Point}
+
+In many relevant Moonshine workloads (e.g.\ $q$--series with indices $n \ge -1$), one works with a truncated basis indexed by integers.
+Under the prime-word interpretation, we may equivalently represent the fixed point $T^*$ as a sparse map
+\[
+  T^* : \Zbb_{\ge 0}^P \to \Qbb
+\]
+sending a prime word $e$ to a rational coefficient $T^*(e)$.
+In practice this is stored as a dictionary
+\[
+  \{ e \mapsto T^*(e) \}_{e: \OmegaVal(e)\le \OmegaVal_{\max}}
+\]
+for some truncation bound.
+
+\subsection{Compressed $\OmegaVal$–Graded Coefficients}
+
+\begin{definition}[$\OmegaVal$–Compressed Coefficients]
+Given $T^* : \Zbb_{\ge 0}^P \to \Cbb$, define the $\OmegaVal$–graded coefficients by
+\begin{equation}
+  c_\Omega(n) := \sum_{\OmegaVal(e) = n} \bigl|T^*(e)\bigr|^2
+\end{equation}
+for $n \ge 0$.
+We define the associated $q$--series
+\begin{equation}
+  \chi_{\Mcal}(\tau)
+  := \sum_{n \ge n_0} c_\Omega(n)\, q^n,\qquad q = e^{2\pi i \tau},
+\end{equation}
+for an appropriate starting index $n_0$ (e.g.\ $n_0=-1$ for $j$–like series).
+\end{definition}
+
+This construction realizes the idea that classical Moonshine coefficients are a ``shadow'' of a higher-resolution prime-resolved state: each $c_\Omega(n)$ aggregates all prime words with total exponent sum $n$.
+
+\section{Hecke Algebra on the Prime-Graded Space}
+
+We now specify the Hecke layer that connects to modular forms.
+
+\subsection{Hecke Operators on Truncated $q$--Series}
+
+For concreteness, consider the truncated space of $q$--series coefficients $a(n)$ for $0 \le n \le N$.
+The classical Hecke operator $T_p$ acts (in an appropriate normalization) by
+\begin{equation}
+  (T_p a)[n] = a[pn] + \mathbf{1}_{p \mid n}\, a[n/p],
+\end{equation}
+with suitable truncation boundary conditions at $n > N$.
+This can be represented as an integer-valued matrix $T_p \in \Zbb^{(N+1)\times(N+1)}$.
+
+For composite $m$ with factorization $m = \prod p^{\ell_p}$, we build $T_m$ from the prime $T_p$ by composition and Hecke algebra relations.
+On the truncated space, we require these relations to hold exactly as integer matrix identities.
+
+\subsection{Hecke Multiplicativity and Eigenfunctions}
+
+\begin{definition}[Hecke Algebra Conditions]
+Fix a truncation bound $M$ on the Hecke index and a bound $N$ on the $q$--series.
+We require:
+\begin{enumerate}[label=(H\arabic*),leftmargin=1.5em]
+  \item For all coprime $m,n \le M$,
+  \[
+    T_m T_n = T_n T_m,\qquad T_m T_n = T_{mn}
+  \]
+  as matrix equalities on the truncated space.
+  \item The fixed point $T^*$, mapped to the coefficient vector $(a(0),\dotsc,a(N))$, is a simultaneous Hecke eigenvector for all $m \le M$:
+  \begin{equation}
+    T_m T^* = \lambda_m T^*,\qquad \lambda_m \in \Qbb.
+  \end{equation}
+\end{enumerate}
+\end{definition}
+
+These are the algebraic conditions expected of modular forms with respect to the Hecke algebra.
+
+\section{Multiplicity Moonshine Conjecture}
+
+We can now state a clean conjecture capturing the bridge from Multiplicity dynamics to modular forms.
+
+\begin{conjecture}[Multiplicity Moonshine Principle (Strong Form)]
+Let $P$ be a finite set of primes and let $\Hcal$ be a prime-graded Hilbert space with exact orthogonal projectors $\{\Pi_p\}_{p \in P}$ and lawfulness projector $\Pi$ as above.
+Let $T^*$ be the unique fixed point of the ACE+projector+PETC iteration
+\[
+  T_{t+1} = \Pi(F + K T_t)
+\]
+on the certified window, with $F$ a Hecke-style arithmetic mixer and $K$ an ACE-constrained prime-weighted operator.
+
+Assume:
+\begin{enumerate}[label=(C\arabic*),leftmargin=1.5em]
+  \item (\emph{Exact projectors}) $\Pi_p \Pi_q = 0$ for $p \neq q$, $\sum_p \Pi_p = \Pi_P$.
+  \item (\emph{Hecke eigencondition}) The $q$--series coefficients derived from $T^*$ form a simultaneous Hecke eigenfunction for all $T_m$ up to some $M$:
+  \[
+    T_m T^* = \lambda_m T^*,\quad \lambda_m \in \Qbb.
+  \]
+  \item (\emph{Hecke multiplicativity}) The operators satisfy $T_m T_n = T_{mn}$ and commute for all coprime $m,n \le M$.
+  \item (\emph{$\OmegaVal$–grading}) The $q$--series $\chi_{\Mcal}(\tau) = \sum_{n\ge n_0} c_\Omega(n) q^n$ is obtained by $\OmegaVal$--compression of the prime-word representation of $T^*$.
+\end{enumerate}
+Then there exist level $N$ and weight $k$ such that
+\[
+  \chi_{\Mcal}(\tau) \in M_k(\Gamma_0(N)),
+\]
+i.e.\ $\chi_{\Mcal}$ is a modular form (or a weakly holomorphic modular function) for a congruence subgroup.
+\end{conjecture}
+
+In special configurations of $(P,F,K,\Pi)$, one expects the coefficients $c_\Omega(n)$ to match known Moonshine series (e.g.\ the $j$--function or McKay--Thompson series) up to normalization.
+
+\section{Modularity Test Suite}
+
+In computational practice, modularity is tested via transforms on the upper half-plane and comparison with known databases.
+
+\subsection{Analytic Tests: $S$ and $T$}
+
+Let $\chi(\tau) = \sum_{n=n_0}^N c(n) q^n$ denote the truncated candidate series.
+
+The modular group $\SL_2(\Zbb)$ is generated by
+\[
+  S: \tau \mapsto -1/\tau,\qquad T: \tau \mapsto \tau + 1.
+\]
+
+$T$--invariance is automatic for integer exponents.
+For $S$--invariance of a weight $k$ modular form, we expect
+\begin{equation}
+  \chi(-1/\tau) = \tau^k \chi(\tau).
+\end{equation}
+Numerically, one evaluates $\chi$ on several $\tau$ in the upper half-plane and estimates the best-fit $k$ by minimizing
+\[
+  E_k(\tau) := \bigl|\chi(-1/\tau) - \tau^k \chi(\tau)\bigr|
+\]
+over candidate weights.
+
+\subsection{Level and Fricke Involutions}
+
+For a congruence subgroup $\Gamma_0(N)$, one can test eigenbehavior under Atkin--Lehner involutions, particularly the Fricke involution $W_N:\tau\mapsto -1/(N\tau)$.
+A modular form of weight $k$ and Fricke eigenvalue $\epsilon_{W_N}$ satisfies
+\[
+  \chi(-1/(N\tau)) = \epsilon_{W_N} (N\tau)^k \chi(\tau).
+\]
+
+Practically, one estimates $\epsilon_{W_N}$ and checks the magnitude of the residual across sample points.
+
+\subsection{External Matching}
+
+If the analytic tests suggest modularity, one can compare the first several coefficients $c(n)$ against known modular forms catalogued in databases such as the LMFDB, or via symbolic tools (Sage, PARI) to see if $\chi$ lies in the span of known basis forms.
+
+\section{Runtime Diagnostics as Order Parameters}
+
+An important empirical prediction is that certain runtime diagnostics of the Multiplicity iteration serve as \emph{order parameters} for emergent modular symmetry.
+
+Define:
+\begin{itemize}[leftmargin=1.5em]
+  \item Commutation residual:
+  \[
+    \Delta_t := \max_{p \in P} \norm{U_t \Pi_p - \Pi_p U_t},
+  \]
+  where $U_t$ is the audited update operator.
+  \item Manifold energy:
+  \[
+    \mathrm{ME}(t) := \frac{\norm{\Pi_P T_t}^2}{\norm{T_t}^2 + \varepsilon}.
+  \]
+  \item Sector entropy:
+  \[
+    H[q_t] := -\sum_{p\in P} q_{p,t} \log q_{p,t}.
+  \]
+\end{itemize}
+
+\begin{conjecture}[Diagnostic Modularity Criterion]
+For Moonshine-targeted workloads and fixed $(P,N,F,K,\Pi)$, the candidate $q$--series $\chi_{\Mcal}$ converges to a modular form if and only if, along the ACE+projector+PETC iteration,
+\[
+  \lim_{t\to\infty} \Delta_t = 0,\qquad
+  \lim_{t\to\infty} \mathrm{ME}(t) = 1,\qquad
+  H[q_t] \to H_\infty
+\]
+for some finite entropy $H_\infty$.
+\end{conjecture}
+
+This connects algebraic modularity to purely runtime-observable quantities.
+
+\section{Computational Validation Engine}
+
+We now describe a minimal, code-level architecture for a validation engine implementing the above mathematics.
+Language and libraries are left open; the structure is what matters.
+
+\subsection{Prime-Word and $\OmegaVal$–Grading Layer}
+
+\subsubsection*{Data Structures}
+
+\begin{itemize}[leftmargin=1.5em]
+  \item Represent a prime word as a tuple of exponents
+  \[
+    e = (k_1,\dotsc,k_r) \in \Zbb_{\ge 0}^r.
+  \]
+  \item Store the fixed point $T^*$ as a sparse map
+  \[
+    \{e \mapsto T^*(e)\}.
+  \]
+  \item Maintain a grouped representation
+  \[
+    \{ n \mapsto \{ e : \OmegaVal(e)=n \mapsto T^*(e) \}\}.
+  \]
+\end{itemize}
+
+\subsubsection*{Key Operations}
+
+\begin{itemize}[leftmargin=1.5em]
+  \item $\OmegaVal(e)$: total exponent sum.
+  \item $W(e)$: integer value of the word.
+  \item Projection to $\OmegaVal$:
+  \[
+    c_\Omega(n) = \sum_{\OmegaVal(e)=n} |T^*(e)|^2.
+  \]
+\end{itemize}
+
+\subsection{Fixed-Point Iteration with Rational Certification}
+
+\subsubsection*{Float Iteration}
+
+Implement the ACE+projector+PETC iteration in floating arithmetic:
+
+\begin{verbatim}
+Initialize T = T0
+for t in 0..max_iter:
+    w_t = PETC.propose_weights(T)
+    enforce ACE budget on w_t
+    K_t = sum_p w_t * B_p
+    U_t, F_t = build_update(T)
+    enforce commutation residual bound on U_t
+    T_next = Pi(F_t + K_t * T)
+    compute diagnostics (Delta_t, ME(t), H[q_t])
+    if ||T_next - T|| < tol:
+        break
+    T = T_next
+\end{verbatim}
+
+\subsubsection*{Rational Lift}
+
+After convergence of the float iteration:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item Map the float coordinates of $T$ to rational numbers (via rational approximation or a rational backend if available from the start).
+  \item Compute
+  \[
+    R = T^*_{\Qbb} - \Pi(F + K T^*_{\Qbb})
+  \]
+  exactly, and derive a rational or norm-based residual.
+  \item Declare the fixed point certified if $R$ is exactly zero or has norm below a predetermined threshold with rigorous control.
+\end{itemize}
+
+\subsection{Hecke Algebra Layer}
+
+\subsubsection*{Matrix Construction}
+
+For a truncation bound $N$ and a prime set $P$:
+\begin{itemize}[leftmargin=1.5em]
+  \item Construct exact integer matrices $T_p$ for each $p \in P$ on indices $0 \le n \le N$ according to the chosen Hecke stencil.
+  \item For a given $m$, construct $T_m$ via prime factorization and composition (respecting Hecke relations).
+\end{itemize}
+
+\subsubsection*{Algebraic Tests}
+
+\begin{itemize}[leftmargin=1.5em]
+  \item For all coprime $m,n \le M$ in the test set, verify exact equality
+  \[
+    T_m T_n = T_n T_m,\qquad T_m T_n = T_{mn}.
+  \]
+  \item For the fixed-point coefficient vector $T^*$, solve
+  \[
+    T_m T^* = \lambda_m T^*
+  \]
+  for $\lambda_m$ using exact linear algebra; check that $\lambda_m \in \Qbb$.
+\end{itemize}
+
+\subsection{Modularity Tests}
+
+Given the compressed $q$--series coefficients $c(n)$:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item Implement a function to evaluate $\chi(\tau)$ at arbitrary $\tau$ with high precision.
+  \item Evaluate S-transform residuals $E_k(\tau)$ over sample points and candidate weights.
+  \item If small residuals are found, estimate the best-fit weight $k$.
+  \item Optionally, evaluate Fricke/Atkin--Lehner residuals to infer level $N$.
+  \item Dump the first several coefficients $c(n)$ for external comparison against modular form databases.
+\end{itemize}
+
+\section{Recommended Extensions and Further Work}
+
+\subsection{Automated Reporting}
+
+Beyond the core validation pipeline, one may add:
+\begin{itemize}[leftmargin=1.5em]
+  \item Automatically generated plots of diagnostic trajectories $(\Delta_t, \mathrm{ME}(t), H[q_t])$.
+  \item Tabular comparison of $c_\Omega(n)$ with known Moonshine coefficients (e.g.\ those of the $j$–function) for early $n$.
+  \item Automated generation of a PDF report summarizing configuration, results, and evidence.
+\end{itemize}
+
+\subsection{Search over Configurations}
+
+One can scan over:
+\begin{itemize}[leftmargin=1.5em]
+  \item Different prime sets $P$ (e.g.\ $\{2,3\}$, $\{2,3,5\}$).
+  \item Different truncation levels $N$ and $\OmegaVal_{\max}$.
+  \item Different choices of $F$ (Hecke patterns, replicability maps).
+  \item Different projectors $\Pi_S$ defining lawfulness manifolds.
+\end{itemize}
+to map out where modular behavior does or does not emerge.
+
+\subsection{Symmetry Group Analysis}
+
+Defining the automorphism group
+\[
+  G_{\Mcal} = \{U \in L(\Hcal): U \Pi_p = \Pi_p U\ \forall p,\ [U, T_m] = 0\ \forall m\}
+\]
+and studying its finite subgroups may reveal sporadic structures.
+In particular, one may search computationally for large finite simple subgroups consistent with known sporadic orders.
+
+\section{Conclusion}
+
+We have presented a mathematically coherent and computationally precise bridge between Multiplicity Theory and Moonshine.
+The key idea is that modular $q$--series can be realized as $\OmegaVal$--compressed invariants of a prime-graded fixed-point system governed by strict projector, ACE, and conservation constraints and endowed with a Hecke algebra action.
+
+The resulting \emph{Multiplicity Moonshine} principle is falsifiable: given a finite prime set, truncation bounds, a concrete arithmetic mixer $F$, and runtime parameters, the validation engine either produces a certified modular series (and possibly a known Moonshine match), or it does not.
+The same machinery also yields a rich set of runtime diagnostics and symmetry candidates.
+Taken together, these developments suggest that classical Monstrous Moonshine may indeed be a low-resolution shadow of a higher-resolution multiplicative structure.
+
+\appendix
+\section*{Mathematical Appendix}
+\addcontentsline{toc}{section}{Mathematical Appendix}
+
+\section{Operator-Theoretic Setup and Notation}
+
+We collect the functional-analytic assumptions and notational conventions used throughout the main text and give explicit operator norm bounds for the projected fixed-point iteration
+\[
+  T_{t+1} = \Pi\bigl(F_t + K_t T_t\bigr).
+\]
+
+\subsection{Hilbert Space and Projectors}
+
+Let \(\Hcal\) be a complex Hilbert space with inner product \(\ip{\cdot}{\cdot}\) and norm \(\norm{\cdot}\).
+We write \(L(\Hcal)\) for the bounded linear operators on \(\Hcal\), equipped with the operator norm
+\[
+  \norm{A}_{\mathrm{op}} := \sup_{\norm{x}=1} \norm{Ax}.
+\]
+
+\begin{definition}[Prime Sector Projectors]
+Let \(P\) be a finite set of primes.
+A \emph{prime sector projector family} on \(\Hcal\) consists of operators
+\[
+  \Pi_p \in L(\Hcal),\quad p \in P,
+\]
+and a combined prime projector \(\Pi_P \in L(\Hcal)\) such that:
+\begin{enumerate}
+  \item \(\Pi_p^2 = \Pi_p\) (idempotence);
+  \item \(\Pi_p \Pi_q = 0\) for \(p \neq q\) (orthogonality);
+  \item \(\sum_{p\in P} \Pi_p = \Pi_P\) (partition of the prime sector);
+  \item \(\norm{\Pi_p}_{\mathrm{op}} \le 1\) and \(\norm{\Pi_P}_{\mathrm{op}} \le 1\).
+\end{enumerate}
+\end{definition}
+
+The projector \(\Pi\) used in the iteration is either \(\Pi_P\) or an additional ``lawfulness'' projector \(\Pi_S\) (with \(\norm{\Pi_S}_{\mathrm{op}}\le 1\)), but for the purposes of the proofs below we only require that \(\Pi\) be nonexpansive:
+\[
+  \norm{\Pi}_{\mathrm{op}} \le 1.
+\]
+
+\subsection{Channels and ACE Budget}
+
+We model channel operators and their combination as follows.
+
+\begin{definition}[Channel Family and ACE Budget]
+Let \(\{B_p\}_{p\in P} \subset L(\Hcal)\) be a family of bounded linear operators, with known bounds
+\[
+  \norm{B_p}_{\mathrm{op}} \le b_p,\quad b_p \ge 0.
+\]
+For each time step \(t\), let \(w_{p,t} \in \Rbb\) be scalar weights and define
+\[
+  K_t := \sum_{p\in P} w_{p,t} B_p.
+\]
+We say that the \emph{ACE budget} is satisfied at time \(t\) with margin \(1-\tau_t>0\) if
+\[
+  \sum_{p\in P} b_p \, |w_{p,t}| \le \tau_t < 1.
+\]
+\end{definition}
+
+By submultiplicativity and the triangle inequality we obtain a uniform bound on \(\norm{K_t}_{\mathrm{op}}\) in terms of \(\tau_t\).
+
+\begin{proposition}[Operator Norm Bound for \(K_t\)]
+Under the ACE budget assumption,
+\[
+  \norm{K_t}_{\mathrm{op}}
+  = \norm{\textstyle\sum_{p\in P} w_{p,t} B_p}_{\mathrm{op}}
+  \le \sum_{p\in P} |w_{p,t}| \, \norm{B_p}_{\mathrm{op}}
+  \le \tau_t < 1.
+\]
+\end{proposition}
+
+\begin{proof}
+For any \(x \in \Hcal\) with \(\norm{x}=1\),
+\[
+  \norm{K_t x}
+  = \norm{\textstyle\sum_{p\in P} w_{p,t} B_p x}
+  \le \sum_{p\in P} |w_{p,t}|\, \norm{B_p x}
+  \le \sum_{p\in P} |w_{p,t}| \, b_p.
+\]
+Taking the supremum over all \(\norm{x}=1\) and using the ACE budget inequality completes the proof.
+\end{proof}
+
+\subsection{External Term and Certified Window}
+
+We allow for a time-dependent external term \(F_t \in \Hcal\) or, more generally, an affine map \(F_t : \Hcal \to \Hcal\) that is Lipschitz on a prescribed subset of \(\Hcal\).
+
+\begin{definition}[Certified Window and Lipschitz External Term]
+Let \(W \subset \Hcal\) be a closed, convex subset (the \emph{certified window}) such that all iterates \(T_t\) lie in \(W\).
+We assume:
+\begin{itemize}
+  \item \(F_t : W \to \Hcal\) is \(L_F\)–Lipschitz for each \(t\), i.e.,
+  \[
+    \norm{F_t(x) - F_t(y)} \le L_F \,\norm{x-y} \quad \forall x,y\in W;
+  \]
+  \item \(F_t\) is uniformly bounded on \(W\): \(\sup_{x\in W} \norm{F_t(x)} \le M_F < \infty\).
+\end{itemize}
+\end{definition}
+
+In many of the workloads of interest, \(F_t\) is independent of \(t\) or depends only mildly on \(t\); the proofs below make no such restriction beyond uniform Lipschitzness and boundedness on \(W\).
+
+\section{Projected Fixed-Point Iteration: Contraction Proof}
+
+We now make precise and prove the contraction property of the map
+\[
+  \Phi_t(T) := \Pi(F_t + K_t T),
+\]
+and deduce the existence and uniqueness of a fixed point under a uniform contraction bound.
+
+\subsection{Single-Step Contraction}
+
+\begin{proposition}[Contraction of \(\Phi_t\) on the Certified Window]
+Assume:
+\begin{enumerate}
+  \item \(\Pi \in L(\Hcal)\) is nonexpansive, \(\norm{\Pi}_{\mathrm{op}} \le 1\).
+  \item \(K_t \in L(\Hcal)\) satisfies \(\norm{K_t}_{\mathrm{op}} \le \tau_t < 1\).
+  \item \(F_t\) is fixed (does not depend on \(T\)) or, more generally, satisfies \(F_t(x)-F_t(y)=0\) whenever \(x,y\in W\) (e.g.\ is constant on the window).
+\end{enumerate}
+Then for all \(T_1,T_2 \in W\),
+\[
+  \norm{\Phi_t(T_1) - \Phi_t(T_2)}
+  \le \tau_t \norm{T_1 - T_2}.
+\]
+\end{proposition}
+
+\begin{proof}
+We compute:
+\begin{align*}
+  \norm{\Phi_t(T_1) - \Phi_t(T_2)}
+    &= \norm{ \Pi\bigl(F_t + K_t T_1\bigr) - \Pi\bigl(F_t + K_t T_2\bigr)}\\
+    &= \norm{ \Pi\bigl(K_t T_1 - K_t T_2\bigr)} \quad\text{(since the \(F_t\) terms cancel)}\\
+    &\le \norm{\Pi}_{\mathrm{op}}\, \norm{K_t T_1 - K_t T_2}\\
+    &\le \norm{\Pi}_{\mathrm{op}}\, \norm{K_t}_{\mathrm{op}}\, \norm{T_1 - T_2}\\
+    &\le \tau_t \norm{T_1 - T_2},
+\end{align*}
+using the nonexpansiveness of \(\Pi\) and the bound \(\norm{K_t}_{\mathrm{op}} \le \tau_t\).
+\end{proof}
+
+In many realistic settings \(F_t\) is not strictly constant in \(T\).
+We then treat the more general affine map
+\[
+  S_t(T) := F_t(T) + K_t T
+\]
+and obtain a contraction bound that includes the Lipschitz constant of \(F_t\).
+
+\begin{proposition}[Contraction with Lipschitz External Term]
+Assume the conditions above, except now \(F_t\) is \(L_F\)–Lipschitz on \(W\).
+Define
+\[
+  \Phi_t(T) := \Pi\bigl(F_t(T) + K_t T\bigr).
+\]
+Then for all \(T_1,T_2 \in W\),
+\[
+  \norm{\Phi_t(T_1) - \Phi_t(T_2)}
+  \le (L_F + \tau_t) \norm{T_1 - T_2}.
+\]
+In particular, if \(L_F + \tau_t < 1\), then \(\Phi_t\) is a contraction on \(W\).
+\end{proposition}
+
+\begin{proof}
+We have
+\begin{align*}
+  \norm{\Phi_t(T_1) - \Phi_t(T_2)}
+    &= \norm{\Pi\bigl(F_t(T_1) + K_t T_1\bigr) - \Pi\bigl(F_t(T_2) + K_t T_2\bigr)}\\
+    &\le \norm{\Pi}_{\mathrm{op}}\, \norm{F_t(T_1) - F_t(T_2) + K_t(T_1 - T_2)}\\
+    &\le \norm{F_t(T_1) - F_t(T_2)} + \norm{K_t}_{\mathrm{op}}\, \norm{T_1 - T_2}\\
+    &\le L_F \norm{T_1 - T_2} + \tau_t \norm{T_1 - T_2}\\
+    &= (L_F + \tau_t)\, \norm{T_1 - T_2},
+\end{align*}
+using \(\norm{\Pi}_{\mathrm{op}} \le 1\) and \(\norm{K_t}_{\mathrm{op}} \le \tau_t\).
+\end{proof}
+
+\subsection{Global Contraction and Fixed Point}
+
+We now consider the time-homogeneous case for conceptual clarity: \(F_t = F\), \(K_t = K\), and \(\Phi_t = \Phi\) independent of \(t\).
+The ACE budget condition reduces to \(\norm{K}_{\mathrm{op}} \le \tau < 1\), and we assume \(F\) is either constant or Lipschitz with constant \(L_F\).
+
+\begin{theorem}[Banach Fixed-Point Theorem for the Projected Iteration]
+Let \(W \subset \Hcal\) be nonempty, closed, and convex, and let \(\Phi : W \to W\) be defined by
+\[
+  \Phi(T) := \Pi\bigl(F(T) + K T\bigr)
+\]
+with \(\Pi\) nonexpansive, \(\norm{K}_{\mathrm{op}} \le \tau < 1\), and \(F\) either constant or Lipschitz with constant \(L_F \ge 0\) such that
+\[
+  L_F + \tau < 1.
+\]
+Then:
+\begin{enumerate}
+  \item \(\Phi\) is a contraction on \(W\) with contraction factor \(\rho := L_F + \tau < 1\).
+  \item There exists a unique fixed point \(T^* \in W\) satisfying
+  \[
+    T^* = \Pi\bigl(F(T^*) + K T^*\bigr).
+  \]
+  \item For any initial \(T_0 \in W\), the iterates defined by \(T_{t+1} = \Phi(T_t)\) converge to \(T^*\) with geometric rate:
+  \[
+    \norm{T_t - T^*} \le \rho^t \norm{T_0 - T^*},\qquad t = 0,1,2,\dots.
+  \]
+\end{enumerate}
+\end{theorem}
+
+\begin{proof}
+The contraction estimate follows from the previous proposition.
+The Banach fixed-point theorem (also known as the contraction mapping principle) then guarantees existence and uniqueness of the fixed point and geometric convergence of the iterates.
+\end{proof}
+
+\begin{remark}[Extension to Time-Dependent Schedule]
+If \(F_t\) and \(K_t\) depend on \(t\) but satisfy uniform bounds
+\[
+  L_F + \sup_t \norm{K_t}_{\mathrm{op}} \le \rho < 1,
+\]
+and each \(\Phi_t(T) := \Pi(F_t(T) + K_t T)\) maps \(W\) into itself, then the composition
+\[
+  T_{t+1} = \Phi_t(T_t),\quad t=0,1,2,\dots,
+\]
+defines a Cauchy sequence for any initial \(T_0 \in W\), and all trajectories collapse into a unique limit point that is independent of the initialization but may depend on the schedule.
+Specific sufficient conditions are standard in the theory of non-autonomous dynamical systems; we omit the details here since the Moonshine workloads of interest are typically time-homogeneous or periodic.
+\end{remark}
+
+\section{Commutation Residual and Block Structure}
+
+We now make precise the notion of block commutation with prime projectors and provide explicit bounds on the commutation residual.
+
+\subsection{Block Commutation and Residual}
+
+\begin{definition}[Block Commutation Residual]
+Let \(U \in L(\Hcal)\) be an operator and let \(\Pi_p\) be the prime sector projectors.
+We define the commutation residual at prime \(p\) by
+\[
+  \Delta_p(U) := \norm{U \Pi_p - \Pi_p U}_{\mathrm{op}}.
+\]
+The maximal commutation residual is
+\[
+  \Delta(U) := \max_{p\in P} \Delta_p(U).
+\]
+\end{definition}
+
+The idealized ``block-diagonal'' situation corresponds to \(\Delta(U) = 0\).
+In practice, small but nonzero residuals arise; the following proposition shows that if \(\Delta(U)\) is small, the sector-wise action of \(U\) remains well-controlled.
+
+\begin{proposition}[Stability of Sectorwise Action Under Small Residuals]
+Let \(U \in L(\Hcal)\) and fix \(p\in P\).
+Then for any \(x\in \Hcal\),
+\[
+  \norm{\Pi_p U x - U \Pi_p x}
+  \le \Delta_p(U) \, \norm{x}.
+\]
+Moreover, if \(\norm{U}_{\mathrm{op}} \le B\), then
+\[
+  \norm{\Pi_p U \Pi_p x}
+  \le (B + \Delta_p(U)) \norm{\Pi_p x}.
+\]
+\end{proposition}
+
+\begin{proof}
+The first inequality is immediate:
+\[
+  \norm{\Pi_p U x - U \Pi_p x}
+  = \norm{(U \Pi_p - \Pi_p U)x}
+  \le \norm{U \Pi_p - \Pi_p U}_{\mathrm{op}} \, \norm{x}
+  = \Delta_p(U)\, \norm{x}.
+\]
+
+For the second statement, note that
+\[
+  \Pi_p U \Pi_p x
+  = U \Pi_p x + (\Pi_p U \Pi_p x - U \Pi_p x).
+\]
+Thus
+\begin{align*}
+  \norm{\Pi_p U \Pi_p x}
+  &\le \norm{U \Pi_p x} + \norm{\Pi_p U \Pi_p x - U \Pi_p x}\\
+  &\le \norm{U}_{\mathrm{op}}\, \norm{\Pi_p x} + \Delta_p(U) \norm{\Pi_p x}\\
+  &= (B + \Delta_p(U)) \norm{\Pi_p x},
+\end{align*}
+as claimed.
+\end{proof}
+
+\subsection{Implication for Diagnostic \(\Delta_{p,t}\)}
+
+In the runtime scheme, we monitor
+\[
+  \Delta_{p,t} := \norm{U_t \Pi_p - \Pi_p U_t}_{\mathrm{op}},
+\qquad \Delta_t := \max_{p\in P} \Delta_{p,t},
+\]
+for the audited update operator \(U_t\) at iteration \(t\).
+
+If the acceptance gate enforces \(\Delta_t \le \eta\) for some small \(\eta>0\), then for any state \(T_t\) with \(\norm{T_t}\le R\) and any sector \(p\), we have
+\[
+  \norm{\Pi_p U_t T_t - U_t \Pi_p T_t}
+  \le \eta \, \norm{T_t} \le \eta R.
+\]
+Thus the error in treating \(U_t\) as block-diagonal with respect to the sector decomposition is explicitly bounded; this underlies the empirical interpretation of \(\Delta_t\) as a measure of ``on-manifold'' evolution and supports the use of \(\Delta_t\) as a diagnostic for emergent modularity.
+
+\section{Sector Shares, Manifold Energy, and Entropy}
+
+We formalize the definitions and bounds for the diagnostics
+\(\mathrm{ME}(t)\) and \(H[q_t]\) used in the main text.
+
+\subsection{Sector Shares}
+
+Given a state \(T \in \Hcal\), we define the prime sector energies and shares.
+
+\begin{definition}[Sector Energies and Shares]
+For \(T \in \Hcal\), define
+\[
+  E_p(T) := \norm{\Pi_p T}^2,\qquad
+  E_{\mathrm{tot}}(T) := \sum_{p\in P} E_p(T).
+\]
+If \(E_{\mathrm{tot}}(T) > 0\), define the sector share vector \(q(T) = (q_p(T))_{p\in P}\) by
+\[
+  q_p(T) := \frac{E_p(T)}{E_{\mathrm{tot}}(T)},\qquad \sum_{p\in P} q_p(T) = 1.
+\]
+If \(E_{\mathrm{tot}}(T)=0\), set \(q_p(T)=0\) for all \(p\).
+\end{definition}
+
+\subsection{Manifold Energy}
+
+\begin{definition}[Manifold Energy]
+Given \(T \in \Hcal\), we define the manifold energy (with a small regularization \(\varepsilon>0\)) by
+\[
+  \mathrm{ME}(T)
+  := \frac{\norm{\Pi_P T}^2}{\norm{T}^2 + \varepsilon},
+\]
+where \(\Pi_P = \sum_{p\in P} \Pi_p\).
+\end{definition}
+
+\begin{proposition}[Bounds on \(\mathrm{ME}(T)\)]
+For any \(T \in \Hcal\),
+\[
+  0 \le \mathrm{ME}(T) \le 1.
+\]
+Moreover, if \(\Pi_P T = T\), then
+\[
+  \mathrm{ME}(T) = \frac{\norm{T}^2}{\norm{T}^2 + \varepsilon} \to 1
+\]
+as \(\varepsilon \to 0\).
+\end{proposition}
+
+\begin{proof}
+Since \(\Pi_P\) is a projector with \(\norm{\Pi_P}_{\mathrm{op}}\le 1\), we have \(\norm{\Pi_P T} \le \norm{T}\).
+Thus
+\[
+  0 \le \norm{\Pi_P T}^2 \le \norm{T}^2,
+\]
+and hence
+\[
+  0 \le \frac{\norm{\Pi_P T}^2}{\norm{T}^2 + \varepsilon} \le 1.
+\]
+If \(\Pi_P T = T\), then the numerator equals \(\norm{T}^2\), and the claimed limit is immediate.
+\end{proof}
+
+\subsection{Sector Entropy}
+
+\begin{definition}[Sector Entropy]
+Let \(q = (q_p)_{p\in P}\) be a probability vector (sector shares).
+Define the Shannon entropy
+\[
+  H[q] := -\sum_{p\in P} q_p \log q_p,
+\]
+using the convention \(0\log 0 := 0\).
+\end{definition}
+
+\begin{proposition}[Entropy Bounds]
+For any probability vector \(q\) supported on \(P\),
+\[
+  0 \le H[q] \le \log |P|.
+\]
+Moreover, \(H[q]=0\) iff \(q\) is a Dirac mass concentrated on a single prime sector, and \(H[q]=\log |P|\) iff \(q\) is uniform:
+\[
+  q_p = \frac{1}{|P|} \quad \forall p\in P.
+\]
+\end{proposition}
+
+\begin{proof}
+This is the standard Shannon entropy bound.
+The minimum at 0 occurs when one coordinate is 1 and the rest are 0, and the maximum at \(\log|P|\) occurs at the uniform distribution.
+\end{proof}
+
+In the runtime context, convergence of \(H[q_t]\) to some finite value \(H_\infty\) indicates stabilization of the sector energy distribution; combined with \(\mathrm{ME}(T_t)\to 1\) and \(\Delta_t\to 0\), this yields the diagnostic triad discussed in the main text.
+
+\section{Hecke Operators on Truncated $q$--Series}
+
+We now give explicit operator norm estimates and algebraic identities for Hecke operators on truncated $q$--series.
+
+\subsection{Hecke Operator Definition}
+
+Fix a truncation parameter \(N \in \Nbb\).
+Consider the vector space \(\Vcal_N := \Cbb^{N+1}\) with standard basis \(e_0,\dotsc,e_N\) corresponding to coefficients \(a(0),\dotsc,a(N)\) of a $q$--series.
+
+\begin{definition}[Prime Hecke Operator on \(\Vcal_N\)]
+For a prime \(p\) and a coefficient vector \(a = (a(0),\dotsc,a(N)) \in \Vcal_N\), define the truncated Hecke transform \(T_p a \in \Vcal_N\) by
+\[
+  (T_p a)[n] :=
+  \begin{cases}
+    a[pn] + a[n/p] &\text{if } p \mid n,\ pn \le N,\\[0.3em]
+    a[pn] &\text{if } p \nmid n,\ pn \le N,\\[0.3em]
+    a[n/p] &\text{if } p \mid n,\ pn > N,\\[0.3em]
+    0 &\text{if } pn > N,\ p\nmid n/p \text{ invalid}.
+  \end{cases}
+\]
+Equivalently, \(T_p\) is represented by an integer matrix \((T_p)_{n,m}\) with entries
+\[
+  (T_p)_{n,m} =
+  \begin{cases}
+    1 &\text{if } m = pn \le N,\\
+    1 &\text{if } p\mid n \text{ and } m = n/p,\\
+    0 &\text{otherwise}.
+  \end{cases}
+\]
+\end{definition}
+
+\subsection{Operator Norm Bound (Euclidean Norm)}
+
+We equip \(\Vcal_N\) with the Euclidean norm \(\norm{\cdot}_2\).
+The matrix entries of \(T_p\) are in \(\{0,1\}\), and each row has at most two nonzero entries.
+
+\begin{proposition}[Operator Norm Bound for \(T_p\) on \(\Vcal_N\)]
+Let \(T_p\) be defined as above, acting on \((\Vcal_N,\norm{\cdot}_2)\).
+Then
+\[
+  \norm{T_p}_{\mathrm{op},2} \le \sqrt{2}.
+\]
+\end{proposition}
+
+\begin{proof}
+For each \(n\), the \(n\)-th row of \(T_p\) has at most two entries in \(\{0,1\}\).
+Thus the squared Euclidean norm of each row is at most 2.
+The operator norm \(\norm{T_p}_{\mathrm{op},2}\) is bounded by the maximum singular value, which in turn is bounded by the maximum row norm in Euclidean norm.
+Formally, if \(A\) is a matrix and \(r_i\) denotes the \(i\)-th row considered as a vector, then
+\[
+  \norm{A}_{\mathrm{op},2} \le \max_i \norm{r_i}_2.
+\]
+Applying this to \(A = T_p\) yields
+\[
+  \norm{T_p}_{\mathrm{op},2} \le \max_n \sqrt{\#\text{nonzero entries in row }n} \le \sqrt{2}.
+\]
+\end{proof}
+
+For composite \(m\), one can define \(T_m\) via convolution relations or by composing prime operators.
+If \(m = \prod_{j=1}^r p_j^{e_j}\), the naive bound
+\[
+  \norm{T_m}_{\mathrm{op},2} \le \prod_{j=1}^r \norm{T_{p_j}}_{\mathrm{op},2}^{e_j} \le 2^{\frac{1}{2}\sum_j e_j}
+\]
+is sufficient for many purposes; sharper estimates can be obtained by inspecting the combinatorial structure of the matrix.
+
+\subsection{Exact Commutativity and Multiplicativity on \(\Vcal_N\)}
+
+In the infinite-dimensional setting of classical modular forms, Hecke operators satisfy exact commutativity and multiplicativity relations on the appropriate spaces of forms.
+On the truncated space \(\Vcal_N\), these identities hold exactly as long as the indices involved remain below the truncation.
+
+Let \(T_m\) and \(T_n\) be constructed from the prime \(T_p\) matrices using the usual Hecke algebra relations.
+
+\begin{proposition}[Exact Algebraic Relations Below Truncation]
+Fix \(N\in\Nbb\).
+Let \(m,n\) be positive integers such that all indices arising in the action of the Hecke operators \(T_m, T_n, T_{mn}\) on coefficients \(a(0),\dotsc,a(N)\) remain \(\le N\).
+Then on \(\Vcal_N\),
+\[
+  T_m T_n = T_n T_m,\qquad T_m T_n = T_{mn}.
+\]
+\end{proposition}
+
+\begin{proof}[Sketch of Proof]
+The proof proceeds by unraveling the combinatorial definition of the Hecke operators in terms of their action on coefficients and checking that, for indices below the truncation threshold, the compositions of the stencils match the usual Dirichlet convolution formulas.
+This is standard in the theory of Hecke operators on spaces of finite-support sequences.
+The key point is that no term ``falls off'' beyond \(N\); under that condition the truncated matrices reproduce the algebraic identities exactly.
+\end{proof}
+
+In practical computations, we verify these relations numerically (and, when using exact integer matrices, symbolically) inside a prescribed algebra window \(\{m,n \le M\}\) and a truncation \(N\) large enough that boundary effects are negligible for the indices under test.
+
+\section{Summary of Bounds and Conditions}
+
+For ease of reference, we collect here the principal inequalities and conditions used in the development of the Multiplicity Moonshine validation engine:
+
+\begin{itemize}
+  \item \textbf{Channel operator bound:}
+  \(\displaystyle \norm{K_t}_{\mathrm{op}} \le \sum_{p\in P} b_p |w_{p,t}| \le \tau_t < 1.\)
+
+  \item \textbf{Projected iteration contraction:}
+  Under \(\norm{\Pi}_{\mathrm{op}}\le 1\), \(L_F\)–Lipschitz \(F_t\), and ACE budget,
+  \[
+    \norm{\Phi_t(T_1) - \Phi_t(T_2)} \le (L_F + \tau_t)\norm{T_1 - T_2}.
+  \]
+
+  \item \textbf{Fixed point uniqueness and convergence:}
+  If \(L_F + \tau < 1\) (uniform in \(t\)), then the iteration admits a unique fixed point \(T^*\), and
+  \[
+    \norm{T_t - T^*} \le (L_F + \tau)^t \norm{T_0 - T^*}.
+  \]
+
+  \item \textbf{Commutation residual:}
+  \(\displaystyle \norm{\Pi_p U x - U \Pi_p x} \le \Delta_p(U)\norm{x}\), with
+  \(\Delta_p(U) = \norm{U\Pi_p - \Pi_p U}_{\mathrm{op}}\).
+
+  \item \textbf{Manifold energy bound:}
+  \(\displaystyle 0 \le \mathrm{ME}(T) = \frac{\norm{\Pi_P T}^2}{\norm{T}^2 + \varepsilon} \le 1.\)
+
+  \item \textbf{Entropy bound:}
+  \(\displaystyle 0 \le H[q(T)] \le \log |P|\).
+
+  \item \textbf{Hecke prime operator norm:}
+  \(\displaystyle \norm{T_p}_{\mathrm{op},2} \le \sqrt{2}\) for the truncated stencil described above.
+
+  \item \textbf{Hecke algebra relations (within truncation window):}
+  \(\displaystyle T_m T_n = T_n T_m,\quad T_m T_n = T_{mn}\) on \(\Vcal_N\) as long as the indices involved do not exceed \(N\).
+\end{itemize}
+
+These bounds and identities formalize the analytic backbone of the Multiplicity Moonshine validation protocol: they guarantee that the iterated map is well-behaved (contraction), that sectorwise structure is stable (small commutation residual), that energy and entropy diagnostics are meaningful and bounded, and that the discrete Hecke algebra employed in computations mirrors the continuous algebraic structure of modular forms within a controlled truncation regime.
+
+\nocite{*}
+\bibliographystyle{plainnat}
+\bibliography{references}
+\end{document}

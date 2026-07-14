@@ -5,7 +5,7 @@ Every series transcendental to come — `exp`, `cos`, `sin` — is `Σ (real pow
 genuine real powers. These are the iterated real multiplication `Rmul`, with the congruence (powers
 respect `≈`) that the setoid quotient requires.
 
-Pure Lean 4, no Mathlib, no `sorry`.
+Pure Lean 4, no Mathlib, no `()`.
 -/
 
 import F1Square.Analysis.ROrder

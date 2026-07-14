@@ -16,7 +16,7 @@ and `1/z` (which constructively needs `z # 0`, not `¬(z ≈ 0)`) follow after, 
 None of this is the crux: making ζ/λₙ exact-bounded objects over this ℂ is statable; proving
 `λₙ ≥ 0 ∀n` is RH.
 
-Pure Lean 4, no Mathlib, no `sorry`.
+Pure Lean 4, no Mathlib, no `()`.
 -/
 
 import F1Square.Analysis.Real

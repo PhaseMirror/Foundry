@@ -23,7 +23,7 @@ the geometry rather than assumed: `blZeroSum_ofZeros` (`Square/BLPipeline.lean`)
 `bl` and its convergence `reg`). It does NOT prove WHERE the zeros are (RH); the crux fields stay
 `none`.
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 

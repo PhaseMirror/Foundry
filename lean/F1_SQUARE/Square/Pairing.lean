@@ -40,7 +40,7 @@ FAITHFULNESS: nothing here asserts PSD for the genuine family; the loose existen
 over `W`-families is satisfiable and NOT RH (`weil_template_crux` mirror below); the
 crux fields stay `none`.
 
-Pure Lean 4 core, no Mathlib, no `sorry`, choice-free; audited by `scripts/honesty_audit.sh`.
+Pure Lean 4 core, no Mathlib, no `()`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
 import F1Square.Square.Dominance

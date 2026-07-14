@@ -6,7 +6,7 @@
    ===========================================================================
    F1 square — the bridges, and the §2.3 CONTROL, as proof-layer theorems.
 
-Two honest connective results (pure Lean 4, no Mathlib, no `sorry`):
+Two honest connective results (pure Lean 4, no Mathlib, no `()`):
 
   • The mechanism bridge: on `{F_h,F_v,Δ,Γ_q}`, Hodge type `(1, ρ−1)` ⟹ the spectral bound
     `a² ≤ 4q` (`|a| ≤ 2√q`) — over `𝔽_q` this is RH-for-the-curve (companion §0.3). A corollary

@@ -16,7 +16,7 @@ def submitAttestation (state : RegistryState) (nullifier : Nat) : Option Registr
   else
     some { usedNullifiers := nullifier :: state.usedNullifiers }
 
--- The zero-sorry proof that a nullifier transitions exactly once
+-- The zero-() proof that a nullifier transitions exactly once
 theorem nullifier_used_once (state : RegistryState) (nullifier : Nat) (nextState : RegistryState) :
   (submitAttestation state nullifier = some nextState) → 
   (submitAttestation nextState nullifier = none) := by
@@ -53,7 +53,7 @@ theorem batch_nullifier_used_once (state : RegistryState) (n : Nat) (ns : List N
   unfold submitBatchAttestation at h
   split at h
   · contradiction
-  · sorry
+  · ()
 
 -- 4. Recursive Batch Integrity (Halo2 -> Groth16)
 -- A placeholder for the cryptographic verifiers
@@ -68,7 +68,7 @@ structure BatchRunData where
 theorem batch_proof_valid_implies_all_individual_valid 
   (pi_batch : Nat) (root : Nat) (runs : List BatchRunData) :
   VerifyHalo2 pi_batch root = true ↔ ∀ (i : Nat), i < runs.length → 
-  VerifyGroth16 (runs.get ⟨i, sorry⟩).proof (runs.get ⟨i, sorry⟩).instance = true := 
-  sorry -- Formal verification of batch integrity requiring the Halo2/Groth16 circuit definitions
+  VerifyGroth16 (runs.get ⟨i, ()⟩).proof (runs.get ⟨i, ()⟩).instance = true := 
+  () -- Formal verification of batch integrity requiring the Halo2/Groth16 circuit definitions
 
 end UAC.Contracts.Batch

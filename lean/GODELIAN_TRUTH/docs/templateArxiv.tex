@@ -1,0 +1,374 @@
+\documentclass[12]{amsart}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{geometry}
+\usepackage{mathrsfs}
+\usepackage{lmodern}
+\usepackage{graphicx}
+\usepackage{epigraph}
+\usepackage{fancyhdr}
+\geometry{margin=1in}
+\pagestyle{fancy}
+\lhead{Recursive Origins}
+\rhead{\thepage}
+\fancyfoot[C]{}        % Clear center footer (where default page number appears)
+\fancyfoot[L]{}        % Optional: clear left footer
+\fancyfoot[R]{}        % Optional: clear right footer
+\renewcommand{\headrulewidth}{0.4pt}  % keep or customize header line
+\renewcommand{\footrulewidth}{0pt}    
+% Define theorem style (optional)
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{definition}[theorem]{Definition}
+\begin{document}
+
+\begin{titlepage}
+    \centering
+
+    \vspace{0.5cm}
+    {\LARGE\bfseries A Fixed-Point Semantics \\ for Gödel Sentences with Prime-Sieved Variants
+    \par}
+
+    \vspace{1cm}
+     {\bfseries Citizen Gardens 
+     \par}
+     \vspace{0.5cm}
+    \textit{Institute for Mathematical Discovery}
+     \vspace{1cm}
+
+    {\normalsize \today \par}
+
+    \vfill
+
+   
+    \vspace{0.5em}
+    \begin{minipage}{0.85\textwidth}
+        \small
+        We present a dynamical semantics for arithmetic truth based on a contractive operator $\mathbb{T}_\lambda$ acting on the space of sentence-valuations $[0,1]^{\Sent}$. The map $\mathbb{T}_\lambda(v)=(1-\lambda)v+\lambda\,\Phi_{\alpha,c}(v)$ combines a grounded, non-expansive update $\Gamma$ (strong Kleene on $[0,1]$ with meta-level arithmetic and provability atoms) with a strictly contractive smoothing $\Phi_{\alpha,c}=(1-\alpha)\Gamma+\alpha c$, $\alpha\in(0,1)$. This yields $\Lip(\mathbb{T}_\lambda)\le 1-\lambda\alpha<1$ and thus a unique fixed point $v^*$ by Banach's theorem, with convergence from any start. In this external semantics, the G\"odel sentence $G$ receives a stable value $v^*(G)=1$ under the assumption of soundness of $F$ (with a natural choice of the bias $c$), converting self-reference from a static paradox into a well-posed limit of an explicitly convergent process. We stress that this constitutes a \emph{meta-consistent} grounded valuation and not an internally definable truth predicate for $F$, thus respecting Tarski's undefinability.
+
+We further develop a prime-sieved variant in which updates occur only at prime indices. The limit remains $v^*$ while the convergence rate is subexponential in the step index $k$ but exponential in the number of effective updates $\pi(k)$, providing a quantitative notion of ``temporal sieving.'' A general ``lawful schedules'' corollary shows that any schedule with infinitely many effective updates converges to the same fixed point. Finally, we formalize a conservative meta-theory $F'$ that axiomatizes the fixed-point semantics via a uniqueness schema using Cauchy names, without inflating the deductive power of $F$ on $F$-sentences. The framework is simple, rigorous, and modular, and it opens a tractable route for analyzing selective-update truth dynamics within foundations.
+
+
+
+    \end{minipage}
+
+\end{titlepage}
+
+
+\clearpage
+\clearpage
+\thispagestyle{empty}
+\begin{center}
+    \Large\textbf{A Dynamical Systems Approach to Gödelian Truth}
+\end{center}
+
+\vspace{2em}
+
+\epigraph{“We are not speaking here of truth, but of provability.”
+}{\textit{— Kurt Gödel}}
+
+\vspace{1em}
+
+
+\section{Introduction}
+
+G\"odel's first incompleteness theorem shows that any sufficiently strong, recursively axiomatized theory $F$ of arithmetic contains a sentence $G$ asserting its own unprovability. Classical presentations make $G$ a focal point of self-reference and undefinability: $G$ is true but not provable (assuming soundness of $F$), and a uniform truth predicate is not definable within $F$ (Tarski).
+
+This paper proposes a minimal, \emph{external} dynamical semantics in which sentence-valuations evolve under a strict contraction on a complete metric space. The unique fixed point provides stable values for all sentences, including $G$. Our construction is deliberately modest: it does not attempt to define internal truth for $F$; rather, it provides a convergent, grounded semantics that respects Tarski while delivering explicit convergence guarantees, including a prime-sieved variant with a clean, analyzable rate.
+
+\paragraph{Contributions.}
+\begin{itemize}[leftmargin=2em]
+\item We define a grounded, non-expansive operator $\Gamma$ on valuations using strong Kleene connectives, meta-level arithmetic atoms, and provability atoms (\Cref{sec:Gamma}).
+\item We obtain a strict contraction $\Tlam$ by smoothing $\Gamma$ toward a bias $c$; Banach yields a unique fixed point $v^*$ and global convergence (\Cref{sec:contraction}).
+\item We analyze the G\"odel coordinate $G$ under soundness, obtaining $v^*(G)=1$ with a natural choice of $c(G)$ (\Cref{sec:Godel}).
+\item We study \emph{prime-sieved} and \emph{lawful} schedules, proving convergence to $v^*$ with explicit rates in the number of effective updates (\Cref{sec:prime,sec:lawful}).
+\item We formalize a conservative meta-theory $F'$ that axiomatizes the fixed-point semantics via Cauchy names and uniqueness (\Cref{sec:conservativity}).
+\end{itemize}
+
+\paragraph{Philosophical stance (one paragraph).}
+Our semantics is \emph{external} and \emph{grounded}: it yields stable values (including for $G$) by convergence of a contracting process on valuations. It does not violate Tarski's theorem nor claim internal definability in $F$. Instead, it shifts the explanatory burden from static predicates to convergent processes.
+
+% ===============================
+\section{Valuation space and the grounded update}\label{sec:Gamma}
+
+Let $\Sent$ denote the set of G\"odel-coded sentences of a recursively axiomatized arithmetic theory $F$.
+We consider valuations $v:\Sent\to[0,1]$ and write
+\[
+\Vspace=[0,1]^{\Sent}.
+\]
+Equip $\Vspace$ with either the sup-norm $d_\infty(v,w)=\|v-w\|_\infty:=\sup_{\varphi}|v(\varphi)-w(\varphi)|$ (complete) or the product metric
+\[
+d_\pi(v,w)=\sum_{n\ge 0}2^{-n-1}\,|v(\varphi_n)-w(\varphi_n)|,
+\]
+for some fixed enumeration $(\varphi_n)$. Both are complete; $d_\pi$ induces the product topology and is compact by Tychonoff. The metrics are equivalent up to constants for our purposes.
+
+\subsection{The grounded operator $\Gamma$}\label{subsec:GammaDef}
+We define $\Gamma:\Vspace\to\Vspace$ clausewise:
+\begin{itemize}[leftmargin=2em]
+\item \textbf{Arithmetic atoms.} Evaluate classically at the meta-level, giving values in $\{0,1\}$ independent of $v$.
+\item \textbf{Provability atoms.} For any sentence $\psi$, set $\Gamma(v)(\Prov_F(\psi)):=\1_{\Prov_F(\psi)}$.
+\item \textbf{Truth/quotation (optional).} If a truth symbol $T$ appears, use grounded reading $\Gamma(v)(T(\varphi)):=v(\varphi)$.
+\item \textbf{Connectives.} Use strong Kleene on $[0,1]$: $\neg x:=1-x$, $x\wedge y:=\min\{x,y\}$, $x\vee y:=\max\{x,y\}$, and define $\Rightarrow,\Leftrightarrow$ via these.
+\item \textbf{Quantifiers (optional).} Either use bounded grounding with syntactic bounds $N(\varphi)$, or define $\forall x\,\varphi(x):=\lim_{k}\inf_{n\le k}\Gamma(v)(\varphi(\bar n))$ and similarly for $\exists$ via $\sup$ (limits taken outside $\Gamma$). Each finite stage is 1-Lipschitz; limits preserve non-expansiveness.
+\end{itemize}
+
+\begin{proposition}[Non-expansiveness of $\Gamma$]\label{prop:LipGamma}
+$\Lip(\Gamma)\le 1$ on $(\Vspace,d_\infty)$ and, up to constants, on $(\Vspace,d_\pi)$.
+\end{proposition}
+
+\begin{proof}
+See Appendix~A. Primitive clauses are independent of $v$ (Lipschitz $0$) or coordinate copies (Lipschitz $1$). Strong Kleene connectives are 1-Lipschitz in $\ell_\infty$; composition preserves 1-Lipschitzness. Induct on formula complexity. For $d_\pi$, use that $d_\pi\le C\|\,\cdot\,\|_\infty$ for a universal constant.
+\end{proof}
+
+% ===============================
+\section{The contractive transformer and main fixed-point theorem}
+\label{sec:contraction}
+
+Fix $\alpha\in(0,1)$ and a bias valuation $c\in[0,1]^{\Sent}$ (e.g., $c\equiv \frac12$ or sentence-specific). Define
+\[
+\Phi_{\alpha,c}(v):=(1-\alpha)\,\Gamma(v)+\alpha\,c.
+\]
+Then $\Lip(\Phi_{\alpha,c})\le (1-\alpha)\Lip(\Gamma)\le 1-\alpha$.
+
+\begin{definition}[The $\Lambda$-operator]
+For $\lambda\in(0,1)$, set
+\[
+\Tlam(v):=(1-\lambda)\,v+\lambda\,\Phi_{\alpha,c}(v).
+\]
+\end{definition}
+
+\begin{theorem}[Existence \& uniqueness of the fixed point]\label{thm:fixpoint}
+On $(\Vspace,d_\infty)$ (complete) or $(\Vspace,d_\pi)$ (compact/complete), $\Tlam$ is a strict contraction with
+\[
+\Lip(\Tlam)\le (1-\lambda)+\lambda(1-\alpha)=1-\lambda\alpha<1.
+\]
+Hence there exists a unique fixed point $v^*$ and for every $v_0$ the Picard iteration $v_{k+1}=\Tlam(v_k)$ converges to $v^*$ at rate $1-\lambda\alpha$.
+\end{theorem}
+
+\begin{proof}
+Immediate from the Lipschitz bounds and Banach's theorem.
+\end{proof}
+
+\begin{remark}[Non-triviality]
+Unlike the constant map $v\mapsto 1-\Prov_F(\cdot)$, $\Phi_{\alpha,c}$ depends on $v$ via $\Gamma$; thus $v^*=\Phi_{\alpha,c}(v^*)$ is a grounded semantics, not merely a non-provability labelling.
+\end{remark}
+
+% ===============================
+\section{The G\"odel coordinate}\label{sec:Godel}
+
+Let $G$ be the diagonal sentence $G\leftrightarrow \neg\Prov_F(\ulcorner G\urcorner)$. Within $\Gamma$, the coordinate for $G$ is
+\[
+\Gamma(v)(G)=1-\1_{\Prov_F(G)}.
+\]
+Consequently
+\[
+\Phi_{\alpha,c}(v)(G)=(1-\alpha)\bigl(1-\1_{\Prov_F(G)}\bigr)+\alpha\,c(G).
+\]
+The $G$-coordinate of $\Tlam$ obeys the scalar recursion
+\[
+t_{k+1}=(1-\lambda)t_k + \lambda\Bigl[(1-\alpha)\bigl(1-\1_{\Prov_F(G)}\bigr)+\alpha\,c(G)\Bigr].
+\]
+
+\begin{theorem}[Meta-consistent valuation of $G$]\label{thm:Godel}
+Assume $F$ is sound. If $c(G)=1$, then $t_k\to 1$ and hence $v^*(G)=1$.
+If (contrary to soundness) $\Prov_F(G)$ held, then $t_k\to \alpha\,c(G)$.
+\end{theorem}
+
+\noindent\textit{Philosophical interpretation.} This assigns a stable, grounded value to $G$ within an external semantics. It does not define a truth predicate in $F$ and is fully compatible with Tarski's undefinability.
+
+% ===============================
+\section{Prime-sieved updates and rates}\label{sec:prime}
+
+We analyze selective-update schedules. Let $\mathbb{P}$ be the primes and define
+\[
+v_{k+1}=
+\begin{cases}
+\Tlam(v_k), & k\in\mathbb{P},\\
+v_k, & k\notin\mathbb{P}\ \text{or }k=1.
+\end{cases}
+\]
+Let $\pi(k)$ be the prime-counting function.
+
+\begin{theorem}[Prime-sieved convergence with explicit rate]\label{thm:prime}
+For the prime-sieved iteration, $v_k\to v^*$ and
+\[
+\norm{v_k-v^*}\ \le\ (1-\lambda\alpha)^{\pi(k)}\,\norm{v_0-v^*}.
+\]
+Since $\pi(k)\sim k/\log k$, convergence is exponential in $\pi(k)$ and subexponential in $k$.
+\end{theorem}
+
+\begin{proof}
+Each prime step applies the same contraction $\Tlam$; composite steps are identities. After $m=\pi(k)$ effective updates, we have $\Tlam^{\,m}(v_0)$.
+\end{proof}
+
+\begin{remark}[Scalar closed form for a single coordinate]
+For any affine one-dimensional coordinate $x_{m+1}=(1-\rho)x_m+\rho b$ with $\rho=\lambda\alpha$ and $b$ constant, the $m$-th effective update solves $x_m=(1-\rho)^m x_0+[1-(1-\rho)^m]b$. Translating to primes yields the stated bound.
+\end{remark}
+
+% ===============================
+\section{Lawful schedules}\label{sec:lawful}
+
+\begin{definition}[Lawful schedule]
+A set $\sigma\subseteq\N$ is \emph{lawful} if $|\sigma\cap[1,N]|\to\infty$ as $N\to\infty$, i.e., there are infinitely many effective updates.
+\end{definition}
+
+\begin{corollary}[Convergence under lawful schedules]\label{cor:lawful}
+If $v_{k+1}=\Tlam(v_k)$ for $k\in\sigma$ and $v_{k+1}=v_k$ otherwise, with $\sigma$ lawful, then $v_k\to v^*$ and after $m$ effective updates
+\[
+\norm{v_k-v^*}\ \le\ (1-\lambda\alpha)^{m}\,\norm{v_0-v^*}.
+\]
+\end{corollary}
+
+\begin{proof}
+After $m$ effective updates the state equals $\Tlam^{\,m}(v_0)$; apply \Cref{thm:fixpoint}.
+\end{proof}
+
+% ===============================
+\section{A conservative meta-theory $F'$}\label{sec:conservativity}
+
+We sketch two standard realizations.
+
+\paragraph{Via weak second-order arithmetic.}
+Let $F' := F + \mathrm{RCA}_0$ (or a similar weak system of analysis for Cauchy names) augmented by a function symbol $T:\Sent\to[0,1]$ (coded by Cauchy names) and axioms:
+(i) $T$ is the (Cauchy) limit of the Picard iteration of $\Tlam$; (ii) uniqueness of the fixed point by Banach (formalizable as a $\Delta^0_1$-comprehension argument given the contraction modulus).
+Because $\Tlam$ is a primitive-recursive operator on codes with rational Lipschitz modulus $\lambda\alpha$, $F'$ is a definitional extension and conservative over $F$ for $F$-sentences.
+
+\paragraph{Within PA using names.}
+Alternatively, remain in $F$ (e.g., PA) and add $T$ with a schema asserting that for each $\varphi$ and rational $\varepsilon>0$, there exists $m$ such that for all $n\ge m$, $|v_n(\varphi)-v_{n+1}(\varphi)|<\varepsilon$ and $|v_n(\varphi)-T(\varphi)|<\varepsilon$ (where $v_{n+1}=\Tlam(v_n)$). Uniqueness follows from the geometric contraction. This is a definitional extension by a total recursive functional, hence conservative.
+
+\begin{remark}
+In either case, the meta-theory fixes the external semantics without expanding the arithmetical consequences of $F$.
+\end{remark}
+
+% ===============================
+\section{Related work and positioning}
+
+Our grounded operator $\Gamma$ is in the spirit of Kripke's fixed-point theories of truth on partial structures, but we layer a strict contraction to obtain uniqueness and geometric convergence. The Mann/Krasnosel'skii lineage justifies damped iterations; here damping is encoded in $\Phi_{\alpha,c}$ and the outer $\lambda$-averaging, yielding a transparent contraction constant $1-\lambda\alpha$. Prime-sieved scheduling provides a simple, number-theoretically meaningful example of selective updates with explicit rates via $\pi(k)$.
+
+% ===============================
+\section{Conclusion}
+
+We provide a clean fixed-point semantics for valuations that (i) converges globally under a strict contraction; (ii) yields a stable value for $G$ under soundness; (iii) admits selective-update schedules (notably primes) with explicit rate control. The semantics is external and grounded, respects Tarski, and is simple enough to formalize conservatively over $F$.
+
+\bigskip
+\noindent\textbf{Acknowledgments.} % Optional.
+
+% ===============================
+\appendix
+
+\section*{Appendix A — Non-expansiveness of $\Gamma$}
+
+We outline the proof that $\Lip(\Gamma)\le 1$; details follow standard arguments (see also the main text).
+
+\paragraph{Primitive clauses.}
+Arithmetic and provability atoms are independent of $v$, hence contribute zero difference. For a truth/quotation symbol with grounded reading $\Gamma(v)(T(\varphi)):=v(\varphi)$, we get
+$|\Gamma(v)(T\varphi)-\Gamma(w)(T\varphi)|\le \|v-w\|_\infty$.
+
+\paragraph{Connectives.}
+Negation $x\mapsto 1-x$ is 1-Lipschitz. Conjunction/disjunction satisfy
+\[
+|\min\{x,y\}-\min\{x',y'\}|\le \max\{|x-x'|,|y-y'|\},\quad
+|\max\{x,y\}-\max\{x',y'\}|\le \max\{|x-x'|,|y-y'|\}.
+\]
+Compositions preserve 1-Lipschitzness.
+
+\paragraph{Induction.}
+Induct on formula complexity using the previous bounds. Taking the supremum over $\varphi$ yields $\|\Gamma(v)-\Gamma(w)\|_\infty \le \|v-w\|_\infty$.
+For $d_\pi$, equivalence with $\|\cdot\|_\infty$ (up to constants) transfers the estimate.
+
+\paragraph{Quantifiers.}
+For bounded grounding, finite inf/sup are 1-Lipschitz in $\ell_\infty$; limits of non-expansive maps remain non-expansive under pointwise limits taken outside $\Gamma$.
+
+\hfill$\square$
+
+\section*{Appendix B — Conservativity via effective contraction}
+
+Let $\Phi_{\alpha,c}=(1-\alpha)\Gamma+\alpha c$ with rational $\alpha\in(0,1)$ and recursive $c$.
+For Picard iteration $v_{m+1}=\Tlam(v_m)$ we have
+\[
+\|v_m-v^*\|_\infty \le (1-\lambda\alpha)^m \,\|v_0-v^*\|_\infty.
+\]
+Thus each coordinate admits a primitive-recursive Cauchy modulus. Coding valuations as Cauchy names of rationals, adding a function symbol $T$ for $v^*$ via its defining limit is a definitional extension; uniqueness follows from Banach, formalizable in a weak base such as $\mathrm{RCA}_0$, or via primitive-recursive operators in PA. Hence $F'$ is conservative over $F$ for $F$-sentences.
+
+\section*{Appendix C — Prime-sieve simulator (Python)}
+
+\begin{verbatim}
+# Grounded contraction with prime-sieved scheduling + empirical rate check
+
+from math import log
+
+# --- logic primitives (strong Kleene on [0,1]) ---
+def neg(x):  return 1.0 - x
+def conj(x,y): return min(x,y)
+def disj(x,y): return max(x,y)
+def impl(x,y): return disj(1.0 - x, y)
+
+# --- language / indices ---
+SENTS = {"G":0, "P":1, "Q":2, "P_and_Q":3, "not_G":4}
+
+# provability oracle (demo)
+PROV = {"P": True, "Q": False, "G": False}  # soundness: Prov_F(G)=False
+
+# --- Gamma: grounded, non-expansive ---
+def Gamma(v):
+    out = v.copy()
+    out[SENTS["P"]] = 1.0 if PROV["P"] else 0.0
+    out[SENTS["Q"]] = 1.0 if PROV["Q"] else 0.0
+    out[SENTS["G"]] = 1.0 if not PROV["G"] else 0.0
+    out[SENTS["P_and_Q"]] = conj(out[SENTS["P"]], out[SENTS["Q"]])
+    out[SENTS["not_G"]] = neg(out[SENTS["G"]])
+    return out
+
+def Phi(v, alpha=0.3, c=None):
+    if c is None:  c = {i: 0.5 for i in SENTS.values()}
+    g = Gamma(v)
+    return {i: (1 - alpha) * g[i] + alpha * c[i] for i in SENTS.values()}
+
+def T(v, lam=0.6, alpha=0.3, c=None):
+    pv = Phi(v, alpha=alpha, c=c)
+    return {i: (1 - lam) * v[i] + lam * pv[i] for i in SENTS.values()}
+
+def primes_upto(n):
+    sieve = [True]*(n+1); sieve[:2] = [False, False]
+    p = 2
+    while p*p <= n:
+        if sieve[p]:
+            for q in range(p*p, n+1, p): sieve[q] = False
+        p += 1
+    return [i for i,ok in enumerate(sieve) if ok]
+
+def iterate_prime_sieve(steps=5000, lam=0.6, alpha=0.3):
+    v = {i: 0.0 for i in SENTS.values()}
+    c = {i: 0.5 for i in SENTS.values()}
+    primes = set(primes_upto(steps))
+    m = 0
+    for k in range(1, steps+1):
+        if k in primes:
+            v = T(v, lam=lam, alpha=alpha, c=c)
+            m += 1
+    # theoretical factor after m updates
+    rate = (1 - lam*alpha) ** m
+    return v, m, rate
+
+if __name__ == "__main__":
+    lam, alpha = 0.6, 0.3
+    v_star, m, fac = iterate_prime_sieve(steps=8000, lam=lam, alpha=alpha)
+    print("Final valuation:", {k: round(v_star[i], 4) for k,i in SENTS.items()})
+    print(f"Effective updates m={m}, theoretical shrink factor ≈ (1-λα)^m = {fac:.3e}")
+\end{verbatim}
+
+% ===============================
+\section*{References}
+
+\bibliographystyle{alpha}
+\bibliography{reference}
+\nocite{Godel1931,Tarski1956,Lob1955,Banach1922,Mann1953,Krasnoselskii1964,Kripke1975,Enderton2001,Smullyan1992,Apostol1976,MontgomeryVaughan2007,Hadamard1896,ValleePoussin1896,KhamsiKirk2001,BoolosJeffrey1999,Feferman1984}
+
+\end{document}
+
+
+\nocite{*}
+\bibliographystyle{unsrt}
+\bibliography{references}
+
+\end{document}

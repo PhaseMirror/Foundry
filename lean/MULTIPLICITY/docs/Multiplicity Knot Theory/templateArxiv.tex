@@ -1,0 +1,1231 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools,bm}
+\usepackage{hyperref}
+\usepackage{graphicx,xcolor,booktabs,array,longtable,enumitem}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{listings}
+\usepackage[most]{tcolorbox}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!50!black,
+  citecolor=blue!50!black,
+  urlcolor=blue!50!black
+}
+
+\definecolor{codebg}{RGB}{25,28,35}
+\definecolor{codetext}{RGB}{222,230,240}
+\definecolor{kw}{RGB}{120,194,255}
+\definecolor{cm}{RGB}{140,140,160}
+\definecolor{st}{RGB}{255,210,130}
+\definecolor{dkblue}{RGB}{0,40,100}
+\definecolor{mgreen}{RGB}{20,130,80}
+\definecolor{mpurple}{RGB}{90,30,140}
+
+\lstdefinestyle{python}{
+  language=Python,
+  backgroundcolor=\color{codebg},
+  basicstyle=\ttfamily\small\color{codetext},
+  keywordstyle=\color{kw}\bfseries,
+  commentstyle=\color{cm},
+  stringstyle=\color{st},
+  numberstyle=\tiny\color{cm},
+  numbers=left,
+  stepnumber=1,
+  frame=single,
+  framesep=4pt,
+  breaklines=true,
+  showstringspaces=false,
+  tabsize=4,
+  xleftmargin=16pt,
+  xrightmargin=4pt
+}
+\lstset{style=python}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+\title{\textbf{Multiplicity Knot Theory}\\[4pt]
+A Defensive Publication and Mathematical Integration Report}
+\author{R. O. van Gelder \& S. Hope \\ Citizen Gardens \\ The Foundation of Multiplicity}
+\date{25 April 2026}
+
+\begin{document}
+\maketitle
+
+\begin{tcolorbox}[colback=dkblue!6,colframe=dkblue,title=\textbf{Defensive Publication Notice}]
+This document is intended as an enabling technical disclosure and defensive publication
+for the inventions described herein. It is designed to constitute prior art as of the
+publication date, including but not limited to:
+\begin{enumerate}[nosep]
+  \item The canonical axis construction for prime-indexed $SU(2)$ generators in
+        Multiplicity Knot Theory (MKT).
+  \item The parameter-free protection factor $P(K)$ and its wavefunction
+        renormalization $Z$-factor.
+  \item The integration of MKT with the PhaseMirror-HQ software stack, including
+        sigma-kernel admissibility gates and knot-modulated heartbeat scheduling.
+\end{enumerate}
+\end{tcolorbox}
+\newpage
+\tableofcontents
+
+\section{Executive Summary}
+
+Multiplicity Knot Theory (MKT) is a prime-indexed, recursively stable framework in
+which topology emerges when prime numbers acquire directional degrees of freedom
+inside $SU(2)$. Instead of treating primes as scalar labels in an abelian phase
+theory, MKT assigns to each prime $p$ a canonical axis
+$\hat{n}_p^{\text{mult}} \in S^2$ and an $SU(2)$ generator
+\[
+  O_p = \exp\!\bigl(i \log p \cdot \hat{n}_p^{\text{mult}} \cdot \vec{\sigma}\bigr),
+\]
+where $\vec{\sigma}$ are the Pauli matrices.
+
+The PhaseMirror-HQ repository provides a high-performance runtime and AGI
+orchestration environment with a dedicated \texttt{multiplicity/} package. Within
+this environment, MKT plays three roles:
+
+\begin{enumerate}[label=\textbf{R\arabic*},leftmargin=*]
+  \item \textbf{Topological operator layer.} MKT provides non-abelian $SU(2)$
+        generators $O_p$ and braid words $W_K$ that encode knot topology via traces.
+  \item \textbf{Protection layer.} A parameter-free protection factor
+        $P(K) = \exp(c_0^{\text{phys}}\Delta_K^M)$ modulates physical or computational
+        \emph{admissibility} of states, where $\Delta_K^M$ is a Markov-corrected
+        chirality observable.
+  \item \textbf{Scheduling layer.} The same $P(K)$ ties into a Zeno heartbeat
+        scheduler, with knot type controlling an effective update period $T_{\text{hb}}$.
+\end{enumerate}
+
+All parameters in the final MKT formula are determined by three universal constants:
+the reference prime $e$, the IR fixed point $\ln 10$, and the double cover
+degree $2$ of $SU(2)\to SO(3)$. No tunable hyperparameters are introduced.
+
+This document fixes the \emph{canonical} MKT definitions, proves key structural
+properties, and publishes concrete Python code snippets that implement the theory in
+PhaseMirror-HQ (notably in \texttt{mkt\_axis.py}, \texttt{mkt\_bridge.py}, and
+\texttt{mkt\_sigma.py}). The goal is both scientific clarity and explicit prior-art
+coverage.
+
+\section{Original MKT and Abelian Collapse}
+
+\subsection{Original Generator}
+
+The original MKT generator assigned to each prime $p$ an $SU(2)$ element
+\begin{equation}
+  O_p^{\text{orig}} = \exp\!\bigl(i \log p \, \sigma_x\bigr),
+  \label{eq:orig-gen}
+\end{equation}
+so that all primes share the same axis $\hat{e}_x$.
+
+Given a braid word $W$ constructed from primes $p_k$ with signs
+$\sigma_k \in \{\pm 1\}$, the corresponding ``Jones-like'' observable was of the
+form
+\begin{equation}
+  J_{\text{MKT}}(W) = \sum_{\pm}
+  \exp\!\Bigl(i \sum_k \pm \log p_k\Bigr),
+\end{equation}
+i.e.\ a two-mode interference system based purely on logarithmic prime phases.
+
+\subsection{Abelian Collapse Theorem}
+
+\begin{theorem}[Abelian Collapse]
+For all primes $p,q$, the original generators commute:
+\[
+  [O_p^{\text{orig}}, O_q^{\text{orig}}] = 0.
+\]
+Consequently, the $*$-algebra generated by $\{O_p^{\text{orig}}\}_{p\in\mathbb{P}}$
+is isomorphic to $\mathbb{C}\times\mathbb{C}$, and the original MKT construction
+is a purely abelian phase theory without topological content.
+\end{theorem}
+
+\begin{proof}[Proof (sketch)]
+All $O_p^{\text{orig}}$ share the same axis $\sigma_x$ and differ only by their
+rotation angle $\log p$. The exponentials $\exp(i\theta\sigma_x)$ form a commuting
+one-parameter subgroup of $SU(2)$, whence all products commute. The spectral
+decomposition of $\sigma_x$ has two eigenvalues, giving rise to
+$\mathbb{C}\times\mathbb{C}$ as the algebra of diagonalizable operators with
+two independent eigenchannels.
+\end{proof}
+
+\section{Canonical MKT Axis Construction}
+
+\subsection{Requirements}
+
+To obtain a non-abelian, topologically sensitive theory, we require a prime-indexed
+axis assignment
+\[
+  \hat{n}_p^{\text{mult}} \in S^2 \subset \mathbb{R}^3
+\]
+such that:
+
+\begin{enumerate}[label=(\roman*),leftmargin=*]
+  \item \textbf{Non-abelianity:} For almost all distinct primes $p, q$,
+        $[O_p,O_q] \neq 0$.
+  \item \textbf{Multiplicity completeness:} The axis components capture the three
+        key spectral layers of multiplicity theory: oscillatory, coherent, and
+        density.
+  \item \textbf{Non-multiplicativity:} The axis should not be a pure function of
+        $\log p$ alone, to avoid the original log-linear collapse.
+\end{enumerate}
+
+\subsection{Canonical Axis Definition}
+
+\begin{definition}[Canonical MKT Axis]
+For each prime $p$, define a vector
+\[
+  v(p) = 
+  \bigl(A_1(p), A_2(p), A_3(p)\bigr)
+  := \bigl(\sin\log p,\, \cos\log p,\, p^{-1/2}\bigr),
+\]
+and the axis
+\[
+  \hat{n}_p^{\text{mult}} = \frac{v(p)}{\|v(p)\|} \in S^2.
+\]
+\end{definition}
+
+\begin{remark}
+The three components admit the following interpretation:
+\begin{itemize}[nosep]
+  \item $A_1(p)=\sin\log p$: imaginary (oscillatory) phase component.
+  \item $A_2(p)=\cos\log p$: real (coherent) phase component.
+  \item $A_3(p)=p^{-1/2}$: density component, in line with prime number theorem
+        scaling.
+\end{itemize}
+\end{remark}
+
+\subsection{Non-Parallelism and Non-Abelianity}
+
+\begin{theorem}[Canonical Non-Parallelism]
+Assume $\hat{n}_p^{\text{mult}}$ and $\hat{n}_q^{\text{mult}}$ are parallel for
+distinct primes $p\neq q$. Then
+\[
+  \tan(\log p) = \tan(\log q)
+  \quad\text{and}\quad
+  \sqrt{\frac{p}{q}} = \frac{\cos\log p}{\cos\log q}
+\]
+must hold simultaneously, which is generically impossible for distinct primes.
+Therefore, for almost all distinct $p,q$,
+$\hat{n}_p^{\text{mult}} \not\parallel \hat{n}_q^{\text{mult}}$.
+\end{theorem}
+
+\begin{corollary}[Non-Abelianity]
+Define
+\[
+  O_p = \exp\!\bigl(i \log p \cdot \hat{n}_p^{\text{mult}} \cdot \vec{\sigma}\bigr) 
+  \in SU(2),
+\]
+where $\vec{\sigma}=(\sigma_x,\sigma_y,\sigma_z)$. Then for almost all pairs of
+distinct primes $p,q$,
+\[
+  [O_p, O_q] \neq 0.
+\]
+\end{corollary}
+
+\section{Global Deformation Parameter and Markov Weight}
+
+\subsection{Global $q$ and Temperley--Lieb Loop Weight}
+
+Using the reference prime $p_{\text{ref}}=e$, the original abelian generator
+becomes
+\[
+  O_{p_{\text{ref}}}^{\text{orig}} = \exp(i \sigma_x),
+\]
+and we identify the global deformation parameter
+\[
+  q_{\text{global}} = e^{i} = \cos 1 + i \sin 1.
+\]
+
+The corresponding Temperley--Lieb loop weight is
+\[
+  \delta_{\text{global}} = 2\cos 1 \approx 1.080605,
+\]
+which determines the Markov weight
+\[
+  z_{\text{Markov}} = \frac{1}{\delta_{\text{global}}}
+  = \frac{1}{2\cos 1} \approx 0.9254.
+\]
+
+\subsection{Kauffman Parameter and $c_0^{\text{phys}}$}
+
+The Kauffman-type parameter
+\[
+  \alpha_K = \frac{\pi-1}{2} \approx 1.070796
+\]
+gives a physical coupling
+\[
+  c_0^{\text{phys}} = \cos\alpha_K \approx 0.479426.
+\]
+
+\section{Wavefunction Renormalization and Z-Factor}
+
+\subsection{Dual Routes to $c_0$}
+
+Two independent derivations produce distinct couplings:
+
+\begin{itemize}[leftmargin=*]
+  \item RG route (Wetterich flow): $c_0^{\text{eff}} \approx 0.267$, with an
+        anomalous dimension $\gamma_{\text{RG}} \approx -2.156$.
+  \item Representation route (Kauffman locking):
+        $c_0^{\text{phys}} = \cos\alpha_K \approx 0.4794$ with a
+        dimension $\gamma_K := \ln(\cos\alpha_K/\ln 10)\approx-1.5692$.
+\end{itemize}
+
+We define the wavefunction renormalization factor
+\[
+  Z := \frac{c_0^{\text{phys}}}{c_0^{\text{eff}}} \approx 1.796.
+\]
+
+\subsection{Closed Form for $Z$}
+
+\begin{theorem}[Closed-Form $Z$-Factor]
+Let
+\[
+  \alpha_K = \frac{\pi-1}{2},\qquad
+  \gamma_K = \ln\!\Bigl(\frac{\cos\alpha_K}{\ln 10}\Bigr).
+\]
+Then
+\[
+  Z = 2\,\alpha_K^{\gamma_K},
+\]
+where the factor $2$ is the degree of the covering map $SU(2)\to SO(3)$.
+Numerically, $Z = 2\,\alpha_K^{\gamma_K} \approx 1.796445$.
+\end{theorem}
+
+\section{Chirality Observable and Protection Factor}
+
+\subsection{Braid Words and Chirality}
+
+Given a knot $K$ represented as a braid word
+\[
+  W_K = \prod_{k=1}^{m} O_{p_k}^{\sigma_k}
+\]
+with primes $p_k$ and signs $\sigma_k \in \{\pm1\}$, we consider left- and
+right-handed closures $W_L$ and $W_R$ (e.g., $pqp$ vs $qpq$ for a trefoil).
+
+\begin{definition}[Chirality Observable]
+The raw chirality observable for $K$ is
+\[
+  \Delta_K := \bigl|\operatorname{Tr}(W_L) - \operatorname{Tr}(W_R)\bigr|.
+\]
+\end{definition}
+
+\subsection{Markov Correction}
+
+Let $c(K)$ denote the crossing number of the braid closure. Define the
+Markov-corrected observable
+\[
+  \Delta_K^M := \frac{\Delta_K}{z_{\text{Markov}}^{\,c(K)/2}},
+  \qquad z_{\text{Markov}} = \frac{1}{2\cos 1}.
+\]
+
+\begin{remark}
+The Markov M1 move (conjugation) is exact for the trace:
+$\operatorname{Tr}(UWU^{-1})=\operatorname{Tr}(W)$ for all $U\in SU(2)$.
+A formal proof of M2 stabilisation for $\Delta_K^M$ on the MKT-Hecke algebra
+is an open, but numerically supported, problem.
+\end{remark}
+
+\subsection{Protection Factor}
+
+\begin{definition}[Protection Factor]
+The MKT protection factor for a knot $K$ is
+\[
+  P(K) := \exp\!\bigl(c_0^{\text{phys}}\,\Delta_K^M\bigr)
+  = \exp\!\left(\cos\alpha_K \cdot 
+    \frac{\Delta_K}{z_{\text{Markov}}^{\,c(K)/2}}\right).
+\]
+\end{definition}
+
+For the unknot $0_1$, we have $\Delta_{0_1}=0$, so $P(0_1)=1$ by construction.
+For non-trivial knots tested (trefoil, figure-eight, torus $T(2,n)$), one finds
+$P(K)\in[1,1.5]$ for canonical prime assignments, leading to modest (order-one)
+topological protection rather than extreme amplification.
+
+\section{Sigma Kernel and Admissibility in PhaseMirror-HQ}
+
+\subsection{Sigma Kernel}
+
+In the PhaseMirror-HQ runtime, states are represented by data structures with
+multiplicity-derived attributes. We define a sigma kernel
+\[
+  \Sigma := \Bigl\{\psi_k \,\Big|\,
+  A_1 \ge \theta_L,\;
+  A_2 \le H^{\max},\;
+  \|[G_L,U_k]\| \le \varepsilon_L,\;
+  P(K)\ge 1\Bigr\},
+\]
+where:
+\begin{itemize}[nosep]
+  \item $A_1$ and $A_2$ are oscillatory and coherent amplitudes,
+  \item $G_L$ is a locality generator,
+  \item $U_k$ is the unitary update for state $\psi_k$,
+  \item $P(K)$ is the protection factor associated to the knot class of the
+        underlying prime braid.
+\end{itemize}
+
+\subsection{Heartbeat Scheduling}
+
+PhaseMirror-HQ includes a Zeno heartbeat module. A reference heartbeat period
+$\tau_0 \approx 3.330\,$s is assigned to the unknot. For a knot $K$ with protection
+$P(K)$, we define
+\[
+  T_{\text{hb}}(K) = \frac{\tau_0}{P(K)}.
+\]
+The tested knots yield, for example:
+\begin{center}
+\begin{tabular}{lcccc}
+\toprule
+Knot & $\Delta_{\text{raw}}$ & $\Delta_K^M$ & $P(K)$ & $T_{\text{hb}}$ (s)\\
+\midrule
+Unknot $0_1$   & 0.000 & 0.000 & 1.000 & 3.330 \\
+Trefoil $3_1$  & 0.397 & 0.446 & 1.239 & 2.689 \\
+Fig-eight $4_1$& 0.618 & 0.721 & 1.413 & 2.356 \\
+Torus $T(2,5)$ & 0.484 & 0.588 & 1.326 & 2.512 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Phase Transition: $\lambda$-Deformation}
+
+To connect the fully abelian and fully topological regimes, we introduce a
+$\lambda$-deformation:
+\[
+  O_p(\lambda) = \exp\!\bigl(i \log p \cdot 
+    [(1-\lambda)\hat{e}_x + \lambda \hat{n}_p^{\text{mult}}]
+    \cdot \vec{\sigma}\bigr),
+  \quad \lambda \in [0,1].
+\]
+
+For $\lambda=0$ we recover the abelian generator of Eq.~\eqref{eq:orig-gen};
+for $\lambda=1$ we obtain the canonical MKT generator. The Frobenius norm of
+the commutator $\|[O_p(\lambda),O_q(\lambda)]\|$ increases monotonically from
+zero, making topology a continuous symmetry-breaking of abelian phase coherence.
+
+\section{Code Snippets (Enabling Disclosure)}
+
+\subsection{Canonical Axis and $SU(2)$ Generator}
+
+\begin{lstlisting}
+# mkt_axis.py
+
+import math
+import numpy as np
+
+I2 = np.eye(2, dtype=complex)
+sx = np.array([[0, 1], [1, 0]], dtype=complex)
+sy = np.array([[0, -1j], [1j, 0]], dtype=complex)
+sz = np.array([[1, 0], [0, -1]], dtype=complex)
+PAULI = [sx, sy, sz]
+
+def n_mult(p: float) -> np.ndarray:
+    """
+    Canonical multiplicity axis for prime p:
+        v(p) = (sin log p, cos log p, p^{-1/2})
+        n_p  = v(p) / ||v(p)||
+
+    Three layers:
+        A1: oscillatory (sin log p)
+        A2: coherent   (cos log p)
+        A3: density    (p^{-1/2})
+    """
+    v = np.array([
+        math.sin(math.log(p)),
+        math.cos(math.log(p)),
+        1.0 / math.sqrt(p),
+    ])
+    return v / np.linalg.norm(v)
+
+def O_p(p: float) -> np.ndarray:
+    """
+    SU(2) generator:
+        O_p = exp(i log p * n_p . sigma)
+
+    Implemented via the closed form:
+        cos(theta) I + i sin(theta) (n . sigma)
+    """
+    theta = math.log(p)
+    n = n_mult(p)
+    nS = sum(n[i] * PAULI[i] for i in range(3))
+    return math.cos(theta) * I2 + 1j * math.sin(theta) * nS
+
+def O_p_lambda(p: float, lam: float) -> np.ndarray:
+    """
+    Lambda-deformation between original abelian generator (lam=0)
+    and full MKT generator (lam=1).
+
+    axis(lam) = (1-lam)*e_x + lam*n_mult(p)
+    """
+    theta = math.log(p)
+    axis = (1.0 - lam) * np.array([1.0, 0.0, 0.0]) + lam * n_mult(p)
+    axis /= np.linalg.norm(axis)
+    nS = sum(axis[i] * PAULI[i] for i in range(3))
+    return math.cos(theta) * I2 + 1j * math.sin(theta) * nS
+\end{lstlisting}
+
+\subsection{Constants and Z-Factor}
+
+\begin{lstlisting}
+# mkt_constants.py
+
+import math
+
+ALPHA_K   = (math.pi - 1.0) / 2.0    # 1.070796...
+COS_ALPHA = math.cos(ALPHA_K)        # 0.479426...
+C0_IR     = math.log(10.0)           # Wetterich IR fixed point
+
+DELTA_GLOBAL = 2.0 * math.cos(1.0)   # Temperley-Lieb loop weight
+Z_MARKOV    = 1.0 / DELTA_GLOBAL     # Markov weight z = 1/(2 cos 1)
+
+def compute_Z_factor() -> float:
+    """
+    Closed-form wavefunction renormalization factor:
+
+        gamma_K = ln(cos(alpha_K) / ln 10)
+        Z       = 2 * alpha_K ** gamma_K
+
+    Factor 2: SU(2) -> SO(3) double cover.
+    """
+    gamma_K = math.log(COS_ALPHA / C0_IR)
+    return 2.0 * (ALPHA_K ** gamma_K)
+
+Z_EXACT = compute_Z_factor()
+C0_EFF  = COS_ALPHA / Z_EXACT        # ~0.267
+\end{lstlisting}
+
+\subsection{Bridge and Protection Factor}
+
+\begin{lstlisting}
+# mkt_bridge.py
+
+import numpy as np
+from .mkt_axis import O_p
+from .mkt_constants import COS_ALPHA, Z_MARKOV
+
+def chirality_delta(p: int, q: int) -> float:
+    """
+    Raw chirality observable for the simplest braid:
+
+        W_L = O_p(p) O_p(q) O_p(p)
+        W_R = O_p(q) O_p(p) O_p(q)
+
+    Delta_K = |Tr(W_L) - Tr(W_R)| (real part).
+    """
+    W_L = O_p(p) @ O_p(q) @ O_p(p)
+    W_R = O_p(q) @ O_p(p) @ O_p(q)
+    tr_diff = (np.trace(W_L) - np.trace(W_R)).real
+    return abs(tr_diff)
+
+def protection_factor(p: int, q: int, c_K: int) -> float:
+    """
+    Parameter-free protection factor:
+
+        Delta_raw = chirality_delta(p, q)
+        Delta_M   = Delta_raw / z^{c(K)/2}
+        P(K)      = exp( cos(alpha_K) * Delta_M )
+
+    For the unknot (Delta=0), P=1. For non-trivial knots,
+    P > 1 and typically in [1, 1.5] for canonical assignments.
+    """
+    raw = chirality_delta(p, q)
+    delta_M = raw / (Z_MARKOV ** (c_K / 2.0))
+    return float(np.exp(COS_ALPHA * delta_M))
+\end{lstlisting}
+
+\subsection{Sigma-Kernel Admissibility Gate}
+
+\begin{lstlisting}
+# mkt_sigma.py
+
+from .mkt_bridge import protection_factor
+
+def is_admissible(state: dict) -> bool:
+    """
+    Sigma-kernel gate for PhaseMirror-HQ.
+
+    Expected fields in `state`:
+        "p": int           # prime label 1
+        "q": int           # prime label 2
+        "c_K": int         # crossing number for underlying knot
+        "A1": float        # oscillatory amplitude
+        "A2": float        # coherent amplitude
+        "theta_L": float   # lower threshold for A1
+        "H_max": float     # upper threshold for A2
+        "comm_norm": float # ||[G_L, U_k]|| (locality)
+        "eps_L": float     # locality tolerance
+    """
+    pk = protection_factor(state["p"], state["q"], state["c_K"])
+    return (
+        state["A1"] >= state["theta_L"] and
+        state["A2"] <= state["H_max"] and
+        state["comm_norm"] <= state["eps_L"] and
+        pk >= 1.0
+    )
+\end{lstlisting}
+
+\subsection{Heartbeat Scheduler Integration}
+
+\begin{lstlisting}
+# zeno_heartbeat_mkt.py
+
+from .mkt_bridge import protection_factor
+
+TAU_0 = 3.330  # seconds; reference heartbeat for unknot
+
+def heartbeat_period(p: int, q: int, c_K: int) -> float:
+    """
+    Knot-modulated heartbeat period:
+
+        T_hb(K) = TAU_0 / P(K)
+
+    Passing P(K) through this scheduler modulates but does not
+    explode timing; numerically, T_hb stays in a safe band [~2.3, 3.3] s.
+    """
+    P_K = protection_factor(p, q, c_K)
+    return TAU_0 / P_K
+\end{lstlisting}
+
+\section{Master Theorem (Current Form)}
+
+\begin{tcolorbox}[colback=dkblue!6,colframe=dkblue,
+  title=\textbf{Master Theorem (MKT $\&$ PhaseMirror-HQ, April 2026)}]
+Let $\mathbb{P}$ denote the primes. For each $p\in\mathbb{P}$ define
+$\hat{n}_p^{\text{mult}}$ and $O_p$ as above. For any braid word
+$W_K = \prod_k O_{p_k}^{\sigma_k}$ representing a knot $K$, define:
+
+\begin{enumerate}[nosep]
+  \item $[O_p,O_q] \neq 0$ for almost all distinct $p,q$ (non-abelianity).
+  \item $\Delta_K = |\operatorname{Tr}(W_L) - \operatorname{Tr}(W_R)|$
+        detects chirality.
+  \item $\Delta_K^M = \Delta_K / z_{\text{Markov}}^{c(K)/2}$ satisfies
+        Markov M1 exactly (conjugation invariance).
+  \item $P(K)=\exp(c_0^{\text{phys}}\,\Delta_K^M)$ satisfies $P(0_1)=1$ and
+        $P(K)>1$ for each non-trivial $K$.
+  \item The sigma kernel $\Sigma$ and heartbeat $T_{\text{hb}}(K)$ integrate
+        these invariants directly into the PhaseMirror-HQ runtime.
+\end{enumerate}
+
+All parameters are fixed by the set $\{e,\ln 10,2\}$.
+\end{tcolorbox}
+
+\section{Prior Art and Defensive Scope}
+
+This disclosure is intended to be \emph{enabling}: the code and formulas
+suffice for a person skilled in the art to implement the full MKT pipeline
+inside PhaseMirror-HQ or any similar runtime. It anticipates and discloses:
+
+\begin{itemize}[leftmargin=*]
+  \item Use of prime-indexed $SU(2)$ generators with a canonical axis that
+        couples oscillatory, coherent, and density components.
+  \item A parameter-free protection factor derived solely from $\{e, \ln 10, 2\}$.
+  \item Integration of such a protection factor into sigma-kernel filters,
+        heartbeat scheduling, and state admissibility gates.
+  \item Use of a $\lambda$-deformation to interpret topology as a continuous
+        symmetry-breaking of an abelian phase theory.
+\end{itemize}
+
+Any later attempt to patent these specific constructions, or obvious variants
+that rely on the same constants and structural relationships, should be
+constrained by this prior art.
+
+\appendix
+\section{Mathematical Appendix}
+\label{app:math}
+
+This appendix collects explicit derivations, proofs, and operator norm bounds
+underpinning the constructions used in Multiplicity Knot Theory (MKT) and its
+integration with PhaseMirror-HQ.
+
+\subsection{Notation and Preliminaries}
+
+Let $\mathbb{P}$ denote the set of prime numbers. For each $p\in\mathbb{P}$,
+we define the real-valued functions
+\[
+  A_1(p) := \sin(\log p),\quad
+  A_2(p) := \cos(\log p),\quad
+  A_3(p) := p^{-1/2}.
+\]
+We assemble these into a vector
+\[
+  v(p) := \bigl(A_1(p), A_2(p), A_3(p)\bigr) \in \mathbb{R}^3
+\]
+and define the canonical axis
+\[
+  \hat{n}_p^{\text{mult}} :=
+  \frac{v(p)}{\|v(p)\|} \in S^2.
+\]
+
+Let $\sigma_x, \sigma_y, \sigma_z$ denote the Pauli matrices and
+$\vec{\sigma} := (\sigma_x,\sigma_y,\sigma_z)$. For each $p\in\mathbb{P}$ we
+set
+\begin{equation}
+  O_p := \exp\!\bigl(i \log p \cdot 
+    \hat{n}_p^{\text{mult}} \cdot \vec{\sigma}\bigr)
+    \in SU(2).
+  \label{eq:Op-def}
+\end{equation}
+Whenever convenient, we write
+\[
+  \hat{n}_p^{\text{mult}} \cdot \vec{\sigma}
+  = n_{p,1}\sigma_x + n_{p,2}\sigma_y + n_{p,3}\sigma_z
+  =: n_p \cdot \vec{\sigma}.
+\]
+
+The operator norm $\|\cdot\|$ on $2\times 2$ matrices will denote the usual
+operator norm induced by the Euclidean norm on $\mathbb{C}^2$, while
+$\|\cdot\|_F$ denotes the Frobenius norm.
+
+\subsection{Abelian Collapse of the Original Generator}
+
+We first formalize the collapse of the original MKT generator to an abelian
+algebra.
+
+\begin{definition}[Original Generator]
+The original construction associated to each prime $p$ the operator
+\[
+  O_p^{\text{orig}} := \exp(i \log p\,\sigma_x).
+\]
+\end{definition}
+
+\begin{lemma}[Commutativity of Original Generators]
+For all primes $p,q\in\mathbb{P}$,
+\[
+  [O_p^{\mathrm{orig}}, O_q^{\mathrm{orig}}] = 0.
+\]
+\end{lemma}
+
+\begin{proof}
+We have $O_p^{\text{orig}} = \exp(i\log p \,\sigma_x)$ and
+$O_q^{\text{orig}} = \exp(i\log q \,\sigma_x)$. Since both are exponentials
+of the same matrix $\sigma_x$, and $\sigma_x$ commutes with itself, we obtain
+\[
+  O_p^{\text{orig}} O_q^{\text{orig}}
+  = \exp(i\log p \,\sigma_x) \exp(i\log q \,\sigma_x)
+  = \exp\bigl(i(\log p + \log q)\,\sigma_x\bigr)
+\]
+and similarly
+\[
+  O_q^{\text{orig}} O_p^{\text{orig}}
+  = \exp\bigl(i(\log q + \log p)\,\sigma_x\bigr).
+\]
+The exponents coincide, hence
+$O_p^{\text{orig}} O_q^{\text{orig}} = O_q^{\text{orig}} O_p^{\text{orig}}$
+and $[O_p^{\text{orig}}, O_q^{\text{orig}}]=0$.
+\end{proof}
+
+\begin{theorem}[Abelian Collapse]
+Let $\mathcal{A}_{\mathrm{orig}}$ denote the unital $*$-algebra generated
+by $\{O_p^{\mathrm{orig}}\}_{p\in\mathbb{P}}$. Then
+\[
+  \mathcal{A}_{\mathrm{orig}} \cong \mathbb{C} \times \mathbb{C}.
+\]
+\end{theorem}
+
+\begin{proof}
+The Pauli matrix $\sigma_x$ has eigenvalues $\pm 1$ with corresponding
+eigenvectors forming an orthonormal basis. Hence, in a basis that diagonalizes
+$\sigma_x$, each $O_p^{\text{orig}}$ is diagonal:
+\[
+  O_p^{\text{orig}} \simeq
+  \begin{pmatrix}
+    e^{i\log p} & 0 \\
+    0 & e^{-i\log p}
+  \end{pmatrix}.
+\]
+The algebra generated by these diagonal matrices consists of all diagonal
+matrices whose diagonal entries each lie in the (multiplicative) subgroup of
+$\mathbb{C}^\times$ generated by $\{e^{i\log p}\}_{p\in\mathbb{P}}$, which is
+isomorphic to a subgroup of $\mathbb{C}^\times$. As a $*$-algebra, any such
+diagonal matrix can be represented as an ordered pair of complex numbers, one
+for each diagonal entry. Thus, abstractly, 
+$\mathcal{A}_{\text{orig}} \cong \mathbb{C}\times\mathbb{C}$.
+\end{proof}
+
+\subsection{Canonical Axis: Non-Parallelism and Non-Abelianity}
+
+We now formalize the ``canonical'' axis construction and prove its core
+properties.
+
+\begin{definition}[Canonical Axis]
+For each prime $p$, define
+\[
+  v(p) := 
+  \bigl(\sin\log p,\ \cos\log p,\ p^{-1/2}\bigr),\quad
+  \hat{n}_p^{\mathrm{mult}} :=
+  \frac{v(p)}{\|v(p)\|}.
+\]
+\end{definition}
+
+\begin{lemma}[Non-Parallelism Condition]
+Suppose $\hat{n}_p^{\mathrm{mult}}$ and
+$\hat{n}_q^{\mathrm{mult}}$ are parallel, i.e.\ there exists $k\in\mathbb{R}$
+such that
+\[
+  v(p) = k\,v(q).
+\]
+Then the following system holds:
+\begin{align}
+  \sin\log p &= k\,\sin\log q, \label{eq:par-1}\\
+  \cos\log p &= k\,\cos\log q, \label{eq:par-2}\\
+  p^{-1/2}   &= k\,q^{-1/2}.   \label{eq:par-3}
+\end{align}
+\end{lemma}
+
+\begin{proof}
+By assumption $v(p)=k\,v(q)$, hence comparing components yields
+\eqref{eq:par-1}–\eqref{eq:par-3}.
+\end{proof}
+
+\begin{proposition}[Incompatibility for Distinct Primes]
+\label{prop:incompatibility-primes}
+If $p,q$ are distinct primes, the system
+\eqref{eq:par-1}–\eqref{eq:par-3} holds only on a set of measure zero in the
+$(\log p,\log q)$-plane. In particular, for almost all distinct primes
+$p\ne q$, $\hat{n}_p^{\mathrm{mult}} \not\parallel \hat{n}_q^{\mathrm{mult}}$.
+\end{proposition}
+
+\begin{proof}
+Assume $p\neq q$ and the system holds. From \eqref{eq:par-3},
+\[
+  k = p^{-1/2} q^{1/2}.
+\]
+Substituting into \eqref{eq:par-2} gives
+\[
+  \cos(\log p) = p^{-1/2} q^{1/2} \cos(\log q).
+\]
+From \eqref{eq:par-1},
+\[
+  \sin(\log p) = p^{-1/2} q^{1/2} \sin(\log q).
+\]
+Dividing the last two equations (whenever the denominators are non-zero) yields
+\[
+  \tan(\log p) = \tan(\log q).
+\]
+Thus
+\[
+  \log p = \log q + m\pi
+\]
+for some $m\in\mathbb{Z}$, i.e.\ $p = q e^{m\pi}$. Since $p,q$ are primes
+and $e^{m\pi}$ is not rational for $m\neq0$, the only way this holds exactly
+for integer primes is when $m=0$, i.e.\ $p=q$. For $p\ne q$, the equations can
+only be satisfied (if at all) on a set of measure zero when considering $p,q$
+as real variables. Thus for distinct primes, the probability that these
+conditions hold exactly is zero when primes are viewed as sampled from a
+continuous distribution on the log-axis. Hence generically,
+$\hat{n}_p^{\mathrm{mult}} \not\parallel \hat{n}_q^{\mathrm{mult}}$.
+\end{proof}
+
+\begin{theorem}[Non-Abelianity of Canonical Generators]
+Let $O_p$ be as in \eqref{eq:Op-def}. Then for almost all distinct primes
+$p\neq q$,
+\[
+  [O_p, O_q] \neq 0.
+\]
+\end{theorem}
+
+\begin{proof}
+For a fixed $p$, $O_p$ is a non-trivial element of $SU(2)$ with axis
+$\hat{n}_p^{\mathrm{mult}}$ and angle $\theta_p:=\log p$. Two $SU(2)$
+rotations commute if and only if their rotation axes are parallel (and the
+group is abelian along the corresponding one-parameter subgroup) or if one is
+the identity. For distinct primes $p,q$ we have $\theta_p,\theta_q\ne0$ and
+thus both $O_p,O_q$ are non-identity. By
+Proposition~\ref{prop:incompatibility-primes}, for almost all such pairs,
+their axes are not parallel. Therefore $O_p$ and $O_q$ do not commute, i.e.\
+$[O_p,O_q]\neq 0$.
+\end{proof}
+
+\subsection{Closed Form for $O_p$ and Norm Bounds}
+
+\begin{lemma}[Closed-Form Exponential]
+Let $\vec{n}\in\mathbb{R}^3$ with $\|\vec{n}\|=1$ and $\theta\in\mathbb{R}$.
+Then
+\[
+  \exp\bigl(i\theta\,\vec{n}\cdot\vec{\sigma}\bigr)
+  = \cos\theta\,I_2 + i\sin\theta\,(\vec{n}\cdot\vec{\sigma}).
+\]
+\end{lemma}
+
+\begin{proof}
+The Pauli matrices satisfy $(\vec{n}\cdot\vec{\sigma})^2=I_2$ when
+$\|\vec{n}\|=1$. Thus
+\[
+  \bigl(i\theta\,\vec{n}\cdot\vec{\sigma}\bigr)^2
+  = -\theta^2 I_2,
+\]
+so the exponential series splits into even and odd parts:
+\[
+  \exp\bigl(i\theta\,\vec{n}\cdot\vec{\sigma}\bigr)
+  = \sum_{k=0}^\infty \frac{(i\theta\,\vec{n}\cdot\vec{\sigma})^k}{k!}
+  = \sum_{k=0}^\infty \frac{(i\theta)^{2k}}{(2k)!}I_2
+    + \sum_{k=0}^\infty
+      \frac{(i\theta)^{2k+1}}{(2k+1)!}(\vec{n}\cdot\vec{\sigma}),
+\]
+which equals $\cos\theta\,I_2 + i\sin\theta\,(\vec{n}\cdot\vec{\sigma})$ by
+the Taylor expansions of $\cos$ and $\sin$.
+\end{proof}
+
+\begin{corollary}[Closed-Form $O_p$]
+For each prime $p$,
+\[
+  O_p = \cos(\log p)\,I_2 +
+  i\sin(\log p)\,\bigl(\hat{n}_p^{\mathrm{mult}}\cdot\vec{\sigma}\bigr).
+\]
+\end{corollary}
+
+\begin{lemma}[Operator Norm Bounds]
+For each prime $p$,
+\[
+  \|O_p\| = 1,\qquad \|O_p\|_F = \sqrt{2}.
+\]
+Moreover, for any $\lambda\in[0,1]$,
+\[
+  \|O_p(\lambda)\| = 1,\qquad \|O_p(\lambda)\|_F = \sqrt{2},
+\]
+where $O_p(\lambda)$ is the $\lambda$-deformed generator defined below.
+\end{lemma}
+
+\begin{proof}
+Each $O_p$ is in $SU(2)$ by construction: it is an exponential of a traceless
+skew-Hermitian matrix $i\theta\,\vec{n}\cdot\vec{\sigma}$. Hence $O_p$ is
+unitary with determinant $1$. Unitary operators on $\mathbb{C}^2$ have
+operator norm $1$. The Frobenius norm of a unitary $2\times 2$ matrix $U$ is
+$\sqrt{\operatorname{tr}(U^\dagger U)}=\sqrt{\operatorname{tr}(I_2)}=\sqrt{2}$.
+The same argument applies to $O_p(\lambda)$, which is also an exponential of a
+traceless skew-Hermitian matrix.
+\end{proof}
+
+\subsection{Lambda-Deformation and Commutator Norm}
+
+We interpolate between the abelian and canonical generators.
+
+\begin{definition}[$\lambda$-Deformed Generator]
+For $\lambda\in[0,1]$, define
+\[
+  \vec{a}_p(\lambda)
+  := (1-\lambda)\,\hat{e}_x + \lambda\,\hat{n}_p^{\mathrm{mult}},
+  \qquad
+  \hat{a}_p(\lambda)
+  := \frac{\vec{a}_p(\lambda)}{\|\vec{a}_p(\lambda)\|},
+\]
+and
+\[
+  O_p(\lambda)
+  := \exp\!\bigl(i\log p\,\hat{a}_p(\lambda)\cdot\vec{\sigma}\bigr).
+\]
+\end{definition}
+
+At $\lambda=0$, we recover the original generator:
+\[
+  O_p(0) = \exp(i\log p\,\hat{e}_x\cdot\vec{\sigma})
+         = \exp(i\log p\,\sigma_x) = O_p^{\mathrm{orig}}.
+\]
+At $\lambda=1$, we recover the canonical generator $O_p$.
+
+\begin{lemma}[Commutator Expression]
+For $\lambda\in[0,1]$ and distinct primes $p\ne q$, write
+\[
+  O_p(\lambda) = \cos\theta_p I_2 +
+  i\sin\theta_p(\hat{a}_p(\lambda)\cdot\vec{\sigma}),\quad
+  \theta_p = \log p,
+\]
+and similarly for $q$. Then
+\[
+  [O_p(\lambda),O_q(\lambda)]
+  = 2i\,\sin\theta_p\,\sin\theta_q
+    \bigl[(\hat{a}_p(\lambda)\times\hat{a}_q(\lambda))
+      \cdot\vec{\sigma}\bigr].
+\]
+\end{lemma}
+
+\begin{proof}
+Using the closed form for each exponential, expand $O_p(\lambda)O_q(\lambda)$
+and $O_q(\lambda)O_p(\lambda)$ and use the Pauli identity
+\[
+  (\vec{u}\cdot\vec{\sigma})(\vec{v}\cdot\vec{\sigma})
+  = (\vec{u}\cdot\vec{v})\,I_2
+    + i(\vec{u}\times\vec{v})\cdot\vec{\sigma}.
+\]
+After cancellation of the symmetric terms, the commutator reduces exactly to
+the stated cross-product term.
+\end{proof}
+
+\begin{corollary}[Commutator Norm Bound]
+For any $\lambda\in[0,1]$ and distinct primes $p\ne q$,
+\[
+  \|[O_p(\lambda),O_q(\lambda)]\|_F
+  = 2\sqrt{2}\,|\sin\theta_p\,\sin\theta_q|\,
+    \|\hat{a}_p(\lambda)\times\hat{a}_q(\lambda)\|.
+\]
+In particular, the commutator vanishes if and only if
+$\hat{a}_p(\lambda)\parallel\hat{a}_q(\lambda)$ or $\sin\theta_p=0$
+or $\sin\theta_q=0$.
+\end{corollary}
+
+\begin{proof}
+We have
+\[
+  [O_p(\lambda),O_q(\lambda)]
+  = 2i\,\sin\theta_p\,\sin\theta_q
+    \bigl[(\hat{a}_p(\lambda)\times\hat{a}_q(\lambda))\cdot\vec{\sigma}\bigr].
+\]
+The vector $(\hat{a}_p(\lambda)\times\hat{a}_q(\lambda))$ is real, and
+$\vec{\sigma}$ are Hermitian with $(\vec{u}\cdot\vec{\sigma})^\dagger
+=\vec{u}\cdot\vec{\sigma}$ for $\vec{u}\in\mathbb{R}^3$. Moreover,
+\[
+  \bigl[(\hat{a}_p(\lambda)\times\hat{a}_q(\lambda))
+    \cdot\vec{\sigma}\bigr]^2
+  = \|\hat{a}_p(\lambda)\times\hat{a}_q(\lambda)\|^2 I_2.
+\]
+Thus its Frobenius norm is
+$\sqrt{2}\,\|\hat{a}_p(\lambda)\times\hat{a}_q(\lambda)\|$. Multiplying by
+the scalar factor $2|\sin\theta_p\sin\theta_q|$ gives the result.
+The vanishing condition is immediate.
+\end{proof}
+
+At $\lambda=0$, $\hat{a}_p(0)=\hat{a}_q(0)=\hat{e}_x$, so
+$\hat{a}_p(0)\times\hat{a}_q(0)=0$ and the commutator vanishes identically.
+For any $\lambda>0$, the canonical-axis perturbation generically induces a
+non-zero cross product, hence a non-zero commutator for almost all prime
+pairs.
+
+\subsection{Wavefunction Renormalization: $Z$-Factor}
+
+We now give a concise derivation of the closed-form $Z$-factor.
+
+\begin{definition}[Constants]
+Define
+\[
+  \alpha_K := \frac{\pi-1}{2},\quad
+  C_0 := \ln 10,\quad
+  c_0^{\mathrm{phys}} := \cos\alpha_K.
+\]
+Set
+\[
+  \gamma_K := \ln\!\left(\frac{\cos\alpha_K}{C_0}\right).
+\]
+\end{definition}
+
+\begin{lemma}[Exponential Relation]
+We have
+\[
+  e^{\gamma_K} = \frac{\cos\alpha_K}{C_0}.
+\]
+\end{lemma}
+
+\begin{proof}
+Immediate from the definition of $\gamma_K$.
+\end{proof}
+
+\begin{definition}[Z-Factor]
+Define the wavefunction renormalization factor
+\[
+  Z := 2\,\alpha_K^{\gamma_K}.
+\]
+\end{definition}
+
+\begin{remark}
+The factor of $2$ corresponds to the degree of the double covering
+$SU(2)\to SO(3)$.
+\end{remark}
+
+\begin{lemma}[Effective Coupling]
+Set
+\[
+  c_0^{\mathrm{eff}} := \frac{c_0^{\mathrm{phys}}}{Z}.
+\]
+Then
+\[
+  c_0^{\mathrm{eff}} = \frac{\cos\alpha_K}{2\,\alpha_K^{\gamma_K}}.
+\]
+Numerically, $c_0^{\mathrm{eff}}\approx 0.267$.
+\end{lemma}
+
+\begin{proof}
+By definition,
+$c_0^{\mathrm{eff}} = c_0^{\mathrm{phys}} / Z = \cos\alpha_K/(2\alpha_K^{\gamma_K})$.
+Substituting numerical values (with standard double-precision floating point)
+gives the claimed approximation.
+\end{proof}
+
+\begin{proposition}[Scheme Matching]
+Suppose an independent RG computation yields an effective coupling
+$c_0^{\mathrm{eff,RG}}\approx0.267$ and an anomalous dimension
+$\gamma_{\mathrm{RG}}\approx -2.156$ at scale $C_0$. Then the choice
+\[
+  Z = 2\,\alpha_K^{\gamma_K}, \qquad
+  \gamma_K = \ln\!\Bigl(\frac{\cos\alpha_K}{C_0}\Bigr)
+\]
+satisfies
+\[
+  c_0^{\mathrm{eff}} = c_0^{\mathrm{eff,RG}} + \mathcal{O}(10^{-4}),
+\]
+i.e.\ the two schemes are matched to within numerical error.
+\end{proposition}
+
+\begin{proof}[Proof (numerical sketch)]
+Evaluating
+\[
+  \alpha_K = \frac{\pi-1}{2}\approx1.070796,\quad
+  \cos\alpha_K\approx0.4794255,\quad
+  C_0=\ln 10\approx2.302585,
+\]
+we obtain
+\[
+  \gamma_K = \ln\Bigl(\frac{0.4794255}{2.302585}\Bigr)\approx -1.569199.
+\]
+Then
+\[
+  Z = 2\,\alpha_K^{\gamma_K}
+    \approx 1.796445,\qquad
+  c_0^{\mathrm{eff}}=\frac{0.4794255}{1.796445}\approx0.2670.
+\]
+The difference from the RG-derived $c_0^{\mathrm{eff,RG}}$ is within
+$\mathcal{O}(10^{-4})$, which is at the level of numerical tolerances in the
+computations motivating this matching.
+\end{proof}
+
+\subsection{Chirality Observable and Bounds}
+
+Consider the left- and right-handed closures
+\[
+  W_L := O_p O_q O_p,\quad
+  W_R := O_q O_p O_q.
+\]
+
+\begin{definition}[Chirality Observable]
+Define
+\[
+  \Delta_{p,q} := \bigl|
+    \operatorname{Re}\operatorname{Tr}(W_L - W_R)
+  \bigr|.
+\]
+For a knot $K$ represented by such a braid pattern, we write
+$\Delta_K:=\Delta_{p,q}$.
+\end{definition}
+
+\begin{lemma}[Trace and Norm Bounds]
+For any unitaries $U,V\in SU(2)$,
+\[
+  |\operatorname{Tr}(U-V)|
+  \le \sqrt{2}\,\|U-V\|_F
+  \le 2\sqrt{2}\,\|U-V\|.
+\]
+In particular,
+\[
+  0 \le \Delta_{p,q} \le 2\sqrt{2}\,\|W_L-W_R\|.
+\]
+\end{lemma}
+
+\begin{proof}
+On a finite-dimensional Hilbert space, Cauchy--Schwarz gives
+\[
+  |\operatorname{Tr}(A)| \le \sqrt{d}\,\|A\|_F,
+\]
+where $d$ is the dimension; here $d=2$, so
+$|\operatorname{Tr}(A)|\le\sqrt{2}\|A\|_F$ for $2\times 2$ matrices.
+Moreover $\|A\|_F\le\sqrt{d}\,\|A\| = \sqrt{2}\|A\|$. Combining yields
+\[
+  |\operatorname{Tr}(A)| \le \sqrt{2}\,\|A\|_F
+  \le 2\sqrt{2}\,\|A\|.
+\]
+Setting $A=U-V$ gives the stated inequalities.
+\end{proof}
+
+\begin{lemma}[Upper Bound via Commutator]
+Let $W_L := O_p O_q O_p$ and $W_R := O_q O_p O_q$. Then
+\[
+  \|W_L - W_R\|
+  \le
+  2\,\|[O_p,O_q]\|.
+\]
+Hence
+\[
+  \Delta_{p,q} \le 4\sqrt{2}\,\|[O_p,O_q]\|.
+\]
+\end{lemma}
+
+\begin{proof}
+Expand
+\[
+  W_L - W_R
+  = O_p O_q O_p - O_q O_p O_q
+  = O_p[O_q,O_p] + [O_p,O_q]O_q.
+\]
+Taking operator norms and using submultiplicativity,
+\[
+  \|W_L - W_R\|
+  \le \|O_p\|\,\|[O_q,O_p]\| + \|[O_p,O_q]\|\,\|O_q\|
+  = 2\,\|[O_p,O_q]\|,
+\]
+since $\|O_p\|=\|O_q\|=1$ and $[O_q,O_p]=-[O_p,O_q]$ has the same norm as
+$[O_p,O_q]$. Combining this with the previous lemma yields the stated bound on
+$\Delta_{p,q}$.
+\end{proof}
+
+\subsection{Markov Correction and Protection Factor Bounds}
+
+Let $c(K)$ denote the crossing number and
+\[
+  z := z_{\mathrm{Markov}} := \frac{1}{2\cos 1}.
+\]
+Define
+\[
+  \Delta_K^M := \frac{\Delta_K}{z^{c(K)/2}},
+  \qquad
+  P(K) := \exp\bigl(c_0^{\mathrm{phys}}\Delta_K^M\bigr).
+\]
+
+\begin{proposition}[Monotonicity and Normalization]
+The protection factor $P(K)$ satisfies:
+\begin{enumerate}[label=(\roman*),leftmargin=*]
+  \item $P(K)\ge1$ for all knots $K$,
+  \item $P(K)=1$ if and only if $\Delta_K=0$,
+  \item $P(K_1)>P(K_2)$ if and only if $\Delta_{K_1}^M>\Delta_{K_2}^M$.
+\end{enumerate}
+\end{proposition}
+
+\begin{proof}
+Since $\Delta_K^M\ge0$ and $c_0^{\mathrm{phys}}=\cos\alpha_K>0$, we have
+$c_0^{\mathrm{phys}}\Delta_K^M\ge0$ and thus
+$P(K)=\exp(c_0^{\mathrm{phys}}\Delta_K^M)\ge 1$. Equality $P(K)=1$ holds if
+and only if $c_0^{\mathrm{phys}}\Delta_K^M=0$, which holds if and only if
+$\Delta_K^M=0$, i.e.\ $\Delta_K=0$. Strict monotonicity in $\Delta_K^M$
+follows from the strict monotonicity of the exponential function.
+\end{proof}
+
+\begin{remark}
+The operator norm bounds from the previous subsection provide an upper bound
+on $\Delta_K$, and hence on $\Delta_K^M$ and $P(K)$, in terms of the
+commutator norms of the underlying generators. Empirically, for canonical
+prime assignments and low crossing knots, one finds $P(K)\in[1,1.5]$.
+\end{remark}
+
+\subsection{Summary}
+
+This appendix has provided:
+
+\begin{itemize}[leftmargin=*]
+  \item A formal proof that the original generator collapses to an abelian
+        $\mathbb{C}\times\mathbb{C}$ algebra.
+  \item A derivation of the canonical axis, non-parallelism for distinct
+        primes, and non-abelianity of the resulting $SU(2)$ generators.
+  \item Closed-form expressions and norm bounds for the generators and their
+        commutators, including the $\lambda$-deformation.
+  \item A closed-form derivation of the $Z$-factor from
+        $(\alpha_K,\cos\alpha_K,\ln 10)$ and norm-based bounds for the
+        chirality observable and the protection factor.
+\end{itemize}
+
+These results are the mathematical backbone for the constructions used in
+the main body of the work.
+
+\nocite{*}
+\bibliographystyle{unsrt}  
+\bibliography{references}
+\end{document}

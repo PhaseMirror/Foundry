@@ -20,7 +20,7 @@ filter) is NECESSARY but is not the coherent whole. The coherent witness is the 
 of `2λₙ` as a manifest sum of squares from the single Prime — that is RH (§4.1), not asserted; the
 crux fields stay `none`.
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 

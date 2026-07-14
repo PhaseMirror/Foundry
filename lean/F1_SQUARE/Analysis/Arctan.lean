@@ -7,7 +7,7 @@ artanh ones (Log.lean): we reuse `geoTerm`/`geo_diff_bound`, `artTerm_abs_le`, t
 `Rartanh_R`, `artanh_reindex`, and `qpow_geom_bound`. The argument here is a fixed **rational**, so
 the diagonal is truncation-only (no Lipschitz term) — strictly simpler than `Rartanh`.
 
-This is the engine for `π` via Machin's formula (Pi.lean). Pure Lean 4, no Mathlib, no `sorry`.
+This is the engine for `π` via Machin's formula (Pi.lean). Pure Lean 4, no Mathlib, no `()`.
 -/
 import F1Square.Analysis.Log
 

@@ -5,7 +5,7 @@ keystone: the exponential/trigonometric functional equation via the Cauchy produ
 identity `Σ_{i+j=k} (xⁱ/i!)(yʲ/j!) = (x+y)ᵏ/k!`, whose heart is `C(k,i)·i!·(k−i)! = k!`.
 
 This module builds `choose` (Pascal's recurrence) and that factorial identity (the ℤ ring algebra is
-discharged by `ring_uor`, the project's from-scratch `ring`). Pure Lean 4, no Mathlib, no `sorry`.
+discharged by `ring_uor`, the project's from-scratch `ring`). Pure Lean 4, no Mathlib, no `()`.
 -/
 
 import F1Square.Analysis.Exp

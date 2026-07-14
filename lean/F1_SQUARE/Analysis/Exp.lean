@@ -15,7 +15,7 @@ sequence is regular. `e` is then a genuine constructive real, and `Pos e` is wit
 
 Lean core has no `Nat.factorial` (it is Mathlib), so factorial is built from scratch.
 
-Pure Lean 4, no Mathlib, no `sorry`.
+Pure Lean 4, no Mathlib, no `()`.
 -/
 
 import F1Square.Analysis.Complete

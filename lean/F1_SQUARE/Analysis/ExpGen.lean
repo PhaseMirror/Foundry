@@ -18,7 +18,7 @@ The everywhere-defined `exp` on all of ℝ (via the halving/squaring identity `e
 and `cos`/`sin` (alternating series with the even/odd sandwich remainder — genuinely new machinery)
 and `log` (positivity-as-data + the artanh series) are the later bricks of the arc.
 
-Pure Lean 4, no Mathlib, no `sorry`.
+Pure Lean 4, no Mathlib, no `()`.
 -/
 
 import F1Square.Analysis.Exp

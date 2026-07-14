@@ -15,7 +15,7 @@ is NOT the negativity of `λₙ`: that needs the PHASE of `wⁿ` (when `Re(wⁿ)
 the growing term over the SUM — Voros's saddle-point — which is the irreducible classical content
 carried as the `LiBridge.dichotomy` interface (`BLPipeline.lean`). Crux fields stay `none`.
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 

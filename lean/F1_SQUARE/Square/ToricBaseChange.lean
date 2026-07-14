@@ -10,7 +10,7 @@
     with a pre-addition ℛ (equivalence relation on the semiring ℕ[A]). The trivial
     pre-addition (ℛ = ∅) recovers pure monoids — exactly our current structures.
 
-    Proven here (axiom-clean, no Mathlib, no sorry):
+    Proven here (axiom-clean, no Mathlib, no ()):
       • Ample class `mample_vec` survives base change under Hasse assumptions.
       • Dense torus orbit exists for N=2,3 as toric generic points.
       • Signature compatibility with toric intersection form.

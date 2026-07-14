@@ -12,7 +12,7 @@ with `chigh_i = cApprox(i,3) + 1/3⁷` the depth-3 **upper** per-term approximan
 last `≤` is a single rational `decide`. Two-sided, `γ ∈ [0.54, 0.66]` — enough to bound `γ²` from above
 for `Pos λ₂` (v0.16.0).
 
-Pure Lean 4, no Mathlib, no `sorry`/`native_decide`, choice-free.
+Pure Lean 4, no Mathlib, no `()`/`native_decide`, choice-free.
 -/
 
 import F1Square.Analysis.GammaAccel

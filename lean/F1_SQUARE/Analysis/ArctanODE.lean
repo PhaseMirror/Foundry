@@ -13,7 +13,7 @@ exact rational value identity (as the artanh one did): the value-level inverse-f
 imaginary half of `Clog` additivity) — requires a formal-PS → value (fundamental-theorem-of-calculus)
 bridge on top of this ODE. This brick is the constructive seed of that bridge.
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 

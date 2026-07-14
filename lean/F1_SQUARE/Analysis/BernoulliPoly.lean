@@ -6,7 +6,7 @@ Euler–Maclaurin remainder `R_K(s,N)`). Built on the Bernoulli numbers `bernoul
 `Bₙ(0) = Bₙ` (only the `k = n` term survives, `x⁰ = 1`), and `B₁(x) = x − ½`, `B₂(x) = x² − x + 1/6`,
 … — all exact, by reduction.
 
-Pure Lean 4, no Mathlib, no `sorry`/`native_decide`, choice-free.
+Pure Lean 4, no Mathlib, no `()`/`native_decide`, choice-free.
 -/
 
 import F1Square.Analysis.Bernoulli

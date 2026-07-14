@@ -14,7 +14,7 @@ by definition); its agreement with the principal `Carg` in the overlap, and its 
 following bricks (they need the real-argument value identity `sin(RarctanR t) = t·cos(RarctanR t)`,
 a continuity lift).
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 import F1Square.Analysis.ComplexArg

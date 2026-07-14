@@ -7,7 +7,7 @@ approximant, by `zetaabs_bound`). At `N = 70` the rational partial sum already e
 (`Σ_{k=1}^{70} 1/k² ≈ 1.6307`; one `decide`), giving `ζ(2) ≥ 163/100`. (Plain `Σ 1/k²` decides cheaply —
 no `lcm`-denominator blow-up, unlike the alternating `γ`-series.)
 
-Pure Lean 4, no Mathlib, no `sorry`/`native_decide`, choice-free.
+Pure Lean 4, no Mathlib, no `()`/`native_decide`, choice-free.
 -/
 
 import F1Square.Analysis.Zeta

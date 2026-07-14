@@ -25,7 +25,7 @@ The reusable nugget `Rdouble_inj` (`2x ≈ 2y ⟹ x ≈ y`, via `Rhalf`) closes 
 HONEST SCOPE. Nothing asserts an atlas rule that realizes the diagonal exists (that is RH). §6's
 content is a NEGATIVE result: the obvious zero-built rule is circular. The crux fields stay `none`.
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 

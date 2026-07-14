@@ -1,0 +1,659 @@
+\documentclass[11pt]{article}
+
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{hyperref}
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage{microtype}
+
+\title{p-Adic Numbers, Valuations, and Quantum Circuits:\\
+A Focused Survey for Multiplicity-Based Quantum Pipelines}
+
+\author{Citizen Gardens \\ The Prime Materia Commons}
+\date{May 5, 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We survey a small but conceptually rich literature connecting p-adic numbers
+and valuations to quantum theory, statistical systems, and computational
+tooling. Our emphasis is on work that is structurally relevant to
+multiplicity-based, valuation-driven feedback loops in noisy
+intermediate-scale quantum (NISQ) pipelines such as M--QNN.
+We highlight p-adic quantum mechanics, p-adic qubits and gates,
+p-adic statistical systems, FPGA-based quantum emulation,
+and classical p-adic arithmetic libraries, and we identify a gap:
+no existing work realizes the kind of prime-exponent valuation dynamics
+we engineer in M--QNN as part of an adaptive measurement and training loop.
+\end{abstract}
+
+\section{Introduction and Motivation}
+
+Classical p-adic number theory encodes multiplicities of prime factors via
+the p-adic valuation \(v_p\), which measures the exponent of a prime \(p\)
+in the factorization of an integer or, more generally, a number field element.
+Over the last several decades, p-adic structures have been imported into
+mathematical physics and quantum theory, leading to p-adic Hilbert spaces,
+p-adic wave functions, and p-adic statistical ensembles
+(e.g.~Khrennikov's overview~\cite{khrennikov2017padic},
+Aniello--Mancini--Parisi~\cite{aniello2023trace},
+and subsequent work on p-adic quantum mechanics).
+
+In parallel, noisy intermediate-scale quantum (NISQ) algorithms such as
+M--QNN use standard complex-valued quantum circuits but rely heavily
+on classical bookkeeping of measurement multiplicities and statistical
+confidence bounds.
+From a multiplicity-theoretic point of view, these discrete counts
+are exponents of primes in a structured state space.  This suggests
+a conceptual bridge between p-adic valuations and the engineered
+feedback loops of NISQ-era quantum machine learning:
+prime-exponent valuations as state variables, with adaptive update
+rules and stopping inequalities defined directly on the valuation lattice.
+
+This note collects the most relevant post-2015 work that touches this
+bridge from the p-adic side, and contrasts it with the multiplicity-driven
+design used in M--QNN.
+
+\section{Core Works and Their Relation to Multiplicity-Based Pipelines}
+
+Table~\ref{tab:core} summarizes six representative works and toolchains
+that are most relevant to a p-adic, valuation-centric view of quantum
+circuits and statistical systems.
+
+\begin{table}[h]
+\centering
+\small
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{@{}p{2.3cm}p{2.2cm}p{2.2cm}p{1.8cm}X@{}}
+\toprule
+\textbf{Short citation} &
+\textbf{p-adic use} &
+\textbf{Quantum model} &
+\textbf{Hardware link} &
+\textbf{Main method, key result, and relevance to multiplicity view} \\
+\midrule
+
+Khrennikov et al.~2017
+(\emph{p-Adic Mathematical Physics: The First 30 Years})
+&
+p-adic Hilbert spaces; wave functions and amplitudes over \(\mathbb{Q}_p\)
+&
+Abstract p-adic quantum mechanics (states, observables, dynamics)
+&
+None
+&
+Reconstructs quantum-mechanical structures (states, observables,
+probability amplitudes) over non-Archimedean fields, showing that a
+consistent p-adic quantum formalism exists.
+Conceptually supports treating valuations and p-adic fields as legitimate
+state spaces, aligning with prime-exponent lattices as structured
+multiplicity spaces. \\
+
+Aniello--Mancini--Parisi 2023
+(\emph{Trace class operators and states in p-adic QM})
+&
+States and trace-class operators over quadratic extensions of \(\mathbb{Q}_p\);
+p-adic probability weights
+&
+Rigorous operator-theoretic p-adic quantum mechanics
+&
+None
+&
+Develops functional analysis for p-adic Banach spaces, defines trace,
+density operators, and expectation values in p-adic quantum mechanics.
+Provides formal tools (trace, density matrices) that could describe
+probability distributions over multiplicity-encoded or prime-exponent
+states in a valuation-centric model. \\
+
+Svampa et al.~2026
+(\emph{Composing p-adic qubits: from representations of SO(3)\(_p\) \dots})
+&
+p-adic qubits as irreducible representations of SO(3)\(_p\); p-adic
+controlled gates
+&
+p-adic qubit and gate model, including entanglement
+&
+Implicit (gate-level architecture; not mapped to physical qubits)
+&
+Uses representation theory of compact p-adic groups to define p-adic
+qubits and multi-qubit spaces, and constructs universal p-adic gate sets
+(explicitly analyzed for \(p=3\)).
+Offers a natural formalism for a ``native'' p-adic circuit picture of
+multiplicity-state evolution, in contrast to classical valuation
+bookkeeping in NISQ pipelines. \\
+
+Dragovich et al.~2021
+(\emph{Statistical system based on p-adic numbers})
+&
+Configuration space and phase variables in \(\mathbb{Q}_p\);
+p-adic partition functions
+&
+None (classical statistical mechanics)
+&
+None
+&
+Builds statistical ensembles with p-adic configuration spaces and
+defines partition functions as p-adic sums, then maps to real-valued
+thermodynamic quantities (free energy, entropy, specific heat).
+Demonstrates how valuation-structured state spaces can produce
+real-valued observables, analogous to multiplicity-based stopping
+criteria (e.g.\ Hoeffding bounds) in M--QNN. \\
+
+ManishPatla 2023
+(\emph{QuantumComputation\_FPGAs} repository)
+&
+No explicit p-adics; fixed-point complex arithmetic pipelines
+&
+Gate-model quantum circuit emulation (state-vector)
+&
+FPGA (VHDL-based emulation of quantum gates)
+&
+Implements gate-level emulation of quantum circuits on FPGAs using
+fixed-point arithmetic for amplitudes and models of quantum noise.
+Provides a hardware blueprint for building dedicated controllers that
+could update prime-exponent / valuation registers in lockstep with
+quantum measurements in adaptive, multiplicity-driven NISQ pipelines. \\
+
+SageMath p-adic valuation tools
+(e.g.\ \texttt{padic\_valuation.py})
+&
+Full p-adic arithmetic: valuations on integers and number fields,
+completions \(\mathbb{Q}_p\)
+&
+None (classical CAS and number-theory tooling)
+&
+Software library (Python/C)
+&
+Supplies robust algorithms for exact p-adic arithmetic, valuations,
+and expansions in computer algebra.
+Essentially the classical analogue of the valuation bookkeeping layer
+in M--QNN-like feedback loops, showing that treating valuations as
+first-class computational objects is standard and well-supported. \\
+
+\bottomrule
+\end{tabularx}
+\caption{Core works linking p-adic numbers, valuations, and quantum or
+quantum-adjacent computational models, with emphasis on relevance to
+multiplicity-based NISQ pipelines such as M--QNN.}
+\label{tab:core}
+\end{table}
+
+\section{Discussion: From p-Adic Models to Multiplicity-Based Feedback}
+
+% Here you can connect the table to your M--QNN work:
+% - valuations as exponents in a prime-indexed multiplicity lattice
+% - early-exit rules as inequalities on valuations
+% - gap between p-adic Hilbert-space models and NISQ-era hybrid pipelines.
+
+\section{Conclusion and Open Directions}
+
+% Summarize gaps and propose future work:
+% - native p-adic circuit models vs. classical valuation control loops
+% - hardware support (FPGA/ASIC) for valuation updates
+% - integration with variational training and adaptive measurement.
+
+%=========================================================
+% Mathematical Appendix: Valuation-Based Early-Exit and
+% Operator Bounds for M--QNN-Style Feedback Loops
+%=========================================================
+
+\appendix
+\section{Mathematical Appendix}
+\label{app:math}
+
+This appendix collects explicit proofs and norm bounds underlying the
+valuation-based early-exit rule and related operators in the M--QNN
+pipeline.  We work in a simplified setting (two and then many
+candidates), but all arguments extend to the full candidate set used in
+practice.
+
+\subsection{Setup and Notation}
+
+Fix a query \(x\) and a finite reference set of candidates
+\(j \in \mathcal{C}(x)\).
+For each candidate \(j\) we estimate the fidelity
+\(F_j := F(x,x_j)\in[0,1]\) using the swap test.
+One swap-test shot for candidate \(j\) produces an ancilla outcome
+\(Z_{j,s}\in\{0,1\}\) with
+\begin{equation}
+  \mathbb{P}(Z_{j,s}=0)
+  \;=\;
+  p_{j,0}
+  \;:=\;
+  \frac{1+F_j}{2},
+  \qquad
+  \mathbb{P}(Z_{j,s}=1) = 1-p_{j,0}.
+\end{equation}
+We assume conditional independence of shots:
+\(\{Z_{j,s}\}_{s\ge 1}\) are i.i.d.\ for each fixed \(j\),
+and independent across different \(j\).
+
+After \(S_j\) shots for candidate \(j\), define the multiplicities
+\begin{equation}
+  N_{j,0} = \sum_{s=1}^{S_j} \mathbf{1}[Z_{j,s}=0],
+  \qquad
+  N_{j,1} = S_j - N_{j,0},
+\end{equation}
+the empirical probability
+\(\hat{p}_{j,0} := N_{j,0}/S_j\),
+and the fidelity estimator
+\begin{equation}
+  \hat{F}_j
+  :=
+  2\hat{p}_{j,0} - 1
+  \;=\;
+  2\frac{N_{j,0}}{S_j} - 1.
+\end{equation}
+For a confidence parameter \(\delta \in (0,1)\), define the
+Hoeffding radius
+\begin{equation}
+  r_j
+  :=
+  \sqrt{\frac{\ln(2/\delta)}{2 S_j}}.
+\end{equation}
+The classical (scalar) early-exit rule declares candidate \(j^\star\) as
+winner when
+\begin{equation}
+  \hat{F}_{j^\star} - r_{j^\star}
+  >
+  \max_{j\neq j^\star} \bigl(\hat{F}_j + r_j\bigr).
+  \label{eq:early-exit-app}
+\end{equation}
+
+\subsection{Explicit multiplicity inequality (two-candidate case)}
+\label{app:two-candidate}
+
+We first specialize \eqref{eq:early-exit-app} to two candidates
+\(j\in\{1,2\}\) and derive the early-exit condition as an explicit
+inequality in the integer multiplicities
+\((N_{1,0},N_{2,0},S_1,S_2)\).
+
+\begin{lemma}[Explicit multiplicity inequality, two candidates]
+\label{lem:mult-ineq-two}
+In the two-candidate setting, the condition
+\begin{equation}
+  \hat{F}_1 - r_1 > \hat{F}_2 + r_2
+\end{equation}
+is equivalent to
+\begin{equation}
+  2\left(\frac{N_{1,0}}{S_1} - \frac{N_{2,0}}{S_2}\right)
+  >
+  \sqrt{\frac{\ln(2/\delta)}{2}}
+  \left(
+    \frac{1}{\sqrt{S_1}}
+    +
+    \frac{1}{\sqrt{S_2}}
+  \right),
+  \label{eq:mult-ineq-two}
+\end{equation}
+which is an explicit inequality in the integer multiplicities.
+\end{lemma}
+
+\begin{proof}
+Write the early-exit condition for candidate~1 as
+\begin{equation}
+  \left(2\frac{N_{1,0}}{S_1} - 1\right)
+  - \sqrt{\frac{\ln(2/\delta)}{2 S_1}}
+  >
+  \left(2\frac{N_{2,0}}{S_2} - 1\right)
+  + \sqrt{\frac{\ln(2/\delta)}{2 S_2}}.
+\end{equation}
+Adding \(1\) to both sides cancels the \(-1\) terms and yields
+\begin{equation}
+  2\frac{N_{1,0}}{S_1}
+  - \sqrt{\frac{\ln(2/\delta)}{2 S_1}}
+  >
+  2\frac{N_{2,0}}{S_2}
+  + \sqrt{\frac{\ln(2/\delta)}{2 S_2}}.
+\end{equation}
+Rearranging,
+\begin{equation}
+  2\left(\frac{N_{1,0}}{S_1} - \frac{N_{2,0}}{S_2}\right)
+  >
+  \sqrt{\frac{\ln(2/\delta)}{2 S_1}}
+  + \sqrt{\frac{\ln(2/\delta)}{2 S_2}}.
+\end{equation}
+Factoring out \(\sqrt{\ln(2/\delta)/2}\) on the right-hand side,
+\begin{equation}
+  2\left(\frac{N_{1,0}}{S_1} - \frac{N_{2,0}}{S_2}\right)
+  >
+  \sqrt{\frac{\ln(2/\delta)}{2}}
+  \left(
+    \frac{1}{\sqrt{S_1}}
+    +
+    \frac{1}{\sqrt{S_2}}
+  \right),
+\end{equation}
+which is precisely \eqref{eq:mult-ineq-two}.
+\end{proof}
+
+For some purposes it is convenient to express the left-hand side as a
+\emph{cross-multiplicity} term:
+\begin{equation}
+  \Delta
+  :=
+  N_{1,0} S_2 - N_{2,0} S_1.
+\end{equation}
+Multiplying both sides of \eqref{eq:mult-ineq-two} by \(S_1 S_2\) gives
+\begin{equation}
+  2 \Delta
+  >
+  \sqrt{\frac{\ln(2/\delta)}{2}}
+  \left(
+    S_2 \sqrt{S_2} + S_1 \sqrt{S_1}
+  \right),
+\end{equation}
+which isolates an integer quantity \(\Delta\) on the left and a
+scale-dependent bound on the right.
+
+\subsection{High-probability correctness of early exit}
+\label{app:hoeffding}
+
+We now prove that the early-exit rule \eqref{eq:early-exit-app}
+identifies the true best candidate with probability at least \(1-\delta\)
+under the independence assumptions stated above.
+
+\begin{lemma}[Hoeffding interval for fidelity estimator]
+\label{lem:hoeffding}
+For each candidate \(j\), we have
+\begin{equation}
+  \mathbb{P}\Bigl(
+    \bigl|\hat{F}_j - F_j\bigr|
+    \le r_j
+  \Bigr)
+  \;\ge\;
+  1-\delta,
+\end{equation}
+where \(r_j = \sqrt{\ln(2/\delta)/(2 S_j)}\).
+\end{lemma}
+
+\begin{proof}
+Since \(Z_{j,s}\in\{0,1\}\) are i.i.d.\ with mean \(p_{j,0}\),
+Hoeffding's inequality for bounded variables on \([0,1]\) gives
+\begin{equation}
+  \mathbb{P}\Bigl(\bigl|\hat{p}_{j,0} - p_{j,0}\bigr| \ge t\Bigr)
+  \le 2 \exp(-2 S_j t^2)
+  \quad
+  \forall t>0.
+\end{equation}
+Set \(t = \sqrt{\ln(2/\delta)/(2 S_j)}\); then
+\begin{equation}
+  2 \exp(-2 S_j t^2)
+  =
+  2 \exp\left(
+    -2 S_j \cdot \frac{\ln(2/\delta)}{2 S_j}
+  \right)
+  =
+  2 \exp\bigl(-\ln(2/\delta)\bigr)
+  =
+  \delta.
+\end{equation}
+Thus
+\begin{equation}
+  \mathbb{P}\Bigl(
+    \bigl|\hat{p}_{j,0} - p_{j,0}\bigr|
+    \le t
+  \Bigr)
+  \ge 1-\delta.
+\end{equation}
+Because \(\hat{F}_j = 2\hat{p}_{j,0}-1\) and \(F_j = 2 p_{j,0}-1\),
+\begin{equation}
+  \bigl|\hat{F}_j - F_j\bigr|
+  =
+  2 \bigl|\hat{p}_{j,0} - p_{j,0}\bigr|.
+\end{equation}
+Therefore
+\begin{equation}
+  \mathbb{P}\Bigl(
+    \bigl|\hat{F}_j - F_j\bigr|
+    \le 2 t
+  \Bigr)
+  \ge 1-\delta.
+\end{equation}
+By definition, \(r_j = 2 t\), hence the desired inequality.
+\end{proof}
+
+We now show that the early-exit rule correctly identifies the best
+candidate with high probability.
+
+\begin{theorem}[Correctness of early exit]
+\label{thm:correct-early-exit}
+Let \(j^\star\) be the true best candidate, i.e.,
+\(F_{j^\star} = \max_j F_j\).
+Assume that for each candidate \(j\), the fidelity estimator
+\(\hat{F}_j\) is built from i.i.d.\ swap-test shots as above.
+If the early-exit condition \eqref{eq:early-exit-app} holds for some
+index \(\hat{j}\), then under the event
+\(\mathcal{E} = \bigcap_j \{\lvert \hat{F}_j - F_j\rvert \le r_j\}\)
+we must have \(\hat{j} = j^\star\).
+Moreover,
+\begin{equation}
+  \mathbb{P}(\hat{j} \neq j^\star)
+  \le
+  \mathbb{P}(\mathcal{E}^c),
+\end{equation}
+and if the \(\hat{F}_j\) are conditionally independent across \(j\), then
+\begin{equation}
+  \mathbb{P}(\hat{j} \neq j^\star)
+  \le
+  \sum_j \mathbb{P}\bigl(\lvert \hat{F}_j - F_j\rvert > r_j\bigr)
+  \le
+  |\mathcal{C}(x)| \,\delta.
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+On the event \(\mathcal{E}\) we have, for every \(j\),
+\begin{equation}
+  F_j
+  \ge \hat{F}_j - r_j,
+  \qquad
+  F_j
+  \le \hat{F}_j + r_j.
+\end{equation}
+Suppose the early-exit condition holds with index \(\hat{j}\):
+\begin{equation}
+  \hat{F}_{\hat{j}} - r_{\hat{j}}
+  >
+  \max_{j\neq \hat{j}} (\hat{F}_j + r_j).
+  \label{eq:ee-proof-cond}
+\end{equation}
+Fix any \(k\neq \hat{j}\).  Using the event \(\mathcal{E}\),
+\begin{equation}
+  F_{\hat{j}}
+  \ge \hat{F}_{\hat{j}} - r_{\hat{j}},
+  \qquad
+  F_k
+  \le \hat{F}_k + r_k.
+\end{equation}
+Combining these inequalities with \eqref{eq:ee-proof-cond},
+\begin{equation}
+  F_{\hat{j}}
+  \ge \hat{F}_{\hat{j}} - r_{\hat{j}}
+  >
+  \hat{F}_k + r_k
+  \ge F_k.
+\end{equation}
+Thus \(F_{\hat{j}} > F_k\) for every \(k\neq \hat{j}\), i.e.,
+\(\hat{j}\) attains the unique maximum of the true fidelities, so
+\(\hat{j}=j^\star\).
+
+For the error probability, note that under \(\mathcal{E}\) we can never
+output the wrong index, hence
+\(\{\hat{j} \neq j^\star\} \subseteq \mathcal{E}^c\),
+so
+\begin{equation}
+  \mathbb{P}(\hat{j} \neq j^\star)
+  \le
+  \mathbb{P}(\mathcal{E}^c).
+\end{equation}
+If the estimators are independent across \(j\), then by the union bound
+and Lemma~\ref{lem:hoeffding},
+\begin{equation}
+  \mathbb{P}(\mathcal{E}^c)
+  \le
+  \sum_{j\in \mathcal{C}(x)}
+  \mathbb{P}\bigl(\lvert\hat{F}_j - F_j\rvert > r_j\bigr)
+  \le
+  |\mathcal{C}(x)| \,\delta,
+\end{equation}
+which completes the proof.
+\end{proof}
+
+\begin{remark}[Scaled \(\delta\) choice]
+In practice one often chooses a per-candidate confidence level
+\(\delta' := \delta / |\mathcal{C}(x)|\) and defines
+\(r_j = \sqrt{\ln(2/\delta')/(2 S_j)}\).
+By Lemma~\ref{lem:hoeffding} and the union bound we then obtain
+\(\mathbb{P}(\mathcal{E}^c)\le \delta\), so the probability of selecting
+an incorrect winner is at most \(\delta\).
+\end{remark}
+
+\subsection{Operator-norm bounds for fidelity estimators}
+\label{app:operator-norm}
+
+We now recast the scalar Hoeffding bound in terms of operator norms of
+the swap-test measurement operator, which is useful when viewing the
+entire estimation process as a linear map on density operators.
+
+\subsubsection{Swap-test measurement operator}
+
+For a fixed candidate pair \((x,x_j)\), the swap test can be described
+by a POVM \(\{M_0, M_1\}\) on the joint query--reference--ancilla
+Hilbert space \(\mathcal{H}_Q \otimes \mathcal{H}_R \otimes \mathcal{H}_A\)
+such that
+\begin{equation}
+  \mathrm{Pr}[Z=0]
+  =
+  \mathrm{Tr}(M_0 \rho),
+  \qquad
+  \mathrm{Pr}[Z=1]
+  =
+  \mathrm{Tr}(M_1 \rho),
+\end{equation}
+with \(\rho = \rho_Q \otimes \rho_R \otimes \rho_A\) the joint state and
+\(M_0 + M_1 = I\).
+For pure states and appropriate initialization, one obtains
+\(\mathrm{Pr}[Z=0] = (1+F_j)/2\).
+
+Define the centered observable
+\begin{equation}
+  O
+  :=
+  2 M_0 - I,
+\end{equation}
+so that for a single shot \(Z\),
+\begin{equation}
+  \mathbb{E}[2\mathbf{1}[Z=0]-1]
+  =
+  \mathrm{Tr}(O \rho)
+  =
+  F_j.
+\end{equation}
+The empirical estimator after \(S\) shots is
+\begin{equation}
+  \hat{F}
+  =
+  \frac{1}{S} \sum_{s=1}^S X_s,
+  \qquad
+  X_s := 2\mathbf{1}[Z_s=0]-1,
+\end{equation}
+with \(\mathbb{E}[X_s] = \mathrm{Tr}(O\rho)\).
+
+\begin{lemma}[Operator norm of \(O\)]
+\label{lem:op-norm}
+The operator \(O = 2M_0 - I\) has operator norm
+\(\|O\|_{\mathrm{op}} \le 1\).
+\end{lemma}
+
+\begin{proof}
+The POVM elements satisfy \(0 \preceq M_0 \preceq I\), so all
+eigenvalues \(\lambda_k(M_0)\) lie in \([0,1]\).
+The eigenvalues of \(O\) are \(2\lambda_k(M_0) - 1\), which lie in
+\([-1,1]\).
+Hence \(\|O\|_{\mathrm{op}} = \max_k |2\lambda_k(M_0)-1| \le 1\).
+\end{proof}
+
+\subsubsection{Variance and concentration in operator form}
+
+We can view each \(X_s\) as a random variable with values in \([-1,1]\)
+and mean \(\mathbb{E}[X_s] = \mathrm{Tr}(O\rho)\).
+Then\footnote{This is the same variance bound used implicitly in the
+main text; we spell it out here for completeness.}
+\begin{equation}
+  \mathrm{Var}(X_s)
+  \le 1,
+  \qquad
+  \mathrm{Var}(\hat{F})
+  =
+  \mathrm{Var}\Bigl(\frac{1}{S}\sum_{s=1}^S X_s\Bigr)
+  =
+  \frac{\mathrm{Var}(X_s)}{S}
+  \le \frac{1}{S}.
+\end{equation}
+Hoeffding's inequality for bounded variables on \([-1,1]\) yields
+\begin{equation}
+  \mathbb{P}\Bigl(
+    |\hat{F} - F_j|
+    \ge t
+  \Bigr)
+  \le 2\exp\Bigl(-\frac{S t^2}{2}\Bigr),
+\end{equation}
+which matches the scalar bound of Lemma~\ref{lem:hoeffding} after
+reparametrization.
+
+\subsection{Valuation-based encoding and inequalities}
+\label{app:valuation}
+
+For completeness, we record the valuation-based encoding of the
+multiplicities and the equivalence of the multiplicity inequality with
+a valuation inequality.
+
+Fix distinct primes \(p_j, q_j\) for each candidate \(j\).
+Define the global integer
+\begin{equation}
+  M
+  :=
+  \prod_{j\in\mathcal{C}(x)}
+  p_j^{S_j} \, q_j^{N_{j,0}}.
+\end{equation}
+The \(p_j\)-adic and \(q_j\)-adic valuations are
+\begin{equation}
+  v_{p_j}(M) = S_j,
+  \qquad
+  v_{q_j}(M) = N_{j,0}.
+\end{equation}
+
+In the two-candidate case, inequality
+\eqref{eq:mult-ineq-two} can be rewritten as
+\begin{equation}
+  2\left(
+    \frac{v_{q_1}(M)}{v_{p_1}(M)}
+    -
+    \frac{v_{q_2}(M)}{v_{p_2}(M)}
+  \right)
+  >
+  \sqrt{\frac{\ln(2/\delta)}{2}}
+  \left(
+    \frac{1}{\sqrt{v_{p_1}(M)}}
+    +
+    \frac{1}{\sqrt{v_{p_2}(M)}}
+  \right),
+\end{equation}
+which shows that the early-exit decision can be expressed as a
+predicate on the valuations of \(M\).
+This viewpoint is useful in multiplicity-based models where prime
+exponents are treated as state coordinates.
+
+\medskip
+
+The arguments in this appendix provide a mathematically explicit
+foundation for the valuation-based early-exit rule and the associated
+operator bounds used in M--QNN and related NISQ-practical pipelines.
+
+\nocite{*}
+\bibliographystyle{unsrtnat}
+\bibliography{references}
+\end{document}

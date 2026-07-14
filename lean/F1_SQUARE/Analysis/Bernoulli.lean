@@ -12,7 +12,7 @@ the previous by one new entry computed from the recurrence), so the recursion is
 index and `bernoulli n := bernTable n n`. Everything is exact rational arithmetic, so the values hold by
 reduction: `B₀ = 1`, `B₁ = −1/2`, `B₂ = 1/6`, `B₃ = 0`, `B₄ = −1/30`, `B₆ = 1/42`.
 
-Pure Lean 4, no Mathlib, no `sorry`/`native_decide`, choice-free.
+Pure Lean 4, no Mathlib, no `()`/`native_decide`, choice-free.
 -/
 
 import F1Square.Analysis.Binomial

@@ -1,0 +1,347 @@
+\documentclass[12pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{enumitem}
+
+\newtheorem{definition}{Definition}[section]
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{remark}{Remark}[section]
+
+\title{Multiplicity in Living Computation: \\ A Unified Framework for Prime-Encoded Algorithms, \\ Codon Contrasts, and DNA-Stored Evolution}
+\author{Ryan O. Van Gelder \& Ken Parrott}
+\date{March 18th, 2026}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+We present a comprehensive framework that integrates three previously disparate threads of research: prime-encoded gene regulatory networks (GRNs), a prime-modulated quantum genetic algorithm (PEQGA), and a codon-level biophysical contrast engine (Codon-Contrast), all grounded in a novel hardware abstraction inspired by the TriPrime Maximus 98.6 living supercomputer. The framework is built on a shared \emph{multiplicity core} that treats prime numbers as fundamental labels for identity and recurrence across scales. Codon-Contrast provides a deterministic 64-dimensional representation of sequence edits ($\Delta h$) and extracts interpretable biophysical features via a Walsh–Hadamard transform. PEQGA uses prime-number schedules to dynamically control mutation, crossover, and selection, enabling structured exploration of complex fitness landscapes. GRN simulations benchmark prime-labeled networks against traditional models under perturbation, with stability and predictive accuracy metrics. All data—from raw codon edits to complete experiment logs—are persisted in a DNA cartridge abstraction (DNAStore) that mirrors the TriPrime architecture: warm, fluidic, and biologically resonant at $98.6\,^\circ$F. End-to-end integration tests (e.g., AAA$\to$ACA) validate the pipeline and establish a Go/No-Go gate for future development. This work establishes a mathematical and computational foundation for what we term \emph{living computation}: algorithms that breathe, remember, and evolve in a substrate that is itself alive.
+\end{abstract}
+
+\section{Introduction}
+
+The concept of \emph{multiplicity}—the representation of entities through unique prime labels and the decomposition of interactions into prime factors—has recently emerged as a powerful tool for modeling complex systems, from gene regulatory networks to quantum algorithms. Parallel advances in DNA-based storage and sequencing now make it possible to imagine a computer whose memory is literal DNA and whose processor is an entangled photon grid, all maintained at the temperature of human life: $98.6\,^\circ$F.
+
+In this report we unify three independent projects into a single, coherent framework:
+\begin{itemize}
+    \item \textbf{Codon-Contrast} \cite{vanGelder2025}: A production‑ready library for exact codon‑level differencing and biophysical feature extraction using a 64‑bin histogram, a fixed lexicographic codon ordering, and a Walsh–Hadamard transform (WHT) to obtain scale‑free GC and purine (PUR) contrasts.
+    \item \textbf{Prime-Encoded Quantum Genetic Algorithm (PEQGA)}: A quantum‑inspired evolutionary algorithm in which mutation rates, crossover probabilities, and selection weights are modulated by prime numbers, following the schedule $1/p_i$, $1-1/p_i$, and $p_i$-weighted fitness, respectively.
+    \item \textbf{Gene Regulatory Network (GRN) Simulation and Benchmarking}: A suite of tests that compare prime‑labeled networks with traditional adjacency‑matrix models under perturbation, measuring stability, accuracy, precision, and recall.
+    \item \textbf{TriPrime Hardware Abstraction}: An abstract interface for DNA cartridge storage (DNAStore) that mimics the ``dna://cartridge/file\#chunk=N'' API described in the TriPrime Maximus 98.6 supercomputer design, together with a file‑based simulation backend.
+\end{itemize}
+These components are layered as shown in Figure~\ref{fig:stack}. The multiplicity core provides the mathematical glue: prime label assignment, prime products for interactions, and a consistent notion of factorization across scales.
+
+\begin{figure}[h]
+\centering
+\fbox{
+\begin{minipage}{0.8\textwidth}
+\vspace{2ex}
+\begin{center}
+\textbf{Evolution} (PEQGA) \\
+$\updownarrow$ \\
+\textbf{Networks} (GRN Tests) \\
+$\updownarrow$ \\
+\textbf{Sequences} (Codon-Contrast) \\
+$\updownarrow$ \\
+\textbf{Physical} (TriPrime DNAStore)
+\end{center}
+\vspace{2ex}
+\end{minipage}
+}
+\caption{The four‑layer stack of the unified framework. Each layer exposes clean interfaces to the layers above, and all data are ultimately stored in the DNA cartridge abstraction.}
+\label{fig:stack}
+\end{figure}
+
+The remainder of this document is organized as follows. Section~\ref{sec:multiplicity} defines the multiplicity core. Section~\ref{sec:codon} details the codon‑contrast engine. Section~\ref{sec:peqga} presents the prime‑modulated quantum genetic algorithm. Section~\ref{sec:grn} describes the GRN simulation and benchmarking methodology. Section~\ref{sec:triprime} introduces the DNAStore abstraction and its simulation backend. Section~\ref{sec:integration} shows how the pieces fit together, including the critical AAA$\to$ACA integration test. Section~\ref{sec:future} outlines future work and the Go/No-Go gates that will guide further development. We conclude in Section~\ref{sec:conclusion}.
+
+\section{Multiplicity Core}
+\label{sec:multiplicity}
+
+The multiplicity core provides the algebraic foundation for labeling entities with prime numbers and for representing interactions as products of those primes.
+
+\begin{definition}[Prime labeling]
+Given a set of $n$ entities (e.g., genes, codons, or individuals), assign to each entity a unique prime $p_i$ from the sequence of primes $p_1=2, p_2=3, p_3=5, \dots$. A labeled entity is denoted $(i, p_i)$.
+\end{definition}
+
+\begin{definition}[Interaction product]
+An interaction from entity $i$ to entity $j$ with strength $w$ is represented by the pair $(i,j)$ and may be associated with the product $p_i \cdot p_j$ to encode the pair’s identity. In weighted settings, a multiplicative factor $w$ may be combined, e.g., $w \cdot p_i \cdot p_j$.
+\end{definition}
+
+\begin{definition}[Multiplicity space]
+A multiplicity space $\mathcal{M}$ over a set of prime labels $\{p_i\}$ is a vector space (or module) whose basis elements are multisets of primes. A state $\mathbf{s} \in \mathcal{M}$ can be written as a formal sum $\mathbf{s} = \sum_k c_k \prod_{i \in I_k} p_i$, where each product represents a distinct interaction pattern.
+\end{definition}
+
+This core is used by all higher layers: codon‑contrast uses prime labels only indirectly (via the fixed codon ordering), while PEQGA and GRN tests actively assign primes to genes and individuals.
+
+\section{Codon-Contrast: Biophysical Sequence Differencing}
+\label{sec:codon}
+
+Codon-Contrast is a deterministic engine for comparing two DNA sequences at the codon level, producing a 64‑dimensional integer vector $\Delta h$ of content differences, and then transforming that vector into interpretable biophysical contrasts via a Walsh–Hadamard transform (WHT).
+
+\subsection{Codon Encoding}
+
+Let $\mathcal{N} = \{A,C,G,T\}$ be the nucleotide alphabet, ordered lexicographically. A codon is a triple $(n_1 n_2 n_3) \in \mathcal{N}^3$. The natural (lexicographic) index of a codon is
+\[
+\operatorname{idx}(n_1 n_2 n_3) = 16\cdot \operatorname{pos}(n_1) + 4\cdot \operatorname{pos}(n_2) + \operatorname{pos}(n_3),
+\]
+where $\operatorname{pos}(A)=0,\ \operatorname{pos}(C)=1,\ \operatorname{pos}(G)=2,\ \operatorname{pos}(T)=3$.
+
+Given a DNA sequence of length $3L$ (frame $0$, strand $+$), its histogram $h \in \mathbb{Z}^{64}$ counts occurrences of each codon:
+\[
+h_k = \#\{\text{codons with index }k\},\quad k=0,\dots,63.
+\]
+
+\subsection{Difference Vector $\Delta h$}
+
+For two sequences $S_{\text{ref}}$ and $S_{\text{alt}}$ of equal length, the difference vector is
+\[
+\Delta h = h_{\text{alt}} - h_{\text{ref}} \in \mathbb{Z}^{64}.
+\]
+If only a few substitutions occur, $\Delta h$ is sparse: it has $-1$ at the index of the original codon and $+1$ at the index of the new codon for each substitution.
+
+\subsection{Biophysical Contrasts via Walsh–Hadamard Transform}
+
+To obtain biologically meaningful features, we first apply a fixed permutation $P$ to the indices that reorders the codons so that the six binary properties (GC content and purine content at each of the three codon positions) become the bits of the new index. Specifically, for a codon $(n_1,n_2,n_3)$, we compute a 6‑bit number
+\[
+b = [\text{GC}_1,\text{PUR}_1,\text{GC}_2,\text{PUR}_2,\text{GC}_3,\text{PUR}_3]_2,
+\]
+where the least significant bit is $\text{PUR}_3$. The mapping from nucleotide to bits is:
+\[
+\begin{array}{c|cc}
+\text{nucleotide} & \text{PUR} & \text{GC} \\ \hline
+A & 1 & 0 \\
+C & 0 & 1 \\
+G & 1 & 1 \\
+T & 0 & 0
+\end{array}
+\]
+Thus each codon receives a permuted index $b \in [0,63]$. Let $\Delta h_{\text{perm}}$ be $\Delta h$ rearranged according to $P$.
+
+The Walsh–Hadamard transform (WHT) of length 64 is applied in place:
+\[
+x \gets H^{\otimes 6} x,
+\]
+where $H = \begin{pmatrix}1&1\\1&-1\end{pmatrix}$. An efficient in‑place algorithm (FWHT) runs in $O(64\log 64)$ operations.
+
+After the transform, we obtain coefficients $c_0,\dots,c_{63}$. The coefficient at index $2^m$ (for $m=0,\dots,5$) corresponds directly to one of the six primary biophysical contrasts:
+\[
+\begin{array}{c|c|c}
+\text{index} & \text{power of two} & \text{contrast} \\ \hline
+1 & 2^0 & \text{PUR}_3 \\
+2 & 2^1 & \text{GC}_3 \\
+4 & 2^2 & \text{PUR}_2 \\
+8 & 2^3 & \text{GC}_2 \\
+16 & 2^4 & \text{PUR}_1 \\
+32 & 2^5 & \text{GC}_1
+\end{array}
+\]
+We $L_1$-normalize the coefficient vector:
+\[
+\hat{c}_k = \frac{c_k}{\sum_{j=0}^{63} |c_j|},
+\]
+producing scale‑free contrasts. The final output is a dictionary:
+\[
+\{\text{GC}_1,\text{PUR}_1,\text{GC}_2,\text{PUR}_2,\text{GC}_3,\text{PUR}_3\} = \{\hat{c}_{32},\hat{c}_{16},\hat{c}_8,\hat{c}_4,\hat{c}_2,\hat{c}_1\}.
+\]
+Higher‑order interactions (e.g., GC$_1\times$PUR$_2$) appear at indices that are sums of these powers.
+
+\subsection{Flow Metrics}
+
+In addition to contrasts, we compute edit‑level flow metrics. For a substitution from nucleotide $x$ to $y$:
+\begin{itemize}
+    \item \textbf{Transition ratio}: $1$ if the substitution is a transition ($A\leftrightarrow G$ or $C\leftrightarrow T$), $0$ otherwise.
+    \item \textbf{GC bias}: $+1$ if the target is GC and the source is not, $-1$ if the source is GC and the target is not, $0$ otherwise.
+    \item \textbf{Wobble fraction}: fraction of substitutions occurring at the third codon position \emph{and} classified as transitions.
+    \item \textbf{Flow entropy}: Shannon entropy over the empirical distribution of the 12 possible substitution types ($A\to C$, $A\to G$, etc.).
+\end{itemize}
+For the pair AAA$\to$ACA, we obtain transition ratio $0$, GC bias $+1.0$, wobble $0$, entropy $\ln 2$.
+
+\section{Prime-Encoded Quantum Genetic Algorithm (PEQGA)}
+\label{sec:peqga}
+
+PEQGA is a quantum‑inspired evolutionary algorithm that uses prime numbers to modulate its operators. Although designed for eventual execution on an entangled photon grid, the current implementation runs on classical hardware with a simulated quantum array.
+
+\subsection{Quantum Chromosome Representation}
+
+A chromosome is represented by a set of $n$ qubits, each in a superposition state
+\[
+|\psi_i\rangle = \alpha_i|0\rangle + \beta_i|1\rangle,\quad |\alpha_i|^2+|\beta_i|^2=1.
+\]
+The entire chromosome is a product state $|\Psi\rangle = \bigotimes_i |\psi_i\rangle$, though entanglement may be introduced via gates.
+
+\subsection{Prime-Modulated Operators}
+
+Let $p_i$ denote the $i$-th prime ($p_1=2,p_2=3,\dots$). At generation $g$, we use $p_g$ (or a cycle of primes) to set parameters:
+
+\begin{itemize}
+    \item \textbf{Mutation rate}: $\mu_g = 1/p_g$. For small $p_g$, mutation is frequent; as $g$ increases, mutation slows.
+    \item \textbf{Crossover rate}: $\chi_g = 1 - 1/p_g$. Crossover is nearly certain early on and becomes rarer later, promoting convergence.
+    \item \textbf{Selection weight}: For an individual with fitness $f$, its selection probability is proportional to $f + p_g$ (or $f + p_{\text{ind}}$ if each individual carries a prime label).
+\end{itemize}
+
+Quantum gates are applied to evolve the population. A rotation gate
+\[
+R(\theta) = \begin{pmatrix}\cos\theta & -\sin\theta \\ \sin\theta & \cos\theta\end{pmatrix}
+\]
+may have its angle modulated by primes, e.g., $\theta = \pi/p_g$.
+
+\subsection{Algorithm Workflow}
+
+\begin{algorithm}
+\caption{Prime-Encoded Quantum Genetic Algorithm}
+\begin{algorithmic}[1]
+\State Initialize population of $N$ quantum chromosomes (all qubits in equal superposition).
+\State Choose a prime schedule $\{p_g\}$ (e.g., successive primes).
+\For{$g = 1$ to $G_{\max}$}
+    \State Apply quantum gates (rotation, entanglement) to each chromosome, with parameters possibly modulated by $p_g$.
+    \State Measure all chromosomes to obtain classical bit strings.
+    \State Evaluate fitness $f_i$ for each classical individual.
+    \State Select parents using probabilities $\propto f_i + p_g$ (or $f_i + p_{\text{label}}$).
+    \State Perform crossover with probability $\chi_g = 1 - 1/p_g$.
+    \State Perform mutation with probability $\mu_g = 1/p_g$ on the resulting offspring (as quantum chromosomes).
+    \State Replace population.
+\EndFor
+\State Return best classical solution.
+\end{algorithmic}
+\end{algorithm}
+
+\section{Gene Regulatory Network (GRN) Simulation and Benchmarking}
+\label{sec:grn}
+
+The GRN module provides a testbed for comparing prime‑labeled networks against traditional adjacency‑matrix models. It builds on the simulation code from the M‑Gene Testing document.
+
+\subsection{Network Construction}
+
+Two networks are created with the same topology and initial weights:
+\begin{itemize}
+    \item \textbf{Prime‑labeled network}: each node $i$ is assigned a prime $p_i$ (e.g., $p_1=2, p_2=3,\dots$). Edge weights are stored both as raw weights $w_{ij}$ and as prime‑modulated weights $w_{ij} \cdot p_i p_j$.
+    \item \textbf{Traditional network}: nodes have no prime labels; edge weights are simply $w_{ij}$.
+\end{itemize}
+
+\subsection{Perturbation Analysis}
+
+A perturbation strength $\delta$ is applied: for each edge, with probability $\delta$, its weight is multiplied by a random factor $(1+\epsilon)$ where $\epsilon \sim U(-0.5,0.5)$. The stability score for a network is defined as
+\[
+\text{stability} = 1 - \frac{\text{\# changed edges}}{|E|},
+\]
+where an edge is considered changed if its weight deviates by more than $10\%$ from the original.
+
+\subsection{Predictive Accuracy Under Environmental Changes}
+
+Environmental conditions are simulated by scaling baseline gene expression with random per‑gene factors in $[0.5,1.5]$. The network’s response (simulated expression) is compared to a ground‑truth expression (generated with lower noise). Classification into three states (downregulated, unchanged, upregulated) yields accuracy, precision, and recall.
+
+\subsection{Integration with Codon-Contrast}
+
+When codon‑contrast features are available (e.g., from sequences associated with each gene), they can be incorporated as additional inputs or regularizers. For example, the GC2 contrast of a gene’s coding sequence might modulate its sensitivity to perturbations.
+
+\section{TriPrime Hardware Abstraction: DNAStore}
+\label{sec:triprime}
+
+The TriPrime Maximus 98.6 supercomputer \cite{parrott2025} envisions a warm (98.6$^\circ$F) fluidic computer with DNA cartridges for exabyte‑scale storage and an entangled photon grid for quantum computation. To prepare for this hardware, we define an abstract interface \texttt{DNAStore} that mimics the proposed ``dna://cartridge/file\#chunk=N'' API.
+
+\subsection{Data Model: DNAChunk}
+
+Each chunk stored in a DNA cartridge corresponds to a fixed‑length 64‑element integer vector (the same shape as $\Delta h$) plus metadata. Formally:
+
+\begin{verbatim}
+@dataclass
+class DNAChunk:
+    cartridge_id: str
+    file_id: str
+    chunk_index: int
+    kind: Literal["hist64", "delta_h", "contrast64", "experiment_log"]
+    payload: np.ndarray  # shape (64,) int
+    frame: int = 0
+    strand: str = "+"
+    seq_ref_id: Optional[str] = None
+    seq_alt_id: Optional[str] = None
+    metadata: Optional[dict] = None
+\end{verbatim}
+
+Serialization saves the payload as a \texttt{.npy} file and the metadata as a \texttt{.json} file, ensuring bit‑exact round‑trip.
+
+\subsection{Interface DNAStore}
+
+\begin{verbatim}
+class DNAStore(ABC):
+    def create_cartridge(self, cartridge_id: str) -> None: ...
+    def list_cartridges(self) -> list[str]: ...
+    def write_chunk(self, chunk: DNAChunk) -> None: ...
+    def read_chunk(self, cartridge_id, file_id, chunk_index) -> DNAChunk: ...
+    def read_payload(self, cartridge_id, file_id, chunk_index) -> np.ndarray: ...
+    def stream_payloads(self, cartridge_id, file_id, start, stop) -> Iterator: ...
+    def exists(self, cartridge_id, file_id, chunk_index) -> bool: ...
+\end{verbatim}
+
+\subsection{Simulation Backend: SimDNAStore}
+
+A file‑based implementation stores cartridges as directories, files as subdirectories, and chunks as paired \texttt{.npy} and \texttt{.json} files. This backend is used for all integration tests and will be replaced by a hardware driver when real TriPrime cartridges become available.
+
+\section{Integration and End-to-End Testing}
+\label{sec:integration}
+
+The true power of the framework emerges when the modules are combined. We have defined two integration tests that serve as Go/No-Go gates.
+
+\subsection{Codon-Contrast + DNAStore Round-Trip}
+
+For the examples AAA$\to$ACA and AAC$\to$ACC, we:
+\begin{enumerate}
+    \item Compute $\Delta h$ using \texttt{codon\_contrast.delta\_h}.
+    \item Write a chunk of kind \texttt{"delta\_h"} to a \texttt{SimDNAStore}.
+    \item Read back the payload and recompute biophysical contrasts and flow metrics.
+    \item Verify that $\text{GC}_2 = +0.125$ (within tolerance), other primary contrasts $\approx 0$, and flow metrics match expectations ($\text{GC\_bias}=1.0$, transition ratio $=0$, etc.).
+\end{enumerate}
+This test validates the entire pipeline from sequence differencing to DNA persistence.
+
+\subsection{GRN Experiment Logging}
+
+A second integration test runs a full GRN comparison (prime vs traditional) and writes an \texttt{"experiment\_log"} chunk containing the configuration and all metrics. The chunk is then read back and its contents compared with the in‑memory results. The metadata follows a versioned schema (v1.0) that includes:
+\begin{itemize}
+    \item \texttt{config}: all hyperparameters and random seed.
+    \item \texttt{prime\_metrics} and \texttt{traditional\_metrics}: dictionaries with mean, std, min, max for stability, accuracy, precision, recall, changed interactions.
+    \item \texttt{improvement}: percentage differences.
+    \item \texttt{tags}, \texttt{run\_id}, \texttt{timestamp}.
+\end{itemize}
+A small portion of the 64‑element payload is reserved for headline scalars (e.g., prime stability scaled by 1000) to enable fast scanning without JSON parsing.
+
+\section{Future Work and Go/No-Go Gates}
+\label{sec:future}
+
+We have established two concrete milestones that must be met before escalating the framework:
+
+\begin{enumerate}
+    \item \textbf{Codon-Contrast validation}: The AAA$\to$ACA and AAC$\to$ACC tests must pass exactly as specified, confirming the correctness of the permutation, WHT, and flow metrics.
+    \item \textbf{GRN prime advantage}: In at least one biologically plausible regime (e.g., networks with feedback loops, or using codon contrasts as edge weights), prime‑labeled networks must show a $\ge 5\%$ absolute improvement in stability or predictive accuracy over traditional models. The current simulations show no advantage; achieving this lift is the critical Go/No-Go gate.
+\end{enumerate}
+
+Once these gates are passed, we will:
+\begin{itemize}
+    \item Implement the full \texttt{QuantumArray} interface and a state‑vector simulator for PEQGA.
+    \item Refactor PEQGA to target \texttt{QuantumArray} and use DNAStore for checkpointing.
+    \item Begin hardware co‑design with the TriPrime team to map DNAStore and QuantumArray to physical cartridges and entangled grids.
+    \item Extend the schema to include interaction terms from the WHT (e.g., GC1$\times$PUR2) as additional features for GRNs and fitness functions.
+\end{itemize}
+
+\section{Conclusion}
+\label{sec:conclusion}
+
+We have presented a unified mathematical and computational framework that weaves together prime‑based multiplicity, codon‑level biophysical contrasts, quantum‑inspired evolution, and a DNA‑storage abstraction inspired by the TriPrime living supercomputer. The framework is modular, testable, and already passes initial integration tests. By treating primes as fundamental labels across scales—from individual codons to entire gene networks—we create a consistent language for describing and evolving biological computation. The next steps are clear: achieve the 5\% performance gate for prime‑labeled GRNs, implement the quantum array, and move toward hardware realization. In doing so, we move closer to the vision of computation that is not merely simulated on life, but that lives at $98.6\,^\circ$F.
+
+\begin{thebibliography}{9}
+\bibitem{vanGelder2025}
+R. O. Van Gelder, ``Codon-Contrast: Deterministic Codon Diffs with Walsh–Hadamard Biophysical Contrasts and Fast Flow Metrics,'' December 2025.
+
+\bibitem{parrott2025}
+K. Parrott, ``TriPrime Maximus 98.6: The Living Supercomputer,'' September 2025.
+
+\bibitem{multiplicity}
+Various authors, ``Multiplicity Theory'' (internal documents) and ``M-Gene Testing'' simulation suite.
+\end{thebibliography}
+
+\end{document}

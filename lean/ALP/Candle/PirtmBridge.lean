@@ -17,7 +17,7 @@ namespace ALP.Candle.PirtmBridge
 -- | `LambdaTrace` | `LambdaTrace` struct | `pirtm-candle/src/lib.rs:30` |
 -- | `SedonaSpineEvaluator::evaluate_stop_rules` | `evaluate_stop_rules` | `pirtm-candle/src/lib.rs:86` |
 
--- CI invariant: no sorry in ALP/ without a matching Rust implementation stub.
+-- CI invariant: no () in ALP/ without a matching Rust implementation stub.
 
 structure SedonaTrace where
   valid : Bool

@@ -16,7 +16,7 @@ kills the `6/(m+1)` tail — exactly the argument behind `Req_trans`.
 It also gives `Rnonneg` (Bishop `x ≥ 0`, `−1/(n+1) ≤ xₙ`) its canonical home (moved here from `Li`),
 with `Rnonneg → Rle 0 x`.
 
-Pure Lean 4, no Mathlib, no `sorry`.
+Pure Lean 4, no Mathlib, no `()`.
 -/
 
 import F1Square.Analysis.Real

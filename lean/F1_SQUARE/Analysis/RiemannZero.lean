@@ -16,7 +16,7 @@ is the genuine RH for the ζ this repository builds — a named, typed object, f
 statement it is (NOT proved; nothing here exhibits a zero or locates one — that is RH). It ties the
 abstract `AllZerosOnLine` of the witness pipeline to the actual constructed ζ.
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`. Defines the open statement; proves nothing about where the zeros are.
 -/
 

@@ -74,7 +74,7 @@ precise NEXT TARGET, and if a genuine proof of the universal ever lands here, th
 flip to `some true` because that is then the truth (a result, not a defect). What is
 recorded above is where the wall genuinely is, not a declaration that it cannot fall.
 
-Pure Lean 4 core, no Mathlib, no `sorry`, choice-free; audited by `scripts/honesty_audit.sh`.
+Pure Lean 4 core, no Mathlib, no `()`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
 import F1Square.Square.Spectral

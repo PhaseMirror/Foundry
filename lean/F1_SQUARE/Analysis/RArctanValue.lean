@@ -16,7 +16,7 @@ bridges `Rcos_seq_eq_peval` / `RsinAux_seq_eq_peval` are already `X`-general; th
 final factor reconciliation `q` (the sin-shift factor) vs `t` (the `Rmul` factor), discharged by
 `t`'s regularity.
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 import F1Square.Analysis.ArctanTan

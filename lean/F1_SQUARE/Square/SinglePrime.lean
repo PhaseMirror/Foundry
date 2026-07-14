@@ -25,7 +25,7 @@ wrong), and the unity is real and forced (`atlas_forced_web`). It does not, by i
 witness — the genuine emanation of `2λₙ` as a manifest sum of squares from the single Prime. That
 exhibition is RH (§4.1); the gate decides; the crux fields stay `none`.
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 

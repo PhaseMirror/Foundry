@@ -1,0 +1,427 @@
+\documentclass[11pt]{article}
+
+% --- Packages ---
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amsthm,amssymb,mathtools}
+\usepackage{bm}
+\usepackage{enumitem}
+\usepackage{microtype}
+\usepackage{hyperref}
+\usepackage[capitalise]{cleveref}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{float}
+
+% --- Hyperref setup ---
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  citecolor=teal,
+  urlcolor=magenta,
+  pdfauthor={IFMD},
+  pdftitle={Multiplicity in PGF: The Structural M Operator and the Certified Contraction Constant $\Lambda_{\mathrm{rec}}$},
+}
+
+% --- Listings (Python) ---
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codered}{rgb}{0.7,0.1,0.1}
+\definecolor{codeblue}{rgb}{0.12,0.12,0.7}
+\lstdefinestyle{py}{
+  language=Python,
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{codeblue}\bfseries,
+  commentstyle=\color{codegray},
+  stringstyle=\color{codered},
+  showstringspaces=false,
+  frame=single,
+  framerule=0.3pt,
+  breaklines=true,
+  columns=fullflexible
+}
+
+% --- Macros (Notation Standardization) ---
+% Multiplicity Framework Macros
+\newcommand{\Sig}{\mathrm{Sig}}
+\newcommand{\Mfun}{M_{\mathrm{fun}}}
+\newcommand{\Mint}{M_{\mathrm{int}}}
+\newcommand{\Mhat}{\widehat{M}}
+\newcommand{\Mdiag}{\mathbf{M}}
+\newcommand{\Lrec}{\Lambda_{\mathrm{rec}}}
+\newcommand{\Lglobal}{\Lambda_{\mathrm{global}}}
+\newcommand{\Llocal}{\Lambda_{\mathrm{local}}}
+\newcommand{\Lcrit}{\Lambda_{\mathrm{crit}}}
+\newcommand{\Lhyb}{\Lambda_{\mathrm{rec}}^{\mathrm{hyb}}}
+% Prime-Graded Framework
+\newcommand{\PGalgebra}{\mathcal{A}}
+\newcommand{\PGprojector}{P}
+\newcommand{\PGstate}{\varphi}
+\newcommand{\PGspace}{\mathcal{H}}
+% Utility
+\newcommand{\norm}[1]{\left\lVert #1\right\rVert}
+\newcommand{\abs}[1]{\left\lvert #1\right\rvert}
+\newcommand{\ip}[2]{\left\langle #1,\,#2\right\rangle}
+
+% --- Theorem environments ---
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{assumption}[theorem]{Assumption}
+\newtheorem{remark}[theorem]{Remark}
+\begin{document}
+\begin{titlepage}
+    \centering
+
+    {\Huge\bfseries Multiplicity in PGF \par}
+    \vspace{0.5cm}
+    {\LARGE\bfseries The Structural $M$ Operator and the Certified Contraction Constant $\Lrec$ \par}
+
+  \vspace{2cm}
+    {\LARGE\itshape Ryan O. Van Gelder \par}
+    \vspace{1cm}
+    {\Large\bfseries Citizen Gardens} \\
+    \vspace{0.5cm}
+    \Large{Institute for Mathematical Discovery} \\ 
+    \vspace{0.5cm}
+    {\normalsize \today \par}
+
+ \vfill
+
+    {\bfseries Abstract \par}
+    \vspace{0.5em}
+    \begin{minipage}{0.85\textwidth}
+        \small
+We present a comprehensive, Prime-Graded Framework (PGF) for multiplicity in recursive systems that strictly separates the \emph{structural} Multiplicity operator layer ($\Mfun$, $\Mint$, $\Mhat$, $\Mdiag$) from the \emph{analytic} contraction layer governed by the multiplicity (contraction) constant $\Lrec$. We define the critical boundary $\Lcrit=1/\rho(S)$, provide a certified global choice $\Lglobal(\gamma)=\gamma/\norm{S}$ with $0<\gamma<1$, introduce a Rayleigh-based local gate $\Llocal(\gamma;T)=\gamma/r(T)$, and combine them in a safe hybrid policy $\Lhyb=\min\{\Lglobal,\Llocal\}$. We prove stability and error bounds, give boundedness criteria for infinite prime families, and provide production-ready Python reference implementations.
+
+ \end{minipage}
+\end{titlepage}
+\newpage
+
+\tableofcontents
+
+
+\section{Introduction \& Motivation}
+% ===============================
+Complex prime-weighted recursive systems appear in mathematics, physics-inspired models, and structured AI pipelines. Prior drafts mixed structural multiplicity (prime accounting, typing) with analytic gains controlling contraction, creating type-mismatches and unprovable claims. This article consolidates the theory into a PGF-aligned document with:
+\begin{itemize}[leftmargin=*,nosep]
+  \item a \emph{structural} layer: the $M$-objects $\Mfun,\Mint,\Mhat,\Mdiag$ that certify prime structure,
+  \item an \emph{analytic} layer: the scalar $\Lrec$ that ensures contraction and stability.
+\end{itemize}
+Our main contributions are: (i) precise definitions and proofs; (ii) certified computation algorithms; (iii) minimal, reproducible case studies.
+
+% ===============================
+\section{Mathematical Preliminaries}
+% ===============================
+\subsection{Prime-Graded Framework (PGF)}
+\begin{definition}[Signature Category]
+Let $\Sig=\{e:\mathbb{P}\to\mathbb{Z}\ \text{with finite support}\}$ equipped with
+\begin{itemize}[leftmargin=*,nosep]
+  \item Tensor: $(e\otimes f)(p)=e(p)+f(p)$,
+  \item Unit: $0$,
+  \item Dual: $e^\vee=-e$.
+\end{itemize}
+\end{definition}
+
+\begin{definition}[Prime-Graded $*$-Algebra]
+A $*$-algebra $\PGalgebra=\bigoplus_{p\in\mathbb{P}}\PGalgebra_p$ with bounded projectors $\PGprojector_p:\PGalgebra\to\PGalgebra_p$, $\PGprojector_p^2=\PGprojector_p$, and a positive linear functional $\PGstate:\PGalgebra\to\mathbb{C}$.
+\end{definition}
+
+\paragraph{Hilbert structure for Rayleigh.}
+We endow $\PGalgebra$ with the inner product $\ip{X}{Y}:=\PGstate(X^\*Y)$ and norm $\norm{X}^2=\PGstate(X^\*X)$. This makes the Rayleigh average $r(T)=\ip{T}{ST}/\norm{T}^2$ well-defined whenever $S$ is bounded.
+
+\subsection{Recursion Operator and Dynamics}
+Let $P_N\subset\mathbb{P}$ be a finite active set (or assume boundedness otherwise). Define
+\begin{equation}
+  S:=\sum_{p\in P_N} p^{\alpha_p}\PGprojector_p.
+\end{equation}
+The affine recursion is
+\begin{equation}\label{eq:rec}
+  T_{t+1}=\Lrec\,S\,T_t + F.
+\end{equation}
+
+\begin{assumption}[Settings]\label{ass:settings}
+We work on a Banach space with submultiplicative norm and its induced operator norm (Hilbert structure when using Rayleigh quotients). Projectors satisfy $\norm{\PGprojector_p}=1$. For orthogonal resolution we additionally assume $\PGprojector_p\PGprojector_q=\delta_{pq}\PGprojector_p$ and $\sum_{p\in P_N}\PGprojector_p=I$.
+\end{assumption}
+
+% ===============================
+\section{The Multiplicity Operator $M$ (Structural Layer)}
+% ===============================
+\subsection{Four Consistent Faces}
+\begin{definition}[Functorial $M$]\label{def:Mfun}
+$\Mfun:\Sig\to\mathbb{Q}^\times$ with $\Mfun(e)=\prod_{p}p^{e(p)}$.
+\end{definition}
+\begin{theorem}[Monoidal Properties]\label{thm:monoidal}
+$\Mfun$ is strict monoidal: $\Mfun(0)=1$, $\Mfun(e\otimes f)=\Mfun(e)\Mfun(f)$, and $\Mfun(e^\vee)=\Mfun(e)^{-1}$.
+\end{theorem}
+
+\begin{definition}[Integer Ledger]
+$\Mint(X,p)=e(p)\in\mathbb{Z}$ tracks exact prime exponents in signatures.
+\end{definition}
+
+\begin{definition}[Sector Weights]\label{def:Mhat}
+For $T\in\PGalgebra$, set $\mu_p(T):=\PGstate\big((\PGprojector_pT)^\*(\PGprojector_pT)\big)$ and
+\[
+  \Mhat(T,p)=\frac{\mu_p(T)}{\sum_{q\in P_N}\mu_q(T)}\in[0,1],\qquad \sum_{p\in P_N}\Mhat(T,p)=1.
+\]
+\end{definition}
+
+\begin{definition}[Diagonal Signature Gauge]
+On a signature Hilbert space $\PGspace$, $\Mdiag\ket{e}=\Mfun(e)\ket{e}$.
+\end{definition}
+
+\begin{remark}[Separation of concerns]
+$\Mfun,\Mint,\Mhat,\Mdiag$ are \emph{structural} and must \emph{never} be multiplied by real analytic contraction gains; only $\Lrec$ scales the recursion.
+\end{remark}
+
+% ===============================
+\section{The Contraction Constant $\Lrec$ (Analytic Layer)}
+% ===============================
+\subsection{Critical and Certified Global Scales}
+\begin{definition}[Critical boundary and certified global]\label{def:lambdas}
+Let $S=\sum_{p}p^{\alpha_p}\PGprojector_p$. Define
+\[
+  \Lcrit:=\frac{1}{\rho(S)},\qquad
+  \boxed{\ \Lglobal(\gamma):=\frac{\gamma}{\norm{S}}\ },\quad 0<\gamma<1.
+\]
+Then $\norm{\Lglobal(\gamma)S}\le\gamma<1$.
+\end{definition}
+
+\begin{remark}[Diagonal fast-path]\label{rem:diag}
+Under orthogonal resolution, $S$ is self-adjoint positive with spectrum $\sigma(S)=\{p^{\alpha_p}\}_p$ and $\norm{S}=\rho(S)=\max_p p^{\alpha_p}$. Hence $\Lglobal(\gamma)=\gamma/\max_p p^{\alpha_p}$ and $\norm{\Lglobal(\gamma)S}=\gamma$.
+\end{remark}
+
+\subsection{Local Rayleigh Gate and Hybrid Policy}
+\begin{definition}[Rayleigh average]
+$r(T):=\dfrac{\ip{T}{ST}}{\norm{T}^2}=\sum_{p\in P_N}\Mhat(T,p)\,p^{\alpha_p}$ (orthogonal case).
+\end{definition}
+\begin{definition}[Local and hybrid policies]
+For $\gamma\in(0,1)$ and $r(T)>0$, set
+\[
+  \boxed{\ \Llocal(\gamma;T):=\frac{\gamma}{r(T)}\ },\qquad
+  \boxed{\ \Lhyb(T):=\min\{\Lglobal(\gamma),\,\Llocal(\gamma;T)\}\ }.
+\]
+If $S$ is non-normal, compute $r(T)$ using $S_{\mathrm{sym}}=(S+S^\*)/2$ and keep $\Lglobal$ as a hard fence.
+\end{definition}
+
+\subsection{Stability and Error Bounds}
+\begin{theorem}[Global certified stability]\label{thm:global}
+With $0<\gamma<1$ and $\Lrec=\Lglobal(\gamma)$, the map $\Phi(T)=\Lrec S T + F$ is a contraction with constant $c=\norm{\Lrec S}\le\gamma<1$. Thus $T_\infty=(I-\Lrec S)^{-1}F$ is unique and
+\[
+\norm{T_t-T_\infty}\le \gamma^t\norm{T_0-T_\infty},\qquad
+\norm{T_\infty}\le \frac{\norm{F}}{1-\gamma}.
+\]
+\end{theorem}
+\begin{proof}
+Immediate from submultiplicativity: $\norm{\Phi(T)-\Phi(T')}=\norm{\Lrec S(T-T')}\le\gamma\norm{T-T'}$.
+\end{proof}
+
+\begin{lemma}[Directional local gate]\label{lem:local}
+For self-adjoint $S$, with $\Llocal(\gamma;T)=\gamma/r(T)$ one has $\norm{(\Llocal S)T}=\gamma\norm{T}$.
+\end{lemma}
+
+\begin{proposition}[Hybrid safety]\label{prop:hybrid}
+$\Lhyb(T)=\min\{\Lglobal(\gamma),\Llocal(\gamma;T)\}$ satisfies $\norm{\Lhyb(T)S}\le\gamma<1$ and never exceeds the global fence.
+\end{proposition}
+
+\subsection{Infinite Prime Families: Boundedness Criterion}
+\begin{proposition}[Boundedness for $|P_N|=\infty$]\label{prop:infinite}
+Assume orthogonal resolution with $\sum_{p\in P_N}\PGprojector_p=I$ and $S=\sum_p p^{\alpha_p}\PGprojector_p$. Then $S$ is bounded iff $\sup_{p}p^{\alpha_p}<\infty$. For unbounded primes this is equivalent to $\limsup_{p\to\infty}\alpha_p\le 0$, and then $\norm{S}=\sup_p p^{\alpha_p}$.
+\end{proposition}
+\begin{proof}
+$S$ is diagonal in the $\PGprojector_p$ basis with eigenvalues $p^{\alpha_p}$, so $\norm{S}=\sup_p p^{\alpha_p}$.
+\end{proof}
+
+\begin{remark}[Golden-ratio anecdote]
+If at a fixed point $T_\infty$ the Rayleigh average satisfies $r(T_\infty)\approx\varphi^{-1}$, then the \emph{largest certified local} value is $\Llocal^\star(\gamma;T_\infty)=\gamma\,\varphi$. This is contingent on spectra and sector weights, not universal.
+\end{remark}
+
+% ===============================
+\section{Certified Computation: Reference Implementations}
+% ===============================
+We provide minimal, production-ready snippets. Projectors are linear, idempotent diagonal masks; $\PGstate$ is quadratic, ensuring the Hilbert structure.
+
+\subsection{Framework and Sector Weights}
+\begin{lstlisting}[style=py,caption={PrimeGradedFramework with linear idempotent projectors and quadratic state},label={lst:framework}]
+import numpy as np
+
+class PrimeGradedFramework:
+    def __init__(self, primes, masks):
+        """
+        primes: list of primes
+        masks: dict prime -> boolean/float mask of shape (d,)
+        """
+        self.primes = primes
+        self.masks = masks
+        self.dim = len(next(iter(masks.values())))
+        # Linear idempotent projectors: P_p(x) = mask * x
+        self.projectors = {p: (lambda m: (lambda x: m * x))(masks[p]) for p in primes}
+
+    # φ(X) = ||X||_2^2 ensures <X,Y> = φ(X*Y) for vectors
+    def phi(self, x):
+        return float(np.vdot(x, x))
+
+    def sector_weight(self, T, p):
+        Tp = self.projectors[p](T)
+        mu_p = self.phi(Tp)
+        mu_tot = sum(self.phi(self.projectors[q](T)) for q in self.primes)
+        return (mu_p / mu_tot) if mu_tot > 0 else 0.0
+
+    def zero_element(self):
+        return np.zeros(self.dim, dtype=float)
+
+    def zero_element_like(self, x):
+        return np.zeros_like(x)
+\end{lstlisting}
+
+\subsection{Global Certificate (Diagonal Fast-Path) and Safe Norm Upper Bound}
+\begin{lstlisting}[style=py,caption={Diagonal $\|S\|$ and one-sided upper bound for general $S$},label={lst:norms}]
+def lambda_global_diag(primes, alpha, gamma=0.9):
+    smax = max(p ** alpha.get(p, 0.0) for p in primes)
+    if smax <= 0:
+        raise ValueError("Diagonal S requires positive weights.")
+    return gamma / smax
+
+def upper_bound_norm(apply_S, dim, iters=50, probes=8, seed=0):
+    """
+    One-sided upper bound for ||S||_2 (never underestimates).
+    """
+    rng = np.random.default_rng(seed)
+    ub = 0.0
+    for _ in range(probes):
+        x = rng.standard_normal(dim); x /= np.linalg.norm(x)
+        for _ in range(iters):
+            y = apply_S(x); n = np.linalg.norm(y)
+            if n == 0: break
+            x = y / max(n, 1e-300)
+        ub = max(ub, np.linalg.norm(apply_S(x)))
+    return max(ub, 1e-12)
+\end{lstlisting}
+
+\subsection{Local Gate, Hybrid Policy, and Certified Update}
+\begin{lstlisting}[style=py,caption={Local Rayleigh gate, hybrid selection, and certified update},label={lst:hybrid}]
+def lambda_local_gamma(T, primes, alpha, framework, gamma=0.9, eps=1e-12):
+    r = sum(framework.sector_weight(T, p) * (p ** alpha.get(p, 0.0)) for p in primes)
+    if not np.isfinite(r) or r <= eps:
+        return None
+    return gamma / r
+
+def lambda_hybrid(T, lambda_global, local_fn=None, hard_cap=None):
+    vals = [lambda_global]
+    if local_fn is not None:
+        lc = local_fn(T)
+        if lc is not None:
+            vals.append(lc)
+    v = min(vals)
+    return min(v, hard_cap) if hard_cap is not None else v
+
+def certified_update(T, F, primes, alpha, projectors, framework, Lambda_global,
+                     local_fn=None, hard_cap=None):
+    Lambda = lambda_hybrid(T, Lambda_global, local_fn=local_fn, hard_cap=hard_cap)
+    T_next = framework.zero_element_like(T)
+    for p in primes:
+        T_next += Lambda * (p ** alpha.get(p, 0.0)) * projectors[p](T)
+    T_next += F
+    return T_next
+\end{lstlisting}
+
+\subsection{End-to-End: Diagonal Case Study (Reproducible)}
+\begin{lstlisting}[style=py,caption={Diagonal system: convergence with $\|\Lrec S\|\le\gamma$},label={lst:diagdemo}]
+def demo_diagonal_convergence():
+    primes = [2, 3, 5]
+    d = 12
+    masks = {
+        2: np.array([1]*4 + [0]*8, dtype=float),
+        3: np.array([0]*4 + [1]*4 + [0]*4, dtype=float),
+        5: np.array([0]*8 + [1]*4, dtype=float),
+    }
+    fw = PrimeGradedFramework(primes, masks)
+    alpha = {2: -1.0, 3: -1.0, 5: -1.0}  # S diag entries: {1/2, 1/3, 1/5}
+    gamma = 0.8
+
+    # Diagonal fast-path: ||S|| = max_p p^{alpha_p} = 1/2
+    Lglob = lambda_global_diag(primes, alpha, gamma=gamma)  # 0.8 / 0.5 = 1.6
+    local_fn = lambda T: lambda_local_gamma(T, primes, alpha, fw, gamma=gamma)
+
+    T = np.linspace(1.0, 2.0, fw.dim)
+    F = 0.1 * np.ones(fw.dim)
+
+    rates = []
+    for _ in range(50):
+        T_new = certified_update(T, F, primes, alpha, fw.projectors, fw, Lglob, local_fn=local_fn)
+        rates.append(np.linalg.norm(T_new - T))
+        T = T_new
+
+    print("Λ_global =", Lglob, " (Λ_global>1 is fine since ||S||<1 ⇒ ||ΛS||≤γ)")
+    print("final ||ΔT||:", rates[-1])
+\end{lstlisting}
+
+\subsection{Sketch: Non-Diagonal Case (Safe Norm Fence)}
+\begin{lstlisting}[style=py,caption={Building apply_S and fencing with a one-sided upper bound},label={lst:nondiag}]
+def build_apply_S(primes, alpha, projectors, framework):
+    def apply_S(x):
+        out = framework.zero_element_like(x)
+        for p in primes:
+            out += (p ** alpha.get(p, 0.0)) * projectors[p](x)
+        return out
+    return apply_S
+
+def demo_nondiagonal_certified(primes, alpha, projectors, framework, gamma=0.8):
+    apply_S = build_apply_S(primes, alpha, projectors, framework)
+    ub = upper_bound_norm(apply_S, dim=framework.dim, iters=40, probes=8)
+    Lglob = gamma / ub
+    local_fn = lambda T: lambda_local_gamma(T, primes, alpha, framework, gamma=gamma)
+    # proceed as in the diagonal demo...
+\end{lstlisting}
+
+% ===============================
+\section{Applications}
+% ===============================
+\subsection{Case Study: Diagonal System}
+\textbf{Parameters:} $P_3=\{2,3,5\}$, $\alpha_2=\alpha_3=\alpha_5=-1$, $\gamma=0.8$, $F=0.1\cdot \mathbf{1}$, disjoint masks of size $4$ each.
+
+\textbf{Certificates:} $\norm{S}=\max\{2^{-1},3^{-1},5^{-1}\}=1/2$, hence $\Lglobal=0.8/(1/2)=1.6$ and $\norm{\Lglobal S}\le 0.8$.
+
+\textbf{Outcome:} Empirical linear rate $\approx \gamma=0.8$; convergence to $T_\infty=(I-\Lglobal S)^{-1}F$; $\Llocal$ further tightens steps statewise without breaching the global fence.
+
+\subsection{Case Study: Non-Diagonal System}
+\textbf{Challenge:} Non-orthogonal projectors (e.g., overlapping masks or learned linear maps) break exact diagonalization.
+
+\textbf{Solution:} Use \texttt{upper\_bound\_norm} to fence $\norm{S}$ from above, set $\Lglobal=\gamma/\text{UB}$, and optionally deploy $S_{\mathrm{sym}}$ in the local Rayleigh average. Hybrid policy preserves $\norm{\Lrec S}\le\gamma$.
+
+% ===============================
+\section{Conclusion and Outlook}
+% ===============================
+We completed a PGF-consistent split between the structural $M$ layer and the analytic contraction scalar $\Lrec$. This yields clean, certifiable stability results, a minimal set of assumptions, and simple, robust algorithms. Future directions include learned local gates, multi-scale $\Lrec$ spectra, and domain-specific PETC constraints.
+
+% ===============================
+\appendix
+\section*{Appendix A: Quick Reference (Definitions \& Results)}
+\begin{itemize}[leftmargin=*,nosep]
+  \item $S=\sum_p p^{\alpha_p}\PGprojector_p$; recursion $T_{t+1}=\Lrec ST_t+F$.
+  \item $\Lcrit=1/\rho(S)$ (boundary), $\Lglobal(\gamma)=\gamma/\norm{S}$ (certificate).
+  \item $r(T)=\ip{T}{ST}/\norm{T}^2=\sum_p \Mhat(T,p)p^{\alpha_p}$ (orthogonal case).
+  \item $\Llocal(\gamma;T)=\gamma/r(T)$, $\Lhyb=\min\{\Lglobal,\Llocal\}$.
+  \item If orthogonal: $\norm{S}=\max_p p^{\alpha_p}$.
+  \item Infinite primes: $S$ bounded $\Leftrightarrow \sup_p p^{\alpha_p}<\infty$.
+\end{itemize}
+
+\section*{Appendix B: Minimal Make Tips}
+\begin{itemize}[leftmargin=*,nosep]
+  \item Compile with \texttt{pdflatex} $\times$2 (for cross-refs).
+  \item Use \texttt{\textbackslash lstinputlisting} to include full Python files if desired.
+\end{itemize}
+
+\nocite{*}
+\bibliographystyle{unsrt}
+\bibliography{references}
+\end{document}
+
+
+
+

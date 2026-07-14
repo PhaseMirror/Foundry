@@ -9,7 +9,7 @@ on `−z`'s ratio + the π-shift `sin(A+π) = −sin A`, `cos(A+π) = −cos A`,
 `cos π = −1`). Together with the principal `Carg`, `CargUpper`, and `CargLower`, the argument is now
 defined over the whole punctured plane near the four axes.
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 import F1Square.Analysis.ComplexArgUpper

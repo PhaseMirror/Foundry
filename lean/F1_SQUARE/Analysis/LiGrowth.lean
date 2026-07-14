@@ -10,7 +10,7 @@ the `RAddNF`+`RMulNF` "ring" engine), hence `|zⁿ|² = (|z|²)ⁿ` (`cnormSq_np
 the constructive heart of the ¬RH (exponential) regime. The aggregation of the SUM `λₙ` (Voros's
 saddle-point) stays [CLASSICAL] interface; WHERE the zeros sit is RH. Crux fields stay `none`.
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free.
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free.
 -/
 
 import F1Square.Analysis.ZeroGeometry

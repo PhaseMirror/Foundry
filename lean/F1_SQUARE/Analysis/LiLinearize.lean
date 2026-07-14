@@ -25,7 +25,7 @@ crux fields stay `none`.
 Also: the small **complex commutative-ring lemmas** the substrate had not yet needed (`cmul_czero`,
 `cadd_zero`, `cmul_cneg`, the local congruences) — reusable for any future complex algebra.
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 

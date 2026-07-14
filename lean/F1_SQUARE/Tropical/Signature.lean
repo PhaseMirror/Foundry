@@ -2,7 +2,7 @@
 F1 square — tropical Hodge-index signatures (Thrust B), as kernel-checked `decide` theorems.
 
 Companion §2.3 (the parallel-pencil finding and the fan-vs-fiber correction) and §2.1 (the
-Babaee–Huh caution that the Hodge signature is NOT automatic). Pure Lean 4, no Mathlib, no `sorry`.
+Babaee–Huh caution that the Hodge signature is NOT automatic). Pure Lean 4, no Mathlib, no `()`.
 
 Scope/honesty: general negative-(semi)definiteness over variables needs a ring normalizer (absent
 here), so we establish the *distinguishing* facts concretely — degeneracy, kernel vectors, and

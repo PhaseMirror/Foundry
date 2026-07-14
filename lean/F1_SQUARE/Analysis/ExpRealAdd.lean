@@ -7,7 +7,7 @@ corner is bounded for *arbitrary* arguments (`expSum_corner_le_gen`, via `expSum
 This is the first brick of the `ζ` analytic stack: it upgrades `exp` to a homomorphism, the prerequisite
 for `exp(c·log n) = nᶜ` (real powers) and hence the `ζ(s)` tail bound at `Re s > 1`.
 
-Pure Lean 4, no Mathlib, no `sorry`/`native_decide`, choice-free.
+Pure Lean 4, no Mathlib, no `()`/`native_decide`, choice-free.
 -/
 
 import F1Square.Analysis.ExpReal

@@ -26,7 +26,7 @@ disk — WHERE the zeros sit is RH, untouched. The crux fields stay `none`. This
 functional-equation facet of the Atlas connected to the witness, formalized; novelty: the reflection
 identity for the Li growth ratio.
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 

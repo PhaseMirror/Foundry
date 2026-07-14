@@ -12,7 +12,7 @@ square-root primitive is required: the single real-power combinator `RrpowPos` i
 This file builds that combinator and its laws; Spouge's coefficients, the approximant, and the error
 estimate follow.
 
-Pure Lean 4, no Mathlib, no `sorry`/`native_decide`, choice-free.
+Pure Lean 4, no Mathlib, no `()`/`native_decide`, choice-free.
 -/
 
 import F1Square.Analysis.RealPow

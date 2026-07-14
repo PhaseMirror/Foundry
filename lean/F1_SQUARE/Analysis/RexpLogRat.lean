@@ -7,7 +7,7 @@ nat closed forms (`tmap_nat_num`/`tmap_nat_den`, `ExpLog.lean`) cover `q = ⟨n,
 an arbitrary rational `q` (`Qinv (q+1) = ⟨q.den, (q.num+q.den).toNat⟩` is unconditional). Reusable for
 any rational-argument log/artanh work.
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 

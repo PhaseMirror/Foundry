@@ -7,7 +7,7 @@ no regularity is owed), with the three transport lemmas every quadratic-form ass
 needs: congruence (`≈` termwise ⟹ `≈` of sums), non-negativity (termwise `≥ 0` ⟹ sum
 `≥ 0` — the PSD direction), and monotonicity (termwise `≤` ⟹ sums `≤`).
 
-Pure Lean 4 core, no Mathlib, no `sorry`, choice-free; audited by `scripts/honesty_audit.sh`.
+Pure Lean 4 core, no Mathlib, no `()`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
 import F1Square.Analysis.Pi

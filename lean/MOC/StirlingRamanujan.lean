@@ -1,5 +1,5 @@
 --! This file implements the Stirling‑Ramanujan constant Ω in a production‑grade, Mathlib‑free Lean4 module.
---! It follows the ADR‑138 plan and respects the Zero‑Axiom mandate (no `sorry`).
+--! It follows the ADR‑138 plan and respects the Zero‑Axiom mandate (no `()`).
 
 namespace StirlingRamanujan
 

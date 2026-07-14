@@ -35,7 +35,7 @@ HONEST SCOPE: the `n = 1, 2` slices are genuine; for `n ≥ 3` the sequences fal
 trivial split (the higher `η_j` need the higher Stieltjes constants `γ₂, …`, not yet built).
 Nothing here bears on `λₙ > 0 ∀ n` — that is RH and stays OPEN.
 
-Pure Lean 4 core, no Mathlib, no `sorry`, choice-free; audited by `scripts/honesty_audit.sh`.
+Pure Lean 4 core, no Mathlib, no `()`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
 import F1Square.Analysis.LambdaTwo

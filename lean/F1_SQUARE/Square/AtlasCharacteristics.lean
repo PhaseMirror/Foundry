@@ -26,7 +26,7 @@ G₂`, odd-degree) is that negative direction made explicit. They CONSTRAIN wher
 from; they do not by themselves supply it. Closure of the crux stays gated on the genuine
 positive-definite witness (`crux_gate_faithful`), so the crux fields stay `none`.
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 

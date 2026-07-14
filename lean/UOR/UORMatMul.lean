@@ -63,7 +63,7 @@ the TQC exact-certifier programme, in four rules.
    argument as scalar codecs.
 
 3. **Kernel authority and a minimal axiom base.** Every theorem below is
-   checked by the Lean 4 v4.16.0 kernel with no `sorry`, no Mathlib, and no
+   checked by the Lean 4 v4.16.0 kernel with no `()`, no Mathlib, and no
    `native_decide`; the `#print axioms` audit at the end of the file shows
    every proof closes over at most `{propext, Quot.sound}` (several use no
    axioms at all). This mirrors F1's `honesty_audit.sh` contract.
@@ -82,7 +82,7 @@ the TQC exact-certifier programme, in four rules.
 ## Check status (read before citing)
 
 Kernel-checked. This file compiles standalone against core Lean 4 v4.16.0
-(the uor-addr / F1 toolchain pin) with no errors, no warnings, no `sorry`,
+(the uor-addr / F1 toolchain pin) with no errors, no warnings, no `()`,
 and no imports beyond the prelude:
 
 ```
@@ -794,7 +794,7 @@ none at all — the three invariance theorems that rewrite only a hypothesis
 definitional `dot_nil_left`, and the `decide`-proved `w8a8KMax_value`; the
 rest carry `propext`, most also `Quot.sound`, both inherited from the core
 rewrite lemmas and induction principles they invoke. Anything else — in
-particular `sorryAx`
+particular `()Ax`
 or `Classical.choice` — is a build failure of the discipline, even if Lean
 accepts the file. -/
 

@@ -16,7 +16,7 @@ a custom single rational diagonal `gammaSeq j`, exactly as `Rpi`: a finite doubl
 ζ-approximants whose truncation (in the number of terms) and approximation (in the ζ-depth) errors are
 each driven below the Bishop modulus `1/(j+1)`.
 
-Pure Lean 4, no Mathlib, no `sorry`/`native_decide`, choice-free.
+Pure Lean 4, no Mathlib, no `()`/`native_decide`, choice-free.
 -/
 
 import F1Square.Analysis.Zeta

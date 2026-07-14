@@ -17,7 +17,7 @@ FOUR independent ways. That four-fold forcing is the strongest "no coincidence":
 construction choice but a fixed point of algebra, topology, and homotopy at once — which is why the
 Atlas treats `R, C, H, O` as the fundamental, not-chosen objects.
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 

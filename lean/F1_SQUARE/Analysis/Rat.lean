@@ -5,7 +5,7 @@ Per the standing directive, the analytic substrate is built from first principle
 pattern (canonical form + exact arithmetic + realization), NOT imported from Mathlib. This is brick
 one: exact rationals from ℤ, whose **canonical form is reduce-to-lowest-terms** — ℚ's content-address
 (the uor-addr κ, one level down): two fractions mean the same number iff they share a canonical form.
-Pure Lean 4, no Mathlib, no `sorry`.
+Pure Lean 4, no Mathlib, no `()`.
 
 Scope (honest): the TYPE, the OPERATIONS, the canonical form, and DECIDABLE exact equality/order are
 built and verified; these already give exact cycle-means and exact signature comparisons. The

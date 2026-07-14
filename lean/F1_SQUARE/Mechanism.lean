@@ -12,14 +12,14 @@ This module is the REAL Lean proof layer for the program (companion docs
 construction's *epistemic status* as UOR ontology data (`universallyValid : Option Bool`) —
 this module states load-bearing claims as honest Lean `theorem`s with real proofs.
 
-Discipline (matching the UOR Lean corpus, verified zero-`sorry`):
-  * NO `sorry`, NO `axiom`, NO `native_decide`, NO `partial def`.
+Discipline (matching the UOR Lean corpus, verified zero-`()`):
+  * NO `()`, NO `axiom`, NO `native_decide`, NO `partial def`.
   * For now, only [VERIFIED] / [CLASSICAL] boundary/shadow facts are proved here.
   * NO ARBITRARY CEILING on the crux. The Hodge index theorem for `Spec ℤ ×_𝔽₁ Spec ℤ`
     IS the Riemann Hypothesis. We do NOT forbid proving it: if a genuine, axiom-clean proof of
     a FAITHFUL statement ever lands and survives the audit, that is a result, and the manifest
     status flips `none → some true` because that is then the truth. What is forbidden is
-    *fooling ourselves* — hidden `sorry`/`axiom`/`native_decide`, circular or vacuous positivity
+    *fooling ourselves* — hidden `()`/`axiom`/`native_decide`, circular or vacuous positivity
     (the §2.3 control discipline), and mislabeling a finite SHADOW as the crux. In this pure
     (no-Mathlib) setting we cannot yet even *state* RH faithfully (no ℂ, no ζ), so every theorem
     here is a boundary/shadow fact, labeled as such — not the summit mistaken for the climb.

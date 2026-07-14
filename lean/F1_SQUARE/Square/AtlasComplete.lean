@@ -31,7 +31,7 @@ intersection-form positivity — the prime–archimedean coupling sign — is th
 atlas spectral form is indefinite by design; closure is one uniform coherent witness (RH). The crux
 fields stay `none`.
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 

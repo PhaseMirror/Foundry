@@ -11,7 +11,7 @@ value on a positive real: `arg(x) = 0` for `x > 0` (`Im = 0`, so the ratio has n
 (Principal sector only — `|arg| < π/4`; the full-range argument via the `|t| ≥ 1` reduction
 `arctan t = ±π/2 − arctan(1/t)` and quadrant adjustments is a later brick.)
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 

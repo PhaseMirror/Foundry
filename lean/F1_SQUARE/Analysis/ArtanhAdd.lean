@@ -15,7 +15,7 @@ thicket **once** for an arbitrary rational `0 ≤ τ < 1`, with the generic choi
 `d = q−p`); the budget slack is `(2L+4)q²·d(j+1)²·(d−1) ≥ 0`, clean because `d ≥ 1`. This is the
 radius-`ρ = τ` analog of `Rexp_twoArtanhRecip` (`GammaOne.lean`) at a *general* base.
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 

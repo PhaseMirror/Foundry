@@ -11,6 +11,14 @@ pub use task::{Workflow, Task};
 pub use identity::{
     IssuerType, ExternalIssuerConfig, IdentityOnboardingConfig, UniquenessAnchorInput,
     UniquenessAnchor, ValidatedIdToken, VerifiedVerifiableCredential, derive_uniqueness_anchor,
-    resolve_issuer_for_id_token, derive_membership_anchor_from_id_token, resolve_issuer_for_vc,
+    derive_membership_anchor_from_id_token, resolve_issuer_for_vc,
     derive_membership_anchor_from_vc,
 };
+
+pub mod generated_vals_array;
+pub mod hamiltonian;
+pub mod spectral_bridge;
+pub mod spectral_resolvent;
+
+#[cfg(kani)]
+pub mod proofs;

@@ -21,7 +21,7 @@ conquered ground — and where its sign stays open:
 Outside the window the prime side returns and the coupling's sign is the uniform tail bound,
 governed by the zeros — the one open content. The crux fields stay `none`.
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 

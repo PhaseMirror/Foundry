@@ -17,7 +17,7 @@ chaining strict to non-strict (which would itself pass through RH). The classica
 (Bombieri–Lagarias, Voros) are the explicit hypotheses of `LiBridge`, audit-visible; the single open
 input is `AllZerosOnLine` = RH. The crux fields stay `none`.
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 

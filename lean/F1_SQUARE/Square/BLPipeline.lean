@@ -26,7 +26,7 @@ witness sum is `≥ 0` (the witness), so their limit — `λₙ` — is `≥ 0`.
 INHABITING `BLZeroSum` (classical, available) AND discharging `AllZerosOnLine` (RH, open) — so the
 crux fields stay `none`.
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 

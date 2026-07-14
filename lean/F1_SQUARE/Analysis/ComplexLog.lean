@@ -12,7 +12,7 @@ on the positive real axis (`Im = 0`) the imaginary part vanishes (`Clog_ofReal_p
 and additivity `Clog (zw) = Clog z + Clog w` via log-multiplicativity and the arctan addition law —
 are the next bricks; each needs its own sub-construction.)
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 

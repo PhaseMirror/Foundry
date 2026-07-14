@@ -18,7 +18,7 @@ non-increasing, so `S(m) ≤ g(12) = S(12) + 3/48`), and `ψ(1/4) = −γ + core
 through `Rgamma_h_upper`. This is the value Burnol's multiplier `α(τ)` evaluates to at
 `τ = 0` together with `8√2` and `−log π` (brick W3b).
 
-Pure Lean 4 core, no Mathlib, no `sorry`, choice-free; audited by `scripts/honesty_audit.sh`.
+Pure Lean 4 core, no Mathlib, no `()`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
 import F1Square.Analysis.GammaUpper

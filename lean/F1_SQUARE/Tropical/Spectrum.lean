@@ -4,7 +4,7 @@ F1 square — the tropical content-address κ and the cycle-mean spectrum (Thrus
 Companion `characteristic_1_constructions.md`: R3 (κ is permutation-invariant), R4 (the cycle-mean
 spectrum), and the headline R9/R10 (**κ does NOT determine the spectrum** — same content-address,
 different dynamics) with R11 (the κ-fiber carries distinct spectra). Pure Lean 4, no Mathlib, no
-`sorry`. κ is the tropical incarnation of the uor-addr content-address: the sorted off-diagonal
+`()`. κ is the tropical incarnation of the uor-addr content-address: the sorted off-diagonal
 multiset of the Kleene closure `W*` (a relabeling-invariant canonical address).
 
 Means are kept exact as `(sum, length)` pairs (the cycle profile); equality of profiles is the

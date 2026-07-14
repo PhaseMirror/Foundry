@@ -16,7 +16,7 @@ data, the §7 candidate generator "Coxeter iteration (order 30)". A forced numer
 So `30` (Coxeter), `8 = O` (rank `= φ(30)`), `120` (positive roots), `240` (roots / `E₄` coeff),
 `248` (dim) form one forced web around `{T, O}`. All `Nat`, decidable. Crux fields untouched.
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 

@@ -36,7 +36,7 @@ canonical `𝕊` the coarse lattice is pencil-blind (`Square.square_hodge_pencil
 `Δ·Γ_n = 0`): the trace datum is what the spectral (`H¹`-bearing) enrichment must carry, and
 THIS module is the exact shape of what carrying it buys. RH itself stays OPEN.
 
-Pure Lean 4 core, no Mathlib, no `sorry`, choice-free; audited by `scripts/honesty_audit.sh`.
+Pure Lean 4 core, no Mathlib, no `()`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
 import F1Square.Mechanism

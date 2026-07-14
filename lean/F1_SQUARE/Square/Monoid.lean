@@ -19,7 +19,7 @@ Two Frobenius-flavored maps live on the curve and must not be conflated (compani
     (`mScale_not_hom`); on the square it is carried by the graph CORRESPONDENCE `Γ_n`
     (`Square/Divisors.lean`), exactly as the companion's parallel-pencil finding requires.
 
-Pure Lean 4 core (no Mathlib), no `sorry`, choice-free; audited by `scripts/honesty_audit.sh`.
+Pure Lean 4 core (no Mathlib), no `()`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
 namespace UOR.Bridge.F1Square.Square

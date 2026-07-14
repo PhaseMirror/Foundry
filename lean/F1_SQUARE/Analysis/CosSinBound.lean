@@ -3,7 +3,7 @@ F1 square — **`|cos x| ≤ 1` and `|sin x| ≤ 1`** as constructive reals, in 
 The immediate order-theoretic corollary of the Pythagorean identity `cos² + sin² = 1`
 (`Rcos_sq_add_sin_sq`): a square is `≥ 0`, so each summand is `≤` the sum `= 1`.
 
-Pure Lean 4, no Mathlib, no `sorry`/`native_decide`, choice-free.
+Pure Lean 4, no Mathlib, no `()`/`native_decide`, choice-free.
 -/
 
 import F1Square.Analysis.CosSinAdd

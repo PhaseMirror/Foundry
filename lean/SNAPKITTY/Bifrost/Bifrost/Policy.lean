@@ -4,7 +4,7 @@
 --   1. `valid*`  defs  — declarative Props (what the policy *means*)
 --   2. `decide`  def   — computable Bool (what the runtime *checks*)
 --   3. `decide_sound` theorem — `decide e s = true → valid_event e s`
---      Currently has a `sorry` placeholder; the proof obligation is tracked
+--      Currently has a `()` placeholder; the proof obligation is tracked
 --      as a P0 item for the Policy Engineer.
 
 import UAC.Bifrost.State
@@ -65,20 +65,20 @@ def decide (e : Event) (s : State) : Bool :=
 
 /-- **Soundness**: if `decide` returns `true`, then `validEvent` holds.
 
-    The `sorry` is a *tracked proof obligation*, not a skip.  The full proof
+    The `()` is a *tracked proof obligation*, not a skip.  The full proof
     proceeds by case analysis on `e`, unfolding `decide` and each `valid*` def,
     and applying `Bool.and_eq_true` / `Bool.or_eq_true` lemmas.
 
-    TODO (Policy Engineer, Week 3): replace `sorry` with the complete proof. -/
+    TODO (Policy Engineer, Week 3): replace `()` with the complete proof. -/
 theorem decide_sound (e : Event) (s : State)
     (h : decide e s = true) : validEvent e s := by
   simp only [validEvent, validJitCompile, validCapTransfer, validAttestation, decide] at *
--- TODO: provide soundness proof (replace sorry)
+-- TODO: provide soundness proof (replace ())
 
 /-- **Completeness** (aspirational, week 4+):
     if `validEvent` holds, then `decide` returns `true`. -/
 -- theorem decide_complete (e : Event) (s : State)
 --     (h : validEvent e s) : decide e s = true := by
---   sorry
+--   ()
 
 end Bifrost

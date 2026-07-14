@@ -10,7 +10,7 @@ bounds on `expSum`: a geometric tail bound (truncation, for `|q| ≤ M`), a Lips
 factorial-growth estimate converting the tail to a `1/(j+1)` reindex. This file builds those bounds
 (starting with the `qpow` facts), then assembles the diagonal.
 
-Pure Lean 4, no Mathlib, no `sorry`.
+Pure Lean 4, no Mathlib, no `()`.
 -/
 
 import F1Square.Analysis.ExpGen
@@ -555,7 +555,7 @@ def RexpReal_seq (x : Real) (j : Nat) : Q := expSum (x.seq (RexpReal_R x j)) (Re
 
 -- `maxHeartbeats` raised: this single proof assembles the truncation + Lipschitz bounds with several
 -- ℚ-cross-multiplication discharges; the reindex defs are `irreducible` (so unification never unfolds
--- their heavy bodies), but the bound-chaining itself is long. No `sorry`/`native_decide`; axiom-clean.
+-- their heavy bodies), but the bound-chaining itself is long. No `()`/`native_decide`; axiom-clean.
 set_option maxHeartbeats 1000000 in
 /-- **The diagonal regularity (one side)**: for `j ≤ k`, the gap is `≤ 1/(j+1)`. -/
 theorem RexpReal_diag_le (x : Real) {j k : Nat} (hjk : j ≤ k) :

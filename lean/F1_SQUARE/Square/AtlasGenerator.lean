@@ -23,7 +23,7 @@ by matching the growth class, and it is not asserted. This is a SURVIVING candid
 the crux fields stay `none`. The remaining work is whether the shift-length sum-of-squares can be
 made to hit `2λₙ` on the nose — which is exactly the open content.
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 

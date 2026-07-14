@@ -9,7 +9,7 @@ conjugate symmetry `arg(z̄) = −arg z`, the lower-sector argument is `CargLowe
 additivity `CargLower(zw) = Carg z + CargLower w` (`CargLower_add`) reflects `CargUpper_add` through
 `Cconj_Cmul` (`z̄w̄ = z̄·w̄`).
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 import F1Square.Analysis.ComplexArgUpperAdd

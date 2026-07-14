@@ -10,7 +10,7 @@
     The associated S-algebra 𝕊M for a pointed monoid M recovers the Deitmar
     spectrum; multi-partition covers decompose the arithmetic surface into affine pieces.
 
-    Proven here (axiom-clean, no Mathlib, no sorry):
+    Proven here (axiom-clean, no Mathlib, no ()):
       • The N=2/3 monoid approximations embed as S-algebras 𝕊M.
       • Multi-partition covers correspond to the block decomposition.
       • Block signature implies positivity on structure sheaf level.

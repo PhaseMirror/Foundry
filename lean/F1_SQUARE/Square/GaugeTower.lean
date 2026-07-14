@@ -27,7 +27,7 @@ the RH form. So the atlas spectral signature does not, by itself, supply Gate B'
 limit; the intersection-form/RH positivity stays RH-equivalent and open (Atlas §11/§12/§15), and the
 crux fields stay `none`.
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 

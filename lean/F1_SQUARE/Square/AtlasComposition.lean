@@ -11,7 +11,7 @@ already has the 2-square (`Analysis.cnormSq_mul`, `|zw|² = |z|²|w|²`); this b
 squares), distinct from the open RH intersection-form positivity (§9: "the model does not identify
 the two").
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 

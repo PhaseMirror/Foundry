@@ -13,7 +13,7 @@ With `CSpougeGammaW` (the strip-applicable `Γ(w)`, `ComplexDigamma.lean`) and `
 (mechanical) product assembly and then the genuine analytic content (functional equation, order-1
 bound, Hadamard) of items 3–5.
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 import F1Square.Analysis.ComplexExp

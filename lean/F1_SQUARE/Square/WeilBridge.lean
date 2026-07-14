@@ -15,7 +15,7 @@
     von Mangoldt weight Λ(p) = log p. This provides a DECIDABLE bridge: the
     template signature controls the local Weil coupling sign.
 
-    Proven here (axiom-clean, no Mathlib, no sorry):
+    Proven here (axiom-clean, no Mathlib, no ()):
       • The template pairing's primitive form magnitude bounds the Weil functional's
         local contribution at prime p.
       • Under Hasse assumptions, the combined contribution is controlled by the

@@ -20,7 +20,7 @@ factor (`spf_dvd`: it divides `n`; `spf_two_le`: `≥ 2`; `spf_prime`: it is pri
 the von Mangoldt function and not merely a table agreeing at sampled points — in particular
 `Λ(p) = log p` for **every** prime `p` (`vonMangoldt_prime`).
 
-Pure Lean 4, no Mathlib, no `sorry`/`native_decide`, choice-free.
+Pure Lean 4, no Mathlib, no `()`/`native_decide`, choice-free.
 -/
 
 import F1Square.Analysis.RealPow

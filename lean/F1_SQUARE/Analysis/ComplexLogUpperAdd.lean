@@ -9,7 +9,7 @@ factors read by `ClogUpper`. As in `Clog_add`, the modulus/real half is the expl
 the one audit-visible heavy input); the imaginary half is the *fully discharged* cross-sector
 argument additivity `CargUpper_add` (`ComplexArgUpperAdd.lean`).
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 import F1Square.Analysis.ComplexLogUpper

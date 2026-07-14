@@ -7,7 +7,7 @@ not a definitional identity. This file assembles the pieces toward it. First bri
 `exp` respects `≈` (`RexpReal_congr`) — needed to substitute log-equalities under `exp` — and the
 **reciprocal law** `exp(−y)·exp(y) ≈ 1` (`RexpReal_mul_neg`, from the keystone `RexpReal_add`).
 
-Pure Lean 4, no Mathlib, no `sorry`/`native_decide`, choice-free.
+Pure Lean 4, no Mathlib, no `()`/`native_decide`, choice-free.
 -/
 
 import F1Square.Analysis.ExpRealAdd

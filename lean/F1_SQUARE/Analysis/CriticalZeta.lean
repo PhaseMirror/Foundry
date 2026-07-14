@@ -13,7 +13,7 @@ This file builds the denominator `1 − 2^{1−s} = 1 − 2·2⁻ˢ = 1 − 2·c
 `cpowNeg`, no new `Cexp`), its non-vanishing `|1 − 2^{1−s}|² ≥ (2^{1−σ} − 1)² > 0` for `σ < 1` (via the
 `Cexp`/`ncpow` modulus identity and `Re ≤ |·|`), and the constructive inverse `Cinv`.
 
-Pure Lean 4, no Mathlib, no `sorry`/`native_decide`, choice-free.
+Pure Lean 4, no Mathlib, no `()`/`native_decide`, choice-free.
 -/
 
 import F1Square.Analysis.EtaVariation

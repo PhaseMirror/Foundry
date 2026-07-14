@@ -7,7 +7,7 @@ This is the **lift to reals** of the exact finite Cauchy product (`expSum_mul_eq
 the partial sums at the reindex depth `M = Ridx + 1 ≥ n + 1`; there both the corner and the truncation
 tail are `≤ 1/(n+1)`, so the diagonal gap is `≤ ⟨2,n+1⟩` — exactly the `Req` tolerance.
 
-Pure Lean 4, no Mathlib, no `sorry`/`native_decide`, choice-free.
+Pure Lean 4, no Mathlib, no `()`/`native_decide`, choice-free.
 -/
 
 import F1Square.Analysis.Binomial

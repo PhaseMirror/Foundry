@@ -1,5 +1,4 @@
-// .github/workflows/ci.yml
-name: CI
+name: CI Pipeline
 
 on:
   push:
@@ -10,26 +9,46 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        rust: [stable]
     steps:
-      - uses: actions/checkout@v3
-      - name: Set up Rust
-        uses: actions/setup-rust@v1
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Rust (nightly for Kani)
+        uses: actions-rs/toolchain@v1
         with:
-          rust-version: stable
-      - name: Cache cargo registry
-        uses: actions/cache@v3
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-registry-
-      - name: Cache cargo index
-        uses: actions/cache@v3
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-index-
-      - name: Build and test
+          toolchain: nightly
+          profile: minimal
+          override: true
+
+      - name: Install Kani
         run: |
-          cargo test --all
+          curl -L https://github.com/model-checking/kani/releases/download/v0.14/kani-0.14-x86_64-unknown-linux-musl.tar.gz | tar xz
+          sudo mv kani /usr/local/bin/
+
+      - name: Install Lean toolchain (lake)
+        run: |
+          curl -L https://raw.githubusercontent.com/leanprover/lean4/master/scripts/get-lean.sh | bash -s -- -y
+
+      - name: Build Lean core
+        working-directory: /home/multiplicity/Multiplicity/PhaseMirror/Prime
+        run: |
+          lake build
+
+      - name: Generate Rust vals
+        run: |
+          cd materia_commons && python3 generate_rust_vals.py
+
+      - name: Run Kani verification
+        run: |
+          cd materia_commons && cargo kani --all-features
+
+      - name: Build WASM target
+        run: |
+          cd materia_commons && cargo +nightly build --release --target wasm32-unknown-unknown
+
+      - name: Run example resolvent scan
+        run: |
+          cd materia_commons && cargo run --example resolvent_scan

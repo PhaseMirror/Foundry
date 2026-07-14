@@ -31,7 +31,7 @@ shown only to be inhabited at a template (`realizesDiag_satisfiable`, the two-si
 the `⟹` direction only, and at FIXED finite `D` it cannot close the crux (the form is not its
 diagonal — the off-diagonal forces infinite rank; §4, §10). The crux fields stay `none`.
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 

@@ -5,7 +5,7 @@ inverse law `Rmul_Rinv_self` (`RealDiv`): with `N = |z|² = (Re z)² + (Im z)²`
 via a witness `k`), `1/z := (Re z)·I − i·(Im z)·I`, and the defining identity `z·(1/z) = 1` reduces
 componentwise to `Re = ((Re z)² + (Im z)²)·I = N·I = 1` and `Im = (Re z)(Im z)I − (Im z)(Re z)I = 0`.
 
-Pure Lean 4, no Mathlib, no `sorry`/`native_decide`, choice-free.
+Pure Lean 4, no Mathlib, no `()`/`native_decide`, choice-free.
 -/
 
 import F1Square.Analysis.ComplexMod

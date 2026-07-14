@@ -10,7 +10,7 @@ real laws — `RexpReal_add` (`e^{x+y}=e^x e^y`), `Rcos_add` (`cos(a+b)=cos a co
 `Rsin_add` (`sin(a+b)=sin a cos b + cos a sin b`) — followed by a pure real-ring rearrangement
 (`Rmul4_rearrange`, `Rmul_sub_distrib`/`Rmul_distrib`). No new convergence obligation.
 
-Pure Lean 4, no Mathlib, no `sorry`/`native_decide`, choice-free.
+Pure Lean 4, no Mathlib, no `()`/`native_decide`, choice-free.
 -/
 
 import F1Square.Analysis.ComplexExp

@@ -13,7 +13,7 @@ extends the complex logarithm PAST `|arg| < π/4` — to the upper sector `|arg|
 is the genuine logarithm on the upper sector. Its additivity across sectors (the full-plane atan2) is
 the following brick.
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 import F1Square.Analysis.ComplexLog

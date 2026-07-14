@@ -20,7 +20,7 @@ finite-type Cartan fact (the roots are linearly independent / the lattice is uni
 brick certifies choice-free is the seed and its semidefinite anchor; nothing about the INFINITE
 limit (G2b), where definiteness is the make-or-break and may fail. The crux fields stay `none`.
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 

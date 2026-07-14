@@ -22,7 +22,7 @@ currently has no in-repo atlas n-family to feed it and selects NO candidate — 
 mode for the candidate search. The harness is built and demonstrated so that the test runs the
 instant atlas data is supplied. The crux fields stay `none`.
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 

@@ -21,7 +21,7 @@ So a match is content, not fiat. `scripts/honesty_audit.sh` is extended with the
 no-smuggling check (the metric analog of `intrinsicH1_dict`'s "no false dictionary can be
 supplied"): the pairing definitions never reference `λ`. The crux fields stay `none`.
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 

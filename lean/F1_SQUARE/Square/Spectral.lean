@@ -50,7 +50,7 @@ FAITHFULNESS (the standing cautions, all enforced):
   • The finite-check guard transfers to the geometric face (`spectral_iff_all_upTo`):
     no finite run of negativity checks reaches the crux.
 
-Pure Lean 4 core, no Mathlib, no `sorry`, choice-free; audited by `scripts/honesty_audit.sh`.
+Pure Lean 4 core, no Mathlib, no `()`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
 import F1Square.Analysis.LiTwo

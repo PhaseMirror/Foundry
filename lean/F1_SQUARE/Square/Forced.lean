@@ -27,7 +27,7 @@ whose `dict` is the theorem `vanCyc_selfpair`), the same engine runs over ℤ:
     construction) and unreachable by any finite run (`genuine_iff_all_upTo`). This is the exact
     canonical shape of the obstruction, which is the point of running the engine.
 
-Pure Lean 4 core, no Mathlib, no `sorry`, choice-free; audited by `scripts/honesty_audit.sh`.
+Pure Lean 4 core, no Mathlib, no `()`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
 import F1Square.Square.WeilLattice

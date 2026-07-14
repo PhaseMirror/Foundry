@@ -1,0 +1,837 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{bm}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{listings}
+\usepackage[T1]{fontenc}
+\usepackage[scaled]{beramono}
+\usepackage{courier}
+\usepackage{graphicx}
+
+\lstdefinestyle{code}{
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  frame=single,
+  columns=fullflexible
+}
+
+\title{%
+ACE--SCN / CSC / PhaseMirror-HQ Integration\\[4pt]
+\large Technical Report and Defensive Publication
+}
+
+\author{Citizen Gardens \\ The Foundation of Multiplicity}
+\date{April 25, 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This document consolidates and formalizes recent developments around the Arithmetic Control Engine (ACE), the Structured Control Network (SCN), the Contraction Spectral Certificate (CSC), and their proposed unification with a PhaseMirror-HQ memory-kernel architecture. It is written as both a technical report and a prior-art defensive publication. The report covers: (i) executive-level motivation and system architecture; (ii) a comprehensive mathematical overview of ACE--SCN, including feasibility maps and certified bounds; (iii) the Track A / Track B split and the canonical 5{,}087-constraint zero-knowledge circuit layout; (iv) the proposal to treat an FZS-MK memory kernel and Zeno projection as the sole semantic authority for drift and protection metrics; (v) an ADR-centered governance plan with SWOT and RAID analysis; and (vi) implementation sketches and validation pathways sufficient to serve as public technical disclosure.%
+\end{abstract}
+\newpage
+\tableofcontents
+\newpage
+\section{Executive Summary}
+
+The Arithmetic Control Engine (ACE) is a reproducible system for amortized, certified spectral shaping on families of arithmetic operators, in particular self-adjoint Hecke operators on cusp forms.\footnote{Formal specification in ACE--SCN document. [file:1]} Given a Hermitian operator matrix \(A\) and a target gap value \(\hat g\), ACE produces a Hermitian perturbation \(\Delta\) that satisfies hard feasibility certificates and, optionally, preserves arithmetic structure via explicit fidelity modes. The Structured Control Network (SCN) proposes such perturbations in an amortized fashion, while a deterministic feasibility map enforces admissible constraints independently of training.\footnote{Definitions of the feasibility map and fidelity modes are given in Sections 4--6 of the ACE--SCN specification. [file:1]}
+
+The implementation roadmap partitions ACE into two tracks. Track A (Python) computes semantic quantities including drift metrics, windowed contraction (WAC), and certification flags, while Track B (Rust/Circom) implements a fixed-topology zero-knowledge circuit that verifies algebraic invariants, Poseidon2 hash commitments, and an exact canonical constraint budget of 5{,}087 R1CS constraints.\footnote{ACE Roadmap and constraint layout documents. [file:2][file:3]} The file \texttt{csc.py} in Track A is designated as the canonical constraint-budget authority, and the Circom circuit enforces both the Poseidon2 topology \((t=9, r=8)\) and the total constraint count as non-negotiable.%
+
+Within this design thread, the following additional developments have been articulated and are captured here as defensive publication:
+
+\begin{itemize}[leftmargin=*]
+  \item Clarification of SCN as the learned amortized controller and CSC (``Contraction Spectral Certificate'') as the topology-and-certificate layer binding SCN outputs, governance witnesses, and cryptographic proofs.
+  \item A proposal to unify all drift and protection semantics under a PhaseMirror-HQ memory-kernel layer (FZS-MK with Zeno projection), such that ACE, SCN, and CSC treat this kernel as the sole authority for drift/protection metrics.
+  \item An ADR-based governance and migration plan, including SWOT and RAID analyses, to deprecate duplicate ACE-side drift logic while preserving reproducibility and circuit topology constraints.
+  \item A telemetry contract for exposing kernel-certified scalars (e.g., normalized drift \(X_n\), maximum WAC statistic, a protection index, and a validity bit) into ACE's certificate and zero-knowledge pipelines, without recomputing semantic logic in the consuming stack.
+\end{itemize}
+
+The final architecture proposed is four-layered:
+\begin{enumerate}[leftmargin=*]
+  \item Arithmetic operator layer (cusp-form spaces, Hecke operators, Hermitianization).
+  \item Kernel authority layer (FZS-MK memory kernel and Zeno projection).
+  \item Control and certificate layer (SCN, feasibility maps, governance logic, CSC).
+  \item Cryptographic verification layer (Circom/Rust circuit, Poseidon2 commitments, Groth16 proofs).
+\end{enumerate}
+
+This configuration preserves ACE's original mathematical guarantees while concentrating semantic authority for drift and protection metrics in a single, well-defined kernel.
+
+\section{Mathematical Overview of ACE--SCN}
+
+\subsection{Arithmetic Objects and Hermitianization}
+
+\paragraph{Cusp-form space and safe Hecke family.} Let
+\[
+V = S_k(\Gamma_0(N))
+\]
+be the complex vector space of weight-\(k\) holomorphic cusp forms of level \(\Gamma_0(N)\).\footnote{Section 1 of the ACE--SCN specification. [file:1]} For primes \(p\nmid N\), the Hecke operators
+\[
+T_p : V \to V
+\]
+are self-adjoint with respect to the Petersson inner product and form the ``safe'' part of the Hecke family; non-self-adjoint operators such as \(U_p\) for \(p\mid N\) are excluded from the base specification.
+
+\paragraph{Computational basis and Gram matrix.} Choose a non-diagonal computable basis \(B\) for \(V\) (for example, a modular-symbols-derived basis), producing a matrix representation
+\[
+M_p
+\]
+for \(T_p\) in that basis.\footnote{Section 2 of the ACE--SCN specification. [file:1]} Let \(G\succ 0\) denote the Gram matrix of the relevant inner product in basis \(B\). Self-adjointness in this basis is equivalent to the condition
+\[
+M_p G = G M_p^*.
+\]
+A diagnostic self-adjointness error is defined by
+\[
+\operatorname{selfAdjErr}(M_p,G)
+  := \frac{\|M_p G - G M_p^*\|_F}{\|M_p\|_F \,\|G\|_F}.
+\]
+
+\paragraph{Stable Hermitianization.} Compute a Cholesky factorization \(G = LL^*\) and define
+\[
+A_p := L^{-1} M_p L.
+\]
+If \(\operatorname{selfAdjErr}(A_p)\) is sufficiently small, then \(A_p\) is Hermitian up to numerical tolerance.\footnote{Hermitianization and diagnostics described in Section 2. [file:1]} Optionally, apply a symmetrization
+\[
+A_p \leftarrow \tfrac12 (A_p + A_p^*)
+\]
+and record the residual \(\|A_p - A_p^*\|_F\) as a diagnostic.
+
+\subsection{Gap Functionals and Perturbation Classes}
+
+\paragraph{Eigenvalues and gap functionals.} For a Hermitian matrix \(A\in\mathbb{C}^{d\times d}\), denote its ordered real eigenvalues by
+\[
+\lambda_1(A) \le \cdots \le \lambda_d(A).
+\]
+The indexed gap is defined as
+\[
+g_i(A) := \lambda_{i+1}(A) - \lambda_i(A),
+\]
+while a smooth soft-min gap functional can be defined as
+\[
+g_\tau(A) := -\tau \log\!\left(\sum_{i=1}^{d-1} \exp\!\left(-\frac{\lambda_{i+1}(A) - \lambda_i(A)}{\tau}\right)\right), \quad \tau > 0.
+\]
+These functionals provide smooth objectives for spectral-gap control.\footnote{Gap definitions and smooth variants are discussed in Section 3. [file:1]}
+
+\paragraph{Hecke-span subspace and norms.} Fix primes \(p_1,\dots,p_r\) with \(p_j\nmid N\). Define the Frobenius subspace
+\[
+H_r := \operatorname{span}\{A_{p_1},\dots,A_{p_r}\} \subset \mathbb{C}^{d\times d}.
+\]
+The Frobenius norm is
+\[
+\|X\|_F := \sqrt{\operatorname{tr}(X^*X)},
+\]
+and the induced distance to \(H_r\) is
+\[
+\operatorname{dist}_F(X,H_r) := \min_{H\in H_r}\|X - H\|_F.
+\]
+
+\paragraph{Fidelity modes and constraint sets.} For \(\varepsilon>0\) and \(\eta\ge 0\), ACE defines three constraint sets:
+\begin{align*}
+\mathcal{C}_\varepsilon
+  &:= \{\Delta : \Delta = \Delta^*,\, \|\Delta\|_F \le \varepsilon\}, \\
+\mathcal{C}_\varepsilon^{H_r}
+  &:= \{\Delta : \Delta\in H_r,\, \Delta = \Delta^*,\, \|\Delta\|_F \le \varepsilon\}, \\
+\mathcal{C}^{\mathrm{near}}_{\varepsilon,\eta}
+  &:= \{\Delta : \Delta = \Delta^*,\, \|\Delta\|_F \le \varepsilon,\, \operatorname{dist}_F(\Delta,H_r)\le \eta\}.
+\end{align*}
+These sets correspond respectively to Mode~1 (unstructured), Mode~2 (Hecke-span), and Mode~3 (near-arithmetic) perturbations.\footnote{Fidelity modes appear in Section 4 of the ACE--SCN specification. [file:1]}
+
+\subsection{Projection and Feasibility Map}
+
+\paragraph{Frobenius projection onto \(H_r\).} Define
+\[
+B = [\operatorname{vec}(A_{p_1}) \; \cdots \; \operatorname{vec}(A_{p_r})] \in \mathbb{R}^{d^2\times r}.
+\]
+Then the Frobenius projection of a matrix \(X\) onto \(H_r\) is
+\[
+P_{H_r}(X) = \operatorname{unvec}\bigl(B(B^\top B)^{-1} B^\top \operatorname{vec}(X)\bigr),
+\]
+with the practical recommendation to precompute a numerically stable orthonormal basis for \(H_r\) via QR factorization on flattened matrices.\footnote{Implementation notes in Section 5. [file:1]}
+
+\paragraph{Certificate-first feasibility map.} Let \(\Delta_0\) be a raw Hermitian proposal (for example, an SCN output after symmetrization). ACE applies a deterministic map \(F\) to \(\Delta_0\), depending on the chosen mode.
+
+\begin{itemize}[leftmargin=*]
+  \item Common Hermitianization:
+  \[
+  \Delta_0 \leftarrow \tfrac12(\Delta_0 + \Delta_0^*).
+  \]
+  \item Mode 1 (unstructured): scale to the ball of radius \(\varepsilon\),
+  \[
+  F_1(\Delta_0) := \varepsilon \cdot \frac{\Delta_0}{\max(\|\Delta_0\|_F,\, \varepsilon)}.
+  \]
+  \item Mode 2 (Hecke-span): project then scale,
+  \begin{align*}
+    H &= P_{H_r}(\Delta_0), \\
+    F_2(\Delta_0) &:= \varepsilon \cdot \frac{H}{\max(\|H\|_F,\, \varepsilon)}.
+  \end{align*}
+  \item Mode 3 (near-arithmetic): clip residual distance and then scale,
+  \begin{align*}
+    H &= P_{H_r}(\Delta_0), \\
+    R &= \Delta_0 - H, \\
+    R' &:= \min\!\left(1,\, \frac{\eta}{\|R\|_F}\right) R, \\
+    \Delta_1 &:= H + R', \\
+    F_3(\Delta_0) &:= \varepsilon \cdot \frac{\Delta_1}{\max(\|\Delta_1\|_F,\, \varepsilon)}.
+  \end{align*}
+\end{itemize}
+
+The resulting map \(F_m(\Delta_0)\) (for \(m\in\{1,2,3\}\)) is Hermitian and guaranteed to lie in the corresponding constraint set by construction.\footnote{Feasibility map construction in Section 6. [file:1]}
+
+\subsection{Certificates and Key Lemmas}
+
+\paragraph{Weyl via Frobenius.} For Hermitian \(A\) and Hermitian \(\Delta\in\mathcal{C}_\varepsilon\), Weyl's theorem yields the Frobenius-based bound
+\[
+|\lambda_i(A+\Delta) - \lambda_i(A)| \le \|\Delta\|_2 \le \|\Delta\|_F \le \varepsilon.
+\]
+This provides a certified upper bound on eigenvalue movement for all fidelity modes.
+
+\paragraph{Near-span implies near-commuting.} If \(\Delta\) satisfies \(\operatorname{dist}_F(\Delta,H_r)\le \eta\), then for each generator \(A_{p_i}\),
+\[
+\|[A_{p_i},\Delta]\|_F \le 2\|A_{p_i}\|_2\,\eta.
+\]
+This inequality turns commutator norms into explicit diagnostics of arithmetic fidelity: small Frobenius distance to the Hecke span implies small commutators.%
+
+\subsection{SCN Amortized Controller}
+
+\paragraph{Dimension-agnostic parametrization.} The SCN learns an amortized mapping from instance features to either a raw matrix proposal or a low-dimensional parameter vector \((\alpha,\beta)\). A recommended parametrization is
+\[
+\Delta_0(\alpha,\beta)
+  = \sum_{j=1}^r \alpha_j A_{p_j}
+    + \sum_{\ell=1}^s \beta_\ell u_\ell u_\ell^\top,
+\]
+where \(u_\ell \in \mathbb{R}^d\) are deterministic pseudorandom unit vectors generated from a fixed seed. This makes the network output dimension independent of \(d\), the ambient matrix size.
+
+\paragraph{Features and amortized objective.} Let \(\phi(A,\hat g)\) be a feature vector including target gap \(\hat g\), eigenvalue summaries, selected gap values, and quantiles. For a fixed constraint set \(\mathcal{C}\), the per-instance constrained problem is
+\[
+\Delta^*(A,\hat g)
+  \in \arg\min_{\Delta\in\mathcal{C}}\left(g_\tau(A+\Delta) - \hat g\right)^2.
+\]
+The amortized training objective for SCN parameters \(\theta\) is
+\[
+\min_\theta \mathbb{E}_{(A,\hat g)}\left[
+  \left(
+    g_\tau\bigl(A + F(\Delta_0(F_\theta(\phi(A,\hat g))))\bigr) - \hat g
+  \right)^2
+\right],
+\]
+where \(F_\theta\) is the network mapping features to parameter vectors, \(\Delta_0(\cdot)\) constructs raw perturbations, and \(F(\cdot)\) is the deterministic feasibility map.
+
+\section{Governance Metrics and Zero-Knowledge Layout}
+
+\subsection{Track A Governance Metrics}
+
+The ACE roadmap introduces a governance stack that computes various drift and retention metrics in Track A.\footnote{Track A description in ACE Roadmap. [file:2]} Given a proxy distribution \(\mu_{\mathrm{proxy}}\) and a current empirical mean \(\mu_n\), define:
+
+\begin{itemize}[leftmargin=*]
+  \item Proxy \(L_1\) norm:
+  \[
+  \|\mu_{\mathrm{proxy}}\|_1 = \sum_i |\mu_{\mathrm{proxy},i}|.
+  \]
+  \item Support mask and off-support drift:
+  \[
+  \bar m_n = \sum_i |\mu_n(i) - \mu_{\mathrm{proxy}}(i)|\,(1 - \mathrm{support\_mask}_i).
+  \]
+  \item Normalized drift metric:
+  \[
+  X_n = \frac{\bar m_n}{\|\mu_{\mathrm{proxy}}\|_1}.
+  \]
+  \item Retention rate:
+  \[
+  R_t = \max(0, 1 - \varepsilon - X_n).
+  \]
+  \item Telescoping WAC window metric:
+  \[
+  W_t = \frac{\bar m^{(t+M)}}{\max(\bar m^{(t)},10^{-12})}.
+  \]
+\end{itemize}
+
+The flag \(\mathrm{is\_valid}\in\{0,1\}\) is set based on whether \(\max_t W_t\) stays below a prescribed threshold (typically less than 1), serving as a certification gate for windowed contraction.
+
+\subsection{Track B Circuit and Constraint Budget}
+
+The Track B circuit, implemented in Circom and orchestrated by Rust, is constrained by a canonical 5{,}087-constraint budget that is locked both in \texttt{csc.py} and in a constraint-layout specification.\footnote{Constraint layout document. [file:3]} The optimized base circuit uses 133 constraints, decomposed into:
+\begin{itemize}[leftmargin=*]
+  \item 64 trajectory consistency constraints:
+  \[
+  \mathrm{current\_mu}[i] \cdot \mathrm{step\_n} \equiv \mathrm{h\_hat}[i] \pmod p.
+  \]
+  \item 64 support-mask booleanity constraints:
+  \[
+  \mathrm{support\_mask}[i](\mathrm{support\_mask}[i]-1) \equiv 0 \pmod p.
+  \]
+  \item 1 drift quotient check:
+  \[
+  X_n \cdot \mathrm{proxy\_l1\_norm} \equiv \bar m_n\cdot \mathrm{SCALE} \pmod p.
+  \]
+  \item 1 clamping consistency:
+  \[
+  R_t \cdot (r_{\mathrm{raw}} - R_t) \equiv 0 \pmod p,
+  \quad r_{\mathrm{raw}} = \mathrm{SCALE}-\varepsilon-X_n.
+  \]
+  \item 1 validity-flag booleanity:
+  \[
+  \mathrm{is\_valid}(\mathrm{is\_valid}-1) \equiv 0 \pmod p.
+  \]
+  \item 2 topology guards for WAC mode and \(N_0\) consistency.
+\end{itemize}
+
+Poseidon2 hash gadgets (sponge and single-permutation) are then added to reach a projected 4{,}804 constraints after hashing all witness fields and binding commitments, leaving 283 constraints in reserve for guard-rails and audit hooks.\footnote{Poseidon2 integration roadmap and budget in constraint layout. [file:3]}
+
+\subsection{Commitment Strategy}
+
+Track B uses two Poseidon2 layers:
+\begin{enumerate}[leftmargin=*]
+  \item A sponge hash over all relevant witness fields, producing a commitment \(h_{\mathrm{commitment}}\).
+  \item A second Poseidon2 permutation binding the hash and selected outputs (e.g., \(X_n\), \(R_t\), \(\mathrm{is\_valid}\), WAC product, and a retry nonce) into a final CAS commitment.
+\end{enumerate}
+In Circom-style pseudocode:
+\begin{lstlisting}[style=code,language=C]
+component poseidon_h = Poseidon2Sponge(205, 9, 8);
+for (var i = 0; i < 205; i++) {
+    poseidon_h.in[i] <== witness_field[i];
+}
+signal h_commitment;
+h_commitment <== poseidon_h.out;
+
+component poseidon_gamma = Poseidon2(5, 9, 8);
+poseidon_gamma.in[0] <== h_commitment;
+poseidon_gamma.in[1] <== X_n;
+poseidon_gamma.in[2] <== R_t;
+poseidon_gamma.in[3] <== max_wac_product;
+poseidon_gamma.in[4] <== retry_nonce;
+cas_commitment <== poseidon_gamma.out;
+\end{lstlisting}
+This structure is tightly coupled to the 5{,}087-constraint budget and enforces both determinism and collision resistance.\footnote{Detailed in the constraint layout and roadmap. [file:2][file:3]}
+
+\section{PhaseMirror-HQ Unification and Kernel Authority}
+
+\subsection{Motivation for Single Semantic Authority}
+
+In the current ACE design, Track A defines the semantics of drift and protection metrics (e.g.\ \(X_n\), WAC, and \(\mathrm{is\_valid}\)), while Track B only verifies algebraic consistency and commitments. This leaves open the possibility of duplicating or partially re-implementing drift logic in other systems interacting with ACE.
+
+The proposed unification introduces a dedicated \emph{kernel authority layer}, implemented by PhaseMirror-HQ, whose FZS-MK memory kernel and Zeno projection define all drift and protection metrics consumed by ACE, SCN, and CSC. Under this model:
+\begin{itemize}[leftmargin=*]
+  \item Semantic definitions of drift and protection reside entirely in the kernel layer.
+  \item ACE and SCN treat these metrics as read-only telemetry.
+  \item CSC verifies that these telemetry values are properly bound into commitments and respect topological and budget constraints, but does not define their semantics.
+\end{itemize}
+
+\subsection{Kernel Telemetry Contract}
+
+A minimal telemetry record emitted by PhaseMirror could be
+\[
+\Theta_{\mathrm{kernel}} = \left(
+  X_n^{\mathrm{kernel}},
+  W_{\max}^{\mathrm{kernel}},
+  \zeta_{\mathrm{protect}},
+  \mathrm{is\_valid}_{\mathrm{kernel}}
+\right),
+\]
+augmented with a version field for schema evolution. ACE would then consume this record as control telemetry and include its fields in certificate and CAS commitments.
+
+A Python sketch of this interface is:
+
+\begin{lstlisting}[style=code,language=Python]
+from dataclasses import dataclass
+
+@dataclass(frozen=True)
+class KernelTelemetry:
+    xn_kernel: float
+    wt_max_kernel: float
+    protection_zeta: float
+    is_valid_kernel: bool
+    telemetry_version: int = 1
+
+def load_kernel_telemetry(step_state) -> KernelTelemetry:
+    # Delegates semantic authority to PhaseMirror-HQ/kernel/core/zeno
+    return zeno.compute_kernel_telemetry(step_state)
+\end{lstlisting}
+
+An ACE-side wrapper can optionally maintain a \emph{parity mode} during migration:
+
+\begin{lstlisting}[style=code,language=Python]
+def get_drift_metrics(step_state, parity_mode: bool = False):
+    kt = load_kernel_telemetry(step_state)
+    if parity_mode:
+        legacy_xn = compute_legacy_xn(step_state)
+        assert abs(legacy_xn - kt.xn_kernel) < 1e-9
+    return kt
+\end{lstlisting}
+
+\subsection{SCN Conditioning on Kernel Telemetry}
+
+With kernel authority established, the SCN feature map is extended from \(\phi(A,\hat g)\) to
+\[
+\phi(A,\hat g, \Theta_{\mathrm{kernel}}),
+\]
+allowing the controller to react to kernel-defined drift and protection states without recomputing or redefining them. The feasibility map and spectral-control objective remain unchanged; only the policy distribution learned by SCN is conditioned on the additional telemetry.
+
+\section{ADR, SWOT, and RAID Structure}
+
+\subsection{ADR Package}
+
+An ADR (Architecture Decision Record) package for this unification can be organized as:
+\begin{itemize}[leftmargin=*]
+  \item \textbf{ADR--001}: FZS-MK/Zeno as Single Drift and Protection Authority.
+  \item \textbf{ADR--002}: ACE--PhaseMirror Kernel Telemetry Contract.
+  \item \textbf{ADR--003}: SCN/CSC Conditioning on Kernel Metrics Only.
+\end{itemize}
+
+Each ADR should include context, decision, rationale, alternatives, consequences, SWOT, and a RAID log. A skeletal structure (in prose form) is:
+
+\subsubsection*{ADR--001: FZS-MK/Zeno as Single Drift and Protection Authority}
+
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Context}: Drift and protection metrics currently defined in ACE Track A; PhaseMirror kernel provides a potentially richer and more general non-Markovian framework.
+  \item \textbf{Decision}: Declare PhaseMirror's FZS-MK/Zeno layer the sole semantic authority for drift and protection metrics used by ACE, SCN, and CSC.
+  \item \textbf{Consequences}: ACE may consume and certify these metrics but must not define independent semantic formulas after migration completes.
+\end{itemize}
+
+Similar detail can be elaborated for ADR--002 and ADR--003, focusing on schema-level contracts and SCN feature constraints, respectively.
+
+\subsection{SWOT Analysis}
+
+\paragraph{Strengths.}
+\begin{itemize}[leftmargin=*]
+  \item ACE already separates learned proposal generation from deterministic feasibility enforcement, making authority unification structurally compatible.\footnote{SCN and feasibility map design. [file:1]}
+  \item The Track A / Track B split ensures that semantic computation resides outside the circuit, simplifying kernel integration.\footnote{Roadmap and constraint layout. [file:2][file:3]}
+  \item A fixed 5{,}087-constraint budget with Poseidon2 topology lock yields strong reproducibility and auditability.\footnote{Constraint layout. [file:3]}
+\end{itemize}
+
+\paragraph{Weaknesses.}
+\begin{itemize}[leftmargin=*]
+  \item Current documentation does not yet specify the exact ACE--PhaseMirror API boundary.
+  \item Moving semantics to PhaseMirror increases coupling to kernel release cycles and failure modes.
+  \item The circuit relies on Track A for semantic correctness, so kernel bugs are not directly ruled out by the R1CS constraints.\footnote{Constraint responsibilities. [file:3]}
+\end{itemize}
+
+\paragraph{Opportunities.}
+\begin{itemize}[leftmargin=*]
+  \item Prevents semantic drift across training, runtime, and proof-generation pipelines.
+  \item Telemetry contract enables both open-core and OEM deployment paths without altering high-level mathematics.\footnote{Deployment discussion in roadmap. [file:2]}
+  \item Reserved circuit headroom (283 constraints) allows introducing future guard rails or audit hooks around kernel telemetry if needed.\footnote{Constraint budget headroom. [file:3]}
+\end{itemize}
+
+\paragraph{Threats.}
+\begin{itemize}[leftmargin=*]
+  \item Divergent telemetry schemas between ACE and PhaseMirror could break determinism or governance clarity.
+  \item Overly complex telemetry could strain Poseidon2 input layout or circuit budget.
+  \item Partial or inconsistent deprecation of ACE-side drift logic could undermine the single-authority guarantee.
+\end{itemize}
+
+\subsection{RAID Log (Risks, Assumptions, Issues, Dependencies)}
+
+\paragraph{Risks.}
+\begin{itemize}[leftmargin=*]
+  \item \textbf{R1}: Numerical divergence between kernel and legacy ACE drift metrics during migration.
+  \item \textbf{R2}: Telemetry schema churn compromising certificate determinism.
+  \item \textbf{R3}: Telemetry additions inadvertently increasing constraint count beyond budget.
+\end{itemize}
+
+\paragraph{Assumptions.}
+\begin{itemize}[leftmargin=*]
+  \item \textbf{A1}: PhaseMirror kernel can produce stable, scalar (or low-dimensional) telemetry suitable for ACE.
+  \item \textbf{A2}: Circuit headroom is sufficient for any minor witness-binding refinements.\footnote{Headroom explicitly reserved for future guard-rails. [file:3]}
+\end{itemize}
+
+\paragraph{Issues.}
+\begin{itemize}[leftmargin=*]
+  \item \textbf{I1}: Formalizing a versioned \texttt{KernelTelemetry} schema.
+  \item \textbf{I2}: Establishing a deprecation policy and test coverage for legacy ACE drift/WAC logic.
+\end{itemize}
+
+\paragraph{Dependencies.}
+\begin{itemize}[leftmargin=*]
+  \item \textbf{D1}: PhaseMirror-HQ kernel API release.
+  \item \textbf{D2}: ACE certificate schema updates and Track B witness adapter changes.
+\end{itemize}
+
+\section{Code Snippets and Implementation Sketches}
+
+\subsection{Python: Kernel Telemetry and Certificate Payload}
+
+\begin{lstlisting}[style=code,language=Python]
+from dataclasses import dataclass
+
+@dataclass(frozen=True)
+class KernelTelemetry:
+    xn_kernel: float
+    wt_max_kernel: float
+    protection_zeta: float
+    is_valid_kernel: bool
+    telemetry_version: int = 1
+
+def load_kernel_telemetry(step_state) -> KernelTelemetry:
+    # Delegates semantic authority to PhaseMirror-HQ/kernel/core/zeno
+    return zeno.compute_kernel_telemetry(step_state)
+
+def get_drift_metrics(step_state, parity_mode: bool = False):
+    kt = load_kernel_telemetry(step_state)
+    if parity_mode:
+        legacy_xn = compute_legacy_xn(step_state)
+        assert abs(legacy_xn - kt.xn_kernel) < 1e-9
+    return kt
+
+def certificate_payload(theta_base, telemetry, outputs):
+    return {
+        "theta": serialize_theta(theta_base),
+        "xn_kernel": telemetry.xn_kernel,
+        "wt_max_kernel": telemetry.wt_max_kernel,
+        "protection_zeta": telemetry.protection_zeta,
+        "is_valid_kernel": int(telemetry.is_valid_kernel),
+        "telemetry_version": telemetry.telemetry_version,
+        "outputs": outputs,
+    }
+\end{lstlisting}
+
+\subsection{Circom Witness Binding Sketch}
+
+Adapting the existing CAS commitment pattern, a telemetry-aware binding might be:
+
+\begin{lstlisting}[style=code]
+component poseidon_gamma = Poseidon2(5, 9, 8);
+poseidon_gamma.in[0] <== h_commitment;
+poseidon_gamma.in[1] <== xn_kernel;
+poseidon_gamma.in[2] <== retention_rate;
+poseidon_gamma.in[3] <== max_wac_product;
+poseidon_gamma.in[4] <== retry_nonce;
+cas_commitment <== poseidon_gamma.out;
+\end{lstlisting}
+
+Here, \texttt{xn\_kernel} replaces or augments the previous \(X_n\) witness field while preserving circuit budget and topology constraints.
+
+\section{Validation Path and Repository Changes}
+
+\subsection{Four-Phase Validation Plan}
+
+A fast yet robust validation path is:
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Authority Declaration}: Accept ADR--001 and update documentation to state that PhaseMirror's kernel layer is the semantic authority for drift and protection metrics.
+  \item \textbf{Parity Phase}: Run existing ACE drift/WAC logic in parallel with kernel telemetry on benchmark datasets and assert numerical agreement within strict tolerances.
+  \item \textbf{Contract Phase}: Integrate \texttt{KernelTelemetry} fields into ACE certificates and Poseidon2 witness commitments, keeping SCN behavior unchanged initially.
+  \item \textbf{Control Phase}: Retrain or fine-tune SCN to condition on kernel telemetry, then compare to pre-integration baselines in terms of objective values, fidelity metrics, proof determinism, and runtime.
+\end{enumerate}
+
+\subsection{Recommended Repository Edits}
+
+Within the ACE repository structure outlined in the roadmap,\footnote{ACE Core scaffold and modules. [file:2]} recommended edits include:
+
+\begin{itemize}[leftmargin=*]
+  \item \textbf{\texttt{src/ace/governor.py}}: Replace internal ownership of \(X_n\) with calls into \texttt{get\_drift\_metrics}.
+  \item \textbf{\texttt{src/ace/monitor.py}}: Route WAC-related decisions via kernel telemetry.
+  \item \textbf{\texttt{src/ace/certify.py}}: Extend the certificate schema with telemetry fields and versioning.
+  \item \textbf{\texttt{src/ace/cas\_registry.py}}: Ensure telemetry fields are hashed consistently into CAS commitments.
+  \item \textbf{\texttt{src/ace/csc.py}} and Circom circuit: Maintain the 5{,}087-constraint lock and adjust witness binding if necessary within the existing budget.
+  \item \textbf{\texttt{tests/}}: Add parity tests (kernel vs legacy drift), schema-version tests, and checks that forbid reintroduction of duplicate drift logic.
+  \item \textbf{\texttt{adr/}}: Add ADR--001, ADR--002, and ADR--003, each with its own embedded SWOT and RAID sections.
+\end{itemize}
+
+\section{Defensive Publication Notes}
+
+This report is intended as a defensive disclosure of the integrated ACE--SCN--CSC--PhaseMirror architecture. It documents:
+\begin{itemize}[leftmargin=*]
+  \item The mathematical specification of ACE--SCN, including fidelity modes, feasibility maps, and certified commutator bounds.
+  \item The Track A / Track B split and the fixed 5{,}087-constraint Circom topology with Poseidon2 commitments.
+  \item The conceptual role of a Contraction Spectral Certificate as a certificate-and-topology layer binding controller outputs to cryptographic proofs.
+  \item The unification with a memory-kernel and projection-based authority layer for drift and protection metrics.
+  \item Concrete code and interface sketches for telemetry integration, ADR governance structures, SWOT and RAID analyses, and validation pathways.
+\end{itemize}
+
+For maximum defensive value, it is recommended to:
+\begin{itemize}[leftmargin=*]
+  \item Publish this document (or an equivalent) in a publicly timestamped venue or repository.
+  \item Include immutable hashes or content-addressable identifiers for this text and associated ADRs.
+  \item Maintain accompanying machine-readable schemas (e.g., JSON schemas for \texttt{KernelTelemetry} and \texttt{ACECertificate}) in a public code repository.
+\end{itemize}
+
+\section{Conclusion}
+
+The developments synthesized here refine rather than replace the ACE program. ACE remains a certified spectral-control engine on arithmetic operators; SCN remains the amortized proposal mechanism; CSC remains the topology-and-certificate authority; and a PhaseMirror FZS-MK/Zeno layer becomes the single semantic authority for drift and protection metrics. This layered arrangement is mathematically coherent, operationally auditable, and appropriate for a prior-art defensive publication.
+
+\appendix
+\section{Mathematical Appendix: Proofs and Operator Norm Bounds}
+
+This appendix collects explicit proofs and operator-norm bounds underlying the ACE--SCN specification, with emphasis on feasibility-map invariants, spectral perturbation bounds, and commutator estimates used as arithmetic-fidelity diagnostics.\footnote{See Sections 4--9 of the ACE--SCN formal specification for the informal statements. [file:1]} Throughout, \( \|\cdot\|_2 \) denotes the operator norm induced by the Euclidean norm on \( \mathbb{C}^d \), and \( \|\cdot\|_F \) denotes the Frobenius norm.
+
+\subsection{Weyl-Type Bounds via Frobenius Norm}
+
+ACE uses Weyl's inequality together with the relation \( \|\cdot\|_2 \le \|\cdot\|_F \) to certify that any perturbation in \( \mathcal{C}_\varepsilon \) moves eigenvalues by at most \( \varepsilon \) in absolute value.\footnote{The set \( \mathcal{C}_\varepsilon \) is defined in Section 4.3 of the ACE--SCN document. [file:1]}
+
+\begin{lemma}[Weyl via Frobenius]\label{lem:weyl-frob}
+Let \( A \in \mathbb{C}^{d\times d} \) be Hermitian and let \( \Delta \in \mathbb{C}^{d\times d} \) be Hermitian with \( \|\Delta\|_F \le \varepsilon \). Denote the ordered eigenvalues of \( A \) and \( A+\Delta \) by
+\[
+\lambda_1(A) \le \cdots \le \lambda_d(A), \qquad
+\lambda_1(A+\Delta) \le \cdots \le \lambda_d(A+\Delta).
+\]
+Then for each \( i \in \{1,\dots,d\} \),
+\[
+|\lambda_i(A+\Delta) - \lambda_i(A)| \;\le\; \|\Delta\|_2 \;\le\; \|\Delta\|_F \;\le\; \varepsilon.
+\]
+\end{lemma}
+
+\begin{proof}
+The first inequality is Weyl's eigenvalue perturbation bound for Hermitian matrices:
+\[
+|\lambda_i(A+\Delta) - \lambda_i(A)| \le \|\Delta\|_2, \quad i=1,\dots,d.
+\]
+This is a standard result; see, e.g., classical matrix analysis texts. The second inequality
+\[
+\|\Delta\|_2 \le \|\Delta\|_F
+\]
+follows because the Frobenius norm is the \( \ell_2 \)-norm of the singular values, and the operator norm is the \( \ell_\infty \)-norm of the same singular values, so \( \|\cdot\|_2 \le \|\cdot\|_F \) always holds. The final inequality is by the assumption \( \|\Delta\|_F \le \varepsilon \), completing the chain.
+\end{proof}
+
+As an immediate corollary, any perturbation produced by the feasibility map in Mode~1 (which outputs an element of \( \mathcal{C}_\varepsilon \)) moves every eigenvalue of the target operator \( A \) by at most \( \varepsilon \).
+
+\subsection{Feasibility-Map Invariants in All Modes}
+
+We next give a unified proof that the feasibility maps \( F_1, F_2, F_3 \) used in ACE preserve Hermitian symmetry and enforce the appropriate mode constraints.\footnote{See Section 6 of the ACE--SCN specification for the construction of \( F_m \). [file:1]}
+
+\begin{proposition}[Feasibility-map invariants]\label{prop:feasibility}
+Let \( \Delta_0 \in \mathbb{C}^{d\times d} \) be arbitrary, and let
+\[
+\Delta_0' := \tfrac12(\Delta_0 + \Delta_0^*)
+\]
+be its Hermitian part. Let \( F_1, F_2, F_3 \) be defined as in the ACE specification, using \( \Delta_0' \) as input:
+\begin{align*}
+F_1(\Delta_0') &:= \varepsilon \cdot \frac{\Delta_0'}{\max(\|\Delta_0'\|_F,\,\varepsilon)}, \\
+H(\Delta_0') &:= P_{H_r}(\Delta_0'), \\
+F_2(\Delta_0') &:= \varepsilon \cdot \frac{H(\Delta_0')}{\max(\|H(\Delta_0')\|_F,\,\varepsilon)}, \\
+R(\Delta_0') &:= \Delta_0' - H(\Delta_0'), \\
+R'(\Delta_0') &:= \min\!\left(1,\,\frac{\eta}{\|R(\Delta_0')\|_F}\right)R(\Delta_0'), \\
+\Delta_1(\Delta_0') &:= H(\Delta_0') + R'(\Delta_0'), \\
+F_3(\Delta_0') &:= \varepsilon \cdot \frac{\Delta_1(\Delta_0')}{\max(\|\Delta_1(\Delta_0')\|_F,\,\varepsilon)}.
+\end{align*}
+Then:
+\begin{enumerate}[label=(\alph*), leftmargin=*]
+  \item For each \( m\in\{1,2,3\} \), \( F_m(\Delta_0') \) is Hermitian.
+  \item \( F_1(\Delta_0') \in \mathcal{C}_\varepsilon \).
+  \item \( F_2(\Delta_0') \in \mathcal{C}_\varepsilon^{H_r} \).
+  \item \( F_3(\Delta_0') \in \mathcal{C}^{\mathrm{near}}_{\varepsilon,\eta} \).
+\end{enumerate}
+\end{proposition}
+
+\begin{proof}
+(a) Hermitian symmetry is preserved in each case because all operations used in the construction are Hermitian-preserving:
+
+\begin{itemize}
+  \item \( \Delta_0' \) is Hermitian by definition.
+  \item The Frobenius projection \( P_{H_r} \) onto a linear subspace \( H_r \) preserves Hermitian structure when \( H_r \) is spanned by Hermitian matrices \( A_{p_j} \). That is, if \( \Delta_0' = \Delta_0'^* \), then \( H(\Delta_0') \) is a real linear combination of the \( A_{p_j} \), hence Hermitian.
+  \item The residual \( R(\Delta_0') = \Delta_0' - H(\Delta_0') \) is the difference of Hermitian matrices, hence Hermitian.
+  \item Scaling by a real scalar preserves Hermitian structure, so \( R'(\Delta_0') \) and the normalized outputs \( F_m(\Delta_0') \) remain Hermitian.
+\end{itemize}
+
+(b) For Mode~1, define
+\[
+\Delta^{(1)} := F_1(\Delta_0') = \varepsilon \cdot \frac{\Delta_0'}{\max(\|\Delta_0'\|_F,\,\varepsilon)}.
+\]
+By construction, \( \Delta^{(1)} = (\Delta^{(1)})^* \). Its Frobenius norm is
+\[
+\|\Delta^{(1)}\|_F
+  = \varepsilon \cdot \frac{\|\Delta_0'\|_F}{\max(\|\Delta_0'\|_F,\,\varepsilon)}
+  \le \varepsilon,
+\]
+since the fraction is at most 1. Thus \( \Delta^{(1)} \in \mathcal{C}_\varepsilon \).
+
+(c) For Mode~2, define
+\[
+\Delta^{(2)} := F_2(\Delta_0') = \varepsilon \cdot \frac{H(\Delta_0')}{\max(\|H(\Delta_0')\|_F,\,\varepsilon)}.
+\]
+We have \( H(\Delta_0') \in H_r \) by definition of the projection. As above, the scaling factor ensures
+\[
+\|\Delta^{(2)}\|_F \le \varepsilon.
+\]
+Hermitianity of \( H(\Delta_0') \) was established in part (a). Therefore, \( \Delta^{(2)} \in \mathcal{C}_\varepsilon^{H_r} \).
+
+(d) For Mode~3, write
+\[
+\Delta^{(3)} := F_3(\Delta_0') = \varepsilon \cdot \frac{\Delta_1(\Delta_0')}{\max(\|\Delta_1(\Delta_0')\|_F,\,\varepsilon)}.
+\]
+By part (a), \( \Delta_1(\Delta_0') \) is Hermitian. The final scaling ensures
+\[
+\|\Delta^{(3)}\|_F \le \varepsilon.
+\]
+
+It remains to show that \( \operatorname{dist}_F(\Delta^{(3)}, H_r) \le \eta \). Let
+\[
+\widetilde{\Delta} := \Delta_1(\Delta_0') = H(\Delta_0') + R'(\Delta_0').
+\]
+We have \( H(\Delta_0')\in H_r \) and \( R'(\Delta_0') \) orthogonal (in the Frobenius geometry) to \( H_r \) because it is a scaled version of the residual from the projection. Thus
+\[
+\operatorname{dist}_F(\widetilde{\Delta},H_r) = \|R'(\Delta_0')\|_F.
+\]
+By definition of \( R'(\Delta_0') \),
+\[
+\|R'(\Delta_0')\|_F
+  = \min\!\left(1,\frac{\eta}{\|R(\Delta_0')\|_F}\right)\|R(\Delta_0')\|_F
+  \le \eta.
+\]
+Now note that the final scaling
+\[
+\Delta^{(3)} = \varepsilon \cdot \widetilde{\Delta}/\max(\|\widetilde{\Delta}\|_F,\,\varepsilon)
+\]
+shrinks \(\widetilde{\Delta}\) (or leaves it unchanged) by a nonnegative scalar factor no larger than 1. In particular, distances to \(H_r\) (measured in Frobenius norm) can only decrease under such a contraction:
+\[
+\operatorname{dist}_F(\Delta^{(3)},H_r)
+  \le \operatorname{dist}_F(\widetilde{\Delta},H_r)
+  = \|R'(\Delta_0')\|_F
+  \le \eta.
+\]
+Therefore, \( \Delta^{(3)} \in \mathcal{C}^{\mathrm{near}}_{\varepsilon,\eta} \), completing the proof.
+\end{proof}
+
+\subsection{Near-Span Implies Near-Commuting}
+
+ACE interprets commutator norms \( \|[A_{p_i},\Delta]\|_F \) as diagnostics for arithmetic fidelity in Mode~3.\footnote{See Section 9.2 of the ACE--SCN specification. [file:1]} Here we spell out the standard operator-norm argument that justifies the bound.
+
+\begin{proposition}[Near-span implies near-commuting]\label{prop:near-comm}
+Let \( A_{p_i} \in \mathbb{C}^{d\times d} \) be Hermitian operators (e.g.\ the safe Hecke matrices) spanning \(H_r\), and let
+\[
+\Delta \in \mathcal{C}^{\mathrm{near}}_{\varepsilon,\eta}
+\]
+so that \( \Delta = \Delta^* \) and \( \operatorname{dist}_F(\Delta,H_r)\le \eta \). Then for each generator \(A_{p_i}\),
+\[
+\|[A_{p_i},\Delta]\|_F \;\le\; 2\,\|A_{p_i}\|_2\,\eta.
+\]
+\end{proposition}
+
+\begin{proof}
+By definition of the distance, there exists \(H\in H_r\) such that
+\[
+\|\Delta - H\|_F = \operatorname{dist}_F(\Delta,H_r) \le \eta.
+\]
+We can decompose
+\[
+[A_{p_i},\Delta] = [A_{p_i},H] + [A_{p_i},\Delta - H].
+\]
+Since \(H\in H_r\) and \(H_r\) is spanned by the commuting family of safe Hecke operators \(A_{p_j}\), \(H\) commutes with each \(A_{p_i}\), giving
+\[
+[A_{p_i},H] = 0.
+\]
+Therefore,
+\[
+[A_{p_i},\Delta] = [A_{p_i},\Delta - H] = A_{p_i}(\Delta-H) - (\Delta-H)A_{p_i}.
+\]
+
+Using submultiplicativity of the operator and Frobenius norms,
+\begin{align*}
+\|[A_{p_i},\Delta]\|_F
+  &= \|A_{p_i}(\Delta-H) - (\Delta-H)A_{p_i}\|_F \\
+  &\le \|A_{p_i}(\Delta-H)\|_F + \|(\Delta-H)A_{p_i}\|_F \\
+  &\le \|A_{p_i}\|_2 \|\Delta-H\|_F + \|\Delta-H\|_F \|A_{p_i}\|_2 \\
+  &= 2\,\|A_{p_i}\|_2\,\|\Delta - H\|_F \\
+  &\le 2\,\|A_{p_i}\|_2\,\eta,
+\end{align*}
+as claimed.
+\end{proof}
+
+This proposition is the precise content behind ACE's statement that Mode~3 commutator norms scale as \(O(\eta)\) and can be interpreted as certified arithmetic-fidelity diagnostics.
+
+\subsection{Monotonicity and Scaling Behaviour in Mode 3}
+
+ACE informally notes that in Mode~3, smaller \(\eta\) produces stricter control of arithmetic fidelity and smaller commutators while Mode~2 corresponds to the endpoint \(\eta = 0\).\footnote{See Section 12 of the ACE--SCN specification for the qualitative description of expected outcomes. [file:1]} We briefly formalize these monotonicity properties.
+
+\begin{lemma}[Monotonicity in \texorpdfstring{\(\eta\)}{eta}]\label{lem:eta-monotone}
+Fix \(\varepsilon>0\), and consider two near-arithmetic constraint sets
+\[
+\mathcal{C}^{\mathrm{near}}_{\varepsilon,\eta_1}
+  \subseteq
+\mathcal{C}^{\mathrm{near}}_{\varepsilon,\eta_2}
+\quad\text{with}\quad
+0 \le \eta_1 \le \eta_2.
+\]
+Then the set of admissible perturbations under \(\eta_1\) is contained in the admissible set under \(\eta_2\). In particular, any admissible \(\Delta\) for \(\eta_1\) is also admissible for \(\eta_2\), and the corresponding commutator bounds satisfy
+\[
+\|[A_{p_i},\Delta]\|_F \le 2\|A_{p_i}\|_2\,\eta_1
+\quad\Rightarrow\quad
+\|[A_{p_i},\Delta]\|_F \le 2\|A_{p_i}\|_2\,\eta_2.
+\]
+\end{lemma}
+
+\begin{proof}
+The inclusion of sets is immediate from the definition:
+\[
+\mathcal{C}^{\mathrm{near}}_{\varepsilon,\eta_1}
+  = \{\Delta: \Delta = \Delta^*,\ \|\Delta\|_F\le\varepsilon,\ \operatorname{dist}_F(\Delta,H_r)\le\eta_1\},
+\]
+and if \(\eta_1\le \eta_2\), then every \(\Delta\) satisfying \(\operatorname{dist}_F(\Delta,H_r)\le\eta_1\) also satisfies \(\operatorname{dist}_F(\Delta,H_r)\le\eta_2\). The rest follows from Proposition~\ref{prop:near-comm}.
+\end{proof}
+
+\begin{corollary}[Mode~2 as endpoint]\label{cor:mode2-endpoint}
+Mode~2 corresponds exactly to the case \(\eta=0\) in Mode~3. In this limit, the near-arithmetic constraint set reduces to the Hecke-span constraint set, and the commutator bound becomes
+\[
+\|[A_{p_i},\Delta]\|_F = 0
+\]
+for all \(A_{p_i}\), since \(\Delta\in H_r\) commutes with each generator.
+\end{corollary}
+
+\begin{proof}
+If \(\eta=0\), then \(\operatorname{dist}_F(\Delta,H_r)\le 0\) implies \(\Delta\in H_r\), so
+\[
+\mathcal{C}^{\mathrm{near}}_{\varepsilon,0} = \mathcal{C}_\varepsilon^{H_r}.
+\]
+The commutator statement follows as in Proposition~\ref{prop:near-comm} with \(\eta=0\).
+\end{proof}
+
+\subsection{Operator Norm Bounds in the Drift Quotient Constraint}
+
+The constraint-layout document encodes the normalized drift metric \(X_n\) and the off-support drift sum \(\bar m_n\) via a single multiplicative constraint
+\[
+X_n \cdot \mathrm{proxy\_l1\_norm} \equiv \bar m_n \cdot \mathrm{SCALE} \pmod{p}, 
+\]
+which, in real arithmetic, corresponds to
+\[
+X_n = \frac{\bar m_n}{\|\mu_{\mathrm{proxy}}\|_1}.
+\]\footnote{Normalization constraint as in the ACE constraint layout. [file:3]}
+
+While this is an exact identity rather than an inequality, it interacts with the norm bounds above via the role of \(X_n\) in retention and feasibility constraints. For completeness, we note the following simple bound.
+
+\begin{lemma}[Drift and retention bounds]\label{lem:drift-retention}
+Assume the proxy distribution \(\mu_{\mathrm{proxy}}\) is normalized so that \(\|\mu_{\mathrm{proxy}}\|_1 > 0\), and let
+\[
+\bar m_n = \sum_{i} |\mu_n(i) - \mu_{\mathrm{proxy}}(i)|\,(1-\mathrm{support\_mask}_i)
+\]
+with \(\mathrm{support\_mask}_i\in\{0,1\}\). Then
+\[
+0 \le X_n = \frac{\bar m_n}{\|\mu_{\mathrm{proxy}}\|_1}
+\]
+and the retention rate
+\[
+R_t = \max(0, 1 - \varepsilon - X_n)
+\]
+satisfies
+\[
+0 \le R_t \le 1.
+\]
+\end{lemma}
+
+\begin{proof}
+By definition, each summand in \(\bar m_n\) is nonnegative, hence \(\bar m_n\ge 0\). With \(\|\mu_{\mathrm{proxy}}\|_1>0\), this implies \(X_n\ge 0\). The upper bound \(R_t\le 1\) follows from
+\[
+R_t = \max(0, 1 - \varepsilon - X_n) \le 1,
+\]
+since \(\varepsilon>0\) and \(X_n\ge 0\). Nonnegativity is immediate from the max operation.
+\end{proof}
+
+This simple bound is one of the ingredients justifying the clamping constraint
+\[
+R_t(r_{\mathrm{raw}} - R_t) = 0,\quad r_{\mathrm{raw}} = \mathrm{SCALE} - \varepsilon - X_n
+\]
+in the circuit, which encodes \(R_t = \max(0,r_{\mathrm{raw}})\) in arithmetic form.\footnote{Clamping constraint described in the constraint layout. [file:3]}
+
+\subsection{Summary}
+
+The bounds and proofs in this appendix make explicit the operator-norm control that underpins ACE's spectral guarantees:
+\begin{itemize}[leftmargin=*]
+  \item Feasibility maps yield perturbations lying in the correct constraint sets while preserving Hermitianity.
+  \item Eigenvalue movements are bounded by the Frobenius radius \(\varepsilon\) via Weyl's inequality.
+  \item Commutator norms behave as \(O(\eta)\) in Mode~3, with Mode~2 as the commuting endpoint.
+  \item Drift and retention metrics used in the Track~A governance stack respect natural range constraints that are encoded succinctly in the Track~B circuit.
+\end{itemize}
+These explicit derivations complement the main specification and strengthen the correctness claims made in the ACE–SCN and constraint-layout documents.\footnote{See the ACE formal specification and constraint layout for the high-level statements this appendix formalizes. [file:1][file:3]}
+\nocite{*}
+\bibliographystyle{unsrt}  
+\bibliography{references}
+\end{document}

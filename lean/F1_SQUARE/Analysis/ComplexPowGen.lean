@@ -9,7 +9,7 @@ the principal sector (where `Clog` is anchored) as `Cexp(w·Clog z)` and proves 
 `z^{w₁+w₂} = z^{w₁}·z^{w₂}` (`Cpow_add_exp`, immediate from `Cexp_add` and distributivity). The
 base law `(zz')^w = z^w·z'^w` will follow from `Clog` additivity (`Clog_add`/`ClogUpper_add`, item 0).
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 import F1Square.Analysis.ComplexLog

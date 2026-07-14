@@ -17,7 +17,7 @@ THIS FILE (brick 1 of γ₃): the real substrate — the term `(ln k)³/k` (reus
 difference `e₃`, and the telescoping identity `g₃(j+1) − g₃(j) ≈ e₃`. The monotonicity/regularity
 layers and the certified bracket follow (the γ₃ analogue of `GammaTwo`'s dyadic-tail stack).
 
-Pure Lean 4, no Mathlib, no `sorry`/`native_decide`, choice-free.
+Pure Lean 4, no Mathlib, no `()`/`native_decide`, choice-free.
 -/
 
 import F1Square.Analysis.GammaTwo

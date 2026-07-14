@@ -1,0 +1,1092 @@
+\documentclass[11pt]{article}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{geometry}
+\geometry{margin=1in}
+\usepackage{hyperref}
+\usepackage{bm}
+
+\title{Multiplicity-Embedded Vlasov Dynamics: \\
+Prime-Indexed Recursive Corrections in an Energy-Conserving DG Framework}
+\author{Citizen Gardens \\ The Foundation of Multiplicity}
+\date{April 26, 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This document presents a defensive publication for a prime-indexed, recursively
+defined multiplicity framework embedded into classical kinetic plasma theory.
+Stage~1 focuses on a 1D--1V Vlasov--Poisson / Vlasov--Amp\`ere system, extended
+by a hierarchy of prime-indexed modes and a structured recursive correction
+operator. The correction is implemented as a divergence-form modification of
+the spatial flux in an energy-conserving discontinuous Galerkin (DG) scheme.
+The report provides: (i) an executive summary of the conceptual and practical
+novelty; (ii) a comprehensive mathematical specification of the multiplicity
+lift, reconstruction, and recursive correction; (iii) a fully coupled
+algorithmic description compatible with energy-conserving DG solvers; and (iv)
+representative code skeletons illustrating how to integrate the framework into
+existing DG Vlasov solvers.
+\end{abstract}
+
+\tableofcontents
+\newpage
+\section{Executive Summary}
+
+\subsection{Conceptual core}
+
+Multiplicity Theory, as deployed here, treats classical fields and
+distributions not as monolithic objects but as \emph{reconstructed aggregates}
+of prime-indexed, recursively coupled modes. The Stage~1 embodiment of this
+idea uses a kinetic plasma model---the 1D--1V Vlasov system coupled to Poisson
+or Amp\`ere equations---as the base, and augments it by:
+\begin{itemize}
+  \item introducing a family of \emph{prime-indexed} distribution modes
+        $f_p^{(k)}(x,v,t)$, where $p$ is a prime and $k$ is a recursion depth;
+  \item defining a reconstruction map
+        \(
+          f_0(x,v,t) = \sum_{p,k} w_{p,k} f_p^{(k)}(x,v,t)
+        \),
+        which recovers the observable distribution $f_0$;
+  \item designing a recursive correction operator
+        $\mathcal{Q}_p^{(k)}$ that couples each mode only to modes of
+        strictly lower recursion order and/or prime index;
+  \item embedding one such correction, 
+        $\mathcal{Q}_2^{(1)} = \eta_{2,1}\,\partial_x(\rho_2^{(0)} f_2^{(1)})$,
+        as an additional divergence-form contribution to the DG spatial flux.
+\end{itemize}
+
+The \emph{field}---electric potential or field in the Vlasov--Poisson /
+Vlasov--Amp\`ere system---couples only to the reconstructed distribution
+$f_0$, not to individual modes. Thus the multiplicity structure lives entirely
+inside the kinetic sector, while the field ``sees'' only the observable,
+reconstructed, classical distribution.
+
+\subsection{Practical novelty}
+
+The key differentiators relative to standard Vlasov theory and DG
+implementations are:
+\begin{enumerate}
+  \item A prime-indexed mode hierarchy $(p,k)$ with a \emph{recursion order}
+        restriction: each $\mathcal{Q}_p^{(k)}$ depends only on modes
+        $(q,l)$ with $(q,l) < (p,k)$ in lexicographic order on $(l,p)$.
+  \item A reconstruction $f_0 = \sum_{p,k} w_{p,k} f_p^{(k)}$ 
+        used as the \emph{exclusive} source for the field equations
+        (Poisson or Amp\`ere), so that multiplicity is a hidden structure.
+  \item A specific divergence-form correction 
+        $\mathcal{Q}_2^{(1)} = \eta_{2,1}\,\partial_x(\rho_2^{(0)} f_2^{(1)})$
+        that is designed to be implementable as a flux modification in an
+        energy-conserving DG framework.
+  \item An experimental protocol which:
+        (i) recovers classical Landau damping and standard instabilities in the
+        limit of zero multiplicity coupling,
+        (ii) activates a correction-only regime (recursion with no direct
+        contribution of additional modes to $f_0$),
+        and (iii) finally allows selected modes to contribute to $f_0$,
+        probing the physical impact of multiplicity on observables.
+\end{enumerate}
+
+The goal of this defensive publication is to fix this architecture---including
+its prime-indexed recursion, reconstruction, and DG flux-based implementation
+strategy---as prior art for future work in multiplicity-augmented kinetic and
+field theories.
+
+\section{Base Classical System: 1D--1V Vlasov--Poisson / Vlasov--Amp\`ere}
+
+\subsection{Domain and classical distribution}
+
+Let $x \in [0,L_x]$ be a periodic spatial coordinate and
+$v \in [-V_{\max},V_{\max}]$ a truncated velocity coordinate.
+The classical electron distribution function is
+\[
+  f_0(x,v,t) \ge 0,
+\]
+with total mass
+\[
+  M = \int_0^{L_x}\int_{-V_{\max}}^{V_{\max}} f_0(x,v,t)\,dv\,dx.
+\]
+
+\subsection{Vlasov equation}
+
+The collisionless 1D--1V Vlasov equation reads
+\begin{equation}
+  \partial_t f_0 + v\,\partial_x f_0 + \frac{q}{m} E(x,t)\,\partial_v f_0 = 0,
+  \label{eq:classical_vlasov}
+\end{equation}
+where $q$ is the charge, $m$ is the mass, and $E(x,t)$ is the self-consistent
+electric field.
+
+\subsection{Field equations}
+
+Two closures are considered.
+
+\paragraph{Vlasov--Poisson.}
+Define the charge density
+\[
+  \rho_0(x,t) = \int_{-V_{\max}}^{V_{\max}} f_0(x,v,t)\,dv.
+\]
+The electrostatic potential $\phi(x,t)$ satisfies
+\begin{equation}
+  -\partial_x^2 \phi(x,t) = \rho_0(x,t) - \rho_{\mathrm{bg}},
+  \label{eq:poisson}
+\end{equation}
+with $\rho_{\mathrm{bg}}$ a neutralizing background and periodic boundary
+conditions, and
+\[
+  E(x,t) = -\partial_x \phi(x,t).
+\]
+
+\paragraph{Vlasov--Amp\`ere.}
+Define the current density
+\[
+  J_0(x,t) = \int_{-V_{\max}}^{V_{\max}} v\,f_0(x,v,t)\,dv.
+\]
+The electric field evolves via
+\begin{equation}
+  \partial_t E(x,t) = -J_0(x,t),
+  \label{eq:ampere}
+\end{equation}
+or a suitably scaled variant consistent with the DG energy-conserving scheme.
+
+\section{Multiplicity Lift and Reconstruction}
+
+\subsection{Prime-indexed modes and recursion}
+
+Fix a finite set of primes
+\[
+  \mathbb{P} = \{p \in \mathbb{N} : p \text{ prime}, p \le p_{\max}\}
+\]
+and a maximum recursion depth $k_{\max}\in\mathbb{N}$.
+For each $(p,k)$ with $p\in\mathbb{P}$ and $0\le k\le k_{\max}$ define a mode
+distribution
+\[
+  f_p^{(k)}(x,v,t),
+\]
+which is not assumed to be nonnegative but is assumed to have bounded moments
+and lie in the DG approximation space.
+
+Define the lexicographic order on pairs $(p,k)$ by:
+\[
+  (q,l) < (p,k)
+  \quad\text{if}\quad
+  \big( l < k \big) \text{ or }
+  \big( l = k \text{ and } q < p \big).
+\]
+
+\subsection{Reconstruction map}
+
+Introduce weights $w_{p,k}$ and define the reconstructed distribution
+\begin{equation}
+  f_0(x,v,t) = \sum_{p\in\mathbb{P}}\sum_{k=0}^{k_{\max}} w_{p,k}\,
+               f_p^{(k)}(x,v,t).
+  \label{eq:reconstruction}
+\end{equation}
+Weights are scaled by a small parameter $\epsilon\ll 1$:
+\[
+  w_{p,k} = \lambda_{p,k}\,\epsilon,
+  \quad
+  \lambda_{2,0} = 1,
+\]
+so that the classical limit is recovered when $\epsilon\to 0$ and only mode
+$(p,k)=(2,0)$ is active.
+
+On a discrete grid, with $f_{p,i,j}^{(k)}$ the DG representation in cell $i$,
+velocity cell $j$,
+\[
+  f_{0,i,j} = \sum_{p,k} w_{p,k} f_{p,i,j}^{(k)}.
+\]
+
+\subsection{Reconstructed observables}
+
+For each mode $(p,k)$ define the density and current
+\[
+  \rho_p^{(k)}(x,t) = \int f_p^{(k)}(x,v,t)\,dv,
+  \quad
+  J_p^{(k)}(x,t) = \int v\,f_p^{(k)}(x,v,t)\,dv.
+\]
+The reconstructed density and current are then
+\begin{equation}
+  \rho_0(x,t) = \sum_{p,k} w_{p,k} \,\rho_p^{(k)}(x,t),
+  \qquad
+  J_0(x,t) = \sum_{p,k} w_{p,k} \,J_p^{(k)}(x,t).
+  \label{eq:rho0_J0}
+\end{equation}
+These reconstructed quantities are used exclusively in the field equations
+\eqref{eq:poisson}--\eqref{eq:ampere}.
+
+\section{Recursive Correction Operator}
+
+\subsection{General form}
+
+Each mode satisfies a Vlasov-type equation with a correction operator
+$\mathcal{Q}_p^{(k)}$:
+\begin{equation}
+  \partial_t f_p^{(k)} + v\,\partial_x f_p^{(k)} 
+  + \frac{q}{m} E(x,t)\,\partial_v f_p^{(k)}
+  = \mathcal{Q}_p^{(k)}[f],
+  \label{eq:mode_vlasov_general}
+\end{equation}
+where $E(x,t)$ is computed from $f_0$ via \eqref{eq:poisson} or
+\eqref{eq:ampere}.
+
+The correction $ \mathcal{Q}_p^{(k)}[f] $ is required to satisfy:
+\begin{enumerate}
+  \item \textbf{Recursion:} it depends only on modes $(q,l)$ with $(q,l) < (p,k)$.
+  \item \textbf{Divergence form:} it must be expressible as
+        \[
+          \mathcal{Q}_p^{(k)} = \partial_x A_{p,k}(x,v,t)
+                                + \partial_v B_{p,k}(x,v,t),
+        \]
+        so that, with appropriate boundary conditions, it preserves mass and
+        energy at the continuous level.
+  \item \textbf{Small-coupling scaling:} it is proportional to the same small
+        parameter $\epsilon$ that appears in the weights, via coefficients
+        $\eta_{p,k} = \mu_{p,k}\,\epsilon$.
+\end{enumerate}
+
+\subsection{Stage~1 prototype: a single x-divergence correction}
+
+For the first prototype, only a single nontrivial correction is activated:
+\begin{equation}
+  \mathcal{Q}_2^{(1)}[f]
+  =
+  \eta_{2,1}\,\partial_x\Big(\rho_2^{(0)}(x,t)\,f_2^{(1)}(x,v,t)\Big),
+  \label{eq:Q21_def}
+\end{equation}
+where
+\[
+  \rho_2^{(0)}(x,t) = \int f_2^{(0)}(x,v,t)\,dv
+\]
+is the density of the lower mode $(2,0)$. All other $\mathcal{Q}_p^{(k)}$ may
+be set to zero in the minimal implementation.
+
+Equation \eqref{eq:Q21_def} is a pure $x$-divergence and fits naturally into
+the $x$-advection step of a split DG method.
+
+\section{DG Discretization and Flux Formulation}
+
+\subsection{Spatial cells and test functions}
+
+Partition $[0,L_x]$ into $N_x$ cells
+$ I_i = [x_{i-1/2}, x_{i+1/2}]$, $i=1,\dots,N_x$, with cell centers
+$x_i$. Let $\phi(x)$ be a test function from the DG space supported on
+$ I_i$.
+
+\subsection{X-advection substep for a mode}
+
+Consider the $x$-advection + correction part for a mode $(p,k)$:
+\begin{equation}
+  \partial_t f_p^{(k)} + v\,\partial_x f_p^{(k)}
+  =
+  \mathcal{Q}_p^{(k)}[f].
+  \label{eq:x_step_continuous}
+\end{equation}
+For the prototype, \eqref{eq:Q21_def} is used when $(p,k)=(2,1)$ and
+$\mathcal{Q}_p^{(k)}=0$ otherwise.
+
+Multiplying \eqref{eq:x_step_continuous} by $\phi$ and integrating over
+$I_i$ yields
+\[
+  \int_{I_i} \partial_t f_p^{(k)} \phi\,dx
+  +\int_{I_i} v\,\partial_x f_p^{(k)}\,\phi\,dx
+  =
+  \int_{I_i} \mathcal{Q}_p^{(k)}[f]\,\phi\,dx.
+\]
+
+Integrating by parts:
+\begin{align*}
+  \int_{I_i} \partial_t f_p^{(k)} \phi\,dx
+  &+ \Big[ \widehat{(v f_p^{(k)})} \,\phi\Big]_{x_{i-1/2}}^{x_{i+1/2}}
+  - \int_{I_i} v\,f_p^{(k)}\,\partial_x\phi\,dx \\
+  &= \Big[ \widehat{(\eta_{p,k}\rho_{\text{lower}} f_p^{(k)})}\,\phi\Big]_{x_{i-1/2}}^{x_{i+1/2}}
+  - \int_{I_i}\eta_{p,k}\,\rho_{\text{lower}}(x,t)\,f_p^{(k)}\,\partial_x\phi\,dx,
+\end{align*}
+where $\rho_{\text{lower}}$ is the appropriate lower-mode density, and 
+$\widehat{(\cdot)}$ denotes the numerical flux at cell interfaces.
+
+Define the total flux
+\[
+  \widehat{F}^{x}_{p,k}
+  =
+  \widehat{(v f_p^{(k)})}
+  +
+  \widehat{(\eta_{p,k}\rho_{\text{lower}} f_p^{(k)})}.
+\]
+The weak form becomes
+\begin{equation}
+  \int_{I_i} \partial_t f_p^{(k)} \phi\,dx
+  +
+  \Big[ \widehat{F}^{x}_{p,k}\,\phi\Big]_{x_{i-1/2}}^{x_{i+1/2}}
+  -
+  \int_{I_i} (v+\eta_{p,k}\rho_{\text{lower}}) f_p^{(k)}\,\partial_x\phi\,dx
+  = 0.
+  \label{eq:DG_weak_form}
+\end{equation}
+
+\subsection{Upwind numerical fluxes}
+
+For the Vlasov term, use the standard upwind flux with speed $v$:
+\[
+  \widehat{(v f)} = v^+ f^- + v^- f^+,
+  \quad
+  v^\pm = \frac12\big(v\pm |v|\big),
+\]
+where $f^-$ and $f^+$ are left and right traces at the interface.
+
+For the correction term, with speed 
+\[
+  a(x,t) = \eta_{p,k}\,\rho_{\text{lower}}(x,t),
+\]
+use the same upwind logic:
+\[
+  \widehat{(\eta_{p,k}\rho_{\text{lower}} f)}
+  =
+  a^+ f^- + a^- f^+,
+  \quad
+  a^\pm = \frac12\big(a\pm |a|\big).
+\]
+On a periodic domain, these fluxes preserve discrete conservation and are
+compatible with the energy-conserving structure of the base DG scheme.
+
+\subsection{V-advection substep}
+
+The $v$-advection term,
+\[
+  \partial_t f_p^{(k)} + \frac{q}{m}E(x,t)\,\partial_v f_p^{(k)}=0,
+\]
+is discretized as in the underlying DG solver, with appropriate upwinding in
+$v$ and boundary treatment (e.g.\ zero-flux) at $v = \pm V_{\max}$.
+
+\section{Time Integration: Strang Splitting plus SSPRK3}
+
+\subsection{Operators}
+
+Define DG operators:
+\begin{itemize}
+  \item $\mathcal{A}_x[f_p^{(k)}, E; \Delta t]$:
+        one DG step for the $x$-equation
+        $\partial_t f_p^{(k)} + v\,\partial_x f_p^{(k)} = \mathcal{Q}_p^{(k)}[f]$
+        with time step $\Delta t$.
+  \item $\mathcal{A}_v[f_p^{(k)}, E; \Delta t]$:
+        one DG step for the $v$-equation
+        $\partial_t f_p^{(k)} + \frac{q}{m}E\,\partial_v f_p^{(k)}=0$
+        with step $\Delta t$.
+\end{itemize}
+
+\subsection{Strang splitting for one time step}
+
+For a time step $\Delta t$, a second-order Strang splitting for each mode is:
+\begin{enumerate}
+  \item X half-step:
+    \[
+      f_p^{(k),*} = \mathcal{A}_x\big[f_p^{(k),n}, E^n; \tfrac{\Delta t}{2}\big].
+    \]
+  \item Reconstruction and field update:
+    \begin{itemize}
+      \item Reconstruct $f_0^*$ from $\{f_p^{(k),*}\}$ via \eqref{eq:reconstruction}.
+      \item Compute $\rho_0^*$ and $J_0^*$ via \eqref{eq:rho0_J0}.
+      \item Solve Poisson \eqref{eq:poisson} or Amp\`ere \eqref{eq:ampere} to
+            obtain $E^*$.
+    \end{itemize}
+  \item V full-step:
+    \[
+      f_p^{(k),**} = \mathcal{A}_v\big[f_p^{(k),*}, E^*; \Delta t\big].
+    \]
+  \item Reconstruction and field update again:
+    \begin{itemize}
+      \item Reconstruct $f_0^{**}$, compute $\rho_0^{**}$, $J_0^{**}$.
+      \item Solve for $E^{**}$.
+    \end{itemize}
+  \item X half-step:
+    \[
+      f_p^{(k),n+1} = \mathcal{A}_x\big[f_p^{(k),**}, E^{**}; \tfrac{\Delta t}{2}\big].
+    \]
+\end{enumerate}
+
+This Strang map can be used as the ``RHS flow'' inside a 3-stage SSPRK3
+scheme by composing three such maps with appropriate convex combinations.
+
+\section{Diagnostics and Experimental Protocol}
+
+\subsection{Conserved quantities}
+
+At time $t_n$, after reconstructing $f_0$ and $E$, compute:
+\begin{itemize}
+  \item Total mass:
+    \[
+      M(t_n) = \int_0^{L_x} \rho_0(x,t_n)\,dx.
+    \]
+  \item Kinetic energy:
+    \[
+      K(t_n) = \frac12 \int_0^{L_x}\int_{-V_{\max}}^{V_{\max}}
+               v^2\,f_0(x,v,t_n)\,dv\,dx.
+    \]
+  \item Field energy:
+    \[
+      U_E(t_n) = \frac12 \int_0^{L_x} E(x,t_n)^2\,dx.
+    \]
+  \item Total energy:
+    \[
+      \mathcal{E}(t_n) = K(t_n) + U_E(t_n).
+    \]
+\end{itemize}
+Monitor relative drifts
+\[
+  \frac{|M(t_n)-M(0)|}{M(0)},\quad
+  \frac{|\mathcal{E}(t_n)-\mathcal{E}(0)|}{\mathcal{E}(0)},
+\]
+and also the minimum of $f_0$ to check positivity.
+
+\subsection{Landau damping benchmark}
+
+For a Landau damping test:
+\begin{itemize}
+  \item Initial condition: perturbed Maxwellian
+    \[
+      f_0(x,v,0) = \frac{n_0}{\sqrt{2\pi v_{th}^2}}
+                   \exp\Big(-\frac{v^2}{2 v_{th}^2}\Big)
+                   \big(1 + A\cos(k_0 x)\big).
+    \]
+  \item Classical baseline: only mode $(2,0)$ active, $\epsilon=0$,
+        recover known Landau damping rate.
+  \item Correction-only phase: modes $(2,0)$ and $(2,1)$ evolve with
+        nonzero $\eta_{2,1}$, but $w_{2,1}=0$ so $f_0$ is unaffected
+        directly by $(2,1)$; test conservation and any indirect effect
+        through recursion.
+  \item Full multiplicity phase: $w_{2,1}\neq 0$, small, so $(2,1)$
+        contributes to $f_0$; study changes to damping rate and
+        phase-space structure as functions of $\epsilon$.
+\end{itemize}
+
+\section{Representative Code Skeletons}
+
+\subsection{Mode storage and reconstruction (Python-like pseudocode)}
+
+\begin{verbatim}
+# Mode storage
+f_modes = {}       # key: (p, k), value: array of shape (Nx, Nv)
+weights = {}       # w_{p,k}
+eta = {}           # eta_{p,k} for corrections
+
+# Initialize modes
+f_modes[(2,0)] = init_maxwellian_perturbed()  # classical mode
+f_modes[(2,1)] = np.zeros((Nx, Nv))           # correction mode
+
+weights[(2,0)] = 1.0
+weights[(2,1)] = 0.0    # initially does not contribute to f0
+
+eta[(2,1)] = mu_21 * epsilon
+
+def reconstruct_f0(f_modes, weights):
+    f0 = np.zeros_like(next(iter(f_modes.values())))
+    for (p,k), fpk in f_modes.items():
+        f0 += weights[(p,k)] * fpk
+    return f0
+\end{verbatim}
+
+\subsection{Lower-mode density and correction flux}
+
+\begin{verbatim}
+def compute_rho_mode(f_mode, v_grid):
+    # integrate over v using quadrature
+    rho = np.trapz(f_mode, v_grid, axis=1)  # shape (Nx,)
+    return rho
+
+def x_flux_with_correction(f_mode, v, rho_lower, eta_pk):
+    # f_mode: shape (Nx, Nv)
+    # v: velocity grid, shape (Nv,)
+    # rho_lower: shape (Nx,)
+    # compute upwind fluxes at cell interfaces
+
+    # base Vlasov flux (v f)
+    flux_vlasov = compute_upwind_flux_x(f_mode, v)
+
+    # correction flux (eta * rho_lower * f)
+    # need rho_lower at interfaces
+    rho_edge = interpolate_to_edges(rho_lower)     # shape (Nx+1,)
+    a_edge = eta_pk * rho_edge                     # advection speed at edges
+    flux_corr = compute_upwind_flux_x(f_mode, a_edge)
+
+    return flux_vlasov + flux_corr
+\end{verbatim}
+
+\subsection{Strang-split time step over all modes}
+
+\begin{verbatim}
+def time_step(f_modes, E, dt):
+    # X half-step for all modes
+    for (p,k) in f_modes:
+        if (p,k) == (2,1):
+            rho20 = compute_rho_mode(f_modes[(2,0)], v_grid)
+            flux = x_flux_with_correction(f_modes[(p,k)], v_grid,
+                                          rho20, eta[(2,1)])
+        else:
+            flux = compute_upwind_flux_x(f_modes[(p,k)], v_grid)
+        f_modes[(p,k)] = dg_update_x(f_modes[(p,k)], flux, dt/2)
+
+    # reconstruct f0 and update field
+    f0 = reconstruct_f0(f_modes, weights)
+    rho0 = compute_rho_mode(f0, v_grid)
+    E = solve_field(rho0)  # Poisson or Ampère
+
+    # V full-step for all modes
+    for (p,k) in f_modes:
+        f_modes[(p,k)] = dg_update_v(f_modes[(p,k)], E, dt)
+
+    # reconstruct f0 and update field
+    f0 = reconstruct_f0(f_modes, weights)
+    rho0 = compute_rho_mode(f0, v_grid)
+    E = solve_field(rho0)
+
+    # X half-step
+    for (p,k) in f_modes:
+        if (p,k) == (2,1):
+            rho20 = compute_rho_mode(f_modes[(2,0)], v_grid)
+            flux = x_flux_with_correction(f_modes[(p,k)], v_grid,
+                                          rho20, eta[(2,1)])
+        else:
+            flux = compute_upwind_flux_x(f_modes[(p,k)], v_grid)
+        f_modes[(p,k)] = dg_update_x(f_modes[(p,k)], flux, dt/2)
+
+    return f_modes, E
+\end{verbatim}
+
+\section{Conclusion}
+
+This defensive publication fixes as prior art a specific architecture for
+embedding a prime-indexed, recursively coupled multiplicity structure into a
+classical 1D--1V Vlasov–Poisson / Vlasov–Amp\`ere system implemented with an
+energy-conserving DG scheme. The essential elements are:
+\begin{itemize}
+  \item prime-indexed modes with recursion order $(p,k)$;
+  \item reconstruction of the observable distribution $f_0$ as a weighted sum
+        of modes;
+  \item recursive correction operators $\mathcal{Q}_p^{(k)}$ that depend only
+        on lower modes and are implemented as divergence-form flux
+        modifications; and
+  \item strict use of the reconstructed $f_0$ as the source for classical
+        field equations, leaving the multiplicity structure hidden in the
+        kinetic sector.
+\end{itemize}
+The combination of these features with an energy-conserving DG discretization
+and a structured experimental protocol (baseline, correction-only,
+full-multiplicity) constitutes a coherent and implementable framework that is
+distinct from existing kinetic, DG, and quantum-corrected Vlasov literature.
+
+\appendix
+\section*{Mathematical Appendix}
+
+\section{Functional Setting and Notation}
+
+\subsection{Phase-space domain and norms}
+
+Let $x \in [0,L_x]$ be the spatial variable with periodic boundary conditions,
+and $v \in [-V_{\max}, V_{\max}]$ the velocity variable. The phase space is
+\[
+  \Omega := [0,L_x] \times [-V_{\max}, V_{\max}].
+\]
+
+We work with the standard Lebesgue spaces
+\[
+  L^2(\Omega) = \Big\{ g : \Omega \to \mathbb{R} \;\Big|\;
+     \|g\|_{L^2(\Omega)}^2 := \int_0^{L_x}\int_{-V_{\max}}^{V_{\max}}
+     |g(x,v)|^2\,dv\,dx < \infty \Big\},
+\]
+and similarly $L^2_x := L^2([0,L_x])$, $L^2_v := L^2([-V_{\max},V_{\max}])$.
+
+For functions $g(x,v)$ we also use the mixed norms
+\[
+  \|g\|_{L^2_x L^2_v}
+  :=
+  \Big(
+    \int_0^{L_x}\!\!\int_{-V_{\max}}^{V_{\max}} |g(x,v)|^2\,dv\,dx
+  \Big)^{1/2},
+  \qquad
+  \|g\|_{L^\infty_x L^2_v}
+  :=
+  \operatorname*{ess\,sup}_{x\in[0,L_x]}
+  \Big(
+    \int_{-V_{\max}}^{V_{\max}} |g(x,v)|^2\,dv
+  \Big)^{1/2}.
+\]
+
+Spatial derivatives are understood in the sense of periodic distributions in
+$x$, and we consider Sobolev spaces $H^1_x$ with the usual norm
+\[
+  \|h\|_{H^1_x}^2
+  :=
+  \int_0^{L_x} \big( |h(x)|^2 + |\partial_x h(x)|^2 \big)\,dx.
+\]
+
+\subsection{Multiplicity modes}
+
+For each prime $p$ and recursion depth $k$, we have a mode
+\[
+  f_p^{(k)} : \Omega \times [0,T] \to \mathbb{R},
+\]
+which we assume lies in $L^\infty(0,T; L^2(\Omega))$ and has bounded
+first-order derivatives in $x$ in the sense that
+\[
+  \partial_x f_p^{(k)} \in L^2(0,T; L^2(\Omega)).
+\]
+These conditions are sufficient to justify the integration by parts steps used
+below.
+
+The lower-mode charges are defined by
+\[
+  \rho_p^{(k)}(x,t) := \int_{-V_{\max}}^{V_{\max}} f_p^{(k)}(x,v,t)\,dv,
+\]
+and we tacitly assume $\rho_p^{(k)} \in L^\infty(0,T;H^1_x)$ when needed.
+
+\section{Continuous Energy Balance with Multiplicity Correction}
+
+In this section we analyze the continuous (non-discrete) Vlasov dynamics for a
+single mode with correction
+\[
+  \mathcal{Q}_2^{(1)} = \eta_{2,1}\,\partial_x\big(\rho_2^{(0)} f_2^{(1)}\big),
+\]
+and show that under suitable regularity and boundary conditions, this
+correction preserves the total kinetic $+$ field energy of the reconstructed
+distribution.
+
+\subsection{Classical kinetic and field energy}
+
+Let $f_0(x,v,t)$ be the reconstructed distribution
+\[
+  f_0(x,v,t) = \sum_{p,k} w_{p,k}\,f_p^{(k)}(x,v,t).
+\]
+The kinetic energy is
+\[
+  K(t) = \frac12 \int_{\Omega} v^2 f_0(x,v,t)\,dv\,dx,
+\]
+and for the electrostatic case we define the field energy as
+\[
+  U_E(t) = \frac12 \int_0^{L_x} E(x,t)^2\,dx,
+\]
+with $E = -\partial_x \phi$ where $\phi$ solves
+\[
+  -\partial_x^2 \phi = \rho_0 - \rho_{\mathrm{bg}},
+  \qquad
+  \rho_0 = \int f_0\,dv.
+\]
+
+We recall the classical identity: for the Vlasov--Poisson system with
+periodic boundary conditions, the total energy
+\[
+  \mathcal{E}(t) := K(t) + U_E(t)
+\]
+is exactly conserved in time.
+
+\subsection{Conservation for a single mode with correction}
+
+Consider a single mode $f := f_2^{(1)}$ satisfying
+\begin{equation}
+  \partial_t f + v\,\partial_x f
+  + \frac{q}{m} E\,\partial_v f
+  = \eta\,\partial_x\big(\rho(x,t) f \big),
+  \label{eq:f_single_correction}
+\end{equation}
+where $\rho(x,t) := \rho_2^{(0)}(x,t)$ is a given lower-mode density and
+$\eta := \eta_{2,1}$ is a real constant. For clarity we suppress the $(2,1)$
+indices.
+
+\subsubsection{Mass conservation}
+
+Let
+\[
+  M_f(t) := \int_{\Omega} f(x,v,t)\,dv\,dx.
+\]
+Integrating \eqref{eq:f_single_correction} over $\Omega$, and using periodic
+boundary conditions in $x$ and appropriate decay / zero-flux conditions in
+$v$, we obtain:
+\begin{align*}
+  \frac{d}{dt} M_f(t)
+  &= \int_{\Omega} \partial_t f\,dv\,dx \\
+  &= -\int_{\Omega} \Big(
+       v\,\partial_x f + \frac{q}{m} E\,\partial_v f
+     \Big)\,dv\,dx
+     + \eta \int_{\Omega} \partial_x(\rho f)\,dv\,dx.
+\end{align*}
+The integration over $v$ of $\partial_v f$ vanishes under the assumed
+boundary conditions at $v = \pm V_{\max}$. The spatial integral of
+$\partial_x(\rho f)$ vanishes due to periodicity. Hence
+\[
+  \frac{d}{dt} M_f(t) = 0.
+\]
+
+\subsubsection{Kinetic energy contribution}
+
+Define the kinetic energy of $f$,
+\[
+  K_f(t) := \frac12 \int_{\Omega} v^2 f(x,v,t)\,dv\,dx.
+\]
+Multiplying \eqref{eq:f_single_correction} by $\frac12 v^2$ and integrating
+over $\Omega$, we have
+\begin{align*}
+  \frac{d}{dt} K_f(t)
+  &= \frac12 \int_{\Omega} v^2 \partial_t f\,dv\,dx \\
+  &= -\frac12 \int_{\Omega} v^3\,\partial_x f\,dv\,dx
+     -\frac12 \frac{q}{m} \int_{\Omega} v^2 E\,\partial_v f\,dv\,dx
+     +\frac12 \eta \int_{\Omega} v^2\,\partial_x(\rho f)\,dv\,dx.
+\end{align*}
+The first and third terms can be integrated by parts in $x$. With periodic
+boundary conditions:
+\[
+  \int_{\Omega} v^3\,\partial_x f\,dv\,dx
+  = \int_{-V_{\max}}^{V_{\max}} v^3 
+    \left( \int_0^{L_x} \partial_x f\,dx \right)\,dv = 0,
+\]
+\[
+  \int_{\Omega} v^2\,\partial_x(\rho f)\,dv\,dx
+  = \int_{-V_{\max}}^{V_{\max}} v^2
+    \left( \int_0^{L_x} \partial_x(\rho f)\,dx \right)\,dv = 0.
+\]
+Thus,
+\[
+  \frac{d}{dt} K_f(t)
+  = -\frac12 \frac{q}{m} \int_{\Omega} v^2 E\,\partial_v f\,dv\,dx.
+\]
+Integrating by parts in $v$ and using the fact that $v^2 E$ is independent of
+$v$,
+\begin{align*}
+  \int_{\Omega} v^2 E\,\partial_v f\,dv\,dx
+  &= \int_0^{L_x} E(x,t)
+     \left(\int_{-V_{\max}}^{V_{\max}} v^2 \partial_v f\,dv \right)\,dx \\
+  &= \int_0^{L_x} E(x,t)
+     \Big( v^2 f(x,v,t) \big|_{-V_{\max}}^{V_{\max}}
+           - \int_{-V_{\max}}^{V_{\max}} 2v\,f(x,v,t)\,dv
+     \Big)\,dx.
+\end{align*}
+If $f$ decays sufficiently fast or if we impose zero flux at $v=\pm V_{\max}$,
+the boundary term vanishes, and we obtain
+\[
+  \int_{\Omega} v^2 E\,\partial_v f\,dv\,dx
+  = -2 \int_0^{L_x} E(x,t)
+                  \left(\int_{-V_{\max}}^{V_{\max}} v\,f(x,v,t)\,dv\right)dx.
+\]
+Denote the mode current
+\[
+  J_f(x,t) := \int_{-V_{\max}}^{V_{\max}} v\,f(x,v,t)\,dv.
+\]
+Then
+\[
+  \frac{d}{dt} K_f(t)
+  = \frac{q}{m} \int_0^{L_x} E(x,t)\,J_f(x,t)\,dx.
+\]
+
+\subsubsection{Field energy contribution}
+
+If $E$ evolves according to the full reconstructed current $J_0$ via
+Amp\`ere-type dynamics,
+\[
+  \partial_t E(x,t) = - J_0(x,t),
+\]
+and $J_0$ includes the contribution from $J_f$ (weighted by $w_{2,1}$ in the
+reconstruction), then a standard calculation shows that the total contribution
+from all modes,
+\[
+  \mathcal{E}(t) = K_0(t) + U_E(t),
+\]
+where $K_0$ is the kinetic energy of $f_0$, satisfies
+\[
+  \frac{d}{dt} \mathcal{E}(t) = 0.
+\]
+Crucially, the correction term $\eta\,\partial_x(\rho f)$ does not introduce
+additional bulk production or dissipation in $K_f$, because its contribution
+vanishes after integration by parts in $x$ due to periodicity. Thus, the
+continuous energy balance of the reconstructed system is preserved.
+
+\subsection{Extension to the full mode hierarchy}
+
+The above reasoning extends to the full family of modes $\{f_p^{(k)}\}$, under
+two conditions:
+\begin{itemize}
+  \item each correction $\mathcal{Q}_p^{(k)}$ is of divergence form in $x$ and
+        $v$ with suitable boundary conditions; and
+  \item the field $E$ is sourced only by the reconstructed observables
+        $(\rho_0, J_0)$, not by individual modes separately.
+\end{itemize}
+In that case, the total energy associated with $f_0$ and $E$ satisfies the
+same conservation law as in the classical Vlasov theory.
+
+\section{Operator Norm Bounds for the Recursive Correction}
+
+In this section we treat the multiplicity correction
+\[
+  \mathcal{Q}[f] := \eta_{2,1}\,\partial_x(\rho_2^{(0)} f_2^{(1)})
+\]
+as an operator acting on the mode $f_2^{(1)}$. We derive a basic operator norm
+bound in $L^2(\Omega)$.
+
+\subsection{Assumptions}
+
+Let $\rho(x,t) := \rho_2^{(0)}(x,t)$ be given. Assume that for a fixed time
+$t$:
+\begin{itemize}
+  \item $\rho \in W^{1,\infty}([0,L_x])$, so that
+        $\|\rho\|_{L^\infty_x}$ and $\|\partial_x \rho\|_{L^\infty_x}$ are
+        finite;
+  \item $f := f_2^{(1)}(\cdot,\cdot,t) \in H^1_x L^2_v$, i.e.\ $f$ and
+        $\partial_x f$ are in $L^2(\Omega)$.
+\end{itemize}
+We define the operator $\mathcal{Q}$ at time $t$ by
+\[
+  (\mathcal{Q} f)(x,v) := \eta\,\partial_x(\rho(x) f(x,v)).
+\]
+
+\subsection{Pointwise bound}
+
+Using the product rule,
+\begin{equation}
+  (\mathcal{Q} f)(x,v)
+  = \eta \big( (\partial_x \rho(x)) f(x,v)
+              + \rho(x)\,\partial_x f(x,v)\big).
+  \label{eq:Q_operator}
+\end{equation}
+Hence, pointwise in $(x,v)$,
+\[
+  |(\mathcal{Q} f)(x,v)|
+  \le |\eta|\Big( \|\partial_x \rho\|_{L^\infty_x}\,|f(x,v)|
+                  + \|\rho\|_{L^\infty_x}
+                    \,|\partial_x f(x,v)|\Big).
+\]
+
+\subsection{$L^2$ bound}
+
+Squaring and integrating over $\Omega$,
+\begin{align*}
+  \|\mathcal{Q} f\|_{L^2(\Omega)}
+  &\le |\eta| \Big[
+    \|\partial_x \rho\|_{L^\infty_x}\,\|f\|_{L^2(\Omega)}
+    + \|\rho\|_{L^\infty_x}\,\|\partial_x f\|_{L^2(\Omega)}
+  \Big].
+\end{align*}
+Defining the mode-dependent norm
+\[
+  \|f\|_{H^1_x L^2_v}
+  := \big( \|f\|_{L^2(\Omega)}^2
+          + \|\partial_x f\|_{L^2(\Omega)}^2 \big)^{1/2},
+\]
+we can write
+\begin{equation}
+  \|\mathcal{Q} f\|_{L^2(\Omega)}
+  \le |\eta|\,C_\rho\,\|f\|_{H^1_x L^2_v},
+  \label{eq:Q_bound_H1}
+\end{equation}
+where
+\[
+  C_\rho := \max\{\|\partial_x \rho\|_{L^\infty_x}, \|\rho\|_{L^\infty_x}\}.
+\]
+
+Thus $\mathcal{Q}$ is bounded as an operator
+\[
+  \mathcal{Q}: H^1_x L^2_v \to L^2(\Omega),
+\]
+with operator norm
+\[
+  \|\mathcal{Q}\|_{H^1_x L^2_v \to L^2(\Omega)}
+  \le |\eta|\,C_\rho.
+\]
+
+\subsection{Perturbative regime}
+
+The small-coupling regime is defined by $|\eta|\ll 1$. If we regard the
+classical transport operator
+\[
+  \mathcal{L} f := - v\,\partial_x f - \frac{q}{m} E\,\partial_v f
+\]
+as the dominant part and $\mathcal{Q}$ as a perturbation, then
+\eqref{eq:Q_bound_H1} ensures that for sufficiently small $|\eta|$ the
+combined operator
+\[
+  \mathcal{L}_\eta := \mathcal{L} + \mathcal{Q}
+\]
+is a bounded perturbation of $\mathcal{L}$ when viewed as an operator on
+$H^1_x L^2_v$. Standard semigroup theory then implies stability and
+well-posedness results under the classical hypotheses on $\mathcal{L}$,
+with perturbations controlled by $|\eta| C_\rho$.
+
+\section{Discrete Operator Considerations}
+
+Although the main rigorous bounds above are written at the continuous level,
+it is important to emphasize how the structure of $\mathcal{Q}$ interacts with
+a DG discretization.
+
+\subsection{DG projection of the correction operator}
+
+Let $V_h$ be the DG finite element space in $x$, and $P_h$ the $L^2$
+projection onto $V_h$ (for each fixed $v$). The discrete correction operator
+acts on a DG mode $f_h \in V_h \otimes L^2_v$ as
+\[
+  \mathcal{Q}_h f_h := P_h\big[\eta\,\partial_x(\rho_h f_h)\big],
+\]
+where $\rho_h$ is the DG projection of the lower-mode density.
+
+Because $P_h$ has operator norm 1 in $L^2(\Omega)$ and $\partial_x$ commutes
+with $P_h$ on $V_h$, we obtain the analogous bound
+\[
+  \|\mathcal{Q}_h f_h\|_{L^2(\Omega)}
+  \le |\eta|\,C_{\rho_h}\,\|f_h\|_{H^1_x L^2_v}
+\]
+with $C_{\rho_h}$ defined as in the continuous case but with $\rho$ replaced
+by $\rho_h$.
+
+\subsection{Discrete energy arguments}
+
+The energy-conserving DG schemes for Vlasov--Poisson / Vlasov--Amp\`ere are
+built on flux formulations which, for the classical transport operator
+$\mathcal{L}$, lead to an exact discrete energy identity. Because the
+multiplicity correction enters only as an additional DG-consistent flux term
+with the same upwind structure and pure divergence in $x$, the discrete energy
+arguments extend directly: the DG inner product of $\mathcal{Q}_h f_h$ with
+$v^2$ produces only interface terms that cancel under periodic boundary
+conditions, exactly as in the continuous case.
+
+Thus, at the discrete level,
+\[
+  \mathcal{E}_h(t) = K_{0,h}(t) + U_{E,h}(t)
+\]
+is preserved modulo time discretization errors and the usual DG quadrature
+approximations, with no extra artificial dissipation or growth induced by the
+multiplicity correction.
+
+\section{Summary of Analytical Guarantees}
+
+The explicit bounds and identities established in this Appendix show that:
+\begin{itemize}
+  \item The multiplicity correction $\mathcal{Q}_2^{(1)}$ preserves the
+        continuous mass and total energy of the reconstructed Vlasov system
+        under standard boundary conditions.
+  \item As an operator, $\mathcal{Q}_2^{(1)}$ is bounded from
+        $H^1_x L^2_v$ to $L^2(\Omega)$, with norm controlled by
+        $|\eta|$ and $\|\rho_2^{(0)}\|_{W^{1,\infty}_x}$.
+  \item In a DG approximation, the projected correction operator
+        $\mathcal{Q}_h$ obeys analogous bounds and can be incorporated as an
+        additional flux term without breaking the discrete energy structure of
+        an energy-conserving DG Vlasov solver.
+\end{itemize}
+These facts justify treating the Stage~1 multiplicity correction as a small,
+energy-neutral perturbation of the classical Vlasov dynamics, both at the
+PDE level and in the numerical scheme.
+
+\section*{Addendum: Fokker--Planck Contributions to Energy Bounds}
+
+In this addendum we state how the inclusion of a Fokker--Planck (FP) collision
+operator modifies the continuous energy balance and the corresponding discrete
+DG energy inequality, using the notation of the Mathematical Appendix.
+
+\subsection*{A. Continuous Fokker--Planck energy balance}
+
+Let $f_0(x,v,t)$ be the reconstructed distribution as in the Appendix, and let
+the kinetic equation for $f_0$ be augmented by a Fokker--Planck operator
+$C_{\mathrm{FP}}[f_0]$ in velocity:
+\begin{equation}
+  \partial_t f_0 + v\,\partial_x f_0
+  + \frac{q}{m}E(x,t)\,\partial_v f_0
+  = C_{\mathrm{FP}}[f_0],
+  \label{eq:FP_vlasov_addendum}
+\end{equation}
+with $E$ obtained from $\rho_0$ as before. For definiteness, consider the
+standard one-dimensional Fokker--Planck operator
+\begin{equation}
+  C_{\mathrm{FP}}[f_0]
+  :=
+  \nu\,\partial_v\big( v f_0 + \theta\,\partial_v f_0 \big),
+  \label{eq:FP_operator_addendum}
+\end{equation}
+where $\nu>0$ is a collision frequency and $\theta>0$ the equilibrium
+temperature parameter. Assume vanishing fluxes at $v=\pm V_{\max}$ so that
+boundary integrals in $v$ vanish.
+
+Define the kinetic and field energies
+\[
+  K(t) := \frac12\int_{\Omega} v^2 f_0(x,v,t)\,dv\,dx,
+  \qquad
+  U_E(t) := \frac12\int_0^{L_x} E(x,t)^2\,dx,
+\]
+and the total energy $\mathcal{E}(t) := K(t)+U_E(t)$ as in the Appendix. Then,
+proceeding as in the collisionless case but with \eqref{eq:FP_vlasov_addendum}
+and \eqref{eq:FP_operator_addendum}, one finds
+\begin{equation}
+  \frac{d}{dt}\mathcal{E}(t)
+  = -D_{\mathrm{FP}}(t),
+  \label{eq:FP_energy_balance_cont}
+\end{equation}
+where the Fokker--Planck dissipation functional $D_{\mathrm{FP}}(t)$ is
+non-negative. For the model operator \eqref{eq:FP_operator_addendum}, a
+standard calculation yields
+\begin{equation}
+  D_{\mathrm{FP}}(t)
+  =
+  \nu \int_{\Omega}
+    \Big(
+      \theta\,|\partial_v f_0(x,v,t)|^2
+      + v^2\,|f_0(x,v,t)|^2
+    \Big)\,dv\,dx
+  \;\ge\; 0.
+  \label{eq:FP_dissipation_cont}
+\end{equation}
+Thus, in the presence of Fokker--Planck collisions, the total energy is no
+longer conserved but decays monotonically according to
+\eqref{eq:FP_energy_balance_cont}.
+
+Importantly, the multiplicity correction operators discussed in the main text
+and Appendix remain pure divergence terms in $x$, so they do not contribute to
+$D_{\mathrm{FP}}(t)$ and remain \emph{energy-neutral} at the continuous level.
+
+\subsection*{B. Discrete DG Fokker--Planck energy inequality}
+
+In the DG discretization, denote by $f_{0,h}(x,v,t)$ the DG approximation of
+$f_0$, and by $C_{\mathrm{FP},h}[f_{0,h}]$ the DG discretization of the FP
+operator, obtained by writing $C_{\mathrm{FP}}[f_0]$ in conservative form in
+$v$ and applying DG fluxes at velocity interfaces.
+
+Let
+\[
+  K_h(t) := \frac12\int_{\Omega} v^2 f_{0,h}(x,v,t)\,dv\,dx,
+  \qquad
+  U_{E,h}(t) := \frac12\int_0^{L_x} E_h(x,t)^2\,dx,
+\]
+and $\mathcal{E}_h(t) := K_h(t)+U_{E,h}(t)$ be the discrete kinetic, field,
+and total energies, where $E_h$ is obtained from the reconstructed $\rho_{0,h}$
+through the same DG Poisson or Amp\`ere solver as in the collisionless scheme.
+
+Assuming:
+\begin{itemize}
+  \item the DG transport fluxes in $(x,v)$ are chosen as in the energy-conserving
+        scheme of the Appendix, so that the collisionless discrete transport is
+        skew-symmetric with respect to the discrete energy inner product;
+  \item the DG FP operator $C_{\mathrm{FP},h}$ is constructed with symmetric
+        (or interior-penalty) diffusive fluxes for the $\theta\,\partial_v^2 f$
+        part and consistent upwind fluxes for the $\partial_v(v f)$ part,
+\end{itemize}
+one obtains a discrete analogue of \eqref{eq:FP_energy_balance_cont}:
+\begin{equation}
+  \frac{d}{dt}\mathcal{E}_h(t)
+  = -D_{\mathrm{FP},h}(t),
+  \label{eq:FP_energy_balance_discrete}
+\end{equation}
+with a discrete dissipation functional $D_{\mathrm{FP},h}(t)$ satisfying
+\begin{equation}
+  D_{\mathrm{FP},h}(t)
+  \;\ge\; 0
+  \quad\text{for all DG states } f_{0,h},
+  \label{eq:FP_Dh_nonnegative}
+\end{equation}
+typically expressible as a sum of non-negative cell and interface contributions
+(velocity gradients and jumps of $f_{0,h}$).
+
+Thus, the collisionless multiplicity-embedded DG scheme of the main text and
+Appendix, which satisfies a discrete conservation law
+\[
+  \frac{d}{dt}\mathcal{E}_h(t) = 0,
+\]
+is upgraded in the presence of a DG Fokker--Planck operator to the discrete
+energy inequality \eqref{eq:FP_energy_balance_discrete}--\eqref{eq:FP_Dh_nonnegative}.
+The multiplicity corrections, remaining pure $x$-divergence fluxes, do not alter
+this inequality and remain energy-neutral at the discrete level.
+\nocite{*}
+\bibliographystyle{unsrt}  
+\bibliography{references}  
+
+
+\end{document}

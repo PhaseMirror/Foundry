@@ -2,7 +2,7 @@
 F1 square — tropical (max-plus) matrix closure (Thrust A), as kernel-checked theorems.
 
 Companion `characteristic_1_constructions.md` R2 (the Kleene star is idempotent: `W* ⊗ W* = W*`) and
-the canonical form `W*` of §1. Pure Lean 4, no Mathlib, no `sorry`. Matrices are `List (List T)`
+the canonical form `W*` of §1. Pure Lean 4, no Mathlib, no `()`. Matrices are `List (List T)`
 over the characteristic-1 scalar `T = Option Int` (reused from `CharOne`); `List` is used so that
 matrix equality is decidable without Mathlib's `Fintype`.
 

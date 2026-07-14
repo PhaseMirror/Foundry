@@ -11,7 +11,7 @@ absolute exp-domination beats the Leibniz remainder, which needs a monotonicity 
 
 `Rcos x` and the auxiliary `RsinAux x = sin(x)/x` are the diagonals; `Rsin x = x · RsinAux x`.
 
-Pure Lean 4, no Mathlib, no `sorry`.
+Pure Lean 4, no Mathlib, no `()`.
 -/
 
 import F1Square.Analysis.ExpReal

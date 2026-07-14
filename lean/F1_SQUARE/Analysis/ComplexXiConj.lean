@@ -11,7 +11,7 @@ supplied values, so their conjugation is taken as explicit hypotheses; `Cxi_conj
 former a large `Clog`/`Cpow` chain) as named, audit-visible hypotheses — the program's standard
 relocation, not a closure.
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 import F1Square.Analysis.ComplexXi

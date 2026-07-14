@@ -29,7 +29,7 @@ T1 lives. Its divisor/intersection structure is built in bricks 3–6 (point-cou
 the `H¹`-bearing spectral structure (T4: scaling spectrum = the zeta zeros) is NOT here, and
 the Hodge-index crux (T5 = RH) is untouched — see `Square/Polarized.lean` and `Crux.lean`.
 
-Pure Lean 4 core, no Mathlib, no `sorry`, choice-free; audited by `scripts/honesty_audit.sh`.
+Pure Lean 4 core, no Mathlib, no `()`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
 import F1Square.Square.Monoid

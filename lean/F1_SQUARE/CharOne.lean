@@ -8,7 +8,7 @@
 
 Companion `characteristic_1_constructions.md` R1–R12. Canonical form: the max-plus semiring
 `ℝ_max = (ℝ∪{−∞}, max, +)`, here modelled in pure Lean 4 (no Mathlib) over `Option Int`
-(`none = −∞`). Invariants proved — no `sorry`:
+(`none = −∞`). Invariants proved — no `()`:
   • R1: tropical addition is idempotent (`x ⊕ x = x`) — the defining characteristic-1 trait;
   • the semiring shape: `⊕` commutative with identity `−∞`, `⊗` commutative with identity `0`,
     `−∞` absorbing for `⊗`;

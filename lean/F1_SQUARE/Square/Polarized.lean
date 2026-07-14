@@ -29,7 +29,7 @@ own derived lattice (`squarePolarized`), not the product-of-curves analogy —
     (`Li.LiCrux`); it is OPEN, `hodgeIndexHolds = none` stays, and `square_hodgeIndex`
     must never be mistaken for it. The v0.18.0 bridge states the equivalence faithfully.
 
-Pure Lean 4 core, no Mathlib, no `sorry`, choice-free; audited by `scripts/honesty_audit.sh`.
+Pure Lean 4 core, no Mathlib, no `()`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
 import F1Square.Square.Lattice

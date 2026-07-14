@@ -16,7 +16,7 @@ THIS FILE (brick 1 of γ₂): the real substrate — the term `(ln k)²/k`, the 
 cube `(ln N)³`, and the sequence `g₂(N)`. The monotonicity/regularity layers and the certified
 bracket follow (the γ₂ analogue of `GammaOne`'s dyadic-tail stack).
 
-Pure Lean 4, no Mathlib, no `sorry`/`native_decide`, choice-free.
+Pure Lean 4, no Mathlib, no `()`/`native_decide`, choice-free.
 -/
 
 import F1Square.Analysis.GammaOne

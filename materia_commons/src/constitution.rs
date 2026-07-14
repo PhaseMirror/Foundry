@@ -3,7 +3,7 @@ use thiserror::Error;
 use std::fmt;
 
 // --- Constants ---
-pub const LAMBDA_M_THRESHOLD: f64 = 0.1;
+pub const LAMBDA_M_THRESHOLD: f64 = 0.3; // MTPI bound delta(t) <= 0.3
 pub const CONTRACTIVITY_UPPER: f64 = 1.0;
 pub const CONTRACTIVITY_LOWER: f64 = 0.0;
 pub const CIRCUIT_BREAKER_THRESHOLD: u32 = 3;
@@ -137,14 +137,52 @@ impl ConstitutionModel {
     }
 
     fn l0_4_prime_gates_satisfied(&self) -> Result<(), ConstitutionViolation> {
+        fn mod_pow(mut base: u128, mut exp: u128, modulus: u128) -> u128 {
+            if modulus == 1 { return 0; }
+            let mut result = 1;
+            base %= modulus;
+            while exp > 0 {
+                if exp % 2 == 1 {
+                    result = (result * base) % modulus;
+                }
+                exp >>= 1;
+                base = (base * base) % modulus;
+            }
+            result
+        }
+
         fn is_prime(n: u64) -> bool {
             if n < 2 { return false; }
             if n == 2 || n == 3 { return true; }
-            if n.is_multiple_of(2) || n.is_multiple_of(3) { return false; }
-            let mut i = 5;
-            while i * i <= n {
-                if n.is_multiple_of(i) || n.is_multiple_of(i + 2) { return false; }
-                i += 6;
+            if n % 2 == 0 { return false; }
+
+            let mut d = n - 1;
+            let mut s = 0;
+            while d % 2 == 0 {
+                d /= 2;
+                s += 1;
+            }
+
+            let bases: [u64; 7] = [2, 3, 5, 7, 11, 13, 17];
+            let n_u128 = n as u128;
+
+            for &a in bases.iter() {
+                if a >= n { continue; }
+                let mut x = mod_pow(a as u128, d as u128, n_u128);
+                if x == 1 || x == n_u128 - 1 {
+                    continue;
+                }
+                let mut composite = true;
+                for _ in 1..s {
+                    x = (x * x) % n_u128;
+                    if x == n_u128 - 1 {
+                        composite = false;
+                        break;
+                    }
+                }
+                if composite {
+                    return false;
+                }
             }
             true
         }
@@ -157,7 +195,7 @@ impl ConstitutionModel {
         if !violations.is_empty() {
             return Err(ConstitutionViolation {
                 invariant: L0Invariant::L0_4,
-                detail: format!("Actions {:?} have non-prime gate values.", violations),
+                detail: format!("Actions {:?} failed MTPI Miller-Rabin primality test.", violations),
             });
         }
         Ok(())

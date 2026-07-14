@@ -7,7 +7,7 @@ complex ring `ℂ = ℝ×ℝ` (Complex): each component of `Cexp z` is a genuine
 is a clean composition — no new regularity obligation. The argument-0 anchor (`Cexp 0 ≈ 1`), the `nˢ`
 map, and `Czeta` build on this in subsequent bricks.
 
-Pure Lean 4, no Mathlib, no `sorry`, choice-free.
+Pure Lean 4, no Mathlib, no `()`, choice-free.
 -/
 
 import F1Square.Analysis.Complex

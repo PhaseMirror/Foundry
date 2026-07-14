@@ -38,7 +38,7 @@ infinite-dimensional coupling; `c(i) = 0 on the band` is its spectral-support sk
 the discrete, integration-free substrate carries. The unconditional positivity proved here is the
 band-complement positivity, not the full Sonine-space theorem.)
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 

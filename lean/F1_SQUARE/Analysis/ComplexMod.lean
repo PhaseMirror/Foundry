@@ -5,7 +5,7 @@ the imaginary rotation `cos(Im z) + i·sin(Im z)` has unit modulus, so the modul
 is governed entirely by its real part. It is the gateway to the `nˢ` modulus `|n⁻ˢ| = n⁻ᴿᵉˢ`
 that drives convergence of the complex `ζ` for `Re s > 1`.
 
-Pure Lean 4, no Mathlib, no `sorry`/`native_decide`, choice-free.
+Pure Lean 4, no Mathlib, no `()`/`native_decide`, choice-free.
 -/
 
 import F1Square.Analysis.ComplexExp

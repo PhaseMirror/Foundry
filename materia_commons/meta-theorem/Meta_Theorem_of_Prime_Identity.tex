@@ -1,0 +1,688 @@
+
+\documentclass[11pt,a4paper]{article}
+
+%% ============================================================
+%% MTPI Core Specification v1.0 - LaTeX Formalization
+%% Meta-Theorem of Prime Identity: A Proof-First Framework
+%% for Verifiable Computation
+%% Author: Ryan O. Van Gelder
+%% Affiliation: Citizen Gardens Institute for Mathematical Discovery
+%% License: CC-BY-4.0 International
+%% Date: January 2026
+%% DOI: 10.5281/zenodo.18248116
+%% ============================================================
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{mathtools}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{geometry}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+
+\geometry{margin=1in}
+
+%% Theorem environments
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{remark}[theorem]{Remark}
+
+%% Custom commands
+\newcommand{\MTPI}{\textsf{MTPI}}
+\newcommand{\PIRTM}{\textsf{PIRTM}}
+\newcommand{\CSL}{\textsf{CSL}}
+\newcommand{\Archivum}{\textsf{Archivum}}
+\newcommand{\Tensor}[1]{\mathcal{T}_{#1}}
+\newcommand{\EthicalField}{\mathcal{E}_t}
+\newcommand{\SovereigntyTensor}{\sigma_i(t)}
+\newcommand{\Commutator}[2]{[#1, #2]}
+\newcommand{\PrimeSet}[1]{\mathbb{P}(N_{#1})}
+\newcommand{\Poseidon}{\textsc{Poseidon}}
+\newcommand{\MillerRabin}{\textsc{Miller-Rabin}}
+\newcommand{\XiOp}{\Xi(t)}
+
+%% Code listing style
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+\lstset{style=mystyle}
+
+%% Header/Footer
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{MTPI Core Specification v1.0}
+\lhead{Defensive Publication}
+\rfoot{Page \thepage}
+\lfoot{CC-BY-4.0}
+
+%% ============================================================
+\begin{document}
+
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+
+    {\Huge\bfseries Meta-Theorem of Prime Identity\\[0.5cm]}
+    {\LARGE\itshape A Proof-First Framework for Verifiable Computation\\[1cm]}
+
+    {\Large\textbf{MTPI Core Specification v1.0}\\[2cm]}
+
+    {\large
+    Ryan O. Van Gelder\\[0.3cm]
+    \textit{Citizen Gardens Institute for Mathematical Discovery}\\
+    Worthington, Ohio, USA\\[2cm]
+    }
+
+    {\large Publication Date: January 2026\\[0.5cm]}
+
+    \vfill
+
+    {\normalsize
+    \textbf{Document Classification:} Defensive Publication / Technical Specification\\
+    \textbf{License:} Creative Commons Attribution 4.0 International (CC-BY-4.0)\\
+    \textbf{Version:} 1.0.0\\[0.3cm]
+    \textbf{DOI:} \href{https://doi.org/10.5281/zenodo.18248116}{10.5281/zenodo.18248116}
+    }
+\end{titlepage}
+
+%% ============================================================
+\tableofcontents
+\newpage
+
+%% ============================================================
+\begin{abstract}
+The \textbf{Meta-Theorem of Prime Identity (MTPI)} is an architectural pattern and protocol stack for building \emph{proof-first} digital systems. Instead of relying on institutional trust, surveillance, or opaque algorithms, MTPI requires that every state transition be accompanied by a cryptographic proof that the transition is \emph{lawful}, \emph{ethically constrained}, and \emph{user-sovereign}.
+
+Lawfulness is defined not only in terms of syntactic validity (e.g., input formats, signatures) but also with respect to higher-order invariants: ethical constraints, bounded drift, jurisdictional rules, and user consent.
+
+\textbf{Core Claim:} Every lawful identity in the system can be represented as a composition of prime identities, and this decomposition is stable under lawful recursion.
+
+An MTPI identity is anchored by prime-based checks and is mathematically constrained by strict time-drift bounds, typically $\delta(t) \leq 0.3$. This ensures that proofs are not only valid but also \emph{live}, preventing replay attacks and impersonation by ensuring a proof is linked to a specific, verifiable moment in time.
+\end{abstract}
+
+%% ============================================================
+\section{Mathematical Foundation}
+
+\subsection{Prime-Indexed Recursive Tensor Mathematics (PIRTM)}
+
+\begin{definition}[Recursive Tensor Evolution]
+The recursive tensor dynamics within PIRTM are defined by the evolution equation:
+\begin{equation}
+    \Tensor{t+1} = \lambda \sum_{p_i \in \PrimeSet{t}} \Tensor{t} + \mathcal{F}_t
+    \label{eq:tensor_evolution}
+\end{equation}
+where:
+\begin{itemize}[noitemsep]
+    \item $\lambda$ is the \textbf{Universal Multiplicity Constant} (cognitive stabilizer), with $\lambda \geq 1$
+    \item $\PrimeSet{t}$ is the set of primes up to index $N_t$
+    \item $\mathcal{F}_t$ represents forcing inputs (cognitive, semantic, or external)
+    \item The condition $\lambda \geq 1$ ensures exponential convergence
+\end{itemize}
+\end{definition}
+
+\subsection{Contractive Dynamics Guarantee}
+
+\begin{theorem}[Stability Guarantee]
+The system's reliability is underpinned by a foundational mathematical guarantee of stability derived from the principle of contractive dynamics, governed by the core inequality:
+\begin{equation}
+    \|\Phi_t\| \leq q^t, \quad q < 1
+    \label{eq:contractive}
+\end{equation}
+This ensures that with every computational step, the distance between any two possible computational paths is guaranteed to shrink.
+\end{theorem}
+
+\begin{proof}
+The proof of convergence for the recursive operator $\Phi_t$ follows from the Banach Fixed-Point Theorem. Given the contractive mapping property with contraction constant $q < 1$, the sequence of iterates converges to a unique fixed point in the complete metric space of tensor states.
+\end{proof}
+
+\subsection{Recursive Operator Evolution}
+
+\begin{definition}[Operator Dynamics]
+The recursive operator evolves under the differential relation:
+\begin{equation}
+    \frac{d\Phi_t}{dt} = \mathcal{M}\Phi_t - \Commutator{\mathcal{M}}{\Phi_t}
+    \label{eq:operator_evolution}
+\end{equation}
+where $\mathcal{M}$ is a Hilbert-Schmidt operator and $\Commutator{\mathcal{M}}{\Phi_t} := \mathcal{M}\Phi_t - \Phi_t\mathcal{M}$ denotes the commutator. This formulation follows the dynamic recursive operator framework established in \cite{vanosdol2025}.
+\end{definition}
+
+\begin{remark}
+The commutator $\Commutator{A}{B}$ measures the degree to which operators $A$ and $B$ fail to commute. When $\Commutator{A}{B} = 0$, the operators are said to commute, implying that the order of application does not affect the outcome.
+\end{remark}
+
+\begin{definition}[Dynamic Recursive Operator]
+The dynamic recursive operator $\XiOp$ governs tensor evolution in PIRTM systems through $\Lambda_m$-indexed contraction mappings. Stability in DRMM/PIRTM is achieved via entangled feedback loops that preserve prime-indexed structure under recursive application \cite{vanosdol2025}.
+\end{definition}
+
+\subsection{Related Work and Prior Art}
+
+MTPI extends foundational cryptographic and number-theoretic primitives:
+
+\begin{itemize}[noitemsep]
+    \item \textbf{Groth16} (2016): Foundational ZK-SNARK construction \cite{groth2016}
+    \item \textbf{Poseidon Hash} (2021): Algebraic hash function optimized for ZK circuits \cite{grassi2021}
+    \item \textbf{Miller-Rabin} (1980): Probabilistic primality testing \cite{rabin1980}
+    \item \textbf{Van Osdol} (2025): Dynamic recursive operator $\XiOp$ and PIRTM stability analysis via Hilbert-Schmidt dynamics and prime-indexed contraction mappings \cite{vanosdol2025}
+\end{itemize}
+
+MTPI introduces \emph{prime-indexed identity gating}, \emph{drift-bounded state evolution}, and \emph{silence-by-default semantics} as novel extensions.
+
+%% ============================================================
+\section{Prime-Indexed Identity}
+
+\subsection{Genesis State and Prime Index}
+
+\begin{definition}[Identity Anchoring]
+Every governed entity (user, device, process, model, contract) is anchored in a \textbf{genesis state} and a \textbf{prime index}:
+\begin{itemize}[noitemsep]
+    \item The genesis state encodes initial conditions (e.g., enrollment seed, device attestation, initial model snapshot)
+    \item The prime index ties that genesis to a unique slot within the system's identity lattice
+\end{itemize}
+\end{definition}
+
+\begin{definition}[Identity Computation]
+The identity is computed via a \Poseidon{} hash of the genesis state and local salt, then mapped to a prime index within a large, sparse space:
+\begin{equation}
+    \text{Identity} = \Poseidon(0\text{x}39\text{e}0, \text{salt})
+    \label{eq:identity}
+\end{equation}
+Validated via \MillerRabin{} primality testing.
+\end{definition}
+
+\subsection{Prime-Gated Activation}
+
+State transitions are gated by prime-based checks, where actions are only permissible during specific \emph{prime epochs}.
+
+\begin{lstlisting}[language=C,caption={Prime-Gated Activation (Solidity pseudocode)}]
+function activatePrimeGate(uint256 primeIndex, bytes32 proofHash) external {
+    if (!isCertifiedPrime(primeIndex)) 
+        revert InvalidPrime(primeIndex);
+    if (primeIndex <= state.lastPrimeIndex) 
+        revert PrimeOrderViolation(primeIndex, state.lastPrimeIndex + 1);
+    // ... activation logic
+}
+\end{lstlisting}
+
+\subsection{Drift Bounds}
+
+\begin{definition}[Drift Constraint]
+Drift measures the distance between an identity's current state and its genesis or prior lawful checkpoints. The system enforces:
+\begin{equation}
+    \delta(t) \leq 0.3
+    \label{eq:drift_bound}
+\end{equation}
+\end{definition}
+
+\begin{proposition}[Drift Enforcement]
+When drift exceeds the threshold, the system must either:
+\begin{enumerate}[noitemsep]
+    \item Refuse further transitions until recertification occurs, or
+    \item Restrict capabilities and enter constrained mode
+\end{enumerate}
+\end{proposition}
+
+%% ============================================================
+\section{Conscious Sovereignty Layer (CSL)}
+
+\subsection{Ethical Tensor Field}
+
+\begin{definition}[Conscious Sovereignty Layer]
+The \CSL{} is a governance and policy layer that encodes:
+\begin{itemize}[noitemsep]
+    \item \textbf{Ethical constraints:} beneficence (do good), non-maleficence (do no harm), respect for autonomy
+    \item \textbf{Sovereignty rules:} which jurisdictions apply to a given identity or action
+    \item \textbf{Silence Clause semantics:} specifying when systems must default to inaction
+\end{itemize}
+\end{definition}
+
+\subsection{CSL Commutation Relation}
+
+\begin{theorem}[Admissibility Criterion]
+A transition is admissible only if, when interpreted under CSL, it commutes with the ethical operators:
+\begin{equation}
+    \Commutator{\mathcal{M}}{\EthicalField} = 0 \quad \Longrightarrow \quad \mathcal{M} \text{ admissible}
+    \label{eq:csl_commutation}
+\end{equation}
+where $\EthicalField$ is the Ethical Tensor Field encoding conserved invariants.
+\end{theorem}
+
+\subsection{Sovereignty Tensor}
+
+\begin{definition}[Sovereignty Encoding]
+The Sovereignty Tensor $\SovereigntyTensor$ encodes agent permissions at node $i$ and time $t$:
+\begin{equation}
+    \SovereigntyTensor \in \{0, 1\}^n
+    \label{eq:sovereignty_tensor}
+\end{equation}
+where each binary element corresponds to constraints: consent, security, context alignment.
+\end{definition}
+
+\subsection{Recursive Opt-Out (Silence Clause)}
+
+\begin{theorem}[Silence Clause]
+The rule guaranteeing an agent's right to disengage:
+\begin{equation}
+    \Tensor{t+1}^{(i)} = \Tensor{t}^{(i)} \quad \text{if} \quad \SovereigntyTensor = \mathbf{0}
+    \label{eq:silence_clause}
+\end{equation}
+This mathematically freezes the agent's state upon opt-out.
+\end{theorem}
+
+\begin{corollary}[Default Behavior]
+In ambiguous situations or in the absence of a valid proof, the system's default behavior is \emph{silence}---to take no action.
+\end{corollary}
+
+%% ============================================================
+\section{Archivum Audit Schema}
+
+\subsection{$\Lambda$-Trace Structure}
+
+\begin{definition}[$\Lambda$-Trace]
+$\Lambda$-Trace serves as the canonical decision and audit layer, binding off-chain decisions to on-chain assets via a single unique hash---the \texttt{ltraceHash}. A $\Lambda$-Trace object captures the full context of a decision:
+\begin{itemize}[noitemsep]
+    \item Scores and evaluation metrics
+    \item Ethics verdict (CSL compliance)
+    \item Link to supporting evidence (IPFS/decentralized storage)
+\end{itemize}
+\end{definition}
+
+\begin{lstlisting}[language=C,caption={$\Lambda$-Trace Interface (TypeScript)}]
+interface LambdaTrace {
+    primeId: string;       // Prime-indexed identity hash
+    proofHash: bytes32;    // ZK proof hash
+    vkHash: bytes32;       // Verification key hash
+    R96: number;           // Resonance budget
+    delta: number;         // Drift metric
+    timestamp: uint256;
+    lawful: boolean;
+}
+\end{lstlisting}
+
+\subsection{Provenance Ledger}
+
+\begin{definition}[\Archivum{}]
+\Archivum{} is an append-only, prime-indexed store that records:
+\begin{itemize}[noitemsep]
+    \item Hashes of zero-knowledge proofs
+    \item Minimal public metadata (timestamps, drift metrics)
+    \item Prime identity references
+    \item Resonance/participation weights
+\end{itemize}
+\end{definition}
+
+\begin{remark}[Privacy Guarantee]
+\textbf{Critical:} \Archivum{} does not store raw personal data. It enables regulator-grade auditability without surveillance.
+\end{remark}
+
+\subsection{Post-Quantum Integrity}
+
+\begin{theorem}[Hash Chain Immutability]
+Immutability is guaranteed by a recursive state hash chain:
+\begin{equation}
+    H_{n+1} = \mathcal{H}(B_n \| H_n \| Q_{\text{ent}}(n))
+    \label{eq:hash_chain}
+\end{equation}
+where $Q_{\text{ent}}(n)$ is a high-entropy source (e.g., quantum random number generator or cryptographic entropy pool), providing resistance against future quantum threats.
+\end{theorem}
+
+%% ============================================================
+\section{Conformance Requirements}
+
+\subsection{Technical Invariants}
+
+All MTPI-conformant implementations must satisfy:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Invariant} & \textbf{Requirement} & \textbf{Enforcement} \\ \midrule
+Prime-Gated Activation & $\text{isPrime}(\text{epochIndex}) = \text{true}$ & Miller-Rabin circuit \\
+Drift Bound & $\delta(t) \leq 0.3$ & Client-side + on-chain verification \\
+CSL Commutation & $[\mathcal{M}, \mathcal{E}_t] = 0$ & Proof must demonstrate commutation \\
+Replay Protection & $\text{usedProofHashes}[\text{proofHash}] = \text{false}$ & Nullifier mapping \\
+Silence-by-Default & No action without valid proof & Revert on verification failure \\ \bottomrule
+\end{tabular}
+\caption{Technical invariants for MTPI conformance}
+\label{tab:invariants}
+\end{table}
+
+\subsection{Surveillance Fork Definition}
+
+\begin{definition}[Surveillance Fork]
+An implementation constitutes a \textbf{Surveillance Fork} if it:
+\begin{enumerate}[noitemsep]
+    \item \textbf{EMITS} any of the following WITHOUT an on-device consent artifact:
+    \begin{itemize}[noitemsep]
+        \item Device fingerprints (canvas, WebGL, audio context)
+        \item Persistent identifiers linkable across $>1$ session
+        \item Location data at precision $\leq$ city level
+        \item Biometric templates or derivatives
+    \end{itemize}
+    \item \textbf{OR FAILS} the Emission Gating Test
+    \item \textbf{OR STORES} on remote infrastructure raw user content without client-side encryption where user does not hold decryption key
+\end{enumerate}
+\end{definition}
+
+\subsection{Emission Gating Test}
+
+\begin{lstlisting}[language=bash,caption={Emission Gating Test}]
+#!/bin/bash
+# Emission Gating Test for MTPI Conformance
+# Requires containerization/sandboxing (Docker or equivalent)
+
+docker run --network=none $IMPLEMENTATION_IMAGE sleep 60 &
+tcpdump -i any -c 1 -w /tmp/capture.pcap &
+# Enable network
+docker network connect bridge $CONTAINER_ID
+# Wait for idle
+sleep 300
+# Analyze capture
+if pcap_has_unlisted_endpoints /tmp/capture.pcap $MANIFEST; then
+    echo "FAIL: Surveillance Fork detected"
+    exit 1
+fi
+echo "PASS: Emission Gating Test"
+\end{lstlisting}
+
+\begin{remark}
+For non-containerized implementations, use \texttt{strace}/\texttt{dtrace} syscall tracing or equivalent sandboxing.
+\end{remark}
+
+\subsection{Proof Lifecycle}
+
+The end-to-end lifecycle of an MTPI transaction:
+
+\begin{enumerate}[noitemsep]
+    \item \textbf{Local Proof Generation:} Client uses circuit (WASM binary) and proving key to generate Groth16 ZK-proof
+    \item \textbf{Local Verification:} Client verifies proof against local verification key; if fail, halt
+    \item \textbf{Policy Oracle Evaluation:} Client evaluates Prime Gate + Drift Gate; verdict: submit or silent
+    \item \textbf{On-Chain Submission:} If submit, proof and minimal public signals sent to verifier contract
+    \item \textbf{State Transition:} Upon verification, contract executes transition, records proof hash as nullifier
+    \item \textbf{Audit Event Emission:} Contract emits privacy-preserving audit event (hashes only)
+\end{enumerate}
+
+%% ============================================================
+\section{Reference Implementation}
+
+\subsection{Core Contract Interface}
+
+\begin{lstlisting}[language=C,caption={IMTPICore Interface (Solidity)}]
+// SPDX-License-Identifier: LProof-License-v1.2
+pragma solidity ^0.8.20;
+
+interface IMTPICore {
+    function quantumTransition(
+        uint256[2] calldata a,
+        uint256[2][2] calldata b,
+        uint256[2] calldata c,
+        uint256[1] calldata input,
+        bytes32 proofHash
+    ) external returns (bytes32 newStateHash);
+
+    function enterSilentRecovery(bytes32 proofHash) external;
+    function getCurrentState() external view returns (bytes32);
+    function checkPrimeAccess(address entity, uint256 primeIndex) 
+        external view returns (bool);
+}
+\end{lstlisting}
+
+\subsection{Circom Circuit Template}
+
+\begin{lstlisting}[language=C,caption={RootContract Circuit (Circom 2.1+)}]
+pragma circom 2.0.0;
+
+include "poseidon.circom";
+include "millerrabin.circom";
+include "comparators.circom";
+
+template RootContract() {
+    signal input identityHash;
+    signal input stateCommit;
+    signal input primeIndex;
+    signal input drift;
+
+    signal output newStateHash;
+    signal output lawful;
+
+    // Prime-gate check
+    component isPrime = MillerRabin();
+    isPrime.n <== primeIndex;
+    isPrime.result === 1;
+
+    // Drift bound check (Circom 2.1 compliant)
+    // 0.3 represented as 3e17 in fixed-point (scale 1e18)
+    signal driftBound;
+    driftBound <== 300000000000000000;
+
+    component driftCheck = LessThan(64);
+    driftCheck.in[0] <== drift;
+    driftCheck.in[1] <== driftBound;
+    signal driftValid;
+    driftValid <== driftCheck.out;
+    driftValid === 1;
+
+    // State evolution via Poseidon
+    component hasher = Poseidon(3);
+    hasher.inputs[0] <== identityHash;
+    hasher.inputs[1] <== stateCommit;
+    hasher.inputs[2] <== primeIndex;
+
+    newStateHash <== hasher.out;
+    lawful <== 1;
+}
+
+component main = RootContract();
+\end{lstlisting}
+
+%% ============================================================
+\section{Intellectual Property Declaration}
+
+\subsection{Public Domain Designation (as of v1.0.0)}
+
+The following concepts are irrevocably placed in the public domain and may not be patented, enclosed, or restricted, effective as of specification version \textbf{v1.0.0}:
+
+\begin{enumerate}[noitemsep]
+    \item \textbf{MTPI} (Meta-Theorem of Prime Identity) mathematical formulation
+    \item \textbf{PIRTM} (Prime-Indexed Recursive Tensor Mathematics)
+    \item \textbf{PETC} (Prime-Eigenmode Tensor Calculus)
+    \item \textbf{DRMM} (Recursive Decodability and Multiplicity Mathematics)
+    \item \textbf{CSL} (Conscious Sovereignty Layer) ethics framework, including Silence Clause
+    \item Prime-gated invariant specifications
+    \item RootContract interface specifications
+    \item \Archivum{} audit logic (specification-level)
+    \item Dynamic recursive operator $\XiOp$ framework and $\Lambda_m$-indexed contraction mappings
+\end{enumerate}
+
+\begin{remark}[Version Scope]
+This public domain designation applies to specification versions \texttt{1.x.x}. Future major versions (\texttt{2.0.0}+) may extend but not retract public domain scope.
+\end{remark}
+
+\subsection{Guiding Principle}
+
+\begin{quote}
+\textit{The Constitution is open; the tools may be owned.}
+\end{quote}
+
+This bifurcated strategy ensures no single entity can control the foundational layer while enabling commercialization of high-value implementations built atop the open foundation.
+
+%% ============================================================
+\section{Alternative Embodiments}
+
+\subsection{Non-Blockchain Deployments}
+
+MTPI may be implemented without blockchain anchoring, using timestamped append-only logs (e.g., Certificate Transparency, Trillian) for \Archivum{}.
+
+\subsection{Alternative Proof Systems}
+
+Groth16 may be substituted with:
+\begin{itemize}[noitemsep]
+    \item \textbf{PLONK:} Universal trusted setup
+    \item \textbf{Halo2:} No trusted setup
+    \item \textbf{STARKs:} Post-quantum, larger proofs
+\end{itemize}
+
+\subsection{Alternative Hash Functions}
+
+\Poseidon{} may be substituted with:
+\begin{itemize}[noitemsep]
+    \item \textbf{Rescue:} Similar algebraic structure
+    \item \textbf{Blake3:} Non-algebraic, requires different circuit design
+\end{itemize}
+
+\subsection{Prime Index Alternatives}
+
+\MillerRabin{} may be substituted with:
+\begin{itemize}[noitemsep]
+    \item \textbf{AKS:} Deterministic primality test
+    \item \textbf{Precomputed prime tables:} For bounded domains
+\end{itemize}
+
+\subsection{Alternative Drift Metrics}
+
+The drift bound $\delta(t) \leq 0.3$ may be replaced with domain-specific metrics (e.g., Wasserstein distance, KL divergence) provided the contractive property (\ref{eq:contractive}) is preserved.
+
+\subsection{Alternative Execution Environments}
+
+The reference implementation targets EVM-compatible chains but may be adapted to:
+\begin{itemize}[noitemsep]
+    \item \textbf{WASM runtimes:} (Substrate, Cosmos)
+    \item \textbf{TEE environments:} (SGX, TrustZone)
+    \item \textbf{Pure off-chain execution:} with periodic anchoring
+\end{itemize}
+
+%% ============================================================
+\section*{Document Metadata}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Field} & \textbf{Value} \\ \midrule
+Canonical Title & MTPI Core Specification v1.0 \\
+Subtitle & A Proof-First Framework for Verifiable Computation \\
+Version & 1.0.0 \\
+Publication Date & January 14, 2026 \\
+Author & Van Gelder, Ryan O. \\
+Affiliation & Citizen Gardens Institute for Mathematical Discovery \\
+License & CC-BY-4.0 International \\
+Document Type & Defensive Publication / Technical Note \\
+DOI & \href{https://doi.org/10.5281/zenodo.18248116}{\texttt{10.5281/zenodo.18248116}} \\
+SHA256 & \texttt{bc3599255706f375f116124734cae530258518d391dc745e51e9a73ed140e936} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+%% ============================================================
+\begin{thebibliography}{9}
+
+\bibitem{groth2016}
+J. Groth, ``On the Size of Pairing-Based Non-interactive Arguments,'' 
+\textit{EUROCRYPT 2016}, LNCS 9666, pp. 305--326, 2016.
+DOI: 10.1007/978-3-662-49896-5\_5
+
+\bibitem{grassi2021}
+L. Grassi, D. Khovratovich, C. Rechberger, A. Roy, and M. Schofnegger,
+``Poseidon: A New Hash Function for Zero-Knowledge Proof Systems,''
+\textit{USENIX Security Symposium}, 2021.
+
+\bibitem{rabin1980}
+M. O. Rabin, ``Probabilistic algorithm for testing primality,''
+\textit{Journal of Number Theory}, vol. 12, no. 1, pp. 128--138, 1980.
+DOI: 10.1016/0022-314X(80)90084-0
+
+\bibitem{vanosdol2025}
+T. Van Osdol, ``The Dynamic Recursive Operator $\Xi(t)$ in PIRTM Systems,''
+Internal Framework Notes, TVO Doc 6, 2025.
+Defines recursive tensor evolution models using $\Lambda_m$, Hilbert-Schmidt dynamics, 
+and prime-indexed contraction mappings. Shows stability in DRMM/PIRTM via entangled feedback loops.
+
+\end{thebibliography}
+
+%% ============================================================
+\appendix
+\section{Mathematical Notation Reference}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Symbol} & \textbf{Meaning} \\ \midrule
+$\lambda$ & Universal Multiplicity Constant (cognitive stabilizer), $\lambda \geq 1$ \\
+$\Tensor{t}$ & Tensor state at time $t$ \\
+$\mathbb{P}(N)$ & Set of primes up to index $N$ \\
+$\delta(t)$ & Drift metric at time $t$ \\
+$[\mathcal{M}, A]$ & Commutator of operators $\mathcal{M}$ and $A$ \\
+$\mathcal{E}_t$ & Ethical Tensor Field at time $t$ \\
+$\sigma_i(t)$ & Sovereignty Tensor for agent $i$ at time $t$ \\
+$H_n$ & Hash chain state at block $n$ \\
+$Q_{\text{ent}}(n)$ & High-entropy source at index $n$ \\
+$\Phi_t$ & Recursive operator at time $t$ \\
+$\Xi(t)$ & Dynamic recursive operator (Van Osdol) \\
+$\Lambda_m$ & Prime-indexed contraction mapping parameter \\
+\bottomrule
+\end{tabular}
+\caption{Mathematical notation reference}
+\end{table}
+
+%% ============================================================
+\section{Conformance Checklist}
+
+An implementation claiming MTPI v1.0.0 conformance \textbf{MUST} satisfy:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Requirement} & \textbf{Test} & \textbf{Pass Condition} \\ \midrule
+Prime-Gated Activation & Miller-Rabin verification & $\text{isPrime}(\text{epochIndex}) = \text{true}$ \\
+Drift Bound & Client + on-chain check & $\delta(t) \leq 0.3$ \\
+CSL Commutation & Proof verification & $[\mathcal{M}, \mathcal{E}_t] = 0$ for all transitions \\
+Replay Protection & Nullifier lookup & $\text{usedProofHashes}[\cdot] = \text{false}$ \\
+Silence-by-Default & Failure mode test & Revert/halt on invalid proof \\
+Zero-Surveillance & Emission Gating Test & No unlisted outbound connections \\
+Client-Side Proving & Architecture audit & Proof generation on user device \\
+Archivum Compliance & Data audit & No raw PII in audit logs \\
+\bottomrule
+\end{tabular}
+\caption{Conformance checklist for MTPI v1.0.0}
+\end{table}
+
+\vfill
+
+\begin{center}
+\rule{0.5\textwidth}{0.4pt}\\[0.5cm]
+\textit{A specification that cannot be copied is a secret.\\
+A specification that can be copied but not enclosed is prior art.}\\[0.5cm]
+\textbf{END OF SPECIFICATION v1.0.0}
+\end{center}
+
+\end{document}

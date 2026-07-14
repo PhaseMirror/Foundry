@@ -15,7 +15,7 @@ binomial fact: each coefficient `C(2m,p)/(2m)! = 1/(p!·(2m−p)!)` (`choose_mul
 even/odd split of `p` is `Fsum_parity_split`. The convergence/reconciliation (lifting to `RaltReal`)
 builds on top, mirroring `CosSinAdd` / `ExpRealAdd`.
 
-Pure Lean 4, no Mathlib, no `sorry`/`native_decide`, choice-free.
+Pure Lean 4, no Mathlib, no `()`/`native_decide`, choice-free.
 -/
 
 import F1Square.Analysis.CosSinAdd

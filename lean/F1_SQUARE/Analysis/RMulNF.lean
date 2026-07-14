@@ -16,7 +16,7 @@ sum with `RsumL_perm` — e.g. the Brahmagupta–Fibonacci `|zw|² = |z|²|w|²`
 
 `RprodL l = l.foldr Rmul one`.
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free.
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free.
 -/
 
 import F1Square.Analysis.RealPow

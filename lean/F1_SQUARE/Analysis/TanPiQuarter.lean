@@ -21,7 +21,7 @@ combination is `1` (`vval`-checked), giving `sin(π/4) = cos(π/4)`. Double-angl
 bricks; this file supplies their `π/2` anchors. Consistency with the Machin `Rpi` of `Pi.lean` —
 `Rpi = 4·Spi4.angle` — is a separate later lemma.)
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 import F1Square.Analysis.ArctanTan

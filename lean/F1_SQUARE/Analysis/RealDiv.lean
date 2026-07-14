@@ -9,7 +9,7 @@ The proof mirrors `RinvSeq_regular`: at the reindexed point `A`, `x_A·(1/x_b) �
 by regularity and the tail lower bound `x ≥ L`. So `C = 2·L.den` is a linear bound, and `Req_of_lin_bound`
 closes it.
 
-Pure Lean 4, no Mathlib, no `sorry`/`native_decide`, choice-free.
+Pure Lean 4, no Mathlib, no `()`/`native_decide`, choice-free.
 -/
 
 import F1Square.Analysis.Inv

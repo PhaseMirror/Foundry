@@ -11,7 +11,7 @@ with `(s)_m = s(s+1)…(s+m−1)` the rising factorial and `R_K` the periodic-Be
 data**: the complex rising factorial `Cpoch` and the exact-rational coefficients `B_{2k}/(2k)!`. The
 remainder bound and the `ExactBoundedReal` packaging (the analytic crux) build on top of these.
 
-Pure Lean 4, no Mathlib, no `sorry`/`native_decide`, choice-free.
+Pure Lean 4, no Mathlib, no `()`/`native_decide`, choice-free.
 -/
 
 import F1Square.Analysis.Bernoulli

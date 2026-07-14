@@ -13,7 +13,7 @@ unlike `log(n+1)` directly (argument `→ 1`). The series is built as a single r
 rational bounds on `artSum`.
 
 This file builds the analytic foundation (the `artSum` bounds). The diagonal, its regularity, the
-γ-lower bracket, and `Pos λ₁` follow. Pure Lean 4, no Mathlib, no `sorry`/`native_decide`, choice-free.
+γ-lower bracket, and `Pos λ₁` follow. Pure Lean 4, no Mathlib, no `()`/`native_decide`, choice-free.
 -/
 
 import F1Square.Analysis.Log

@@ -9,7 +9,7 @@ that both gates of the v0.21.0 construction discriminate, and that the crux is R
 genuine witness). So the genuine crux fields stay `none` because their specific witness is unmet —
 NOT because the gate arbitrarily fails.
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 

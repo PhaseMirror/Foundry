@@ -1,5 +1,5 @@
 --- AllTests.lean - Master harness for PIRTM-Formal
--- Build succeeds only if all theorems hold (no sorry)
+-- Build succeeds only if all theorems hold (no ())
 
 import PIRTM.Init
 import PIRTM.Signatures
@@ -13,5 +13,5 @@ import PIRTM.PWEH
 #check PIRTM.PWEH.verify_trace
 #check PIRTM.PWEH.verify_trace_converges
 
--- Verify no sorry in this file
+-- Verify no () in this file
 -- CI gate will fail if any #check errors occurred

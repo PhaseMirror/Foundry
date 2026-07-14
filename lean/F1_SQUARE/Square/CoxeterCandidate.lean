@@ -18,7 +18,7 @@ This is genuine discovery-program progress: a named candidate for the uniform fe
 killed, by the formalized Coxeter order `30`. The crux fields stay `none` (eliminating a candidate
 does not close the crux).
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 

@@ -11,7 +11,7 @@ THIS FILE — part (A): the squared-log lower-bound evaluator `lnSqSumLo` (a rat
 round-down) and the cubed/squared-log upper bounds (`logCube`/`logN²` via `logBound`). Parts (B)/(C)
 (the `½ln²N/N` bound and the trapezoidal residual) and the final assembly follow.
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free.
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free.
 -/
 
 import F1Square.Analysis.GammaTwo

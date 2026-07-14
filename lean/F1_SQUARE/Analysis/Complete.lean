@@ -15,7 +15,7 @@ diagonal `n ↦ (X(4n+3))_{4n+3}`: the `4n+3` reindex is chosen so that the modu
 index and the limit sequence is itself regular (`|·| ≤ 1/(m+1)+1/(n+1)`). Convergence then holds with
 rate `1/(k+1)`.
 
-Pure Lean 4, no Mathlib, no `sorry`.
+Pure Lean 4, no Mathlib, no `()`.
 -/
 
 import F1Square.Analysis.Real

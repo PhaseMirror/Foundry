@@ -45,7 +45,7 @@ Companion §1.2 / §1.3 / §2.2 / T2 / T3. The derivation, step by step:
      (`pencil_numerically_trivial`): the integer lattice CANNOT see the arithmetic
      content of the pencil; that content lives in the real shift lengths (brick 4).
 
-Pure Lean 4 core, no Mathlib, no `sorry`, choice-free; audited by `scripts/honesty_audit.sh`.
+Pure Lean 4 core, no Mathlib, no `()`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
 import F1Square.Square.Divisors

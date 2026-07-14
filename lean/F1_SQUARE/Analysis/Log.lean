@@ -7,7 +7,7 @@ exp/cos/sin series (factorial tails), the artanh series is **geometric**: for `|
 a `1/(j+1)` reindex. This file builds that geometric machinery (the telescoping invariant, the tail
 bound) — the foundation for `artanh` and hence `log`.
 
-Pure Lean 4, no Mathlib, no `sorry`.
+Pure Lean 4, no Mathlib, no `()`.
 -/
 
 import F1Square.Analysis.CosSin

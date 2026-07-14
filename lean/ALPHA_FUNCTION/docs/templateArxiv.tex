@@ -1,0 +1,215 @@
+% !TEX program = pdflatex
+\documentclass[11pt]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{bm}
+\usepackage{booktabs}
+\usepackage{microtype}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{listings}
+\lstset{basicstyle=\ttfamily\small,breaklines=true,columns=fullflexible,frame=single}
+\hypersetup{colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue}
+
+\title{The Alpha Function in IFMD: Formalization, Evaluation, and\\ Safety-Certified Integration}
+\author{Ryan O. Van Gelder}
+\date{\today}
+
+% Theorem environments
+\newtheorem{definition}{Definition}
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}{Proposition}
+\newtheorem{lemma}{Lemma}
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}
+
+% Shorthand
+\DeclareMathOperator{\diag}{diag}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Var}{\mathrm{Var}}
+\newcommand{\RePart}{\operatorname{Re}}
+
+\begin{document}
+\maketitle
+
+\vspace{0.5em}
+
+\begin{abstract}
+We formalize a unifying \emph{alpha function} \(\alpha(x;\theta)\) and integrate it with the IFMD stack (ACE, PETC, Langlands Prism, PIRTM). The report provides: (i) a precise integral/series definition with machine-checkable domain guards; (ii) certified numerical evaluation using Gauss--Laguerre quadrature and adaptive series; (iii) recovery of classical special functions (Gamma, Beta, Zeta, Bessel, generalized hypergeometric); (iv) a diagnostics schema suitable for safety logging; (v) kernel ablation with closed-form references; and (vi) a projection-first ACE integration pattern with certificates (GapLB, SlopeUB). A minimal evaluator implementation is included in Appendix~\ref{app:code}.
+\end{abstract}
+
+\newpage
+\tableofcontents
+
+\section{Introduction}
+\label{sec:intro}
+The IFMD architecture enables safe, mathematically grounded AI control. Its core layers are: ACE (safety), PETC (structure), the Langlands Prism (integration), and PIRTM (projection/runtime monitoring). The \emph{alpha function} consolidates a wide range of classical functions into a single parameterized kernel, enabling (a) unified numerical guarantees, (b) structured feature extraction, and (c) streamlined verification.
+
+\paragraph{Design principles.} (1) Separate inspiration (for example, quantum or number-theoretic motifs) from certified control dynamics; (2) prefer kernels with closed-form checks; (3) attach diagnostics and guards to every evaluation; (4) enforce projection-first actuation via ACE.
+
+\section{Formal Definition}
+\label{sec:formal}
+\begin{definition}[Alpha Master]
+Let \(x>0\) and parameters \(\theta\in\Theta\subset\R^m\). Define
+\begin{equation}
+\label{eq:alpha-master}
+\alpha(x;\theta)\;=\;\int_{0}^{\infty} t^{\theta_0-1}\,e^{-xt}\,\mathcal{G}(t;\theta)\,dt\; +\; \sum_{k\in\mathcal{K}(\theta)} c_k(\theta)\,x^{\rho_k(\theta)}.
+\end{equation}
+The kernel family \(\mathcal{G}(\cdot;\theta)\) is \emph{lawful} if it satisfies the domain and convergence conditions below. The discrete term is optional and used for series-style constructions.
+\end{definition}
+
+\paragraph{Domain and convergence guards.} A call to \(\alpha(x;\theta)\) is permitted only if all guards pass:
+\begin{itemize}[nosep]
+  \item \textbf{Integral path:} \(x>0\) and \(\RePart(\theta_0)>0\) with an \(\mathcal{G}\) such that \(\int_0^{\infty}\!\big|t^{\theta_0-1} e^{-xt}\,\mathcal{G}(t;\theta)\big|\,dt<\infty\).
+  \item \textbf{Series path:} Discrete parameters ensure absolute convergence; for example, for \(\zeta(s)=\sum_{n\ge1}n^{-s}\), require \(\RePart(s)>1\).
+  \item \textbf{Diagnostics:} Each evaluation returns an estimated error and convergence flags (Section~\ref{sec:diagnostics}).
+\end{itemize}
+
+\section{Recovery of Classical Functions}
+\label{sec:recovery}
+We collect parameter slices and constructions that recover standard special functions from~\eqref{eq:alpha-master}.
+
+\subsection{Gamma and Beta}
+\paragraph{Gamma.} With \(x=1\), \(\theta_0=s\), and \(\mathcal{G}\equiv1\),
+\begin{equation}
+\alpha(1;\theta)=\int_0^{\infty}t^{s-1}e^{-t}\,dt=\Gamma(s),\qquad \RePart(s)>0.
+\end{equation}
+\paragraph{Beta.} Using \(B(a,b)=\Gamma(a)\Gamma(b)/\Gamma(a+b)\) and the Gamma slice twice yields \(B(a,b)\) for \(\RePart(a),\RePart(b)>0\). A direct Beta-integral recovery is also possible via a change of variables onto \([0,1]\).
+
+\subsection{Zeta, Bessel, and Hypergeometric}
+\paragraph{Riemann zeta (real slice).} With discrete-only part \(\sum_{n\ge1} n^{-s}\), we require \(\RePart(s)>1\). An explicit truncation remainder bound is \(R_N\le N^{1-s}/(s-1)\) for real \(s>1\).
+
+\paragraph{Bessel $J_\nu$.} The series recovery is
+\begin{equation}
+J_\nu(z)=\sum_{m\ge0}\frac{(-1)^m}{m!\,\Gamma(m+\nu+1)}\Big(\frac{z}{2}\Big)^{2m+\nu},\qquad \nu>-1.
+\end{equation}
+
+\paragraph{Generalized hypergeometric.} For parameters \(\bm{a}=(a_1,\ldots,a_p)\) and \(\bm{b}=(b_1,\ldots,b_q)\),
+\begin{equation}
+{}_pF_q(\bm{a};\bm{b};z)=\sum_{k\ge0}\frac{(a_1)_k\cdots(a_p)_k}{(b_1)_k\cdots(b_q)_k}\,\frac{z^k}{k!},\qquad (a)_k=\frac{\Gamma(a+k)}{\Gamma(a)}.
+\end{equation}
+Convergence holds for all \(z\) if \(q\ge p\); if \(q=p-1\) then \(|z|<1\).
+
+\section{Numerical Evaluator}
+\label{sec:evaluator}
+\subsection{Gauss--Laguerre Quadrature (Integral Path)}
+Using the change of variables \(u=xt\) gives
+\begin{equation}
+\alpha(x;\theta)=x^{-\theta_0}\int_0^{\infty} u^{\theta_0-1}e^{-u}\,\mathcal{G}(u/x;\theta)\,du.
+\end{equation}
+We approximate \(\int_0^{\infty} f(u)\,e^{-u}\,du\) via Gauss--Laguerre with adaptive node doubling \(N\in\{16,32,64\}\), terminating when successive estimates differ by less than a tolerance \(\varepsilon\).
+
+\subsection{Series Control}
+For discrete terms, we use adaptive truncation with ratio tests or explicit tail bounds (for example, zeta).
+
+\subsection{Returned Diagnostics}
+\label{sec:diagnostics}
+Each evaluation returns a structured dictionary
+\begin{equation*}
+\texttt{diagnostics}=\{\,\texttt{convergence\_flags},\ \texttt{estimated\_error},\ \texttt{computation\_path},\ \texttt{performance\_metrics}\,\},
+\end{equation*}
+where
+\begin{align*}
+\texttt{convergence\_flags}&=\{\texttt{integral:bool},\ \texttt{series:bool}\},\\
+\texttt{computation\_path}&\in\{\texttt{integral},\ \texttt{series},\ \texttt{hybrid}\},\\
+\texttt{performance\_metrics}&=\{\texttt{nodes\_used:int},\ \texttt{terms\_used:int},\ \texttt{compute\_time:float}\}.
+\end{align*}
+
+\section{Kernel Ablation}
+\label{sec:ablation}
+We compare kernels with closed-form references:
+\begin{description}[leftmargin=1.8em,labelsep=0.5em]
+  \item[\(\bm{G_1}\): baseline] \(\mathcal{G}(t)=1\) gives \(\alpha=\Gamma(s)\,x^{-s}\).
+  \item[\(\bm{G_2}\): exp-shift] \(\mathcal{G}(t)=e^{a t}\) with \(a<x\) gives \(\alpha=\Gamma(s)\,(x-a)^{-s}\).
+  \item[\(\bm{G_3}\): polynomial] \(\mathcal{G}(t)=(1+ct)^m\) gives \(\alpha=\sum_{k=0}^m\binom{m}{k}c^k\,\Gamma(s+k)\,x^{-(s+k)}\).
+\end{description}
+Each run logs absolute/relative error, nodes used, and compute time.
+
+\section{ACE Integration Pattern}
+\label{sec:ace}
+\subsection{Feature Extraction}
+Sample \(x\) on a geometric grid and form a PETC-typed feature vector
+\begin{equation}
+\bm{\phi}=\mathrm{normalize}\Big( \big[\,\alpha(x_i;\theta),\ \partial_{\log x}\log\alpha(x_i;\theta),\ \partial_{\log x}^2\log\alpha(x_i;\theta)\,\big]_{i=1}^M \Big).
+\end{equation}
+
+\subsection{Projection-First Actuation}
+Let \(\tilde{\bm{w}}\) be the estimator output. We project onto a weighted \(\ell_1\) safety set \(\mathcal{S}=\{\bm{w}:\sum_p b_p|w_p|\le T\}\).
+\begin{proposition}[Soft-thresholding solves the weighted \(\ell_1\) projection]
+For any \(\tilde{\bm{w}}\in\R^d\) and weights \(b_p>0\), there exists \(\lambda\ge0\) such that the solution of
+\(\min_{\bm{w}}\tfrac12\|\bm{w}-\tilde{\bm{w}}\|_2^2\) subject to \(\sum_p b_p|w_p|\le T\) is \(w_p=\mathrm{sign}(\tilde w_p)\max(|\tilde w_p|-\lambda b_p,0)\) with \(\lambda\) chosen by bisection so \(\sum_p b_p|w_p|=T\) when the constraint is active.
+\end{proposition}
+\begin{remark}
+Certificates log a contraction margin (GapLB), a Lipschitz envelope (SlopeUB), and feasibility. On failure, the controller rolls back.
+\end{remark}
+
+\section{PETC Typing and Lawfulness}
+\label{sec:petc}
+Prime-indexed or arithmetic features are ledgered with \emph{prime signatures}. Typed tensor axes ensure contractive operators preserve signatures under reshapes and contractions. Lawfulness budgets bound how much such features can influence proposals before ACE projection.
+
+\section{Experiments and Results}
+\label{sec:experiments}
+\paragraph{E1: Recovery tests.} Compare numerically evaluated \(\alpha\) slices to references for Gamma, Beta, Zeta, Bessel, and \({}_pF_q\). Report max relative error and diagnostics.
+
+\paragraph{E2: PETC feature check.} Feed \(\bm{\phi}\) into a small estimator; verify ACE projection maintains contraction on random plants. Record GapLB and SlopeUB.
+
+\paragraph{E3: Kernel ablation.} Run \(\bm{G_1}\)--\(\bm{G_3}\) with references; log errors, nodes, and timings.
+
+\section{Reproducibility}
+\label{sec:reprod}
+\begin{itemize}[nosep]
+  \item \textbf{Python:} 3.11; packages: \texttt{numpy}, \texttt{pandas}.
+  \item \textbf{Artifacts:} evaluator module, recovery CSVs, kernel ablation CSV.
+  \item \textbf{Invocation:} code is included below as an excerpt for portability.
+\end{itemize}
+
+\appendix
+\section{Notation}
+\label{app:notation}
+\(\Gamma(\cdot)\) Gamma function; \(B(\cdot,\cdot)\) Beta; \(\zeta(\cdot)\) Riemann zeta; \({}_pF_q\) generalized hypergeometric; \(J_\nu\) Bessel of the first kind.
+
+\section{Minimal Evaluator Code}
+\label{app:code}
+\begin{lstlisting}[language=Python,caption=alpha_eval.py (excerpt)]
+import math
+import numpy as np
+from numpy.polynomial.laguerre import laggauss
+
+def gauss_laguerre_integrate(f, nodes=32):
+    x, w = laggauss(nodes)
+    return float(np.dot(w, f(x)))
+
+def alpha_integral(x, s, G=lambda t: 1.0, tol=1e-10, max_nodes=64, min_nodes=16):
+    assert x > 0 and s > 0
+    def integrand(u):
+        return (u**(s-1.0)) * G(u/x)
+    nodes, prev = min_nodes, None
+    x_pow = x**(-s)
+    while nodes <= max_nodes:
+        val = gauss_laguerre_integrate(integrand, nodes=nodes) * x_pow
+        if prev is not None and abs(val - prev) < tol:
+            return val
+        prev, nodes = val, 2*nodes
+    return prev
+\end{lstlisting}
+
+\section{Bibliography (internal working notes)}
+\begin{thebibliography}{99}
+\bibitem{Alpha} Alpha Function (working draft). Internal PDF.
+\bibitem{ACE} Arithmetic Control Engine (ACE). Internal PDF.
+\bibitem{PETC} Prime-Encoded Tensor Calculus (PETC). Internal PDF.
+\bibitem{LanglandsPrism} Langlands Prism. Internal PDF.
+\bibitem{MO} Moonshine Operator. Internal PDF.
+\bibitem{SPASC} SPASC. Internal PDF.
+\bibitem{LCA} Low-Complexity Attractor. Internal PDF.
+\bibitem{PIRTM} PIRTM. Internal PDF.
+\bibitem{AutomorphicLearning} Automorphic Learning. Internal PDF.
+\end{thebibliography}
+
+\end{document}

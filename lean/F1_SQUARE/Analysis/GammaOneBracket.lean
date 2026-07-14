@@ -23,7 +23,7 @@ TIGHT lower bound (`hSeq1(N) ≈ γ₁ + O(1/N²)`), the genuinely missing `λ�
 
 THIS FILE — part (A): the accelerated sequence, its increment identity, and the per-step lower bound.
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 

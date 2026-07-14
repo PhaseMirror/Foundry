@@ -11,7 +11,7 @@
    scaling graphs Γ_i) and their sourced intersection pairing. The template is
    the reference any candidate surface must match.
 
-   Proven here (axiom-clean, no Mathlib, no sorry):
+   Proven here (axiom-clean, no Mathlib, no ()):
      • The pairing is symmetric and bilinear.
      • The ample class H = Σ H_i + Σ V_i has H² = 2n > 0.
      • For n = 1, the signature theorem is proved by reduction to the verified

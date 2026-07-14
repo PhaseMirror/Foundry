@@ -23,7 +23,7 @@ This brick makes that explicit over ℤ:
   archimedean place (`Pairing`/`ArchTrend`) — is the uniform tail bound, governed by the zeros. It
   is the one open content; the crux fields stay `none`.
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 

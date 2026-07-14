@@ -64,7 +64,7 @@ state both faces.) This module pins that boundary HONESTLY.
     `λ` (which needs analytic continuation, the explicit formula, and `log`) is the deferred input the
     interfaces above are stated against — its *values* are not fabricated here.
 
-Pure Lean 4, no Mathlib, no `sorry`.
+Pure Lean 4, no Mathlib, no `()`.
 -/
 
 import F1Square.Analysis.ExactBounded

@@ -1,0 +1,947 @@
+\documentclass[11pt]{article}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{mathtools}
+\usepackage{geometry}
+\usepackage{hyperref}
+\geometry{margin=1in}
+
+\title{Multiplicity-LWE, CSL-Gated Dynamics, and PhaseMirror\\
+\Large A Defensive Publication and Mathematical Overview}
+
+\author{Citizen Gardens \\ The Foundation of Multiplicity}
+
+\date{April 25, 2026}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+This report documents the design, mathematical foundations, and integration
+plan for a prime-indexed multiplicity framework that simultaneously:
+
+(i) realises standard Learning With Errors (LWE) instances in a prime/scale
+state space (``Multiplicity-LWE''), and
+
+(ii) supports sovereignty-aware, contractive dynamics via a CSL-style gate
+(CSL\_Gate) that enforces consent, spectral drift control, and norm budgets
+on the evolution operator $\Xi(t)$.
+
+We formalize the Multiplicity Universal Constant $\Lambda_m$ as a purely
+analytic contraction scalar separated from type-pure structural functors,
+unify prime-sector operators across the DRMM, PGF, and $\Xi(t)$ specifications,
+and define a concrete Toy A instance over $\mathbb{Z}_{257}^{20}$ that realizes
+LWE as a special case. We then present a gated convergence theorem, a rate
+limiter for rollbacks, and an ADR-phase plan for integrating this stack into
+PIRTM in the PhaseMirror-HQ repository, using \texttt{multiplicity-core}
+as the canonical implementation.
+
+This document is intended as a defensive publication: it establishes prior art
+for the described constructions, algorithms, and integration patterns so
+that they cannot be patented by third parties.
+\end{abstract}
+\newpage
+\tableofcontents
+\newpage
+\section{Executive Summary}
+
+\subsection{Goals and contributions}
+
+This work has three main goals:
+
+\begin{enumerate}
+    \item \textbf{Multiplicity-LWE:} Embed standard LWE instances into a
+    prime-indexed multiplicity space $H$ with scales, using a unified operator
+    binding $U_p = R_p = \Lambda_m p^\alpha P_p$ and a contractive evolution
+    $\Xi(t)$.\cite{pqc-lwe} The resulting ``Multiplicity-LWE'' is reducible
+    to classical LWE over $\mathbb{Z}_q^n$ (here $\mathbb{Z}_{257}^{20}$).
+
+    \item \textbf{CSL-Gated Dynamics:} Introduce a CSL-style gate (CSL\_Gate)
+    that wraps $\Xi(t)$ and enforces three constraints:
+
+    (a) consent via a prime-diagonal operator $\Sigma(t)$,
+
+    (b) bounded spectral drift via per-prime weights ${\kappa_p}$, and
+
+    (c) norm-budget enforcement via rollback to a stored spectral snapshot.
+    A new gated convergence theorem guarantees convergence to the same fixed
+    point as the ungated system under a rate-limiter condition.
+
+    \item \textbf{Integration into PIRTM / PhaseMirror-HQ:} Provide an
+    ADR-phase plan for integrating \texttt{multiplicity-core} into the
+    \texttt{pirtm/core} stack in the PhaseMirror-HQ repository, using the
+    multiplicity engine as the LWE sampler and the CSL\_Gate as the policy
+    layer.
+\end{enumerate}
+
+All constructions are explicitly specified in a way that allows reproducible
+implementation and straightforward cryptanalytic scrutiny.
+
+\subsection{Prior-art and defensive scope}
+
+The defensive publication covers:
+
+\begin{itemize}
+    \item The exact operator binding $U_p = \Lambda_m p^\alpha P_p$ and its
+    use to unify DRMM, PGF, and $\Xi(t)$.
+
+    \item The embedding of LWE into a 4-scale, 20-prime multiplicity space
+    with $q = 257$ and centered binomial noise.
+
+    \item The CSL\_Gate with consent ($\Sigma(t)$), spectral drift, and norm
+    budget checks, plus a rate-limiter constraint for rollbacks.
+
+    \item The ADR-phase plan for using \texttt{multiplicity-core} as an
+    internal PIRTM primitive with a narrow API.
+\end{itemize}
+
+\section{Prime-Indexed Structure and $\alpha$ Convention}
+
+\subsection{Prime sectors and orthogonal resolution}
+
+Let $P_N = \{p_1, \dots, p_N\}$ be a finite set of primes. We work in a
+separable Hilbert space $H$.
+
+\begin{assumption}[Orthogonal Prime Resolution]\label{ass:orthogonal}
+There exists a family of orthogonal projectors $\{P_p\}_{p \in P_N} \subset B(H)$
+such that
+\[
+P_p P_q = \delta_{pq} P_p,\qquad \sum_{p \in P_N} P_p = I.
+\]
+Consent operators $\Sigma(t)$ are required to be diagonal in this basis.
+\end{assumption}
+
+This expresses multiplicity as a prime-graded decomposition of $H$ into
+disjoint sectors, one per prime in $P_N$.
+
+\subsection{Canonical $\alpha$ convention}
+
+\begin{definition}[Prime-Weighted Sum]\label{def:prime-zeta}
+Define
+\[
+Z(\alpha) := \sum_{p} p^{-\alpha},
+\]
+where the sum runs over all primes $p$.
+\end{definition}
+
+\begin{lemma}[Convergence of Prime-Weighted Sums]\label{lem:prime-zeta}
+The series $\sum_{p} p^{-\alpha}$ converges if and only if $\alpha > 1$.
+\end{lemma}
+
+\begin{proof}
+For $\alpha>1$, $Z(\alpha)$ is dominated by the Riemann zeta function
+$\zeta(\alpha)$, which converges. For $\alpha \le 1$, it diverges.
+\end{proof}
+
+\noindent
+\textbf{Convention.} We adopt $\alpha>1$ throughout; any prior notation with
+$\alpha < -1$ is re-expressed as $\alpha' = -\alpha > 1$ and series written
+as $p^{-\alpha'}$.
+
+\section{Unified Operator Binding (DRMM, PGF, $\Xi(t)$)}
+
+\subsection{Structural vs analytic layers}
+
+We separate:
+
+\begin{itemize}
+    \item \emph{Structural layer}: PGF M-objects (e.g.\ $M_{\mathrm{fun}}$,
+    $M_{\mathrm{int}}$, $\widehat{M}_c$) that encode prime-indexed recursion
+    and functorial composition, but no gains.
+
+    \item \emph{Analytic layer}: a real-valued multiplicity constant $\Lambda_m$
+    that certifies contraction via global and local policies (e.g.\ $\Lambda_{\mathrm{glob}}$
+    and Rayleigh-style $\Lambda_{\mathrm{loc}}$).
+\end{itemize}
+
+This resolves the ``double role'' of $\Lambda_m$: structure is cleanly
+separated from analytic contraction.
+
+\subsection{Unified prime-sector operators}
+
+\begin{definition}[Unified Prime-Sector Operator]\label{def:Up}
+For each prime $p \in P_N$ and time $t$, define
+\begin{equation}
+U_p(t) \;\stackrel{\mathrm{def}}{=}\; R_p(t) \;\stackrel{\mathrm{def}}{=}\;
+\Lambda_m(t)\, p^{\alpha_p}\, P_p,
+\tag{$\star$}
+\end{equation}
+where:
+\begin{itemize}
+    \item $\alpha_p > 1$ (often constant $\alpha_p \equiv \alpha$),
+    \item $\Lambda_m(t)$ is a bounded real scalar,
+    \item $P_p$ are the projectors from Assumption~\ref{ass:orthogonal}.
+\end{itemize}
+\end{definition}
+
+Equation~($\star$) simultaneously identifies:
+
+\begin{itemize}
+    \item $U_p(t)$ from the $\Xi(t)$ spec,
+    \item $R_p(t)$ from DRMM (prime-indexed morphisms),
+    \item and the PGF prime-sector gain operator.
+\end{itemize}
+
+\subsection{Definition of $\Xi(t)$ and bounded weights}
+
+\begin{definition}[$\Xi(t)$ Evolution Operator]\label{def:Xi}
+Let $w_p(t)$ be scalar weights. Define
+\[
+\Xi(t) := \sum_{p \in P_N} w_p(t)\, U_p(t)
+= \Lambda_m(t) \sum_{p \in P_N} w_p(t)\, p^{\alpha_p}\, P_p.
+\]
+\end{definition}
+
+\begin{assumption}[Bounded Weights]\label{ass:bounded-w}
+There exists $W < \infty$ such that
+\[
+|w_p(t)| \le W \quad \text{for all } p \in P_N,\, t.
+\]
+\end{assumption}
+
+Given Definition~\ref{def:Up} and Assumption~\ref{ass:bounded-w}:
+
+\begin{align*}
+\|\Xi(t)\|
+&\le |\Lambda_m(t)| \sum_{p \in P_N} |w_p(t)|\, \|P_p\|\, p^{\alpha_p} \\
+&\le W \sup_t |\Lambda_m(t)| \sum_{p \in P_N} p^{\alpha_p}.
+\end{align*}
+
+\section{Ungated Dynamics and Contraction}
+
+\subsection{Global contraction via $\Lambda_{\mathrm{glob}}$}
+
+Let $\|S\| := \max_{p \in P_N} p^{\alpha_p}$ under the orthogonal resolution.
+Given a desired global contraction target $\gamma \in (0,1)$, set
+\[
+\Lambda_{\mathrm{glob}} := \frac{\gamma}{\|S\|}.
+\]
+If we choose $\Lambda_m(t)$ such that $|\Lambda_m(t)| \le \Lambda_{\mathrm{glob}}$
+for all $t$, then
+\[
+\|\Xi(t)\| \le \gamma
+\]
+provided $|w_p(t)| \le 1$; more generally, Assumption~\ref{ass:bounded-w}
+gives a finite bound.
+
+\subsection{Non-linear map $T$ and combined contraction}
+
+Let $T: H \to H$ be a non-linear map with Lipschitz constant $L_T$:
+\[
+\|T(x) - T(y)\| \le L_T \|x-y\|.
+\]
+Define the recursion
+\begin{equation}\label{eq:core-recursion}
+X_{t+1} = \Xi(t) X_t + \Lambda_m(t) T(X_t).
+\end{equation}
+Let
+\[
+c := \sup_t \|\Lambda_{m,\mathrm{op}}(t)\|\, L_T.
+\]
+If $\sup_t \|\Xi(t)\| \le 1 - \varepsilon$ and $c < \varepsilon$ for some
+$\varepsilon \in (0,1)$, then the combined update is contractive (Banach) with
+factor $\gamma < 1$ determined by $1-\varepsilon$ and $c$.\cite{postquantum-intro}
+
+\section{Toy A: Multiplicity-LWE over $\mathbb{Z}_{257}^{20}$}
+
+\subsection{Toy A parameters}
+
+We fix:
+
+\begin{itemize}
+    \item Prime set: $P_N = \{2,3,5,\dots,71\}$, $N=20$.
+    \item Scale set: $S = \{0,1,2,3\}$.
+    \item Ambient dimension: $n = N \cdot |S| = 80$.
+    \item Exponent: $\alpha_p \equiv \alpha = 2$.
+    \item Modulus: $q = 257$.
+    \item Norm bound: $\|S\| = \max_{p \in P_N} p^{\alpha} = 71^2 = 5041$.
+    \item Contraction target: $\gamma = 0.9$, so
+    $\Lambda_{\mathrm{glob}} = \gamma / \|S\| \approx 1.786\times 10^{-4}$.
+\end{itemize}
+
+We also choose $T$ as an LWE-style noise and quantization map over $\mathbb{Z}_q$,
+with $L_T \le 1$, giving $c = \Lambda_m L_T \approx 1.786\times 10^{-4} \ll 0.1$.
+
+\subsection{Scale layout}
+
+We index $X_t \in H \cong \mathbb{C}^{80}$ by $(p,s)$:
+
+\begin{itemize}
+    \item $s=0$ (secret slice): holds $\mathbf{s} \in \mathbb{Z}_q^{20}$,
+    fixed, not updated by $\Xi(t)$ or $T$.
+
+    \item $s=1$ (public random slice): holds $\mathbf{a}_t \in \mathbb{Z}_q^{20}$,
+    the LWE sample vector at time $t$.
+
+    \item $s=2$ (inner product slice): holds $b_t = \langle \mathbf{a}_t,
+    \mathbf{s}\rangle \bmod q$.
+
+    \item $s=3$ (ciphertext slice): holds $b_t + e_t \bmod q$, where $e_t$
+    is small noise.
+\end{itemize}
+
+\subsection{LWE-style $T$}
+
+Define $T: H \to H$ so that it acts only on the $s=2$ slice. Let $\chi$ be a
+centered binomial distribution $\mathrm{Bin}(k,k) - \mathrm{Bin}(k,k)$ with
+parameter $k=3$, approximating a discrete Gaussian with variance
+$\sigma^2 \approx 1.22$.\cite{pqc-lwe} For each time $t$:
+
+\begin{itemize}
+    \item Draw $e_t \in \mathbb{Z}_q$ coordinate-wise from $\chi$.
+    \item Set the $s=3$ slice to $b_t + e_t \bmod q$.
+\end{itemize}
+
+Modulo reduction into a centered range is non-expansive (Lipschitz constant
+$\le 1$), and bounded $e_t$ yields $L_T \le 1 + B$ for some $B$; in the toy,
+we may conservatively take $L_T \le 1$.
+
+\subsection{Toy A sampler: pseudocode}
+
+Below is a Python-like pseudocode for a single step of Toy A:
+
+\begin{verbatim}
+# Parameters: q = 257, primes P_N, alpha = 2, Lambda_m ~ 1.786e-4, k = 3
+
+class ToyAEngine:
+    def __init__(self, params):
+        self.params = params
+        self.state  = initialize_state()  # includes secret in s=0
+
+    def sample_step(self):
+        # 1. Draw a_t for s=1 slice
+        a_t = random_vector_Zq(dim=20, q=257)
+        self.set_slice(s=1, value=a_t)
+
+        # 2. Compute b_t = <a_t, s> mod q into s=2 slice
+        s_vec = self.get_slice(s=0)
+        b_t   = inner_product(a_t, s_vec, q=257)
+        self.set_slice(s=2, value=b_t)
+
+        # 3. Add noise e_t and write to s=3 slice
+        e_t   = centered_binomial(k=3, dim=20)
+        c_t   = (b_t + e_t) mod 257
+        self.set_slice(s=3, value=c_t)
+
+        # 4. Advance full state X_{t+1} via Xi(t) and T(X_t)
+        X     = self.state
+        X_new = Xi(t) @ X + Lambda_m * T(X)
+        self.state = X_new
+
+        return a_t, c_t
+\end{verbatim}
+
+The inversion problem is: given the sequence $(\mathbf{a}_t, c_t)$, recover
+$\mathbf{s}$. This is exactly an LWE instance over $\mathbb{Z}_{257}^{20}$ with
+noise $\chi$.\cite{pqc-lwe}
+
+\section{Consent and CSL-Gated Dynamics}
+
+\subsection{Consent-sector commutator lemma}
+
+\begin{lemma}[Consent-Sector Commutation]\label{lem:comm}
+Let $\{P_p\}_{p\in P_N}$ satisfy Assumption~\ref{ass:orthogonal} and
+$U_p(t) = \Lambda_m(t)\, p^{\alpha_p} P_p$ as in Definition~\ref{def:Up}.
+Let $\Sigma(t)$ be a bounded operator on $H$. Then
+\[
+[\Sigma(t), U_p(t)] = 0 \quad \forall p,t
+\]
+if and only if $\Sigma(t) \in \{P_p\}' := \{A \in B(H): [A, P_p]=0\ \forall p\}$.
+\end{lemma}
+
+\begin{proof}
+We have
+\[
+[\Sigma(t), U_p(t)] = \Lambda_m(t) p^{\alpha_p} [\Sigma(t), P_p].
+\]
+Since $\Lambda_m(t)p^{\alpha_p}$ is nonzero, this vanishes iff
+$[\Sigma(t), P_p]=0$ for all $p$. This is precisely $\Sigma(t) \in \{P_p\}'$.
+\end{proof}
+
+Under Assumption~\ref{ass:orthogonal}, the algebra generated by $\{P_p\}$ is
+exactly
+\[
+\mathrm{Alg}\{P_p\} = \left\{ \sum_p \sigma_p P_p: \sigma_p \in \mathbb{C} \right\}.
+\]
+Hence choosing $\Sigma(t) = \sum_p \sigma_p(t) P_p$ with $\sigma_p(t)\in\{0,1\}$
+(binary consent per prime sector) guarantees $[\Sigma(t), U_p(t)] = 0$.
+
+\subsection{Masked evolution}
+
+With $\Sigma(t) = \sum_p \sigma_p(t) P_p$, we have
+\[
+\Sigma(t) \Xi(t) \Sigma(t) = \sum_p \sigma_p(t)^2 w_p(t) U_p(t)
+= \sum_p \sigma_p(t) w_p(t) U_p(t),
+\]
+since $\sigma_p^2 = \sigma_p$ for binary consent. Thus masking simply zeroes
+non-consented sectors.
+
+Moreover, the norm bound
+\[
+\sup_t \|\Sigma(t) \Xi(t) \Sigma(t)\|
+\le \sup_t \|\Xi(t)\|
+\]
+ensures that masking preserves or tightens the contraction bound.
+
+\subsection{Per-sector margins and $\kappa_p$}
+
+From Assumption~\ref{ass:bounded-w} and Definition~\ref{def:Up}:
+
+\[
+|w_p(t)| \|U_p(t)\| \le 1 - \varepsilon_p
+\quad\Rightarrow\quad
+\varepsilon_p \ge 1 - W \sup_t|\Lambda_m(t)| p^{\alpha_p}.
+\]
+
+We then define static $\kappa_p$:
+\[
+\kappa_p := \frac{1}{\varepsilon_p}
+\le \frac{1}{1 - W \sup_t|\Lambda_m(t)| p^{\alpha_p}},
+\]
+which serve as drift weights in a spectral drift score
+\[
+\delta_{\mathrm{drift}}(t) = \sum_p \kappa_p |\Phi(p,t) - \Phi(p,t-1)|.
+\]
+
+\subsection{Gated convergence and rate-limiter}
+
+The CSL\_Gate enforces:
+
+\begin{itemize}
+    \item Consent quorum: $\mathrm{tr}(\Sigma(t)) \ge \theta_\Sigma$,
+    \item Spectral drift: $\delta_{\mathrm{drift}}(t) \le \delta_{\max}$,
+    \item Norm budget: $\|\Xi(t)\| \le 1 - \varepsilon$, else rollback
+    $X \leftarrow \sum_\alpha E_\alpha(t_0) X$.
+\end{itemize}
+
+Let $\gamma < 1$ be the contraction factor from the ungated dynamics. To reach
+target precision $\delta_{\mathrm{target}}$ from initial error $\delta_0$, we
+need at least
+\[
+M > \frac{\log(\delta_{\mathrm{target}}/\delta_0)}{\log(\gamma)}
+\]
+passing steps.
+
+Assume a rate-limiter allowing at most $R$ rollbacks in any window of $N$ steps;
+then at least $N-R$ updates are passes. The liveness condition is:
+
+\begin{equation}\label{eq:rate}
+N - R > \frac{\log(\delta_{\mathrm{target}}/\delta_0)}{\log(\gamma)}.
+\end{equation}
+
+\begin{theorem}[Gated Convergence]\label{thm:gated}
+Suppose the ungated recursion \eqref{eq:core-recursion} satisfies the Banach
+conditions with contraction factor $\gamma<1$, and the CSL-gated dynamics
+apply at most $R$ rollbacks in any window of $N$ steps, with \eqref{eq:rate}
+holding. Then the gated trajectory converges to the same fixed point
+$X_\infty$ as the ungated system, and there exists $t^\star$ such that
+\[
+\|X_t - X_\infty\| < \delta_{\mathrm{target}} \quad \forall t \ge t^\star.
+\]
+\end{theorem}
+
+\section{Integration into PIRTM / PhaseMirror-HQ}
+
+\subsection{Use of \texttt{multiplicity-core} in \texttt{pirtm/core}}
+
+Instead of implementing Toy A as a separate module, we propose:
+
+\begin{itemize}
+    \item Use \texttt{multiplicity-core} as a versioned dependency in
+    \texttt{pirtm/core}.
+    \item Instantiate a \texttt{MultiplicityEngine} with the Toy A parameters
+    (primes, scales, $\alpha$, $q$, $\gamma$, noise).
+    \item Expose a narrow LWE-style boundary:
+    \begin{itemize}
+        \item \texttt{get\_public\_sample()} $\to (\mathbf{a}_t, b_t + e_t)$,
+        \item \texttt{get\_state\_digest()} $\to$ integrity hash of $X_t$,
+        \item \texttt{inspect\_params()} $\to$ read-only view of parameters.
+    \end{itemize}
+\end{itemize}
+
+The CSL\_Gate, rate-limiter, and consent logic are implemented in PIRTM as a
+policy wrapper around the \texttt{MultiplicityEngine}.
+
+\subsection{ADR-phase plan (summary)}
+
+An ADR-phase plan for PhaseMirror-HQ:
+
+\begin{enumerate}
+    \item ADR-001: Introduce \texttt{multiplicity-core} as the canonical
+    multiplicity engine (operator binding, parameters).
+    \item ADR-002: Wire \texttt{multiplicity-core} into \texttt{pirtm/core} as
+    the internal LWE sampler (Toy A configuration).
+    \item ADR-003: Define the PIRTM $\leftrightarrow$ Multiplicity boundary
+    (API, no direct parameter mutation).
+    \item ADR-004: Integrate CSL\_Gate and rate-limiter around the engine.
+    \item ADR-005: Document the chosen-reset / chosen-rollback attack model,
+    derive (R,N) via \eqref{eq:rate}, and set operational policy.
+\end{enumerate}
+
+\section{Recommendations and Further Work}
+
+\subsection{Validation and cryptanalysis}
+
+We recommend:
+
+\begin{itemize}
+    \item Running numerical simulations for Toy A with the chosen parameters
+    to verify exponential convergence and noise statistics.
+
+    \item Implementing a small lattice-reduction experiment (e.g.\ BKZ on
+    collected LWE samples) to confirm that the chosen $(n,q,\chi)$ offer the
+    expected security level.
+
+    \item Extending the CSL\_Gate implementation to log gating decisions,
+    drift scores, and rollback events for forensic and anomaly analysis.
+\end{itemize}
+
+\subsection{Extensions}
+
+Possible extensions:
+
+\begin{itemize}
+    \item Generalizing from LWE to Module-LWE while retaining the same prime
+    grading and CSL semantics.\cite{pqc-lwe}
+
+    \item Exploring different noise models $T$ and their impact on both
+    contraction and cryptanalytic hardness.
+
+    \item Adapting consent granularity beyond prime sectors via refined
+    projectors and studying its effect on both performance and security.
+\end{itemize}
+
+\section*{Prior Art Notice}
+
+All constructions described in this report --- including but not limited to
+the unified operator binding, the prime/scale LWE embedding, the CSL\_Gate
+design, the rate-limiter constraints, and the integration pattern with PIRTM ---
+are hereby disclosed as prior art. They are published for the purpose of
+preventing third-party patent claims over these methods.
+
+\appendix
+\section*{Mathematical Appendix}
+\addcontentsline{toc}{section}{Mathematical Appendix}
+
+This appendix collects explicit proofs, operator norm bounds, and detailed
+derivations that were only sketched in the main text. It is intended to be
+attached as a technical supplement to the main report.
+
+\section{Prime-Weighted Sums and the $\alpha$ Convention}
+
+\subsection{Convergence of $\sum_{p} p^{-\alpha}$}
+
+\begin{lemma}[Prime-Weighted Sum Convergence]
+Let the sum
+\[
+Z(\alpha) := \sum_{p} p^{-\alpha},
+\]
+run over all primes $p$. Then $Z(\alpha)$ converges if and only if $\alpha > 1$.
+\end{lemma}
+
+\begin{proof}
+For $\alpha > 1$, we can bound $Z(\alpha)$ by a multiple of the Riemann zeta
+function. Enumerate primes as $p_1 < p_2 < \dots$ and note that $p_k \ge k+1$
+for all $k \ge 1$. Then
+\[
+p_k^{-\alpha} \le (k+1)^{-\alpha},
+\]
+so
+\[
+Z(\alpha) = \sum_{k=1}^\infty p_k^{-\alpha}
+\le \sum_{k=1}^\infty (k+1)^{-\alpha}
+= \sum_{m=2}^\infty m^{-\alpha}
+= \zeta(\alpha) - 1.
+\]
+Since $\zeta(\alpha)$ converges for $\alpha > 1$, so does $Z(\alpha)$.
+
+For $\alpha \le 1$, divergence follows from standard comparison with the
+harmonic series. For large $x$, the prime number theorem implies the number
+of primes $\le x$ is $\pi(x) \sim x / \log x$. Thus
+\[
+\sum_{p\le x} p^{-\alpha}
+\approx \int_2^x t^{-\alpha}\,\frac{dt}{\log t}.
+\]
+For $\alpha \le 1$, the integrand behaves like $t^{-1}/\log t$ or slower
+decay, whose integral diverges as $x\to\infty$. Hence $Z(\alpha)$ diverges
+for $\alpha \le 1$.
+\end{proof}
+
+\subsection{Translation of DRMM sign convention}
+
+Any DRMM condition of the form
+\[
+\alpha_{\text{DRMM}} < -1
+\]
+is rewritten by defining $\alpha' := -\alpha_{\text{DRMM}}$, so
+$\alpha' > 1$, and expressing the prime-weighted term as $p^{-\alpha'}$.
+All convergence statements thus uniformly use the condition $\alpha' > 1$.
+
+\section{Unified Operator Norm Bounds}
+
+Let $\{P_p\}_{p\in P_N}$ be the orthogonal prime-sector projectors satisfying
+Assumption~\ref{ass:orthogonal}, and define $U_p(t)$ as in
+Definition~\ref{def:Up}:
+\[
+U_p(t) = \Lambda_m(t)\, p^{\alpha_p}\, P_p.
+\]
+
+\subsection{Norm of $U_p(t)$}
+
+\begin{lemma}
+Assume $\|P_p\| = 1$ for all $p$. Then
+\[
+\|U_p(t)\| = |\Lambda_m(t)|\, p^{\alpha_p}.
+\]
+\end{lemma}
+
+\begin{proof}
+Since $P_p$ is a projector, its spectrum is contained in $\{0,1\}$ and
+$\|P_p\| = 1$. The operator $U_p(t)$ acts on $H$ as scalar multiplication
+by $\Lambda_m(t) p^{\alpha_p}$ on the range of $P_p$ and as zero on its
+kernel. Thus its eigenvalues are $\{0, \Lambda_m(t) p^{\alpha_p}\}$, and
+\[
+\|U_p(t)\| = \max\{0,|\Lambda_m(t)p^{\alpha_p}|\}
+= |\Lambda_m(t)| p^{\alpha_p}.
+\]
+\end{proof}
+
+\subsection{Norm of $\Xi(t)$ and global contraction}
+
+Recall $\Xi(t)$ is defined by
+\[
+\Xi(t) = \sum_{p\in P_N} w_p(t)\, U_p(t)
+= \Lambda_m(t)\sum_{p\in P_N} w_p(t)\, p^{\alpha_p} P_p.
+\]
+
+\begin{assumption}[Bounded Weights]
+There exists $W < \infty$ such that $|w_p(t)| \le W$ for all $p\in P_N$ and $t$.
+\end{assumption}
+
+\begin{lemma}[Norm Bound for $\Xi(t)$]\label{lem:Xi-norm}
+Under Assumption~\ref{ass:bounded-w} and $\|P_p\|=1$,
+\[
+\|\Xi(t)\| \le W \sup_t|\Lambda_m(t)| \sum_{p\in P_N} p^{\alpha_p}.
+\]
+\end{lemma}
+
+\begin{proof}
+Using the triangle inequality and the bound on $U_p(t)$:
+\begin{align*}
+\|\Xi(t)\|
+&= \left\|\sum_{p\in P_N} w_p(t) U_p(t)\right\|
+\le \sum_{p\in P_N} |w_p(t)|\,\|U_p(t)\| \\
+&\le \sum_{p\in P_N} |w_p(t)|\,|\Lambda_m(t)|\,p^{\alpha_p} \\
+&\le W \sup_t |\Lambda_m(t)| \sum_{p\in P_N} p^{\alpha_p}.
+\end{align*}
+\end{proof}
+
+Suppose we choose a target contraction parameter $\gamma \in (0,1)$ and define
+\[
+\|S\| := \max_{p\in P_N} p^{\alpha_p},\qquad
+\Lambda_{\mathrm{glob}} := \frac{\gamma}{\|S\|}.
+\]
+If we further constrain $\Lambda_m(t)$ so that $|\Lambda_m(t)| \le \Lambda_{\mathrm{glob}}$
+and $|w_p(t)|\le 1$, then
+\[
+\|\Xi(t)\| \le \Lambda_{\mathrm{glob}} \max_{p} p^{\alpha_p} = \gamma.
+\]
+When $|w_p(t)| \le W$ with $W>1$, the bound is scaled by $W$.
+
+\section{Non-linear Map $T$ and Combined Contraction}
+
+Let $T: H \to H$ be a non-linear map with Lipschitz constant $L_T$:
+\[
+\|T(X) - T(Y)\| \le L_T \|X - Y\|\quad \forall X,Y\in H.
+\]
+
+Consider the update
+\[
+X_{t+1} = F_t(X_t),\quad
+F_t(X) := \Xi(t) X + \Lambda_m(t) T(X).
+\]
+
+\subsection{Lipschitz bound for $F_t$}
+
+\begin{lemma}
+Suppose $\|\Xi(t)\|\le 1-\varepsilon$ for some $\varepsilon\in(0,1)$ and
+\[
+c := \sup_t \|\Lambda_{m,\mathrm{op}}(t)\| L_T < \varepsilon.
+\]
+Then each $F_t$ is a contraction mapping with Lipschitz constant
+\[
+L_{F_t} \le (1-\varepsilon) + c < 1.
+\]
+\end{lemma}
+
+\begin{proof}
+For any $X,Y\in H$,
+\begin{align*}
+\|F_t(X) - F_t(Y)\|
+&= \|\Xi(t)(X-Y) + \Lambda_m(t)[T(X)-T(Y)]\| \\
+&\le \|\Xi(t)\|\|X-Y\| + \|\Lambda_m(t)\|\,\|T(X)-T(Y)\| \\
+&\le (1-\varepsilon)\|X-Y\| + \|\Lambda_m(t)\| L_T \|X-Y\| \\
+&\le \left[(1-\varepsilon) + c\right] \|X-Y\|.
+\end{align*}
+By assumption, $(1-\varepsilon) + c < 1$.
+\end{proof}
+
+Thus the family $\{F_t\}$ is uniformly contractive; under suitable conditions
+(e.g.\ stationarity or bounded variation of $\Xi(t)$ and $\Lambda_m(t)$) a
+Banach-type argument yields convergence to a unique fixed point $X_\infty$.
+
+\section{Toy A: Detailed Norm Computations}
+
+For the Toy A instance we specify:
+
+\begin{itemize}
+    \item $P_N = \{2,3,5,\dots,71\}$ (first 20 primes),
+    \item $\alpha_p \equiv \alpha = 2$,
+    \item $q = 257$,
+    \item $\gamma = 0.9$,
+    \item $\|S\| = \max_{p\in P_N} p^{2} = 71^2 = 5041$,
+    \item $\Lambda_{\mathrm{glob}} = \gamma / \|S\| \approx 0.9 / 5041 \approx 1.786\times 10^{-4}$.
+\end{itemize}
+
+Assuming $|w_p(t)|\le 1$ and $\Lambda_m(t) \equiv \Lambda_{\mathrm{glob}}$,
+we get:
+
+\[
+\|\Xi(t)\|
+\le \Lambda_{\mathrm{glob}} \sum_{p\in P_N} p^2.
+\]
+
+For the toy ``diagonal only'' case where $w_p(t) = 1$ for each $p$ and we
+care about the spectral radius rather than the sum, we can use:
+
+\[
+\Xi(t) = \Lambda_{\mathrm{glob}} \sum_p p^2 P_p
+\]
+which is diagonal in the $P_p$ basis with eigenvalues $\Lambda_{\mathrm{glob}} p^2$.
+Then
+\[
+\|\Xi(t)\| = \max_{p\in P_N} |\Lambda_{\mathrm{glob}} p^2|
+= \Lambda_{\mathrm{glob}} \max_p p^2 = \gamma = 0.9.
+\]
+
+For the LWE-style non-linearity $T$ defined via modulo reduction and bounded
+noise, we can conservatively take $L_T\le 1$, and thus
+\[
+c = \sup_t \|\Lambda_{m,\mathrm{op}}(t)\| L_T = \Lambda_{\mathrm{glob}} \approx 1.786\times 10^{-4}.
+\]
+If we choose $\varepsilon = 0.1$, then $c\ll \varepsilon$ and
+$L_{F_t} \le (1-\varepsilon)+c \approx 0.90018 < 1$.
+
+\section{CSL-Gate: Commutator and Masked Norm Bound}
+
+\subsection{Proof of the commutator lemma}
+
+We restate and prove Lemma~\ref{lem:comm} in more detail.
+
+\begin{lemma}[Consent-Sector Commutation]
+Let $\{P_p\}_{p\in P_N}$ satisfy Assumption~\ref{ass:orthogonal} and set
+$U_p(t) = \Lambda_m(t)\, p^{\alpha_p} P_p$. Let $\Sigma(t)$ be bounded on $H$.
+Then $[\Sigma(t), U_p(t)] = 0$ for all $p,t$ if and only if
+\[
+\Sigma(t) \in \{P_p\}' := \{A \in B(H): [A, P_p]=0\ \forall p\}.
+\]
+\end{lemma}
+
+\begin{proof}
+For each fixed $p$ and $t$,
+\[
+[\Sigma(t), U_p(t)]
+= \Sigma(t) \Lambda_m(t) p^{\alpha_p} P_p - \Lambda_m(t) p^{\alpha_p} P_p \Sigma(t)
+= \Lambda_m(t) p^{\alpha_p} [\Sigma(t), P_p].
+\]
+If $[\Sigma(t), U_p(t)] = 0$ for all $p$, then for each $p$,
+$\Lambda_m(t)p^{\alpha_p}[\Sigma(t),P_p]=0$, which (assuming
+$\Lambda_m(t)p^{\alpha_p}\ne 0$) implies $[\Sigma(t),P_p]=0$. Thus
+$\Sigma(t)\in\{P_p\}'$.
+
+Conversely, if $[\Sigma(t),P_p]=0$ for all $p$, then
+$[\Sigma(t),U_p(t)] = \Lambda_m(t)p^{\alpha_p}[\Sigma(t),P_p]=0$ for all $p$.
+\end{proof}
+
+When $\{P_p\}$ are orthogonal projectors forming a resolution of the identity,
+the algebra they generate is
+\[
+\mathrm{Alg}\{P_p\} = \left\{\sum_p \sigma_p P_p: \sigma_p \in \mathbb{C}\right\}.
+\]
+Operators diagonal in this basis commute with all $P_p$. Choosing
+$\Sigma(t) = \sum_p \sigma_p(t) P_p$ with $\sigma_p(t)\in\{0,1\}$ therefore
+ensures $[\Sigma(t),U_p(t)]=0$ for all $p$.
+
+\subsection{Norm bound for masked evolution}
+
+Define the masked evolution operator
+\[
+\Xi_\Sigma(t) := \Sigma(t) \Xi(t) \Sigma(t).
+\]
+Using $\Sigma(t) = \sum_p \sigma_p(t) P_p$ with $\sigma_p(t)\in\{0,1\}$, we have:
+
+\begin{align*}
+\Xi_\Sigma(t)
+&= \Sigma(t) \left(\sum_p w_p(t) U_p(t)\right) \Sigma(t) \\
+&= \sum_p w_p(t) \Sigma(t) U_p(t) \Sigma(t) \\
+&= \sum_p w_p(t) \Sigma(t) \Lambda_m(t)p^{\alpha_p} P_p \Sigma(t) \\
+&= \Lambda_m(t) \sum_p w_p(t) p^{\alpha_p} \Sigma(t) P_p \Sigma(t).
+\end{align*}
+
+Because $\Sigma(t)$ and $P_p$ commute, we have
+\[
+\Sigma(t) P_p \Sigma(t)
+= \Sigma(t)^2 P_p
+= \left(\sum_q \sigma_q(t)P_q\right)^2 P_p.
+\]
+
+Using orthogonality $P_q P_{q'} = \delta_{qq'}P_q$, we get
+\[
+\Sigma(t)^2 = \sum_q \sigma_q(t)^2 P_q
+= \sum_q \sigma_q(t) P_q
+= \Sigma(t),
+\]
+and thus
+\[
+\Sigma(t) P_p \Sigma(t)
+= \Sigma(t) P_p
+= \sigma_p(t) P_p.
+\]
+
+Hence
+\[
+\Xi_\Sigma(t) = \Lambda_m(t) \sum_p w_p(t) p^{\alpha_p} \sigma_p(t) P_p.
+\]
+
+Since $\sigma_p(t)\in\{0,1\}$, the eigenvalues of $\Xi_\Sigma(t)$ are a subset
+of the eigenvalues of $\Xi(t)$, so
+\[
+\|\Xi_\Sigma(t)\| \le \|\Xi(t)\|.
+\]
+
+Therefore, any contraction bound that holds for $\Xi(t)$ also holds (or is
+tightened) for the masked operator $\Xi_\Sigma(t)$.
+
+\section{Rate-Limiter and Gated Convergence: Detailed Derivation}
+
+Let $\gamma<1$ be the contraction factor for the ungated update
+$X_{t+1} = F_t(X_t)$, so that
+\[
+\|X_{t+1} - X_\infty\| \le \gamma \|X_t - X_\infty\|
+\]
+for all $t$.
+
+\subsection{Number of passing steps required}
+
+Let $\delta_t := \|X_t - X_\infty\|$. For each passing step
+(i.e.\ when the gate allows $F_t$ to be applied),
+\[
+\delta_{t+1} \le \gamma \delta_t.
+\]
+After $M$ passing steps, we get
+\[
+\delta_{\mathrm{after}} \le \gamma^M \delta_0.
+\]
+
+To ensure $\delta_{\mathrm{after}} \le \delta_{\mathrm{target}}$, it suffices
+that
+\[
+\gamma^M \delta_0 \le \delta_{\mathrm{target}}
+\quad\Rightarrow\quad
+M \ge \frac{\log(\delta_{\mathrm{target}}/\delta_0)}{\log(\gamma)}.
+\]
+Note $\log(\gamma)<0$, so the right-hand side is positive if
+$\delta_{\mathrm{target}}<\delta_0$.
+
+\subsection{Rate-limiter inequality}
+
+Suppose we impose a rate-limiter: in any window of $N$ steps, at most $R$
+rollbacks occur, so at least $N-R$ steps are actual passes.
+
+To guarantee at least $M$ passes within an $N$-step window, we require
+\[
+N - R > M
+> \frac{\log(\delta_{\mathrm{target}}/\delta_0)}{\log(\gamma)}.
+\]
+
+This is the liveness condition:
+\[
+N - R > \frac{\log(\delta_{\mathrm{target}}/\delta_0)}{\log(\gamma)}.
+\]
+
+\subsection{Example: $\gamma=0.9$, $\delta_0=1$, $\delta_{\mathrm{target}}=10^{-2}$}
+
+With $\gamma=0.9$, $\delta_0=1$, $\delta_{\mathrm{target}}=10^{-2}$:
+\[
+\frac{\log(\delta_{\mathrm{target}}/\delta_0)}{\log(\gamma)}
+= \frac{\log(10^{-2})}{\log(0.9)}
+\approx \frac{-4.60517}{-0.10536} \approx 43.7.
+\]
+Thus we require $N-R > 43.7$, i.e.\ $N-R\ge 44$. For example, $N=100$, $R=56$
+satisfies this, though more conservative choices (smaller $R$) give faster
+guaranteed convergence.
+
+\section{LWE Embedding: Equivalence to Standard LWE}
+
+We briefly formalize the equivalence between the Multiplicity-LWE Toy A
+construction and classical LWE over $\mathbb{Z}_q^n$.
+
+\subsection{Classical LWE instance}
+
+Classical LWE$(n,q,\chi)$ is the following problem:\cite{pqc-lwe}
+
+\begin{quote}
+Given access to samples $(\mathbf{a}_i, b_i)$ where
+$\mathbf{a}_i \in \mathbb{Z}_q^n$ is uniform and
+\[
+b_i = \langle \mathbf{a}_i, \mathbf{s} \rangle + e_i \pmod{q},
+\]
+for a secret $\mathbf{s} \in \mathbb{Z}_q^n$ and noise $e_i \leftarrow \chi$,
+recover $\mathbf{s}$ or distinguish the samples from uniform.
+\end{quote}
+
+\subsection{Multiplicity-LWE embedding}
+
+In Toy A:
+
+\begin{itemize}
+    \item The dimension is $n=20$ (one coordinate per prime in $P_N$).
+    \item The secret sits in the $s=0$ slice as $\mathbf{s} \in \mathbb{Z}_q^{20}$.
+    \item At each time $t$, the $s=1$ slice holds $\mathbf{a}_t\in\mathbb{Z}_q^{20}$,
+    chosen uniformly or via a key schedule.
+    \item The $s=2$ slice holds $b_t = \langle \mathbf{a}_t, \mathbf{s} \rangle \bmod q$.
+    \item The $s=3$ slice holds $b_t + e_t \bmod q$ with $e_t\sim\chi$.
+\end{itemize}
+
+The observable samples $(\mathbf{a}_t, c_t)$, where $c_t$ is the $s=3$ slice,
+are exactly LWE samples:
+\[
+c_t = b_t + e_t
+= \langle \mathbf{a}_t, \mathbf{s} \rangle + e_t \pmod{q}.
+\]
+
+\begin{lemma}[Equivalence to LWE]
+Any algorithm that, given enough multiplicity state steps, recovers the secret
+$s$ from $(\mathbf{a}_t, c_t)$ can be used to solve the classical LWE problem
+with parameters $(n=20, q=257, \chi)$, and conversely.
+\end{lemma}
+
+\begin{proof}[Proof sketch]
+The forward direction is direct: treat the observed $\mathbf{a}_t$ and $c_t$
+as LWE samples. Any solver that works on the multiplicity representation
+can be used on the LWE samples by ignoring other slices.
+
+For the converse: given LWE samples $(\mathbf{a}_i,b_i)$, embed them into the
+multiplicity state by placing $\mathbf{a}_i$ into $s=1$, constructing the
+corresponding $b_i$ into $s=2$, and letting $T$ add the noise $e_i$ to obtain
+$b_i+e_i$ in $s=3$. Any solver that recovers $\mathbf{s}$ from the multiplicity
+evolution can then be applied as a black box on the embedded LWE instance.
+\end{proof}
+
+Thus the hardness of Multiplicity-LWE for Toy A is exactly the hardness of
+standard LWE$(n=20,q=257,\chi)$.
+
+\nocite{*}
+\bibliographystyle{unsrt}  
+\bibliography{references}
+\end{document}

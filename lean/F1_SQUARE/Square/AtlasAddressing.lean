@@ -23,7 +23,7 @@ So understanding the addressing tells us precisely how the Atlas meets RH: it ca
 (the primes) in full, and the crux is the coupling to the archimedean place — the open content
 (`crux_gate_faithful`). The crux fields stay `none`.
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 

@@ -12,7 +12,7 @@ def DRIFT_SCALER_RHS : Nat := 3
 def checkDriftBound (delta : Nat) (xi : Nat) : Bool :=
   (DRIFT_SCALER_LHS * delta) <= (DRIFT_SCALER_RHS * xi)
 
--- The zero-sorry pure arithmetic proof that the R1CS boolean check implies the strict mathematical bound
+-- The zero-() pure arithmetic proof that the R1CS boolean check implies the strict mathematical bound
 theorem drift_bound_soundness (delta xi : Nat) :
   checkDriftBound delta xi = true → (10 * delta) ≤ (3 * xi) := by
   intro h

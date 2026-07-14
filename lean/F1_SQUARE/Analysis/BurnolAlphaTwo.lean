@@ -18,7 +18,7 @@ necessary"), and Connes–Consani's need for the Sonine-space projection — the
 the single-archimedean-place positivity, now a theorem. It is the barrier, NOT a route through it;
 the crux fields stay `none`.
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 

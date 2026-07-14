@@ -22,7 +22,7 @@ simultaneously (§4.1). That object is not yet discovered; the forced web and th
 spectral operator do not supply it, and producing it is RH. The crux fields stay `none` — the gate,
 not enumeration and not ambition, decides.
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 

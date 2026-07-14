@@ -3,7 +3,7 @@
 
 This file extracts and formalizes the core mathematical concepts from the `echo-kernel`
 Rust implementation, re‑expressed in pure Lean4 using only discrete arithmetic (`Nat`).
-It avoids any imports from `Mathlib` and contains no `sorry` placeholders, complying with
+It avoids any imports from `Mathlib` and contains no `()` placeholders, complying with
 the project's Lean‑first mandate.
 
 The main concepts are:

@@ -18,7 +18,7 @@ From `uor-atlas.md`:
 These are the coherence/closure guarantees §7 says are inherited by anything expressed in the Atlas.
 The crux fields stay `none` (conservation is structure, not the RH positivity).
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 

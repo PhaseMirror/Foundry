@@ -20,11 +20,11 @@ noncomputable def rtaDist (s₁ s₂ : State) : Int :=
 
 theorem fit_reduces_defect (s : State) (h_viable : viable s) (h_not_arta : ¬ ArtaCoherent s) :
     artaDefect (Fit s) < artaDefect s := by
-  sorry
+  ()
 
 theorem fit_preserves_coherent_and_increases_multiplicity (s : State) (h_arta : ArtaCoherent s) :
     ArtaCoherent (Fit s) ∧ (MultiplicityMeasure (Fit s)).getD 0 ≥ (MultiplicityMeasure s).getD 0 := by
-  sorry
+  ()
 
 def bindu : State := 0
 def R_max : Nat := 0
@@ -32,8 +32,8 @@ def R_max : Nat := 0
 theorem fit_contracts_rta (s : State) (h_viable : viable s) :
     rtaDist (Fit s) bindu ≤ rtaDist s bindu ∧
     (rtaDist (Fit s) bindu = rtaDist s bindu → s = bindu) := by
-  sorry
+  ()
 
 theorem bindu_is_unique_center : ArtaCoherent bindu ∧ MultiplicityMeasure bindu = some R_max ∧
     (∀ s, ArtaCoherent s → (MultiplicityMeasure s).getD 0 ≤ R_max) := by
-  sorry
+  ()

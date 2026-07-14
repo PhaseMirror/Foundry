@@ -1,0 +1,454 @@
+\documentclass[11pt]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{geometry}
+\geometry{margin=1in}
+
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{enumitem}
+\usepackage{hyperref}
+
+% ---------- Macros ----------
+\newcommand{\ZZ}{\mathbb{Z}}
+\newcommand{\QQ}{\mathbb{Q}}
+\newcommand{\Sym}{\mathrm{Sym}}
+\newcommand{\NF}{\mathrm{NF}}
+\newcommand{\GL}{\mathrm{GL}}
+\newcommand{\rank}{\mathrm{rank}}
+\newcommand{\sign}{\mathrm{sign}}
+\newcommand{\lex}{\mathrm{lex}}
+\newcommand{\proj}{\pi}
+\newcommand{\bracks}[1]{\llbracket #1 \rrbracket}
+
+\newcommand{\cfg}[2]{\langle #1,#2\rangle}
+
+\newcommand{\Rule}[1]{\textsc{(#1)}}
+
+% ---------- Title ----------
+\title{Operator-Word Calculus on \texorpdfstring{$(Q,p)$}{(Q,p)}:\\
+Slides, Blow-Ups, Hyperbolic Stabilization, and Rewrite-to-\texorpdfstring{$\NF(Q,p)$}{NF(Q,p)}}
+\author{Ryan Van Gelder}
+\date{2025}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We formalize a state-based rewriting logic for an operator-word calculus acting on configurations
+$(Q,p)$, where $Q$ is an integral symmetric form and $p$ is an integral refinement vector.
+The generator set consists of slides $S_{ij}^{\pm}$ (elementary unimodular basis changes),
+blow up/down moves $B_{\pm}, B_{\pm}^{-1}$, and hyperbolic stabilization/cancellation $H,H^{-1}$.
+A deterministic rewrite strategy produces a canonical normal form $\NF(Q,p)$ that is invariant
+under the generated equivalences. We also indicate a specialization to 8D plumbings bounding Milnor
+7-spheres, making admissibility tests and the canonical $p$-data explicit.
+\end{abstract}
+
+\paragraph{Background pointers.}
+Exotic $7$-spheres and $\Theta_7$: \cite{Mil56,KM63}. Smoothing theory: \cite{KS77}. Kirby calculus:
+\cite{Kir78,GS99}.
+
+% ============================================================
+\section{Configurations and semantics}
+
+\subsection{Configuration space}
+A configuration is a pair
+\[
+(Q,p),\qquad Q\in \Sym_n(\ZZ),\quad p\in \ZZ^n.
+\]
+Interpretation: $Q$ is a lattice pairing (e.g.\ an intersection form in a chosen basis) and $p$ is
+extra structure (e.g.\ a characteristic/Pontryagin-refinement datum in that basis).
+
+\subsection{Congruence (``gauge'') action}
+A unimodular basis change $U\in \GL_n(\ZZ)$ acts by
+\[
+(Q,p)\longmapsto (U^T Q U,\; U^{-1}p).
+\]
+Slides are elementary generators for this action (handle slides in Kirby calculus; see \cite{Kir78,GS99}).
+
+% ============================================================
+\section{Generator operators (raw moves)}
+
+\subsection{Slides \texorpdfstring{$S_{ij}^{\varepsilon}$}{Sij}}
+For $i\neq j$ and $\varepsilon\in\{+1,-1\}$, let
+\[
+U_{ij}(\varepsilon)=I+\varepsilon E_{ij}\in \GL_n(\ZZ),
+\]
+where $E_{ij}$ has a single $1$ in position $(i,j)$.
+
+\paragraph{Definition (Slide).}
+\[
+S_{ij}^{\varepsilon}(Q,p)=\big(U_{ij}(\varepsilon)^T Q\, U_{ij}(\varepsilon),\; U_{ij}(\varepsilon)^{-1}p\big).
+\]
+Slides are total and invertible: $(S_{ij}^{\varepsilon})^{-1}=S_{ij}^{-\varepsilon}$.
+
+\subsection{Blow-up/down \texorpdfstring{$B_\sigma$}{B}}
+For $\sigma\in\{+1,-1\}$ define the blow-up
+\[
+B_\sigma(Q,p)=\big(Q\oplus[\sigma],\; p\oplus 0\big).
+\]
+This is total.
+
+\paragraph{Blow-down $B_\sigma^{-1}$ (partial).}
+It is admissible only if $(Q,p)$ contains an orthogonal primitive $\sigma$-vector (precisely in \S\ref{sec:blowdown}).
+
+\subsection{Hyperbolic stabilization/cancellation \texorpdfstring{$H$}{H}}
+Let $H_2=\begin{pmatrix}0&1\\1&0\end{pmatrix}$. Define
+\[
+H(Q,p)=\big(Q\oplus H_2,\; p\oplus(0,0)\big).
+\]
+Cancellation $H^{-1}$ is partial: it is admissible only if $(Q,p)$ contains an orthogonal hyperbolic plane (precisely in \S\ref{sec:hypsplit}).
+
+% ============================================================
+\section{Rewriting logic: explicit rules on configurations}
+
+We write rewrite rules as
+\[
+\cfg{Q}{p}\;\Rightarrow\;\cfg{Q'}{p'}
+\]
+possibly under an admissibility predicate.
+
+\subsection{Slide rule (always admissible)}
+\[
+\Rule{SLIDE}\qquad
+\frac{}{\cfg{Q}{p}\Rightarrow \cfg{U^T Q U}{U^{-1}p}}
+\]
+where $U=U_{ij}(\varepsilon)=I+\varepsilon E_{ij}$.
+
+\subsection{Blow-up rule (always admissible)}
+\[
+\Rule{BLOWUP}\qquad
+\frac{}{\cfg{Q}{p}\Rightarrow \cfg{Q\oplus[\sigma]}{p\oplus 0}}
+\qquad \sigma\in\{\pm1\}.
+\]
+
+\subsection{Blow-down rule (partial)}\label{sec:blowdown}
+We formalize blow-down by finding a unimodular $U$ such that
+\[
+U^T Q U = Q'\oplus[\sigma].
+\]
+Let $\proj$ be projection onto the first $n-1$ coordinates.
+
+\paragraph{Predicate $\mathrm{Split}_\sigma(Q)$.}
+There exists primitive $v\in \ZZ^n$ and $U\in \GL_n(\ZZ)$ with $Ue_n=v$ and $U^T Q U=Q'\oplus[\sigma]$.
+
+\[
+\Rule{BLOWDOWN}\qquad
+\frac{\mathrm{Split}_\sigma(Q)\ \wedge\ U^TQU=Q'\oplus[\sigma]}{\cfg{Q}{p}\Rightarrow \cfg{Q'}{\proj(U^{-1}p)}}
+\]
+In rewriting-to-normal-form we do not allow arbitrary $U$; we choose a canonical witness (see \S\ref{sec:canonwitness}).
+
+\subsection{Hyperbolic add rule (always admissible)}
+\[
+\Rule{HYPADD}\qquad
+\frac{}{\cfg{Q}{p}\Rightarrow \cfg{Q\oplus H_2}{p\oplus(0,0)}}.
+\]
+
+\subsection{Hyperbolic cancel rule (partial)}\label{sec:hypsplit}
+\paragraph{Predicate $\mathrm{HypSplit}(Q)$.}
+There exist primitive $u,v\in\ZZ^n$ and $U\in \GL_n(\ZZ)$ so that $Ue_{n-1}=u$, $Ue_n=v$, and
+\[
+U^T Q U = Q'\oplus H_2.
+\]
+Equivalently, in the original basis: $u^TQu=0$, $v^TQv=0$, $u^TQv=1$, and the span splits off orthogonally.
+
+Let $\proj$ project away the last two coordinates. Then
+\[
+\Rule{HYPCANCEL}\qquad
+\frac{\mathrm{HypSplit}(Q)\ \wedge\ U^TQU=Q'\oplus H_2}{\cfg{Q}{p}\Rightarrow \cfg{Q'}{\proj(U^{-1}p)}}.
+\]
+Again, normalization uses a canonical choice of $(u,v,U)$ (see \S\ref{sec:canonwitness}).
+
+% ============================================================
+\section{Deterministic rewrite-to-normal-form strategy}
+
+The central idea is: \emph{words are not normalized syntactically; states are normalized deterministically.}
+
+Define a deterministic normalization map
+\[
+\mathsf{N}:\ (Q,p)\longmapsto \NF(Q,p).
+\]
+We obtain a normalized step relation
+\[
+(Q,p)\xRightarrow{g}\mathsf{N}\big(g(Q,p)\big)
+\]
+for any generator $g$ admissible at $(Q,p)$.
+
+\subsection{Canonical witness selection for partial reductions}\label{sec:canonwitness}
+To make $\mathsf N$ deterministic, every time a partial rule (BLOWDOWN/HYPCANCEL) is applicable, we choose the witness by a fixed minimization procedure.
+
+\subsubsection*{Canonical blow-down choice}
+Among all primitive $v$ that split off a $[\sigma]$, select the one minimizing
+\[
+(\|v\|_2,\ \lex(v)).
+\]
+Then among unimodular $U$ with $Ue_n=v$ and $U^TQU=Q'\oplus[\sigma]$, choose $U$ minimizing a deterministic tie-break key (e.g.\ lexicographic order of the last row, then of the full matrix entries).
+
+\subsubsection*{Canonical hyperbolic cancellation choice}
+Among all primitive hyperbolic pairs $(u,v)$ that split off $H_2$, select the one minimizing
+\[
+(\max(\|u\|_2,\|v\|_2),\ \lex(u),\ \lex(v)).
+\]
+Then choose a canonical completing $U$ as above.
+
+\paragraph{Stage N1 --- Stabilization reduction.}
+\begin{enumerate}[label=\arabic*.]
+\item While a canonical blow-down is admissible, apply \Rule{BLOWDOWN} using the canonical witness.
+\item While a canonical hyperbolic cancellation is admissible, apply \Rule{HYPCANCEL} using the canonical witness.
+\item Repeat until neither applies.
+\end{enumerate}
+This strictly decreases rank whenever it fires, hence terminates.
+
+\paragraph{Stage N2 --- Global congruence normalization (real-place basis fix).}
+Apply a deterministic lattice reduction procedure to fix the remaining congruence freedom, e.g.:
+\begin{itemize}
+\item compute an LLL-reduced basis for the lattice with Gram matrix $Q$ \cite{LLL82},
+\item among all LLL-valid reduced bases, choose the one that lexicographically minimizes the coordinates of $p$,
+\item fix a sign convention (first nonzero entry of $p$ positive; then lex-min for remaining symmetries).
+\end{itemize}
+This yields a reproducible representative in the congruence class.
+
+\paragraph{Stage N3 --- Prime-local block normalization (optional).}
+(Local classification/Jordan decompositions and invariants of integral quadratic forms: see \cite{OM63,Ser73,CS99}.)
+For each selected prime $\ell$ (and optionally depth $r$):
+\begin{enumerate}[label=\arabic*.]
+\item Compute the $\ell$-adic Jordan decomposition of $(Q,p)\otimes \ZZ_\ell$:
+\[
+(Q,p)\otimes\ZZ_\ell \cong \bigoplus_{e\ge 0}\ell^e\,(Q_{\ell,e},\,p_{\ell,e}).
+\]
+\item If using a projector $\Pi_{\ell^r}$, truncate to $0\le e<r$.
+\item Sort blocks by a canonical key, e.g.
+\[
+(e,\ \rank,\ \det\bmod(\ZZ_\ell^\times)^2,\ \text{Hasse/2-adic refinements},\ \text{coordinates of }p_{\ell,e}).
+\]
+\end{enumerate}
+
+The result is $\NF(Q,p)$. If only a stable normal form is needed, one may stop at Stage N2.
+
+% ============================================================
+\section{Operator words, evaluation, and equivalence}
+
+\subsection{Words}
+A word is a sequence of generator symbols
+\[
+w=g_m\cdots g_2 g_1
+\]
+subject to admissibility of partial inverses at runtime.
+
+\subsection{Normalized evaluation}
+Define
+\[
+\mathrm{EvalNF}(w;Q,p) := \mathsf{N}\big(\bracks{w}(Q,p)\big).
+\]
+Two words are equivalent on input $(Q,p)$ if they yield the same normal form.
+
+\subsection{``Resonance = 1'' criterion (move invariance)}
+Replace any scoring notion by strict equality of canonical outputs:
+\[
+\mathrm{EvalNF}(w_1;Q,p) = \mathrm{EvalNF}(w_2;Q,p).
+\]
+
+% ============================================================
+\section{Specialization: 8D plumbing coboundaries of Milnor 7-spheres}\label{sec:plumbing}
+
+This section makes $(Q,p)$ explicitly computable from an 8D plumbing of disk bundles over $S^4$ whose boundary is a homotopy 7-sphere (Milnor-type).
+
+\subsection{Plumbing input}
+A plumbing description consists of:
+\begin{itemize}
+\item a finite graph $\Gamma=(V,E)$;
+\item for each vertex $v\in V$, an oriented $D^4$-bundle over $S^4$ with structure group $SO(4)$, specified by bundle parameters $(a_v,b_v)\in \ZZ\oplus \ZZ$ (a standard $\pi_3(SO(4))\cong \ZZ\oplus\ZZ$ coordinate choice; see \cite{DW59,CE03});
+\item each edge represents a plumbing along fiber/base disks with a chosen sign convention.
+\end{itemize}
+
+Let $n=|V|$ and choose the basis $\{x_v\}_{v\in V}\subset H^4(W;\ZZ)$ given by the core $S^4$ of each bundle.
+
+\subsection{Constructing the intersection matrix $Q$}
+Define $Q\in \Sym_n(\ZZ)$ by:
+\begin{itemize}
+\item Diagonal:
+\[
+Q_{vv}=e_v,\qquad e_v:=a_v+b_v \quad \text{(Euler number in this convention).}
+\]
+\item Off-diagonal: for $v\neq w$,
+\[
+Q_{vw} = \sum_{\text{edges }(v,w)} \epsilon_{vw},
+\]
+where $\epsilon_{vw}\in\{\pm 1\}$ is the plumbing sign (often all $+1$ in standard Milnor plumbings).
+\end{itemize}
+This is the usual ``diagonal = self-intersection, edges = intersection'' plumbing matrix pattern, in degree $4$ for an 8-manifold.
+
+\subsection{Constructing the refinement vector $p$}
+In the same basis $\{x_v\}$ define $p\in \ZZ^n$ by
+\[
+(p)_v := a_v-b_v
+\quad\text{(a standard choice compatible with $p_1$ conventions up to overall factors).}
+\]
+\paragraph{Spin constraint / admissibility.}
+To be in the spin setting, require the appropriate mod $2$ parity condition on the vertex data (equivalently $w_2(W)=0$); in many plumbing conventions this forces each Euler number $e_v$ to be even.
+
+\subsection{A boundary scalar from $(Q,p)$ (Eells--Kuiper type)}
+Once $(Q,p)$ is formed for the coboundary $W^8$, define:
+\begin{itemize}
+\item Signature $\sigma(W)=\sign(Q)$;
+\item Quadratic value (over $\QQ$):
+\[
+p_W^2 := p^T Q^{-1}p\in \QQ.
+\]
+\end{itemize}
+Then a boundary invariant (for homotopy 7-spheres in the relevant class) is built from
+\[
+\mu \equiv \frac{p_W^2-\sigma(W)}{224}\pmod{1},
+\]
+up to convention choices (Eells--Kuiper invariant \cite{EK62}; modern classification context \cite{CN19}).
+This makes the $2$- and $7$-primary structure explicit via the denominator.
+
+\subsection{Admissibility tests in plumbing cases (explicit)}
+In plumbing-derived $Q$, admissibility for cancellations often becomes concrete.
+
+\paragraph{Blow-down test ($\pm 1$-sphere split).}
+Search for primitive $v$ with
+\[
+v^TQv=\pm 1.
+\]
+If found, attempt to complete $v$ to a unimodular basis and check if the last basis vector is orthogonal to the others (i.e.\ off-diagonal last row/column can be eliminated by slides).
+
+\paragraph{Hyperbolic split test.}
+Search for primitive $u,v$ with
+\[
+u^TQu=0,\quad v^TQv=0,\quad u^TQv=1,
+\]
+and verify orthogonal split by completing $(u,v)$ to a unimodular basis and reducing cross-terms via slides.
+
+These tests are exactly what Stage N1 requires.
+
+% ============================================================
+\section{Compact rewriting-logic summary}
+
+\subsection{Rule schema list}
+\begin{itemize}
+\item \Rule{SLIDE} $\cfg{Q}{p}\Rightarrow \cfg{U^TQU}{U^{-1}p}$ for $U=I\pm E_{ij}$.
+\item \Rule{BLOWUP} $\cfg{Q}{p}\Rightarrow \cfg{Q\oplus[\sigma]}{p\oplus 0}$.
+\item \Rule{BLOWDOWN} $\cfg{Q}{p}\Rightarrow \cfg{Q'}{\proj(U^{-1}p)}$ if $U^TQU=Q'\oplus[\sigma]$ (canonical witness).
+\item \Rule{HYPADD} $\cfg{Q}{p}\Rightarrow \cfg{Q\oplus H_2}{p\oplus(0,0)}$.
+\item \Rule{HYPCANCEL} $\cfg{Q}{p}\Rightarrow \cfg{Q'}{\proj(U^{-1}p)}$ if $U^TQU=Q'\oplus H_2$ (canonical witness).
+\end{itemize}
+
+\subsection{Deterministic strategy}
+Define $\NF(Q,p)=\mathsf N(Q,p)$ by:
+\begin{enumerate}[label=\arabic*.]
+\item Apply canonical \Rule{BLOWDOWN}/\Rule{HYPCANCEL} until stuck.
+\item Apply deterministic congruence normalization (LLL + lex tie-break on $p$).
+\item Optionally apply prime-local block normalization (Jordan decomposition + sorted blocks), including truncations $\Pi_{\ell^r}$ when desired.
+\end{enumerate}
+
+% ============================================================
+\section{Suggested minimum viable experiment (Milnor 7-spheres)}
+\paragraph{Input.} A plumbing graph $\Gamma$ with vertex parameters $(a_v,b_v)$ and edge signs.
+
+\paragraph{Compute.}
+\begin{enumerate}[label=\arabic*.]
+\item $(Q,p)$ via \S\ref{sec:plumbing}.
+\item $\NF(Q,p)$ via \S4.
+\item Prime-tier fingerprints via Stage N3 (especially $\ell=2$ and $\ell=7$).
+\item Scalar $\mu$ and its $2$- and $7$-primary projections.
+\end{enumerate}
+
+\paragraph{Validate invariance.}
+Randomly apply sequences of slides (and optional stabilizations followed by normalization) and confirm $\NF(Q,p)$ is unchanged.
+
+% ============================================================
+\section{Notes on conventions}
+The precise mapping from vertex parameters $(a_v,b_v)$ to $(e_v,(p)_v)$ depends on orientation/normalization conventions for $SO(4)$-bundles over $S^4$. The rewrite calculus is invariant under any consistent choice, as long as:
+\begin{enumerate}[label=\arabic*.]
+\item $Q$ is integral symmetric and transforms by congruence under slides,
+\item $p$ transforms as $p\mapsto U^{-1}p$, and
+\item stabilizations append zeros to $p$.
+\end{enumerate}
+If you adopt a different convention, record it once and keep it fixed; $\NF(Q,p)$ remains well-defined for that convention.
+
+% ============================================================
+\begin{thebibliography}{99}
+
+\bibitem{MOC25}
+\textsc{Multiplicity Operator Calculus (MOC)} (internal note/manuscript), Nov.\ 5, 2025 (unpublished).
+
+\bibitem{PMDM25}
+\textsc{PMDM: Exotic Spheres direction} (internal note/manuscript), 2025 (unpublished).
+
+\bibitem{CN19}
+D.~Crowley and J.~Nordstr{\"o}m,
+\newblock The classification of 2-connected 7-manifolds,
+\newblock \emph{Proc.\ London Math.\ Soc.}\ (3) \textbf{119} (2019), no.~1, 1--54.
+
+\bibitem{CE03}
+D.~Crowley and C.~M.~Escher,
+\newblock A classification of $S^3$-bundles over $S^4$,
+\newblock \emph{Differential Geom.\ Appl.}\ \textbf{18} (2003), no.~3, 363--380.
+
+\bibitem{DW59}
+A.~Dold and H.~Whitney,
+\newblock Classification of oriented sphere bundles over a 4-complex,
+\newblock \emph{Ann.\ of Math.}\ (2) \textbf{69} (1959), no.~3, 667--677.
+
+\bibitem{EK62}
+J.~Eells, Jr.\ and N.~H.~Kuiper,
+\newblock An invariant for certain smooth manifolds,
+\newblock \emph{Annali di Matematica Pura ed Applicata}\ (4) \textbf{60} (1962), 93--110.
+
+\bibitem{GS99}
+R.~E.~Gompf and A.~I.~Stipsicz,
+\newblock \emph{4-Manifolds and Kirby Calculus},
+\newblock Graduate Studies in Mathematics, Vol.\ 20, AMS, 1999.
+
+\bibitem{Kir78}
+R.~Kirby,
+\newblock A calculus for framed links in $S^3$,
+\newblock \emph{Invent.\ Math.}\ \textbf{45} (1978), 35--56.
+
+\bibitem{KM63}
+M.~A.~Kervaire and J.~W.~Milnor,
+\newblock Groups of homotopy spheres. I,
+\newblock \emph{Ann.\ of Math.}\ (2) \textbf{77} (1963), no.~3, 504--537.
+
+\bibitem{LLL82}
+A.~K.~Lenstra, H.~W.~Lenstra Jr., and L.~Lov{\'a}sz,
+\newblock Factoring polynomials with rational coefficients,
+\newblock \emph{Math.\ Ann.}\ \textbf{261} (1982), 515--534.
+
+\bibitem{Mil56}
+J.~Milnor,
+\newblock On manifolds homeomorphic to the 7-sphere,
+\newblock \emph{Ann.\ of Math.}\ (2) \textbf{64} (1956), no.~2, 399--405.
+
+\bibitem{OM63}
+O.~T.~O'Meara,
+\newblock \emph{Introduction to Quadratic Forms},
+\newblock Springer, 1963.
+
+\bibitem{Ser73}
+J.-P.~Serre,
+\newblock \emph{A Course in Arithmetic},
+\newblock Springer, 1973.
+
+\bibitem{CS99}
+J.~H.~Conway and N.~J.~A.~Sloane,
+\newblock \emph{Sphere Packings, Lattices and Groups}, 3rd ed.,
+\newblock Springer, 1999.
+
+\bibitem{KS77}
+R.~C.~Kirby and L.~C.~Siebenmann,
+\newblock \emph{Foundational Essays on Topological Manifolds, Smoothings, and Triangulations},
+\newblock Princeton Univ.\ Press, 1977.
+
+\bibitem{Wal62}
+C.~T.~C.~Wall,
+\newblock Classification of $(n-1)$-connected $2n$-manifolds,
+\newblock \emph{Ann.\ of Math.}\ (2) \textbf{75} (1962), 163--189.
+
+\end{thebibliography}
+
+\vspace{1em}
+\noindent\textcopyright\ 2025 Citizen Gardens. CC-NC-ND 4.0.
+
+\end{document}

@@ -1,0 +1,778 @@
+\documentclass[11pt]{article}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{hyperref}
+\usepackage{geometry}
+\geometry{margin=1in}
+
+\title{J-Multiplicity as a Multiplicity-Space Reparametrization of Atomic Term Structure:\\
+A Defensive Publication}
+\author{Multiplicity Foundation (Defensive Publication)}
+\date{April 26, 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This document defines and develops \emph{J-Multiplicity}, a refinement of spectroscopic multiplicity for atomic systems, within a prime-indexed multiplicity-space framework inspired by Multiplicity Theory. We reinterpret standard LS-coupling and Hund's rules as emergent optimization principles over recursively generated multiplicity spaces built from prime-labeled electronic degrees of freedom. The construction preserves all empirical content of conventional atomic term symbolism while introducing new structural invariants (J-Multiplicity patterns) that encode the internal organization of micro-configurations corresponding to a given term symbol. We give a mathematical overview, an explicit worked example for the carbon ground state, and a reference implementation sketch. This text is intended as a defensive publication and prior art disclosure.
+\end{abstract}
+\newpage
+\tableofcontents
+\newpage
+\section{Executive Summary}
+
+\subsection{Background and motivation}
+
+In conventional atomic physics, the \emph{multiplicity} of an electronic state is defined as \(2S+1\), where \(S\) is the total spin quantum number, and appears as the leading superscript in spectroscopic term symbols of the form \(^{2S+1}L_J\).[file:1] This multiplicity counts the number of spin projections for a given \(S\) and plays a central role in characterizing atomic energy levels and spectroscopic transitions.[file:1] Hund's rules further select energetically favored combinations of \(L\), \(S\), and \(J\) for a given electronic configuration.[file:1]
+
+Multiplicity Theory, as considered here, posits that physical systems can be modeled as \emph{multiplicity spaces}: recursively generated patterns of interactions indexed by primes, where identities and behaviors are preserved by feedback across scales. In this view, classical term symbols are coarse summaries of deeper combinatorial structure.
+
+\subsection{Core idea: J-Multiplicity}
+
+We introduce \emph{J-Multiplicity} as a structured invariant associated with an atomic electronic state, refining and extending the traditional \(2S+1\) multiplicity. Informally:
+\begin{itemize}
+  \item Start from a fixed electronic configuration (e.g.\ \(1s^2 2s^2 2p^2\) for carbon).[file:1]
+  \item Assign prime labels to each \emph{active} electronic degree of freedom (typically unpaired electrons or open subshell sites).
+  \item Define a multiplicity space of micro-configurations over these prime-labeled sites, subject to Pauli constraints and the chosen coupling scheme.
+  \item For each allowed macroscopic term symbol \(^{2S+1}L_J\), J-Multiplicity encodes how many, and in what prime-structured way, micro-configurations realize that term.
+\end{itemize}
+
+Thus, whereas \(2S+1\) counts spin states for a fixed \(S\), J-Multiplicity encodes the internal combinatorial ``prime structure'' of the configuration contributing to \(J\). This structure can be represented as counts, factorization patterns, or other invariants defined on the multiplicity space.
+
+\subsection{Novelty and intended contribution}
+
+The distinctive aspects of this approach are:
+\begin{enumerate}
+  \item Recasting LS-coupling and Hund's rules as optimization over a prime-indexed multiplicity space rather than as purely algebraic composition of angular momenta.
+  \item Introducing prime labels as stable, recursively composable indices attached to electronic degrees of freedom, compatible with the broader Multiplicity Theory paradigm.
+  \item Defining J-Multiplicity invariants that, while reducible to the standard spectroscopic data, add structure that could be used for classification, generalization, or conjectural extensions (e.g.\ to correlated systems, artificial atoms, or emergent degrees of freedom).
+\end{enumerate}
+
+This document functions as prior art by:
+\begin{itemize}
+  \item Providing explicit definitions and a computational sketch.
+  \item Giving a concrete worked example (carbon ground state) showing how J-Multiplicity is computed.
+  \item Articulating a research program for validating and extending this structure.
+\end{itemize}
+
+\section{Conventional Spectroscopic Multiplicity and Hund's Rules}
+
+\subsection{Electronic configuration and term symbols}
+
+The electronic configuration of an atom specifies how electrons occupy available orbitals, subject to the Pauli exclusion principle and the Aufbau principle.[file:1] For many-electron atoms, degenerate or nearly degenerate orbitals give rise to multiple possible distributions of electrons, which are classified into spectroscopic term symbols \(^{2S+1}L_J\).[file:1]
+
+In standard notation:
+\begin{itemize}
+  \item \(S\) is the total spin quantum number, with multiplicity \(2S+1\).[file:1]
+  \item \(L\) is the total orbital angular momentum quantum number, denoted by letters \(S,P,D,F,G,\dots\) for \(L=0,1,2,3,4,\dots\).[file:1]
+  \item \(J\) is the total angular momentum quantum number resulting from coupling \(L\) and \(S\).[file:1]
+\end{itemize}
+
+\subsection{Hund's rules}
+
+For a given electron configuration, Hund's rules provide heuristic energy ordering:
+\begin{enumerate}
+  \item Maximize \(S\): the term with the highest spin multiplicity \(2S+1\) lies lowest in energy.[file:1]
+  \item For a given \(S\), maximize \(L\): the term with the highest \(L\) is lowest in energy.[file:1]
+  \item For a given \(L\) and \(S\):
+    \begin{itemize}
+      \item If the subshell is less than half-filled, the lowest \(J\) lies lowest in energy.
+      \item If the subshell is more than half-filled, the highest \(J\) lies lowest in energy.[file:1]
+    \end{itemize}
+\end{enumerate}
+
+These rules are well-motivated by considerations of electron-electron repulsion and spin-orbit interactions, and they successfully predict the ground state term symbols for many atoms.[file:1]
+
+\subsection{Example: carbon ground state}
+
+Carbon has electronic configuration \(1s^2 2s^2 2p^2\).[file:1] The two \(2p\) electrons can couple to multiple possible term symbols. Applying Hund's rules:
+\begin{itemize}
+  \item The maximum spin \(S=1\) (triplet) arises when the two \(2p\) electrons have parallel spins.
+  \item For \(p^2\), the highest \(L\) for the triplet is \(L=1\) (P term).
+  \item The subshell \(2p^2\) is less than half-filled (maximum \(2p\) occupancy is \(6\)), so the lowest energy term has the smallest \(J\), i.e.\ \(J=0\).[file:1]
+\end{itemize}
+Thus the ground state term symbol is \(^{3}P_{0}\).[file:1]
+
+\section{Multiplicity Spaces and Prime Labeling}
+
+\subsection{Multiplicity spaces}
+
+We formalize the idea of a multiplicity space for an atom with a given electronic configuration:
+\begin{definition}[Multiplicity space]
+Let an electronic configuration be fixed, with a set of \emph{active sites} corresponding to unpaired electrons or open subshell positions. The multiplicity space \(\mathcal{M}\) is the set of all assignments of local quantum numbers and internal labels to these sites that satisfy:
+\begin{itemize}
+  \item Pauli exclusion and overall occupation numbers of orbitals.
+  \item The chosen coupling scheme (e.g.\ LS coupling).
+  \item Any additional constraints (symmetry, selection rules, etc.).
+\end{itemize}
+\end{definition}
+
+Each element of \(\mathcal{M}\) is a \emph{micro-configuration}. Conventional term symbols arise from grouping micro-configurations into equivalence classes with the same \((L,S,J)\).
+
+\subsection{Prime labeling scheme}
+
+To integrate Multiplicity Theory, we assign prime labels to active sites.
+
+\begin{definition}[Prime labeling of active sites]
+Let the active sites be indexed by \(i=1,\dots,k\). Assign to each site \(i\) a distinct prime number \(p_i\). Each site carries local quantum data
+\[
+(s_i, \ell_i, m_{\ell,i}),
+\]
+where \(s_i \in \{\pm \frac{1}{2}\}\) is spin, \(\ell_i\) is orbital angular momentum, and \(m_{\ell,i}\) is the magnetic quantum number.
+\end{definition}
+
+The choice of which degrees of freedom receive primes can vary:
+\begin{itemize}
+  \item Minimal scheme: only unpaired electrons are labeled by primes.
+  \item Extended scheme: every electron in an open subshell is prime-labeled.
+\end{itemize}
+
+For this disclosure, we adopt the minimal scheme: one prime per unpaired electron in the open subshell under consideration.
+
+\subsection{Prime-structured micro-configurations}
+
+A prime-labeled micro-configuration is then a tuple
+\[
+\mathbf{c} = \big((p_i, s_i, \ell_i, m_{\ell,i})\big)_{i=1}^k
+\]
+subject to the constraints defining \(\mathcal{M}\). The total spin, orbital, and angular momentum are derived in the usual way:
+\[
+\mathbf{S} = \sum_i \mathbf{s}_i,\quad
+\mathbf{L} = \sum_i \mathbf{\ell}_i,\quad
+\mathbf{J} = \mathbf{L} + \mathbf{S}
+\]
+with corresponding quantum numbers \(S, L, J\).
+
+The novelty is that we track how each prime-labeled site contributes to a given \((L,S,J)\) class and package this into multiplicity invariants.
+
+\section{Definition of J-Multiplicity}
+
+\subsection{Equivalence classes in the multiplicity space}
+
+For a fixed configuration and prime labeling, define the projection map
+\[
+\pi : \mathcal{M} \to \mathcal{T},\quad
+\pi(\mathbf{c}) = (L(\mathbf{c}), S(\mathbf{c}), J(\mathbf{c})),
+\]
+where \(\mathcal{T}\) is the set of allowed term-label triples. For a given term \(\tau = (L,S,J)\), denote the fiber
+\[
+\mathcal{M}_\tau = \pi^{-1}(\{\tau\}) \subset \mathcal{M}.
+\]
+
+Each element of \(\mathcal{M}_\tau\) is a prime-labeled micro-configuration realizing the same macroscopic term.
+
+\subsection{Basic J-Multiplicity count}
+
+\begin{definition}[J-Multiplicity count]
+For a term \(\tau = (L,S,J)\), the (basic) J-Multiplicity \(M_J(\tau)\) is defined as
+\[
+M_J(\tau) = \# \mathcal{M}_\tau,
+\]
+the number of prime-labeled micro-configurations realizing that term.
+\end{definition}
+
+This count refines the standard degeneracy notion by distinguishing micro-configurations at the level of prime labels, not just quantum numbers.
+
+\subsection{Prime factorization of J-Multiplicity}
+
+The prime labels themselves can be used to define more structured invariants. For each micro-configuration \(\mathbf{c} \in \mathcal{M}_\tau\), define a contribution monomial
+\[
+\Phi(\mathbf{c}) = \prod_{i=1}^k p_i^{\alpha_i(\mathbf{c})},
+\]
+where \(\alpha_i(\mathbf{c})\) encodes the manner in which site \(i\) contributes to \(\tau\). For example, \(\alpha_i\) could depend on:
+\begin{itemize}
+  \item Whether site \(i\) contributes spin parallel or antiparallel to \(\mathbf{S}\).
+  \item Whether its \(m_{\ell,i}\) aligns with the dominant direction of \(\mathbf{L}\).
+\end{itemize}
+
+\begin{definition}[Prime-structured J-Multiplicity]
+Define the prime-structured J-Multiplicity for term \(\tau\) as the multiset
+\[
+\mathcal{P}_J(\tau) = \{\Phi(\mathbf{c}) : \mathbf{c} \in \mathcal{M}_\tau\}
+\]
+considered up to permutation. Alternatively, one can define an aggregate
+\[
+\widetilde{M}_J(\tau) = \prod_{\mathbf{c} \in \mathcal{M}_\tau} \Phi(\mathbf{c}),
+\]
+whose prime factorization encodes the cumulative role of each prime-labeled site.
+\end{definition}
+
+Multiple variants are possible; the essential feature is that J-Multiplicity attaches a structured prime-based multiplicity invariant to each spectroscopic term.
+
+\section{Hund's Rules as Multiplicity Optimization}
+
+\subsection{Energy functional on the multiplicity space}
+
+To connect with Hund's rules, we introduce an energy-like functional
+\[
+F : \mathcal{M} \to \mathbb{R}
+\]
+that assigns an effective energy to each micro-configuration. The aggregate energy of a term \(\tau\) can be taken as
+\[
+E(\tau) = \min_{\mathbf{c} \in \mathcal{M}_\tau} F(\mathbf{c})
+\]
+or as a suitable average.
+
+We posit that the patterns identified by Hund's rules correspond to the hierarchy:
+\[
+E(\tau_1) < E(\tau_2) \quad \Leftrightarrow \quad \tau_1 \text{ satisfies more favorable multiplicity and alignment patterns than } \tau_2.
+\]
+
+In particular, maximizing \(S\) and \(L\) corresponds to selecting micro-configurations with:
+\begin{itemize}
+  \item High alignment of spins across prime-labeled sites.
+  \item High alignment of orbital angular momenta across those sites.
+\end{itemize}
+
+\subsection{Multiplicity-based constraints}
+
+We may impose constraints such as:
+\[
+F(\mathbf{c}) = f_S(S(\mathbf{c})) + f_L(L(\mathbf{c})) + f_J(J(\mathbf{c})) + f_{\text{corr}}(\mathbf{c}),
+\]
+where:
+\begin{itemize}
+  \item \(f_S\) is decreasing in \(S\) (favoring high spin multiplicity).
+  \item \(f_L\) is decreasing in \(L\) (favoring high orbital multiplicity).
+  \item \(f_J\) reflects spin-orbit coupling and the less/more than half-filled rules.
+  \item \(f_{\text{corr}}\) captures finer prime-structured correlation penalties or bonuses.
+\end{itemize}
+
+By suitable choice of these functions, one can recover the ordering predicted by Hund's rules while retaining access to the deeper multiplicity structure encoded in J-Multiplicity.
+
+\section{Worked Example: Carbon Ground State}
+
+\subsection{Configuration and active sites}
+
+Consider the carbon configuration \(1s^2 2s^2 2p^2\).[file:1] The closed \(1s^2\) and \(2s^2\) subshells are inert in this simplified analysis; the active sites are the two electrons in the \(2p\) subshell.
+
+We thus take \(k=2\) active sites with primes \(p_1=2\) and \(p_2=3\). Each site corresponds to a \(2p\) electron with local quantum numbers
+\[
+s_i \in \{\pm \tfrac{1}{2}\}, \quad \ell_i = 1, \quad m_{\ell,i} \in \{-1,0,1\}.
+\]
+
+\subsection{Multiplicity space for \(2p^2\)}
+
+The multiplicity space \(\mathcal{M}\) consists of all assignments of \((s_1, m_{\ell,1}; s_2, m_{\ell,2})\) subject to:
+\begin{itemize}
+  \item Exclusion: two electrons cannot occupy the same spin-orbital (same \(m_{\ell}\) and spin).
+  \item We restrict attention to LS-coupling states that correspond to allowed term symbols for \(p^2\).
+\end{itemize}
+
+Standard analysis shows that the allowed term symbols for \(p^2\) are \(^{3}P\), \(^{1}D\), and \(^{1}S\).[file:1] Here we focus on the \(^{3}P\) manifold, and in particular on \(^{3}P_0\).
+
+\subsection{Triplet P term and prime-labeled micro-configurations}
+
+For the triplet \(^{3}P\) term:
+\begin{itemize}
+  \item \(S=1\), so the two spins are parallel.
+  \item \(L=1\), arising from coupling the two \(\ell=1\) orbitals.
+\end{itemize}
+
+At the micro-configuration level, one can represent the triplet states in a basis of spin and orbital product states. For J-Multiplicity, we enumerate prime-labeled micro-configurations that project into the \(^{3}P_0\) term.
+
+A simple illustrative scheme:
+\begin{itemize}
+  \item Select all micro-configurations where the total \(M_S\) and \(M_L\) correspond to the \(J=0\) component of the \(^{3}P\) term under LS coupling.
+  \item For each such micro-configuration \(\mathbf{c}\), define exponents \(\alpha_i(\mathbf{c})\) as:
+    \[
+    \alpha_i(\mathbf{c}) = 
+    \begin{cases}
+      1 & \text{if } s_i \text{ aligns with total } \mathbf{S} \text{ and } m_{\ell,i} \text{ aligns with total } \mathbf{L},\\
+      0 & \text{otherwise.}
+    \end{cases}
+    \]
+\end{itemize}
+
+Then each \(\mathbf{c}\) contributes a monomial
+\[
+\Phi(\mathbf{c}) = \prod_{i=1}^2 p_i^{\alpha_i(\mathbf{c})} \in \{1,2,3,6\}.
+\]
+
+\subsection{Example J-Multiplicity for \(^{3}P_0\)}
+
+Suppose the set \(\mathcal{M}_{^{3}P_0}\) of micro-configurations contains \(N\) elements, and among them:
+\begin{itemize}
+  \item \(n_{2}\) configurations where only site \(1\) is aligned (\(\Phi=2\)).
+  \item \(n_{3}\) configurations where only site \(2\) is aligned (\(\Phi=3\)).
+  \item \(n_{6}\) configurations where both are aligned (\(\Phi=6\)).
+  \item \(n_{1}\) configurations where neither is aligned (\(\Phi=1\)).
+\end{itemize}
+
+Then:
+\[
+M_J(^{3}P_0) = N = n_1 + n_2 + n_3 + n_6,
+\]
+and
+\[
+\widetilde{M}_J(^{3}P_0) = 2^{n_2 + n_6} 3^{n_3 + n_6}.
+\]
+
+This prime factorization makes explicit how often each prime-labeled site contributes in a ``fully aligned'' way to the term. One may compare \(\widetilde{M}_J\) across different \(J\) values or different configurations to study patterns of internal organization that are invisible to the standard spectroscopic labels.
+
+\section{Reference Implementation Sketch}
+
+This section gives a schematic Python implementation for constructing and analyzing J-Multiplicity for a small configuration like \(2p^2\). It is illustrative and not optimized.
+
+\subsection{Data structures and enumeration}
+
+\begin{verbatim}
+import itertools
+from collections import Counter
+
+# Define primes for active sites
+primes = [2, 3]  # p1, p2
+
+# Possible spin and m_l values for 2p electrons
+spins = [+0.5, -0.5]
+ml_values = [-1, 0, 1]
+
+def micro_configurations():
+    """Enumerate prime-labeled micro-configurations for 2p^2."""
+    configs = []
+    for s1, ml1, s2, ml2 in itertools.product(spins, ml_values,
+                                              spins, ml_values):
+        # Exclusion: cannot occupy same spin-orbital
+        if s1 == s2 and ml1 == ml2:
+            continue
+        configs.append(((primes[0], s1, ml1),
+                        (primes[1], s2, ml2)))
+    return configs
+
+def classify_term(config):
+    """
+    Placeholder for LS-coupling classification:
+    Given a micro-configuration, return (L, S, J).
+    In a full implementation, this would use angular momentum
+    coupling, Clebsch-Gordan coefficients, etc.
+    """
+    # Here we implement a toy classification just as a stub.
+    (p1, s1, ml1), (p2, s2, ml2) = config
+    S = 1.0 if s1 == s2 else 0.0  # triplet vs singlet
+    # Very rough heuristic L, J for illustration only:
+    L = 1  # Assume P-term for this toy
+    J = 0 if S == 1.0 else 1      # Toy mapping
+    return (L, S, J)
+
+def alpha_exponents(config, term):
+    """
+    Compute alpha_i exponents for prime-structured J-Multiplicity.
+    This is a simplified alignment criterion.
+    """
+    (p1, s1, ml1), (p2, s2, ml2) = config
+    L, S, J = term
+    # For the toy model, treat 'aligned' as S=1 and spins equal
+    alpha1 = 1 if S == 1.0 and s1 > 0 else 0
+    alpha2 = 1 if S == 1.0 and s2 > 0 else 0
+    return [alpha1, alpha2]
+
+def j_multiplicity(configs, target_term):
+    """
+    Compute M_J and prime-structured multiplicity for target_term.
+    """
+    fiber = []
+    monomials = []
+    for cfg in configs:
+        term = classify_term(cfg)
+        if term == target_term:
+            fiber.append(cfg)
+            alphas = alpha_exponents(cfg, term)
+            monomial = 1
+            for p, a in zip(primes, alphas):
+                monomial *= p**a
+            monomials.append(monomial)
+    M_J = len(fiber)
+    prime_counts = Counter()
+    for m in monomials:
+        n = m
+        for p in primes:
+            count = 0
+            while n % p == 0 and n > 1:
+                n //= p
+                count += 1
+            if count:
+                prime_counts[p] += count
+    return M_J, monomials, prime_counts
+
+if __name__ == "__main__":
+    configs = micro_configurations()
+    target_term = (1, 1.0, 0)  # Toy representation of ^3P_0
+    M_J, monomials, prime_counts = j_multiplicity(configs, target_term)
+    print("M_J(^3P_0) =", M_J)
+    print("Monomials in fiber:", monomials)
+    print("Aggregate prime exponents:", prime_counts)
+\end{verbatim}
+
+This code:
+\begin{itemize}
+  \item Enumerates micro-configurations of two \(2p\) electrons.
+  \item Uses a toy term classifier and alignment rule to illustrate the J-Multiplicity counting.
+  \item Returns both the basic J-Multiplicity count and a factorization summary over the assigned primes.
+\end{itemize}
+
+A full implementation would:
+\begin{itemize}
+  \item Replace \texttt{classify\_term} with proper LS-coupling calculations.
+  \item Generalize to more electrons and different subshells.
+  \item Parameterize the choice of prime labeling and alignment exponents.
+\end{itemize}
+
+\section{Mathematical Overview and Research Directions}
+
+\subsection{Mathematical structure}
+
+The core mathematical structures introduced are:
+\begin{enumerate}
+  \item A prime-labeled multiplicity space \(\mathcal{M}\) for each electronic configuration.
+  \item A projection \(\pi: \mathcal{M} \to \mathcal{T}\) onto term labels.
+  \item Fiber counts and prime-structured invariants that define J-Multiplicity.
+  \item An energy functional \(F: \mathcal{M} \to \mathbb{R}\) whose minima reproduce Hund-like ordering.
+\end{enumerate}
+
+This fits within a general pattern of:
+\begin{itemize}
+  \item Treating physical states as orbits or fibers under group actions (here, the action of rotations and permutations).
+  \item Enriching these structures with prime-indexed labels that allow finer classification.
+\end{itemize}
+
+\subsection{Predictions and expected outcomes}
+
+Potential testable and structural outcomes include:
+\begin{itemize}
+  \item Systematic regularities in J-Multiplicity patterns (e.g.\ factorization profiles) across isoelectronic sequences.
+  \item Correlations between prime-structured J-Multiplicity and properties like response to external fields or correlation energies.
+  \item New classification schemes for term structure that may inform approximate methods in atomic or solid-state calculations.
+\end{itemize}
+
+While the present framework is constructed to reproduce known term symbols rather than to predict new spectral lines, its additional structure may guide conjectures in:
+\begin{itemize}
+  \item Artificial atoms (quantum dots) where effective degrees of freedom can be engineered.
+  \item Many-body systems where distinct prime-indexing schemes correspond to different modes or quasiparticles.
+\end{itemize}
+
+\subsection{Fastest path to validation}
+
+To validate the conceptual and practical value of J-Multiplicity, a pragmatic roadmap is:
+\begin{enumerate}
+  \item Implement the multiplicity-space and J-Multiplicity computation for small open-subshell systems (\(p^2, p^3, d^2\), etc.).
+  \item Verify that the induced energy ordering under natural choices of \(F\) reproduces Hund's rules and known term orderings.
+  \item Study patterns of J-Multiplicity across small atoms (C, N, O, F) and simple transition metals to identify stable structural signatures.
+  \item Publish these results as a formal reparametrization of LS-coupling in multiplicity-space language, with explicit comparison tables.
+\end{enumerate}
+
+\section{Claimed Concepts for Defensive Publication}
+
+This document intends to establish prior art for the following concepts, individually and in combination:
+\begin{itemize}
+  \item The notion of \emph{J-Multiplicity} as a structured invariant attached to atomic term symbols, defined via prime-labeled multiplicity spaces of micro-configurations.
+  \item The use of prime labels on electronic degrees of freedom (e.g.\ unpaired electrons in open subshells) to define multiplicity spaces for atomic and related systems.
+  \item The mapping of conventional LS-coupling and Hund's rules to optimization principles over such multiplicity spaces, with energy functionals \(F\) whose minima reproduce known term orderings.
+  \item The explicit construction of J-Multiplicity counts and prime-structured factorization patterns as invariants for states such as the carbon ground state \(^{3}P_0\).
+  \item The general research program of using J-Multiplicity patterns for classification and potential prediction of properties beyond those encoded in standard \(^{2S+1}L_J\) notation.
+\end{itemize}
+
+\section*{Mathematical Appendix: Operator Framework and Norm Bounds for J-Multiplicity}
+
+\subsection*{A. Hilbert Space Setting and Observables}
+
+We work in the standard non-relativistic electronic Hilbert space for an atom with fixed nuclear charge \(Z\) and \(N\) electrons:\footnote{See e.g.\ standard expositions on Hund's rules and LS-coupling.[web:24][web:26][web:28]}
+\[
+\mathcal{H} \;=\; \bigwedge\nolimits^N \mathcal{H}_1,
+\]
+where \(\mathcal{H}_1 = L^2(\mathbb{R}^3) \otimes \mathbb{C}^2\) is the one-electron Hilbert space including spin, and \(\bigwedge^N\) denotes antisymmetrization under particle exchange.
+
+The usual angular momentum operators act as:
+\[
+\mathbf{L} = \sum_{i=1}^N \mathbf{L}_i, \qquad
+\mathbf{S} = \sum_{i=1}^N \mathbf{S}_i, \qquad
+\mathbf{J} = \mathbf{L} + \mathbf{S},
+\]
+with
+\[
+L_i^2 = \mathbf{L}_i \cdot \mathbf{L}_i, \quad
+S_i^2 = \mathbf{S}_i \cdot \mathbf{S}_i, \quad
+J^2 = \mathbf{J} \cdot \mathbf{J}.
+\]
+On appropriate dense domains in \(\mathcal{H}\), these are essentially self-adjoint operators with pure point spectra corresponding to the quantum numbers \(L, S, J\).\footnote{See e.g.\ standard quantum mechanics texts; we only recall qualitative facts here.[web:24][web:26][web:30]}
+
+The total Hamiltonian in LS coupling can be written schematically as
+\[
+H \;=\; H_{\text{Coul}} + H_{\text{SO}},
+\]
+where \(H_{\text{Coul}}\) encodes spin-independent Coulomb interactions (kinetic + electron-nucleus + electron-electron) and \(H_{\text{SO}}\) is the spin-orbit coupling term.\footnote{Hund's rules can be justified from the interplay of spin-dependent and spin-independent terms in \(H\).[web:26][web:28]}
+
+\subsection*{B. Multiplicity-Space Projectors}
+
+Fix an electronic configuration (e.g.\ \(1s^2 2s^2 2p^2\) for carbon).\footnote{The carbon ground-state example is discussed in detail in the main text; here we abstract the structure.[file:1]} Let \(\mathcal{H}_{\text{conf}} \subset \mathcal{H}\) be the subspace of \(\mathcal{H}\) spanned by Slater determinants consistent with this configuration (up to LS-coupling). Denote the set of active one-electron sites (unpaired electrons or open-shell positions) by
+\[
+\mathcal{I} = \{1,\dots,k\},
+\]
+with \(k\) the number of active sites (e.g.\ \(k=2\) for \(2p^2\)). We assign distinct primes \(p_i\) to each \(i\in\mathcal{I}\).
+
+On \(\mathcal{H}_{\text{conf}}\), we may choose a basis of micro-configurations indexed by data
+\[
+\mathbf{c} = \big( (p_i, s_i, \ell_i, m_{\ell,i}) \big)_{i\in\mathcal{I}},
+\]
+subject to Pauli and configuration constraints (occupation numbers, antisymmetry). Let \(\{ \lvert \mathbf{c} \rangle \}\) denote such an orthonormal basis. Each basis vector is an eigenvector of the commuting set
+\[
+\{ L_i^2, S_i^2, L_{z,i}, S_{z,i} \}_{i\in\mathcal{I}}
+\]
+for appropriately chosen one-electron operators (assuming separated center-of-mass degrees where needed).
+
+Define the \emph{multiplicity-space projector}
+\[
+P_{\mathcal{M}} : \mathcal{H}_{\text{conf}} \to \mathcal{H}_{\text{conf}}
+\]
+by
+\[
+P_{\mathcal{M}} = \sum_{\mathbf{c}\in \mathcal{M}} \lvert \mathbf{c} \rangle \langle \mathbf{c} \rvert,
+\]
+where \(\mathcal{M}\) is the set of prime-labeled micro-configurations in the configuration of interest (so here \(\mathcal{M}\) is simply the full basis index set for \(\mathcal{H}_{\text{conf}}\)). This projector is the identity on \(\mathcal{H}_{\text{conf}}\) but will be useful when restricting to sub-fibers.
+
+\subsection*{C. Term Projectors and J-Multiplicity Operators}
+
+Let the set of allowed term labels for the configuration be
+\[
+\mathcal{T} = \{ \tau = (L,S,J) \}.
+\]
+For each \(\tau \in \mathcal{T}\), define the joint spectral projector
+\[
+P_\tau = P_{L,S,J} = P_{L} P_{S} P_{J}
+\]
+onto the simultaneous eigenspace of \(L^2, S^2, J^2\) with eigenvalues \(L(L+1)\hbar^2, S(S+1)\hbar^2, J(J+1)\hbar^2\). These projectors satisfy:
+\[
+P_\tau P_{\tau'} = \delta_{\tau,\tau'} P_\tau, \quad \sum_{\tau\in\mathcal{T}} P_\tau = P_{\text{conf}},
+\]
+where \(P_{\text{conf}}\) is the projector onto \(\mathcal{H}_{\text{conf}}\).
+
+Define the fiber of micro-configurations realizing term \(\tau\) as
+\[
+\mathcal{M}_\tau = \{ \mathbf{c} \in \mathcal{M} : P_\tau \lvert \mathbf{c} \rangle \neq 0 \}.
+\]
+
+We define the basic J-Multiplicity count for term \(\tau\) as:
+\[
+M_J(\tau) := \# \mathcal{M}_\tau.
+\]
+Equivalently, consider the diagonal operator
+\[
+\widehat{M}_J := \sum_{\mathbf{c} \in \mathcal{M}} \lvert \mathbf{c} \rangle \langle \mathbf{c} \rvert,
+\]
+which is the identity in this basis; then
+\[
+M_J(\tau) = \operatorname{Tr}\left( \widehat{M}_J P_\tau \right) = \operatorname{Tr}\left( P_\tau \right)
+\]
+when one counts each basis micro-configuration with multiplicity 1. This recovers the dimension of the \(\tau\)-eigenspace in the prime-labeled basis.
+
+\subsection*{D. Prime-Structured J-Multiplicity Operators}
+
+For each prime-labeled site \(i\in\mathcal{I}\), introduce a diagonal operator \(\Pi_i\) that records the contribution of site \(i\) to the J-Multiplicity structure. A simple choice is:
+\[
+\Pi_i \lvert \mathbf{c} \rangle = p_i^{\alpha_i(\mathbf{c})} \lvert \mathbf{c} \rangle,
+\]
+where \(\alpha_i(\mathbf{c})\) is an integer-valued function encoding alignment or contribution rules (e.g.\ whether the local spin aligns with total spin, whether the orbital projection aligns with the dominant \(L\), etc., as defined in the main text for specific cases).
+
+Define a composite J-Multiplicity operator for term \(\tau\):
+\[
+\widehat{\Phi}_\tau := \sum_{\mathbf{c}\in\mathcal{M}} \left( \prod_{i\in\mathcal{I}} p_i^{\alpha_i(\mathbf{c})} \right) \lvert \mathbf{c} \rangle \langle \mathbf{c} \rvert P_\tau
+= \sum_{\mathbf{c}\in\mathcal{M}_\tau} \left( \prod_{i\in\mathcal{I}} p_i^{\alpha_i(\mathbf{c})} \right) \lvert \mathbf{c} \rangle \langle \mathbf{c} \rvert.
+\]
+Then the aggregate prime-structured J-Multiplicity
+\[
+\widetilde{M}_J(\tau) = \prod_{\mathbf{c}\in\mathcal{M}_\tau} \prod_{i\in\mathcal{I}} p_i^{\alpha_i(\mathbf{c})}
+\]
+can be recovered as a (logarithmic) trace:
+\[
+\log \widetilde{M}_J(\tau)
+= \sum_{\mathbf{c}\in\mathcal{M}_\tau} \sum_{i\in\mathcal{I}} \alpha_i(\mathbf{c}) \log p_i
+= \sum_{i\in\mathcal{I}} \log p_i \cdot \operatorname{Tr}\big( \Pi_i^{(1)} P_\tau \big),
+\]
+where \(\Pi_i^{(1)}\) is the operator with eigenvalues \(\alpha_i(\mathbf{c})\) on \(\lvert \mathbf{c} \rangle\). This expresses the aggregate prime exponents as weighted traces of diagonal operators on the term subspace.
+
+\subsection*{E. Operator Norm Bounds}
+
+We now state and prove simple norm bounds for the J-Multiplicity operators under mild assumptions on the alignment exponents \(\alpha_i\).
+
+\begin{assumption}[Bounded alignment exponents]
+There exists \(A \ge 0\) such that for all micro-configurations \(\mathbf{c}\in\mathcal{M}\) and all \(i\in\mathcal{I}\),
+\[
+|\alpha_i(\mathbf{c})| \le A.
+\]
+\end{assumption}
+
+\begin{lemma}[Operator norm of site contribution operators]
+For each \(i\in\mathcal{I}\), the operator \(\Pi_i\) defined by
+\[
+\Pi_i \lvert \mathbf{c} \rangle = p_i^{\alpha_i(\mathbf{c})} \lvert \mathbf{c} \rangle
+\]
+is bounded on \(\mathcal{H}_{\text{conf}}\) with
+\[
+\|\Pi_i\|_{\text{op}} \le \max\big( p_i^{A}, p_i^{-A} \big).
+\]
+\end{lemma}
+
+\begin{proof}
+In the orthonormal basis \(\{ \lvert \mathbf{c} \rangle \}\), the operator \(\Pi_i\) is diagonal with eigenvalues \(p_i^{\alpha_i(\mathbf{c})}\). Thus the operator norm is the supremum of the absolute values of these eigenvalues:
+\[
+\|\Pi_i\|_{\text{op}} = \sup_{\mathbf{c}\in\mathcal{M}} |p_i^{\alpha_i(\mathbf{c})}|.
+\]
+By the bounded exponent assumption,
+\[
+|\alpha_i(\mathbf{c})| \le A \quad \Rightarrow \quad
+p_i^{-A} \le |p_i^{\alpha_i(\mathbf{c})}| \le p_i^{A}.
+\]
+Thus
+\[
+\|\Pi_i\|_{\text{op}} \le \max(p_i^{A}, p_i^{-A}) = p_i^{A},
+\]
+if we assume \(p_i > 1\); for primes, this always holds. This yields the stated bound.
+\end{proof}
+
+\begin{lemma}[Operator norm of composite J-Multiplicity operator]
+Let
+\[
+\widehat{\Phi} := \prod_{i\in\mathcal{I}} \Pi_i.
+\]
+Then \(\widehat{\Phi}\) is bounded with
+\[
+\|\widehat{\Phi}\|_{\text{op}} \le \prod_{i\in\mathcal{I}} p_i^{A}.
+\]
+\end{lemma}
+
+\begin{proof}
+Since all \(\Pi_i\) commute (they are diagonal in the same basis), we have
+\[
+\|\widehat{\Phi}\|_{\text{op}} = \left\| \prod_{i\in\mathcal{I}} \Pi_i \right\|_{\text{op}}
+\le \prod_{i\in\mathcal{I}} \|\Pi_i\|_{\text{op}}
+\le \prod_{i\in\mathcal{I}} p_i^{A}.
+\]
+\end{proof}
+
+\begin{corollary}[Norm bound restricted to a term subspace]
+For any term \(\tau\in\mathcal{T}\), consider the restricted operator
+\[
+\widehat{\Phi}_\tau = \widehat{\Phi} P_\tau
+\]
+acting on \(\mathcal{H}_{\text{conf}}\). Then
+\[
+\|\widehat{\Phi}_\tau\|_{\text{op}} \le \|\widehat{\Phi}\|_{\text{op}} \le \prod_{i\in\mathcal{I}} p_i^{A}.
+\]
+\end{corollary}
+
+\begin{proof}
+Using \(\|P_\tau\|_{\text{op}} = 1\) and submultiplicativity of the operator norm,
+\[
+\|\widehat{\Phi}_\tau\|_{\text{op}} = \|\widehat{\Phi} P_\tau\|_{\text{op}}
+\le \|\widehat{\Phi}\|_{\text{op}} \|P_\tau\|_{\text{op}}
+= \|\widehat{\Phi}\|_{\text{op}}.
+\]
+Then apply the previous lemma.
+\end{proof}
+
+\subsection*{F. Connection to Energy Functionals and Hund-Type Orderings}
+
+We recall that in the main text an effective energy functional \(F\) on the multiplicity space \(\mathcal{M}\) was introduced, posit that
+\[
+E(\tau) := \min_{\mathbf{c}\in\mathcal{M}_\tau} F(\mathbf{c})
+\]
+reproduces the ordering of Hund's rules (maximum \(S\), maximum \(L\), then appropriate \(J\)).[web:26][web:28][file:1] We can realize such a functional as the expectation of a bounded self-adjoint operator \(\widehat{F}\) in the micro-configuration basis.
+
+Assume:
+\begin{itemize}
+  \item \(\widehat{F}\) is diagonal in the \(\lvert \mathbf{c} \rangle\) basis, \(\widehat{F} \lvert \mathbf{c} \rangle = F(\mathbf{c}) \lvert \mathbf{c} \rangle\), with \(F(\mathbf{c}) \in \mathbb{R}\).
+  \item \(|F(\mathbf{c})| \le B\) for some uniform bound \(B\) on \(\mathcal{M}\) (this is a modeling assumption; in practice one may restrict to a finite-dimensional truncation where the bound is automatic).
+\end{itemize}
+
+\begin{lemma}[Norm bound for energy functional operator]
+Under the above assumptions, \(\widehat{F}\) is bounded with
+\[
+\|\widehat{F}\|_{\text{op}} \le B.
+\]
+\end{lemma}
+
+\begin{proof}
+As with the \(\Pi_i\), \(\widehat{F}\) is diagonal in an orthonormal basis with eigenvalues \(F(\mathbf{c})\). Thus
+\[
+\|\widehat{F}\|_{\text{op}} = \sup_{\mathbf{c}\in\mathcal{M}} |F(\mathbf{c})| \le B.
+\]
+\end{proof}
+
+Given term projectors \(P_\tau\), define the term energy operator
+\[
+\widehat{E}_\tau := P_\tau \widehat{F} P_\tau.
+\]
+Its spectral minimum on \(P_\tau \mathcal{H}_{\text{conf}}\) is \(E(\tau)\).
+
+\begin{lemma}[Ordering stability under bounded perturbations]
+Let \(\widehat{F}_0\) be a baseline functional whose minima on each term subspace \(P_\tau\) reproduce standard Hund ordering (e.g.\ derived from a model Hamiltonian consistent with Coulomb and spin-orbit interactions).[web:26][web:28] Let \(\widehat{G}\) be a bounded perturbation with \(\|\widehat{G}\|_{\text{op}} \le \delta\). If
+\[
+\min_{\psi\in P_{\tau_1}\mathcal{H}_{\text{conf}},\,\|\psi\|=1} \langle \psi, \widehat{F}_0 \psi \rangle
++
+\delta
+<
+\min_{\psi\in P_{\tau_2}\mathcal{H}_{\text{conf}},\,\|\psi\|=1} \langle \psi, \widehat{F}_0 \psi \rangle
+-
+\delta,
+\]
+then the ordering \(E(\tau_1) < E(\tau_2)\) is preserved for \(\widehat{F} = \widehat{F}_0 + \widehat{G}\).
+\end{lemma}
+
+\begin{proof}
+For normalized \(\psi\in P_{\tau_1}\mathcal{H}_{\text{conf}}\),
+\[
+\langle \psi, \widehat{F} \psi \rangle
+= \langle \psi, \widehat{F}_0 \psi \rangle + \langle \psi, \widehat{G} \psi \rangle
+\le \langle \psi, \widehat{F}_0 \psi \rangle + \|\widehat{G}\|_{\text{op}}
+\le \min_{\psi_1} \langle \psi_1, \widehat{F}_0 \psi_1 \rangle + \delta,
+\]
+and similarly for \(\tau_2\),
+\[
+\langle \psi, \widehat{F} \psi \rangle
+\ge \langle \psi, \widehat{F}_0 \psi \rangle - \|\widehat{G}\|_{\text{op}}
+\ge \min_{\psi_2} \langle \psi_2, \widehat{F}_0 \psi_2 \rangle - \delta
+\]
+for all normalized \(\psi\in P_{\tau_2}\mathcal{H}_{\text{conf}}\). Taking minima over \(\psi\) in each subspace yields:
+\[
+E(\tau_1) \le \min_{\psi_1} \langle \psi_1, \widehat{F}_0 \psi_1 \rangle + \delta,\quad
+E(\tau_2) \ge \min_{\psi_2} \langle \psi_2, \widehat{F}_0 \psi_2 \rangle - \delta.
+\]
+By the assumed inequality, we conclude \(E(\tau_1) < E(\tau_2)\).
+\end{proof}
+
+This lemma implies that one may add bounded prime-structured perturbations (e.g.\ via \(\widehat{\Phi}\) or functions thereof) to a baseline energy functional while preserving the standard Hund ordering, provided that the ordering gaps exceed twice the operator norm of the perturbation. This legitimizes the introduction of J-Multiplicity-based correction terms in the energy without contradicting known spectroscopic orderings, so long as the corrections are sufficiently small in operator norm.
+
+\subsection*{G. Specialization to Carbon Ground State}
+
+For carbon, with configuration \(1s^2 2s^2 2p^2\) and active sites \(\mathcal{I} = \{1,2\}\) carrying primes \(p_1 = 2\), \(p_2 = 3\), the \(2p^2\) configuration admits terms \(^{3}P\), \(^{1}D\), and \(^{1}S\).[file:1][web:24][web:26] Hund's rules predict the ground state to be \(^{3}P_0\), i.e.\ maximum \(S\), \(L =1\), and smallest \(J\).[file:1][web:26][web:28]
+
+In this case:
+\begin{itemize}
+  \item \(\mathcal{T} = \{ ^3P_0,\, ^3P_1,\, ^3P_2,\, ^1D_2,\, ^1S_0 \}\).
+  \item Each \(P_\tau\) projects onto a finite-dimensional subspace of \(\mathcal{H}_{\text{conf}}\).
+  \item The J-Multiplicity operators \(\Pi_1, \Pi_2\) and their product \(\widehat{\Phi}\) are finite-dimensional diagonal operators with norms bounded by Lemma 2.
+\end{itemize}
+
+Let \(\widehat{F}_0\) be any effective Hamiltonian on \(\mathcal{H}_{\text{conf}}\) whose spectral minima over the \(P_\tau\) subspaces reproduce the known level ordering (e.g.\ derived from a fit to experimental carbon spectra or from ab initio calculations).[web:24][web:26][web:28] Let \(\widehat{G} = \epsilon \widehat{\Phi}\) for some \(\epsilon \in \mathbb{R}\). Then
+\[
+\|\widehat{G}\|_{\text{op}} \le |\epsilon| \, \|\widehat{\Phi}\|_{\text{op}}
+\le |\epsilon| \, p_1^{A} p_2^{A}
+\]
+for the chosen alignment exponent bound \(A\). If the gap between the ground-state energy \(E_0(^3P_0)\) and the first excited term's energy exceeds \(2 |\epsilon| p_1^{A} p_2^{A}\), Lemma 3 guarantees that the ground state remains \(^{3}P_0\) in the presence of the J-Multiplicity correction.
+
+This shows explicitly how prime-structured multiplicity corrections can be incorporated as bounded operators whose impact on term ordering is quantitatively controlled by their operator norm.
+
+\subsection*{H. Summary of Operator-Norm Results}
+
+The above lemmas and corollaries establish:
+\begin{itemize}
+  \item Boundedness of prime-structured J-Multiplicity operators under a simple exponent bound.
+  \item Explicit operator norm estimates in terms of the assigned primes and exponent bounds.
+  \item Stability of Hund-type term orderings under bounded J-Multiplicity-based perturbations of the effective energy functional, provided spectral gaps exceed twice the perturbation norm.
+\end{itemize}
+
+These results provide a rigorous operator-theoretic underpinning for the heuristic use of J-Multiplicity invariants as corrections or refinements to standard LS-coupling models, ensuring consistency with established atomic structure within quantifiable bounds.[web:24][web:26][web:28][file:1]
+
+
+\nocite{*}
+\bibliographystyle{unsrt}  
+\bibliography{references}
+\end{document}

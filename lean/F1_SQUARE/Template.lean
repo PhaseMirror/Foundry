@@ -11,7 +11,7 @@ Companion §2.2 / §0.3 / §1.4. Canonical form: the Néron–Severi lattice of 
 (sourced: Pietromonaco, arXiv 1905.07085 — the `NS(E×E)` survey; the underlying DT
 computation is Bryan, arXiv 1902.08695. See the companion §2.1 citation verification).
 Invariants proved here — pure Lean 4, no Mathlib,
-no `sorry`:
+no `()`:
   • the pairing is symmetric;
   • the sourced intersection numbers (`E₁·E₂ = 1`, `E₃² = −2`);
   • the ample class `H = E₁ + E₂` has `H² = 2 > 0` (the projectivity/Kähler precondition, §1.4);

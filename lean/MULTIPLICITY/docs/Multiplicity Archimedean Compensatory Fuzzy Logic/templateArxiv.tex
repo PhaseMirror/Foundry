@@ -1,0 +1,742 @@
+\documentclass[11pt]{article}
+\usepackage{amsmath, amssymb, amsthm, geometry}
+\geometry{margin=1in}
+
+\title{M-ACFL: Multiplicity Archimedean Compensatory Fuzzy Logic\\
+\large Formal Specification and Defensive Publication}
+\author{Multiplicity Foundation}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We introduce M-ACFL (Multiplicity Archimedean Compensatory Fuzzy Logic), a prime-indexed extension of the Archimedean Compensatory Fuzzy Logic (ACFL) engine deployed within the Phase Mirror health-state assessment platform.\,[file:1] 
+M-ACFL replaces scalar weights in geometric-mean-based compensatory logic with multiplicity weights derived from prime-labeled biosensor modules while preserving veto behavior, monotonicity, and commutativity.\,[file:1][web:29][web:43] 
+A tunable blending parameter interpolates between standard and inverted forms, yielding a family of risk postures suitable for regulated Software as a Medical Device (SaMD) applications.\,[file:1] 
+We present the mathematical specification, relate M-ACFL to classical Archimedean t-norm families (e.g., Frank), provide a reference implementation sketch, and outline a validation protocol designed to address patent obviousness and clinical enablement concerns.
+\end{abstract}
+
+\section{Executive Summary}
+
+Archimedean Compensatory Fuzzy Logic (ACFL) serves as the explainability and decision-logic engine of the Intrinsica platform, transforming raw biosensor streams (HRV, bioimpedance, SpO\textsubscript{2}, skin temperature, PPG, acceleration) into interpretable linguistic health states via trapezoidal membership functions and geometric-mean-based compensatory aggregation.\,[file:1] 
+ACFL already includes a conservative blending mechanism (I-ACFL) that interpolates between standard and inverted operators, with factory presets (optimistic, balanced, conservative, clinical) and a mature test suite exceeding 600 unit and integration tests across operators, membership functions, counterfactual reasoning, and pipeline integration.\,[file:1] 
+
+However, the original ACFL patent position exhibits three vulnerabilities: (1) a lack of specificity regarding the underlying Archimedean t-norm family, (2) absence of comparative performance data relative to both classical fuzzy operators and modern machine learning baselines, and (3) no clinical validation data supporting enablement under 35~U.S.C.~\S112 and regulatory expectations for SaMD.\,[file:1][web:12] 
+M-ACFL directly addresses (1) and structurally prepares for (2) and (3) by:
+
+\begin{itemize}
+  \item Introducing \emph{prime-labeled multiplicity profiles} for each biosensor channel, with weights computed from prime multiplicities via a fixed positive mapping $\gamma$.
+  \item Defining a prime-weighted geometric mean aggregator that preserves veto behavior (any zero input yields zero output) while allowing domain experts to encode causal relevance in the multiplicity structure.
+  \item Retaining the I-ACFL blending parameter as a tunable risk-control dial, now operating over multiplicity-weighted operators.
+  \item Anchoring the construction in the Archimedean framework used in ACFL (e.g., Frank-family t-norms), yet explicitly positioning M-ACFL as a \emph{multi-ary compensatory operator} rather than insisting on strict binary associativity.
+\end{itemize}
+
+This document acts as both a formal specification and a defensive publication: it places core M-ACFL ideas (prime-weighted geometric aggregation, multiplicity-based blending, and their integration into a biosensor health assessment pipeline) into the public domain, constraining future patent claims while strengthening the specificity and non-obviousness of any derivative filings.
+
+\section{Background}
+
+\subsection{ACFL and Intrinsica}
+
+In Intrinsica, ACFL converts multi-modal biosensor streams into fuzzy linguistic categories (e.g., CRITICALLY\_LOW, LOW, NORMAL, HIGH, CRITICALLY\_HIGH) via trapezoidal membership functions and then fuses them using compensatory operators that avoid the extremism of minimum and maximum t-norm/t-conorm behavior.\,[file:1] 
+Minimum (G\"odel t-norm) discards all evidence except the worst case, while maximum discards all but the best; ACFL instead uses a geometric-mean-based logic that averages across channels while preserving the veto axiom (if any input is zero, the output is zero).\,[file:1][web:34] 
+
+The engine is implemented in two main packages: a core \texttt{dna\_key} module containing operators, membership functions, counterfactual analysis, and compliance logic, and an \texttt{hcalc} module integrating ACFL into the full health-calculator pipeline with shadow validation metrics (e.g., JSD, Jaccard, cosine similarity) and Go/No-Go gating.\,[file:1] 
+This software stack has hundreds of passing tests and explicit architectural layering for operators, membership, counterfactuals, blending, pipeline wiring, and shadow comparison.\,[file:1] 
+
+\subsection{Archimedean t-norms and compensatory aggregation}
+
+Continuous Archimedean t-norms admit additive generators $f$ such that
+\[
+T(x,y) = f^{-1}\big(f(x) + f(y)\big),
+\]
+with $f$ strictly decreasing on $[0,1]$, $f(1)=0$, and $f(0)$ possibly $+\infty$.\,[web:29][web:34][web:36] 
+The Frank family is a standard example, parametrized such that product, {\L}ukasiewicz, and minimum t-norms arise as limit cases.\,[web:20][web:26][web:34] 
+
+Geometric means are closely related to product t-norms and form natural compensatory aggregators: the (unweighted) geometric mean
+\[
+G(x_1,\dots,x_n) = \left(\prod_{i=1}^n x_i\right)^{1/n}
+\]
+preserves veto (if any $x_i = 0$ then $G=0$), is monotone in each argument, and is idempotent on constant vectors.\,[web:30][web:43] 
+Weighted geometric means introduce positive weights $w_i$ to encode differentiated influence:
+\[
+G_w(\mathbf{x}) = \prod_{i=1}^n x_i^{w_i / \sum_j w_j}.
+\]
+Such operators are well-studied and retain continuity, monotonicity, and symmetry when weights are fixed.\,[web:37][web:43] 
+
+M-ACFL leverages this structure but replaces arbitrary scalar weights by multiplicity weights derived from prime-labeled profiles tied to each biosensor channel, bridging ACFL and Multiplicity Theory.
+
+\section{M-ACFL: Formal Mathematical Overview}
+
+\subsection{Multiplicity profiles and weights}
+
+Let $I = \{1,\dots,n\}$ index biosensor channels. 
+For each $i \in I$:
+
+\begin{itemize}
+  \item $x_i \in [0,1]$ is the fuzzified membership degree of channel $i$, produced by the ACFL trapezoidal membership functions.\,[file:1]
+  \item $M_i$ is a finite multiset of primes
+  \[
+  M_i = \{p_{i1}^{k_{i1}},\dots,p_{im_i}^{k_{im_i}}\},
+  \]
+  where $p_{ij}$ are primes and $k_{ij} \in \mathbb{N}$ are multiplicities.
+\end{itemize}
+
+Let $\mathcal{P} = \bigcup_{i} \{p\mid p\text{ appears in }M_i\}$ and fix a strictly positive mapping
+\[
+\gamma : \mathcal{P} \to (0,\infty).
+\]
+We then define the \emph{multiplicity weight} of channel $i$ as
+\begin{equation}
+\omega_i \;=\; \sum_{p \in M_i} k_{i,p}\,\gamma(p),
+\label{eq:omega}
+\end{equation}
+with $k_{i,p}=0$ when $p$ does not appear in $M_i$.
+By construction, $\omega_i > 0$ whenever $M_i$ is non-empty and $\gamma(p)>0$ for all $p$.
+
+\subsection{Prime-weighted geometric conjunction}
+
+\paragraph{Definition 3.1 (M-ACFL conjunction).}
+Let $\mathbf{x} = (x_1,\dots,x_n)$ and let $\omega_i$ be given by \eqref{eq:omega}. 
+The M-ACFL conjunction operator $C_{\text{M-ACFL}}$ is defined on the finite multiset of labeled inputs $\{(x_i,M_i)\}_{i=1}^n$ by
+\begin{equation}
+C_{\text{M-ACFL}}(\mathbf{x}) =
+\begin{cases}
+0, & \text{if any } x_i = 0, \\[4pt]
+\left(\displaystyle\prod_{i=1}^n x_i^{\omega_i}\right)^{\frac{1}{\sum_{i=1}^n \omega_i}}, & \text{otherwise.}
+\end{cases}
+\label{eq:m-acfl-conj}
+\end{equation}
+
+\noindent
+This is a weighted geometric mean with weights determined by the prime multiplicity profiles of each channel, and it preserves the veto axiom by explicit case selection.\,[file:1][web:30][web:43] 
+
+\paragraph{Special case (equal weights).}
+If $M_i$ are chosen such that all $\omega_i$ are equal, then $C_{\text{M-ACFL}}$ reduces to the standard geometric mean
+\[
+C_{\text{M-ACFL}}(\mathbf{x}) = \left(\prod_{i=1}^n x_i\right)^{1/n},
+\]
+which recovers the existing geometric-mean-based compensatory logic deployed in ACFL.\,[file:1][web:43] 
+
+\subsection{Disjunction, inversion, and blending}
+
+\paragraph{Definition 3.2 (M-ACFL disjunction).}
+The disjunction operator $D_{\text{M-ACFL}}$ is given by De Morgan duality:
+\begin{equation}
+D_{\text{M-ACFL}}(\mathbf{x}) \;=\; 1 - C_{\text{M-ACFL}}(1 - x_1,\dots,1 - x_n).
+\label{eq:m-acfl-disj}
+\end{equation}
+
+\paragraph{Definition 3.3 (Inverted M-ACFL conjunction).}
+Define the inverted conjunction
+\begin{equation}
+C_{\text{M-ACFL}}^{\text{inv}}(\mathbf{x}) \;=\; 1 - C_{\text{M-ACFL}}(1 - x_1,\dots,1 - x_n).
+\label{eq:m-acfl-inv}
+\end{equation}
+This mirrors the inverted form I-ACFL already used in Intrinsica to parameterize conservative vs optimistic behavior.\,[file:1] 
+
+\paragraph{Definition 3.4 (Blended M-ACFL).}
+For a blending parameter $c \in [0,1]$, define
+\begin{equation}
+C_{\text{blend}}(\mathbf{x}; c) 
+\;=\;
+(1 - c)\,C_{\text{M-ACFL}}(\mathbf{x}) \;+\; c\,C_{\text{M-ACFL}}^{\text{inv}}(\mathbf{x}).
+\label{eq:m-acfl-blend}
+\end{equation}
+\begin{itemize}
+  \item $c = 0$ yields the standard M-ACFL conjunction.
+  \item $c = 1$ yields the inverted form.
+  \item Intermediate $c$ provide a continuum of conservative postures, as already exploited in I-ACFL presets.\,[file:1]
+\end{itemize}
+
+\subsection{Relation to Archimedean t-norms}
+
+ACFL makes extensive use of Archimedean t-norms (e.g., Frank family) and quasi-arithmetic means.\,[file:1][web:20][web:29][web:34] 
+Let $T$ denote a continuous Archimedean t-norm with additive generator $f$:
+\[
+T(x,y) = f^{-1}(f(x)+f(y)),
+\]
+where $f$ is strictly decreasing, $f(1)=0$, and $f(0)$ is finite or $+\infty$.\,[web:29][web:34][web:36] 
+The product t-norm $T_P(x,y)=xy$ admits $f(x)=-\log x$ as a generator (up to scaling), and the associated multi-ary extension is the geometric mean.\,[web:29][web:34][web:36] 
+
+\paragraph{Positioning M-ACFL.}
+M-ACFL does not claim that $C_{\text{M-ACFL}}$ is itself generated by a \emph{single} scalar additive generator $f$ when prime-dependent weights $\omega_i$ vary across coordinates. 
+Instead, it is positioned as:
+\begin{itemize}
+  \item An \emph{Archimedean-inspired compensatory operator}, 
+  \item Which reduces to a product-family t-norm based geometric mean in the equal-weight limit,
+  \item And preserves key t-norm-like axioms (commutativity, monotonicity, veto) in the multi-ary setting.\,[web:29][web:34]
+\end{itemize}
+This is sufficient for continuity with the existing ACFL operator calculus while enabling a richer multiplicity structure.
+
+\subsection{Axioms and properties}
+
+Assume throughout that $\omega_i>0$ for all $i$.
+
+\paragraph{Proposition 4.1 (Commutativity).}
+For any permutation $\pi$ of $\{1,\dots,n\}$,
+\[
+C_{\text{M-ACFL}}(x_1,\dots,x_n) = C_{\text{M-ACFL}}(x_{\pi(1)},\dots,x_{\pi(n)}),
+\]
+when multiplicity profiles $M_i$ (and thus $\omega_i$) travel with $x_i$.
+
+\emph{Proof sketch.} 
+The product $\prod x_i^{\omega_i}$ and sum $\sum \omega_i$ are both invariant under index permutations, hence so is the weighted geometric mean.\,[web:30][web:43] 
+\qed
+
+\paragraph{Proposition 4.2 (Monotonicity).}
+If $x_i \le y_i$ for all $i$, then
+\[
+C_{\text{M-ACFL}}(\mathbf{x}) \le C_{\text{M-ACFL}}(\mathbf{y}).
+\]
+
+\emph{Proof sketch.}
+For $x_i \in [0,1]$ and $\omega_i>0$, the function $x_i \mapsto x_i^{\omega_i}$ is non-decreasing. 
+The product of non-decreasing functions is non-decreasing in each coordinate, and raising to the positive power $1/\sum \omega_i$ preserves monotonicity.\,[web:30][web:37][web:43] 
+\qed
+
+\paragraph{Proposition 4.3 (Veto property).}
+If any $x_i = 0$, then $C_{\text{M-ACFL}}(\mathbf{x}) = 0$.
+
+\emph{Proof.}
+This follows directly from the case definition in \eqref{eq:m-acfl-conj}. 
+Alternatively, if $x_i=0$, the product includes $0^{\omega_i}=0$ and thus the geometric mean is $0$.\,[file:1][web:30] 
+\qed
+
+\paragraph{Proposition 4.4 (Idempotence on constants).}
+For any $t \in [0,1]$,
+\[
+C_{\text{M-ACFL}}(t,\dots,t) = t.
+\]
+
+\emph{Proof.}
+For constant inputs, $\prod t^{\omega_i} = t^{\sum \omega_i}$ and raising to $1/\sum\omega_i$ yields $t$.\,[web:30][web:43] 
+\qed
+
+\paragraph{Multi-ary associativity.}
+M-ACFL is defined as an operator on finite multisets of labeled inputs, rather than via repeated binary composition. 
+Aggregation over the union of disjoint multisets $A$ and $B$ is defined by a single application of \eqref{eq:m-acfl-conj} to all elements in $A\cup B$. 
+This avoids the need for classical binary associativity while faithfully modeling the intended semantics: simultaneous fusion of a set of biosensor readings.\,[file:1][web:34] 
+
+\section{Reference Implementation (Python-like Pseudocode)}
+
+The following snippet illustrates how M-ACFL can be implemented in a codebase similar to Intrinsica's \texttt{operators.py}, using a mapping from biosensor channels to prime multisets and a fixed $\gamma$.
+
+\begin{verbatim}
+from math import log, exp
+
+def gamma_prime(p):
+    # Example choice: strictly positive, monotone in p
+    return log(p + 1.0)
+
+def multiplicity_weight(M_i):
+    """
+    M_i: list of (prime, multiplicity) pairs, e.g. [(2,1), (5,2)]
+    """
+    return sum(k * gamma_prime(p) for p, k in M_i)
+
+def m_acfl_conj(memberships, multiplicity_profiles):
+    """
+    memberships: list or array of x_i in [0, 1]
+    multiplicity_profiles: list of M_i for each i
+    """
+    assert len(memberships) == len(multiplicity_profiles)
+    # Veto
+    if any(x <= 0.0 for x in memberships):
+        return 0.0
+
+    omegas = [multiplicity_weight(M_i) for M_i in multiplicity_profiles]
+    sum_omega = sum(omegas)
+    if sum_omega <= 0.0:
+        # Degenerate; fall back to unweighted geometric mean
+        prod_term = 1.0
+        for x in memberships:
+            prod_term *= x
+        return prod_term ** (1.0 / len(memberships))
+
+    prod_term = 1.0
+    for x, w in zip(memberships, omegas):
+        prod_term *= x ** w
+
+    return prod_term ** (1.0 / sum_omega)
+
+def m_acfl_conj_inv(memberships, multiplicity_profiles):
+    one_minus = [1.0 - x for x in memberships]
+    return 1.0 - m_acfl_conj(one_minus, multiplicity_profiles)
+
+def m_acfl_blend(memberships, multiplicity_profiles, c):
+    """
+    c in [0, 1]: blending parameter between standard and inverted form
+    """
+    c = max(0.0, min(1.0, c))
+    base = m_acfl_conj(memberships, multiplicity_profiles)
+    inv = m_acfl_conj_inv(memberships, multiplicity_profiles)
+    return (1.0 - c) * base + c * inv
+\end{verbatim}
+
+This code is compatible with ACFL's existing architecture: it can be wired into the operator layer, then exercised by existing test harnesses and integrated into shadow validation pipelines.\,[file:1] 
+
+\section{Factory Presets and Clinical Postures}
+
+Factory presets are specified by:
+\begin{itemize}
+  \item A choice of prime multiset $M_i$ for each biosensor channel $i$.
+  \item A fixed mapping $\gamma$ (e.g., $\gamma(p) = \log(p+1)$).
+  \item A blending parameter $c$.
+\end{itemize}
+
+An example configuration for a cardiorespiratory deterioration use case:
+
+\begin{center}
+\begin{tabular}{l l l}
+\hline
+\textbf{Preset} & \textbf{Blend $c$} & \textbf{Qualitative behavior of $\boldsymbol{\omega}$} \\
+\hline
+Optimistic  & $0.25$ & Down-weight noisy channels, mild veto \\
+Balanced    & $0.50$ & Moderate, no strong veto dominance \\
+Conservative& $0.75$ & Up-weight SpO$_2$ and HRV risk primes \\
+Clinical    & $0.90$ & Strong veto, inverted emphasis on critical channels \\
+\hline
+\end{tabular}
+\end{center}
+
+These presets are intended to be pre-specified and fixed per indication, enabling clear documentation in SaMD submissions and reducing the risk of post-hoc tuning.\,[file:1][web:12] 
+
+\section{Validation Protocol (Obviousness and Enablement)}
+
+To address obviousness (35~U.S.C.~\S103) and enablement/support (\S112), we outline a two-phase validation program tailored to M-ACFL.
+
+\subsection{Phase A: Synthetic and Public Benchmark Comparison}
+
+\paragraph{Goals.}
+\begin{itemize}
+  \item Fix a concrete operator family (M-ACFL with specified $\gamma$ and $M_i$).
+  \item Compare against standard operators (min, max, product t-norm, unweighted geometric mean) and basic ML models on synthetic and public data.
+\end{itemize}
+
+\paragraph{Datasets.}
+\begin{itemize}
+  \item \emph{Synthetic:} Random vectors in $[0,1]^6$ with scripted conflict patterns (one channel low, others high) and known oracle behavior (e.g., target geometric mean of a subset).
+  \item \emph{Public biosignal:} Reconstructed fuzzy memberships from HRV, SpO$_2$, and temperature derived from datasets such as MIMIC-III or similar physiological repositories.\,[web:11][web:12]
+\end{itemize}
+
+\paragraph{Comparators.}
+\begin{itemize}
+  \item Min (G\"odel) and max t-norm/t-conorm.
+  \item Product t-norm and unweighted geometric mean.
+  \item Scalar-weighted ACFL geometric mean (baseline).
+  \item Simple ML models (e.g., random forest, gradient boosting) trained on the fuzzy inputs.
+\end{itemize}
+
+\paragraph{Metrics.}
+\begin{itemize}
+  \item Mean-squared error vs oracle on synthetic tasks.
+  \item Veto violations and monotonicity checks.
+  \item For public data with labels: AUROC, sensitivity/specificity, and intervention concordance metrics analogous to ACFL shadow validation (e.g., JSD, Jaccard, cosine similarity).\,[file:1][web:12]
+\end{itemize}
+
+Demonstrating that M-ACFL offers quantifiable benefits on conflict scenarios (e.g., improved detection of clinically dangerous low values without over-reacting to noise) supports non-obviousness over prior geometric and Archimedean constructions.\,[web:20][web:34] 
+
+\subsection{Phase B: Focused Clinical Feasibility Study}
+
+\paragraph{Goal.}
+Generate preliminary clinical evidence that M-ACFL is safe, plausible, and clinically useful for a specific indication (e.g., post-operative cardiorespiratory deterioration, COPD exacerbation detection).
+
+\paragraph{Design.}
+\begin{itemize}
+  \item Prospective study, $N \approx 30$--$50$ patients in a single indication.
+  \item Continuous or high-frequency recording of non-invasive biosensors (HRV, SpO$_2$, temperature, PPG, accelerometry) for 48--72 hours per subject.
+  \item Expert panel annotations of clinical deterioration events as ground truth.
+\end{itemize}
+
+\paragraph{Arms.}
+\begin{itemize}
+  \item M-ACFL with 2--3 pre-specified presets $(c,\boldsymbol{\omega})$.
+  \item Current ACFL (scalar-weight geometric mean).
+  \item A simple threshold rule (e.g., SpO$_2$ cutoffs).
+  \item A basic ML model (e.g., gradient boosting) as a black-box comparator.\,[web:12]
+\end{itemize}
+
+\paragraph{Endpoints.}
+\begin{itemize}
+  \item Primary: AUROC for event prediction, sensitivity at fixed specificity.
+  \item Secondary: intervention concordance, plausibility of counterfactual explanations as rated by clinicians.
+\end{itemize}
+
+Such a study yields a concise feasibility report that can be attached to SaMD submissions and used to support enablement claims in patent prosecution.
+
+\section{Discussion and Defensive Publication Scope}
+
+The contributions of M-ACFL that this document places into the public domain include:
+
+\begin{itemize}
+  \item The explicit use of prime-labeled multiplicity profiles $M_i$ for biosensor channels, with weights $\omega_i$ defined as in \eqref{eq:omega}.
+  \item The prime-weighted geometric conjunction operator \eqref{eq:m-acfl-conj} combined with an inverted dual and blend parameter \eqref{eq:m-acfl-inv}--\eqref{eq:m-acfl-blend}.
+  \item The integration of these operators into an ACFL-style architecture with linguistic memberships, counterfactual analysis, and pipeline shadow validation.\,[file:1]
+  \item The proposed two-phase validation protocol explicitly targeting obviousness and enablement for health-state assessment in SaMD contexts.\,[file:1][web:12]
+\end{itemize}
+
+By documenting these structures, we narrow the space of novel claims available to third parties while clarifying the specific mathematical assumptions and properties of the M-ACFL operator family.
+
+\appendix
+\section*{Mathematical Appendix: M-ACFL Properties and Bounds}
+
+\section{Preliminaries}
+
+We recall the M-ACFL (Multiplicity-Weighted Archimedean Compensatory Fuzzy Logic) conjunction operator introduced in the main text.[file:1] 
+Let $I = \{1,\dots,n\}$ index biosensor channels, and for each $i \in I$:
+
+\begin{itemize}
+  \item $x_i \in [0,1]$ is the fuzzified membership of channel $i$.
+  \item $M_i = \{p_{i1}^{k_{i1}},\dots,p_{im_i}^{k_{im_i}}\}$ is a finite multiset of primes.
+  \item $\gamma : \mathcal{P} \to (0,\infty)$ is a fixed strictly positive function on the set $\mathcal{P}$ of primes used in all $M_i$.
+\end{itemize}
+
+We define the multiplicity weight
+\begin{equation}
+\omega_i = \sum_{p \in M_i} k_{i,p}\,\gamma(p) > 0,
+\label{eq:omega-app}
+\end{equation}
+where $k_{i,p}=0$ if $p$ does not appear in $M_i$.
+Let $\boldsymbol{\omega} = (\omega_1,\dots,\omega_n)$ and $W = \sum_{i=1}^n \omega_i$.
+
+\subsection{M-ACFL conjunction and related operators}
+
+\begin{definition}[M-ACFL conjunction]
+For $\mathbf{x} = (x_1,\dots,x_n) \in [0,1]^n$ define
+\begin{equation}
+C_{\mathrm{M}}(\mathbf{x}) =
+\begin{cases}
+0, & \text{if any } x_i = 0, \\[4pt]
+\left(\displaystyle\prod_{i=1}^n x_i^{\omega_i}\right)^{1/W}, & \text{otherwise.}
+\end{cases}
+\label{eq:m-acfl-conj-app}
+\end{equation}
+\end{definition}
+
+\begin{definition}[M-ACFL disjunction and inverted form]
+The M-ACFL disjunction $D_{\mathrm{M}}$ and inverted conjunction $C_{\mathrm{M}}^{\mathrm{inv}}$ are defined by
+\begin{align}
+D_{\mathrm{M}}(\mathbf{x}) &= 1 - C_{\mathrm{M}}(1 - x_1,\dots,1 - x_n), \label{eq:m-acfl-disj-app} \\
+C_{\mathrm{M}}^{\mathrm{inv}}(\mathbf{x}) &= 1 - C_{\mathrm{M}}(1 - x_1,\dots,1 - x_n).
+\label{eq:m-acfl-inv-app}
+\end{align}
+\end{definition}
+
+\begin{definition}[Blended M-ACFL]
+For $c \in [0,1]$, the blended M-ACFL operator is
+\begin{equation}
+C_{\mathrm{blend}}(\mathbf{x};c) = (1-c)\,C_{\mathrm{M}}(\mathbf{x}) + c\,C_{\mathrm{M}}^{\mathrm{inv}}(\mathbf{x}).
+\label{eq:m-acfl-blend-app}
+\end{equation}
+\end{definition}
+
+The following sections provide explicit proofs of the key algebraic properties of $C_{\mathrm{M}}$ and derive basic norm bounds and Lipschitz-type estimates.
+
+\section{Algebraic Properties of $C_{\mathrm{M}}$}
+
+\subsection{Commutativity (symmetry)}
+
+\begin{proposition}[Commutativity]
+Let $\pi$ be any permutation of $\{1,\dots,n\}$. 
+Assuming that the multiplicity profiles $M_i$ (and thus $\omega_i$) move with the associated $x_i$, we have
+\[
+C_{\mathrm{M}}(x_1,\dots,x_n) = C_{\mathrm{M}}(x_{\pi(1)},\dots,x_{\pi(n)}).
+\]
+\end{proposition}
+
+\begin{proof}
+If any $x_i=0$, both sides are $0$ by definition.
+Otherwise, by \eqref{eq:m-acfl-conj-app},
+\[
+C_{\mathrm{M}}(x_1,\dots,x_n)
+= \left(\prod_{i=1}^n x_i^{\omega_i}\right)^{1/W}.
+\]
+A permutation $\pi$ simply reorders the factors and their exponents:
+\[
+\prod_{i=1}^n x_i^{\omega_i}
+= \prod_{i=1}^n x_{\pi(i)}^{\omega_{\pi(i)}},
+\quad
+\sum_{i=1}^n \omega_i
+= \sum_{i=1}^n \omega_{\pi(i)}.
+\]
+Therefore,
+\[
+C_{\mathrm{M}}(x_{\pi(1)},\dots,x_{\pi(n)})
+= \left(\prod_{i=1}^n x_{\pi(i)}^{\omega_{\pi(i)}}\right)^{1/W}
+= C_{\mathrm{M}}(x_1,\dots,x_n).
+\]
+\end{proof}
+
+\subsection{Monotonicity}
+
+\begin{proposition}[Monotonicity]
+If $\mathbf{x}, \mathbf{y} \in [0,1]^n$ satisfy $x_i \le y_i$ for all $i$, then
+\[
+C_{\mathrm{M}}(\mathbf{x}) \le C_{\mathrm{M}}(\mathbf{y}).
+\]
+\end{proposition}
+
+\begin{proof}
+If any $x_i = 0$, then $C_{\mathrm{M}}(\mathbf{x}) = 0 \le C_{\mathrm{M}}(\mathbf{y})$, since $C_{\mathrm{M}}(\mathbf{y}) \ge 0$ by definition. 
+Hence assume $x_i>0$ for all $i$ (and thus $y_i>0$).
+
+Consider the function $f_i(t) = t^{\omega_i}$ on $[0,1]$ with $\omega_i>0$. 
+Then $f_i$ is nondecreasing since $f_i'(t) = \omega_i t^{\omega_i - 1} \ge 0$. 
+Thus, $x_i \le y_i$ implies $x_i^{\omega_i} \le y_i^{\omega_i}$. 
+Multiplying over $i$ yields
+\[
+\prod_{i=1}^n x_i^{\omega_i} \le \prod_{i=1}^n y_i^{\omega_i}.
+\]
+Since $W=\sum_i \omega_i>0$, raising both sides to the power $1/W$ preserves order:
+\[
+\left(\prod_{i=1}^n x_i^{\omega_i}\right)^{1/W}
+\le
+\left(\prod_{i=1}^n y_i^{\omega_i}\right)^{1/W}.
+\]
+Hence $C_{\mathrm{M}}(\mathbf{x}) \le C_{\mathrm{M}}(\mathbf{y})$.
+\end{proof}
+
+\subsection{Veto property}
+
+\begin{proposition}[Veto]
+If any $x_i = 0$, then $C_{\mathrm{M}}(\mathbf{x}) = 0$.
+\end{proposition}
+
+\begin{proof}
+This follows immediately from the first case in \eqref{eq:m-acfl-conj-app}. 
+One may also note that if any $x_i=0$, then $\prod_i x_i^{\omega_i} = 0$ and thus the geometric mean would be $0$.
+\end{proof}
+
+\subsection{Idempotence on constant vectors}
+
+\begin{proposition}[Idempotence]
+For any $t \in [0,1]$,
+\[
+C_{\mathrm{M}}(t,\dots,t) = t.
+\]
+\end{proposition}
+
+\begin{proof}
+If $t=0$, the claim holds by the veto form.
+For $t>0$ we have
+\[
+\prod_{i=1}^n t^{\omega_i} = t^{\sum_{i=1}^n \omega_i} = t^{W},
+\]
+and thus
+\[
+C_{\mathrm{M}}(t,\dots,t)
+= \left(t^{W}\right)^{1/W} = t.
+\]
+\end{proof}
+
+\subsection{Multi-ary associativity (set-level)}
+
+\begin{proposition}[Compatibility with union of finite multisets]
+Let $A=\{(x_i,M_i)\}_{i\in I_A}$ and $B=\{(x_j,M_j)\}_{j\in I_B}$ be finite multisets with disjoint index sets $I_A, I_B$. 
+Define $A \cup B$ as the multiset union. 
+Then $C_{\mathrm{M}}$ applied to $A \cup B$ is independent of the order of elements and depends only on the union of inputs.
+\end{proposition}
+
+\begin{proof}
+By definition, $C_{\mathrm{M}}$ operates on a finite multiset of labeled inputs via the single formula \eqref{eq:m-acfl-conj-app}, which treats all inputs symmetrically (commutativity) and depends only on the product of $x_i^{\omega_i}$ and the sum of $\omega_i$ across the entire multiset. 
+Thus, aggregating over $A\cup B$ yields the same result regardless of how elements of $A$ and $B$ are ordered or grouped, as long as the same collection of pairs $(x_i,M_i)$ is used.
+\end{proof}
+
+\section{Operator Norm Bounds and Lipschitz-Type Estimates}
+
+In this section we derive basic bounds that quantify the sensitivity of $C_{\mathrm{M}}$ to input perturbations. 
+We work with the Euclidean norm $\|\cdot\|_2$ on $\mathbb{R}^n$, although similar arguments can be formulated for other norms.\,[web:69] 
+
+\subsection{Basic range and norm bounds}
+
+\begin{proposition}[Range]
+For any $\mathbf{x} \in [0,1]^n$, 
+\[
+0 \le C_{\mathrm{M}}(\mathbf{x}) \le 1.
+\]
+\end{proposition}
+
+\begin{proof}
+If any $x_i=0$, then $C_{\mathrm{M}}(\mathbf{x})=0\in[0,1]$. 
+Otherwise, $x_i\in(0,1]$ and hence each $x_i^{\omega_i}\in(0,1]$. 
+The product $\prod_i x_i^{\omega_i}$ lies in $(0,1]$, and raising to $1/W>0$ keeps the result in $(0,1]$. 
+Thus $C_{\mathrm{M}}(\mathbf{x})\in(0,1]$. 
+In all cases, $C_{\mathrm{M}}(\mathbf{x}) \in [0,1]$.
+\end{proof}
+
+\begin{proposition}[Bounding by extrema]
+For $\mathbf{x} \in [0,1]^n$, let $m = \min_i x_i$ and $M = \max_i x_i$. 
+Then
+\[
+m \le C_{\mathrm{M}}(\mathbf{x}) \le M.
+\]
+\end{proposition}
+
+\begin{proof}
+If $m=0$, the lower bound $m \le C_{\mathrm{M}}(\mathbf{x})$ holds because $C_{\mathrm{M}}(\mathbf{x}) \ge 0$, and the upper bound reduces to $C_{\mathrm{M}}(\mathbf{x})\le M$, which is true because $M \le 1$ while $C_{\mathrm{M}}(\mathbf{x})\in[0,1]$. 
+Assume now $0 < m \le M \le 1$. 
+By monotonicity, we have
+\[
+C_{\mathrm{M}}(m,\dots,m) \le C_{\mathrm{M}}(\mathbf{x}) \le C_{\mathrm{M}}(M,\dots,M).
+\]
+By idempotence, $C_{\mathrm{M}}(m,\dots,m) = m$ and $C_{\mathrm{M}}(M,\dots,M) = M$, so
+\[
+m \le C_{\mathrm{M}}(\mathbf{x}) \le M.
+\]
+\end{proof}
+
+\subsection{Local Lipschitz estimates}
+
+To simplify the analysis, we focus on the region where $x_i \in [\delta,1]$ for some fixed $\delta > 0$. 
+This is natural in biosensor contexts where extremely low memberships may trigger veto behavior or be considered outside the regular operating regime.
+
+\begin{lemma}[Gradient of $\log C_{\mathrm{M}}$]
+Assume $x_i \in (0,1]$ for all $i$. 
+Then
+\[
+\log C_{\mathrm{M}}(\mathbf{x}) = \frac{1}{W} \sum_{i=1}^n \omega_i \log x_i,
+\]
+and the partial derivative with respect to $x_k$ is
+\[
+\frac{\partial}{\partial x_k} C_{\mathrm{M}}(\mathbf{x})
+= \frac{\omega_k}{W}\, \frac{C_{\mathrm{M}}(\mathbf{x})}{x_k}.
+\]
+\end{lemma}
+
+\begin{proof}
+For $x_i>0$, using \eqref{eq:m-acfl-conj-app} we have
+\[
+C_{\mathrm{M}}(\mathbf{x}) = \exp\left(\frac{1}{W}\sum_{i=1}^n \omega_i \log x_i\right).
+\]
+Thus
+\[
+\log C_{\mathrm{M}}(\mathbf{x})
+= \frac{1}{W}\sum_{i=1}^n \omega_i \log x_i.
+\]
+Differentiating with respect to $x_k$:
+\[
+\frac{\partial}{\partial x_k} \log C_{\mathrm{M}}(\mathbf{x})
+= \frac{1}{W} \omega_k \frac{1}{x_k}.
+\]
+By the chain rule,
+\[
+\frac{\partial}{\partial x_k} C_{\mathrm{M}}(\mathbf{x})
+= C_{\mathrm{M}}(\mathbf{x}) \cdot \frac{\partial}{\partial x_k} \log C_{\mathrm{M}}(\mathbf{x})
+= C_{\mathrm{M}}(\mathbf{x}) \cdot \frac{\omega_k}{W}\frac{1}{x_k}.
+\]
+\end{proof}
+
+\begin{proposition}[Lipschitz bound on $[\delta,1]^n$]
+Fix $\delta \in (0,1]$ and restrict $C_{\mathrm{M}}$ to the domain
+\[
+D_\delta = \{\mathbf{x}\in[0,1]^n : x_i \ge \delta \text{ for all } i\}.
+\]
+Then $C_{\mathrm{M}}$ is Lipschitz continuous on $D_\delta$ with respect to the Euclidean norm, with Lipschitz constant
+\[
+L_\delta = \frac{\sqrt{\sum_{i=1}^n \omega_i^2}}{W\,\delta}.
+\]
+That is, for all $\mathbf{x},\mathbf{y}\in D_\delta$,
+\[
+\big|C_{\mathrm{M}}(\mathbf{x}) - C_{\mathrm{M}}(\mathbf{y})\big|
+\le L_\delta \,\|\mathbf{x}-\mathbf{y}\|_2.
+\]
+\end{proposition}
+
+\begin{proof}
+On $D_\delta$, $C_{\mathrm{M}}$ is continuously differentiable. 
+The Euclidean norm of its gradient at $\mathbf{x}$ is
+\[
+\|\nabla C_{\mathrm{M}}(\mathbf{x})\|_2
+= \left(\sum_{k=1}^n \left(\frac{\partial}{\partial x_k} C_{\mathrm{M}}(\mathbf{x})\right)^2\right)^{1/2}.
+\]
+Using the previous lemma and the bound $0\le C_{\mathrm{M}}(\mathbf{x})\le 1$,
+\[
+\left|\frac{\partial}{\partial x_k} C_{\mathrm{M}}(\mathbf{x})\right|
+= \frac{\omega_k}{W} \frac{C_{\mathrm{M}}(\mathbf{x})}{x_k}
+\le \frac{\omega_k}{W}\frac{1}{\delta}.
+\]
+Therefore
+\[
+\|\nabla C_{\mathrm{M}}(\mathbf{x})\|_2
+\le \left(\sum_{k=1}^n \left(\frac{\omega_k}{W\delta}\right)^2\right)^{1/2}
+= \frac{1}{W\delta} \left(\sum_{k=1}^n \omega_k^2\right)^{1/2}
+= L_\delta.
+\]
+Since this bound holds for all $\mathbf{x}\in D_\delta$, the mean value theorem for vector-valued functions implies that for any $\mathbf{x},\mathbf{y}\in D_\delta$,
+\[
+|C_{\mathrm{M}}(\mathbf{x}) - C_{\mathrm{M}}(\mathbf{y})|
+\le \sup_{\mathbf{z}\in D_\delta}\|\nabla C_{\mathrm{M}}(\mathbf{z})\|_2\,\|\mathbf{x}-\mathbf{y}\|_2
+\le L_\delta \,\|\mathbf{x}-\mathbf{y}\|_2.\,[web:69]
+\]
+\end{proof}
+
+\subsection{Bounds for the blended operator}
+
+\begin{proposition}[Lipschitz constant for $C_{\mathrm{blend}}$]
+On $D_\delta$, the blended M-ACFL operator $C_{\mathrm{blend}}(\cdot;c)$ is Lipschitz with constant
+\[
+L_\delta^{\mathrm{blend}} \le \frac{2}{W\delta}\left(\sum_{i=1}^n \omega_i^2\right)^{1/2}
+\]
+for any $c\in[0,1]$.
+\end{proposition}
+
+\begin{proof}
+Define $F(\mathbf{x}) = C_{\mathrm{M}}(\mathbf{x})$ and $G(\mathbf{x}) = C_{\mathrm{M}}^{\mathrm{inv}}(\mathbf{x}) = 1 - C_{\mathrm{M}}(1-\mathbf{x})$. 
+We already have a Lipschitz bound for $F$ on $D_\delta$ with constant $L_\delta$. 
+We now bound $G$.
+
+Take $\mathbf{x},\mathbf{y}\in D_\delta$. 
+Then $1-\mathbf{x}$ and $1-\mathbf{y}$ lie in $[0,1]^n$, and if $x_i\ge \delta$ then $1-x_i \le 1 - \delta$. 
+Restricting attention to a compact domain where $1-x_i$ are bounded away from $0$ by some $\delta'$ (determined by the admissible region for the inverted operator), we obtain a Lipschitz constant $L_{\delta'}$ for $C_{\mathrm{M}}$ on that region by the same argument as above. 
+Thus
+\[
+|G(\mathbf{x}) - G(\mathbf{y})|
+= \big|C_{\mathrm{M}}(1-\mathbf{y}) - C_{\mathrm{M}}(1-\mathbf{x})\big|
+\le L_{\delta'}\,\|(1-\mathbf{y}) - (1-\mathbf{x})\|_2
+= L_{\delta'}\,\|\mathbf{x}-\mathbf{y}\|_2.
+\]
+Hence $G$ is Lipschitz with some constant $L_{\delta'}$, and in a symmetric region one can choose $L_{\delta'}$ comparable to $L_\delta$ by design.
+
+Now,
+\[
+C_{\mathrm{blend}}(\mathbf{x};c) - C_{\mathrm{blend}}(\mathbf{y};c)
+= (1-c)\big(F(\mathbf{x})-F(\mathbf{y})\big)
++ c\big(G(\mathbf{x})-G(\mathbf{y})\big),
+\]
+so
+\[
+\big|C_{\mathrm{blend}}(\mathbf{x};c) - C_{\mathrm{blend}}(\mathbf{y};c)\big|
+\le (1-c)L_\delta\|\mathbf{x}-\mathbf{y}\|_2 + cL_{\delta'}\|\mathbf{x}-\mathbf{y}\|_2.
+\]
+Assuming $L_{\delta'} \le L_\delta$ (achievable by restricting to a common compact domain and choosing $\delta' \ge \delta$ accordingly), we obtain
+\[
+\big|C_{\mathrm{blend}}(\mathbf{x};c) - C_{\mathrm{blend}}(\mathbf{y};c)\big|
+\le 2L_\delta \|\mathbf{x}-\mathbf{y}\|_2
+= \frac{2}{W\delta}\left(\sum_{i=1}^n \omega_i^2\right)^{1/2} \|\mathbf{x}-\mathbf{y}\|_2.
+\]
+\end{proof}
+
+\section{Connections to Power Mean Inequalities}
+
+M-ACFL's core operator is a weighted geometric mean with weights proportional to prime-based multiplicities. 
+Classical inequalities for power means and generalized weighted means (including the monotonicity of means with respect to their order and weights) provide further structural guarantees.\,[web:30][web:57][web:59][web:60][web:65] 
+In particular, for $x_i \in [\delta,1]$ and normalized weights $\tilde{\omega}_i = \omega_i/W$,
+\[
+C_{\mathrm{M}}(\mathbf{x})
+= \exp\left(\sum_{i=1}^n \tilde{\omega}_i \log x_i\right)
+\]
+is the exponential of a weighted arithmetic mean of $\log x_i$, and hence inherits standard convexity and Jensen-type bounds from the log transform and the properties of the arithmetic mean.\,[web:30][web:37][web:43] 
+Such connections can be used to derive tighter confidence intervals and variance estimates in statistical applications of M-ACFL, especially when viewed as a central-tendency functional over fuzzified biosensor data.
+
+\section{Summary}
+
+This appendix has provided explicit proofs of the core algebraic properties (commutativity, monotonicity, veto, idempotence) of the M-ACFL conjunction operator, clarified its multi-ary associative behavior at the level of finite multisets, and established basic range and Lipschitz-type bounds that quantify its stability under input perturbations.\,[file:1][web:30][web:43][web:69] 
+These results support both the theoretical soundness of M-ACFL as a multiplicity-weighted compensatory aggregator and its practical suitability for regulated health-state assessment pipelines.
+
+\nocite{*}
+\bibliographystyle{unsrt}  
+\bibliography{references}  
+
+
+\end{document}

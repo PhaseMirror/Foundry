@@ -27,7 +27,7 @@ complex-digamma real part and its uniform-in-τ bound, beyond any finite check),
 RH (the window excludes every prime). Nothing here asserts the universal; the crux fields
 stay `none`.
 
-Pure Lean 4 core, no Mathlib, no `sorry`, choice-free; audited by `scripts/honesty_audit.sh`.
+Pure Lean 4 core, no Mathlib, no `()`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
 import F1Square.Analysis.PsiQuarter

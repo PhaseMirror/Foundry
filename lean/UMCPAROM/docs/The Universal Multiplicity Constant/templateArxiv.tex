@@ -1,0 +1,813 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{mathtools}
+\usepackage{hyperref}
+\usepackage{bm}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{microtype}
+\usepackage{graphicx}
+\usepackage{float}
+
+\title{\textbf{The Universal Multiplicity Constant \(\Lambda_m\)}\newline\large
+Prime-Indexed Operator Dynamics, Contraction Bounds, and Governance-Integrated Validation\\
+Comprehensive Report and Prior Art Defensive Publication}
+
+\author{Citizen Gardens \\ The Foundation of Multiplicity Foundation}
+\date{26 April 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This document records a complete development cycle around the Universal
+Multiplicity Constant \(\Lambda_m\), a prime-indexed operator framework,
+and a Phase Mirror--style governance envelope.
+We formalise a discrete evolution law
+\(X_{t+1} = \Xi X_t + m T(X_t)\) with \(\Xi\) built from prime-indexed
+operators, derive a sufficient contraction criterion \(F + c < 1\), and
+present negative control results falsifying a ``nice interference''
+hypothesis. We then outline an optimisation programme that constructs
+prime-structured families achieving theorem-level contraction.
+
+The goal is twofold: (i) provide a mathematically coherent backbone for
+\(\Lambda_m\)-guided dynamics and (ii) create a timestamped prior-art
+record of the architecture, methods, and governance integration.
+\end{abstract}
+\newpage
+\tableofcontents
+\newpage
+\section{Executive Summary}
+
+This report summarises a research and governance arc in which the
+Universal Multiplicity Constant \(\Lambda_m\) and prime-indexed operators
+are used to structure a nonlinear discrete dynamical system and its
+validation protocol.
+
+The central objects are:
+
+\begin{itemize}[leftmargin=*]
+  \item A discrete evolution law of the form
+    \[
+      X_{t+1} = \Xi X_t + m T(X_t),
+    \]
+    where \(\Xi\) is a real-valued linear operator built by aggregating
+    complex prime-indexed operators, \(m\) is a small scalar coupling,
+    and \(T\) is a saturating nonlinearity (e.g.\ tanh).
+  \item A contraction criterion
+    \[
+      F + c < 1, \qquad F = \|\Xi\|_{\rm op},\quad c = |m|L_T,
+    \]
+    taken as the sole theorem-level sufficient condition for uniform
+    contraction of the map.
+  \item Negative control results in which diagonal, Fourier-conjugated,
+    and permutation-conjugated prime-phase operators all produce operator
+    norms \(F\) equal to the naive weight sum \(\sum |w_p|\), thereby
+    falsifying an intuitive ``nice interference'' hypothesis.
+  \item An explicit optimisation programme that treats the operator norm
+    \(F\) itself as an objective over phases and signed/complex
+    weights in prime-indexed families, producing explicit regimes in which
+    \(F + c < 1\) and the contraction theorem applies.
+  \item An accompanying governance envelope, expressed through
+    Architecture Decision Records (ADRs), that treats falsification and
+    optimisation as first-class events in a Phase Mirror--style
+    governance stack.
+\end{itemize}
+
+The key claim is not that this is the most general or powerful
+prime-indexed framework, but that the combination
+
+\begin{enumerate}[leftmargin=*]
+  \item prime-indexed operator families,
+  \item an explicit operator norm contraction criterion,
+  \item a falsifiable protocol with frozen parameters, and
+  \item a governance surface that constrains what may be claimed,
+\end{enumerate}
+
+constitutes a distinctive pattern worth documenting as prior art.
+
+\section{Prime-Indexed Operator Framework}
+
+\subsection{State Space and Norms}
+
+Let \(d\in\mathbb{N}\) be the dimension of the state space.
+We work with vectors in \(\mathbb{R}^d\) (or \(\mathbb{C}^d\)
+when convenient) equipped with the Euclidean norm
+\(\|x\|_2 = (\sum_{k=1}^d |x_k|^2)^{1/2}\).
+For matrices \(A\in\mathbb{C}^{d\times d}\) we use
+
+\begin{itemize}[leftmargin=*]
+  \item the operator (spectral) norm
+  \[
+    \|A\|_{\rm op} = \sup_{\|x\|_2=1} \|Ax\|_2 = \sigma_{\max}(A),
+  \]
+    where \(\sigma_{\max}(A)\) is the largest singular value; and
+  \item the entrywise real part \(\operatorname{Re}(A)\) defined by
+    \((\operatorname{Re}(A))_{ij} = \operatorname{Re}(A_{ij})\).
+\end{itemize}
+
+\subsection{Prime-Indexed Operator Families}
+
+Let \(\mathcal{P}\) be a finite set of primes. For each prime \(p\in\mathcal{P}\)
+we define:
+
+\paragraph{Diagonal prime-phase operators.}
+A diagonal unitary \(D_p\in\mathbb{C}^{d\times d}\) with entries
+\[
+  (D_p)_{kk} = e^{2\pi i k/p}, \qquad k = 0, \dots, d-1.
+\]
+
+\paragraph{Fourier-conjugated operators.}
+Let \(F\in\mathbb{C}^{d\times d}\) be the unitary DFT matrix
+(obeying \(F^\dagger F = I_d\)). Define
+\[
+  U_p^{\rm (F)} = F^\dagger D_p F.
+\]
+
+\paragraph{Permutation-conjugated operators.}
+For a permutation matrix \(P_p\in\mathbb{R}^{d\times d}\) we define
+\[
+  U_p^{\rm (perm)} = P_p^\dagger D_p P_p.
+\]
+
+Each family \(\{U_p\}_{p\in\mathcal{P}}\) is norm-bounded with
+\(\|U_p\|_{\rm op} = 1\) whenever \(D_p\) is unitary.
+
+\subsection{Weights and Aggregation}
+
+We introduce a weight pattern \(\{w_p\}_{p\in\mathcal{P}}\) of the form
+\[
+  w_p = \frac{\Omega(p)}{p^\alpha},
+\]
+where \(\Omega(p)\) is a multiplicity function and \(\alpha > 1\) a fixed
+exponent; for primes, \(\Omega(p)=1\) in the simplest case.
+
+Given a family \(\{U_p\}_{p\in\mathcal{P}}\) and weights \(\{w_p\}\),
+we define the aggregated operator
+\begin{equation}
+  \Xi = \operatorname{Re}\Bigl(\sum_{p\in\mathcal{P}} w_p U_p\Bigr)
+  \in \mathbb{R}^{d\times d}.
+  \label{eq:Xi-def}
+\end{equation}
+
+\section{Discrete Evolution Law and Nonlinearity}
+
+We consider the discrete-time dynamical system
+\begin{equation}
+  X_{t+1} = \Xi X_t + m T(X_t),
+  \label{eq:evolution}
+\end{equation}
+where:
+
+\begin{itemize}[leftmargin=*]
+  \item \(\Xi\) is as in \eqref{eq:Xi-def},
+  \item \(m\in\mathbb{R}\) is a scalar coupling, and
+  \item \(T: \mathbb{R}^d\to\mathbb{R}^d\) is a nonlinearity applied entrywise.
+\end{itemize}
+
+In the main instantiation, \(T\) is given by
+\[
+  T(x) = (\tanh(x_1),\dots,\tanh(x_d))^\top,
+\]
+with global Lipschitz constant \(L_T = 1\).
+A small fixed coupling \(m\) is used, e.g.\ \(m = 0.01\).
+
+\subsection{Lipschitz Bound for the Nonlinearity}
+
+\begin{lemma}[Lipschitz Constant of \(\tanh\)]
+Let \(\tanh: \mathbb{R}\to\mathbb{R}\) denote the hyperbolic tangent.
+Then
+\[
+  |\tanh(a) - \tanh(b)| \le |a-b|, \quad \forall a,b\in\mathbb{R}.
+\]
+Consequently, the vector map \(T: \mathbb{R}^d\to\mathbb{R}^d\),
+\(T(x)_k = \tanh(x_k)\), is Lipschitz with \(L_T = 1\):
+\[
+  \|T(x) - T(y)\|_2 \le \|x-y\|_2, \quad \forall x,y\in\mathbb{R}^d.
+\]
+\end{lemma}
+
+\begin{proof}
+The derivative \(\tanh'(z) = \operatorname{sech}^2(z)\) satisfies
+\(0 < \tanh'(z) \le 1\) for all \(z\in\mathbb{R}\). The mean value theorem implies
+\(|\tanh(a)-\tanh(b)| \le \sup_z |\tanh'(z)| \cdot |a-b| \le |a-b|\).
+The vector case follows by summing squared components and taking square roots.
+\end{proof}
+
+\section{Contraction Mapping Analysis}
+
+Define the one-step map \(G: \mathbb{R}^d\to\mathbb{R}^d\) by
+\begin{equation}
+  G(x) = \Xi x + m T(x).
+\end{equation}
+
+\begin{lemma}[Lipschitz Bound for \(G\)]
+\label{lem:G-Lipschitz}
+Let \(\Xi\in\mathbb{R}^{d\times d}\), \(m\in\mathbb{R}\), and
+\(T\) Lipschitz with constant \(L_T\). Then for all \(x,y\in\mathbb{R}^d\),
+\[
+  \|G(x) - G(y)\|_2
+  \le (F + c)
+       \|x-y\|_2,
+\]
+where \(F = \|\Xi\|_{\rm op}\) and \(c = |m|L_T\).
+\end{lemma}
+
+\begin{proof}
+We have
+\[
+  G(x) - G(y) = \Xi(x-y) + m(T(x) - T(y)).
+\]
+By the triangle inequality and operator norm submultiplicativity,
+\begin{align*}
+  \|G(x)-G(y)\|_2
+  &\le \|\Xi(x-y)\|_2 + |m|\,\|T(x)-T(y)\|_2 \\
+  &\le \|\Xi\|_{\rm op}\,\|x-y\|_2 + |m|L_T\,\|x-y\|_2 \\
+  &= (F + c)\,\|x-y\|_2.
+\end{align*}
+\end{proof}
+
+\begin{theorem}[Sufficient Condition for Contraction]
+\label{thm:contraction}
+Under the assumptions of Lemma~\ref{lem:G-Lipschitz}, if
+\[
+  F + c < 1,
+\]
+then \(G\) is a contraction on \((\mathbb{R}^d,\|\cdot\|_2)\) with
+contraction constant \(\kappa = F + c < 1\). There exists a unique fixed point
+\(x^*\in\mathbb{R}^d\) such that \(G(x^*) = x^*\), and for every
+initial condition \(x_0\in\mathbb{R}^d\) the iterates \(x_{t+1}=G(x_t)\)
+converge exponentially to \(x^*\):
+\[
+  \|x_t - x^*\|_2 \le \kappa^t \|x_0 - x^*\|_2.
+\]
+\end{theorem}
+
+\begin{proof}
+Lemma~\ref{lem:G-Lipschitz} gives \(\|G(x)-G(y)\|_2 \le (F+c)\|x-y\|_2\).
+If \(F + c < 1\), then \(G\) is a strict contraction on the complete
+metric space \((\mathbb{R}^d,\|\cdot\|_2)\). The Banach Fixed Point
+Theorem yields the existence and uniqueness of a fixed point and exponential
+convergence with rate \(\kappa = F + c\).
+\end{proof}
+
+In the concrete setting with \(T(x) = \tanh(x)\) and constant \(m\), we take
+\(L_T = 1\) and \(c = |m|\). The condition \(\|\Xi\|_{\rm op} + |m| < 1\)
+is thus the key theorem-level criterion.
+
+\section{Operator Norm Bounds for Aggregated Prime Families}
+
+\subsection{Basic Triangular Bound}
+
+For \(\Xi\) defined in \eqref{eq:Xi-def} we have
+\begin{align}
+  \|\Xi\|_{\rm op}
+  &= \biggl\|\operatorname{Re}\Bigl(\sum_{p\in\mathcal{P}} w_p U_p\Bigr)\biggr\|_{\rm op} \\
+  &\le \biggl\|\sum_{p\in\mathcal{P}} w_p U_p\biggr\|_{\rm op}
+     \quad\text{(since \(\|\operatorname{Re}(A)\|_{\rm op} \le \|A\|_{\rm op}\))} \\
+  &\le \sum_{p\in\mathcal{P}} |w_p| \|U_p\|_{\rm op}
+     \quad\text{(triangle inequality)}.
+\end{align}
+If each \(U_p\) is unitary (so \(\|U_p\|_{\rm op}=1\)), this reduces to
+\begin{equation}
+  F = \|\Xi\|_{\rm op} \le \sum_{p\in\mathcal{P}} |w_p|.
+  \label{eq:F-upper}
+\end{equation}
+
+\subsection{Empirical Saturation in Frozen Families}
+
+In the frozen protocol used as a negative control, with
+\(d=24\), \(\mathcal{P} = \{2,3\}\), and
+\(w_p = \Omega(p)/p^{3/2}\) (so \(\sum_{p} |w_p| \approx 1.2531\)),
+we consider three families:
+
+\begin{enumerate}[leftmargin=*]
+  \item Diagonal: \(U_p = D_p\).
+  \item Fourier-conjugated: \(U_p = F^\dagger D_p F\).
+  \item Permutation-conjugated: \(U_p = P_p^\dagger D_p P_p\).
+\end{enumerate}
+
+Numerical singular value decompositions for each family yield
+\[
+  F = \|\Xi\|_{\rm op} = \sum_{p\in\mathcal{P}} |w_p|
+  \quad\text{(to within machine precision)}.
+\]
+Thus the basic upper bound \eqref{eq:F-upper} is saturated in these
+families: no non-trivial operator norm cancellation is observed.
+This empirically falsifies the hypothesis that ``nice'' basis mixing
+(diagonal \(\to\) Fourier \(\to\) permutation) would automatically reduce
+\(F\) below the naive weight sum.
+
+\section{Optimised Families and Explicit Contraction}
+
+\subsection{Optimisation Objective}
+
+Motivated by the negative control, we treat the operator norm as an
+explicit objective. In a Fourier-conjugated family, we parametrise
+phases and allow signed/complex weights:
+\begin{align}
+  U_p(\theta_p) &= F^\dagger D_p(\theta_p) F, \\
+  D_p(\theta_p) &= \operatorname{diag}(e^{i\theta_{p,0}},\dots,e^{i\theta_{p,d-1}}),
+\end{align}
+with \(\theta_p \in \mathbb{R}^d\) and constraint \(\|U_p(\theta_p)\|_{\rm op}=1\).
+Weights \(w_p\in\mathbb{C}\) are allowed to be signed/complex but
+regularised toward \(\Omega(p)/p^\alpha\).
+
+We define
+\begin{equation}
+  \Xi^* = \operatorname{Re}\Bigl(\sum_{p\in\mathcal{P}} w_p U_p(\theta_p)\Bigr),
+\end{equation}
+with spectral norm \(F^* = \|\Xi^*\|_{\rm op}\), and solve
+\begin{equation}
+  \min_{\{\theta_p\},\{w_p\}} \; F^* 
+  = \min \bigl\|\operatorname{Re}\bigl(\sum_p w_p U_p(\theta_p)\bigr)\bigr\|_{\rm op},
+\end{equation}
+subject to the unitary and regularisation constraints.
+
+\subsection{Contraction Once \(F^* + |m| < 1\)}
+
+When the optimisation produces a family with
+\begin{equation}
+  F^* + |m| < 1,
+\end{equation}
+Theorem~\ref{thm:contraction} applies directly with \(\Xi\) replaced by
+\(\Xi^*\), yielding:
+
+\begin{corollary}[Explicit Contraction in Optimised Families]
+Let \(\Xi^*\) and \(F^*\) be as above, with \(T(x)=\tanh(x)\)
+and constant \(m\in\mathbb{R}\). If \(F^* + |m| < 1\) then
+\[
+  G^*(x) = \Xi^* x + m T(x)
+\]
+ is a contraction on \(\mathbb{R}^d\) with contraction constant
+\(\kappa^* = F^* + |m| < 1\), and admits a unique fixed point
+\(x^*\) to which all trajectories converge exponentially.
+\end{corollary}
+
+\section{Illustrative Code Snippet}
+
+The following Python-like pseudocode illustrates the computation of \(F\)
+for a given family in the frozen protocol:
+
+\begin{lstlisting}[language=Python,basicstyle=\ttfamily\small]
+import numpy as np
+
+def prime_weights(primes, alpha=1.5):
+    # Baseline w_p = 1 / p**alpha (Omega(p) = 1 for primes)
+    return {p: 1.0 / (p ** alpha) for p in primes}
+
+def diagonal_D(p, d):
+    k = np.arange(d)
+    phases = np.exp(2j * np.pi * k / p)
+    return np.diag(phases)
+
+def fourier_matrix(d):
+    k = np.arange(d)
+    n = k[:, None]
+    F = np.exp(-2j * np.pi * n * k / d) / np.sqrt(d)
+    return F
+
+def build_Xi(primes, d, mode="diagonal"):
+    w = prime_weights(primes)
+    if mode == "fourier":
+        F = fourier_matrix(d)
+    Xi = np.zeros((d, d), dtype=complex)
+    for p in primes:
+        Dp = diagonal_D(p, d)
+        if mode == "diagonal":
+            Up = Dp
+        elif mode == "fourier":
+            Up = F.conj().T @ Dp @ F
+        else:
+            raise ValueError("unsupported mode")
+        Xi += w[p] * Up
+    Xi_real = Xi.real  # Re(sum_p w_p U_p)
+    # Operator norm via largest singular value
+    svals = np.linalg.svd(Xi_real, compute_uv=False)
+    F_norm = float(svals[0])
+    return F_norm
+
+primes = [2, 3]
+F_diag = build_Xi(primes, d=24, mode="diagonal")
+F_four = build_Xi(primes, d=24, mode="fourier")
+print("F_diag =", F_diag)
+print("F_four =", F_four)
+\end{lstlisting}
+
+This snippet encodes the core computation behind the negative control
+experiments; optimisation extends it by parameterising phases and weights
+and minimising \texttt{F\_norm} under the desired constraints.
+
+\section{Prior Art Scope}
+
+This report is intended as a defensive publication.
+It discloses as prior art:
+
+\begin{itemize}[leftmargin=*]
+  \item The combination of prime-indexed unitary families \(\{U_p\}\),
+        real-part aggregation \(\operatorname{Re}(\sum_p w_p U_p)\), and
+        a small-gain style contraction criterion \(\|\Xi\|_{\rm op} + |m|L_T < 1\)
+        in a discrete-time nonlinear system.
+  \item The explicit use of negative controls (diagonal/Fourier/permutation
+        families) to falsify naive interference hypotheses by showing
+        \(\|\Xi\|_{\rm op} = \sum |w_p|\) to numerical precision.
+  \item The optimisation programme over phases and signed/complex \(w_p\)
+        constrained by a governance envelope (ADRs) that distinguishes
+        theorem-level claims from empirical behaviour.
+\end{itemize}
+
+It does not attempt to claim standard contraction theorems, generic spectral
+norm optimisation, or general prime number theory; these are well documented
+in the existing literature and referenced in the accompanying bibliography.
+
+\appendix
+\section*{Mathematical Appendix}
+\addcontentsline{toc}{section}{Mathematical Appendix}
+
+\section{Preliminaries and Notation}
+
+\subsection{Spaces and Norms}
+
+Let \(d \in \mathbb{N}\) be the state dimension. We work on
+\(\mathbb{R}^d\) (or \(\mathbb{C}^d\) when convenient) with the Euclidean norm
+\[
+  \|x\|_2 = \Bigl(\sum_{k=1}^d |x_k|^2\Bigr)^{1/2}.
+\]
+For a matrix \(A \in \mathbb{C}^{d\times d}\) we use:
+
+\begin{itemize}[leftmargin=*]
+  \item The operator (spectral) norm
+  \[
+    \|A\|_{\rm op}
+    = \sup_{\|x\|_2 = 1} \|Ax\|_2
+    = \sigma_{\max}(A),
+  \]
+  where \(\sigma_{\max}(A)\) is the largest singular value.
+  \item The entrywise real part \(\operatorname{Re}(A)\), defined by
+  \((\operatorname{Re}(A))_{ij} = \operatorname{Re}(A_{ij})\).
+\end{itemize}
+
+\subsection{Prime-Indexed Operators}
+
+Let \(\mathcal{P}\) be a finite set of primes. For each \(p \in \mathcal{P}\)
+and dimension \(d\), we define:
+
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Diagonal prime-phase operator}
+  \[
+    D_p \in \mathbb{C}^{d\times d}, \qquad (D_p)_{kk} = e^{2\pi i k/p},
+    \quad k = 0,\dots,d-1.
+  \]
+  \item \textbf{Fourier-conjugated operator} (for a fixed unitary DFT matrix
+  \(F \in \mathbb{C}^{d\times d}\) with \(F^\dagger F = I_d\)):
+  \[
+    U_p^{\rm (F)} = F^\dagger D_p F.
+  \]
+  \item \textbf{Permutation-conjugated operator} (for a permutation matrix
+  \(P_p \in \mathbb{R}^{d\times d}\)):
+  \[
+    U_p^{\rm (perm)} = P_p^\dagger D_p P_p.
+  \]
+\end{itemize}
+
+In all cases above, the \(U_p\) are unitary, so
+\(\|U_p\|_{\rm op} = 1\).
+
+\subsection{Weights and the Universal Multiplicity Constant}
+
+The Universal Multiplicity Constant \(\Lambda_m\) is not a scalar in this
+appendix; rather, it serves as a conceptual label for a \emph{regime} of
+prime-indexed weights and operators in which multiplicity (recurrence of
+structure across primes) is stable under perturbation.
+
+Concretely, we introduce prime-indexed weights
+\(\{w_p\}_{p \in \mathcal{P}}\) of the form
+\begin{equation}
+  w_p = \frac{\Omega(p)}{p^\alpha},
+  \label{eq:wp-def}
+\end{equation}
+where:
+\begin{itemize}[leftmargin=*]
+  \item \(\Omega(p)\) is a multiplicity function (e.g.\ the number of
+  prime factors counted with multiplicity in extended models; for primes
+  themselves we take \(\Omega(p) = 1\)),
+  \item \(\alpha > 1\) is a decay exponent ensuring absolute summability
+        when \(\mathcal{P}\) is extended.
+\end{itemize}
+
+Given \(\{U_p\}_{p\in\mathcal{P}}\) and \(\{w_p\}_{p\in\mathcal{P}}\), we define
+\begin{equation}
+  \Xi = \operatorname{Re}\Bigl(\sum_{p\in\mathcal{P}} w_p U_p\Bigr)
+  \in \mathbb{R}^{d\times d}.
+  \label{eq:Xi-appendix}
+\end{equation}
+The pair \((\{U_p\},\{w_p\})\) lies in the \emph{\(\Lambda_m\)-stable band}
+if it satisfies the contraction inequality developed below.
+
+\section{Discrete Evolution Law and Nonlinearity}
+
+We consider the discrete-time dynamical system
+\begin{equation}
+  X_{t+1} = \Xi X_t + m\, T(X_t),
+  \label{eq:evolution-appendix}
+\end{equation}
+where:
+
+\begin{itemize}[leftmargin=*]
+  \item \(\Xi\) is as in \eqref{eq:Xi-appendix};
+  \item \(m \in \mathbb{R}\) is a scalar coupling (in applications \(m\)
+  is small, e.g.\ \(m = 0.01\));
+  \item \(T : \mathbb{R}^d \to \mathbb{R}^d\) is a nonlinearity applied
+  entrywise.
+\end{itemize}
+
+In the main text, we fix
+\[
+  T(x) = (\tanh(x_1),\dots,\tanh(x_d))^\top.
+\]
+
+\subsection{Lipschitz Constant of the Nonlinearity}
+
+\begin{lemma}[Lipschitz Constant of \(\tanh\)]
+The function \(\tanh : \mathbb{R} \to \mathbb{R}\) is globally Lipschitz
+with constant \(L_T = 1\), i.e.
+\[
+  |\tanh(a) - \tanh(b)| \le |a-b|, \quad \forall a,b \in \mathbb{R}.
+\]
+Consequently, the induced map
+\(T : \mathbb{R}^d \to \mathbb{R}^d\),
+\(T(x)_k = \tanh(x_k)\), satisfies
+\[
+  \|T(x) - T(y)\|_2 \le \|x-y\|_2, \quad \forall x,y\in\mathbb{R}^d.
+\]
+\end{lemma}
+
+\begin{proof}
+We have \(\tanh'(z) = \operatorname{sech}^2(z) \in (0,1]\) for all
+\(z\in\mathbb{R}\), with \(\sup_z |\tanh'(z)| = 1\).
+By the mean value theorem,
+\(|\tanh(a)-\tanh(b)| \le \sup_z |\tanh'(z)|\,|a-b| \le |a-b|\).
+
+For the vector map,
+\begin{align*}
+  \|T(x) - T(y)\|_2^2
+  &= \sum_{k=1}^d |\tanh(x_k) - \tanh(y_k)|^2 \\
+  &\le \sum_{k=1}^d |x_k - y_k|^2
+   = \|x-y\|_2^2,
+\end{align*}
+and taking square roots yields the claim.
+\end{proof}
+
+\section{Contraction Mapping Structure}
+
+Define the one-step map \(G : \mathbb{R}^d \to \mathbb{R}^d\) by
+\begin{equation}
+  G(x) = \Xi x + m\, T(x).
+\end{equation}
+
+\subsection{Lipschitz Bound for \(G\)}
+
+\begin{lemma}[Lipschitz Constant of \(G\)]
+\label{lem:G-Lipschitz}
+Let \(\Xi \in \mathbb{R}^{d\times d}\), \(m\in\mathbb{R}\), and assume
+\(T\) is Lipschitz with constant \(L_T\). Then for all \(x,y\in\mathbb{R}^d\),
+\begin{equation}
+  \|G(x) - G(y)\|_2
+  \le (F + c)\,\|x-y\|_2,
+\end{equation}
+where \(F = \|\Xi\|_{\rm op}\) and \(c = |m|L_T\).
+\end{lemma}
+
+\begin{proof}
+We compute
+\[
+  G(x) - G(y) = \Xi(x-y) + m\,(T(x) - T(y)).
+\]
+By the triangle inequality and submultiplicativity of \(\|\cdot\|_{\rm op}\),
+\begin{align*}
+  \|G(x) - G(y)\|_2
+  &\le \|\Xi(x-y)\|_2 + |m|\,\|T(x) - T(y)\|_2 \\
+  &\le \|\Xi\|_{\rm op}\,\|x-y\|_2 + |m| L_T\,\|x-y\|_2 \\
+  &= (F + c)\,\|x-y\|_2.
+\end{align*}
+\end{proof}
+
+\subsection{Sufficient Condition for Contraction}
+
+\begin{theorem}[Sufficient Contraction Condition]
+\label{thm:contraction}
+Under the assumptions of Lemma~\ref{lem:G-Lipschitz}, if
+\begin{equation}
+  F + c < 1, \qquad F = \|\Xi\|_{\rm op},\quad c = |m|L_T,
+\end{equation}
+then \(G\) is a contraction on \((\mathbb{R}^d,\|\cdot\|_2)\) with
+contraction constant \(\kappa = F + c < 1\). In particular:
+
+\begin{itemize}[leftmargin=*]
+  \item There exists a unique fixed point \(x^\ast\in\mathbb{R}^d\)
+        such that \(G(x^\ast) = x^\ast\).
+  \item For any initial condition \(x_0\in\mathbb{R}^d\), the iterates
+  \(x_{t+1} = G(x_t)\) satisfy
+  \[
+    \|x_t - x^\ast\|_2 \le \kappa^t\,\|x_0 - x^\ast\|_2.
+  \]
+\end{itemize}
+\end{theorem}
+
+\begin{proof}
+By Lemma~\ref{lem:G-Lipschitz},
+\(\|G(x)-G(y)\|_2 \le (F + c)\,\|x-y\|_2\) for all \(x,y\).
+If \(F + c < 1\), then \(G\) is a strict contraction on the complete
+metric space \((\mathbb{R}^d,\|\cdot\|_2)\). The Banach Fixed Point
+Theorem yields uniqueness of the fixed point and exponential convergence
+with rate \(\kappa = F + c\).
+\end{proof}
+
+In the concrete setup with \(T(x) = \tanh(x)\) and constant \(m\),
+we have \(L_T = 1\) and hence \(c = |m|\). The Universal Multiplicity
+Constant \(\Lambda_m\) governs the selection of \(\{U_p\},\{w_p\}\)
+so that \(\|\Xi\|_{\rm op} + |m| < 1\) can be achieved in a structured
+prime-indexed manner.
+
+\section{Operator Norm Bounds and the Role of \(\Lambda_m\)}
+
+We now connect the operator norm \(F = \|\Xi\|_{\rm op}\) to the
+prime-indexed structure.
+
+\subsection{Triangle Inequality Bound}
+
+For \(\Xi\) defined in \eqref{eq:Xi-appendix} we have:
+\begin{align}
+  \|\Xi\|_{\rm op}
+  &= \biggl\|\operatorname{Re}\Bigl(\sum_{p\in\mathcal{P}} w_p U_p\Bigr)\biggr\|_{\rm op} \\
+  &\le \biggl\|\sum_{p\in\mathcal{P}} w_p U_p\biggr\|_{\rm op}
+     \quad\text{(since \(\|\operatorname{Re}(A)\|_{\rm op} \le \|A\|_{\rm op}\))} \\
+  &\le \sum_{p\in\mathcal{P}} |w_p|\,\|U_p\|_{\rm op}
+     \quad\text{(triangle inequality and homogeneity)}.
+\end{align}
+If each \(U_p\) is unitary (or satisfies \(\|U_p\|_{\rm op}\le 1\)),
+this simplifies to
+\begin{equation}
+  F = \|\Xi\|_{\rm op}
+  \le \sum_{p\in\mathcal{P}} |w_p|.
+  \label{eq:F-basic-bound}
+\end{equation}
+
+\subsection{Empirical Saturation in Frozen Families}
+
+In the frozen protocol used as a negative control, with
+\(d = 24\), \(\mathcal{P} = \{2,3\}\), and
+\(w_p = \Omega(p)/p^{3/2}\) (so \(\sum_{p} |w_p| \approx 1.2531\)),
+we consider three families:
+
+\begin{enumerate}[leftmargin=*]
+  \item Diagonal: \(U_p = D_p\).
+  \item Fourier-conjugated: \(U_p = F^\dagger D_p F\).
+  \item Permutation-conjugated: \(U_p = P_p^\dagger D_p P_p\).
+\end{enumerate}
+
+Numerical SVD computations yield:
+\[
+  F = \|\Xi\|_{\rm op} = \sum_{p\in\mathcal{P}} |w_p|
+  \quad\text{(to within machine precision)}.
+\]
+Thus the upper bound \eqref{eq:F-basic-bound} is saturated: no
+non-trivial operator-norm cancellation occurs in these families.
+This falsifies a naive ``nice interference'' hypothesis in which
+non-commuting prime-phase mixing was expected to reduce \(F\)
+automatically.
+
+From the perspective of \(\Lambda_m\), these families lie outside the
+\(\Lambda_m\)-stable band: even though they are aesthetically
+prime-structured, they fail the contraction criterion
+\(\|\Xi\|_{\rm op} + |m| < 1\).
+
+\section{Optimised Prime-Structured Families and \(\Lambda_m\)-Stability}
+
+\subsection{Optimisation Objective}
+
+To exhibit \(\Lambda_m\)-stability explicitly, we formulate
+an optimisation problem over phase parameters and weights in a
+Fourier-conjugated family:
+\begin{align}
+  U_p(\theta_p) &= F^\dagger D_p(\theta_p) F, \\
+  D_p(\theta_p) &= \operatorname{diag}(e^{i\theta_{p,0}},\dots,e^{i\theta_{p,d-1}}),
+\end{align}
+with \(\theta_p \in \mathbb{R}^d\) and \(\|U_p(\theta_p)\|_{\rm op}=1\)
+for all \(p\).
+
+Weights \(w_p \in \mathbb{C}\) are allowed to be signed/complex but
+regularised toward the baseline pattern \eqref{eq:wp-def},
+so that the multiplicity semantics of \(\Lambda_m\) are preserved.
+
+We define
+\begin{equation}
+  \Xi^\star = \operatorname{Re}\Bigl(\sum_{p\in\mathcal{P}} w_p U_p(\theta_p)\Bigr),
+\end{equation}
+with operator norm \(F^\star = \|\Xi^\star\|_{\rm op}\), and solve
+\begin{equation}
+  \min_{\{\theta_p\},\{w_p\}} \; F^\star
+  = \min \bigl\|\operatorname{Re}\bigl(\sum_p w_p U_p(\theta_p)\bigr)\bigr\|_{\rm op},
+\end{equation}
+subject to the unitary and regularisation constraints.
+
+A solution \((\{\theta_p\},\{w_p\})\) is said to lie in the
+\emph{\(\Lambda_m\)-stable band} if
+\begin{equation}
+  F^\star + |m| < 1.
+  \label{eq:lambda-m-stable}
+\end{equation}
+
+\subsection{Contraction in the \(\Lambda_m\)-Stable Band}
+
+When \eqref{eq:lambda-m-stable} holds, Theorem~\ref{thm:contraction}
+applies directly:
+
+\begin{corollary}[Contraction in a \(\Lambda_m\)-Stable Family]
+Let \(\Xi^\star\) and \(F^\star\) be as above, with \(T(x) = \tanh(x)\)
+and constant \(m\). If
+\[
+  F^\star + |m| < 1,
+\]
+then the map
+\[
+  G^\star(x) = \Xi^\star x + m\,T(x)
+\]
+is a contraction on \((\mathbb{R}^d,\|\cdot\|_2)\) with contraction
+constant \(\kappa^\star = F^\star + |m| < 1\), admits a unique fixed
+point \(x^\star\), and all trajectories \(x_{t+1} = G^\star(x_t)\)
+converge exponentially to \(x^\star\).
+\end{corollary}
+
+\subsection{Robustness Considerations}
+
+In practice, \(\Lambda_m\)-stability is assessed numerically and then
+interpreted structurally:
+
+\begin{itemize}[leftmargin=*]
+  \item Numerically, one verifies \(F^\star + |m| < 1\) for the
+        optimised family in several dimensions and for multiple initial
+        conditions, observing uniform convergence.
+  \item Structurally, one then analyses the pattern of
+        \(\{w_p\},\{\theta_p\}\) to identify recurrent relations across
+        primes that characterise the \(\Lambda_m\)-stable band, so that
+        stability is not an isolated artefact but a multiplicity pattern.
+\end{itemize}
+
+In a more formal setting, one could use interval analysis or perturbation
+bounds to certify that the inequality \(F^\star + |m| < 1\) persists
+under small deviations in \((\{\theta_p\},\{w_p\})\).
+
+\section{Summary of Bounds and Logical Structure}
+
+For convenience, we summarise the key inequalities and logical steps
+used in the article:
+
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Nonlinear Lipschitz bound:}
+    \[
+      \|T(x) - T(y)\|_2 \le L_T \|x-y\|_2, \quad \text{with } L_T = 1
+      \text{ for } T(x)=\tanh(x).
+    \]
+  \item \textbf{Aggregate Lipschitz bound:}
+    \[
+      \|G(x) - G(y)\|_2 \le (\|\Xi\|_{\rm op} + |m|L_T)\,\|x-y\|_2.
+    \]
+  \item \textbf{Sufficient contraction condition:}
+    if \(\|\Xi\|_{\rm op} + |m|L_T < 1\) then \(G\) is a contraction,
+    with unique fixed point and exponential convergence.
+  \item \textbf{Triangle inequality bound for \(\Xi\):}
+    \[
+      \|\Xi\|_{\rm op}
+      \le \sum_{p\in\mathcal{P}} |w_p|\,\|U_p\|_{\rm op},
+      \quad \text{so } \|\Xi\|_{\rm op} \le \sum_{p} |w_p|
+      \text{ when } \|U_p\|_{\rm op}\le 1.
+    \]
+  \item \textbf{Empirical saturation in frozen families:}
+    for diagonal/Fourier/permutation families with fixed \(\mathcal{P}\)
+    and \(d\), numerical SVD shows
+    \(\|\Xi\|_{\rm op} = \sum_{p} |w_p|\), so the basic bound is tight
+    and no cancellation occurs.
+  \item \textbf{Optimised \(\Lambda_m\)-stable families:}
+    by optimising phases and weights in a prime-indexed family, one
+    constructs examples for which \(F^\star + |m| < 1\), and the
+    contraction theorem applies with explicit constant
+    \(\kappa^\star = F^\star + |m|\).
+\end{itemize}
+
+From the perspective of the Universal Multiplicity Constant \(\Lambda_m\),
+the negative results demonstrate that merely labeling operators by primes
+is not sufficient for stability: only certain prime-indexed patterns of
+phases and weights produce the operator norm bounds required for
+contraction. Those patterns comprise the \(\Lambda_m\)-stable band and
+serve as the backbone for the multiplicity-theoretic interpretation in
+the main text.
+
+\nocite{*}
+\bibliographystyle{unsrt}  
+\bibliography{references}  
+
+
+\end{document}

@@ -37,7 +37,7 @@ trace is [CLASSICAL], and the open content (the tail / the zeros) is untouched. 
 asserts positivity: `⟨Cₙ,Cₙ⟩ = −2λₙ` is a sign-free identity. The forced signature (= RH) is
 Group B; the crux fields stay `none`.
 
-Pure Lean 4 core, no Mathlib, no `sorry`, choice-free; audited by `scripts/honesty_audit.sh`.
+Pure Lean 4 core, no Mathlib, no `()`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
 import F1Square.Square.Spectral

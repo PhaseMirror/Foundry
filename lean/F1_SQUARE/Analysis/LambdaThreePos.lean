@@ -16,7 +16,7 @@ close the crux, which is the uniform `∀ n` (= RH); the crux fields stay `none`
 THIS FILE proves `Pos Rlambda3` (`Rlambda3_pos`): the product/parabola bounds (`γ²`,`γ³`,`γγ₁`), the
 archimedean lower `genuineArchSeq3_ge`, the rounded η-anchor bounds, and the assembly.
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 

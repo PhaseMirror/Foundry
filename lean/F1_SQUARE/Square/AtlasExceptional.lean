@@ -17,7 +17,7 @@ another over-determination (`AtlasForcing`).
 All `Nat` facts, decidable, forced by `{T, O}` and the octonionic origin of `G₂`/`E₈`. Crux fields
 untouched (structure, not positivity).
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 

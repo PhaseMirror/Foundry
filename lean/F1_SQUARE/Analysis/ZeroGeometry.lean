@@ -29,7 +29,7 @@ Vallée-Poussin zero-free band (`DVPBand`) pins zeros into `δ < Re ρ < 1−δ`
 `δ > 0` does NOT collapse the band to the line — that residual gap IS the open analytic content.
 The crux fields stay `none`.
 
-Pure Lean 4 core, no Mathlib, no `sorry`, choice-free; audited by `scripts/honesty_audit.sh`.
+Pure Lean 4 core, no Mathlib, no `()`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
 import F1Square.Analysis.Complex

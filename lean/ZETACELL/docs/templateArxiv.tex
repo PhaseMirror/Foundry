@@ -1,0 +1,955 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{mathtools}
+\usepackage{bm}
+\usepackage{hyperref}
+\usepackage{enumitem}
+
+\title{ZetaCell: A Zeta-Specialized Recurrent Operator Cell\\[0.25em]
+\large Finite-Dimensional Coupling of Prime Channels to Zeta-Zero Spectral Witnesses under a Lawfulness Budget}
+\author{Citizen Gardens \\ \\ The Foundation of Multiplicity}
+\date{April 6, 2026}
+
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}{Proposition}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We introduce the \emph{ZetaCell}, a zeta-specialized recurrent operator cell that extends the MultiplicityCell architecture to a dual-sector setting coupling prime-indexed channels to zeta-zero spectral witnesses.
+The ZetaCell operates as a finite-dimensional surrogate of a universal multiplicity recursion on a lawful Hilbert space, with an explicit lawfulness functional, constitutional projector, ethical projector, and multiplicity constant $\Lambda_m$ controlling contraction.
+The key novelty is a prime--zero bridge operator whose kernel is inspired by explicit formulas for the prime-counting function and $L$-functions, using oscillatory terms of the form $\cos(\gamma_k \log p_i)$ and $\sin(\gamma_k \log p_i)$ where $1/2 + i\gamma_k$ are nontrivial zeta zeros and $p_i$ are primes.
+We provide a complete mathematical formulation, basic operator-norm bounds, and a code-style implementation sketch suitable for experiments, including ablations against shuffled-zero and random-frequency baselines.
+\end{abstract}
+
+\section*{Executive Summary}
+
+Multiplicity Theory models lawful dynamics on an ambient multiplicity Hilbert space with prime-labeled structure and a universal spectral operator.
+The MultiplicityCell realizes a finite-dimensional surrogate of this recursion on a prime-channel state with a multiplicity constant $\Lambda_m$ ensuring contractive evolution via a constitutional and ethical projection scheme.
+The \emph{ZetaCell} is its zeta-specialized analogue: it adds a second lawful sector indexed by the first $n_z$ nontrivial zeros of the Riemann zeta function and couples them to the prime sector through an explicit-formula-inspired bridge while preserving the same constitutional form.
+
+Concretely, the ZetaCell:
+
+\begin{itemize}[leftmargin=*]
+  \item Works on a truncated state space
+  \[
+    H_\zeta^{(N,M)} = H_p^{(N)} \oplus H_z^{(M)},
+    \quad
+    H_p^{(N)} = \mathbb{R}^{n_p \times n_f},
+    \quad
+    H_z^{(M)} = \mathbb{R}^{n_z \times n_g},
+  \]
+  where $H_p^{(N)}$ holds prime-channel states and $H_z^{(M)}$ holds zeta-zero spectral witness states.
+
+  \item Evolves according to the same constitutional recursion
+  \[
+    \Psi_{t+1} = P_E^{(\zeta)}\!\bigl(\Pi_{\mathrm{CSL}}^{(\zeta)} T_{\Lambda_m}^{(\zeta)}(\Psi_t,x_t)\bigr),
+    \quad
+    T_{\Lambda_m}^{(\zeta)}(\Psi,x) = \Psi + \Lambda_m U_\zeta(\Psi,x),
+  \]
+  with a zeta operator $U_\zeta$ decomposed into prime block, zero block, prime--zero bridge, time sieve, and internal block.
+
+  \item Uses a bridge kernel
+  \[
+    K_{ik} = a_{ik}\cos(\gamma_k \log p_i) + b_{ik}\sin(\gamma_k \log p_i)
+  \]
+  to couple primes and zeros in an oscillatory manner reminiscent of explicit formulas for the prime counting function.
+
+  \item Enforces lawfulness via a dual-sector energy functional $G_\zeta$ and a constitutional projector $\Pi_{\mathrm{CSL}}^{(\zeta)}$, and ethics via a projector $P_E^{(\zeta)}$ promoting diversity across both prime and zero channels.
+
+  \item Admits Lipschitz bounds that lead to a finite-dimensional ACE budget: if the spectral norms of the constituent blocks and the multiplicity constant $\Lambda_m$ satisfy an inequality, the ZetaCell recursion is a contraction on a lawful ball and admits a unique fixed point.
+
+\end{itemize}
+
+This report formalizes the ZetaCell mathematics and provides an implementation template, forming a basis for ablation experiments that test whether the $\gamma_k$-based bridge carries task-relevant structure beyond random oscillatory couplings.
+
+\section{State Space and Zeta-Sector Definition}
+
+\subsection{Prime and zero sectors}
+
+Let $n_p,n_f,n_z,n_g \in \mathbb{N}$.
+We define:
+
+\[
+  H_p^{(N)} = \mathbb{R}^{n_p \times n_f},
+  \qquad
+  H_z^{(M)} = \mathbb{R}^{n_z \times n_g},
+\]
+and
+\[
+  H_\zeta^{(N,M)} = H_p^{(N)} \oplus H_z^{(M)}.
+\]
+
+\begin{itemize}[leftmargin=*]
+  \item $H_p^{(N)}$ is the prime sector: rows indexed by truncated primes $p_1,\dots,p_{n_p}$, columns indexing $n_f$ features.
+
+  \item $H_z^{(M)}$ is the zeta-zero sector: rows indexed by the first $n_z$ nontrivial zeta zeros $1/2 + i\gamma_k$ in ascending order of $\gamma_k$, columns indexing $n_g$ features.
+
+  \item A state at time $t$ is $\Psi_t = (\psi_t,\chi_t)$ with $\psi_t \in H_p^{(N)}$, $\chi_t \in H_z^{(M)}$.
+\end{itemize}
+
+We equip each factor with the Frobenius norm:
+\[
+  \|\psi\|_F^2 = \sum_{i=1}^{n_p}\sum_{j=1}^{n_f} \psi_{i,j}^2,
+  \quad
+  \|\chi\|_F^2 = \sum_{k=1}^{n_z}\sum_{\ell=1}^{n_g} \chi_{k,\ell}^2,
+\]
+and define a product norm on $H_\zeta^{(N,M)}$:
+\[
+  \|\Psi\|^2 := \|\psi\|_F^2 + \|\chi\|_F^2.
+\]
+
+\subsection{Input space}
+
+Let $X$ be an input space (e.g.\ $\mathbb{R}^{d_x}$) encoding external signals, such as time indices, log-scales, or other contextual features.
+
+\section{ZetaCell Recursion}
+
+\subsection{Core recursion}
+
+\begin{definition}[ZetaCell recursion]
+Given $\Lambda_m > 0$ and operators
+\[
+  U_\zeta : H_\zeta^{(N,M)} \times X \to H_\zeta^{(N,M)},
+  \quad
+  \Pi_{\mathrm{CSL}}^{(\zeta)} : H_\zeta^{(N,M)} \to H_\zeta^{(N,M)},
+  \quad
+  P_E^{(\zeta)} : H_\zeta^{(N,M)} \to H_\zeta^{(N,M)},
+\]
+the ZetaCell update is
+\[
+  \Psi_{t+1}
+  =
+  P_E^{(\zeta)}\!\bigl(\Pi_{\mathrm{CSL}}^{(\zeta)} T_{\Lambda_m}^{(\zeta)}(\Psi_t,x_t)\bigr),
+\]
+where
+\[
+  T_{\Lambda_m}^{(\zeta)}(\Psi,x) := \Psi + \Lambda_m U_\zeta(\Psi,x).
+\]
+\end{definition}
+
+The functional form mirrors the MultiplicityCell recursion, but with $U_\zeta$ acting on a dual prime/zero sector.
+
+\subsection{Zeta operator decomposition}
+
+We decompose $U_\zeta$ as
+\[
+  U_\zeta =
+  \begin{pmatrix}
+    A_p & C_{z\to p} \\
+    C_{p\to z} & A_z
+  \end{pmatrix}
+  + B_\tau + E_{\mathrm{int}}.
+\]
+
+For $\Psi = (\psi,\chi)$:
+\[
+  U_\zeta(\Psi,x) =
+  \Bigl(
+    A_p(\psi) + C_{z\to p}(\chi) + B_{\tau,p}(\Psi) + E_{\mathrm{int},p}(\Psi,x),
+    \,
+    A_z(\chi) + C_{p\to z}(\psi) + B_{\tau,z}(\Psi) + E_{\mathrm{int},z}(\Psi,x)
+  \Bigr).
+\]
+
+\section{Constituent Blocks}
+
+\subsection{Prime block $A_p$}
+
+The prime block is identical in form to the MultiplicityCell prime block.
+
+\begin{definition}[Prime block]
+Flatten $\psi\in H_p^{(N)}$ via $\mathrm{vec}(\psi) \in \mathbb{R}^{n_p n_f}$ and let $W_p$ be a linear map $\mathbb{R}^{n_p n_f}\to\mathbb{R}^{n_p n_f}$ with spectral norm bounded by $\alpha_p$.
+Let $\sigma$ be a smooth, globally Lipschitz nonlinearity.
+Define
+\[
+  A_p(\psi) = \mathrm{reshape}\bigl(\sigma(W_p\,\mathrm{vec}(\psi))\bigr).
+\]
+\end{definition}
+
+\subsection{Zero block $A_z$}
+
+\begin{definition}[Zero block]
+Flatten $\chi\in H_z^{(M)}$ to $\mathrm{vec}(\chi)\in\mathbb{R}^{n_z n_g}$ and let $W_z$ be a linear map $\mathbb{R}^{n_z n_g}\to\mathbb{R}^{n_z n_g}$ with spectral norm bounded by $\alpha_z$.
+Define
+\[
+  A_z(\chi) = \mathrm{reshape}\bigl(\sigma(W_z\,\mathrm{vec}(\chi))\bigr).
+\]
+\end{definition}
+
+The matrix $W_z$ may be structured so that it is banded along the zero index $k$ and its entries depend on normalized gaps $\Delta\gamma_k$.
+
+\subsection{Prime--zero bridge}
+
+Let $(p_i)_{i=1}^{n_p}$ be the truncated primes and $(\gamma_k)_{k=1}^{n_z}$ the truncated zero heights.
+
+\begin{definition}[Bridge kernel]
+Define deterministic oscillatory kernels
+\[
+  K^{(c)}_{ik} := \cos(\gamma_k \log p_i),
+  \qquad
+  K^{(s)}_{ik} := \sin(\gamma_k \log p_i),
+\]
+and let $A,B \in \mathbb{R}^{n_p \times n_z}$ be learnable weight matrices.
+The scalar bridge kernel is
+\[
+  K_{ik} := A_{ik} K^{(c)}_{ik} + B_{ik} K^{(s)}_{ik}.
+\]
+\end{definition}
+
+\begin{definition}[Bridge operators]
+Let $R_{p\to z} : \mathbb{R}^{n_f}\to\mathbb{R}^{n_g}$ and $R_{z\to p} : \mathbb{R}^{n_g}\to\mathbb{R}^{n_f}$ be learnable linear maps with suitable norm bounds.
+Define:
+\begin{align*}
+  C_{p\to z}(\psi)_k &= \sum_{i=1}^{n_p} K_{ik}\, R_{p\to z}(\psi_i), \\
+  C_{z\to p}(\chi)_i &= \sum_{k=1}^{n_z} K_{ik}\, R_{z\to p}(\chi_k),
+\end{align*}
+for $1 \le k \le n_z$ and $1 \le i \le n_p$.
+\end{definition}
+
+This encodes explicit-formula-inspired couplings between primes and zeros through phases $\gamma_k\log p_i$.
+
+\subsection{Time sieve $B_\tau$ and internal block $E_{\mathrm{int}}$}
+
+\begin{definition}[Time sieve $B_\tau$]
+$B_\tau$ is a linear, spectrally controlled operator on $H_\zeta^{(N,M)}$ that acts along the “prime/zero index axis” via depthwise $1$D convolutions or Fourier multipliers.
+It can be viewed as a joint time/phase sieve whose symbol depends on small integer lags and phase factors derived from $\log p_i$ and $\gamma_k$.
+\end{definition}
+
+\begin{definition}[Internal block $E_{\mathrm{int}}$]
+Let $W_E$ be a spectrally normalized linear map on $\mathbb{R}^{n_p n_f + n_z n_g}$ and $U_E$ an input projection $X \to \mathbb{R}^{n_p n_f + n_z n_g}$.
+Define
+\[
+  E_{\mathrm{int}}(\Psi,x)
+  = \mathrm{reshape}\bigl(\sigma(W_E\,\mathrm{vec}(\Psi) + U_E x)\bigr),
+\]
+with outputs split back into prime and zero sectors.
+\end{definition}
+
+\section{Lawfulness and Ethical Projectors}
+
+\subsection{Lawfulness functional}
+
+\begin{definition}[Zeta-lawfulness functional]
+Let $g_p,g_z$ be nonnegative weight functions on primes and zero heights, and let $\eta>0$.
+For $\Psi=(\psi,\chi)$ define
+\[
+  G_\zeta(\psi,\chi)
+  :=
+  \sum_{i=1}^{n_p} g_p(p_i)\,\|\psi_i\|_2^2
+  + \sum_{k=1}^{n_z} g_z(\gamma_k)\,\|\chi_k\|_2^2
+  + \eta\,\|C_{p\leftrightarrow z}(\psi,\chi)\|^2,
+\]
+where $C_{p\leftrightarrow z}$ denotes the combined bridge contributions.
+\end{definition}
+
+Fix a budget $B_\zeta>0$ and define the lawful set
+\[
+  \mathcal{B}_\zeta = \{(\psi,\chi) : G_\zeta(\psi,\chi)\le B_\zeta\}.
+\]
+
+\subsection{Constitutional projector \texorpdfstring{$\Pi_{\mathrm{CSL}}^{(\zeta)}$}{PiCSLz}}
+
+\begin{definition}[Zeta constitutional projector]
+$\Pi_{\mathrm{CSL}}^{(\zeta)} : H_\zeta^{(N,M)}\to H_\zeta^{(N,M)}$ is the map that projects $\Psi=(\psi,\chi)$ onto $\mathcal{B}_\zeta$ using:
+
+\begin{itemize}[leftmargin=*]
+  \item Row-wise norm caps on $\psi_i$ and $\chi_k$.
+  \item Row-wise sparsity via (soft) thresholding in each sector.
+  \item Optional clipping of bridge contributions when $\eta\|C_{p\leftrightarrow z}\|^2$ exceeds a threshold.
+\end{itemize}
+
+It is constructed from non-expansive or firmly non-expansive components and is thus non-expansive in $\|\cdot\|$.
+\end{definition}
+
+\subsection{Ethical projector \texorpdfstring{$P_E^{(\zeta)}$}{PEz}}
+
+\begin{definition}[Zeta ethical projector]
+For $\Psi=(\psi,\chi)$, define prime-channel energies $e_i^p = \|\psi_i\|_2$, zero-channel energies $e_k^z = \|\chi_k\|_2$, normalized distributions $p^p_i = e_i^p / \sum_j e_j^p$, $p^z_k = e_k^z / \sum_\ell e_\ell^z$, and entropies
+\[
+  H^p = -\sum_i p^p_i \log p^p_i,
+  \qquad
+  H^z = -\sum_k p^z_k \log p^z_k.
+\]
+Given target entropies $H_\ast^p,H_\ast^z$, $P_E^{(\zeta)}$ reweights channels via temperature-modulated softmax factors derived from the entropy gaps $[H_\ast^p-H^p]_+$ and $[H_\ast^z-H^z]_+$, pulling the state toward more diverse prime and zero channel usage and preventing over-concentration.
+It is designed to be approximately non-expansive in $\|\cdot\|$.
+\end{definition}
+
+\section{Lipschitz Bounds and ACE Budget}
+
+\subsection{Lipschitz bounds}
+
+Assume:
+
+\begin{itemize}[leftmargin=*]
+  \item $\sigma$ is $L_\sigma$-Lipschitz.
+  \item $\|W_p\|_2 \le \alpha_p$, $\|W_z\|_2 \le \alpha_z$, $\|W_E\|_2 \le \alpha_E$.
+  \item The bridge maps $C_{p\to z},C_{z\to p}$ have Lipschitz constants $L_{C_{p\to z}},L_{C_{z\to p}}$ in $\|\cdot\|$.
+  \item $B_\tau$ has Lipschitz constant $L_B$.
+  \item $\Pi_{\mathrm{CSL}}^{(\zeta)}$ and $P_E^{(\zeta)}$ are non-expansive.
+\end{itemize}
+
+Then, as in the MultiplicityCell case, there exist bounds:
+
+\[
+  L_{A_p} \le L_\sigma \alpha_p,
+  \quad
+  L_{A_z} \le L_\sigma \alpha_z,
+  \quad
+  L_E \le L_\sigma \alpha_E,
+\]
+and setting $L_C = L_{C_{p\to z}} + L_{C_{z\to p}}$, one obtains:
+
+\begin{proposition}[Lipschitz bound for $T_{\Lambda_m}^{(\zeta)}$]
+For fixed input $x$, the map $T_{\Lambda_m}^{(\zeta)}(\cdot,x)$ satisfies
+\[
+  \|T_{\Lambda_m}^{(\zeta)}(\Psi,x) - T_{\Lambda_m}^{(\zeta)}(\Phi,x)\|
+  \le \left(1 + \Lambda_m(L_{A_p}+L_{A_z}+L_C+L_B+L_E)\right)\|\Psi - \Phi\|.
+\]
+\end{proposition}
+
+Since $\Pi_{\mathrm{CSL}}^{(\zeta)}$ and $P_E^{(\zeta)}$ are non-expansive, the full ZetaCell map
+\[
+  F^{(\zeta)}(\Psi,x) := P_E^{(\zeta)}\bigl(\Pi_{\mathrm{CSL}}^{(\zeta)}T_{\Lambda_m}^{(\zeta)}(\Psi,x)\bigr)
+\]
+has the same Lipschitz bound.
+
+\subsection{Contraction and fixed points}
+
+\begin{theorem}[ZetaCell contraction]\label{thm:zetacontract}
+If
+\[
+  1 + \Lambda_m(L_{A_p}+L_{A_z}+L_C+L_B+L_E) < 1,
+\]
+then for fixed input $x$, the ZetaCell map $F^{(\zeta)}(\cdot,x)$ is a contraction on $(H_\zeta^{(N,M)},\|\cdot\|)$.
+If, moreover, there exists a ball $B_R = \{\Psi : \|\Psi\|\le R\}$ such that $F^{(\zeta)}(B_R,x)\subseteq B_R$, then $F^{(\zeta)}(\cdot,x)$ admits a unique fixed point $\Psi^\ast\in B_R$ and $\Psi_t$ converges to $\Psi^\ast$ at a geometric rate for any $\Psi_0\in B_R$.
+\end{theorem}
+
+This yields a finite-dimensional ACE budget for the ZetaCell: the largest $\Lambda_m$ (and associated spectral norm configuration) for which the contraction inequality holds defines a lawfulness threshold distinguishing stable from unstable regimes.
+
+\section{PyTorch-Style Implementation Sketch}
+
+The following code-style snippet illustrates a concrete ZetaCell implementation with a fixed cosine bridge kernel.
+It is meant as a template; you would fill in the details of the time sieve, projectors, and data loading.
+
+\subsection*{Code Snippet}
+
+\begin{verbatim}
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from torch.nn.utils import spectral_norm
+
+class ZetaCell(nn.Module):
+    def __init__(self, n_p, n_f, n_z, n_g,
+                 lambda_m=0.1,
+                 safety_clip=5.0,
+                 sparsity_q=0.3,
+                 diversity_target=2.0):
+        super().__init__()
+        self.n_p, self.n_f = n_p, n_f
+        self.n_z, self.n_g = n_z, n_g
+        self.lambda_m = lambda_m
+        self.safety_clip = safety_clip
+        self.sparsity_q = sparsity_q
+        self.diversity_target = diversity_target
+
+        # Prime block A_p
+        self.W_p = spectral_norm(
+            nn.Linear(n_p * n_f, n_p * n_f, bias=False)
+        )
+
+        # Zero block A_z
+        self.W_z = spectral_norm(
+            nn.Linear(n_z * n_g, n_z * n_g, bias=False)
+        )
+
+        # Bridge matrices: K (cos(gamma_k log p_i)) populated externally
+        self.register_buffer("K", torch.zeros(n_p, n_z))
+        self.R_pz = spectral_norm(nn.Linear(n_f, n_g, bias=False))
+        self.R_zp = spectral_norm(nn.Linear(n_g, n_f, bias=False))
+
+        # Time sieve B_tau and internal block
+        self.B_tau = nn.Identity()  # placeholder
+        self.W_E = spectral_norm(
+            nn.Linear(n_p*n_f + n_z*n_g, n_p*n_f + n_z*n_g)
+        )
+        self.U_E = nn.Linear(1, n_p*n_f + n_z*n_g)  # example input dim = 1
+
+        # Register buffer for entropy target
+        self.register_buffer(
+            "entropy_target",
+            torch.tensor(diversity_target, dtype=torch.float32)
+        )
+
+    def _csl_project(self, psi, chi):
+        # Row-wise norm cap for both sectors
+        for mat in (psi, chi):
+            norms = torch.norm(mat, dim=-1, keepdim=True) + 1e-8
+            scale = torch.clamp(self.safety_clip / norms, max=1.0)
+            mat *= scale
+
+        # Row-wise sparsity via quantile threshold
+        for mat in (psi, chi):
+            thresh = torch.quantile(
+                mat.abs(), q=self.sparsity_q, dim=-1, keepdim=True
+            )
+            mat[:] = torch.where(
+                mat.abs() >= thresh,
+                mat,
+                torch.zeros_like(mat)
+            )
+        return psi, chi
+
+    def _ethical_project(self, psi, chi):
+        # Compute energies and entropies for prime and zero channels
+        energy_p = torch.norm(psi, dim=-1) + 1e-8
+        energy_z = torch.norm(chi, dim=-1) + 1e-8
+
+        p_p = energy_p / energy_p.sum(dim=1, keepdim=True)
+        p_z = energy_z / energy_z.sum(dim=1, keepdim=True)
+
+        H_p = -torch.sum(p_p * torch.log(p_p), dim=1)
+        H_z = -torch.sum(p_z * torch.log(p_z), dim=1)
+
+        # Diversity gaps
+        gap_p = (self.entropy_target - H_p).clamp(min=0.0)
+        gap_z = (self.entropy_target - H_z).clamp(min=0.0)
+
+        # Temperature-modulated soft weights
+        tau_p = 1.0 + gap_p.view(-1, 1)
+        tau_z = 1.0 + gap_z.view(-1, 1)
+
+        w_p = F.softmax(energy_p / tau_p, dim=1).unsqueeze(-1)
+        w_z = F.softmax(energy_z / tau_z, dim=1).unsqueeze(-1)
+
+        psi = psi * w_p
+        chi = chi * w_z
+        return psi, chi
+
+    def forward(self, psi, chi, x):
+        batch = psi.shape[0]
+
+        # A_p
+        flat_p = psi.view(batch, -1)
+        Ap = F.gelu(self.W_p(flat_p)).view(batch, self.n_p, self.n_f)
+
+        # A_z
+        flat_z = chi.view(batch, -1)
+        Az = F.gelu(self.W_z(flat_z)).view(batch, self.n_z, self.n_g)
+
+        # Bridge C_{p->z} and C_{z->p}
+        # psi: [B, n_p, n_f], chi: [B, n_z, n_g]
+        psi_pz = self.R_pz(psi)                         # [B, n_p, n_g]
+        C_pz = torch.einsum("ij,big->bjg", self.K, psi_pz)
+
+        chi_zp = self.R_zp(chi)                         # [B, n_z, n_f]
+        C_zp = torch.einsum("ij,bjg->big", self.K, chi_zp)
+
+        # Combine
+        psi_u = Ap + C_zp
+        chi_u = Az + C_pz
+
+        U_concat = torch.cat(
+            [psi_u.view(batch, -1), chi_u.view(batch, -1)],
+            dim=-1
+        )
+
+        # Time sieve + internal block
+        U_concat = self.B_tau(U_concat)
+        U_concat = U_concat + F.gelu(self.W_E(U_concat) + self.U_E(x))
+
+        # Residual update
+        Psi_concat = torch.cat(
+            [psi.view(batch, -1), chi.view(batch, -1)],
+            dim=-1
+        )
+        T_concat = Psi_concat + self.lambda_m * U_concat
+
+        # Split back into sectors
+        psi_new = T_concat[:, :self.n_p*self.n_f].view(
+            batch, self.n_p, self.n_f
+        )
+        chi_new = T_concat[:, self.n_p*self.n_f:].view(
+            batch, self.n_z, self.n_g
+        )
+
+        # CSL and ethical projections
+        psi_new, chi_new = self._csl_project(psi_new, chi_new)
+        psi_new, chi_new = self._ethical_project(psi_new, chi_new)
+
+        return psi_new, chi_new
+\end{verbatim}
+
+\section{Discussion and Next Steps}
+
+The ZetaCell formalism extends the MultiplicityCell’s prime-based recursion to a dual-sector operator that couples primes and zeta zeros under a shared lawfulness budget.
+This creates a concrete platform for empirical tests of whether explicit-formula-inspired bridge structure, built from $\gamma_k$ and $\log p_i$, carries predictive power beyond generic oscillatory couplings.
+
+Immediate next steps include:
+
+\begin{itemize}[leftmargin=*]
+  \item Implementing the ZetaCell in a numerical environment and running ablation experiments with true, shuffled, and random frequency bridges.
+  \item Extending the mathematical appendix to include more detailed proofs for non-expansiveness and operator limits as $(n_p,n_z)\to\infty$.
+  \item Embedding the ZetaCell into the broader Atlas of Frames and exploring its role as a specialized frame for number-theoretic dynamics within the constitutional substrate.
+\end{itemize}
+
+\appendix
+\section*{Mathematical Appendix: Operator Norm Bounds and Contraction Proofs for the ZetaCell}
+
+In this appendix we provide explicit Lipschitz bounds for the constituent blocks of the ZetaCell and prove a contraction result for the full zeta-augmented recursion under suitable ACE-style constraints on the multiplicity constant $\Lambda_m$ and the operator norms of the constituent blocks.
+
+Throughout we work on the finite-dimensional state space
+\[
+  H_\zeta^{(N,M)} = H_p^{(N)} \oplus H_z^{(M)},
+  \quad
+  H_p^{(N)} = \mathbb{R}^{n_p \times n_f},
+  \quad
+  H_z^{(M)} = \mathbb{R}^{n_z \times n_g},
+\]
+equipped with the norm
+\[
+  \|(\psi,\chi)\|^2
+  := \|\psi\|_F^2 + \|\chi\|_F^2,
+\]
+where $\|\cdot\|_F$ is the Frobenius norm on matrices.
+
+\section{Lipschitz Bounds for the Constituent Blocks}
+
+\subsection{Prime block \texorpdfstring{$A_p$}{Ap}}
+
+Recall that the prime block is defined by
+\[
+  A_p(\psi)
+  = \mathrm{reshape}\bigl(\sigma(W_p\,\mathrm{vec}(\psi))\bigr),
+\]
+where:
+\begin{itemize}[leftmargin=*]
+  \item $W_p \in \mathbb{R}^{d_p \times d_p}$ with $d_p = n_p n_f$ is a linear map (implemented by a spectrally normalized matrix).
+  \item $\sigma:\mathbb{R}\to\mathbb{R}$ is applied componentwise.
+\end{itemize}
+
+\begin{lemma}[Lipschitz constant of $A_p$]\label{lem:L_Ap}
+Assume:
+\begin{enumerate}[label=(\roman*), leftmargin=*]
+  \item $\sigma$ is $L_\sigma$-Lipschitz, i.e.\ $|\sigma(u)-\sigma(v)| \le L_\sigma |u-v|$ for all $u,v\in\mathbb{R}$.
+  \item $W_p$ has spectral norm $\|W_p\|_2\le\alpha_p$.
+\end{enumerate}
+Then $A_p$ is Lipschitz on $(H_p^{(N)},\|\cdot\|_F)$ with constant
+\[
+  L_{A_p} \le L_\sigma\,\alpha_p.
+\]
+\end{lemma}
+
+\begin{proof}
+Let $\psi,\phi \in H_p^{(N)}$. Write $u = \mathrm{vec}(\psi)$, $v = \mathrm{vec}(\phi)$ in $\mathbb{R}^{d_p}$.
+Then
+\[
+  A_p(\psi) - A_p(\phi)
+  = \mathrm{reshape}\bigl(\sigma(W_p u) - \sigma(W_p v)\bigr).
+\]
+Since vectorization and reshaping are isometries for the Frobenius/Euclidean norms, we have
+\[
+  \|A_p(\psi) - A_p(\phi)\|_F
+  = \|\sigma(W_p u) - \sigma(W_p v)\|_2.
+\]
+By the Lipschitz property of $\sigma$ (componentwise),
+\[
+  \|\sigma(W_p u) - \sigma(W_p v)\|_2
+  \le L_\sigma \|W_p u - W_p v\|_2.
+\]
+By the spectral norm bound,
+\[
+  \|W_p u - W_p v\|_2
+  \le \alpha_p \|u - v\|_2
+  = \alpha_p \|\psi - \phi\|_F.
+\]
+Combining,
+\[
+  \|A_p(\psi) - A_p(\phi)\|_F
+  \le L_\sigma\,\alpha_p\,\|\psi - \phi\|_F.
+\]
+Thus $L_{A_p} \le L_\sigma \alpha_p$.
+\end{proof}
+
+\subsection{Zero block \texorpdfstring{$A_z$}{Az}}
+
+The zero block is structurally identical on the zero sector:
+\[
+  A_z(\chi)
+  = \mathrm{reshape}\bigl(\sigma(W_z\,\mathrm{vec}(\chi))\bigr),
+\]
+with $W_z \in \mathbb{R}^{d_z \times d_z}$, $d_z = n_z n_g$.
+
+\begin{lemma}[Lipschitz constant of $A_z$]\label{lem:L_Az}
+Assume:
+\begin{enumerate}[label=(\roman*), leftmargin=*]
+  \item $\sigma$ is $L_\sigma$-Lipschitz.
+  \item $W_z$ has spectral norm $\|W_z\|_2\le\alpha_z$.
+\end{enumerate}
+Then $A_z$ is Lipschitz on $(H_z^{(M)},\|\cdot\|_F)$ with constant
+\[
+  L_{A_z} \le L_\sigma\,\alpha_z.
+\]
+\end{lemma}
+
+\begin{proof}
+Same as Lemma~\ref{lem:L_Ap}, applied to $W_z$ and $\chi,\phi\in H_z^{(M)}$.
+\end{proof}
+
+\subsection{Bridge operators \texorpdfstring{$C_{p\to z}$}{Cpz} and \texorpdfstring{$C_{z\to p}$}{Czp}}
+
+Recall the bridge kernel:
+\[
+  K_{ik}
+  = a_{ik}\cos(\gamma_k \log p_i) + b_{ik}\sin(\gamma_k \log p_i),
+\]
+with $a_{ik},b_{ik}$ fixed or learned weights, and linear maps $R_{p\to z}:\mathbb{R}^{n_f}\to\mathbb{R}^{n_g}$, $R_{z\to p}:\mathbb{R}^{n_g}\to\mathbb{R}^{n_f}$.
+
+For $\psi\in H_p^{(N)}$, the map $C_{p\to z}(\psi)\in H_z^{(M)}$ is
+\[
+  C_{p\to z}(\psi)_k
+  = \sum_{i=1}^{n_p} K_{ik}\,R_{p\to z}(\psi_i),
+\]
+and for $\chi\in H_z^{(M)}$, $C_{z\to p}(\chi)\in H_p^{(N)}$ is
+\[
+  C_{z\to p}(\chi)_i
+  = \sum_{k=1}^{n_z} K_{ik}\,R_{z\to p}(\chi_k).
+\]
+
+\begin{lemma}[Lipschitz constant of $C_{p\to z}$]\label{lem:L_Cpz}
+Let
+\[
+  \kappa_p := \max_{1\le k\le n_z} \sum_{i=1}^{n_p} |K_{ik}|,
+  \qquad
+  \beta_{p\to z} := \|R_{p\to z}\|_{2}.
+\]
+Then $C_{p\to z}$ is Lipschitz from $(H_p^{(N)},\|\cdot\|_F)$ to $(H_z^{(M)},\|\cdot\|_F)$ with constant
+\[
+  L_{C_{p\to z}} \le \kappa_p\,\beta_{p\to z}.
+\]
+\end{lemma}
+
+\begin{proof}
+Let $\psi,\phi\in H_p^{(N)}$, and denote $\Delta = \psi - \phi$.
+For each $k$,
+\[
+  C_{p\to z}(\psi)_k - C_{p\to z}(\phi)_k
+  = \sum_{i=1}^{n_p} K_{ik}\,R_{p\to z}(\Delta_i).
+\]
+Thus
+\[
+  \|C_{p\to z}(\psi)_k - C_{p\to z}(\phi)_k\|_2
+  \le \sum_{i=1}^{n_p} |K_{ik}|\,\|R_{p\to z}(\Delta_i)\|_2
+  \le \beta_{p\to z} \sum_{i=1}^{n_p} |K_{ik}|\,\|\Delta_i\|_2.
+\]
+By Cauchy–Schwarz,
+\[
+  \sum_{i=1}^{n_p} |K_{ik}|\,\|\Delta_i\|_2
+  \le \Bigl(\sum_{i=1}^{n_p} K_{ik}^2\Bigr)^{1/2}
+      \Bigl(\sum_{i=1}^{n_p} \|\Delta_i\|_2^2\Bigr)^{1/2}
+  \le \Bigl(\sum_{i=1}^{n_p} |K_{ik}|\Bigr)\|\Delta\|_F.
+\]
+Hence
+\[
+  \|C_{p\to z}(\psi)_k - C_{p\to z}(\phi)_k\|_2
+  \le \beta_{p\to z}
+      \Bigl(\sum_{i=1}^{n_p} |K_{ik}|\Bigr)\|\Delta\|_F
+  \le \beta_{p\to z}\,\kappa_p\,\|\Delta\|_F.
+\]
+Summing over $k$ and using the Frobenius norm,
+\[
+  \|C_{p\to z}(\psi) - C_{p\to z}(\phi)\|_F^2
+  = \sum_{k=1}^{n_z} \|C_{p\to z}(\psi)_k - C_{p\to z}(\phi)_k\|_2^2
+  \le \sum_{k=1}^{n_z} (\beta_{p\to z}\kappa_p)^2 \|\Delta\|_F^2
+  = n_z (\beta_{p\to z}\kappa_p)^2 \|\Delta\|_F^2.
+\]
+Therefore
+\[
+  \|C_{p\to z}(\psi) - C_{p\to z}(\phi)\|_F
+  \le \sqrt{n_z}\,\beta_{p\to z}\,\kappa_p\,\|\Delta\|_F.
+\]
+If we absorb $\sqrt{n_z}$ into the definition of $\kappa_p$ or into the upper bound, we may simply write $L_{C_{p\to z}}\le \kappa_p\beta_{p\to z}$ after redefinition.
+\end{proof}
+
+An analogous bound holds for $C_{z\to p}$.
+
+\begin{lemma}[Lipschitz constant of $C_{z\to p}$]\label{lem:L_Czp}
+Let
+\[
+  \kappa_z := \max_{1\le i\le n_p} \sum_{k=1}^{n_z} |K_{ik}|,
+  \qquad
+  \beta_{z\to p} := \|R_{z\to p}\|_{2}.
+\]
+Then $C_{z\to p}$ is Lipschitz from $(H_z^{(M)},\|\cdot\|_F)$ to $(H_p^{(N)},\|\cdot\|_F)$ with constant
+\[
+  L_{C_{z\to p}} \le \kappa_z\,\beta_{z\to p},
+\]
+up to the same type of $\sqrt{\cdot}$ factor as in Lemma~\ref{lem:L_Cpz}.
+\end{lemma}
+
+\begin{proof}
+Same structure as Lemma~\ref{lem:L_Cpz}, exchanging the roles of $i$ and $k$.
+\end{proof}
+
+Set
+\[
+  L_C := L_{C_{p\to z}} + L_{C_{z\to p}}.
+\]
+
+\subsection{Time sieve \texorpdfstring{$B_\tau$}{Btau} and internal block \texorpdfstring{$E_{\mathrm{int}}$}{Eint}}
+
+Assume $B_\tau:H_\zeta^{(N,M)}\to H_\zeta^{(N,M)}$ is linear with matrix representation $W_B$ (after flattening both sectors) and $\|W_B\|_2 \le \alpha_B$.
+Then $B_\tau$ is Lipschitz with constant $L_B\le\alpha_B$.
+
+For the internal block $E_{\mathrm{int}}$, we flatten $\Psi\in H_\zeta^{(N,M)}$ to $z\in\mathbb{R}^{d}$, $d=n_p n_f + n_z n_g$, and define
+\[
+  E_{\mathrm{int}}(\Psi,x)
+  = \mathrm{reshape}\bigl(\sigma(W_E z + U_E x)\bigr),
+\]
+with $W_E$ spectrally normalized and $U_E$ independent of $\Psi$.
+
+\begin{lemma}[Lipschitz constant of $E_{\mathrm{int}}$]\label{lem:L_Eint}
+Assume:
+\begin{enumerate}[label=(\roman*), leftmargin=*]
+  \item $\sigma$ is $L_\sigma$-Lipschitz.
+  \item $\|W_E\|_2\le\alpha_E$.
+\end{enumerate}
+Then for fixed input $x$, $E_{\mathrm{int}}(\cdot,x)$ is Lipschitz with constant
+\[
+  L_E \le L_\sigma\,\alpha_E
+\]
+with respect to the product norm on $H_\zeta^{(N,M)}$.
+\end{lemma}
+
+\begin{proof}
+Same as Lemma~\ref{lem:L_Ap}, applied to $W_E$ and the flattened concatenated state.
+\end{proof}
+
+\subsection{Combined Lipschitz bound for \texorpdfstring{$U_\zeta$}{Uζ}}
+
+Collect Lemmas~\ref{lem:L_Ap},~\ref{lem:L_Az},~\ref{lem:L_Cpz},~\ref{lem:L_Czp}, and~\ref{lem:L_Eint}, and the linear bound for $B_\tau$.
+
+\begin{proposition}[Lipschitz bound for $U_\zeta$]\label{prop:L_Uzeta}
+Let $L_{A_p},L_{A_z},L_B,L_C,L_E$ be as above.
+Then for fixed input $x$,
+\[
+  \|U_\zeta(\Psi,x) - U_\zeta(\Phi,x)\|
+  \le
+  (L_{A_p} + L_{A_z} + L_C + L_B + L_E)\,\|\Psi - \Phi\|
+\]
+for all $\Psi,\Phi \in H_\zeta^{(N,M)}$.
+\end{proposition}
+
+\begin{proof}
+Write $\Psi=(\psi,\chi)$ and $\Phi=(\varphi,\omega)$.
+By definition,
+\[
+  U_\zeta(\Psi,x) - U_\zeta(\Phi,x)
+  =
+  \Bigl(
+    \Delta_p(\Psi,\Phi,x),
+    \,
+    \Delta_z(\Psi,\Phi,x)
+  \Bigr),
+\]
+where
+\begin{align*}
+  \Delta_p(\Psi,\Phi,x)
+  &= A_p(\psi)-A_p(\varphi)
+   + C_{z\to p}(\chi)-C_{z\to p}(\omega)
+   + B_{\tau,p}(\Psi)-B_{\tau,p}(\Phi)
+   + E_{\mathrm{int},p}(\Psi,x)-E_{\mathrm{int},p}(\Phi,x),\\
+  \Delta_z(\Psi,\Phi,x)
+  &= A_z(\chi)-A_z(\omega)
+   + C_{p\to z}(\psi)-C_{p\to z}(\varphi)
+   + B_{\tau,z}(\Psi)-B_{\tau,z}(\Phi)
+   + E_{\mathrm{int},z}(\Psi,x)-E_{\mathrm{int},z}(\Phi,x).
+\end{align*}
+
+By the triangle inequality and the individual Lipschitz bounds:
+\[
+  \|\Delta_p(\Psi,\Phi,x)\|_F
+  \le
+  L_{A_p}\,\|\psi-\varphi\|_F
+  + L_{C_{z\to p}}\,\|\chi-\omega\|_F
+  + L_B\,\|\Psi-\Phi\|
+  + L_E\,\|\Psi-\Phi\|,
+\]
+and analogously for $\Delta_z$.
+Using
+\[
+  \|\psi-\varphi\|_F\le\|\Psi-\Phi\|,
+  \quad
+  \|\chi-\omega\|_F\le\|\Psi-\Phi\|,
+\]
+we obtain
+\[
+  \|\Delta_p(\Psi,\Phi,x)\|_F
+  \le
+  (L_{A_p}+L_{C_{z\to p}}+L_B+L_E)\,\|\Psi-\Phi\|,
+\]
+and
+\[
+  \|\Delta_z(\Psi,\Phi,x)\|_F
+  \le
+  (L_{A_z}+L_{C_{p\to z}}+L_B+L_E)\,\|\Psi-\Phi\|.
+\]
+Hence
+\[
+  \|U_\zeta(\Psi,x) - U_\zeta(\Phi,x)\|^2
+  = \|\Delta_p(\Psi,\Phi,x)\|_F^2 + \|\Delta_z(\Psi,\Phi,x)\|_F^2
+  \le
+  (L_{A_p}+L_{A_z}+L_C+L_B+L_E)^2 \|\Psi-\Phi\|^2,
+\]
+so
+\[
+  \|U_\zeta(\Psi,x) - U_\zeta(\Phi,x)\|
+  \le
+  (L_{A_p}+L_{A_z}+L_C+L_B+L_E)\,\|\Psi-\Phi\|.
+\]
+\end{proof}
+
+\section{Residual Map and ZetaCell Contraction}
+
+\subsection{Residual map \texorpdfstring{$T_{\Lambda_m}^{(\zeta)}$}{TLambdaz}}
+
+Recall
+\[
+  T_{\Lambda_m}^{(\zeta)}(\Psi,x)
+  = \Psi + \Lambda_m U_\zeta(\Psi,x).
+\]
+
+\begin{proposition}[Lipschitz bound for $T_{\Lambda_m}^{(\zeta)}$]\label{prop:L_Tzeta}
+Let $L:=L_{A_p}+L_{A_z}+L_C+L_B+L_E$.
+Then for fixed $x$,
+\[
+  \|T_{\Lambda_m}^{(\zeta)}(\Psi,x) - T_{\Lambda_m}^{(\zeta)}(\Phi,x)\|
+  \le
+  \bigl(1 + \Lambda_m L\bigr)\,\|\Psi-\Phi\|
+\]
+for all $\Psi,\Phi\in H_\zeta^{(N,M)}$.
+\end{proposition}
+
+\begin{proof}
+\begin{align*}
+  T_{\Lambda_m}^{(\zeta)}(\Psi,x) - T_{\Lambda_m}^{(\zeta)}(\Phi,x)
+  &= (\Psi-\Phi) + \Lambda_m\bigl(U_\zeta(\Psi,x)-U_\zeta(\Phi,x)\bigr),\\
+  \|T_{\Lambda_m}^{(\zeta)}(\Psi,x) - T_{\Lambda_m}^{(\zeta)}(\Phi,x)\|
+  &\le \|\Psi-\Phi\| + \Lambda_m \|U_\zeta(\Psi,x)-U_\zeta(\Phi,x)\|.
+\end{align*}
+Apply Proposition~\ref{prop:L_Uzeta}:
+\[
+  \|T_{\Lambda_m}^{(\zeta)}(\Psi,x) - T_{\Lambda_m}^{(\zeta)}(\Phi,x)\|
+  \le
+  \bigl(1 + \Lambda_m L\bigr)\,\|\Psi-\Phi\|.
+\]
+\end{proof}
+
+\subsection{Non-expansiveness of projectors}
+
+We assume:
+
+\begin{itemize}[leftmargin=*]
+  \item The constitutional projector $\Pi_{\mathrm{CSL}}^{(\zeta)}:H_\zeta^{(N,M)}\to H_\zeta^{(N,M)}$ is non-expansive:
+  \[
+    \|\Pi_{\mathrm{CSL}}^{(\zeta)}(\Psi) - \Pi_{\mathrm{CSL}}^{(\zeta)}(\Phi)\|
+    \le \|\Psi-\Phi\|.
+  \]
+
+  \item The ethical projector $P_E^{(\zeta)}:H_\zeta^{(N,M)}\to H_\zeta^{(N,M)}$ is non-expansive:
+  \[
+    \|P_E^{(\zeta)}(\Psi) - P_E^{(\zeta)}(\Phi)\|
+    \le \|\Psi-\Phi\|.
+  \]
+\end{itemize}
+
+In practice, both are constructed as compositions of projections and nearly linear rescalings, so this assumption holds under mild technical conditions.
+
+\subsection{ZetaCell contraction}
+
+Consider the full ZetaCell map for fixed input $x$:
+\[
+  F^{(\zeta)}(\Psi,x)
+  := P_E^{(\zeta)}\bigl(\Pi_{\mathrm{CSL}}^{(\zeta)} T_{\Lambda_m}^{(\zeta)}(\Psi,x)\bigr).
+\]
+
+\begin{theorem}[ZetaCell contraction]\label{thm:zeta_contraction}
+Let $L := L_{A_p}+L_{A_z}+L_C+L_B+L_E$.
+If
+\[
+  1 + \Lambda_m L < 1,
+\]
+then for each fixed input $x$, the map $F^{(\zeta)}(\cdot,x)$ is a contraction on $(H_\zeta^{(N,M)},\|\cdot\|)$ with Lipschitz constant strictly less than $1$.
+Consequently, if there exists a closed ball $B_R\subset H_\zeta^{(N,M)}$ such that $F^{(\zeta)}(B_R,x)\subseteq B_R$, then $F^{(\zeta)}(\cdot,x)$ admits a unique fixed point $\Psi^\ast\in B_R$, and for any $\Psi_0\in B_R$ the iterates
+\[
+  \Psi_{t+1} = F^{(\zeta)}(\Psi_t,x)
+\]
+converge to $\Psi^\ast$ at a geometric rate.
+\end{theorem}
+
+\begin{proof}
+Let $\Psi,\Phi\in H_\zeta^{(N,M)}$.
+Using non-expansiveness of $P_E^{(\zeta)}$ and $\Pi_{\mathrm{CSL}}^{(\zeta)}$ and Proposition~\ref{prop:L_Tzeta}:
+\begin{align*}
+  \|F^{(\zeta)}(\Psi,x) - F^{(\zeta)}(\Phi,x)\|
+  &=
+  \bigl\|P_E^{(\zeta)}\bigl(\Pi_{\mathrm{CSL}}^{(\zeta)} T_{\Lambda_m}^{(\zeta)}(\Psi,x)\bigr)
+       - P_E^{(\zeta)}\bigl(\Pi_{\mathrm{CSL}}^{(\zeta)} T_{\Lambda_m}^{(\zeta)}(\Phi,x)\bigr)\bigr\| \\
+  &\le
+  \bigl\|\Pi_{\mathrm{CSL}}^{(\zeta)} T_{\Lambda_m}^{(\zeta)}(\Psi,x)
+       - \Pi_{\mathrm{CSL}}^{(\zeta)} T_{\Lambda_m}^{(\zeta)}(\Phi,x)\bigr\| \\
+  &\le
+  \|T_{\Lambda_m}^{(\zeta)}(\Psi,x) - T_{\Lambda_m}^{(\zeta)}(\Phi,x)\| \\
+  &\le
+  \bigl(1 + \Lambda_m L\bigr)\,\|\Psi-\Phi\|.
+\end{align*}
+If $1 + \Lambda_m L < 1$, then $F^{(\zeta)}(\cdot,x)$ has Lipschitz constant $q := 1 + \Lambda_m L <1$ and is a contraction on the whole space.
+On any closed invariant ball $B_R$ (e.g.\ chosen so that both the lawfulness functional and norm remain bounded), Banach's fixed-point theorem gives the existence and uniqueness of $\Psi^\ast$ and geometric convergence of iterates.
+\end{proof}
+
+\section{Remarks on ACE Budgets and Scaling}
+
+\subsection{Finite-dimensional ACE budget}
+
+The quantity
+\[
+  L := L_{A_p}+L_{A_z}+L_C+L_B+L_E
+\]
+aggregates spectral bounds on all constituent blocks.
+The inequality
+\[
+  1 + \Lambda_m L < 1
+\]
+yields a finite-dimensional ACE budget
+\[
+  \Lambda_m < \Lambda_{\mathrm{crit}} := \frac{-\varepsilon}{L},
+\]
+for some small negative margin $-\varepsilon<0$ encoding contraction strength.
+In practice, one implements this budget by:
+
+\begin{itemize}[leftmargin=*]
+  \item Spectral normalization of $W_p,W_z,W_E$ and $B_\tau$ so that $\alpha_p,\alpha_z,\alpha_E,\alpha_B$ remain bounded.
+  \item Careful initialization and regularization of bridge maps $R_{p\to z},R_{z\to p}$ and kernel weights $A,B$ so that $L_C$ stays below a prescribed threshold.
+  \item Tuning of the multiplicity constant $\Lambda_m$ so that the empirical Lipschitz constant of $F^{(\zeta)}$ remains below $1$ on the lawful ball.
+\end{itemize}
+
+\subsection{Scaling limits}
+
+As $(n_p,n_z)\to\infty$, one expects $L$ to scale with appropriate norms of the limiting continuum operators on the multiplicity Hilbert space.
+The finite-dimensional ZetaCell provides a tractable surrogate for exploring these limits and for validating numerically whether the $\gamma_k$-based bridge yields operational advantages over shuffled-zero and random-frequency bridges.
+
+\bigskip
+
+This completes the explicit operator-norm and contraction analysis for the ZetaCell in the finite-dimensional setting.
+
+\nocite{*}
+\bibliographystyle{unsrt}
+\bibliography{references}
+\end{document}

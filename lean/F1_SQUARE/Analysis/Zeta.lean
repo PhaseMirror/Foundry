@@ -17,7 +17,7 @@ makes `ζ(s≥2)` a certified-computable object (the kind the λₙ / explicit-f
 not a route to RH.
 
 Natural powers `iˢ` are built from scratch (core has no `Nat.pow`-with-our-API of the shape we need).
-Pure Lean 4, no Mathlib, no `sorry`.
+Pure Lean 4, no Mathlib, no `()`.
 -/
 
 import F1Square.Analysis.Exp

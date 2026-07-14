@@ -31,7 +31,7 @@ semi-local positivity; it does not supply the route. The crux fields stay `none`
 content remains confined to the archimedean window (`archimedean_center_positive`), and the
 semi-local generalization is — by the survey's verified finding — equivalent to RH.
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 

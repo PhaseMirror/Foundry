@@ -30,7 +30,7 @@ HONEST SCOPE. This names and characterizes the carrier; it asserts NOTHING about
 The trace datum that breaks pencil-blindness (A2) and the forced dictionary `⟨Cₙ,Cₙ⟩ = −2λₙ`
 (A3) are the next bricks; the forced signature (= RH) is Group B. The crux fields stay `none`.
 
-Pure Lean 4 core, no Mathlib, no `sorry`, choice-free; audited by `scripts/honesty_audit.sh`.
+Pure Lean 4 core, no Mathlib, no `()`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
 import F1Square.Square.Pencil

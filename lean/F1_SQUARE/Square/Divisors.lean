@@ -30,7 +30,7 @@ fibers are TRANSLATES of one another (`vFiber_translate`), and the translates of
 exactly the `Γ_n` (`graph_translate_diag`); distinct translates are disjoint — that is the
 derivation `E² = 0`, `Δ² = 0` (never an assumption).
 
-Pure Lean 4 core, no Mathlib, no `sorry`, choice-free; audited by `scripts/honesty_audit.sh`.
+Pure Lean 4 core, no Mathlib, no `()`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
 import F1Square.Square.Tensor

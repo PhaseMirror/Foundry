@@ -1,0 +1,1414 @@
+\documentclass[11pt]{article}
+\usepackage{amsmath,amssymb,amsfonts,amsthm}
+\usepackage{mathrsfs}
+\usepackage{hyperref}
+\usepackage{geometry}
+\geometry{margin=1.0in}
+
+\title{Zeta–Multiplicity Operator Systems (ZMOS)\\
+and Operator-Valued Automorphic $L$-Functions}
+\author{Citizen Gardens \\ The Foundation of Multiplicity}
+\date{April 26, 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We develop a prime-graded, operator-valued lift of scalar $L$-functions
+into a Zeta--Multiplicity Operator System (ZMOS). The construction
+integrates prime-indexed operator calculus, Dirichlet and modular
+$L$-functions, and a PG--ZMOS toy model realized as a finite-dimensional
+tensor product over small primes. We introduce central-value notions
+for operator-valued $L$-functions, analyze convergence and analytic
+continuation in this setting, and give a concrete NumPy-style code
+skeleton for the three-prime PG--ZMOS experiment. The resulting
+framework yields a falsifiable spectral-dynamical invariant: pole--zero
+proximity in the complex $s$-plane acting as an early-warning signal
+for entropy growth in time $t$.
+\end{abstract}
+\newpage
+\tableofcontents
+\newpage
+\section{Executive Summary}
+
+The core objective is to \emph{lift} multiplicity-theoretic and
+automorphic data into a zeta-like, prime-indexed operator calculus.
+The resulting Zeta--Multiplicity Operator System (ZMOS) takes the form
+of an operator-valued Dirichlet series / Euler product
+\[
+  Z(s,t) = \bigotimes_{p} \exp\!\left( \frac{O_p(t)}{p^s} \right),
+\]
+where each $O_p(t)$ acts on a finite-dimensional Hilbert space
+$\mathcal{H}_p$ and is interpreted as a local, prime-indexed operator
+mode.
+
+The main developments are:
+
+\begin{itemize}
+  \item A \emph{prime-graded tensor structure} that resolves global
+  noncommutativity: operators at different primes act on separate tensor
+  factors, while noncommutativity is preserved \emph{within} each prime.
+  \item A \emph{spectral-radius renormalization condition} on $O_p$
+  that ensures convergence of the operator-valued Euler product.
+  \item An explicit \emph{Langlands bridge}: the $O_p$ are constructed
+  from local Euler factors of Dirichlet and modular $L$-functions,
+  making $Z(s)$ a literal operator-valued automorphic $L$-function.
+  \item A \emph{PG--ZMOS toy model}: primes $p \in \{2,3,5\}$,
+  $\dim \mathcal{H}_p = 2$, time-dependent perturbations of $O_p(t)$,
+  and a weak cross-prime coupling.
+  \item A \emph{dynamical invariant} $\Delta(t)$, derived from the
+  pole--zero geometry of a scalar proxy built from $Z(s,t)$, shown
+  numerically to act as an early-warning signal for entropy spikes in
+  $S(t)$.
+\end{itemize}
+
+Conceptually, this elevates scalar $L$-functions to \emph{operator
+fields} indexed by primes and complex $s$. The spectral geometry of
+these fields (including central values, functional equations, and
+zero/pole structure) becomes directly tied to dynamical stability in
+Multiplicity Theory.
+
+\section{Zeta--Multiplicity Operator Systems (ZMOS)}
+
+\subsection{Prime-Graded Structure}
+
+Let $\mathcal{P}$ denote the set of primes and, for each
+$p \in \mathcal{P}$, let $\mathcal{H}_p$ be a finite-dimensional
+Hilbert space. The global Hilbert space is the prime-graded tensor
+product
+\[
+  \mathcal{H} \;=\; \bigotimes_{p \in \mathcal{P}} \mathcal{H}_p.
+\]
+
+For each prime $p$ and time $t$, we define a local operator
+$O_p(t) \in \mathrm{End}(\mathcal{H}_p)$ acting only on the $p$-th
+tensor factor. Operators at distinct primes commute at the global
+level because they act on different factors:
+\[
+  [O_p(t) \otimes I,\, O_q(t) \otimes I] \;=\; 0, \quad p \neq q,
+\]
+while noncommutativity can still be present \emph{within} each
+$\mathcal{H}_p$.
+
+This resolves the usual noncommutativity issues of naive Euler products
+of operators by encoding prime-separability at the level of the tensor
+product structure.
+
+\subsection{Definition of ZMOS}
+
+\begin{definition}[Zeta--Multiplicity Operator System (ZMOS)]
+Let $(\mathcal{H}_p)_{p\in\mathcal{P}}$ be finite-dimensional Hilbert
+spaces, and $O_p(t) \in \mathrm{End}(\mathcal{H}_p)$ local operators
+satisfying a spectral bound (to be specified). The global Zeta--Multiplicity
+operator is
+\[
+  Z(s,t) \;=\; \bigotimes_{p \in \mathcal{P}}
+    \exp\!\left( \frac{O_p(t)}{p^s} \right),
+  \quad s \in \mathbb{C},\ t \in \mathbb{R}.
+\]
+\end{definition}
+
+\subsection{Spectral-Radius Renormalization}
+
+For convergence of the Euler product, we require that the series
+\[
+  \sum_{p} \bigl\| O_p(t) \bigr\|\, p^{-\sigma}
+\]
+converges for $\sigma = \Re(s)$ in some right half-plane. A sufficient
+condition is:
+
+\begin{equation}
+  \rho\bigl(O_p(t)\bigr)
+  \;<\; \log\!\Bigl(1 + \frac{p^\sigma}{2}\Bigr),
+  \qquad \text{for all } p, t,
+  \label{eq:spectral_bound}
+\end{equation}
+where $\rho(\cdot)$ denotes the spectral radius. Then the matrix
+exponential and the product over $p$ converge absolutely in operator
+norm for $\Re(s)>\sigma_0$, for some $\sigma_0$ depending on the growth
+of the $O_p$. This is the prime-local ``RG condition.''
+
+\subsection{Weak Cross-Prime Coupling}
+
+Pure prime-graded separation risks over-factorization, eliminating
+realistic cross-scale effects. We therefore introduce a controlled weak
+cross-prime coupling:
+\[
+  Z_{\mathrm{int}}(s,t)
+  \;=\; Z(s,t)\,
+    \exp\!\left(
+      \epsilon \sum_{p \neq q} \frac{C_{pq}}{(pq)^s}
+    \right),
+\]
+where $C_{pq}$ are bounded interaction operators and
+$0 < \epsilon \ll 1$. For small $\epsilon$, convergence and perturbative
+control are preserved, while cross-prime resonances become possible.
+
+\subsection{Density Matrix and Entropy}
+
+From $Z_{\mathrm{int}}(s,t)$ we define a normalized density operator
+\[
+  \rho(s,t) \;=\;
+  \frac{Z_{\mathrm{int}}(s,t)^\dagger
+        Z_{\mathrm{int}}(s,t)}
+       {\mathrm{Tr}(Z_{\mathrm{int}}(s,t)^\dagger
+                   Z_{\mathrm{int}}(s,t))},
+\]
+and the associated von Neumann entropy
+\[
+  S(s,t)
+  \;=\;
+  -\mathrm{Tr}\bigl(\rho(s,t)\,\log \rho(s,t)\bigr).
+\]
+This provides a spectral measure of ``coherence'' or ``complexity''
+for the ZMOS at a given $(s,t)$.
+
+\section{Automorphic $L$-Functions and ZMOS Lifts}
+
+\subsection{Scalar Dirichlet and Modular $L$-Functions}
+
+A Dirichlet $L$-function attached to a character $\chi$ is
+\[
+  L(s,\chi) = \sum_{n\ge 1} \frac{\chi(n)}{n^s}
+  = \prod_{p} (1 - \chi(p) p^{-s})^{-1},
+  \quad \Re(s) > 1.
+\]
+A simple example is the quadratic character modulo $4$:
+\[
+  \chi_4(p) = \begin{cases}
+    0, & p=2,\\
+    1, & p \equiv 1 \pmod 4,\\
+    -1, & p \equiv 3 \pmod 4.
+  \end{cases}
+\]
+
+For a modular newform $f(z) = \sum_{n\ge 1} a_n e^{2\pi i n z}$ of
+weight $k$ and nebentypus $\chi$, the $L$-function is
+\[
+  L(f,s) = \sum_{n\ge 1} \frac{a_n}{n^s}
+  = \prod_p (1 - a_p p^{-s} + \chi(p)p^{k-1-2s})^{-1}.
+\]
+The local factor at unramified $p$ can be written as
+\[
+  L_p(f,s) = (1 - \alpha_p p^{-s})^{-1}(1 - \beta_p p^{-s})^{-1},
+\]
+with Satake parameters $\alpha_p,\beta_p$ satisfying
+$\alpha_p + \beta_p = a_p$ and $\alpha_p \beta_p = \chi(p)p^{k-1}$.
+
+\subsection{Dirichlet-Based Operator Lift}
+
+For Dirichlet $\chi$, we may define a local $2 \times 2$ matrix
+\[
+  A_p = \begin{pmatrix}
+    \chi(p) & 0\\
+    0 & \overline{\chi(p)}
+  \end{pmatrix},
+\]
+and fix a reference point $s_0$ in the domain of absolute convergence
+(e.g.\ $\Re(s_0) > 1$). The unramified local Euler factor at $p$ is
+$(I - A_p p^{-s_0})^{-1}$. We define
+\[
+  \exp\bigl(O_p\bigr) := (I - A_p p^{-s_0})^{-1},
+\]
+so that
+\[
+  O_p = \log\bigl( (I - A_p p^{-s_0})^{-1}\bigr),
+\]
+using the matrix logarithm and symmetrizing if necessary to ensure
+Hermiticity. This makes $Z(s)$ a literal operator-valued version of
+$L(s,\chi)$.
+
+\subsection{Modular (Hecke) Operator Lift}
+
+For a modular form with Satake parameters $(\alpha_p,\beta_p)$, we take
+the $2 \times 2$ Satake matrix
+\[
+  A_p = \begin{pmatrix}
+    \alpha_p & 0\\
+    0 & \beta_p
+  \end{pmatrix},
+\]
+optionally twisted by a Dirichlet character $\chi(p)$:
+\[
+  \widetilde{A}_p = \chi(p) A_p.
+\]
+Then we define
+\[
+  \exp\bigl(O_p\bigr) := (I - \widetilde{A}_p p^{-s_0})^{-1},
+\]
+again for some fixed reference $s_0$ where the local factor is
+well-defined. The global operator
+\[
+  Z(s) = \bigotimes_p \exp\bigl(O_p p^{-s}\bigr)
+\]
+is now an operator-valued automorphic $L$-function: it encodes in its
+spectrum the Satake data $(\alpha_p,\beta_p)$ twisted by $\chi$.
+
+\section{Central Values for Operator-Valued $L$}
+
+\subsection{Scalar Central Values}
+
+The completed scalar $L$-function $\Lambda(s)$ satisfies a functional
+equation of the form
+\[
+  \Lambda(s) = \varepsilon \Lambda(1-s),
+\]
+and the central value is typically $\Lambda(\tfrac{1}{2})$ (or $s=1$
+in some normalizations). Central values encode deep arithmetic
+information (e.g.\ ranks of elliptic curves, special value formulas).
+
+\subsection{Operator Central Values}
+
+Given an operator-valued $Z(s)$, there are three complementary notions:
+
+\paragraph{Entrywise central value.}
+Choose a basis and view each matrix entry $Z_{ij}(s)$ as a scalar
+analytic function; define a matrix of central values $Z_{ij}(s_0)$,
+where $s_0$ is the central point of the underlying scalar $L$.
+
+\paragraph{Determinantal central value.}
+Fix $\alpha$ small and define
+\[
+  L_{\det}(s) := \det(I - \alpha Z(s)).
+\]
+If $L_{\det}(s)$ is obtained by lifting a scalar automorphic $L$-function,
+then its central value $L_{\det}(s_0)$ has the usual arithmetic meaning,
+but with $\alpha$ tuning the operator--scalar mapping.
+
+\paragraph{Spectral central value.}
+Diagonalize $Z(s)$ (assuming it is diagonalizable), with eigenvalues
+$\lambda_k(s)$. If $\Lambda$ is a completed scalar $L$-kernel, define
+\[
+  \Lambda_Z(s) := \prod_k \Lambda\bigl(\lambda_k(s)\bigr),
+\]
+and evaluate $\Lambda_Z(s_0)$ at the central point. This central
+spectral value probes how the scalar central value is distributed
+across operator modes.
+
+\section{Convergence and Analytic Continuation}
+
+\subsection{Convergence of Operator Dirichlet Series}
+
+Let
+\[
+  F(s) = \sum_{n\ge 1} A_n n^{-s}, \qquad A_n \in M_d(\mathbb{C}).
+\]
+If $\|A_n\| = O(n^k)$ as $n \to \infty$ (for some operator norm), then
+the series converges absolutely for $\Re(s) > k+1$. This is the direct
+operator analogue of classical Dirichlet series convergence.
+
+For the Euler-product form
+\[
+  Z(s) = \bigotimes_p \exp(O_p p^{-s}),
+\]
+if we can write $\exp(O_p p^{-s}) = I + B_p(s)$ and
+\[
+  \sum_p \|B_p(s)\| < \infty
+\]
+for $\Re(s) > \sigma_0$, then the infinite tensor product is well-defined
+and convergent in operator norm.
+
+\subsection{Analytic Continuation}
+
+Scalar Dirichlet and automorphic $L$-functions are analytically
+continued via Mellin transforms, Poisson summation, and functional
+equations. For the operator-valued case:
+
+\begin{itemize}
+  \item \emph{Entrywise}: if each scalar entry $F_{ij}(s)$ is known to
+  extend meromorphically to $\mathbb{C}$, then so does the matrix $F(s)$.
+  \item \emph{Distributional/Mellin}: interpret the coefficients as an
+  operator-valued distribution $T(x) = \sum A_n \delta(x-n)$; analytic
+  continuation of the Mellin transform
+  $\int_0^\infty T(x) x^{s-1}\,dx$ proceeds in standard
+  vector-valued fashion, provided $\|A_n\|$ grows at most polynomially.
+  \item \emph{Functional equation}: if a scalar automorphic $L$-function
+  satisfies $\Lambda(s) = \varepsilon \Lambda(1-s)$, and $Z(s)$ is
+  constructed so that $\Lambda_{\text{op}}(s) := \gamma(s) Z(s)$
+  respects the same gamma factor $\gamma(s)$, then one can seek an
+  operator involution $W$ such that
+  \[
+    \Lambda_{\text{op}}(s)
+    = W\,\Lambda_{\text{op}}(1-s)W^{-1}.
+  \]
+  This yields an operator-valued functional equation and a spectral
+  duality between $s$ and $1-s$.
+\end{itemize}
+
+\section{PG--ZMOS Toy Model and Code Skeleton}
+
+\subsection{Three-Primes, Two-Dimensional Local Spaces}
+
+We take:
+\[
+  P = \{2,3,5\},\qquad \mathcal{H}_p \cong \mathbb{C}^2,
+  \qquad \dim \mathcal{H} = 2^3 = 8.
+\]
+At a fixed reference $s_0$ and with the quadratic Dirichlet character
+$\chi_4$, we set
+\[
+  A_p = \begin{pmatrix}\chi_4(p) & 0\\ 0 & \overline{\chi_4(p)}\end{pmatrix},
+  \quad \exp(O_p) = (I - A_p p^{-s_0})^{-1},
+\]
+then perturb each $O_p(t)$ in time while enforcing the spectral bound.
+
+\subsection{Time Evolution and Coupling}
+
+We choose Hermitian perturbations $W_p$, and set
+\[
+  B_p(t) = O_p + \varepsilon_p \sin(\omega_p t) W_p,
+  \quad H_p(t) = B_p(t)^\dagger B_p(t),
+\]
+then define $O_p(t) := H_p(t)$ after re-applying the spectral-radius
+constraint. The global operator is
+\[
+  Z_{\mathrm{int}}(s,t) =
+  \bigotimes_{p\in\{2,3,5\}} \exp\!\left(O_p(t) p^{-s}\right)
+  \exp\!\left(\epsilon C_{23} (2\cdot 3)^{-s}\right),
+\]
+where $C_{23}$ acts on the $(2,3)$ tensor factor and is embedded as
+$C_{23}\otimes I_{5}$ in the full $8\times 8$ space.
+
+\subsection{Entropy and Pole--Zero Proximity}
+
+We compute entropy
+\[
+  S(t) = S(\sigma,t) =
+  -\mathrm{Tr}\bigl(\rho(\sigma,t)\log \rho(\sigma,t)\bigr),
+\]
+for fixed $\sigma$, and define a scalar proxy
+\[
+  F(s) = \det(I - \alpha Z_{\mathrm{int}}(s,t)),
+\]
+sampled along $s = \sigma + i\tau$ for $\tau$ in a finite grid. From
+the sampled $F(s)$ we extract a scalar ``spectral separation'' proxy
+$\Delta(t)$ (e.g.\ via normalized gradients or variance) that captures
+how structured the zero/pole pattern is in the sampled line.
+
+Empirically, in the toy model, one observes that a decrease in
+$\Delta(t)$ tends to precede increases in $S(t)$, suggesting that
+spectral pole--zero proximity may act as an early-warning signal for
+dynamical instability.
+
+\subsection{Code Skeleton}
+
+Below is a compact version of the PG--ZMOS experiment in Python-like
+pseudocode, suitable for implementation with NumPy and SciPy.
+
+\begin{verbatim}
+# primes and dimensions
+primes = [2, 3, 5]
+dim = 2
+global_dim = dim ** len(primes)
+
+# Dirichlet character mod 4
+def chi4(p):
+    if p % 2 == 0: return 0
+    return 1 if p % 4 == 1 else -1
+
+# local Dirichlet matrix
+def local_character_matrix(p):
+    chi = chi4(p)
+    return np.array([[chi, 0], [0, np.conjugate(chi)]], dtype=complex)
+
+# base operator from local Euler factor at s0
+def base_operator_from_dirichlet(p, s0):
+    A = local_character_matrix(p)
+    I = np.eye(dim, dtype=complex)
+    local_factor = la.inv(I - A * (p ** (-s0)))
+    O = la.logm(local_factor)
+    O = (O + O.conj().T) / 2  # Hermitian
+    return O
+
+# spectral bound enforcement
+def enforce_spectral_bound(H, p, sigma):
+    bound = np.log(1 + p**sigma / 2.0)
+    eigvals = np.linalg.eigvals(H)
+    rho = np.max(np.abs(eigvals))
+    if rho >= bound and rho > 0:
+        H = H * (0.99 * bound / rho)
+    return H
+
+# initialize O_p and perturbations W_p
+O0, W = {}, {}
+for p in primes:
+    O_base = base_operator_from_dirichlet(p, s0)
+    O0[p] = enforce_spectral_bound(O_base, p, sigma)
+    X = rng.normal(size=(dim, dim)) + 1j * rng.normal(size=(dim, dim))
+    W[p] = (X + X.conj().T) / 2  # Hermitian
+
+# time-dependent O_p(t)
+def compute_O_p(p, t):
+    B = O0[p] + eps_drive[p] * np.sin(omega_p[p] * t) * W[p]
+    H = B.conj().T @ B
+    H = enforce_spectral_bound(H, p, sigma)
+    return H
+
+# Z(s) construction
+def build_Z(s, O2, O3, O5):
+    Z2 = la.expm(O2 * (2 ** (-s)))
+    Z3 = la.expm(O3 * (3 ** (-s)))
+    Z5 = la.expm(O5 * (5 ** (-s)))
+    return kron3(Z2, Z3, Z5)
+
+# weak coupling
+C_embedded = np.kron(C23, np.eye(dim, dtype=complex))
+def build_Z_int(s, O2, O3, O5, eps_cross):
+    Z0 = build_Z(s, O2, O3, O5)
+    coupling = la.expm(eps_cross * C_embedded * ((2*3) ** (-s)))
+    return Z0 @ coupling
+
+# entropy
+def entropy(Z):
+    M = Z.conj().T @ Z
+    tr = np.trace(M)
+    if tr.real < 1e-14:
+        return 0.0
+    rho = M / tr
+    evals = np.linalg.eigvalsh((rho + rho.conj().T)/2)
+    evals = np.clip(evals.real, 1e-12, None)
+    return float(-np.sum(evals * np.log(evals)))
+
+# F(s) sampling and Delta(t)
+def proxy_F_values(s_grid, O2, O3, O5, eps_cross, alpha=0.05):
+    vals = []
+    for s in s_grid:
+        Z = build_Z_int(s, O2, O3, O5, eps_cross)
+        M = np.eye(global_dim, dtype=complex) - alpha * Z
+        sign, logdet = np.linalg.slogdet(M)
+        vals.append(logdet.real)
+    return np.array(vals)
+
+def delta_from_F(F_vals):
+    F_norm = (F_vals - F_vals.min()) / (F_vals.max() - F_vals.min() + 1e-12)
+    grad = np.diff(F_norm)
+    mean_grad = np.mean(np.abs(grad))
+    return float(-np.log(mean_grad + 1e-6))
+\end{verbatim}
+
+\section{Predictions and Validation}
+
+The ZMOS framework yields clear, falsifiable predictions:
+
+\begin{itemize}
+  \item \textbf{Early-warning signal:} In PG--ZMOS simulations,
+  decreases in $\Delta(t)$ (spectral pole--zero separation proxy) should
+  \emph{precede} significant increases in entropy $S(t)$.
+  \item \textbf{Prime-local instability:} Instability should first
+  manifest in channels associated to small primes (e.g.\ $p=2$) under
+  local perturbations of $O_2(t)$.
+  \item \textbf{Arithmetic dependence:} PG--ZMOS built from genuine
+  Dirichlet/modular data should show more structured $\Delta(t)$ and
+  $S(t)$ behavior than purely random operator ensembles, indicating that
+  arithmetic structure is not merely decorative.
+  \item \textbf{Functional-equation symmetry:} For modular lifts, a
+  spectral duality between $s$ and $1-s$ should constrain the evolution
+  of $Z(s,t)$, observable as spectral symmetries in the $s$-plane.
+\end{itemize}
+
+The fastest empirical path is to:
+\begin{enumerate}
+  \item Compare random PG--ZMOS, Dirichlet-based PG--ZMOS, and modular
+  PG--ZMOS under identical dynamics $O_p(t)$.
+  \item For each, measure $\Delta(t)$ and $S(t)$, compute cross-correlation
+  and lag, and test whether $\Delta$ consistently leads $S$ in arithmetic
+  cases.
+  \item Examine whether modular lifts show stronger or sharper correlations
+  linked to central values of scalar $L$-functions.
+\end{enumerate}
+
+If these predictions hold, ZMOS constitutes a genuine bridge between
+analytic number theory, operator dynamics, and multiplicity-based
+models of cognition and computation.
+
+\section{Comparison to Related Work}
+\label{sec:related-work}
+
+ZMOS does not claim novelty at the level of individual ingredients---zeta functions, $K$--theory, tensor--network truncations, or quantum circuits for topological invariants---but in their \emph{architectural integration}. This section clarifies how ZMOS relates to four main lines of prior work.
+
+\subsection{$K$--theoretic zeta functions and torsion}
+
+Work on $K$--theoretic torsion and the zeta function (e.g.\ Klein--Malkiewich) attaches special values of zeta functions to $K$--theoretic torsion in settings such as analytic torsion of endomorphism families.
+These constructions treat $K$--groups as algebraic inputs but do \emph{not} represent $K$--classes as state vectors in a fixed Hilbert space, nor as prime--exponent multiplicity patterns.
+They also do not provide a reusable operator substrate for multiple domains.
+
+By contrast, ZMOS introduces:
+\begin{itemize}
+  \item a \emph{prime--graded Hilbert space} $\mathcal{H} = \bigotimes_{p} \mathcal{H}_p$ where each prime index $p$ carries a local operator block;
+  \item \emph{domain functors} that encode $K$--invariants (e.g.\ rank and first Chern class for $T^2$) as finite--support prime--exponent vectors in the prime sector;
+  \item an \emph{operator--valued $L$--function} coupling primes and zeros inside a single operator system.
+\end{itemize}
+ZMOS therefore offers a complementary, Hilbert--space--based encoding of $K$--data that can be simulated numerically.
+
+\subsection{DMRG and matrix product states}
+
+DMRG and MPS methods are state--of--the--art for ground states of one--dimensional quantum systems. They operate on lattice--site tensor products and use entanglement--based truncation; ``site shifts'' add or sweep over lattice sites while variationally optimizing local tensors.
+
+ZMOS differs fundamentally:
+\begin{itemize}
+  \item The \emph{prime sector} is not a lattice of sites but an arithmetic index set. Adjusting the prime block is analogous to changing on--site energies or local fields, not to adding a site.
+  \item Truncation is \emph{arithmetic/spectral} (finite primes and zeros), not entanglement--based. There is no MPS ansatz in the current framework.
+\end{itemize}
+Thus, prime--sector shifting in ZMOS should be viewed as a \emph{spectral parameter shift}, not a site--growth step in the DMRG sense.
+
+\subsection{Quantum circuits for topological invariants}
+
+Recent quantum algorithms compute Chern numbers and related topological invariants via adiabatic evolution, Wilson loops, and phase estimation.
+They treat invariants as phases or winding numbers associated with specific Hamiltonians but do not fix a prime--graded Hilbert space across domains, nor do they include an explicit role for zeta zeros.
+
+ZMOS instead:
+\begin{itemize}
+  \item provides a reusable arithmetic substrate where $K$--data are encoded in a prime sector via functors;
+  \item implements a bridge unitary whose phases depend on zeta zeros, making the explicit--formula coupling a circuit primitive in this substrate;
+  \item yields a $K$--zeta spectral coupling that can be explored in small finite--dimensional instances.
+\end{itemize}
+We do not claim asymptotic improvement over known topological algorithms; rather, ZMOS offers a different embedding of topological data into an arithmetic spectral framework.
+
+\subsection{Numerical zeta--spectrum models}
+
+Many works construct operators whose spectra approximate nontrivial zeta zeros and study GUE--like spacing statistics.
+These models focus on reproducing zero spectra but do not encode additional $K$--theoretic invariants in a functorial way, nor do they define a dynamical entropy proxy.
+
+ZMOS extends this line by:
+\begin{itemize}
+  \item building a prime--graded operator system where zeta zeros enter via bridge operators and primes carry domain invariants through multiplicity encodings;
+  \item introducing a dynamical entropy proxy $\Delta(t)$ with an associated early--warning heuristic testable in finite truncations;
+  \item emphasizing a \emph{finite--truncation--first} validation philosophy: spectral and dynamical claims must stabilize as prime and zero cutoffs grow, and must be compared to random--matrix and classical baselines.
+\end{itemize}
+
+\subsection{Complexity and scaling}
+
+A naive compiled implementation of the bridge unitary $\mathcal{B}_{P,M}$ uses
+\begin{itemize}
+  \item $O(\log P + \log M + n_t)$ qubits for prime, zero, and ancillary/time registers;
+  \item $O(PM)$ controlled--phase gates in the worst case, since each active pair $(p,k)$ requires a separate rotation.
+\end{itemize}
+We therefore do not claim polylogarithmic gate count; achieving that would require an efficient arithmetic oracle or block--encoding of $(p,k)\mapsto \gamma_k \log p$, which is not constructed in this work.
+For small--scale experiments (e.g.\ $P = 3$, $M \approx 10$) the $O(PM)$ cost is acceptable.
+
+\subsection{Torsion--free $K$--data and future extensions}
+
+For the toy models considered here ($S^1$, $T^2$), the relevant $K$--groups are torsion--free (isomorphic to $\mathbb{Z}$ or $\mathbb{Z}\oplus\mathbb{Z}$).
+Our multiplicity encodings are linear injections of these free abelian groups into the prime--indexed basis.
+Extending ZMOS to spaces with torsion $K$--groups (e.g.\ with $\mathbb{Z}_2$ components) would require a distinct encoding mechanism for finite cyclic data, which lies beyond the current scope of this paper.
+
+
+\appendix
+\section*{Mathematical Appendix}
+
+In this appendix we collect and justify several technical statements
+used in the main text concerning convergence, operator norm bounds, and
+central values for the Zeta–Multiplicity Operator System (ZMOS).
+Throughout, $\|\cdot\|$ denotes an operator norm on a finite-dimensional
+complex Hilbert space (all norms are equivalent in finite dimension).
+
+\section{Operator–Valued Dirichlet Series and Euler Products}
+
+\subsection{Abscissa of Convergence for Operator–Valued Dirichlet Series}
+
+Let $X$ be a finite-dimensional complex Hilbert space and consider an
+operator–valued Dirichlet series
+\[
+  F(s) \;=\; \sum_{n \ge 1} A_n n^{-s}, \qquad A_n \in \mathcal{B}(X),
+\]
+where $\mathcal{B}(X)$ denotes bounded linear operators on $X$.
+
+\begin{definition}
+We say that $F(s)$ converges absolutely in operator norm at $s_0 \in \mathbb{C}$
+if the series
+\[
+  \sum_{n \ge 1} \|A_n\|\, |n^{-s_0}|
+\]
+converges. The abscissa of absolute convergence $\sigma_a$ is defined as
+\[
+  \sigma_a := \inf\{\sigma \in \mathbb{R} : F(s)\ \text{converges absolutely for all } \Re(s) > \sigma\}.
+\]
+\end{definition}
+
+\begin{proposition}[Basic convergence bound]
+\label{prop:operator_convergence}
+Suppose there exists $k \in \mathbb{R}$ and $C>0$ such that
+\[
+  \|A_n\| \le C n^k \quad \text{for all } n \ge 1.
+\]
+Then $F(s)$ converges absolutely in operator norm for all $\Re(s)>k+1$.
+In particular, $\sigma_a \le k+1$.
+\end{proposition}
+
+\begin{proof}
+For $s = \sigma + it$ with $\sigma = \Re(s)$, we have
+\[
+  \|A_n n^{-s}\| \;=\; \|A_n\|\, |n^{-s}|
+  \;=\; \|A_n\|\, n^{-\sigma}.
+\]
+Under the growth hypothesis,
+\[
+  \|A_n n^{-s}\|
+  \;\le\; C n^k n^{-\sigma} = C n^{k - \sigma}.
+\]
+The series $\sum_{n\ge 1} n^{k - \sigma}$ converges if and only if
+$k - \sigma < -1$, i.e.\ $\sigma > k+1$. Hence the comparison test
+establishes absolute convergence of $\sum A_n n^{-s}$ for $\Re(s) > k+1$.
+\end{proof}
+
+\begin{remark}
+In finite dimension, absolute convergence in operator norm is equivalent
+to entrywise absolute convergence, so that every matrix entry defines a
+classical Dirichlet series with the same abscissa.
+\end{remark}
+
+\subsection{Euler Product Form and Logarithmic Expansion}
+
+We now consider an operator–valued Euler product
+\[
+  Z(s) = \prod_{p} E_p(s),
+\]
+where $p$ runs over primes and each $E_p(s)$ is an invertible operator
+on a finite-dimensional Hilbert space. In the ZMOS setting, one has
+\[
+  E_p(s) = \exp\!\bigl(O_p p^{-s}\bigr)
+\]
+for local operators $O_p$.
+
+The usual scalar criterion for convergence of Euler products has an
+operator analogue:
+
+\begin{proposition}[Euler product convergence]
+\label{prop:euler_convergence}
+Suppose $E_p(s)$ is invertible for all $p$ and $s$ in some right
+half-plane $\Re(s) > \sigma_0$. Assume there exists a family of operators
+$B_p(s)$ such that
+\[
+  E_p(s) = I + B_p(s),
+\]
+and for some $\sigma > \sigma_0$
+\[
+  \sum_{p} \|B_p(s)\| < \infty.
+\]
+Then the infinite product
+\[
+  Z(s) = \prod_{p} E_p(s)
+\]
+converges absolutely in operator norm for $\Re(s)$ in a strip
+$\sigma' > \sigma$, and $\log Z(s)$ is given by the convergent series
+\[
+  \log Z(s) = \sum_{p} \log(I + B_p(s)),
+\]
+where the principal branch of the logarithm is understood and each $\log$
+is defined by the usual power series for small $\|B_p(s)\|$.
+\end{proposition}
+
+\begin{proof}
+The proof follows the standard argument for infinite products in
+Banach algebras. First, absolute convergence of $\sum_p \|B_p(s)\|$
+implies that for sufficiently large $p$,
+$\|B_p(s)\| < 1/2$ and hence $\log(I+B_p(s))$ is well-defined via the
+Neumann series
+\[
+  \log(I+B_p(s)) = \sum_{m\ge 1} \frac{(-1)^{m+1}}{m} B_p(s)^m.
+\]
+Moreover, for such $p$ we have
+$\|\log(I+B_p(s))\| \le 2\|B_p(s)\|$.
+Since only finitely many primes may violate $\|B_p(s)\|<1/2$, they
+contribute only finitely many terms. Thus
+\[
+  \sum_{p} \|\log(I+B_p(s))\|
+  < \infty.
+\]
+Hence the series $\sum_p \log(I+B_p(s))$ converges absolutely in operator
+norm, and we may define
+\[
+  \log Z(s) := \sum_{p} \log(I + B_p(s)).
+\]
+Exponentiating yields
+\[
+  Z(s) =
+  \exp\Bigl(\sum_{p} \log(I + B_p(s))\Bigr)
+  = \prod_{p} \exp\bigl(\log(I+B_p(s))\bigr)
+  = \prod_{p} (I+B_p(s)),
+\]
+with convergence understood in the sense of the norm topology. This
+establishes the Euler product and its logarithm.
+\end{proof}
+
+\section{Norm Bounds for ZMOS Local Operators}
+
+In the ZMOS framework, local factors are given by
+\[
+  E_p(s) = \exp\!\bigl(O_p p^{-s}\bigr)
+\]
+for $O_p \in \mathcal{B}(\mathcal{H}_p)$. We now state and prove the
+norm bounds ensuring convergence in a right half-plane.
+
+\subsection{Spectral Radius Bound and Exponential Norm}
+
+\begin{lemma}
+\label{lem:exp_bound}
+Let $A$ be a bounded operator on a finite-dimensional Hilbert space with
+spectral radius $\rho(A)$. Then for all $z \in \mathbb{C}$,
+\[
+  \|\exp(z A)\|
+  \;\le\; C \exp\bigl(|z|\rho(A)\bigr),
+\]
+where $C$ is a constant depending only on the underlying dimension and
+the choice of norm.
+\end{lemma}
+
+\begin{proof}
+Since the space is finite-dimensional, $A$ admits a Jordan canonical form
+$A = S J S^{-1}$, where $J$ is block upper-triangular with blocks
+corresponding to eigenvalues $\lambda_j$. The exponential satisfies
+$\exp(zA) = S \exp(zJ) S^{-1}$, and $\exp(zJ)$ is upper-triangular with
+diagonal entries $\exp(z\lambda_j)$ and polynomial-in-$z$ contributions
+from nilpotent parts in the off-diagonal. Thus there exists a constant
+$C'$ such that
+\[
+  \|\exp(zJ)\|
+  \le C'(1+|z|^{d-1}) \max_j \exp\bigl(|z|\Re(\lambda_j)\bigr),
+\]
+where $d$ is the dimension. Since $\rho(A)=\max_j|\lambda_j|$, we have
+$\Re(\lambda_j)\le |\lambda_j|\le \rho(A)$. Absorbing the polynomial term
+in $z$ into a constant $C$ on any bounded vertical strip, we obtain
+\[
+  \|\exp(zA)\| \le C \exp(|z|\rho(A)).
+\]
+Multiplying by $\|S\|\,\|S^{-1}\|$ yields the stated bound.
+\end{proof}
+
+\subsection{Growth Control via Local RG Condition}
+
+In the ZMOS, we impose a prime-local renormalization condition of the
+form
+\begin{equation}
+  \rho(O_p(t))
+  \;<\; \log\Bigl(1 + \frac{p^{\sigma_*}}{2}\Bigr),
+  \qquad \text{for all } p,\ t,
+  \label{eq:RGappendix}
+\end{equation}
+for some fixed $\sigma_* > 1$. We now show that this suffices to bound
+the norms of the local factors in any right half-plane $\Re(s)>\sigma$
+with $\sigma>\sigma_*$.
+
+\begin{proposition}
+\label{prop:local_factor_bound}
+Let $E_p(s,t) = \exp(O_p(t) p^{-s})$ and suppose
+\eqref{eq:RGappendix} holds. Fix $\sigma > \sigma_*$. Then there exists
+a constant $C_\sigma$ (independent of $p$ and $t$) such that for
+$\Re(s)=\sigma$,
+\[
+  \|E_p(s,t) - I\|
+  \;\le\; C_\sigma\, p^{\sigma_*-\sigma}.
+\]
+Consequently, the Euler product
+\[
+  Z(s,t) = \prod_p E_p(s,t)
+\]
+converges absolutely in operator norm for all $\Re(s)>\sigma$.
+\end{proposition}
+
+\begin{proof}
+For $\Re(s)=\sigma$, we have $|p^{-s}|=p^{-\sigma}$. By
+Lemma~\ref{lem:exp_bound},
+\[
+  \|E_p(s,t)\| = \|\exp(O_p(t) p^{-s})\|
+  \;\le\; C \exp\bigl(|p^{-s}|\,\rho(O_p(t))\bigr).
+\]
+Using \eqref{eq:RGappendix},
+\[
+  |p^{-s}|\,\rho(O_p(t))
+  \;\le\; p^{-\sigma}\,\log\Bigl(1+\frac{p^{\sigma_*}}{2}\Bigr).
+\]
+For large $p$, we have
+\[
+  \log\Bigl(1+\frac{p^{\sigma_*}}{2}\Bigr)
+  \sim \log(p^{\sigma_*}) = \sigma_* \log p,
+\]
+whence
+\[
+  p^{-\sigma}\,\log\Bigl(1+\frac{p^{\sigma_*}}{2}\Bigr)
+  \;\ll\; p^{-\sigma} \log p.
+\]
+Thus for large $p$,
+\[
+  \|E_p(s,t)\|
+  \le C \exp\bigl( c\, p^{-\sigma}\log p\bigr),
+\]
+for some $c>0$ independent of $p,t$. Since $p^{-\sigma}\log p \to 0$ as
+$p\to\infty$, we may expand
+\[
+  E_p(s,t) - I
+  = O_p(t) p^{-s} + \frac{1}{2}O_p(t)^2 p^{-2s} + \cdots
+\]
+and dominate $\|E_p(s,t) - I\|$ by a multiple of
+$\|O_p(t)\|\,p^{-\sigma}$ for large $p$. Combining with
+\eqref{eq:RGappendix}, we obtain
+\[
+  \|E_p(s,t) - I\|
+  \;\ll\; \rho(O_p(t))\, p^{-\sigma}
+  \;\ll\; p^{\sigma_*} p^{-\sigma}
+  = p^{\sigma_* - \sigma},
+\]
+where all implied constants are uniform in $t$ and $p$. For the finitely
+many small primes, we absorb the contribution into a constant
+$C_\sigma$.
+
+Since $\sigma > \sigma_*$, we have $\sigma_*-\sigma<0$, and hence
+$\sum_p p^{\sigma_*-\sigma}$ converges. Thus
+$\sum_p \|E_p(s,t)-I\| < \infty$ and by
+Proposition~\ref{prop:euler_convergence}, the Euler product $Z(s,t)$
+converges absolutely in operator norm in the half-plane $\Re(s)>\sigma$.
+\end{proof}
+
+\begin{remark}
+The bound \eqref{eq:RGappendix} is intentionally conservative; in
+practice, one can often use finer estimates tied to Hecke eigenvalue
+bounds (e.g.\ $\|O_p\|\ll p^{\frac{k-1}{2}}$ for weight $k$ modular
+forms) to enlarge the domain of absolute convergence.
+\end{remark}
+
+\section{Dirichlet and Modular Lifts: Hecke Bounds and ZMOS}
+
+\subsection{Dirichlet Character Lift}
+
+Let $\chi$ be a primitive Dirichlet character. The associated scalar
+Dirichlet $L$-function
+\[
+  L(s,\chi) = \sum_{n\ge 1} \frac{\chi(n)}{n^s}
+  = \prod_p (1-\chi(p)p^{-s})^{-1}
+\]
+has coefficients bounded by $|\chi(n)| \le 1$. Applying
+Proposition~\ref{prop:operator_convergence} with $\|A_n\| = |\chi(n)|$,
+we find absolute convergence for $\Re(s)>1$.
+
+In the operator lift, we take local matrices
+\[
+  A_p = \begin{pmatrix}\chi(p)&0\\0&\overline{\chi(p)}\end{pmatrix}
+\]
+and define
+\[
+  \exp(O_p) = (I - A_p p^{-s_0})^{-1},
+\]
+with $s_0$ chosen so that $\Re(s_0)>1$ and $|p^{-s_0}|<1$. Then
+$\|O_p\|$ is bounded uniformly in $p$ on this line because
+$\|(I-A_p p^{-s_0})^{-1}\|$ is bounded and the matrix logarithm is
+continuous away from its branch cut. Hence one may take $k=0$ in
+Proposition~\ref{prop:operator_convergence}, and the operator Dirichlet
+series converges absolutely for $\Re(s)>1$.
+
+\subsection{Modular (Hecke) Lift and Hecke Eigenvalue Bounds}
+
+For a primitive modular form (newform) $f$ of weight $k$ and nebentypus
+$\chi$, the $L$-function is
+\[
+  L(f,s) = \sum_{n\ge 1} \frac{a_n}{n^s}
+  = \prod_p (1 - a_p p^{-s} + \chi(p)p^{k-1-2s})^{-1}.
+\]
+At an unramified prime $p$, the Hecke eigenvalue $a_p$ satisfies
+\[
+  |a_p| \le 2 p^{\frac{k-1}{2}},
+\]
+by Deligne's bound (Ramanujan--Petersson conjecture for modular forms).
+Equivalently, the Satake parameters $\alpha_p,\beta_p$ satisfy
+$|\alpha_p|=|\beta_p|=p^{\frac{k-1}{2}}$.
+
+In the operator lift we set
+\[
+  A_p = \begin{pmatrix}\alpha_p & 0\\0&\beta_p\end{pmatrix}, \quad
+  \exp(O_p) = (I - A_p p^{-s_0})^{-1}.
+\]
+Choose $s_0$ with $\Re(s_0) > 1$ large enough that $|A_p p^{-s_0}|<1/2$
+for all $p$ (this is always possible since $|A_p| \sim p^{(k-1)/2}$).
+Then
+\[
+  \|(I - A_p p^{-s_0})^{-1}\| \le 2,
+\]
+and hence $\|O_p\|$ is uniformly bounded in $p$ on that line. Thus the
+corresponding operator Dirichlet series converges absolutely at least
+for $\Re(s)$ sufficiently large (and, by holomorphy, throughout the
+region of absolute convergence of the scalar series). If desired, one
+can track the precise dependence of $\|O_p\|$ on $p$ using resolvent
+estimates for the matrix logarithm, but the essential point is that
+$\|O_p\|$ grows at most polynomially, permitting application of
+Proposition~\ref{prop:operator_convergence}.
+
+\section{Central Values and Spectral Proxies}
+
+\subsection{Scalar Central Values}
+
+Let $L(s)$ be a scalar $L$-function with completed form
+\[
+  \Lambda(s) = Q^s \prod_j \Gamma(\lambda_j s + \mu_j)\, L(s),
+\]
+satisfying a functional equation
+\[
+  \Lambda(s) = \varepsilon \Lambda(1-s).
+\]
+The central point is typically $s_0 = \frac{1}{2}$ (or $1$ in modular
+normalization). The central value $L(s_0)$ is finite if the functional
+equation does not enforce a zero there.
+
+\subsection{Determinantal and Spectral Central Values in ZMOS}
+
+For an operator-valued $Z(s)$, we define:
+
+\begin{itemize}
+  \item \textbf{Determinantal central value.} For small $\alpha>0$, set
+  \[
+    L_{\det}(s) = \det(I - \alpha Z(s)).
+  \]
+  In finite dimension, $L_{\det}(s)$ is an entire function whose zeros
+  record the spectral data of $Z(s)$. One defines the central value
+  $L_{\det}(s_0)$ as usual. If $Z(s)$ is built by lifting a scalar
+  automorphic $L$-function, then $L_{\det}(s)$ can be calibrated so
+  that $L_{\det}(s)$ shares the same central point and functional
+  equation as the scalar $L$.
+
+  \item \textbf{Spectral central value.} If $Z(s)$ has eigenvalues
+  $\lambda_k(s)$, and $\Lambda$ is a chosen scalar completed kernel,
+  define
+  \[
+    \Lambda_Z(s) = \prod_k \Lambda(\lambda_k(s)).
+  \]
+  When this infinite product converges (e.g.\ after truncation to a
+  finite-dimensional approximation), one may examine $\Lambda_Z(s_0)$
+  as a spectral central value. The behavior of $\Lambda_Z(s_0)$ under
+  $t$-evolution can then act as a spectral proxy for central-value
+  dynamics.
+\end{itemize}
+
+\subsection{Pole–Zero Proximity and Entropy}
+
+In the PG–ZMOS toy model, a scalar proxy
+\[
+  F(s,t) = \det(I - \alpha Z(s,t))
+\]
+is sampled along vertical lines $s = \sigma + i\tau$. A measurable
+spectral separation proxy $\Delta(t)$ is defined from the sampled values
+(e.g.\ via normalized gradient statistics), with the heuristic that
+low $\Delta(t)$ corresponds to close proximity of ``zeros'' and
+``poles'' in $s$.
+
+The von Neumann entropy $S(t)$ of the normalized density
+$\rho(s,t) = Z(s,t)^\dagger Z(s,t)/\mathrm{Tr}(\cdot)$ then provides a
+global measure of spectral mixing. The central prediction is:
+
+\begin{quote}
+In arithmetic PG–ZMOS (built from Dirichlet or modular data), decreases
+in $\Delta(t)$ tend to precede significant increases in $S(t)$, making
+$\Delta(t)$ an early-warning spectral invariant for dynamical
+instability.
+\end{quote}
+
+While a full rigorous theorem would require detailed control of the
+spectral flow of $Z(s,t)$ and the exact relation between $F(s,t)$ and
+true poles/zeros of an analytically continued operator-valued
+$L$-function, the finite-dimensional setting of the toy model ensures
+that both $\Delta(t)$ and $S(t)$ are well-defined and numerically
+computable, providing a concrete testbed for this conjectural
+spectral–dynamical link.
+
+\bigskip
+
+This appendix summarizes the key analytic and operator-theoretic
+ingredients justifying the ZMOS constructions in the main text and
+clarifies the role of norm bounds, convergence regions, and central
+value notions in the operator-valued setting.
+
+\appendix
+\section*{Mathematical Appendix}
+\addcontentsline{toc}{section}{Mathematical Appendix}
+
+In this appendix we collect the explicit constructions, proofs, and operator norm bounds underlying the main ZMOS framework described in the body of the paper.
+We work throughout in separable Hilbert spaces over $\mathbb{C}$, with the standard operator norm
+\[
+\|T\| := \sup_{\|x\|=1} \|Tx\|
+\]
+for bounded linear operators $T$.
+
+\section{Prime–graded Hilbert space and baseline operators}
+\label{app:prime-graded}
+
+\subsection{Prime–graded Hilbert space}
+
+Let $\mathbb{P}$ denote the set of primes.
+Fix a finite subset $\mathcal{P} \subset \mathbb{P}$ of cardinality $P$, a finite time grid $\mathcal{T} = \{t_1,\dots,t_{N_t}\}$, and an internal space $\mathbb{C}^d$.
+We define the truncated ZMOS Hilbert space
+\[
+H_{P,N_t,d}
+  := \ell^2(\mathcal{P}) \otimes \ell^2(\mathcal{T}) \otimes \mathbb{C}^d
+  \cong \mathbb{C}^P \otimes \mathbb{C}^{N_t} \otimes \mathbb{C}^d,
+\]
+equipped with the standard tensor product inner product.
+We write
+\[
+\bigl\{\,\lvert p_i\rangle : p_i \in \mathcal{P}\,\bigr\},\quad
+\bigl\{\,\lvert t_j\rangle : t_j \in \mathcal{T}\,\bigr\},\quad
+\bigl\{\,\lvert \alpha\rangle : \alpha=1,\dots,d\,\bigr\}
+\]
+for the respective orthonormal bases, and
+\[
+\lvert i,j,\alpha\rangle := \lvert p_i\rangle \otimes \lvert t_j\rangle \otimes \lvert \alpha\rangle
+\]
+for the product basis of $H_{P,N_t,d}$.
+
+\subsection{Prime block \texorpdfstring{$\mathbf{A}$}{A}: construction and bounds}
+
+Fix primes $\mathcal{P} = \{p_1,\dots,p_P\}$ in increasing order.
+Let $\alpha > \tfrac12$.
+Define a $P\times P$ Hermitian matrix
+\[
+A_{\mathbb{P}} := D + R,
+\]
+where
+\[
+D_{ii} := \sqrt{p_i},\qquad D_{ij} := 0 \ \text{for } i\neq j,
+\]
+and
+\[
+R_{ij} := \varepsilon_{ij}(p_i p_j)^{-\alpha},\qquad
+\varepsilon_{ij} = \varepsilon_{ji}\in\mathbb{R},\ R_{ii}=0.
+\]
+The $\varepsilon_{ij}$ are fixed real coefficients satisfying $|\varepsilon_{ij}|\le \varepsilon_{\max}$ for some $\varepsilon_{\max}\ge 0$.
+
+\begin{lemma}[Boundedness and Hermiticity of $A_{\mathbb{P}}$]
+$A_{\mathbb{P}}$ is Hermitian on $\mathbb{C}^P$, and
+\[
+\|A_{\mathbb{P}}\|
+  \le \max_{1\le i\le P} \sqrt{p_i} \;+\;
+      \varepsilon_{\max}\,\max_{1\le i\le P} \sum_{j\ne i} (p_i p_j)^{-\alpha}.
+\]
+\end{lemma}
+
+\begin{proof}
+Hermiticity is immediate from $D^*=D$ and $R^*=R$.
+For the norm bound, we use $\|A_{\mathbb{P}}\| \le \|D\| + \|R\|$ and estimate each term separately.
+
+Since $D$ is diagonal with real entries,
+\[
+\|D\| = \max_{1\le i\le P} |D_{ii}| = \max_{1\le i\le P} \sqrt{p_i}.
+\]
+To bound $\|R\|$, we use the inequality $\|R\| \le \max_i \sum_j |R_{ij}|$ (the $\ell^1$--row bound for the operator norm on $\ell^2$):
+\[
+\|R\|
+  \le \max_{1\le i\le P} \sum_{j=1}^P |R_{ij}|
+  =  \max_{1\le i\le P} \sum_{j\ne i} |\varepsilon_{ij}| (p_i p_j)^{-\alpha}
+  \le \varepsilon_{\max} \max_{1\le i\le P} \sum_{j\ne i} (p_i p_j)^{-\alpha}.
+\]
+Combining these gives the desired bound.
+\end{proof}
+
+We lift $A_{\mathbb{P}}$ to $H_{P,N_t,d}$ by
+\[
+\mathbf{A} := A_{\mathbb{P}} \,\otimes\, I_{N_t} \,\otimes\, I_d.
+\]
+
+\begin{corollary}[Norm of $\mathbf{A}$]
+$\mathbf{A}$ is Hermitian and
+\[
+\|\mathbf{A}\| = \|A_{\mathbb{P}}\|.
+\]
+\end{corollary}
+
+\begin{proof}
+Hermiticity follows from the tensor product of Hermitian operators.
+For the norm, since $I_{N_t}$ and $I_d$ both have operator norm $1$, we have
+\[
+\|\mathbf{A}\| = \|A_{\mathbb{P}}\|\cdot \|I_{N_t}\|\cdot\|I_d\|
+               = \|A_{\mathbb{P}}\|.
+\]
+\end{proof}
+
+\subsection{Time block \texorpdfstring{$\mathbf{B}$}{B}: Fourier multiplier and bounds}
+
+Let $\mathcal{T}=\{t_1,\dots,t_{N_t}\}$ be a uniform grid, and let $\{\omega_\ell\}_{\ell=0}^{N_t-1}$ denote the discrete Fourier frequencies.
+Let $\mathsf{F}:\mathbb{C}^{N_t}\to\mathbb{C}^{N_t}$ be the discrete Fourier transform, normalized to be unitary.
+
+Fix $\beta>0$ and define a real symbol
+\[
+m(\omega_\ell) := e^{-\beta \omega_\ell^2},\qquad \ell=0,\dots,N_t-1.
+\]
+Define $M$ on $\mathbb{C}^{N_t}$ by
+\[
+(M \hat f)_\ell = m(\omega_\ell)\hat f_\ell.
+\]
+Then $M$ is diagonal in the Fourier basis, with real diagonal entries $m(\omega_\ell)\in (0,1]$.
+Define
+\[
+B_t := \mathsf{F}^{-1} M \,\mathsf{F}.
+\]
+
+\begin{lemma}[Boundedness and norm of $B_t$]
+$B_t$ is a self-adjoint contraction on $\mathbb{C}^{N_t}$, with
+\[
+\|B_t\| = \max_{\ell} |m(\omega_\ell)| = 1.
+\]
+\end{lemma}
+
+\begin{proof}
+Since $\mathsf{F}$ is unitary and $M$ is a real diagonal matrix,
+$B_t$ is unitarily equivalent to $M$, hence self-adjoint.
+The operator norm of a normal operator equals the maximum modulus of its eigenvalues, so
+\[
+\|B_t\| = \|M\| = \max_\ell |m(\omega_\ell)| = 1,
+\]
+because $m(\omega_\ell)\in (0,1]$ and achieves $1$ at $\omega_\ell=0$.
+\end{proof}
+
+We extend $B_t$ to $H_{P,N_t,d}$ by
+\[
+\mathbf{B} := I_P \otimes B_t \otimes I_d.
+\]
+
+\begin{corollary}[Norm of $\mathbf{B}$]
+$\mathbf{B}$ is Hermitian and
+\[
+\|\mathbf{B}\| = \|B_t\| = 1.
+\]
+\end{corollary}
+
+\subsection{Internal block \texorpdfstring{$\mathbf{E}$}{E}}
+
+Let $E\in M_d(\mathbb{C})$ be Hermitian, with eigenvalues $\lambda^{(E)}_1,\dots,\lambda^{(E)}_d$.
+Define
+\[
+\mathbf{E} := I_P \otimes I_{N_t} \otimes E
+\]
+on $H_{P,N_t,d}$.
+
+\begin{lemma}[Norm of $\mathbf{E}$]
+$\mathbf{E}$ is Hermitian and
+\[
+\|\mathbf{E}\| = \|E\| = \max_{1\le k\le d} |\lambda^{(E)}_k|.
+\]
+\end{lemma}
+
+\begin{proof}
+Hermiticity is immediate.
+The norm follows from the fact that tensoring with identities does not change the spectral radius, and for Hermitian operators the operator norm equals the spectral radius.
+\end{proof}
+
+\subsection{Universal operator \texorpdfstring{$\mathcal{U}$}{U}: basic bound}
+
+We define the truncated universal operator by
+\[
+\mathcal{U} := \mathbf{A} + \mathbf{B} + \mathbf{E}.
+\]
+
+\begin{proposition}[Boundedness and norm estimate for $\mathcal{U}$]
+$\mathcal{U}$ is Hermitian on $H_{P,N_t,d}$ and
+\[
+\|\mathcal{U}\|
+  \le \|A_{\mathbb{P}}\| + \|B_t\| + \|E\|
+  = \|A_{\mathbb{P}}\| + 1 + \|E\|.
+\]
+\end{proposition}
+
+\begin{proof}
+Sum of Hermitian operators is Hermitian.
+The triangle inequality gives
+\[
+\|\mathcal{U}\| \le \|\mathbf{A}\| + \|\mathbf{B}\| + \|\mathbf{E}\|
+                 = \|A_{\mathbb{P}}\| + 1 + \|E\|.
+\]
+\end{proof}
+
+\section{K--theoretic multiplicity functors for $S^1$ and $T^2$}
+\label{app:k-functors}
+
+\subsection{$S^1$: rank functor}
+
+Let $\mathcal{C}_{S^1}$ be the category of complex vector bundles over $S^1$, and recall that $K^0(S^1)\cong \mathbb{Z}$ via the rank.
+Fix a finite set of \emph{base primes} $\mathcal{P}_{\mathrm{rank}} := \{p_{r,1},\dots,p_{r,q}\}\subset\mathcal{P}$.
+
+For $E\in\mathcal{C}_{S^1}$ of rank $r\in\mathbb{Z}_{\ge 0}$, define its multiplicity vector
+\[
+v_E := \sum_{i=1}^q r\,\lvert p_{r,i}\rangle \in \ell^2(\mathcal{P}),
+\]
+with all other prime components zero.
+Lift $v_E$ to a state in $H_{P,N_t,d}$ by tensoring with a fixed time state and internal state, e.g.
+\[
+\Psi_E^{(0)} := v_E \otimes \lvert t_1\rangle \otimes \lvert \alpha_0\rangle.
+\]
+
+\begin{proposition}[Functoriality for $S^1$]
+The assignment
+\[
+\mathcal{M}_K^{(S^1)} : K^0(S^1)\to \ell^2(\mathcal{P}),\qquad r\mapsto v_E
+\]
+is a group homomorphism.
+Moreover, for bundle maps $f:E\to F$ that preserve rank, the induced map on multiplicity vectors is the identity on $v_E$.
+\end{proposition}
+
+\begin{proof}
+For $E,F$ of ranks $r,s$ respectively, the direct sum $E\oplus F$ has rank $r+s$, thus
+\[
+\mathcal{M}_K^{(S^1)}([E\oplus F])
+  = \sum_{i=1}^q (r+s)\, \lvert p_{r,i}\rangle
+  = \sum_{i=1}^q r\,\lvert p_{r,i}\rangle + \sum_{i=1}^q s\,\lvert p_{r,i}\rangle
+  = \mathcal{M}_K^{(S^1)}([E]) + \mathcal{M}_K^{(S^1)}([F]),
+\]
+so the map is additive.
+If $f:E\to F$ is a bundle map and $\operatorname{rank}(E)=\operatorname{rank}(F)$, then $[E]=[F]$ in $K^0(S^1)$, hence $\mathcal{M}_K^{(S^1)}([E])=\mathcal{M}_K^{(S^1)}([F])$.
+\end{proof}
+
+\subsection{$T^2$: rank and first Chern class}
+
+For the toy model considered in the paper, we take $K^0(T^2)\cong \mathbb{Z}\oplus\mathbb{Z}$, parameterized by rank $r$ and an integer $c$ representing the first Chern class (in a chosen basis).\footnote{This is an effective parametrization in the torsion–free setting of interest.}
+Fix two disjoint finite sets of primes
+\[
+\mathcal{P}_{\mathrm{rank}} := \{p_{r,1},\dots,p_{r,q}\},\qquad
+\mathcal{P}_{\mathrm{chern}} := \{p_{c,1},\dots,p_{c,q'}\}\subset\mathcal{P},
+\]
+with $\mathcal{P}_{\mathrm{rank}}\cap\mathcal{P}_{\mathrm{chern}}=\varnothing$.
+
+For $E_{r,c}$ with parameters $(r,c)\in\mathbb{Z}\oplus \mathbb{Z}$, define
+\[
+v_{r,c}
+  := r \sum_{i=1}^q \lvert p_{r,i}\rangle
+   + c \sum_{j=1}^{q'} \lvert p_{c,j}\rangle \in \ell^2(\mathcal{P}).
+\]
+
+\begin{proposition}[Additivity for $T^2$]
+The map
+\[
+\mathcal{M}_K^{(T^2)}: K^0(T^2)\to \ell^2(\mathcal{P}),\qquad
+(r,c)\mapsto v_{r,c}
+\]
+is a group homomorphism when $K^0(T^2)$ is regarded as $\mathbb{Z}\oplus\mathbb{Z}$ with the componentwise addition.
+\end{proposition}
+
+\begin{proof}
+For $(r_1,c_1)$ and $(r_2,c_2)$,
+\[
+v_{r_1,c_1} + v_{r_2,c_2}
+ = (r_1+r_2) \sum_i \lvert p_{r,i}\rangle
+ + (c_1+c_2) \sum_j \lvert p_{c,j}\rangle
+ = v_{r_1+r_2,\,c_1+c_2} = \mathcal{M}_K^{(T^2)}((r_1,c_1)+(r_2,c_2)).
+\]
+\end{proof}
+
+\begin{remark}[Torsion–free regime]
+For the $S^1$ and $T^2$ models used here, the relevant $K$--groups are torsion–free (isomorphic to $\mathbb{Z}$ or $\mathbb{Z}\oplus\mathbb{Z}$).
+The multiplicity encodings above are therefore linear injections of these free abelian groups.
+Extensions to spaces with torsion components will require a separate encoding scheme for finite cyclic factors and are left for future work.
+\end{remark}
+
+\section{Bridge operators and basic norm bounds}
+\label{app:bridge}
+
+\subsection{Finite zeta–bridge operator}
+
+Let $\{\rho_k\}_{k=1}^M$ be a finite set of nontrivial zeros of the Riemann zeta function, $\rho_k = \tfrac12 + i\gamma_k$ with real $\gamma_k$.
+For $p_i\in\mathcal{P}$, define phase factors
+\[
+\phi_{i,k} := \gamma_k \log p_i.
+\]
+Let $w_{i,k}\in\mathbb{C}$ be fixed coupling weights and $\{g_k(t_j)\}$ be scalar envelope factors (e.g.\ discrete Gaussians in $t_j$).
+We define the truncated bridge operator
+\[
+\mathcal{B}_{P,M} : H_{P,N_t,d}\to H_{P,N_t,d}
+\]
+by its action on basis vectors
+\[
+\mathcal{B}_{P,M}\,\lvert i,j,\alpha\rangle
+  := \sum_{k=1}^M w_{i,k}\, e^{\,i\phi_{i,k}}\,
+     g_k(t_j) \,
+     \lvert i,j,\alpha\rangle,
+\]
+so that $\mathcal{B}_{P,M}$ is diagonal in the $(i,j,\alpha)$ basis.
+
+\begin{lemma}[Boundedness of the truncated bridge]
+Assume $\sup_{i,k} |w_{i,k}| \le W_{\max}$ and $\sup_{j,k} |g_k(t_j)| \le G_{\max}$.
+Then $\mathcal{B}_{P,M}$ is bounded with
+\[
+\|\mathcal{B}_{P,M}\|
+  \le M\, W_{\max} G_{\max}.
+\]
+\end{lemma}
+
+\begin{proof}
+For each basis vector $\lvert i,j,\alpha\rangle$ we have
+\[
+\bigl\|\mathcal{B}_{P,M}\,\lvert i,j,\alpha\rangle\bigr\|
+  = \biggl|\sum_{k=1}^M w_{i,k} e^{i\phi_{i,k}} g_k(t_j)\biggr|
+  \le \sum_{k=1}^M |w_{i,k}|\, |g_k(t_j)|
+  \le M\,W_{\max} G_{\max}.
+\]
+Since $\mathcal{B}_{P,M}$ is diagonal in the orthonormal basis $\{\lvert i,j,\alpha\rangle\}$, its operator norm is the supremum of the absolute diagonal entries, hence bounded by $M W_{\max} G_{\max}$.
+\end{proof}
+
+\subsection{Hermitian vs.\ unitary variants}
+
+The above $\mathcal{B}_{P,M}$ is diagonal but not necessarily Hermitian.
+For a Hermitian bridge one can symmetrize by choosing real $w_{i,k}$ and $g_k(t_j)$ and replacing $e^{i\phi_{i,k}}$ by $\cos(\phi_{i,k})$, so that $\mathcal{B}_{P,M}$ is real symmetric.
+
+For a unitary bridge, one instead defines a diagonal unitary
+\[
+U_{\mathcal{B}}\,\lvert i,j,\alpha\rangle
+  := \exp\!\Bigl(i \sum_{k=1}^M \theta_{i,j,k}\Bigr)\lvert i,j,\alpha\rangle,
+\]
+with real phases $\theta_{i,j,k}$ chosen so that the combined phase
+$\sum_k \theta_{i,j,k}$ approximates $\sum_k w_{i,k} g_k(t_j)\phi_{i,k}$ in a suitable sense.
+Then $\|U_{\mathcal{B}}\|=1$ exactly.
+
+\section{Norm bound for the coupled operator}
+\label{app:coupled}
+
+Consider the coupled operator
+\[
+\mathcal{U}_{\mathrm{cpl}} := \mathcal{U} + \lambda\,\mathcal{B}_{P,M},
+\]
+with $\lambda\in\mathbb{R}$.
+Under the boundedness assumptions above we obtain:
+
+\begin{proposition}[Norm estimate for $\mathcal{U}_{\mathrm{cpl}}$]
+Assume $\mathcal{B}_{P,M}$ satisfies $\|\mathcal{B}_{P,M}\|\le C_{P,M}$.
+Then
+\[
+\|\mathcal{U}_{\mathrm{cpl}}\|
+  \le \|A_{\mathbb{P}}\| + 1 + \|E\| + |\lambda| C_{P,M}.
+\]
+\end{proposition}
+
+\begin{proof}
+By the triangle inequality,
+\[
+\|\mathcal{U}_{\mathrm{cpl}}\|
+  \le \|\mathcal{U}\| + |\lambda|\|\mathcal{B}_{P,M}\|
+  \le (\|A_{\mathbb{P}}\| + 1 + \|E\|) + |\lambda| C_{P,M}.
+\]
+\end{proof}
+
+This bound shows that, for fixed $P,M,N_t$ and bounded weights $(w_{i,k},g_k)$, the truncated ZMOS operators are uniformly bounded in operator norm.
+
+\section{Finite--truncation stability considerations}
+\label{app:stability}
+
+Let $(P,M,N_t)$ denote truncation parameters and write $\mathcal{U}^{(P,M,N_t)}_{\mathrm{cpl}}$ for the corresponding coupled operator.
+Let $\{\lambda_i^{(P,M,N_t)}\}$ denote its eigenvalues (counted with multiplicity).
+
+\begin{definition}[Finite--truncation stability]
+A spectral statistic $S$ (e.g.\ a normalized gap distribution, an averaged observable, or the dynamical entropy proxy $\Delta(t)$) is said to be \emph{stable under truncation} if for every $\varepsilon>0$ there exist $P_0,M_0,N_{t,0}$ such that for all $P\ge P_0$, $M\ge M_0$, $N_t\ge N_{t,0}$,
+\[
+\bigl| S(\mathcal{U}^{(P,M,N_t)}_{\mathrm{cpl}}) - S_\infty \bigr| < \varepsilon,
+\]
+for some limiting value $S_\infty$ (which may itself depend on other model parameters).
+\end{definition}
+
+In the present work we do not prove such stability analytically; instead, we adopt a \emph{finite--truncation--first} philosophy:
+\begin{itemize}
+  \item All spectral and dynamical claims are first formulated for fixed $(P,M,N_t)$.
+  \item Numerical experiments are used to check that the corresponding statistics exhibit convergence as $(P,M,N_t)$ increase within computationally accessible ranges.
+\end{itemize}
+A rigorous stability analysis for specific operator families is left for future work.
+
+\bigskip
+
+The results in this appendix give explicit constructions and norm bounds for the building blocks of ZMOS in finite truncation.
+They guarantee that the operators considered in the main text are bounded (and Hermitian or unitary as required), and they formalize the $K$--theoretic multiplicity encodings used for $S^1$ and $T^2$ in the torsion--free regime.
+
+
+\nocite{*}
+\bibliographystyle{plainnat}
+\bibliography{references}
+\end{document}

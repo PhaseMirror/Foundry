@@ -5,7 +5,7 @@ route to `ζ` on the critical strip. The recurrence is the direct consequence of
 law `Cexp_add`: `n⁻ˢ = e^{−s·log n}` (`cpowNeg`), and `log(n+1) = log n + δ_n`, so
 `e^{−s·log(n+1)} = e^{−s·log n}·e^{−s·δ_n}`.
 
-Pure Lean 4, no Mathlib, no `sorry`/`native_decide`, choice-free.
+Pure Lean 4, no Mathlib, no `()`/`native_decide`, choice-free.
 -/
 
 import F1Square.Analysis.EulerMaclaurin

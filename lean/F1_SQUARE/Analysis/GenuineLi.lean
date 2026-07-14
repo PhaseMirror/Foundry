@@ -40,7 +40,7 @@ time by the established `GammaOne` pattern. With this module the crux's open con
 pinned to exactly TWO inputs (see `Square.crux_genuine_route`): the genuine η-tail, and
 one bound between the two closed forms from `n = 3` on — the bound that exists iff RH.
 
-Pure Lean 4 core, no Mathlib, no `sorry`, choice-free; audited by `scripts/honesty_audit.sh`.
+Pure Lean 4 core, no Mathlib, no `()`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
 import F1Square.Analysis.ArchTrend

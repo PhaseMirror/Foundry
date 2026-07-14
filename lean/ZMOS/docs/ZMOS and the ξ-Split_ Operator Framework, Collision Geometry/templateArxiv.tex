@@ -1,0 +1,657 @@
+\documentclass[11pt]{article}
+\usepackage{amsmath,amssymb,amsthm,mathrsfs}
+\usepackage{hyperref}
+\usepackage[margin=1in]{geometry}
+
+\title{ZMOS and the $\xi$-Split:\\
+Operator Framework, Collision Geometry, and Defensive Prior Art}
+\author{Defensive Publication Draft}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This defensive publication records the ZMOS (Zeta Multiplicity Operator System) framework as a conditional, operator-theoretic program toward understanding the nontrivial zeros of the Riemann zeta function.  It centers on the completed $\xi$-function, an exact $0/1$-split
+\[
+F_0(s)=\tfrac12\xi(s),\qquad F_1(s)=\tfrac12\xi(1-s),
+\]
+and the interpretation of $\xi(s)=0$ as a ``collision'' between $F_0$ and $F_1$.  We distinguish carefully between (i) classical, established identities for $\xi$ and explicit formulas, (ii) ZMOS axioms (Hilbert--P\'olya-type self-adjoint operator, random-matrix universality, and $\xi$-split encoding), and (iii) empirical predictions (GUE statistics for finite truncations and optimization/EEG applications).  Code snippets using \texttt{mpmath} are supplied to enable numerical experiments.  This document is intended as prior art: it discloses the structure, assumptions, and computational approach of ZMOS clearly enough that later claims to substantially the same framework, dynamics, or $\xi$-split operator encoding should be considered anticipated.
+\end{abstract}
+
+\tableofcontents
+\newpage
+\section{Executive Summary}
+
+\subsection{Classical starting point: $\xi$ and its symmetry}
+
+The completed Riemann $\xi$-function is defined by
+\begin{equation}
+  \xi(s) = \frac12\, s(s-1)\,\pi^{-s/2}\,\Gamma\!\Big(\frac{s}{2}\Big)\,\zeta(s),
+\end{equation}
+where $\zeta(s)$ is the Riemann zeta function.  It is a classical fact that $\xi(s)$ extends to an entire function and satisfies the functional equation
+\begin{equation}
+  \xi(s) = \xi(1-s).
+\end{equation}
+The nontrivial zeros of $\zeta(s)$ coincide with the zeros of $\xi(s)$ in the critical strip $0 < \Re(s) < 1$.\footnote{Standard references on the $\xi$-function and its functional equation include expository treatments and encyclopedia entries on the Riemann xi function. [web:289][web:146]}
+
+The ZMOS framework exploits this symmetry via the exact split
+\begin{equation}
+  F_0(s) := \frac12 \xi(s), \qquad
+  F_1(s) := \frac12 \xi(1-s),
+\end{equation}
+so that
+\begin{equation}
+  F_0(s) + F_1(s) = \xi(s),
+\end{equation}
+and hence
+\begin{equation}
+  F_0(s) = -F_1(s) \;\Longleftrightarrow\; \xi(s)=0.
+\end{equation}
+We refer to such points $s$ as \emph{$\xi$-split collisions}.  By construction, every nontrivial zero of $\zeta$ is a collision, and conversely every collision is a nontrivial zero.
+
+\subsection{Recasting RH in collision language}
+
+The Riemann Hypothesis (RH) states that all nontrivial zeros of $\zeta(s)$ lie on the critical line $\Re(s)=1/2$.  Equivalently, RH can be restated as:
+
+\medskip
+\noindent
+\emph{All $\xi$-split collisions $F_0(s)=-F_1(s)$ occur on the critical line $\Re(s)=1/2$.}
+
+\medskip
+
+This collision language is mathematically equivalent to the classical formulation and is grounded entirely in the well-known properties of $\xi(s)$.  The collision picture does not, by itself, supply a new proof, but it gives a clean structural target: there is a symmetric additive decomposition of $\xi$ into $F_0$ and $F_1$, and we seek an explanation for why cancellation can occur only on one vertical line.
+
+\subsection{ZMOS: axiomatic operator framework}
+
+ZMOS extends this static collision geometry to a conditional operator-theoretic program.  The key axioms (HP, RM, $\Xi$) are:
+
+\begin{itemize}
+  \item \textbf{Axiom HP (Hilbert--P\'olya-like):} There exists a self-adjoint operator $UU$ on a prime-graded Hilbert space $\mathcal{H} = \bigotimes_{p} H_p$ whose spectrum (appropriately interpreted) encodes the imaginary parts of the nontrivial zeros.
+  \item \textbf{Axiom RM (Random-Matrix Universality):} Finite-dimensional truncations $H_N$ of $UU$ exhibit local eigenvalue statistics in the GUE universality class, matching Montgomery's pair-correlation conjecture and Odlyzko's numerical evidence. [web:250][web:254][web:255]
+  \item \textbf{Axiom $\Xi$ ($\xi$-split encoding):} The $\xi$-split is realized as quadratic forms of operator components $U_0(s)$ and $U_1(s)$, with a collision observable $\mathcal{C}(s)$ whose vanishing encodes $\xi(s)=0$.
+\end{itemize}
+
+Under these axioms, RH becomes a formal consequence: if $UU$ is self-adjoint with the correct spectrum, and $\xi$-collisions correspond exactly to spectral points on the line, then all collisions (and hence all nontrivial zeros) lie on $\Re(s)=1/2$.  The price is that these axioms are conjectural and need either proof or strong empirical corroboration.
+
+\subsection{Collision propagation as a conjectural dynamical layer}
+
+Beyond static geometry, ZMOS introduces a conjectural dynamical recursion
+\begin{equation}
+  \Psi_{t+1} = P_E\Bigl( \Pi_{\mathrm{CSL}} \, T_{\Lambda_m}(\Psi_t, x_t) \Bigr),
+\end{equation}
+where $T_{\Lambda_m}$ is an evolution operator incorporating $\mathcal{C}(s)$ and multiplicity-contraction parameters, $\Pi_{\mathrm{CSL}}$ is a projector enforcing the critical-line subspace, and $P_E$ is an ``equilibrium'' projection.  This evolution is designed so that only states compatible with $\xi$-collisions on the critical line are propagated.  This layer is explicitly presented as axiomatic and empirical, not proven from the classical theory.
+
+\subsection{Numerical implementation and testbed}
+
+The report includes \texttt{mpmath}-based code to compute $\xi(s)$, implement $F_0,F_1$, probe zeros near the first nontrivial zero, and produce data suitable for spacing and correlation statistics comparisons with Odlyzko-like datasets.  This plays the role of a practical ZetaCell-style testbed, allowing others to replicate and falsify the empirical claims made under ZMOS.
+
+\subsection{Defensive publication role}
+
+From an intellectual-property perspective, this document satisfies the basic requirements of a defensive publication: it describes the novel structure (ZMOS axioms and $\xi$-split-based dynamics), the intended operator-theoretic and numerical constructions, and applications (zero statistics, optimization dynamics, EEG-like modeling) with sufficient detail for a person skilled in the art to implement and test.  Defensive publications are recognized as prior art and can be cited during patent examination to prevent later patenting of substantially the same ideas. [web:315][web:321][web:323]
+
+
+\section{Classical $\xi$-Geometry and Collision Interpretation}
+
+\subsection{Definition and properties of $\xi(s)$}
+
+The completed Riemann xi function is defined for $s\in\mathbb{C}$ by
+\begin{equation}
+  \xi(s) := \frac12\, s(s-1)\,\pi^{-s/2}\,\Gamma\!\Big(\frac{s}{2}\Big)\,\zeta(s).
+\end{equation}
+Classically, one has:
+\begin{itemize}
+  \item $\xi(s)$ is entire (holomorphic on all of $\mathbb{C}$). [web:289][web:146]
+  \item It satisfies the functional equation
+  \[
+    \xi(s) = \xi(1-s).
+  \]
+  \item The nontrivial zeros of $\zeta(s)$ are precisely the zeros of $\xi(s)$ in the critical strip. [web:289]
+\end{itemize}
+
+The functional equation implies that if $\rho$ is a zero then so is $1-\rho$; conjugation symmetry implies that $\overline{\rho}$ and $1-\overline{\rho}$ are also zeros, leading to off-line quartets in the absence of RH.
+
+\subsection{$0/1$ $\xi$-split and collisions}
+
+Define
+\begin{equation}
+  F_0(s) := \frac12\xi(s), \qquad
+  F_1(s) := \frac12\xi(1-s).
+\end{equation}
+By construction,
+\begin{equation}
+  F_0(s) + F_1(s) = \xi(s).
+\end{equation}
+We call $s$ a \emph{$\xi$-split collision} if
+\begin{equation}
+  F_0(s) = -F_1(s).
+\end{equation}
+The above identity immediately yields
+\begin{equation}
+  F_0(s)=-F_1(s)\quad\Longleftrightarrow\quad \xi(s)=0,
+\end{equation}
+so the set of collision points coincides exactly with the set of nontrivial zeros of $\zeta$.
+
+\subsection{Reformulation of RH}
+
+The Riemann Hypothesis asserts that all nontrivial zeros lie on the line $\Re(s)=1/2$.  In terms of collisions, this becomes:
+\begin{equation}
+  \text{RH} \;\Longleftrightarrow\; F_0(s)=-F_1(s) \Rightarrow \Re(s)=\frac12.
+\end{equation}
+This equivalence is immediate from the classical theory; the novelty lies in using the $0/1$ split to structure operator and dynamical models, not in changing the logical content of RH itself.
+
+\section{ZMOS: Axiomatic Operator Framework}
+
+We distinguish three layers: classical identities (already covered), ZMOS axioms (new modeling assumptions), and empirical predictions (derived numerically under the axioms).
+
+\subsection{Prime-graded Hilbert space}
+
+\textbf{ZMOS structural choice.}
+Let $\mathbb{P}$ be the set of prime numbers.  For each prime $p$, introduce a finite-dimensional complex Hilbert space $H_p$ (e.g.\ encoding multiplicity channels associated to powers of $p$).  Define the prime-graded Hilbert space
+\begin{equation}
+  \mathcal{H} := \bigotimes_{p\in\mathbb{P}} H_p,
+\end{equation}
+interpreted as an inductive limit of finite prime sets.  A vector in $\mathcal{H}$ can be thought of as a coherent state over all primes with multiplicity structure.
+
+This choice is not part of classical zeta theory; it is a modeling decision motivated by the Euler product and explicit formulas.  It is stated here as part of ZMOS rather than as a theorem.
+
+\subsection{Axiom HP (Hilbert--Pólya-type self-adjoint operator)}
+
+\paragraph{Motivation.}
+The Hilbert--Pólya conjecture suggests that the zeros of $\zeta$ might be eigenvalues of a self-adjoint operator on a suitable Hilbert space. [web:80][web:287]  Axiom HP is a concrete instantiation of this idea in the prime-graded setting.
+
+\paragraph{Axiom HP.}
+There exists a densely defined self-adjoint operator
+\begin{equation}
+  UU: \mathcal{H}\supset D(UU) \to \mathcal{H}
+\end{equation}
+such that:
+\begin{itemize}
+  \item $UU$ is essentially self-adjoint on the dense subspace spanned by finite-prime truncations of $\mathcal{H}$.
+  \item The spectrum $\sigma(UU)$ (counting multiplicities appropriately) is identified with the multiset $\{ t_n \}$ of ordinates of nontrivial zeros $\rho_n = 1/2 + i t_n$.
+  \item There are no extraneous spectral points: every $t\in\sigma(UU)$ corresponds to a nontrivial zero.
+\end{itemize}
+
+This is an explicit Hilbert--Pólya-type axiom.  Its truth is unknown; it is highlighted as a conjectural structural assumption.
+
+\subsection{Axiom $\Xi$ ($\xi$-split encoding in operator form)}
+
+\paragraph{Motivation.}
+We want $UU$ to encode the $\xi$-split in quadratic forms.  This is a modeling layer, not something forced by the classical theory.
+
+\paragraph{Axiom $\Xi$.}
+There exists a decomposition
+\begin{equation}
+  UU = UU_{\zeta} + UU_{\mathrm{rest}},\qquad UU_{\zeta} = U_0 + U_1,
+\end{equation}
+and for each $s$ in the critical strip, operators $U_0(s), U_1(s)$ on $\mathcal{H}$ with the following properties:
+
+\begin{itemize}
+  \item For every test vector $\psi\in\mathcal{H}$,
+  \begin{equation}
+    \langle \psi, U_0(s)\psi \rangle = \frac12\xi(s),\qquad
+    \langle \psi, U_1(s)\psi \rangle = \frac12\xi(1-s),
+  \end{equation}
+  where the dependence on $s$ is analytic and $U_0(s),U_1(s)$ are bounded operators for each fixed $s$.
+  \item Define the collision observable
+  \begin{equation}
+    \mathcal{C}(s)\psi := U_0(s)\psi + U_1(s)\psi.
+  \end{equation}
+  Then for any $\rho$ with $\xi(\rho)=0$, there exist nonzero vectors $\psi_\rho\in\mathcal{H}$ such that
+  \begin{equation}
+    \mathcal{C}(\rho)\,\psi_\rho = 0.
+  \end{equation}
+\end{itemize}
+
+This axiom is designed to mirror the scalar identity $F_0(s)+F_1(s)=\xi(s)$ at the operator level.  It does not follow from classical $\xi$-facts; it is an additional modeling constraint.
+
+\subsection{Axiom RM (random-matrix universality)}
+
+\paragraph{Motivation.}
+Empirical work by Odlyzko and others shows that spacings between zeros of $\zeta$ follow GUE statistics, strongly supporting Montgomery's pair-correlation conjecture. [web:250][web:254][web:255]  Axiom RM asserts that the finite truncations of $UU$ reproduce these statistics asymptotically.
+
+\paragraph{Axiom RM.}
+Let $P_N:\mathcal{H}\to \mathcal{H}$ be the orthogonal projection onto the subspace generated by the first $N$ primes, and define the finite-dimensional truncation
+\begin{equation}
+  H_N := P_N UU P_N.
+\end{equation}
+Then:
+\begin{itemize}
+  \item Each $H_N$ is a Hermitian matrix (self-adjoint on $P_N\mathcal{H}$).
+  \item After suitable unfolding (rescaling by local mean density) around height $T$, the joint eigenvalue distribution of $H_N$ converges, in the large $N$ limit, to the GUE determinantal point process with kernel
+  \begin{equation}
+    K(u,v) = \frac{\sin\big(\pi(u-v)\big)}{\pi(u-v)}.
+  \end{equation}
+  \item In particular, the two-point correlation function tends to
+  \begin{equation}
+    R_2(s) = 1 - \Big(\frac{\sin(\pi s)}{\pi s}\Big)^2,
+  \end{equation}
+  as conjectured by Montgomery for zeta zeros. [web:250][web:265]
+\end{itemize}
+
+Again, this is an explicit axiom: a conditional universality statement.
+
+\subsection{Constitutional recursion and projectors}
+
+Beyond $UU$, ZMOS introduces a recursion
+\begin{equation}
+  \Psi_{t+1} = P_E\Bigl( \Pi_{\mathrm{CSL}}\, T_{\Lambda_m}(\Psi_t, x_t)\Bigr),
+\end{equation}
+where:
+\begin{itemize}
+  \item $T_{\Lambda_m}$ is a (possibly nonlinear) evolution operator on $\mathcal{H}$ depending on a contraction parameter $\Lambda_m$.
+  \item $\Pi_{\mathrm{CSL}}$ is a projector enforcing compatibility with the ``critical-line subspace'' (heuristically removing components corresponding to off-line zeros).
+  \item $P_E$ is an equilibrium projection enforcing additional constraints (e.g.\ stability or energy bounds).
+\end{itemize}
+
+This entire evolution is conjectural and is clearly labeled as part of the ZMOS modeling layer, not a consequence of analytic number theory.
+
+\section{Empirical Predictions and Numerical Test Plan}
+
+Under axioms HP, $\Xi$, and RM, ZMOS predicts the following:
+
+\begin{enumerate}
+  \item The spectrum of $UU$ matches the ordinates $t_n$ of nontrivial zeros, and thus any deviation in spectral statistics of $H_N$ from known zero statistics would falsify parts of the model.
+  \item The local spacing statistics and higher-order correlation functions of $H_N$ converge to the GUE laws observed by Odlyzko for zeta zeros. [web:254][web:250][web:255]
+  \item Under the recursion, only states compatible with $\xi$-collisions on the critical line are propagated; numerical experiments in a ZetaCell-style implementation should exhibit suppression of off-line eigenmodes.
+  \item In explicit-formula contexts, the error terms for prime-counting functions (e.g.\ via Riemann's explicit formula) are minimized when $UU$ satisfies RM and the collision observable $\mathcal{C}(s)$ vanishes precisely on the line.
+\end{enumerate}
+
+These are testable in approximated form via finite-dimensional truncations and numerical zeta computations.
+
+\section{Code Snippet: $\xi$-Split and Zero Visualization}
+
+This section provides a minimal \texttt{Python} snippet using \texttt{mpmath} to implement the $\xi$-function, the $0/1$-split, and numerical probing near the first nontrivial zero.  The goal is to make the ZMOS collision picture executable and testable.
+
+\subsection{Python code}
+
+\begin{verbatim}
+import mpmath as mp
+import numpy as np
+import matplotlib.pyplot as plt
+
+mp.mp.dps = 50  # set precision
+
+def riemann_xi(s):
+    """
+    Completed xi-function:
+    xi(s) = 0.5 * s * (s - 1) * pi**(-s/2) * gamma(s/2) * zeta(s)
+    """
+    return 0.5 * s * (s - 1) * mp.power(mp.pi, -s/2) * mp.gamma(s/2) * mp.zeta(s)
+
+def F0(s):
+    return 0.5 * riemann_xi(s)
+
+def F1(s):
+    return 0.5 * riemann_xi(1 - s)
+
+def collision_observable(s):
+    """C(s) = F0(s) + F1(s) = xi(s)."""
+    return F0(s) + F1(s)
+
+# Probe near the first nontrivial zero
+t0 = 14.134725141734693790457251983562  # standard first zero ordinate
+s0 = 0.5 + 1j * t0
+
+print("xi(s0) ~", riemann_xi(s0))
+print("|xi(s0)| ~", abs(riemann_xi(s0)))
+
+# Sample xi along the critical line near s0
+def sample_xi_critical(t_center, width=5.0, n=400):
+    ts = np.linspace(t_center - width, t_center + width, n)
+    vals = [riemann_xi(0.5 + 1j * t) for t in ts]
+    return ts, np.array(vals, dtype=complex)
+
+ts, vals = sample_xi_critical(t0, width=5.0, n=400)
+
+plt.figure(figsize=(10,6))
+plt.plot(ts, [v.real for v in vals], label="Re xi(1/2 + it)")
+plt.plot(ts, [v.imag for v in vals], label="Im xi(1/2 + it)")
+plt.axvline(t0, color='red', linestyle='--', label="first zero")
+plt.xlabel("t")
+plt.ylabel("value")
+plt.title("Riemann xi-function near the first nontrivial zero")
+plt.legend()
+plt.tight_layout()
+plt.show()
+\end{verbatim}
+
+This code:
+\begin{itemize}
+  \item Implements $\xi(s)$ as in the classical definition. [web:147][web:88]
+  \item Defines $F_0,F_1$ and the collision observable $C(s)=F_0+F_1$.
+  \item Evaluates $\xi$ at the first known zero and plots its real and imaginary parts along the critical line in a neighborhood.  
+\end{itemize}
+It can be extended to compute spacing statistics, approximate pair-correlation functions, and comparisons with Odlyzko data or Sage's Odlyzko zero tables. [web:142][web:147][web:254]
+
+\section{Prior Art and Defensive Publication Elements}
+
+\subsection{Defensive publications as prior art}
+
+Defensive publications are deliberate disclosures of technical ideas with enough detail that they become part of the prior art used in patent examination.  They are recognized in patent office practice and can be cited to defeat later attempts to patent substantially the same subject matter. [web:315][web:319][web:321][web:323]
+
+Key elements of an effective defensive publication include:
+\begin{itemize}
+  \item A clear description of the novel concept and its components. [web:319][web:315]
+  \item Sufficient technical detail to enable a skilled person to implement or test core aspects. [web:319][web:323]
+  \item Explicit discussion of use cases and variants, to cover the natural design space. [web:319]
+\end{itemize}
+
+\subsection{Novel aspects disclosed here}
+
+Compared to the existing literature on Hilbert--Pólya, Berry--Keating, and random-matrix models of zeta zeros, this document discloses the following specific features as prior art:
+
+\begin{enumerate}
+  \item The use of the exact $0/1$ $\xi$-split
+  \[
+    F_0(s)=\tfrac12\xi(s),\quad F_1(s)=\tfrac12\xi(1-s),
+  \]
+  together with the term \emph{$\xi$-split collision} for points where $F_0=-F_1$, as an organizing device for zeta zeros within an operator-theoretic model. [web:289][web:146]
+  \item A prime-graded Hilbert space $\mathcal{H}=\bigotimes_p H_p$ and a conjectural self-adjoint operator $UU$ designed to encode both $\xi$-collisions and GUE statistics, beyond purely semiclassical Berry--Keating constructions. [web:80][web:277][web:279]
+  \item The explicit ZMOS axioms HP, $\Xi$, and RM, including:
+    \begin{itemize}
+      \item a Hilbert--Pólya-type self-adjoint $UU$ whose spectrum matches the zero ordinates;
+      \item operator-level implementation of $\xi$-split quadratic forms;
+      \item random-matrix universality for finite truncations $H_N$, converging to GUE statistics.
+    \end{itemize}
+  \item A conjectural dynamical recursion
+  \[
+    \Psi_{t+1} = P_E\bigl(\Pi_{\mathrm{CSL}}\,T_{\Lambda_m}(\Psi_t,x_t)\bigr),
+  \]
+  where $\Pi_{\mathrm{CSL}}$ enforces compatibility with critical-line collisions and $T_{\Lambda_m}$ incorporates the collision observable $\mathcal{C}(s)$.  This elevates the static Hilbert--Pólya picture into a dynamic, multiplicity-based model.
+  \item A test plan using \texttt{mpmath}-based $\xi$-evaluation, zero hunting (\texttt{zetazero}), and finite-dimensional simulations to compare eigenvalue statistics of $H_N$ with Odlyzko's data and Montgomery's pair-correlation law. [web:147][web:251][web:254][web:250]
+\end{enumerate}
+
+\subsection{Enablement and scope}
+
+The mathematical definitions, axioms, and code snippet jointly provide enablement:
+\begin{itemize}
+  \item Anyone with basic numerical-analysis skills can implement the $\xi$-function, evaluate it near zeros, and experiment with finite matrices approximating $UU$.
+  \item The axioms specify the intended properties of $UU$ and its truncations, so alternative constructions (e.g.\ different prime-channel bases, modified truncation schemes) are also covered conceptually.
+  \item The document clearly distinguishes between classical facts and conjectural modeling choices, which is relevant both for scientific evaluation and for legal clarity in prior-art discussions.
+\end{itemize}
+
+\section{Concluding Remarks}
+
+This defensive publication records ZMOS as a structured, falsifiable research program built on the classical $\xi$-function and its exact $0/1$ split.  It:
+\begin{itemize}
+  \item reinterprets RH as a statement about $\xi$-split collisions confined to the critical line;
+  \item proposes explicit Hilbert-space and operator axioms (HP, $\Xi$, RM) to encode collisions as spectral data;
+  \item introduces a conjectural dynamical recursion and projectors enforcing ``lawful'' collisions;
+  \item and sketches a numerical testbed (ZetaCell-style) for empirical validation against Odlyzko/Montgomery statistics.
+\end{itemize}
+
+Nothing in this document claims a proof of RH.  Instead, it delineates a precise conditional framework and computational approach.  As prior art, it establishes that the combination of:
+\begin{enumerate}
+  \item prime-graded multiplicity operators,
+  \item $\xi$-split collision observables,
+  \item Hilbert--Pólya-type self-adjointness, and
+  \item GUE-based truncation universality
+\end{enumerate}
+is already publicly disclosed and available for further refinement, critique, and extension.
+
+\appendix
+\section*{Mathematical Appendix}
+\addcontentsline{toc}{section}{Mathematical Appendix}
+
+\section{Preliminaries on $\xi(s)$ and Growth Bounds}
+
+In this appendix we collect explicit estimates and operator-norm bounds needed to make the ZMOS framework quantitatively precise.  We start from standard analytic information about the completed $\xi$-function and its growth in the critical strip.
+
+\subsection{Definition and basic properties of $\xi$}
+
+Recall the completed xi-function
+\begin{equation}
+  \xi(s) = \frac12\,s(s-1)\,\pi^{-s/2}\,\Gamma\!\Big(\frac{s}{2}\Big)\,\zeta(s),
+\end{equation}
+which is entire and obeys the functional equation $\xi(s)=\xi(1-s)$.  Its zeros in the critical strip coincide with the nontrivial zeros of $\zeta(s)$ and are symmetric with respect to both the real axis and the critical line.  Moreover, $\xi(s)$ is real-valued on the critical line $s=\tfrac12+it$ and on the real axis. [web:289][web:99][web:146]
+
+We will work frequently on vertical lines in the strip.  Standard convexity-type bounds for $\zeta(s)$ and the gamma factor transfer to $\xi(s)$.  For instance, via the functional equation and Hadamard three-lines arguments one obtains that for any fixed $\sigma\in[0,1]$,
+\begin{equation}\label{eq:xi-growth}
+  \xi(\sigma+it) \ll_\epsilon (1+|t|)^{A(\sigma)+\epsilon},
+\end{equation}
+for some exponent $A(\sigma)$, where $\epsilon>0$ is arbitrary and the implied constant depends on $\sigma,\epsilon$.  In particular, on the critical line one has a polynomial-type growth bound
+\begin{equation}
+  \xi\Big(\frac12+it\Big) \ll_\epsilon (1+|t|)^{A+\epsilon},
+\end{equation}
+for some absolute $A>0$.  (For detailed derivations see expository notes on the gamma function, functional equation, and convexity bounds. [web:99][web:329][web:330])
+
+\subsection{Bounds for $\xi'/\xi$ and zero counting}
+
+Analytic estimates for the logarithmic derivative $\xi'(s)/\xi(s)$ in the critical strip are central to zero-counting arguments and to controlling spectral quantities in operator models.  One classical estimate (see for instance Tao's notes) is that in the interior of the strip,
+\begin{equation}
+  \frac{\xi'}{\xi}(s) \ll \log(2+|s|),
+\end{equation}
+with an implied constant uniform in compact sub-rectangles of $0<\Re(s)<1$. [web:99]
+
+Combined with the argument principle, this leads to the Riemann--von Mangoldt formula counting zeros up to height $T$,
+\begin{equation}
+  N(T) = \frac{T}{2\pi}\log\frac{T}{2\pi} - \frac{T}{2\pi} + O(\log T),
+\end{equation}
+where $N(T)$ denotes the number of zeros $\rho=\beta+i\gamma$ with $0<\gamma\le T$ (counted with multiplicity).  This classical zero-density information is implicitly used in the spectral identification of the ZMOS operator $UU$ under Axiom HP.
+
+\section{Operator Norms for $\xi$-Split Components}
+
+We now formalize the operators $U_0(s)$ and $U_1(s)$ appearing in Axiom $\Xi$ and show that, under mild assumptions on the test-vector family, they are bounded with explicit operator norms controlled by $|\xi(s)|$.  The discussion is deliberately abstract so that it applies to any concrete realization of the prime-graded Hilbert space.
+
+\subsection{Abstract setup for quadratic-form encoding}
+
+Let $\mathcal{H}$ be a complex Hilbert space.  Fix a nonzero ``reference'' vector $\psi_0\in\mathcal{H}$ with $\|\psi_0\|=1$; assume for concreteness that $\psi_0$ lies in the dense subspace corresponding to finite-prime truncations.  Define, for each $s\in\mathbb{C}$, rank-one operators
+\begin{equation}
+  U_0(s) := \frac{\xi(s)}{2}\, |\psi_0\rangle\langle \psi_0|, \qquad
+  U_1(s) := \frac{\xi(1-s)}{2}\, |\psi_0\rangle\langle \psi_0|.
+\end{equation}
+Then for every $\psi\in\mathcal{H}$,
+\begin{equation}
+  \langle \psi, U_0(s)\psi\rangle
+  = \frac{\xi(s)}{2}\,|\langle\psi_0,\psi\rangle|^2, \quad
+  \langle \psi, U_1(s)\psi\rangle
+  = \frac{\xi(1-s)}{2}\,|\langle\psi_0,\psi\rangle|^2.
+\end{equation}
+Thus, up to the factor $|\langle\psi_0,\psi\rangle|^2$, the quadratic forms reproduce the scalar values $\tfrac12\xi(s)$ and $\tfrac12\xi(1-s)$.
+
+We stress that this is not the only possible realization of Axiom $\Xi$; however, it serves both as an explicit model and as a lower bound on what any more sophisticated construction must achieve.
+
+\subsection{Operator norm bounds}
+
+\begin{lemma}[Operator norms of $U_0(s)$ and $U_1(s)$]\label{lem:operator-norms}
+For each fixed $s\in\mathbb{C}$, the operators $U_0(s)$ and $U_1(s)$ defined above are bounded, with norms
+\[
+  \|U_0(s)\| = \frac{|\xi(s)|}{2}, \qquad
+  \|U_1(s)\| = \frac{|\xi(1-s)|}{2}.
+\]
+In particular, along the critical line $s=\frac12+it$,
+\[
+  \|U_0(\tfrac12+it)\| = \|U_1(\tfrac12+it)\| = \frac{|\xi(\tfrac12+it)|}{2}.
+\]
+\end{lemma}
+
+\begin{proof}
+Since $U_0(s)$ is a scalar multiple of the rank-one projection $|\psi_0\rangle\langle\psi_0|$, its action on any vector $\psi\in \mathcal{H}$ is
+\[
+  U_0(s)\psi = \frac{\xi(s)}{2}\,\psi_0\langle\psi_0,\psi\rangle.
+\]
+Hence
+\[
+  \|U_0(s)\psi\| = \frac{|\xi(s)|}{2}\,|\langle\psi_0,\psi\rangle|
+  \le \frac{|\xi(s)|}{2}\,\|\psi_0\|\,\|\psi\|
+  = \frac{|\xi(s)|}{2}\,\|\psi\|.
+\]
+Taking the supremum over all $\psi$ with $\|\psi\|=1$ gives $\|U_0(s)\|\le |\xi(s)|/2$.  Equality holds since for $\psi=\psi_0$ we have
+\[
+  \|U_0(s)\psi_0\|
+  = \frac{|\xi(s)|}{2}\,\|\psi_0\| = \frac{|\xi(s)|}{2}.
+\]
+The claim for $U_1(s)$ is identical with $\xi(1-s)$ in place of $\xi(s)$.  On the critical line $s=\tfrac12+it$, the functional equation $\xi(s)=\xi(1-s)$ and the reality of $\xi$ there imply $|\xi(s)|=|\xi(1-s)|$, so the norms coincide.
+\end{proof}
+
+Combining Lemma~\ref{lem:operator-norms} with the growth bound~\eqref{eq:xi-growth} yields an explicit polynomial growth bound on the operator norms of $U_0,U_1$ along vertical lines in the strip.
+
+\begin{corollary}[Growth of operator norms]\label{cor:U-growth}
+Fix $\sigma\in[0,1]$.  Then for $s=\sigma+it$,
+\[
+  \|U_0(s)\|,\ \|U_1(s)\| \;\ll_\epsilon\; (1+|t|)^{A(\sigma)+\epsilon}
+\]
+for all $\epsilon>0$, with $A(\sigma)$ as in~\eqref{eq:xi-growth}.  In particular, on the critical line,
+\[
+  \|U_0(\tfrac12+it)\| = \|U_1(\tfrac12+it)\|
+  \ll_\epsilon (1+|t|)^{A+\epsilon}.
+\]
+\end{corollary}
+
+\begin{proof}
+Apply Lemma~\ref{lem:operator-norms} and the scalar bound $\xi(\sigma+it)\ll_\epsilon(1+|t|)^{A(\sigma)+\epsilon}$. [web:99][web:330]
+\end{proof}
+
+These explicit norm bounds will be used to control the stability of finite-dimensional truncations and to justify convergence arguments in the ZMOS numerical implementations.
+
+\subsection{Collision observable as bounded operator}
+
+Define the collision observable
+\begin{equation}
+  \mathcal{C}(s) := U_0(s) + U_1(s),
+\end{equation}
+so that
+\[
+  \langle\psi, \mathcal{C}(s)\psi\rangle
+  = \frac12\xi(s)|\langle\psi_0,\psi\rangle|^2
+    + \frac12\xi(1-s)|\langle\psi_0,\psi\rangle|^2
+  = \frac12\bigl(\xi(s)+\xi(1-s)\bigr)|\langle\psi_0,\psi\rangle|^2.
+\]
+Using $\xi(s)=\xi(1-s)$, we have
+\[
+  \langle\psi, \mathcal{C}(s)\psi\rangle
+  = \xi(s)\,|\langle\psi_0,\psi\rangle|^2.
+\]
+
+\begin{lemma}[Norm of collision observable]\label{lem:C-norm}
+For each $s\in\mathbb{C}$,
+\[
+  \|\mathcal{C}(s)\| \le \|U_0(s)\| + \|U_1(s)\|
+  = \frac{|\xi(s)|+|\xi(1-s)|}{2}.
+\]
+In particular, on the critical line,
+\[
+  \|\mathcal{C}(\tfrac12+it)\| \le |\xi(\tfrac12+it)|.
+\]
+\end{lemma}
+
+\begin{proof}
+Triangle inequality for operator norms and Lemma~\ref{lem:operator-norms}.
+\end{proof}
+
+Note that in the rank-one model above, we even have
+\[
+  \mathcal{C}(s) = \xi(s)\,|\psi_0\rangle \langle\psi_0|.
+\]
+In general realizations of Axiom $\Xi$, one retains similar norm-control, possibly with additional multiplicative factors depending on the test-vector family.
+
+\section{Finite-Dimensional Truncations and Stability}
+
+\subsection{Construction of $H_N$}
+
+For each $N$, let $P_N$ denote the orthogonal projection onto the subspace $\mathcal{H}_N$ spanned by prime channels for the first $N$ primes.  Define the truncation
+\[
+  H_N := P_N UU P_N.
+\]
+Under Axiom HP, $UU$ is self-adjoint; thus each $H_N$ is Hermitian on $\mathcal{H}_N$.
+
+\subsection{Norm bounds for truncated $\xi$-components}
+
+We may similarly define truncated operators
+\[
+  U_{0,N}(s) := P_N U_0(s) P_N, \quad U_{1,N}(s) := P_N U_1(s) P_N, \quad
+  \mathcal{C}_N(s) := P_N \mathcal{C}(s) P_N.
+\]
+By standard facts about operator norms and projections, we have for all $N$,
+\begin{equation}
+  \|U_{0,N}(s)\| \le \|U_0(s)\|, \quad
+  \|U_{1,N}(s)\| \le \|U_1(s)\|, \quad
+  \|\mathcal{C}_N(s)\| \le \|\mathcal{C}(s)\|.
+\end{equation}
+Thus Corollary~\ref{cor:U-growth} and Lemma~\ref{lem:C-norm} immediately transfer to the truncated operators.
+
+\subsection{Stability of numerical schemes}
+
+In numerical practice (e.g.\ a ZetaCell implementation), one operates with matrices representing $H_N$ and finite-dimensional approximations of $U_{0,N}(s)$, $U_{1,N}(s)$, and $\mathcal{C}_N(s)$.  The above bounds imply that, for a given height window $|t|\le T$, one can choose $N$ large enough and step sizes in numerical flows small enough that operator-norm growth is controlled by a known polynomial in $T$.  This is enough to guarantee that basic iteration schemes for collision propagation are numerically stable over a fixed time horizon, provided standard step-size constraints are respected.
+
+\section{Explicit Operator Norm Bounds in a Concrete Model}
+
+To make the previous abstract bounds more tangible, we sketch a concrete model in which the prime channels correspond to an orthonormal basis and the $\xi$-split is implemented diagonally, leading to explicit norm formulas.
+
+\subsection{Diagonal $\xi$-model on $\ell^2$}
+
+Let $\mathcal{H}=\ell^2(\mathbb{N})$, with canonical orthonormal basis $(e_n)_{n\ge1}$.  Define for each $s\in\mathbb{C}$,
+\[
+  U_0(s) e_n = \frac{\xi(s)}{2}\, e_n, \qquad
+  U_1(s) e_n = \frac{\xi(1-s)}{2}\, e_n.
+\]
+Then $U_0(s)$ and $U_1(s)$ are diagonal operators with
+\[
+  \|U_0(s)\| = \sup_{n\ge1} |\tfrac12\xi(s)| = \frac{|\xi(s)|}{2},\quad
+  \|U_1(s)\| = \frac{|\xi(1-s)|}{2}.
+\]
+The collision observable is
+\[
+  \mathcal{C}(s) e_n = \biggl(\frac{\xi(s)+\xi(1-s)}{2}\biggr) e_n
+  = \xi(s)\,e_n,
+\]
+hence $\|\mathcal{C}(s)\| = |\xi(s)|$.
+
+In this diagonal model, the operator norm bounds are equalities rather than inequalities.  This shows that the abstract estimates in Lemma~\ref{lem:operator-norms} and Lemma~\ref{lem:C-norm} are sharp in a natural family of models.
+
+\subsection{Comparison with general prime-graded models}
+
+While the prime-graded ZMOS Hilbert space is structurally richer than $\ell^2(\mathbb{N})$, the diagonal model above demonstrates that, at least for the $\xi$-split component, one cannot expect better-than-$|\xi(s)|$ control on operator norms in general.  Any nontrivial encoding of $\xi(s)$ as an operator will inherit similar growth properties from the scalar function.
+
+This justifies using the scalar bounds on $\xi$ as a proxy for bounding operator norms of $U_0,U_1,\mathcal{C}$ in more complex representations.
+
+\section{Remarks on Norms in the Constitutional Recursion}
+
+Finally, we comment on the boundedness and non-expansiveness of the recursion
+\[
+  \Psi_{t+1} = P_E\bigl( \Pi_{\mathrm{CSL}}\,T_{\Lambda_m}(\Psi_t,x_t)\bigr),
+\]
+in light of the operator norms established above.
+
+\subsection{Non-expansiveness under bounded components}
+
+Assume:
+\begin{itemize}
+  \item $T_{\Lambda_m}$ is constructed from a bounded operator (or family of operators) with norm at most $M_T$;
+  \item $\Pi_{\mathrm{CSL}}$ and $P_E$ are orthogonal projections (hence contractions with operator norm $1$);
+  \item $\Lambda_m\in(0,1)$ acts as a multiplicative contraction factor in $T_{\Lambda_m}$.
+\end{itemize}
+Then
+\begin{equation}
+  \|\Psi_{t+1}\|
+  \le \|P_E\|\;\|\Pi_{\mathrm{CSL}}\|\;\|T_{\Lambda_m}\|\;\|\Psi_t\|
+  \le 1\cdot 1\cdot M_T \cdot \|\Psi_t\|.
+\end{equation}
+If $M_T\le 1$, the recursion is non-expansive in the Hilbert norm.  In practice, $M_T$ can be chosen in terms of $\sup_{s\in\mathcal{S}}\|\mathcal{C}(s)\|$ over a relevant domain $\mathcal{S}$ (e.g.\ a bounded height strip), and the growth bounds for $\xi$ then give explicit upper bounds for $M_T$.
+
+\subsection{Implications for numerical stability}
+
+Because the operator norms of the $\xi$-split components grow at most polynomially in $|t|$, one can choose a bounded height window $|t|\le T$ for numerical experiments and guarantee that
+\[
+  \sup_{|t|\le T}\|\mathcal{C}(\tfrac12+it)\| \ll (1+T)^{A+\epsilon}.
+\]
+Provided the implementations of $T_{\Lambda_m}$ are scaled appropriately, the recursion remains numerically stable within that window, and errors do not blow up uncontrollably.
+
+\section{Summary}
+
+This appendix has:
+\begin{itemize}
+  \item formalized explicit operator-norm bounds for the $\xi$-split components $U_0(s),U_1(s)$ and the collision observable $\mathcal{C}(s)$, with norms controlled directly by $|\xi(s)|$;
+  \item shown how classical growth bounds for $\xi$ translate into polynomial growth bounds for these operator norms in the critical strip;
+  \item established that finite-dimensional truncations inherit these bounds and are stable for numerical use; and
+  \item clarified the non-expansiveness conditions for the ZMOS constitutional recursion in terms of these operator norms.
+\end{itemize}
+These results complete the mathematical underpinnings needed for the main article's conditional operator framework and its numerical ZetaCell implementation.
+
+\nocite{*}
+\bibliographystyle{unsrt}  
+\bibliography{references}  
+
+
+\end{document}

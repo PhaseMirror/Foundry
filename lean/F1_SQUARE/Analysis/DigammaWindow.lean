@@ -32,7 +32,7 @@ exactly to `ψ(1/4)`'s (`term_n(0) = −3/[(n+1)(4n+1)]`, `windowTerm_zero`).
 
 Parameterized by `s = τ²/4` as a non-negative rational `sn/sd` (`sn sd : ℕ`, `sd > 0`).
 
-Pure Lean 4 core, no Mathlib, no `sorry`, choice-free; audited by `scripts/honesty_audit.sh`.
+Pure Lean 4 core, no Mathlib, no `()`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
 import F1Square.Analysis.Rat

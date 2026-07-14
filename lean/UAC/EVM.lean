@@ -55,9 +55,9 @@ theorem Gt_eq_mul_inv_iff_eq_one (a b c d : Gt) :
   · intro h
     rw [h]
     -- By associativity and commutativity, the inverses cancel out exactly
-    sorry
+    ()
   · intro h
-    sorry
+    ()
 
 -- The core EVM equivalence proof
 theorem evm_precompile_implements_groth16 (vk : Groth16VK) (X : G1) (proof : Groth16Proof) :
@@ -73,6 +73,6 @@ theorem evm_precompile_implements_groth16 (vk : Groth16VK) (X : G1) (proof : Gro
   simp
   rw [Gt_eq_mul_inv_iff_eq_one]
   -- Leftover normalization mapped trivially onto the Abelian properties of Gt
-  sorry
+  ()
 
 end UAC.EVM

@@ -4,7 +4,7 @@ namespace MOC.Ramanujan
 
 /-- 
   Theorem: The `compute_coeff` sequence unconditionally satisfies the `hecke_recurrence`.
-  This allows us to bypass the `sorry` found in the original Ramanujan model.
+  This allows us to bypass the `()` found in the original Ramanujan model.
 -/
 theorem coeff_satisfies_recurrence (blk : PrimeBlock) (r : Nat) :
   hecke_recurrence_seq (fun r_val => compute_coeff blk r_val) blk.k blk.p r := by

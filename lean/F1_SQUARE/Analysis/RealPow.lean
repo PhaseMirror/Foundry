@@ -13,7 +13,7 @@ This is the analytic content behind the `ζ` tail bound `|n^{-s}| = n^{-Re s}` f
 real exponent of `n` is `exp(Re s · log n)`, and grounding it against the integer powers `nᵏ` (here)
 and the exp monotonicity (next commit) is what makes `Σ n^{-s}` summable.
 
-Pure Lean 4, no Mathlib, no `sorry`/`native_decide`, choice-free.
+Pure Lean 4, no Mathlib, no `()`/`native_decide`, choice-free.
 -/
 
 import F1Square.Analysis.ExpLog

@@ -7,7 +7,7 @@ At `s = 1` the factored term `Cterm_n = (s−1)·P_n` vanishes (`s − 1 = 0`), 
 is `≈ 0` (`CdigammaTerm_one_eq_zero`), the partial sums are `≈ 0`, and the limit is `0`
 (`CDigammaCore_one_eq_zero`, via `genSum_congr`/`Rlim_zero`). Hence `ψ(1) = −γ + 0 = −γ`.
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 import F1Square.Analysis.ComplexDigamma

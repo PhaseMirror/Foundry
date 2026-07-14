@@ -14,7 +14,7 @@ the consecutive-log gap and a complex exp-difference bound — *no integral*). T
 via the complex reciprocal `Cinv` (built in `ComplexInv`). This module builds the **partial sums**
 `czEtaSum`; the variation bound (convergence) and the `η → ζ` division build on top.
 
-Pure Lean 4, no Mathlib, no `sorry`/`native_decide`, choice-free.
+Pure Lean 4, no Mathlib, no `()`/`native_decide`, choice-free.
 -/
 
 import F1Square.Analysis.EulerMaclaurin

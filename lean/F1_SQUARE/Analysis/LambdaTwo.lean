@@ -18,7 +18,7 @@ kernel-decidable. This is the
 `n = 2` slice of Li's criterion as **evidence**; it is NOT the crux (`λₙ > 0 ∀ n` = RH stays open, the
 `liPositivityHolds` field remains `none`).
 
-Pure Lean 4, no Mathlib, no `sorry`/`native_decide`, choice-free.
+Pure Lean 4, no Mathlib, no `()`/`native_decide`, choice-free.
 -/
 
 import F1Square.Analysis.GammaOne

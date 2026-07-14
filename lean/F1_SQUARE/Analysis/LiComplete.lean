@@ -51,7 +51,7 @@ is mechanized is build-vs-closed-form agreement. Beyond `n = 2` both sequences a
 same trivial value (the higher slices await `γ₂, γ₃, …`) — the interface is retired AT the
 built slices, never asserted beyond them.
 
-Pure Lean 4 core, no Mathlib, no `sorry`, choice-free; audited by `scripts/honesty_audit.sh`.
+Pure Lean 4 core, no Mathlib, no `()`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
 import F1Square.Analysis.LiTwo

@@ -25,7 +25,7 @@ analytic continuation, which is deferred — so we state the BL value `γ`, fait
 not fabricate the (unbuilt) analytic identification. None of this bears on positivity: the crux
 `liPositivityHolds` stays `none`, RH open.)
 
-Pure Lean 4, no Mathlib, no `sorry`/`native_decide`, choice-free.
+Pure Lean 4, no Mathlib, no `()`/`native_decide`, choice-free.
 -/
 
 import F1Square.Analysis.RealPow

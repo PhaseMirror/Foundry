@@ -1,0 +1,1020 @@
+\documentclass[11pt]{article}
+
+% Basic packages
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,amsfonts}
+\usepackage{mathtools}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{microtype}
+\usepackage{bm}
+\usepackage{xcolor}
+\usepackage{natbib}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!60!black,
+  citecolor=blue!60!black,
+  urlcolor=blue!60!black
+}
+
+\title{Multiplicity-Inflected Prime Theory and the Prime Multiplicity Machine:\\
+A Gap Tensor Flagship and Defensive Publication}
+\author{%
+  [Your Name] \\
+  \small{Multiplicity Foundation}\\
+  \small{\texttt{[your.email@example.org]}}
+}
+\date{\today}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Theorem-like environments
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+
+\theoremstyle{plain}
+\newtheorem{theorem}[definition]{Theorem}
+\newtheorem{proposition}[definition]{Proposition}
+\newtheorem{conjecture}[definition]{Conjecture}
+\newtheorem{lemma}[definition]{Lemma}
+\newtheorem{corollary}[definition]{Corollary}
+
+\theoremstyle{remark}
+\newtheorem{remark}[definition]{Remark}
+\newtheorem{example}[definition]{Example}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Custom macros
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newcommand{\Spec}{\mathrm{Spec}}
+\newcommand{\ZZ}{\mathbb{Z}}
+\newcommand{\QQ}{\mathbb{Q}}
+\newcommand{\RR}{\mathbb{R}}
+\newcommand{\PP}{\mathbb{P}}
+\newcommand{\EE}{\mathbb{E}}
+\newcommand{\Var}{\mathrm{Var}}
+\newcommand{\Cov}{\mathrm{Cov}}
+\newcommand{\Prob}{\mathbb{P}}
+\newcommand{\vv}{\mathbf{v}}
+\newcommand{\vp}{v_p}
+\newcommand{\vq}{v_q}
+\newcommand{\supp}{\mathrm{supp}}
+\newcommand{\1}{\mathbb{1}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Multiplicity-Inflected Prime Theory (MIPT) proposes a unified view of primes as interrogation sites and multiplicities as local thickness of structure across arithmetic, geometric, and analytic contexts. In this note we formalize the \emph{Prime Multiplicity Machine} (PMM), which assigns to each object over \(\Spec \ZZ\) and phenomenon \(\Phi\) a prime-indexed multiplicity field and associated prime-weight measure. We specialize to a flagship instantiation, the \emph{Gap Tensor}, capturing prime-power thickness inside prime gaps. We state a geometric baseline law for valuations of prime gaps, formulate explicit conjectures, and provide an implementable computational protocol (including code) that yields a fast, falsifiable test-bed. The document is written as a defensive publication and prior-art record for the PMM framework as applied to primes, prime gaps, and related multiplicity fields.
+\end{abstract}
+\newpage
+\tableofcontents
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Executive Summary}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+This report consolidates and systematizes several developments around Multiplicity-Inflected Prime Theory (MIPT) into a coherent \emph{Prime Multiplicity Machine} (PMM) framework, and then instantiates PMM concretely in the arithmetic of prime gaps.
+
+\medskip
+
+At a conceptual level:
+
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Primes as interrogation sites.} A prime \(p\) is treated as a place where a structure is interrogated via localization, reduction, or valuation. A phenomenon \(\Phi\) (e.g.\ bad reduction, singularity thickness, gap structure) manifests as a nonnegative real-valued multiplicity \(m_\Phi(p)\) measuring how much of \(\Phi\) survives at \(p\).
+  \item \textbf{Prime multiplicity fields.} Given an object \(X\) over \(\Spec \ZZ\) (or more general bases) and a phenomenon \(\Phi\), the PMM assigns a prime-indexed multiplicity field \(m_\Phi: \{\text{primes}\} \to \RR_{\ge 0}\) and the associated prime-weight measure \(\mu_\Phi = \sum_p m_\Phi(p)\,\delta_p\).
+  \item \textbf{Level hierarchy.} The PMM is naturally stratified:
+  \begin{enumerate}[label=(L\arabic*),leftmargin=*]
+    \item \textbf{Level 1 (Measure-only).} Study empirical properties of \(\mu_\Phi\) and the prime field \(m_\Phi\) (tails, clustering, correlations).
+    \item \textbf{Level 2 (Dirichlet/transform).} Attach transforms
+      \[
+        \Pi_\Phi(x) = \sum_{p\le x} m_\Phi(p),\quad
+        \Theta_\Phi(x) = \sum_{p\le x} m_\Phi(p)\log p,\quad
+        F_\Phi(s) = \sum_p \frac{m_\Phi(p)\log p}{p^s},
+      \]
+      and formal Euler products \(\zeta_m(s)=\prod_p (1-p^{-s})^{-m_\Phi(p)}\) when meaningful.
+    \item \textbf{Level 3 (Explicit-formula capable).} When \(m_\Phi\) arises from genuine Euler factors of geometric or automorphic \(L\)-functions, explicit formulas relate prime sums to zeros, making zeros emergent global structure from local multiplicities.
+  \end{enumerate}
+\end{itemize}
+
+We then focus on a specific flagship instantiation:
+
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Gap Tensor.} Let \(p_n\) denote the \(n\)-th prime, \(g_n = p_{n+1}-p_n\) the gap, and \(q\) a prime. The \emph{gap tensor} is defined by
+  \[
+    T(n,q) := v_q(g_n),
+  \]
+  recording prime-power thickness of gaps along two indices: the gap index \(n\) and multiplicity channel \(q\).
+  \item \textbf{Geometric baseline law.} A natural null model predicts that for fixed \(q\),
+  \[
+    \Prob( v_q(g_n) = a ) \approx q^{-a}, \quad a\ge 1,
+  \]
+  with corresponding tail \(\Prob(v_q(g_n)\ge a)\approx 1/\varphi(q^a)\).
+  \item \textbf{Recursive stability.} The sequence \(n\mapsto T(n,q)\) is organized into windows, and empirical distributions of valuations are tested for stability as \(n\) grows, giving a concrete realization of ``recursive stability" for multiplicity fields.
+  \item \textbf{Fast validation protocol.} A reproducible computational protocol is given to:
+  \begin{enumerate}[leftmargin=*]
+    \item Generate primes to a large bound,
+    \item Compute gaps and valuations \(T(n,q)\),
+    \item Compare empirical distributions to the geometric null law,
+    \item Quantify deviations via KL divergence and total variation distance,
+    \item Measure cross-prime correlations.
+  \end{enumerate}
+\end{itemize}
+
+This document thus serves as both a conceptual manifesto and a practically executable defensive publication: it fixes terminology, formalizes core definitions and conjectures, and provides enough computational detail that others can reproduce tests and thereby establish clear prior art.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Prime Multiplicity Machine: Conceptual Core}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Objects, phenomena, and multiplicity fields}
+
+Let \(S = \Spec \ZZ\) or more generally \(\Spec \mathcal{O}_K\) for a number field \(K\). We consider a class of objects over \(S\), encompassing at least:
+
+\begin{itemize}[leftmargin=*]
+  \item Schemes of finite type \(f: X \to S\),
+  \item Cycles and sheaves/representations attached to such schemes,
+  \item Families \(\{X_t\}\) parametrized by auxiliary parameters \(t\),
+  \item Arithmetic objects such as polynomials \(f\in \ZZ[x]\), elliptic curves \(E/\QQ\), or combinatorial sequences of primes.
+\end{itemize}
+
+\begin{definition}[Phenomenon]
+A \emph{phenomenon} \(\Phi\) is a rule that, given an object \(X\) over \(S\), assigns to each prime \(p\) (or place) a local multiplicity space \(\mathcal{M}_\Phi(X)_p\) together with a canonical nonnegative thickness functional
+\[
+  \tau_{\Phi,p}\colon \mathcal{M}_\Phi(X)_p \to \RR_{\ge 0}.
+\]
+Examples include:
+\begin{itemize}[leftmargin=*]
+  \item Intersection multiplicity modules and length functionals for cycles,
+  \item Valuation modules for discriminants or conductors,
+  \item Eigenspaces for Frobenius or local Hecke operators.
+\end{itemize}
+\end{definition}
+
+\begin{definition}[Prime multiplicity field and prime-weight measure]
+Given an object \(X\) over \(S\) and phenomenon \(\Phi\), the \emph{prime multiplicity field} is the function
+\[
+  m_\Phi(p) := \tau_{\Phi,p}\big(\mathcal{M}_\Phi(X)_p\big) \in \RR_{\ge 0},\quad p\ \text{prime}.
+\]
+The associated \emph{prime-weight measure} is
+\[
+  \mu_\Phi := \sum_p m_\Phi(p)\,\delta_p,
+\]
+a discrete measure supported on primes.
+\end{definition}
+
+We can package the construction functorially.
+
+\begin{definition}[Prime Multiplicity Machine (PMM)]
+Fix a phenomenon \(\Phi\). The \emph{Prime Multiplicity Machine} is a functorial assignment
+\[
+  \mathsf{PMM}_\Phi\colon \mathcal{C} \to \mathcal{D},
+\]
+from a category \(\mathcal{C}\) of objects over \(S\) (e.g.\ schemes, arithmetic objects, or suitable combinatorial data) to a category \(\mathcal{D}\) of prime-indexed multiplicity spaces, such that for each \(X\in\mathcal{C}\),
+\[
+  \mathsf{PMM}_\Phi(X) = \Big( \{\mathcal{M}_\Phi(X)_p\}_p,\ \{\tau_{\Phi,p}\}_p,\ m_\Phi,\ \mu_\Phi \Big).
+\]
+\end{definition}
+
+In practice, we often compress attention to the scalar field \(m_\Phi\) and its transforms, keeping the underlying multiplicity spaces implicit.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Examples of canonical constructions}
+
+We briefly list canonical templates that fit into the PMM framework.
+
+\paragraph{Prime Intersection Spectrum (PIS).} Let \(f: X\to S\) be proper, and \(Y,Z\) cycles intersecting properly (or in the sense of refined intersection theory). The pushforward divisor
+\[
+  D_{Y,Z} := f_*(Y\cdot Z)\in \mathrm{Div}(S) = \bigoplus_p \ZZ\,[p]
+\]
+admits the decomposition \(D_{Y,Z} = \sum_p M_p(Y,Z)\,[p]\). The \emph{Prime Intersection Spectrum} is the multiplicity field
+\[
+  \mathrm{PIS}(Y,Z)\colon p\longmapsto M_p(Y,Z),
+\]
+interpreting \(M_p(Y,Z)\) as total intersection thickness in the fiber over \(p\).
+
+\paragraph{Discriminant weights.} For a polynomial \(f\in \ZZ[x]\) with discriminant \(\mathrm{Disc}(f)\), one defines
+\[
+  m(p) := v_p(\mathrm{Disc}(f)).
+\]
+Then \(m(p) >0\) if and only if \(f\) has a multiple root modulo \(p\), and \(m(p)\) measures its severity. For families \(\{f_t\}\), one studies averaged weights \(\EE_t[v_p(\mathrm{Disc}(f_t))]\).
+
+\paragraph{Bad reduction and ramification weights.} For an elliptic curve \(E/\QQ\) with minimal discriminant \(\Delta_{\min}(E)\), define
+\[
+  m(p) := v_p(\Delta_{\min}(E)),
+\]
+or more generally use conductor exponents or Swan conductors. These capture the thickness of singular fibers or ramification at \(p\).
+
+\paragraph{Local-factor tensors.} For geometric or automorphic \(L\)-functions with local factors
+\[
+  L_p(s) = \prod_i (1-\alpha_{p,i}p^{-s})^{-m_{p,i}},
+\]
+one packages eigenvalues and multiplicities as tensors
+\[
+  A[p,i] = \alpha_{p,i},\quad W[p,i] = m_{p,i}.
+\]
+Here the multiplicity \(W[p,i]\) is intrinsic, defined as eigenspace dimensions, and zeros of the global \(L\)-function are emergent structure from \((A,W)\).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Levels and analytic transforms}
+
+Given a multiplicity field \(m_\Phi\), the PMM attaches standard number-theoretic transforms:
+
+\begin{align*}
+  \Pi_\Phi(x) &:= \sum_{p\le x} m_\Phi(p),\\
+  \Theta_\Phi(x) &:= \sum_{p\le x} m_\Phi(p)\log p,\\
+  F_\Phi(s) &:= \sum_p \frac{m_\Phi(p)\log p}{p^s},\qquad \Re(s)\gg 1,\\
+  \zeta_m(s) &:= \prod_p (1-p^{-s})^{-m_\Phi(p)},\quad \text{formally}.
+\end{align*}
+
+In Level 3 situations, where \(\zeta_m(s)\) can be promoted to a genuine \(L\)-function, explicit formulas connect sums of \(m_\Phi(p)\) (or its transforms) to the zero-set of \(\zeta_m\), importing the full machinery of analytic number theory.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Recursive Stability and Families}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Many individual objects have multiplicity fields with finite support or too-simple behavior (e.g.\ finitely many bad primes). To see genuinely rich prime-distribution phenomena, MIPT emphasizes:
+
+\begin{itemize}[leftmargin=*]
+  \item Families \(\{X_t\}\) or \(\{f_t\}\),
+  \item Towers or levels (e.g.\ congruence levels, iterates, division fields),
+  \item Varying cycles \(Y_t,Z_t\) in intersection-theoretic setups.
+\end{itemize}
+
+\begin{definition}[Recursive stability of multiplicity fields]
+Let \(\{(X_t,\Phi)\}_{t\in T}\) be a family of objects with fixed phenomenon \(\Phi\) and associated multiplicity fields \(\{m_{\Phi,t}\}\). We say the family is \emph{recursively stable} if:
+\begin{enumerate}[label=(\roman*),leftmargin=*]
+  \item For each fixed prime \(p\), the sequence \(t\mapsto m_{\Phi,t}(p)\) has a limiting distribution as \(t\to\infty\) in the sense of convergence of empirical distributions.
+  \item For each fixed threshold \(A>0\), the empirical measures
+  \[
+    \nu_{t,x,A} := \frac{1}{\pi(x)}\sum_{p\le x} \1_{m_{\Phi,t}(p)\le A}\,\delta_p
+  \]
+  converge jointly as \(t,x\to\infty\) in appropriate growth regimes (e.g.\ \(t\) and \(x\) large but subexponential relative to each other).
+\end{enumerate}
+\end{definition}
+
+Intuitively, recursive stability means that as one ascends a tower or explores a family, the coarse statistics of prime multiplicities settle into stable patterns, even if individual primes exhibit complicated, non-monotone behavior.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Gap Tensor Flagship: Definitions and Conjectures}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+We now specialize PMM to a purely arithmetic multiplicity field: the \emph{gap tensor} on prime gaps.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Definitions}
+
+Let \(\{p_n\}_{n\ge 1}\) denote the increasing sequence of primes, and define gaps \(g_n = p_{n+1}-p_n\).
+
+\begin{definition}[Gap tensor]
+Let \(q\) be a prime. The \emph{gap tensor} is the function
+\[
+  T(n,q) := v_q(g_n) \in \ZZ_{\ge 0},
+\]
+where \(v_q\) is the usual \(q\)-adic valuation on integers.
+\end{definition}
+
+Here:
+
+\begin{itemize}[leftmargin=*]
+  \item The index \(n\) plays the role of a discrete ``time'' or interrogation thread.
+  \item The prime \(q\) indexes the multiplicity channel, measuring how deeply the gap is divisible by \(q\).
+\end{itemize}
+
+From the PMM perspective, the underlying object is the sequence of primes \(\{p_n\}\), the phenomenon \(\Phi\) is ``gap \(q\)-power thickness'', and the multiplicity space at position \(n\) and channel \(q\) is a trivial \(\ZZ\)-module with thickness functional \(\tau_{q}(g_n) := v_q(g_n)\).
+
+We can aggregate along \(n\) to get, for each fixed \(q\), a multiplicity field over the index set of gaps. For statistical purposes, we study \(v_q\) as a random variable in the asymptotic regime \(n\to\infty\).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Null model and geometric baseline law}
+
+A natural heuristic null model for \(\vq(g_n)\) is to treat divisibility by powers of \(q\) as nearly independent events with base probability \(1/q\) for each additional factor of \(q\). This leads to a geometric distribution.
+
+\begin{definition}[Geometric null model]
+Fix a prime \(q\). Define a random variable \(V_q\) with law
+\begin{align*}
+  \Prob(V_q = 0) &:= 1-\frac{1}{q},\\
+  \Prob(V_q = a) &:= \bigg(\frac{1}{q}\bigg)^a\bigg(1-\frac{1}{q}\bigg),\quad a\ge 1.
+\end{align*}
+The tail satisfies
+\[
+  \Prob(V_q \ge a) = \frac{1}{\varphi(q^a)} = \frac{1}{q^{a-1}(q-1)},\quad a\ge 1.
+\]
+\end{definition}
+
+Under this null model, one has
+\[
+  \EE[V_q] = \frac{1}{q-1},
+\]
+and
+\[
+  \Var(V_q) = \frac{q}{(q-1)^2}.
+\]
+
+\begin{conjecture}[Gap Tensor Geometric Law, baseline version]
+For each fixed prime \(q\), as \(n\to\infty\), the empirical distribution of \(\vq(g_n)\) converges in distribution to the geometric law described above. Equivalently, for each \(a\ge 0\),
+\[
+  \lim_{N\to\infty} \frac{1}{N}\#\{1\le n\le N : \vq(g_n)=a\} = \Prob(V_q=a).
+\]
+\end{conjecture}
+
+This is a deliberately idealized baseline: systematic deviations from the geometric law are precisely what MIPT seeks to characterize as emergent structure.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Recursive stability in the gap tensor}
+
+For each fixed prime \(q\), consider the sequence \(\{T(n,q)\}_{n\ge 1}\). One can partition the indices \(n\) into windows of length \(W\) and empirically estimate the distribution of \(T(n,q)\) per window.
+
+\begin{definition}[Windowed empirical distribution]
+Fix \(q\) and a window length \(W\in\mathbb{N}\). For a given window index \(k\), define
+\[
+  \hat{\mu}_{q,k}(a) := \frac{1}{W}\#\{(k-1)W < n \le kW : T(n,q) = a\},\quad a\in\ZZ_{\ge 0}.
+\]
+\end{definition}
+
+\begin{definition}[Recursive stability for gap tensor]
+We say the gap tensor is \emph{recursively stable at \(q\)} if, for some choice of window lengths \(W=W(N)\) tending to infinity with \(N\), the sequence of empirical measures \(\hat{\mu}_{q,k}\) converges (in total variation or weakly) to a limiting distribution as the windows move out to infinity, and this limiting distribution is independent of the initial window index.
+\end{definition}
+
+The geometric null model predicts recursive stability with limit law equal to the geometric distribution. Deviations from perfect stability (e.g.\ slow drift, oscillations, residue class dependencies) reveal deeper patterns in the prime gaps.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Cross-prime correlations}
+
+Beyond marginal distributions, MIPT predicts and quantifies correlations between different multiplicity channels.
+
+\begin{definition}[Cross-prime covariance]
+For distinct primes \(q\) and \(r\), define
+\[
+  \Cov_N(q,r) := \frac{1}{N}\sum_{n\le N}\Big(T(n,q)-\overline{T}_N(q)\Big)\Big(T(n,r)-\overline{T}_N(r)\Big),
+\]
+where \(\overline{T}_N(q) := \frac{1}{N}\sum_{n\le N}T(n,q)\).
+\end{definition}
+
+Under a fully independent null model, one would expect \(\Cov_N(q,r)\) to be small and decaying as \(N\) grows. Any persistent positive or structured correlation suggests coupled failure modes: gaps that are large in one multiplicity channel may also be systematically large in another.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Comprehensive Mathematical Overview of Gap Tensor PMM}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+We summarize the structure of the gap tensor as a realization of PMM, emphasize its formal properties, and connect to standard analytic tools.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{PMM data for the gap tensor}
+
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Object \(X\).} The ordered sequence of primes \(\{p_n\}_{n\ge 1}\), or equivalently the counting function \(\pi(x)\).
+  \item \textbf{Phenomenon \(\Phi_q\).} For each fixed prime \(q\), the phenomenon is \emph{``gap \(q\)-adic thickness''} along the prime sequence.
+  \item \textbf{Multiplicity spaces.} At gap index \(n\), the multiplicity space is the trivial \(\ZZ\)-module \(\mathcal{M}_{\Phi_q}(X)_n := \ZZ\), with thickness functional
+  \[
+    \tau_{\Phi_q,n}(g_n) := v_q(g_n).
+  \]
+  \item \textbf{Multiplicity field.} For each \(q\), the prime multiplicity field is
+  \[
+    m_{\Phi_q}(n) := v_q(g_n).
+  \]
+  \item \textbf{Prime-weight measure analogue.} Instead of primes \(p\), the base index is the gap index \(n\). One can treat
+  \[
+    \mu_{\Phi_q} := \sum_{n} v_q(g_n)\,\delta_n
+  \]
+  as an index-weight measure on \(\mathbb{N}\).
+\end{itemize}
+
+The usual PMM transforms translate to the gap-index axis rather than the prime axis.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Analytic transforms and statistics}
+
+For each fixed \(q\), we can define partial sums and generating functions:
+
+\begin{align*}
+  S_q(N) &:= \sum_{n\le N} v_q(g_n),\\
+  \Theta_q(N) &:= \sum_{n\le N} v_q(g_n)\log p_n,\\
+  F_q(s) &:= \sum_{n=1}^\infty \frac{v_q(g_n)}{n^s},\quad \Re(s)\gg 1,
+\end{align*}
+and so on. These may be less classical than prime-indexed transforms but remain natural from the PMM perspective: they encode how gap multiplicities accumulate along the interrogation thread.
+
+Under the geometric null model, one expects approximately
+\[
+  S_q(N) \approx \EE[V_q]\,N = \frac{N}{q-1},
+\]
+with suitable fluctuations governed by the variance of \(V_q\) and any correlations across \(n\).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Null means and empirical means}
+
+Let
+\[
+  \overline{v}_q(N) := \frac{1}{N}\sum_{n\le N} v_q(g_n).
+\]
+The geometric null model predicts
+\[
+  \lim_{N\to\infty} \overline{v}_q(N) = \frac{1}{q-1}.
+\]
+Empirically, one can test this by computing \(\overline{v}_q(N)\) for increasing \(N\) and comparing to \(1/(q-1)\). The relative error
+\[
+  \frac{\overline{v}_q(N)}{1/(q-1)} - 1
+\]
+offers a single scalar measure of deviation.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Deviation quantification: KL divergence and TV distance}
+
+For a fixed \(q\), define the empirical distribution
+\[
+  \hat{\mu}_q^{(N)}(a) := \frac{1}{N}\#\{n\le N : v_q(g_n) = a\},
+\]
+and the geometric null distribution \(\mu_q^{\mathrm{geo}}\). One can quantify deviation via:
+
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Kullback--Leibler divergence:}
+  \[
+    D_{\mathrm{KL}}(\hat{\mu}_q^{(N)} \,\|\, \mu_q^{\mathrm{geo}}) 
+    := \sum_{a\ge 0} \hat{\mu}_q^{(N)}(a)\,\log\frac{\hat{\mu}_q^{(N)}(a)}{\mu_q^{\mathrm{geo}}(a)},
+  \]
+  with the convention \(0\log(0/q) = 0\).
+  \item \textbf{Total variation distance:}
+  \[
+    \mathrm{TV}(\hat{\mu}_q^{(N)}, \mu_q^{\mathrm{geo}}) 
+    := \frac{1}{2} \sum_{a\ge 0} \big|\hat{\mu}_q^{(N)}(a) - \mu_q^{\mathrm{geo}}(a)\big|.
+  \]
+\end{itemize}
+
+Windowed variants of these quantities provide the recursive-stability diagnostics described earlier.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Computational Protocol and Code Snippet}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+We now present a concrete, implementable protocol for testing the gap tensor conjectures numerically. The design aims at being executable within hours on ordinary hardware and easily extendable.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Protocol outline}
+
+\begin{enumerate}[label=\textbf{Step \arabic*.},leftmargin=*]
+  \item \textbf{Prime generation.} Generate all primes up to a large bound \(X\) (e.g.\ \(10^7\)--\(10^9\)) using a sieve of Eratosthenes or a segmented sieve.
+  \item \textbf{Gap computation.} Form the gaps \(g_n = p_{n+1}-p_n\) for all consecutive primes.
+  \item \textbf{Valuation table.} Fix a set of small primes \(Q = \{2,3,5,7,11,13,\dots\}\). For each gap \(g_n\) and each \(q\in Q\), compute \(\vq(g_n)\) by repeated division.
+  \item \textbf{Empirical distributions.} For each \(q\in Q\), compute empirical frequencies \(\hat{\mu}_q^{(N)}(a)\) of \(\vq(g_n)=a\) up to \(N\) gaps, and compare with depth-\(a\) geometric null probabilities.
+  \item \textbf{Recursive stability windows.} Partition \(\{1,\dots, N\}\) into windows of length \(W\), compute window-wise empirical distributions, and measure their evolution via total variation distance to the null model.
+  \item \textbf{Cross-prime correlations.} Compute empirical means \(\overline{v}_q(N)\) and covariances \(\Cov_N(q,r)\) between channels \(q\) and \(r\).
+\end{enumerate}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Representative Python code}
+
+The following self-contained Python snippet illustrates the core steps. It is intentionally written in plain Python for clarity; in practice, one may optimize prime generation and loop structure.
+
+\medskip
+
+\noindent\textbf{Warning.} The sieve bound and prime count should be chosen based on available memory and time. A bound around \(10^7\) is typically manageable; \(10^8\) or beyond may require a segmented sieve and more careful optimization.
+
+\begin{verbatim}
+import math
+
+def sieve(limit):
+    """Simple sieve of Eratosthenes up to 'limit'."""
+    is_prime = bytearray(b"\x01") * (limit + 1)
+    is_prime[0:2] = b"\x00\x00"
+    for i in range(2, int(limit**0.5) + 1):
+        if is_prime[i]:
+            step = i
+            start = i * i
+            is_prime[start: limit+1: step] = b"\x00" * (((limit - start) // step) + 1)
+    return [i for i, flag in enumerate(is_prime) if flag]
+
+def v_q(n, q):
+    """q-adic valuation v_q(n)."""
+    if n == 0:
+        return 0
+    v = 0
+    while n % q == 0:
+        n //= q
+        v += 1
+    return v
+
+# -------------------------------------------------------------------
+# 1. Generate primes and gaps
+# -------------------------------------------------------------------
+LIMIT = 10_000_000              # adjust based on hardware
+primes = sieve(LIMIT)
+gaps = [primes[i+1] - primes[i] for i in range(len(primes) - 1)]
+N = len(gaps)
+
+# -------------------------------------------------------------------
+# 2. Choose multiplicity channels Q
+# -------------------------------------------------------------------
+Q_LIST = [2, 3, 5, 7, 11, 13]
+
+# -------------------------------------------------------------------
+# 3. Empirical distributions and null model
+# -------------------------------------------------------------------
+emp_dist = {}
+null_dist = {}
+
+for q in Q_LIST:
+    # empirical counts
+    counts = {}
+    for g in gaps:
+        a = v_q(g, q)
+        counts[a] = counts.get(a, 0) + 1
+    total = sum(counts.values())
+    emp_dist[q] = {a: counts[a] / total for a in sorted(counts)}
+
+    # geometric null model:
+    # P(V_q = 0) = 1 - 1/q,
+    # P(V_q = a) = (1/q)^a * (1 - 1/q) for a >= 1.
+    d = {0: 1.0 - 1.0/q}
+    # choose a maximum depth, e.g. a <= 8
+    for a in range(1, 9):
+        d[a] = (1.0 / q)**a * (1.0 - 1.0/q)
+    null_dist[q] = d
+
+# -------------------------------------------------------------------
+# 4. KL divergence and empirical means
+# -------------------------------------------------------------------
+def kl_divergence(p_dist, q_dist, eps=1e-12):
+    kl = 0.0
+    for a, p in p_dist.items():
+        if p <= 0:
+            continue
+        q_val = q_dist.get(a, eps)
+        kl += p * math.log(p / q_val)
+    return kl
+
+kl_values = {}
+emp_means = {}
+null_means = {q: 1.0 / (q - 1) for q in Q_LIST}
+
+for q in Q_LIST:
+    kl_values[q] = kl_divergence(emp_dist[q], null_dist[q])
+    # empirical mean
+    e_mean = sum(a * prob for a, prob in emp_dist[q].items())
+    emp_means[q] = e_mean
+
+print("Number of gaps N:", N)
+print("Empirical means:", emp_means)
+print("Null means:", null_means)
+print("KL divergences:", kl_values)
+
+# -------------------------------------------------------------------
+# 5. Recursive stability: windowed TV distance
+# -------------------------------------------------------------------
+def total_variation(p_dist, q_dist):
+    keys = set(p_dist.keys()) | set(q_dist.keys())
+    return 0.5 * sum(abs(p_dist.get(a, 0.0) - q_dist.get(a, 0.0)) for a in keys)
+
+WINDOWS = 10
+win_size = N // WINDOWS
+
+tv_by_q = {}
+for q in [2, 3]:
+    tv_by_q[q] = []
+    for w in range(WINDOWS):
+        start = w * win_size
+        end = (w + 1) * win_size
+        counts_w = {}
+        for g in gaps[start:end]:
+            a = v_q(g, q)
+            counts_w[a] = counts_w.get(a, 0) + 1
+        total_w = sum(counts_w.values())
+        emp_w = {a: counts_w[a] / total_w for a in counts_w}
+        tv = total_variation(emp_w, null_dist[q])
+        tv_by_q[q].append(tv)
+
+print("Windowed TV distances for q=2:", tv_by_q[2])
+print("Windowed TV distances for q=3:", tv_by_q[3])
+
+# -------------------------------------------------------------------
+# 6. Cross-prime covariance matrix
+# -------------------------------------------------------------------
+# Precompute valuations per gap and prime
+vals = {q: [v_q(g, q) for g in gaps] for q in Q_LIST}
+means = {q: sum(vals_q) / N for q, vals_q in vals.items()}
+
+cov_matrix = {}
+for q in Q_LIST:
+    cov_matrix[q] = {}
+    for r in Q_LIST:
+        cov = sum((vals[q][i] - means[q]) * (vals[r][i] - means[r]) for i in range(N)) / N
+        cov_matrix[q][r] = cov
+
+print("Covariance matrix:")
+for q in Q_LIST:
+    row = [f"{cov_matrix[q][r]:.6e}" for r in Q_LIST]
+    print(f"q={q}: ", "  ".join(row))
+\end{verbatim}
+
+This code yields:
+
+\begin{itemize}[leftmargin=*]
+  \item Empirical means \(\overline{v}_q(N)\) vs null means \(1/(q-1)\),
+  \item KL divergences \(D_{\mathrm{KL}}(\hat{\mu}_q^{(N)}\,\|\,\mu_q^{\mathrm{geo}})\),
+  \item Windowed TV distances measuring recursive stability,
+  \item Cross-prime covariance estimates.
+\end{itemize}
+
+Researchers can extend this scaffold to produce plots, persistent storage, and more refined statistics (e.g.\ conditioning on residue classes of \(p_n\) modulo small powers of \(q\)).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Defensive Publication and Prior Art Claims}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+We close by summarizing the novel points that this document seeks to fix as prior art:
+
+\begin{enumerate}[leftmargin=*]
+  \item The \textbf{Prime Multiplicity Machine (PMM)} framework: a functorial association from objects over \(\Spec \ZZ\) and phenomena to prime-indexed multiplicity fields, prime-weight measures, and analytic transforms, with an explicit Level 1--3 hierarchy.
+  \item The \textbf{Gap Tensor} as a flagship instantiation of PMM: a prime-prime multiplicity field \(T(n,q)=v_q(p_{n+1}-p_n)\) recorded across gap index \(n\) and multiplicity channel \(q\), interpreted as a purely arithmetic multiplicity space.
+  \item The \textbf{Geometric baseline law} for gap valuations: the use of a geometric distribution \(\Prob(V_q=a)=q^{-a}(1-1/q)\) as a canonical null model, and interpretation of deviations from this law as emergent structure.
+  \item The explicit \textbf{recursive stability} notion for multiplicity fields: windowed empirical distributions converging in law along families or towers, and the corresponding diagnostics (TV distance trajectories, etc.).
+  \item A \textbf{fast, falsifiable computational protocol} for testing gap tensor conjectures, including empirical distribution estimation, KL/TV quantification, and cross-prime covariance measurement, all in a tractable prime range.
+\end{enumerate}
+
+By giving explicit definitions, conjecture shapes, and runnable code, this document establishes a clear, timestamped account of how MIPT and the PMM framework can be applied to prime gaps and prime multiplicities, and therefore serves as a defensive publication for these ideas.
+
+\appendix
+\section*{Mathematical Appendix}
+\addcontentsline{toc}{section}{Mathematical Appendix}
+
+\section{Basic Properties and Norm Bounds for Gap-Valuation Operators}
+
+In this appendix we make precise several constructions that are implicit in the main text, and we record elementary but explicit norm bounds for the associated operators. Throughout, \(p_n\) denotes the \(n\)-th prime, \(g_n := p_{n+1} - p_n\) the corresponding gap, and \(q\) a fixed prime.
+
+\subsection{Hilbert space model and operators}
+
+We model the gap tensor as a family of operators on a separable Hilbert space.
+
+\begin{definition}[Gap space]
+Let \(\mathcal{H} := \ell^2(\mathbb{N})\) be the real or complex Hilbert space of square-summable sequences
+\[
+  x = (x_n)_{n\ge 1},\qquad \|x\|_2^2 := \sum_{n\ge 1} |x_n|^2 < \infty.
+\]
+Let \(\{e_n\}_{n\ge 1}\) denote the standard orthonormal basis, where \(e_n\) has a \(1\) in position \(n\) and \(0\) elsewhere.
+\end{definition}
+
+\begin{definition}[Gap valuation profile]
+For a fixed prime \(q\), define the \emph{valuation profile} \(\mathbf{v}^{(q)} \in [0,\infty]^{\mathbb{N}}\) by
+\[
+  \mathbf{v}^{(q)}_n := v_q(g_n) \in \mathbb{Z}_{\ge 0}\cup\{\infty\},
+\]
+where we adopt the usual convention \(v_q(0) = \infty\), though in our context \(g_n>0\) for all \(n\), so \(\mathbf{v}^{(q)}_n < \infty\) always holds.
+\end{definition}
+
+\begin{definition}[Multiplication operator]
+Define \(M_q: \mathcal{D}(M_q) \subset \mathcal{H} \to \mathcal{H}\) by
+\[
+  (M_q x)_n := \mathbf{v}^{(q)}_n\,x_n = v_q(g_n)\,x_n,
+\]
+with maximal domain
+\[
+  \mathcal{D}(M_q) := \big\{x\in\mathcal{H} : \sum_{n\ge 1} v_q(g_n)^2 |x_n|^2 < \infty \big\}.
+\]
+\end{definition}
+
+This is the natural gap-valuation operator for channel \(q\). It is diagonal in the basis \(\{e_n\}\) and encodes the gap tensor restricted to the \(q\)-th multiplicity channel.
+
+\begin{proposition}[Self-adjointness and positivity]
+For each prime \(q\), the operator \(M_q\) is densely defined, self-adjoint, and positive semidefinite:
+\[
+  \langle x, M_q x \rangle \ge 0\quad\text{for all } x\in \mathcal{D}(M_q).
+\]
+\end{proposition}
+
+\begin{proof}
+Since \(\mathcal{D}(M_q)\) contains all finite-support sequences, which are dense in \(\mathcal{H}\), \(M_q\) is densely defined. It is diagonal with real nonnegative entries \(v_q(g_n)\), so the adjoint \(M_q^\ast\) coincides with \(M_q\) on \(\mathcal{D}(M_q)\). Positivity follows from
+\[
+  \langle x, M_q x \rangle 
+  = \sum_{n\ge 1} \overline{x_n} v_q(g_n) x_n
+  = \sum_{n\ge 1} v_q(g_n)\,|x_n|^2 \ge 0.
+\]
+\end{proof}
+
+\begin{remark}
+There is no \emph{a priori} uniform bound on \(v_q(g_n)\) as \(n\to\infty\), so \(M_q\) is in general unbounded. In particular, \(\|M_q\|\) as an operator norm on all of \(\mathcal{H}\) is infinite. However, on finitely supported or truncated subspaces one obtains explicit finite bounds, as we now record.
+\end{remark}
+
+\subsection{Truncated operators and operator norm bounds}
+
+For computational and empirical purposes, we often restrict attention to the first \(N\) gaps. This yields finite-dimensional operators with explicit operator norm bounds.
+
+\begin{definition}[Truncated valuation operator]
+Fix \(N \in \mathbb{N}\) and a prime \(q\). Define the truncated operator
+\[
+  M_{q,N} : \mathbb{C}^N \to \mathbb{C}^N,\qquad (M_{q,N} x)_n := v_q(g_n) x_n,\quad 1\le n\le N,
+\]
+viewed as a diagonal \(N\times N\) matrix in the canonical basis.
+\end{definition}
+
+Let
+\[
+  \lambda_{q,n} := v_q(g_n)\quad (1\le n\le N).
+\]
+Then the eigenvalues of \(M_{q,N}\) are precisely \(\lambda_{q,1},\dots,\lambda_{q,N}\).
+
+\begin{proposition}[Operator norm of \(M_{q,N}\)]
+The operator norm of \(M_{q,N}\) with respect to the Euclidean norm is
+\[
+  \|M_{q,N}\|_{2\to 2} = \max_{1\le n\le N} v_q(g_n).
+\]
+\end{proposition}
+
+\begin{proof}
+Since \(M_{q,N}\) is diagonal with diagonal entries \(\lambda_{q,n}\), the singular values are \(|\lambda_{q,n}|\), and for a normal operator the operator norm coincides with the spectral radius, which is \(\max_n |\lambda_{q,n}|\). Because \(\lambda_{q,n} \ge 0\), this reduces to the claimed expression.
+\end{proof}
+
+\begin{remark}[Coarse bounds in terms of gap size]
+For each \(n\), we have
+\[
+  q^{v_q(g_n)} \le g_n,
+\]
+so
+\[
+  v_q(g_n) \le \log_q g_n.
+\]
+Thus
+\[
+  \|M_{q,N}\|_{2\to 2} \le \max_{1\le n\le N} \log_q g_n.
+\]
+Using the trivial bound \(g_n\le p_{n+1}\) and standard bounds on the \(n\)-th prime (e.g.\ \(p_n \le C n\log n\) for some absolute constant \(C\) and all large \(n\)), one obtains an explicit but crude bound of the form
+\[
+  \|M_{q,N}\|_{2\to 2} \le \log_q(C N\log N).
+\]
+\end{remark}
+
+\subsection{Centering and covariance operators}
+
+For many of the correlation and clustering phenomena discussed in the main text, a centered operator viewpoint is useful.
+
+\begin{definition}[Empirical mean and centered profile]
+Fix \(q\) and \(N\). Define the empirical mean
+\[
+  \overline{v}_q(N) := \frac{1}{N}\sum_{n=1}^N v_q(g_n),
+\]
+and the centered valuation profile
+\[
+  \tilde{v}^{(q)}_n := v_q(g_n) - \overline{v}_q(N),\quad 1\le n\le N.
+\]
+\end{definition}
+
+\begin{definition}[Centered valuation operator]
+Define the centered operator \(C_{q,N}: \mathbb{C}^N \to \mathbb{C}^N\) by
+\[
+  (C_{q,N} x)_n := \tilde{v}^{(q)}_n x_n.
+\]
+\end{definition}
+
+By construction, we have \(\sum_{n=1}^N \tilde{v}^{(q)}_n = 0\), so \(\overline{v}_q(N)\) is a ``scalar part'' we have peeled off. The operator norm of \(C_{q,N}\) is again the maximum absolute value of its diagonal entries:
+
+\begin{proposition}[Operator norm of centered operator]
+For each \(q\) and \(N\),
+\[
+  \|C_{q,N}\|_{2\to 2} = \max_{1\le n\le N} \big|v_q(g_n) - \overline{v}_q(N)\big|.
+\]
+\end{proposition}
+
+Note that centering does not change the asymptotic growth order of the norm, but it makes \(C_{q,N}\) trace-free and shifts the spectral distribution.
+
+\begin{definition}[Cross-channel covariance operator]
+Given two primes \(q\) and \(r\), define the bilinear form
+\[
+  \mathcal{C}_{q,r}^{(N)}(x,y) := \frac{1}{N}\sum_{n=1}^N \tilde{v}^{(q)}_n \tilde{v}^{(r)}_n \,\overline{x_n} y_n.
+\]
+Equivalently, one can view this as a diagonal operator on \(\mathbb{C}^N\) with diagonal entries \(\tilde{v}^{(q)}_n \tilde{v}^{(r)}_n\), scaled by \(1/N\).
+\end{definition}
+
+\begin{proposition}[Covariance as Hilbert–Schmidt inner product]
+Let \(x = y = \mathbf{1} = (1,\dots,1)\in\mathbb{C}^N\). Then
+\[
+  \mathcal{C}_{q,r}^{(N)}(\mathbf{1},\mathbf{1}) = \frac{1}{N}\sum_{n=1}^N \tilde{v}^{(q)}_n \tilde{v}^{(r)}_n
+  = \mathrm{Cov}_N(q,r),
+\]
+the empirical covariance between \(v_q(g_n)\) and \(v_r(g_n)\). Furthermore,
+\[
+  |\mathrm{Cov}_N(q,r)| \le \frac{1}{N}\sum_{n=1}^N \big|\tilde{v}^{(q)}_n \tilde{v}^{(r)}_n\big|
+  \le \max_{1\le n\le N} |\tilde{v}^{(q)}_n| \cdot \max_{1\le n\le N} |\tilde{v}^{(r)}_n|.
+\]
+\end{proposition}
+
+\begin{proof}
+The first equality is immediate from the definition. For the inequality, use
+\[
+  \big|\tilde{v}^{(q)}_n \tilde{v}^{(r)}_n\big|
+  \le \max_{1\le m\le N} |\tilde{v}^{(q)}_m| \cdot \max_{1\le m\le N} |\tilde{v}^{(r)}_m|,
+\]
+and average over \(n\).
+\end{proof}
+
+Using the logarithmic bound on valuations yields the coarse but explicit estimate
+\[
+  |\mathrm{Cov}_N(q,r)|
+  \le \big(\log_q(C N\log N) + \overline{v}_q(N)\big)
+     \cdot \big(\log_r(C N\log N) + \overline{v}_r(N)\big),
+\]
+which is sufficient for bounding correlation magnitudes in finite computations.
+
+\section{Norm Bounds for Empirical Distribution Operators}
+
+We now formalize the windowed empirical distributions that underlie the recursive-stability analysis and derive operator norm bounds for their deviations from the null model.
+
+\subsection{Empirical distribution vectors}
+
+Fix a prime \(q\) and a nonnegative integer \(A\) that bounds the valuation range under consideration (e.g.\ \(A=8\) in the code). For a given window of gaps, we can represent the empirical distribution as a vector in \(\mathbb{R}^{A+1}\).
+
+\begin{definition}[Windowed empirical distribution]
+Let \(W\in\mathbb{N}\) be a window length, and let the window index \(k\) correspond to the indices \((k-1)W+1,\dots,kW\). Define
+\[
+  \hat{\mu}_{q,k}(a) := \frac{1}{W}\#\{(k-1)W < n \le kW : v_q(g_n) = a\},\quad 0\le a\le A.
+\]
+We regard \(\hat{\mu}_{q,k}\) as a vector in \(\mathbb{R}^{A+1}\) with components \(\hat{\mu}_{q,k}(0),\dots,\hat{\mu}_{q,k}(A)\).
+\end{definition}
+
+Let \(\mu_q^{\mathrm{geo}}\) denote the geometric null law truncated at level \(A\):
+\begin{align*}
+  \mu_q^{\mathrm{geo}}(0) &:= 1 - \frac{1}{q},\\
+  \mu_q^{\mathrm{geo}}(a) &:= \bigg(\frac{1}{q}\bigg)^a\bigg(1-\frac{1}{q}\bigg),\quad 1\le a\le A.
+\end{align*}
+We write \(\mu_q^{\mathrm{geo}}\in\mathbb{R}^{A+1}\) for the corresponding vector.
+
+\subsection{Deviation operators and norms}
+
+Define the deviation vector
+\[
+  \Delta_{q,k} := \hat{\mu}_{q,k} - \mu_q^{\mathrm{geo}} \in \mathbb{R}^{A+1}.
+\]
+
+We are interested in:
+
+\begin{itemize}[leftmargin=*]
+  \item \(\|\Delta_{q,k}\|_1 = \sum_{a=0}^A |\Delta_{q,k}(a)|\), which is twice the total variation distance between the truncated empirical law and the truncated null law.
+  \item \(\|\Delta_{q,k}\|_2\), which measures RMS deviation across valuation levels.
+\end{itemize}
+
+\begin{proposition}[Total variation and algebraic norm]
+For each \(q\), \(k\), and truncation \(A\),
+\[
+  \mathrm{TV}_{A}(\hat{\mu}_{q,k},\mu_q^{\mathrm{geo}})
+  := \frac{1}{2}\sum_{a=0}^A |\hat{\mu}_{q,k}(a) - \mu_q^{\mathrm{geo}}(a)|
+  = \frac{1}{2}\|\Delta_{q,k}\|_1.
+\]
+Furthermore, we have the basic inequalities
+\[
+  \frac{1}{\sqrt{A+1}}\|\Delta_{q,k}\|_1 \le \|\Delta_{q,k}\|_2 \le \|\Delta_{q,k}\|_1.
+\]
+\end{proposition}
+
+\begin{proof}
+The identity between TV distance and \(\|\Delta_{q,k}\|_1\) is immediate from the definition. The inequalities
+\[
+  \|\Delta\|_2 \le \|\Delta\|_1 \le \sqrt{A+1}\,\|\Delta\|_2
+\]
+are standard norm equivalence relations on finite-dimensional spaces.
+\end{proof}
+
+\subsection{Operator viewpoint}
+
+For fixed \(q\) and \(A\), we can regard the mapping
+\[
+  \hat{\mu}_{q,k} \mapsto \Delta_{q,k} = \hat{\mu}_{q,k} - \mu_q^{\mathrm{geo}}
+\]
+as an affine transformation \(\mathbb{R}^{A+1}\to\mathbb{R}^{A+1}\). Its linear part is the identity operator \(I_{A+1}\), whose operator norm is \(1\) in any \(\ell^p\) norm. Thus all deviation norms are entirely controlled by the size of the empirical fluctuations \(\hat{\mu}_{q,k}\) themselves; the null model vector enters only as a shift.
+
+\begin{proposition}[Uniform operator norm bound]
+For any choice of norm \(\|\cdot\|\) on \(\mathbb{R}^{A+1}\), the linear operator
+\[
+  L\colon \hat{\mu} \mapsto \hat{\mu} - \mu_q^{\mathrm{geo}}
+\]
+has operator norm
+\[
+  \|L\|_{\mathrm{op}} = 1.
+\]
+\end{proposition}
+
+\begin{proof}
+For any vector \(x\),
+\[
+  \|Lx\| = \|x - \mu_q^{\mathrm{geo}}\| \le \|x\| + \|\mu_q^{\mathrm{geo}}\|.
+\]
+But the operator norm is defined by
+\[
+  \|L\|_{\mathrm{op}} = \sup_{x\neq 0} \frac{\|Lx\|}{\|x\|}.
+\]
+Writing \(L = I - P\) where \(P\) is the rank-one projection \(P(x) := \mu_q^{\mathrm{geo}}\) independent of \(x\), one sees that the linear part is simply the identity and the effect of \(P\) vanishes when scaled by \(\|x\|\to\infty\). More directly, for any scalar \(\alpha\neq 0\),
+\[
+  \frac{\|L(\alpha x)\|}{\|\alpha x\|}
+  = \frac{\|\alpha x - \mu_q^{\mathrm{geo}}\|}{|\alpha| \|x\|}
+  \xrightarrow[|\alpha|\to\infty]{} 1.
+\]
+Thus the supremum is at least \(1\), and the triangle inequality shows it is at most \(1\). Hence \(\|L\|_{\mathrm{op}}=1\).
+\end{proof}
+
+\section{Small-Prime Tail Dominance for Generic Valuation Fields}
+
+The main article formulates a heuristic statement that for generic valuation-type multiplicity fields \(m(p)\) one expects small-prime dominance and approximate decay \(\EE[m(p)] \approx 1/(p-1)\), leading to a \(\log\log x\) growth of prime-weight mass. Here we record a clean formalization and a simple proof under a stylized random model.
+
+\subsection{Random sparse-valuation model}
+
+Let \(\{X_p\}_{p \text{ prime}}\) be a family of independent nonnegative integer-valued random variables such that:
+
+\begin{itemize}[leftmargin=*]
+  \item For each prime \(p\), we have
+  \[
+    \Prob(X_p \ge 1) = \frac{1}{p-1},
+  \]
+  and conditional on \(X_p\ge 1\), the distribution of \(X_p\) has uniformly bounded expectation (e.g.\ geometric or compactly supported).
+  \item The family is uniformly integrable in the sense that \(\sup_p \EE[X_p^2] < \infty\).
+\end{itemize}
+
+We can think of \(X_p\) as an idealized surrogate for \(v_p(\mathrm{Disc}(f_t))\) or similar valuation-type multiplicities under a sufficiently generic null model.
+
+\subsection{Expected total mass and small-prime concentration}
+
+Define the cumulative mass up to \(x\) by
+\[
+  M(x) := \sum_{p\le x} X_p.
+\]
+
+\begin{proposition}[Expected total mass]
+Under the above assumptions, there exists a constant \(C_1 > 0\) such that for all large \(x\),
+\[
+  \Big|\EE[M(x)] - \log\log x \Big| \le C_1.
+\]
+In particular, \(\EE[M(x)] \sim \log\log x\) as \(x\to\infty\).
+\end{proposition}
+
+\begin{proof}
+By linearity of expectation,
+\[
+  \EE[M(x)] = \sum_{p\le x} \EE[X_p].
+\]
+By assumption, \(\EE[X_p] = \Prob(X_p\ge 1)\cdot \EE[X_p\mid X_p\ge 1]\). Let \(C := \sup_p \EE[X_p\mid X_p\ge 1]\) be a finite upper bound. Then
+\[
+  \frac{1}{p-1} \le \EE[X_p] \le \frac{C}{p-1}.
+\]
+Hence
+\[
+  \sum_{p\le x} \frac{1}{p-1} \le \EE[M(x)] \le C \sum_{p\le x} \frac{1}{p-1}.
+\]
+It is well known that
+\[
+  \sum_{p\le x} \frac{1}{p-1} = \log\log x + O(1),
+\]
+using partial summation and the prime number theorem (or, more elementarily, that \(\sum_{p\le x} 1/p = \log\log x + O(1)\)). Thus there exists \(C_1\) with the desired property.
+\end{proof}
+
+\begin{proposition}[Small-prime dominance]
+For every \(\varepsilon > 0\), there exists a constant \(C_2(\varepsilon)\) such that for all large \(x\),
+\[
+  \EE\left[\sum_{p\le x,\,p> C_2(\varepsilon)} X_p\right]
+  \le \varepsilon \,\EE[M(x)].
+\]
+Equivalently, for any fixed \(\varepsilon>0\), almost all expected mass comes from primes up to some constant depending on \(\varepsilon\) but not on \(x\).
+\end{proposition}
+
+\begin{proof}
+For \(y \ge 3\),
+\[
+  \sum_{p>y} \frac{1}{p-1}
+  \le \sum_{n>y} \frac{1}{n-1}
+  \le \int_{y-1}^\infty \frac{dt}{t}
+  = \log\frac{1}{y-1}.
+\]
+But more precisely, for large \(x\),
+\[
+  \sum_{y < p\le x} \frac{1}{p-1} = \log\log x - \log\log y + O(1).
+\]
+Hence, for sufficiently large \(y=y(\varepsilon)\),
+\[
+  \sum_{p>y} \frac{1}{p-1} \le \varepsilon \log\log x
+\]
+whenever \(x\) is large enough. Using the bounds \(\EE[X_p]\le C/(p-1)\) as before, we get
+\[
+  \EE\left[\sum_{p\le x,\,p>y} X_p\right]
+  \le C \sum_{y < p\le x} \frac{1}{p-1}
+  \le C\varepsilon \log\log x.
+\]
+On the other hand, \(\EE[M(x)]\) grows like \(\log\log x\), so for large \(x\),
+\[
+  C\varepsilon \log\log x \le \varepsilon' \EE[M(x)]
+\]
+for some \(\varepsilon' \approx C\varepsilon\). Renaming constants yields the claim.
+\end{proof}
+
+\begin{remark}
+This result justifies the phrase ``small-prime tail dominance'': in generic valuation-type multiplicity fields, a fixed finite set of small primes contributes a positive fraction of the total expected mass, even as the prime bound \(x\) tends to infinity.
+\end{remark}
+
+\section{Summary}
+
+This appendix formalizes the operator-theoretic viewpoint on the gap tensor, provides explicit operator norm bounds for truncated valuation operators and their centered variants, and records a clean random-model proof of small-prime tail dominance for generic valuation fields. These details are intended to complement the conceptual exposition in the main article and to furnish a technically precise backbone for further development of the Prime Multiplicity Machine framework.
+
+
+\nocite{*}
+\bibliographystyle{unsrt}  
+\bibliography{references}
+\end{document}

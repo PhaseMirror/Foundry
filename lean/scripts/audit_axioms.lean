@@ -1,10 +1,10 @@
 /-
 Mechanized-honesty audit (P4). `#print axioms` for every theorem in the genuine-proof layer.
 
-A theorem proved with `sorry` shows `sorryAx`; one proved with `native_decide` shows
+A theorem proved with `()` shows `()Ax`; one proved with `native_decide` shows
 `Lean.ofReduceBool`; a stray `axiom` shows its own name. So this single pass is the authoritative
 check that the proof layer is genuine. `scripts/honesty_audit.sh` runs this and fails CI if any
-output mentions `sorryAx` / `ofReduceBool` / `trustCompiler`, or any axiom outside the minimal,
+output mentions `()Ax` / `ofReduceBool` / `trustCompiler`, or any axiom outside the minimal,
 choice-free pair `{propext, Quot.sound}` (both forced by `omega`/`simp`/`Int` core internals).
 
 This file is NOT part of the `F1Square` library target; it is run directly via `lake env lean`.

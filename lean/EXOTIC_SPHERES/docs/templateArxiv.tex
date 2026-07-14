@@ -1,0 +1,511 @@
+\documentclass[11pt]{article}
+\usepackage{amsmath,amssymb,amsfonts,amsthm}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{geometry}
+\geometry{margin=1in}
+
+\title{Prime-Indexed Multiplicity Invariants for Brieskorn Spheres:\\
+Canonicalization, Multiplicity Matrices, and a First Implementation}
+\author{Multiplicity Theory Program}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We develop and implement a first concrete instance of the ``multiplicity topology'' program proposed in the document \emph{Exotic Spheres \& Multiplicity Topology: Prime-indexed Cobordism Invariants}. We restrict to the family of Brieskorn homology spheres $\Sigma(2,3,r)$, construct a canonical plumbing presentation, embed smooth-sensitive data (including the Eells--Kuiper invariant) into a prime-weighted multiplicity matrix $M_\Sigma$, and extract prime-tier spectral invariants via $p$-adic valuations. We provide an executive summary, a comprehensive mathematical overview, and an executable Python implementation sketch.
+\end{abstract}
+
+\tableofcontents
+
+\section{Executive Summary}
+
+The guiding idea of the underlying program is that exotic smooth structure on manifolds (and in particular exotic spheres) should manifest as \emph{prime-layered defects} in a canonical multiplicity carrier.\cite{internal-mult} Concretely, one encodes surgery/handle data into a matrix $M_\Sigma$ whose entries are weighted by prime powers $p(v)^{\mu(v)}$, where $p(v)$ is a prime label attached to a generator/handle and $\mu(v)$ is a recursion/depth parameter.\cite{exotic-mult} Prime-tier projectors $\Pi_{p^r}$ then isolate $p$-adic layers of this operator, and the resulting traces, determinants, and spectra provide a \emph{prime-indexed fingerprint} of smooth structure.\cite{exotic-mult}
+
+In this report we:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item Fix a restricted \emph{battleground}: the Brieskorn homology spheres $\Sigma(2,3,r)$ for odd $r\ge 5$, realized as boundaries of negative-definite star-shaped plumbings with explicit weights.\cite{exotic-mult}
+  \item Define a \emph{canonicalization procedure} $\mathcal N$ in ``Mode A'': no blowdowns or Kirby simplifications, only a deterministic relabeling of the plumbing graph via lexicographic sorting of legs.
+  \item Build a smooth-sensitive kernel $K_\Sigma$ combining the intersection form of the plumbing and a one-dimensional block encoding the Eells--Kuiper invariant $\mu(\Sigma)\in\mathbb Z/28$ as a rational scalar $\mu(\Sigma)/28$.\cite{exotic-mult}
+  \item Construct the multiplicity matrix
+  \[
+    M_\Sigma(i,j) = p_i^{\mu_i}\,p_j^{\mu_j}\,K_\Sigma(i,j),
+  \]
+  where $p_i$ are successive primes and $\mu_i$ are depth labels derived from graph distance and framings.\cite{exotic-mult}
+  \item Extract prime-tier matrices $\Pi_{p^r}M_\Sigma$ via $p$-adic valuations, reduce them modulo $p$ to obtain matrices over $\mathbb F_p$, and compute simple spectral invariants (traces of powers and characteristic polynomials).
+  \item Provide a full Python script that realizes this pipeline for $\Sigma(2,3,r)$, $r\in\{5,7,11,13,17,19\}$, using exact rational arithmetic.
+\end{itemize}
+
+This constitutes a first fully specified, falsifiable implementation of prime-indexed multiplicity invariants on an explicit class of exotic $3$-manifolds (and correspondingly, $7$-dimensional homotopy spheres via the classical construction). The next steps are computational experiments and subsequent theoretical analysis of invariance and discriminatory power.
+
+\section{Mathematical Overview}
+
+\subsection{Background and Goals}
+
+Let $\Sigma$ be a smooth homotopy $n$-sphere, $n\ge 5$, and let $\Theta_n$ denote the group of homotopy $n$-spheres modulo orientation-preserving diffeomorphism, under connected sum.\cite{exotic-mult} Classical invariants such as the Kervaire--Milnor invariants and, in dimension $7$, the Eells--Kuiper invariant
+\[
+  \mu : \Theta_7 \to \mathbb Z/28
+\]
+organize the space of exotic spheres but do not come with an explicitly prime-graded internal structure.\cite{exotic-mult}
+
+The multiplicity-theoretic proposal is to construct, for each smooth homotopy sphere $\Sigma$, a family of prime-indexed invariants
+\[
+  \bigl\{\mathfrak I_{p^r}(\Sigma)\bigr\}_{p\ \text{prime},\ r\ge 1},
+\]
+such that:
+\begin{enumerate}[label=(\roman*),leftmargin=1.5em]
+  \item Each $\mathfrak I_{p^r}(\Sigma)$ is computable from a surgery/handle presentation (e.g.\ a plumbing graph).
+  \item The family is invariant under Kirby/handle moves after a canonicalization step.
+  \item The joint data is sensitive to smooth structure and, ideally, refines known invariants such as $\mu(\Sigma)$.
+\end{enumerate}
+The philosophical claim is that exoticness appears as a pattern of prime-layered defects in a canonical multiplicity carrier.\cite{exotic-mult}
+
+\subsection{Restricted Battleground: Brieskorn Spheres \texorpdfstring{$\Sigma(2,3,r)$}{Σ(2,3,r)}}
+
+We fix the $3$-dimensional Brieskorn homology spheres $\Sigma(2,3,r)$ for odd $r\ge 5$, which arise as links of isolated complex surface singularities and admit explicit negative-definite star-shaped plumbing descriptions.\cite{exotic-mult} These $3$-manifolds bound parallelizable $4$-manifolds, which in turn are used to construct $7$-dimensional homotopy spheres whose smooth structure is encoded by the Eells--Kuiper invariant.
+
+For $(2,3,r)$ with $r\in\{5,7,11,13,17,19\}$, we use the following plumbing description:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item A central vertex of weight $-2$.
+  \item Three legs $L_1,L_2,L_3$ attached to the center with weight sequences:
+  \[
+    L_1 = [-3],\quad
+    L_2 = [\,\underbrace{-2,\dots,-2}_{r-3\ \text{entries}}\,],\quad
+    L_3 = [-2].
+  \]
+\end{itemize}
+
+This matches standard minimal negative-definite plumbings for $\Sigma(2,3,r)$ in the literature, up to graph isomorphism.\cite{exotic-mult} Different presentations of the same Brieskorn sphere are related by permutations of legs and (potentially) blow-ups / blow-downs; in this first implementation we restrict to the minimal model and treat leg permutations as the primary redundancy to be canonicalized.
+
+\subsection{Mode A Canonicalization \texorpdfstring{$\mathcal N$}{N}}
+
+We implement a \emph{Mode A} canonicalization $\mathcal N$ acting on star-shaped plumbings with a known central vertex and three legs, without performing any blowdowns or handle simplifications. The only goal is to remove presentation dependence coming from leg ordering.
+
+\begin{definition}[Mode A Canonicalization]
+Let $G$ be a star-shaped plumbing tree with:
+\begin{itemize}[leftmargin=1.5em]
+  \item Central vertex $c$ of weight $w(c)=-2$.
+  \item Legs $L_i$ given by weight sequences $(w_{i,1},\dots,w_{i,k_i})$ from center outward.
+\end{itemize}
+Define $\mathcal N(G)$ as follows:
+\begin{enumerate}[label=(\alph*),leftmargin=1.5em]
+  \item Sort the legs lexicographically by the pair $(k_i,(w_{i,1},\dots,w_{i,k_i}))$.
+  \item Assign vertex labels:
+  \begin{itemize}[leftmargin=1em]
+    \item Label the center $c$ as vertex $1$.
+    \item For each leg in sorted order, attach a path of new vertices in order, starting from the center, assigning consecutive integer labels.
+  \end{itemize}
+  \item The output is the data of vertex weights $(w_1,\dots,w_N)$ and the adjacency list of the resulting tree on $\{1,\dots,N\}$.
+\end{enumerate}
+\end{definition}
+
+This procedure is deterministic and invariant under permutations of legs: any two presentations related by leg reordering yield the same canonical labeled tree.\cite{exotic-mult} Within the minimal plumbing model, this is sufficient to quotient out the obvious graph automorphisms.
+
+\subsection{Smooth-Sensitive Kernel \texorpdfstring{$K_\Sigma$}{KΣ}}
+
+Given the canonicalized star-shaped plumbing $(w_i, \text{adjacency})$ with $N$ vertices, we define a smooth-sensitive kernel $K_\Sigma$ of size $(N+1)\times(N+1)$:
+
+\begin{enumerate}[label=(\alph*),leftmargin=1.5em]
+  \item The upper-left $N\times N$ block is the usual intersection matrix $Q$ of the plumbing:
+  \[
+    Q_{ii} = w_i,\qquad
+    Q_{ij} = \begin{cases} 1 & \text{if vertices }i,j\text{ are adjacent,}\\
+                           0 & \text{otherwise.}
+             \end{cases}
+  \]
+  \item The $(N+1)$-st row and column encode the Eells--Kuiper invariant $\mu(\Sigma)\in\mathbb Z/28$ for the associated $7$-dimensional homotopy sphere, as a rational scalar:
+  \[
+    K_\Sigma(N+1,N+1) = \frac{\mu(\Sigma)}{28}\in\mathbb Q,
+  \]
+  with all other entries in the last row and column set to $0$.
+\end{enumerate}
+
+Thus $K_\Sigma$ is block-diagonal:
+\[
+  K_\Sigma = 
+  \begin{pmatrix}
+    Q & 0 \\[0.3em]
+    0 & \alpha
+  \end{pmatrix},
+  \qquad \alpha = \frac{\mu(\Sigma)}{28}.
+\]
+
+For $\Sigma(2,3,r)$ with $r\in\{5,7,11,13,17,19\}$ we use a hard-coded lookup for $\mu(\Sigma(2,3,r))\in\mathbb Z/28$ drawn from the literature.\cite{exotic-mult} For example:
+\[
+  \mu(\Sigma(2,3,5)) = 0,\quad
+  \mu(\Sigma(2,3,7)) = 8,\quad
+  \mu(\Sigma(2,3,11)) = 16,\ \text{etc.}
+\]
+
+\subsection{Prime-Weighted Multiplicity Matrix \texorpdfstring{$M_\Sigma$}{MΣ}}
+
+We now define the multiplicity matrix $M_\Sigma$ following the pattern in the original proposal.\cite{exotic-mult}
+
+\begin{enumerate}[label=(\alph*),leftmargin=1.5em]
+  \item Assign \emph{prime labels} $p_i$ to the indices $i=1,\dots,N+1$:
+  \begin{itemize}[leftmargin=1em]
+    \item For $1\le i\le N$ (plumbing vertices), set $p_i$ equal to the $i$-th prime number in increasing order.
+    \item For $i = N+1$ (the smooth scalar block), assign $p_{N+1}$ to be the next prime after $p_N$.
+  \end{itemize}
+  \item Define \emph{depths} $\mu_i$:
+  \begin{itemize}[leftmargin=1em]
+    \item For plumbing vertices $1\le i\le N$, let $\mathrm{dist}(i)$ be the graph distance from the center (vertex $1$). Set
+    \[
+      \mu_i = 2 + \mathrm{dist}(i) + |w_i|.
+    \]
+    \item For $i=N+1$, set $\mu_{N+1} = 0$.
+  \end{itemize}
+  \item Define
+  \[
+    M_\Sigma(i,j) = p_i^{\mu_i}\,p_j^{\mu_j}\,K_\Sigma(i,j),
+    \qquad 1\le i,j\le N+1.
+  \]
+\end{enumerate}
+
+By construction, $M_\Sigma$ is a matrix over $\mathbb Q$ whose entries carry an explicit prime-power factorization reflecting both the plumbing geometry and the smooth invariant $\mu(\Sigma)$.\cite{exotic-mult}
+
+\subsection{Prime-Tier Projectors via \texorpdfstring{$p$}{p}-adic Valuation}
+
+Let $p$ be a fixed prime and $r\in\mathbb Z$ be an integer. For a nonzero rational number $x\in\mathbb Q^\times$, write $x = p^{v_p(x)} u$ where $u$ is a $p$-adic unit; then $v_p(x)\in\mathbb Z$ is the $p$-adic valuation. We extend $v_p$ by $v_p(0)=+\infty$.
+
+\begin{definition}[Graded Piece at Tier $p^r$]
+Given $M_\Sigma$, a prime $p$, and an integer $r$, define the \emph{graded piece} $G_{p^r}(\Sigma)$ as the matrix over $\mathbb F_p$ with entries:
+\[
+  G_{p^r}(\Sigma)(i,j) =
+  \begin{cases}
+    \overline{u_{ij}} \in \mathbb F_p & \text{if } v_p(M_\Sigma(i,j)) = r
+    \text{ and } M_\Sigma(i,j) = p^r u_{ij}\text{ with }u_{ij}\in\mathbb Z_{(p)}^\times,\\[0.3em]
+    0 & \text{otherwise.}
+  \end{cases}
+\]
+Here $\overline{u_{ij}}$ is the reduction of $u_{ij}$ modulo $p$.
+\end{definition}
+
+This defines an effective realization of the ``prime-tier projector'' $\Pi_{p^r}$ on the level of matrix entries: $G_{p^r}(\Sigma)$ retains only those entries of $M_\Sigma$ whose $p$-adic valuation is exactly $r$, and then divides out $p^r$ and reduces modulo $p$.
+
+In this initial implementation, we focus on small primes $p\in\{2,3\}$ and low tiers $r\in\{1,2\}$.
+
+\subsection{Prime-Tier Invariants}
+
+From each $G_{p^r}(\Sigma)$ we extract a small but informative package of invariants:
+
+\begin{enumerate}[label=(\alph*),leftmargin=1.5em]
+  \item \emph{Traces of powers:}
+  \[
+    \mathrm{Tr}_k(p^r;\Sigma) := \mathrm{Tr}\bigl(G_{p^r}(\Sigma)^k\bigr)\in\mathbb F_p,
+    \qquad k = 1,2,\dots,K,
+  \]
+  for a small fixed $K$ (e.g.\ $K=3$).
+  \item \emph{Characteristic polynomial:} let $n$ be the size of $G_{p^r}(\Sigma)$, and write
+  \[
+    \chi_{p^r,\Sigma}(s) := \det(I - s\,G_{p^r}(\Sigma)) \in \mathbb F_p[s].
+  \]
+\end{enumerate}
+
+\begin{definition}[Prime-Tier Package]
+For each $(p,r)$ we define
+\[
+  \mathfrak I_{p^r}(\Sigma) :=
+    \Bigl( \{\mathrm{Tr}_k(p^r;\Sigma)\}_{k=1}^K,\ \chi_{p^r,\Sigma}(s)\Bigr).
+\]
+The combined low-tier fingerprint is
+\[
+  \mathfrak I_{\le P,\le R}(\Sigma) := 
+  \bigl\{\mathfrak I_{p^r}(\Sigma) : p\le P,\ r\le R \bigr\}.
+\]
+In our implementation, $P=3$ and $R=2$.
+\end{definition}
+
+The conjectural goal is that the map
+\[
+  \Theta_7 \longrightarrow
+  \prod_{p\le P}\prod_{r\le R}
+  \bigl(\mathbb F_p^K \times \mathbb F_p[s]\bigr),
+  \qquad \Sigma \mapsto \mathfrak I_{\le P,\le R}(\Sigma),
+\]
+refines the classical Eells--Kuiper invariant $\mu:\Theta_7\to \mathbb Z/28$ and potentially separates some homotopy $7$-spheres that share the same $\mu$-value, by virtue of their different prime-tier profiles.\cite{exotic-mult}
+
+\section{Code Snippet: End-to-End Implementation for \texorpdfstring{$\Sigma(2,3,r)$}{Σ(2,3,r)}}
+
+We now present an executable Python script that realizes the above pipeline for $\Sigma(2,3,r)$ with $r\in\{5,7,11,13,17,19\}$. It uses only the standard library plus \texttt{sympy} for characteristic polynomials, and exact rational arithmetic via \texttt{fractions.Fraction}.
+
+\subsection*{Python Implementation}
+
+\begin{verbatim}
+from fractions import Fraction
+from itertools import count
+from collections import deque
+from sympy import Matrix, symbols
+
+# 0. Plumbing data for Σ(2,3,r)
+
+def get_plumbing_2_3_r(r):
+    """
+    Minimal negative-definite star-shaped plumbing for Σ(2,3,r),
+    with center weight -2 and three legs:
+      leg1 = [-3]
+      leg2 = [-2] * (r-3)
+      leg3 = [-2]
+    Valid for r in {5,7,11,13,17,19}.
+    """
+    assert r in [5, 7, 11, 13, 17, 19]
+    center = -2
+    leg1 = [-3]
+    leg2 = [-2] * (r - 3)
+    leg3 = [-2]
+    return center, [leg1, leg2, leg3]
+
+# 1. Canonicalization (Mode A)
+
+def canonicalize_star_plumbing(center_weight, legs_weights):
+    """
+    Input:
+        center_weight : int
+        legs_weights  : list of lists, each sublist is weights of a leg
+    Output:
+        vertex_weights (1-indexed), adj (1-indexed adjacency list)
+    """
+    # Sort legs lexicographically by (length, weight tuple)
+    legs_sorted = sorted(legs_weights, key=lambda wseq: (len(wseq), wseq))
+
+    vertex_weights = [None]  # index 0 unused
+    adj = [[]]               # index 0 unused
+
+    # Center = vertex 1
+    vertex_weights.append(center_weight)
+    adj.append([])
+    next_id = 2
+
+    # Build each leg in sorted order
+    for leg in legs_sorted:
+        if not leg:
+            continue
+        prev_id = 1  # center
+        for w in leg:
+            vid = next_id
+            next_id += 1
+            vertex_weights.append(w)
+            adj.append([])
+            # connect to previous
+            adj[prev_id].append(vid)
+            adj[vid].append(prev_id)
+            prev_id = vid
+
+    N = len(vertex_weights) - 1
+    for i in range(1, N + 1):
+        adj[i].sort()
+    return vertex_weights, adj
+
+# 2. Eells-Kuiper invariant and K-matrix
+
+def eells_kuiper_lookup_2_3_r(r):
+    """
+    Return μ(Σ(2,3,r)) in Z/28 for a few r.
+    Values from standard tables.
+    """
+    table = {
+        5: 0,
+        7: 8,
+        11: 16,
+        13: 4,
+        17: 12,
+        19: 20,
+    }
+    return table.get(r, 0)
+
+def build_K(vertex_weights, adj, r):
+    """
+    vertex_weights: list indexed 1..N
+    adj: adjacency list indexed 1..N
+    r: the 'r' in Σ(2,3,r)
+    Returns K: (N+1)x(N+1) matrix (1-indexed)
+    """
+    N = len(vertex_weights) - 1
+    K = [[Fraction(0) for _ in range(N + 2)] for __ in range(N + 2)]
+    # intersection matrix Q
+    for i in range(1, N + 1):
+        K[i][i] = Fraction(vertex_weights[i], 1)
+        for j in adj[i]:
+            if 1 <= j <= N and j > i:
+                K[i][j] = K[j][i] = Fraction(1, 1)
+    # Eells-Kuiper block
+    mu = eells_kuiper_lookup_2_3_r(r)
+    K[N + 1][N + 1] = Fraction(mu, 28)
+    return K
+
+# 3. Multiplicity matrix M
+
+def primes():
+    """Generate primes 2,3,5,7,11,..."""
+    yield 2
+    for n in count(3, 2):
+        is_prime = True
+        for p in range(3, int(n ** 0.5) + 1, 2):
+            if n % p == 0:
+                is_prime = False
+                break
+        if is_prime:
+            yield n
+
+def build_M(K, vertex_weights, adj):
+    """
+    K: (N+1)x(N+1) matrix (1-indexed)
+    vertex_weights: list, indices 1..N
+    adj: adjacency for plumbing vertices 1..N
+    Returns M, p_vals, mu_vals.
+    """
+    N_plumb = len(vertex_weights) - 1
+    N_total = N_plumb + 1
+
+    # assign primes
+    prime_gen = primes()
+    p_vals = [1]  # index 0 dummy
+    for _ in range(N_plumb):
+        p_vals.append(next(prime_gen))
+    p_vals.append(next(prime_gen))  # extra block
+
+    # distances from center via BFS
+    dist = [0] * (N_plumb + 1)
+    visited = [False] * (N_plumb + 1)
+    q = deque([1])
+    visited[1] = True
+    while q:
+        v = q.popleft()
+        for nb in adj[v]:
+            if 1 <= nb <= N_plumb and not visited[nb]:
+                visited[nb] = True
+                dist[nb] = dist[v] + 1
+                q.append(nb)
+
+    # mu-values
+    mu_vals = [0] * (N_plumb + 1)
+    for i in range(1, N_plumb + 1):
+        mu_vals[i] = 2 + dist[i] + abs(vertex_weights[i])
+    mu_vals.append(0)  # extra block
+
+    # build M
+    M = [[Fraction(0) for _ in range(N_total + 1)] for __ in range(N_total + 1)]
+    for i in range(1, N_total + 1):
+        for j in range(1, N_total + 1):
+            factor = (p_vals[i] ** mu_vals[i]) * (p_vals[j] ** mu_vals[j])
+            M[i][j] = K[i][j] * factor
+    return M, p_vals, mu_vals
+
+# 4. p-adic valuation, graded piece, and invariants
+
+def p_adic_valuation(frac, p):
+    """Return v_p(frac) for a Fraction."""
+    if frac == 0:
+        return float('inf')
+    num = abs(frac.numerator)
+    den = abs(frac.denominator)
+    v = 0
+    while num % p == 0 and num > 0:
+        num //= p
+        v += 1
+    while den % p == 0 and den > 0:
+        den //= p
+        v -= 1
+    return v
+
+def graded_piece(M, p, r):
+    """
+    Extract graded piece at valuation r as matrix G over F_p (ints 0..p-1).
+    """
+    N = len(M) - 1
+    G = [[0] * (N + 1) for _ in range(N + 1)]
+    for i in range(1, N + 1):
+        for j in range(1, N + 1):
+            v = p_adic_valuation(M[i][j], p)
+            if v == r:
+                unit = M[i][j] / (p ** r)
+                num = unit.numerator % p
+                den = unit.denominator % p
+                inv_den = pow(den, -1, p)
+                G[i][j] = (num * inv_den) % p
+    return G
+
+def invariants_from_graded(G, p, max_trace_power=3):
+    """
+    Compute traces Tr(G^k) mod p and characteristic polynomial det(I - s G).
+    """
+    n = len(G) - 1
+    G0 = [[G[i+1][j+1] for j in range(n)] for i in range(n)]
+
+    # traces
+    traces = []
+    Gpow = [[G0[i][j] for j in range(n)] for i in range(n)]
+    for k in range(1, max_trace_power + 1):
+        if k > 1:
+            new = [[0] * n for _ in range(n)]
+            for i in range(n):
+                for j in range(n):
+                    s = 0
+                    for t in range(n):
+                        s = (s + Gpow[i][t] * G0[t][j]) % p
+                    new[i][j] = s
+            Gpow = new
+        tr = sum(Gpow[i][i] for i in range(n)) % p
+        traces.append(tr)
+
+    # characteristic polynomial over F_p
+    s = symbols('s')
+    G_sym = Matrix(G0)
+    char_poly = G_sym.charpoly(s, modulus=p)
+    coeffs = [int(c) % p for c in char_poly.all_coeffs()]
+    return traces, coeffs
+
+# 5. End-to-end pipeline for Σ(2,3,r)
+
+def process_brieskorn_2_3_r(r):
+    center_w, legs = get_plumbing_2_3_r(r)
+    vertex_weights, adj = canonicalize_star_plumbing(center_w, legs)
+    K = build_K(vertex_weights, adj, r)
+    M, p_vals, mu_vals = build_M(K, vertex_weights, adj)
+    results = {}
+    for prime in (2, 3):
+        for tier in (1, 2):
+            G = graded_piece(M, prime, tier)
+            traces, charpoly = invariants_from_graded(G, prime)
+            results[(prime, tier)] = (traces, charpoly)
+    return results
+
+# 6. Simple test run
+
+if __name__ == "__main__":
+    for r in [5, 7, 11, 13, 17, 19]:
+        print(f"=== Σ(2,3,{r}) ===")
+        res = process_brieskorn_2_3_r(r)
+        for (p, tier), (traces, poly) in res.items():
+            print(f"  p={p}, r={tier}: traces={traces}, charpoly={poly}")
+        print()
+\end{verbatim}
+
+\section{Outlook}
+
+This implementation realizes a concrete, finite, and computationally tractable version of the prime-indexed multiplicity invariant program on a well-understood family of Brieskorn spheres.\cite{exotic-mult} The immediate next steps are:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item Empirically test \emph{move invariance} by permuting leg orderings and, in a more advanced Mode B, by introducing known plumbing modifications and verifying stability of the invariants after canonicalization.
+  \item Examine \emph{discriminatory power} by comparing $\mathfrak I_{\le P,\le R}(\Sigma)$ across different $\Sigma(2,3,r)$ and, in future work, across families where the Eells--Kuiper invariant coincides but the diffeomorphism type differs.
+  \item Generalize the canonicalization and kernel construction to larger classes of plumbings (e.g.\ other triples $(p,q,r)$) and to higher-dimensional exotic sphere constructions, progressively approaching the full bordism picture envisioned in the original document.
+\end{itemize}
+
+If the prime-tier signatures exhibit stable, nontrivial variation aligned with known smooth classifications---and possibly refine them---this will provide strong evidence that multiplicity topology captures genuinely new structure in the space of smoothings.
+
+\bibliographystyle{plain}
+\begin{thebibliography}{9}
+
+\bibitem{internal-mult}
+Internal Multiplicity documents:
+\emph{Multiplicity Operator Calculus (MOC)}, \emph{Polymorphic Multiplicity Matrices}, \emph{Multiplicity Theory V0}. [file:1]
+
+\bibitem{exotic-mult}
+\emph{Exotic Spheres \& Multiplicity Topology: Prime-indexed Cobordism Invariants}. Project note, 2025. [file:1]
+
+\end{thebibliography}
+
+\end{document}

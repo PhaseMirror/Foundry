@@ -5,7 +5,7 @@ the keystone for the `Czeta` modulus). This file builds the per-term algebra of 
 exponential product term. Combined with `alternating_binomial` (`Σ_k (−1)^k C(2m,k) = 0`) it gives the
 per-degree Pythagorean coefficient vanishing.
 
-Pure Lean 4, no Mathlib, no `sorry`/`native_decide`, choice-free.
+Pure Lean 4, no Mathlib, no `()`/`native_decide`, choice-free.
 -/
 
 import F1Square.Analysis.Binomial

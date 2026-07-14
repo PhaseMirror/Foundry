@@ -3,7 +3,7 @@
 
 This is the standard constructive *definition* of π: the Machin combination of two arctangents at
 rational arguments (Arctan.lean), each with |t| ≤ 1/2 < 1 so the geometric-tail diagonal applies.
-Pure Lean 4, no Mathlib, no `sorry`.
+Pure Lean 4, no Mathlib, no `()`.
 
 `Rpi` is the real; the rational brackets `S₁ ≤ arctanSum ≤ S₀` that pin its value (and give `Pos Rpi`,
 needed for `log π`) are developed next.

@@ -15,7 +15,7 @@ Reusable congruence gaps filled along the way: `Rdiv_congr` (division respects `
 cancellation `Rdiv_mul_cancel`/`Rmul_right_cancel` — no `Rinv_congr` needed) and `Carg_congr`
 (the argument respects `≈`).
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 import F1Square.Analysis.ComplexArgUpper

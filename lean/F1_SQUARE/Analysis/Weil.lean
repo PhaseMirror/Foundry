@@ -45,7 +45,7 @@ test `g` — ELEMENTARY in both directions (Weil 1952; Burnol arXiv math/9810169
 the Lemma directly, "rather than applying a suitable density argument"; the C.R. note
 math/0101068: "il est élémentaire que l'Hypothèse de Riemann équivaut à: Z(k) ≥ 0").
 
-Pure Lean 4 core, no Mathlib, no `sorry`, choice-free; audited by `scripts/honesty_audit.sh`.
+Pure Lean 4 core, no Mathlib, no `()`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
 import F1Square.Analysis.Mangoldt

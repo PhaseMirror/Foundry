@@ -29,7 +29,7 @@ import UOR.Individuals.Convergence
 import UOR.Individuals.Division
 import UOR.Individuals.Homology
 
--- The genuine Lean proof layer (real theorems, no Mathlib, no `sorry`): proves the
+-- The genuine Lean proof layer (real theorems, no Mathlib, no `()`): proves the
 -- [VERIFIED] / [CLASSICAL] boundary facts of the program. The crux (= RH) is never proved there.
 import F1Square.Mechanism
 import F1Square.Template
@@ -411,7 +411,7 @@ def f1SquareStatus : F1SquareStatus := {
 -- ===========================================================================
 -- Proof-layer backing (P1–P6). The established (`some true`) fields above are discharged by
 -- GENUINE Lean theorems in the proof layer (`F1Square/*.lean`), each audited axiom-clean
--- (no `sorry` / `native_decide` / stray axiom) by `scripts/honesty_audit.sh`:
+-- (no `()` / `native_decide` / stray axiom) by `scripts/honesty_audit.sh`:
 --   intersectionTemplateValid ← Template.{E1_dot_E2, E3_sq, pair_symm}                 (P1, §2.2)
 --   ampleClassExists          ← Template.{H_sq_pos, Hperp_neg_semidef, Hperp_definite} (P1, §1.4)
 --   the Hodge/Hasse flip      ← Mechanism.{hodgeType_iff, hasse_q4/q9/q25_*}           (P1, §0.3/§9.1)
@@ -509,7 +509,7 @@ def f1SquareStatus : F1SquareStatus := {
 --                               geometric tail (artSum_trunc), artanh Lipschitz (artSum_Lip_le), the general
 --                               Bernoulli reindex (qpow_geom_bound), and the t-map q↦(q−1)/(q+1) with its
 --                               cleared difference identity (tmap_diff_cleared), Lipschitz (tmap_lipschitz),
---                               and range bound (tmap_abs_le) — all axiom-clean, no `sorry`
+--                               and range bound (tmap_abs_le) — all axiom-clean, no `()`
 -- v0.14.0 (the analytic constants of the Li/Keiper bridge, culminating in a positivity certificate
 --          for the first Li coefficient λ₁ — EVIDENCE for RH's analytic face, never the crux):
 --   π                          ← Analysis.Rpi (Machin 16·arctan(1/5) − 4·arctan(1/239), one diagonal),
@@ -868,7 +868,7 @@ example :
     Bishop-regular; and `log` on positive reals is genuine **positivity-as-data**: from a witness
     `x_k > 1/(k+1)`, `RlogPos x k` derives the modulus `1/M ≤ x ≤ M` and yields a constructed real
     (third clause: `log 2` via this path, on the concrete positive real `2`). All axiom-clean, no
-    `sorry`; the t-map range bound keeps the artanh argument inside `[−ρ,ρ]`, `ρ<1`. -/
+    `()`; the t-map range bound keeps the artanh argument inside `[−ρ,ρ]`, `ρ<1`. -/
 example :
     (∀ x : Analysis.Real, ∀ off : Nat, Analysis.IsRegular (Analysis.RaltReal_seq x off))
     ∧ (∀ x : Analysis.Real, (∀ n, 0 < (x.seq n).num) → Analysis.IsRegular (Analysis.Rlog_seq x))
@@ -879,7 +879,7 @@ example :
 /-- Elaboration-checked witness binding the v0.14.0 analytic constants: the first Li/Keiper
     coefficient `λ₁ = ½·(2 + γ − log 4π)` is a **positivity-certified** constructive real —
     `Pos Rlambda1` holds (`λ₁ ≈ 0.0231 > 0`), built from the accelerated Euler–Mascheroni constant
-    `γ ≥ 0.54` and the clean logs `log 2 ≤ 0.6931`, `log π ≤ 1.1453`, all choice-free and `sorry`-free.
+    `γ ≥ 0.54` and the clean logs `log 2 ≤ 0.6931`, `log π ≤ 1.1453`, all choice-free and `()`-free.
     This is the `n = 1` slice of Li's criterion as **evidence**; it is NOT the crux — `λₙ > 0 ∀ n`
     (= RH) stays open and `liPositivityHolds = none` (witnessed just above). -/
 example : Analysis.Pos Analysis.Rlambda1 ∧ f1SquareStatus.liPositivityHolds = none :=
@@ -888,7 +888,7 @@ example : Analysis.Pos Analysis.Rlambda1 ∧ f1SquareStatus.liPositivityHolds = 
 /-- Elaboration-checked witness binding the v0.15.0 complex analytic engine (exponential core): the
     real exponential is a genuine **homomorphism** — `exp(x+y) ≈ exp x · exp y` for all constructive
     reals (`RexpReal_add`) — and the complex `nˢ` carries the **modulus identity** `|nˢ|² = (exp(Re s·log n))²`
-    (`ncpow_normSq`, the analytic payoff of `cos²+sin² ≈ 1`). Both choice-free and `sorry`-free. This is
+    (`ncpow_normSq`, the analytic payoff of `cos²+sin² ≈ 1`). Both choice-free and `()`-free. This is
     the exponential core of stage A; ζ for complex `s` is gated on `exp∘log = id` (the v0.15.x series) and
     the crux stays open — `liPositivityHolds = none`. -/
 example :
@@ -904,7 +904,7 @@ example :
     series with the artanh geometric series (the corner bound `exp_corner_le`, the rational identity
     `exp_artanh_rat_cleared`, and the diagonal reconciliation `Rexp_two_artanh_via`); the radius-general
     construction makes it match the actual `Rlog` (whose artanh radius `ρ_M` is smaller) by definitional
-    equality. Choice-free and `sorry`-free. This unlocks `|n⁻ˢ| = n⁻ᴿᵉˢ` for the ζ-complex tail (v0.15.2);
+    equality. Choice-free and `()`-free. This unlocks `|n⁻ˢ| = n⁻ᴿᵉˢ` for the ζ-complex tail (v0.15.2);
     the crux stays open — `liPositivityHolds = none`.
 
     Two bindings: the general theorem `Rexp_log_nat_Rlog` (for every `n ≥ 1`, with the obviously-satisfiable

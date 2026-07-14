@@ -16,7 +16,7 @@ the Ramanujan `τ`; and `e4cube_eq_e6sq_plus_1728delta` is the cusp relation, by
 A forced/over-determined agreement (`AtlasForcing`): `θ_{E₈} = E₄` (`e8_theta_E4`) and the cusp
 relation are independent, yet both carry the same `24`. No coincidence. Crux fields untouched.
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 

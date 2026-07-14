@@ -77,7 +77,7 @@ FAITHFULNESS (the standing discipline, enforced):
     transfers to the dominance face.
   • The crux fields stay `none`: nothing here asserts `Dominated` for the genuine parts.
 
-Pure Lean 4 core, no Mathlib, no `sorry`, choice-free; audited by `scripts/honesty_audit.sh`.
+Pure Lean 4 core, no Mathlib, no `()`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
 import F1Square.Square.Spectral

@@ -13,7 +13,7 @@ regularity (`RarctanR_diag_le`) all reuse the artanh truncation (`arctanSum_trun
 the geometric reindex (`Rartanh_R`, `geoEvenSum`, `geoEven_bound`, `artanh_reindex`, `qpow_geom_bound`,
 all shared and sign-independent). This is the forced first brick of the `Γ → ξ → Hadamard` stack.
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 

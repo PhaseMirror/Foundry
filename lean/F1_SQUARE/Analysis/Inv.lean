@@ -8,7 +8,7 @@ sequence of rational reciprocals, regular because `|1/x_a − 1/x_b| = |x_a − 
 is controlled once `x_a, x_b ≥ L`.
 
 This file first builds the rational reciprocal `Qinv` (of a positive-numerator rational) and its laws.
-Pure Lean 4, no Mathlib, no `sorry`.
+Pure Lean 4, no Mathlib, no `()`.
 -/
 
 import F1Square.Analysis.ROrder

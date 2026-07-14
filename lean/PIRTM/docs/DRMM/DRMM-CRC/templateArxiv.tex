@@ -1,0 +1,687 @@
+\documentclass[11pt]{article}
+
+% ---------- Packages ----------
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath, amssymb, amsthm, mathtools}
+\usepackage{bm}
+\usepackage{bbm}
+\usepackage{physics}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{siunitx}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage[hidelinks]{hyperref}
+\usepackage[nameinlink,capitalize]{cleveref}
+
+% ---------- Theorem-like environments ----------
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+% ---------------------------
+% Shortcuts & notation
+% ---------------------------
+\DeclareMathOperator{spec}{spec}
+\newcommand{\RR}{\mathbb{R}}
+\newcommand{\CC}{\mathbb{C}}
+\newcommand{\PP}{\mathbb{P}}
+\newcommand{\opnorm}[1]{\left\|#1\right\|}
+\newcommand{\HS}{\mathrm{HS}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\Pset}{\mathbb{P}}
+\newcommand{\Hcal}{\mathcal{H}}
+\newcommand{\absval}[1]{\left\lvert #1 \right\rvert}
+\newcommand{\1}{\mathbbm{1}}
+\newcommand{\gap}{\operatorname{gap}}
+\newcommand{\LB}{\mathrm{LB}}
+\newcommand{\UB}{\mathrm{UB}}
+
+
+\title{\vspace{-1em}DRMM $\times$ CSC:\\
+Certified Spectral Control of Prime-Scripted Operators (Finite-$P$)}
+\author{Dr. Ryan Van Gelder, Luis Morató de Dalmases, \\ Tyler Van Osdol}
+\date{\today}
+
+\begin{document}
+\maketitle
+\vspace{-2em}
+
+% =========================
+% Motivation (Front-matter)
+% =========================
+\section*{Motivation \& Long-Term Vision}
+We aim to develop a \emph{certifiable control theory for prime-scripted spectral operators} that (i) produces verifiable, finite-dimensional results now; (ii) scales to structurally faithful surrogates of operators from analytic number theory (Hecke/trace, automorphic Laplacians, moonshine blocks); and (iii) yields \emph{lawfulness-aware} design principles---prime gating and recursion budgets---that survive model variation. Success is \emph{not} a theorem like RH; it is a \emph{reliable pipeline} that (1) constructs operators with arithmetic provenance, (2) moves specific gaps/slopes under explicit budgets, and (3) quantifies when DRMM-style constraints do or do not confer real robustness beyond ordinary regularization.
+
+% =========================
+% Abstract
+% =========================
+\begin{abstract}
+We present a finite-$P$, certified control scheme for prime-scripted operators that constrains the \emph{Certified Spectral Control} (CSC) design by \emph{DRMM} (Dynamic Recursive Meta-Mathematics) lawfulness budgets and introduces a small-gain DRMM recursion. The plant is $\mathcal U_P(\omega)=X_P + C(\omega;w)$ on $\ell^2(\PP)$, where $X_P$ encodes arithmetic symmetry and $C(\omega;w)$ is a Bohr--prime multiplier driven by weights $w$. We provide convex design surrogates (gap lower bound; slope upper bound), a pinning \& slope-control theorem with explicit constants, a lawful-controller program, a minimal $P{=}5$ sanity check with verification \& falsifiability, and a bounded recursion with a small-gain certificate. We claim \emph{finite-$P$} certified control and a clear scaling path---not asymptotic problem resolution.
+\end{abstract}
+
+% =========================
+% 1. Plant & sector
+% =========================
+\section{Plant, Sector, and Design Objectives}
+\paragraph{Indexing and space.}
+Let $\PP=\{p_1,\dots,p_P\}$ be the first $P$ primes and work on $\Hcal=\ell^2(\PP)$.
+
+\paragraph{Plant.}
+The controlled operator is
+\begin{equation}
+\mathcal U_P(\omega)=X_P + C(\omega;w),\qquad
+C(\omega;w)=\sum_{p\in\PP} w_p\, B_p(\omega),
+\end{equation}
+with $X_P$ self-adjoint, each channel $B_p(\omega)$ self-adjoint, and $w\in\R^P$ the controller. Assume uniform bounds $\norm{B_p(\omega)}\le b_p$ and $\norm{\partial_\omega B_p(\omega)}\le b'_p$, so
+\begin{equation}
+\norm{C(\omega;w)}\le \sum_p |w_p|\,b_p =:\norm{w}_{1,b},\quad
+\norm{\partial_\omega C(\omega;w)}\le \sum_p |w_p|\,b'_p =:\norm{w}_{1,b'}.
+\end{equation}
+
+\subsection{Lawful sector (DRMM) --- constraints with motivation}\label{sec:lawful}
+We constrain design and evolution to a \emph{lawful} subset $\Hcal_{\mathrm{lawful}}\subseteq\Hcal$ via three budgets.
+
+\paragraph{(a) Prime gating ($\Lambda_m$): scale separation by prime size.}
+For $\alpha$ in a small grid $\mathcal A$ (e.g., $\{0.5,0.7,1.0,1.3\}$) and $\kappa\in\R$, penalize deviations from a power-law template
+\begin{equation}
+R_{\Lambda}^{(\alpha)}(w,\kappa)=\sum_{p\in\PP}\big|\,w_p-\kappa p^{-\alpha}\,\big| \le \tau.
+\end{equation}
+We keep convexity by optimizing $(w,\kappa)$ for each fixed $\alpha\in\mathcal A$ and selecting $\alpha$ by validation.
+
+\paragraph{(b) $\Xi$-budget: memory/recursion gain.}
+A recursion operator $\Xi$ (introduced in \cref{sec:recursion}) satisfies $\norm{\Xi}\le \beta$. The pilot uses $\beta=0$; later, $\beta>0$ is certified by a small-gain margin.
+
+\paragraph{(c) Commutator stability ($M$): channel geometry control.}
+Bound non-abelian channel interference by
+\begin{equation}
+\sum_{p<q}\norm{[B_p,B_q]} \le \gamma,
+\end{equation}
+implemented via epigraph variables $\theta_{pq}\ge \norm{[B_p,B_q]}$ with $\sum_{p<q}\theta_{pq}\le\gamma$ (convex).
+
+\paragraph{Design surrogates.}
+Let $\lambda_1(\omega)\le\cdots\le\lambda_P(\omega)$ be the eigenvalues of $\mathcal U_P(\omega)$. If $X_P$ has a simple eigenvalue $\lambda_k$ separated by $\delta_S>0$, Weyl's inequality yields the \emph{gap lower bound}
+\begin{equation}
+\underline{\gap}_k(w):=\delta_S - 2\norm{w}_{1,b},
+\end{equation}
+and differentiability of $B_p$ yields the \emph{slope upper bound}
+\begin{equation}
+\Big|\frac{d\lambda_k}{d\omega}\Big| \le \norm{w}_{1,b'}.
+\end{equation}
+
+% =========================
+% 2. Pilot theorem
+% =========================
+\section{Pilot Theorem: Pinning, Gap, Slope, and Subspace Control}
+
+\paragraph{Assumptions A.}
+(i) $X_P$ self-adjoint with a simple $\lambda_k$ such that $\min(\lambda_{k+1}-\lambda_k,\lambda_k-\lambda_{k-1})\ge \delta_S>0$.  
+(ii) $\norm{C(\omega;w)}\le r<\delta_S/2$ for all $\omega$.  
+(iii) $\partial_\omega C$ exists with $\norm{\partial_\omega C}\le s$.
+
+\begin{theorem}[Pinning \& Slope Control]
+Under Assumptions A:
+\begin{enumerate}[label=(\roman*)]
+\item \textbf{Pinning \& gap:} For all $\omega$, there is a simple eigenvalue $\lambda_k(\omega)$ with
+$|\lambda_k(\omega)-\lambda_k|\le r$ and $\gap_k(\omega)\ge \delta_S-2r$.
+\item \textbf{Slope:} With a smooth eigen-branch,
+$\absval{d\lambda_k/d\omega}\le s$.
+\item \textbf{Subspace stability:} If $\mathsf P_k$ and $\mathsf P_k(\omega)$ denote the rank-1 spectral projectors at $\lambda_k$ and $\lambda_k(\omega)$, then (Davis--Kahan)
+$\norm{\mathsf P_k(\omega)-\mathsf P_k}\le \dfrac{r}{\delta_S-r}$.
+\end{enumerate}
+\end{theorem}
+
+\begin{corollary}[Certified design via convex surrogates]
+If $\norm{w}_{1,b}\le r<\delta_S/2$ and $\norm{w}_{1,b'}\le s$, any optimizer of the controller program in \cref{sec:controller} certifies the above bounds; a single eigentracking sweep verifies realized values.
+\end{corollary}
+
+% =========================
+% 3. Controller
+% =========================
+\section{Controller: Convex Program with Lawfulness Budgets}\label{sec:controller}
+Maximizing $\underline{\gap}_k(w)$ is equivalent to \emph{minimizing} $\norm{w}_{1,b}$ subject to budgets:
+\begin{align}
+\min_{w,\kappa}\quad & \norm{w}_{1,b} \nonumber\\
+\text{s.t.}\quad
+& \norm{w}_{1,b}\le r,\quad \norm{w}_{1,b'}\le s, \label{eq:prog}\\
+& \exists\,\alpha\in\mathcal A:\ R_{\Lambda}^{(\alpha)}(w,\kappa)\le \tau, \nonumber\\
+& \norm{\Xi}\le \beta,\quad \sum_{p<q}\theta_{pq}\le \gamma,\ \ \theta_{pq}\ge \norm{[B_p,B_q]},\nonumber\\
+& w\in\R^P,\ \kappa\in\R.\nonumber
+\end{align}
+\textbf{Solver:} projected/proximal gradient for each fixed $\alpha\in\mathcal A$; select $\alpha$ by validation (e.g., realized gap at matched budgets). Warm start $w_p=\kappa p^{-\alpha}$.
+
+% =========================
+% 4. Verification
+% =========================
+\section{Verification \& Falsifiability}
+\paragraph{Eigensolver.} One Lanczos sweep across a grid $\Omega=\{\omega_j\}$ around the design point; use Woodbury updates when channels are low rank.
+
+\paragraph{Certified vs realized table.}
+\begin{table}[h]
+\centering
+\caption{Certified vs.\ realized metrics at $\omega_j\in\Omega$.}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+$\omega_j$ & $\underline{\gap}_k(w)$ (cert) & $\gap_k(\omega_j)$ (real) & $s$ (cap) & $\abs{\Delta\lambda_k/\Delta\omega}$ (real) \\
+\midrule
+$\omega_1$ & \dots & \dots & \dots & \dots \\
+$\omega_2$ & \dots & \dots & \dots & \dots \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Null controls.} Generate $N$ null controllers $w^{\text{null}}$ by (i) shuffling prime lags in $B_p$, or (ii) randomizing signs, while matching $\norm{w}_{1,b}$ and $R_\Lambda$. Plot a histogram of gap improvements and report a $p$-value for our controller relative to nulls.
+
+% =========================
+% 5. Minimal experiment & scaling
+% =========================
+\section{Zeroth-Order Sanity Check (P=5) \& Scaling Plan}
+\paragraph{Index set.} $\PP=\{2,3,5,7,11\}$.
+
+\subsection{Base-operator menus (choose one per run)}
+\paragraph{(H) Hecke-trace truncation (Automorphic-DRMM).}
+$X_P=\sum_{q\le Q}\rho_q\,T_q$ restricted to $\ell^2(\PP)$ with symmetrized Hecke-like $T_q$.
+\emph{Why:} arithmetic symmetry; $\delta_S$ measurable and tunable via $\rho_q$.
+
+\paragraph{(E) Explicit-formula surrogate (pair-correlation toy).}
+$(X_P)_{ij}=\psi(\log p_i)+\psi(\log p_j)-\psi(\log (p_ip_j))-\mu$ with smooth $\psi$.
+\emph{Why:} mimics explicit-formula interactions while remaining bounded/symmetric.
+
+\paragraph{(M) Moonshine block (modular moment matrix).}
+$X_P=\Pi^\top M(\tau_0)\Pi$, where $M(\tau_0)$ is a small covariance of modular coefficients; $\Pi$ projects to prime indices.
+\emph{Why:} direct modular provenance.
+
+\paragraph{House rule.} Justify the chosen $X_P$ in two sentences and publish $\delta_S$.
+
+\subsection{Channels and bounds}
+Rank-1 Bohr--prime multipliers
+\begin{equation}
+B_p(\omega)=u_p(\omega)u_p(\omega)^\top,\qquad
+u_p(\omega)_i=\cos\!\big(\omega\,\log(pp_i+\ell)\big),
+\end{equation}
+so $\norm{B_p}\le 1$ and $\norm{\partial_\omega B_p}\le b'_p$ (explicit from $u_p$).
+
+\subsection{Protocol \& outputs}
+(i) Solve \eqref{eq:prog} with published $(r,s,\tau,\beta,\gamma,\alpha)$.  
+(ii) Verify by Lanczos across $\Omega$.  
+(iii) Report: confidence-band plot and the certified vs.\ realized table; include null-control histogram and $p$-value.
+
+\subsection{Scaling targets \& complexity}\label{sec:scaling}
+Targets: $P=5$ (sanity), $P=23$ ($\sim$9$\times$), $P=97$ ($\sim$19$\times$).  
+Controller: proximal methods with $O(P)$ primitives/step (empirically tens of iterations).  
+Eigensweep: Lanczos $O(P\cdot m)$ matvecs (tens--low hundreds of Krylov steps for $P\le 100$).  
+\emph{Success at scale:} certified bands remain binding (non-vacuous) and realized improvements beat nulls for $P\in\{23,97\}$.
+
+% =========================
+% 6. Recursion (DRMM)
+% =========================
+\section{Pilot-Plus: Bounded DRMM Recursion with Small-Gain Certificate}\label{sec:recursion}
+Introduce a recursion on $T_t$:
+\begin{equation}
+T_{t+1}=T_t+\varepsilon\sum_{p\in\PP}\Lambda_m\,\Xi\,M_p(T_t),\qquad T_0=X_P+C(\omega;w),
+\end{equation}
+with $\norm{\Xi}\le \beta$ and mixer $M_p$ chosen to reduce channel conflict.
+
+\paragraph{Default mixer.}
+Let $u_p$ denote the channel vector underlying $B_p=u_pu_p^\top$. Define a Householder reflector
+$U_p:=I-2\,\dfrac{u_pu_p^\top}{\norm{u_p}^2}$ and set
+\begin{equation}
+M_p(T):=U_pTU_p^\top - T,\qquad \norm{M_p(T)}\le 2\norm{T}.
+\end{equation}
+With $m_p:=2\norm{T_t}$, define the one-step recursion gain
+\begin{equation}
+\eta:=\varepsilon\sum_{p\in\PP}\Lambda_m\,\beta\,m_p.
+\end{equation}
+
+\begin{proposition}[Spectral drift control]
+Suppose \cref{eq:prog} yields margin $\delta_S-2r>0$ and $\eta<\delta_S/8$. Then
+\[
+\norm{\mathsf P_k(T_{t+1})-\mathsf P_k(T_t)}\le \frac{\eta}{\delta_S-2r-\eta},\qquad
+\gap_k(T_{t+1})\ge \delta_S-2r-2\eta.
+\]
+Over $T$ steps, pinning persists provided $T\eta<\delta_S/4$ (triangle inequality/telescoping).
+\end{proposition}
+
+\paragraph{Reporting.} Publish $(\varepsilon,\beta,\Lambda_m)$, per-step projector drift, cumulative drift over $T$, and realized gap floors vs.\ certified margins.
+
+% =========================
+% 7. Reproducibility & hyperparams
+% =========================
+\section{Reproducibility Checklist \& Hyperparameter Protocol}
+\paragraph{Checklist.} Publish $P$, choice of $X_P$, channel definitions, and $(\phi,\mu)$ or $(\rho_q,Q)$ as applicable; list $(r,s,\tau,\beta,\gamma,\alpha)$; fix seeds; release solver and verification scripts.
+
+\subsection{Setting $(r,s,\tau,\beta,\gamma)$ from data}
+\begin{enumerate}[leftmargin=2em]
+\item $r=\theta\,\delta_S$ with $\theta\in[0.2,0.4]$; publish $(\delta_S,\theta)$.
+\item $s$: compute $b'_p$ analytically; enforce $\norm{w}_{1,b'}\le s$ with target $s\le 0.1\,\delta_S$.
+\item $\tau$: for each $\alpha\in\mathcal A$, fit $\kappa$ by least-absolute-deviation; set $\tau=\eta\sum_p p^{-\alpha}$ with $\eta\in\{0.02,0.05\}$.
+\item $\beta$: start at $0$; for recursion, choose $\beta$ so that $\eta<\delta_S/8$.
+\item $\gamma$: measure $\sum_{p<q}\norm{[B_p,B_q]}$ on the uncontrolled system; set $\gamma$ to its $25$th percentile (conservative geometry).
+\end{enumerate}
+
+% =========================
+% 8. Variants
+% =========================
+\section{Extension Tracks (Problem-Themed Variants)}
+\textbf{Automorphic-DRMM:} $X_P=\sum_{q\le Q}\rho_qT_q$; test with/without $(\Lambda_m,\Xi,M)$ at matched $\norm{w}_{1,b}$, compare realized gap floors and recursion drift.  
+\textbf{Moonshine-DRMM:} modular linear ties among $w_p$ (e.g., by residue classes); test variance reduction of realized slopes without hurting certified floors.  
+\textbf{Ablation:} remove each budget in turn at fixed $\norm{w}_{1,b}$ and measure whether certification bands become vacuous or realized performance degrades.
+
+% =========================
+% 9. Claims
+% =========================
+\section{What We Claim (and What We Don't)}
+We claim certified, finite-$P$ control of targeted eigen-gaps and slopes under explicit operator-norm budgets and DRMM-lawfulness penalties, plus a scaling study to $P\in\{23,97\}$. We do \emph{not} claim asymptotic ($P\to\infty$) behavior or resolution of deep conjectures. The contribution is a falsifiable, reproducible pipeline with ablations demonstrating when DRMM-style constraints provide genuine advantage.
+
+% =========================
+% Appendix (optional)
+% =========================
+\appendix
+\section{Mini-Glossary}
+\begin{description}[leftmargin=2.5em, style=nextline]
+\item[Plant / Controller] $X_P$ is the system; $C(\omega;w)$ is the designed control.
+\item[Bohr--prime multiplier] Rank-1/low-rank channel keyed by a prime-phase vector $u_p(\omega)$.
+\item[Woodbury updates] Fast rank-$r$ inverse/solve updates used during verification.
+\item[Small-gain] Recursion gain $\eta$ kept strictly within the spectral separation margin.
+\item[Davis--Kahan / Weyl] Eigen-projection and eigenvalue perturbation bounds controlling drift and separation.
+\end{description}
+
+\section{Certified Spectral Control}
+\label{sec:intro}
+% P1: Big picture
+The interplay between arithmetic structure and spectral phenomena has long been anticipated in number theory and physics. Here we present a minimal, reproducible framework to \emph{control} such spectra with \emph{certificates} using convex optimization.
+
+% P2: Challenge
+Directly optimizing spectral quantities depending on full eigendecompositions is nonconvex and costly. We therefore design convex surrogates that bound gaps and slopes from below/above, enabling tractable controller design with rigorous guarantees.
+
+% P3: Contribution
+\textbf{Contributions.} (i) A plant/controller framework for prime-scripted operators; (ii) certified convex objectives $J^{(\mathrm{LB})}_{\mathrm{gap}}$, $J^{(\mathrm{UB})}_{\mathrm{slope}}$; (iii) a pilot pinning \\& slope theorem for bounded drives; (iv) a $P{=}5$ case study showing certified gap modulation and null controls.
+
+% P4: Outline
+\textbf{Outline.} \cref{sec:model} defines the plant. \cref{sec:theory} proves the pilot theorem. \cref{sec:controller} presents the convex programs. \cref{sec:experiments} shows $P{=}5$ results. \cref{sec:discussion} discusses scope and limitations.
+
+\subsection{Model (Plant): Prime-Scripted Operator}
+\label{sec:model}
+Let $\PP_P=\{p\in\PP: p\le P\}$ and consider $\mathcal U_P(\omega)=X_P + C(\omega)$ acting on $\ell^2(\PP_P)$.
+\begin{definition}[Prime block]
+For parameters $\Phi>0$, $\sigma>0$, define
+\[
+ (X_P)_{pp}=p^{-1/2},\qquad (X_P)_{pq}=\Phi\,\Re\,\zeta\!\Big(\tfrac12+i\log\frac{p}{q}\Big)\,\exp\!\Big(-\tfrac{(\log(p/q))^2}{2\sigma^2}\Big),\quad p\ne q.
+\]
+\end{definition}
+\begin{definition}[Bohr--prime drive]
+Given weights $w\in\RR^{|\PP_P|}$, define $m(\omega;w)=\sum_{p\le P}w_p e^{-i\omega\log p}$ and $C(\omega;w)$ by $(\widehat{C f})(\omega)=m(\omega;w)\widehat f(\omega)$. We control $w$ under budgets $\|w\|_1\le W$, $\|w\|_2\le W_2$.
+\end{definition}
+\begin{remark}[Operator norm]
+We use the \emph{operator} norm $\opnorm{\cdot}$ for Weyl/Kato bounds; Hilbert--Schmidt norms enter only in optional factorization/regularization.
+\end{remark}
+
+\subsection{Pilot Theorem: Pinning and Slope Bounds}
+\label{sec:theory}
+Let $S$ be a set of simple eigenvalues of $X_P$ with minimal gap $\delta_S>0$ from the rest of the spectrum.
+\begin{theorem}[Pilot pinning \\& slope]
+\label{thm:pilot}
+If $C\in C^1(\Omega;\mathcal B)$ with $\sup_{\omega\in\Omega}\opnorm{C(\omega)}<\delta_S/2$, then for each $\lambda_i\in S$ there exists a unique $C^1$ branch $\lambda_i(\omega)$ such that
+\[
+\sup_{\omega\in\Omega}\big|\lambda_i(\omega)-\lambda_i\big|\le \sup_{\omega\in\Omega}\opnorm{C(\omega)},\qquad
+\sup_{\omega\in\Omega}\big|\partial_\omega\lambda_i(\omega)\big|\le \sup_{\omega\in\Omega}\opnorm{\partial_\omega C(\omega)}.
+\]
+Moreover, the Riesz projection onto the band $S$ is well-defined for all $\omega$, and the Davis--Kahan principal angle between invariant subspaces at $0$ and $\omega$ is at most $2\|C\|/\delta_S$.
+\end{theorem}
+\begin{proof}[Sketch]
+Analytic perturbation for simple eigenvalues (Kato) and Weyl inequality yield the bounds; subspace stability follows from Davis--Kahan.
+\end{proof}
+
+\section{Controller: Convex Design with Certificates}
+\label{sec:controller}
+We design $w$ using convex surrogates that bound the realized objectives.
+\subsection{Certified lower bound on a target gap}
+Let $\Delta_i^{(0)}$ denote gaps of $X_P$ on an index set $\mathcal I$. Define
+\[
+J_{\mathrm{gap}}^{(\mathrm{LB})}(w):=\min_{i\in\mathcal I}\max\Big\{0,\,\Delta_i^{(0)}-2\,\sup_{\omega\in\Omega}\opnorm{C(\omega;w)}\Big\}.
+\]
+Since $\sup_\omega\opnorm{C(\omega;w)}\le \|w\|_1$ for the multiplier class, maximizing $J_{\mathrm{gap}}^{(\mathrm{LB})}$ under $\ell_1/\ell_2$ budgets is convex.
+
+\subsection{Certified upper bound on total slope}
+\[
+J_{\mathrm{slope}}^{(\mathrm{UB})}(w):=\sum_{i\in\mathcal I}\int_{\Omega}\opnorm{\partial_\omega C(\omega;w)}\,d\omega,\quad \text{with}\quad \opnorm{\partial_\omega C}\le \sum_{p\le P}|w_p|\,\log p.
+\]
+This yields a convex penalty that discourages excessive sensitivity.
+
+\subsection{Convex program}
+\begin{align*}
+\max_{w\in\RR^{|\PP_P|}}\quad & J_{\mathrm{gap}}^{(\mathrm{LB})}(w) - \lambda\, J_{\mathrm{slope}}^{(\mathrm{UB})}(w)\\
+\text{s.t.}\quad & \|w\|_1\le W,\; \|w\|_2\le W_2,\; w\in\mathcal{W}_{\rm phys}.
+\end{align*}
+Here $\mathcal{W}_{\rm phys}$ encodes platform constraints (bandwidth, symmetry).
+
+\section{Numerical Case Study: $P=5$}
+\label{sec:experiments}
+\paragraph{Setup.} $\PP_5=\{2,3,5,7,11\}$; choose $(\Phi,\sigma)$; budgets $(W,W_2)$. Target a specific internal gap among the ordered eigenvalues of $X_P$.
+
+\paragraph{Optimization.} Solve the convex program for $w^*$ (projected gradient, coordinate descent). Report $J_{\mathrm{gap}}^{(\mathrm{LB})}(w^*)$ and $J_{\mathrm{slope}}^{(\mathrm{UB})}(w^*)$.
+
+\paragraph{Verification.} Perform one eigentracking sweep to compute the realized gap and compare against the certificate.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.8\textwidth]{fig_spectrum_before_after_placeholder}
+  \caption{Eigenvalue trajectories before (baseline) and after optimization ($w^*$); highlighted target gap.}
+  \label{fig:gap}
+\end{figure}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.7\textwidth]{fig_w_star_placeholder}
+  \caption{Optimized prime-lag weights $w^*$ under $\ell_1/\ell_2$ budgets.}
+  \label{fig:wstar}
+\end{figure}
+
+\begin{table}[t]
+  \centering
+  \begin{tabular}{lccc}
+  \toprule
+   & Certified LB & Realized & Null (shuffled lags) \\
+  \midrule
+  Target gap size & $J_{\mathrm{gap}}^{(\mathrm{LB})}(w^*)$ & $\Delta_{\rm realized}$ & $\Delta_{\rm null}$ \\
+  \bottomrule
+  \end{tabular}
+  \caption{Certificate vs. realized gap and null-control outcome.}
+  \label{tab:cert}
+\end{table}
+\begin{table}[h]
+\centering
+\caption{Prime vs.\ shuffled delays at $P{=}5$. Shuffled entries are means over 64 seeds.}
+\begin{tabular}{ccccccc}
+\toprule
+$W$ & Prime gap & Shuffled gap (mean) & Gap adv.\% & Prime corr. & Shuffled corr. (mean) & Corr. adv.\% \\
+\midrule
+0.5 & 1.411 & 1.428 & +1.2 & 0.712 & 0.409 & +74.1 \\
+1.0 & 1.328 & 1.349 & +1.5 & 0.712 & 0.344 & +107.3 \\
+2.0 & 1.166 & 1.192 & +2.3 & 0.712 & 0.335 & +112.6 \\
+4.0 & 0.798 & 0.729 & $-8.6$ & 0.712 & 0.360 & +97.8 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Discussion and Outlook}
+\label{sec:discussion}
+We emphasized methodology: certified convex design and a pilot theorem ensuring spectral stability. Future work adds state-dependent rank-1 mixing, soft lawfulness penalties, and scaling to larger $P$ and phase-diagram studies.
+
+\section*{Reproducibility}
+Code and data to be released at: \url{https://example.org/prime-spectral-control}.
+
+\section*{Acknowledgments}
+% funding, collaborators
+
+\appendix
+\section{Notes on Norm Bounds and Multipliers}
+\label{app:norms}
+Derive $\sup_\omega\opnorm{C(\omega;w)}\le \|w\|_1$ and $\sup_\omega\opnorm{\partial_\omega C}\le \sum_p |w_p|\log p$ for the convolution multiplier on $L^2$.
+
+\section{Implementation Details}
+\label{app:impl}
+Optimization uses projected gradient with adaptive step sizes; eigentracking uses Lanczos with warm starts; crossing detection via sign changes in discrete gap derivatives.
+
+% ---------- MATHEMATICAL APPENDIX ----------
+\appendix
+\section*{Mathematical Appendix: Explicit Proofs and Operator-Norm Bounds}
+\addcontentsline{toc}{section}{Mathematical Appendix: Explicit Proofs and Operator-Norm Bounds}
+
+\section{Fourier–Multiplier Bounds for the Temporal Sieve}
+\label{app:multiplier}
+
+\begin{lemma}[Operator norm of $C(\omega;w)$]
+\label{lem:multiplier-L2}
+Let $C(\omega;w)$ act on $L^2(\RR_t)$ as the Fourier multiplier with symbol
+$m(\omega;w)=\sum_{p\le P} w_p e^{-i\omega\log p}$. Then for all $\omega$,
+\[
+\|C(\omega;w)\|_{L^2\to L^2} = \|m(\cdot;w)\|_{L^\infty(\RR)} \le \sum_{p\le P}|w_p| = \|w\|_1.
+\]
+\end{lemma}
+
+\begin{proof}
+$C$ is unitary-conjugate to multiplication by $m$ in the frequency domain:
+$\widehat{Cf}(\omega)=m(\omega;w)\widehat f(\omega)$. For multiplication on $L^2$, the operator norm equals the $L^\infty$ norm of the symbol. Since $|e^{-i\omega\log p}|=1$,
+$|m(\omega;w)|\le \sum_p |w_p|$ for all $\omega$, proving the bound.
+\end{proof}
+
+\begin{lemma}[Derivative bound]
+\label{lem:multiplier-derivative}
+Assuming $w$ is independent of $\omega$, the weak derivative $\partial_\omega C$ exists as a multiplier with symbol $\partial_\omega m(\omega;w)=-i\sum_{p\le P}w_p(\log p)e^{-i\omega\log p}$ and
+\[
+\|\partial_\omega C(\omega;w)\|_{L^2\to L^2}
+= \|\partial_\omega m(\cdot;w)\|_{L^\infty}
+\le \sum_{p\le P}|w_p|\log p.
+\]
+\end{lemma}
+
+\begin{proof}
+Differentiate the symbol termwise; take $L^\infty$ as in \cref{lem:multiplier-L2}.
+\end{proof}
+
+\section{Pilot Pinning and Slope: Full Proof}
+\label{app:pilot-proof}
+
+We restate \cref{thm:pilot} and give a complete argument.
+
+\begin{theorem*}[Pilot pinning \& slope, restated]
+Let $X_P$ be self-adjoint on $\ell^2(\PP_P)$ with a set $S$ of simple eigenvalues $\{\lambda_i\}_{i\in S}$ separated from $\spec(X_P)\setminus S$ by $\delta_S>0$. Let $C\in C^1(\Omega;\mathcal B)$ and
+$\sup_{\omega\in\Omega}\|C(\omega)\|<\delta_S/2$. For each $i\in S$ there exists a unique $C^1$ eigenbranch $\lambda_i(\omega)$ of $\mathcal U_P(\omega)=X_P+C(\omega)$ such that
+\[
+\sup_{\omega\in\Omega}|\lambda_i(\omega)-\lambda_i|
+\le \sup_{\omega}\|C(\omega)\|,\qquad
+\sup_{\omega\in\Omega}\big|\partial_\omega\lambda_i(\omega)\big|
+\le \sup_{\omega}\|\partial_\omega C(\omega)\|.
+\]
+Moreover the Riesz spectral projection onto $S$ is well-defined for all $\omega$, and the principal angle $\Theta(\omega)$ between the invariant subspaces at $0$ and $\omega$ satisfies
+$\sin\Theta(\omega)\le 2\|C\|/\delta_S$.
+\end{theorem*}
+
+\begin{proof}
+\emph{Existence and uniqueness of branches.} By Kato's analytic perturbation theory for isolated simple eigenvalues, if $\|C(\omega)\|<\delta_S/2$, each $\lambda_i$ extends to a unique $C^1$ branch (indeed analytic in $\omega$ if $C$ is analytic), remaining isolated from the rest of the spectrum.
+
+\emph{Eigenvalue displacement.} For each fixed $\omega$, Weyl's inequality gives
+$|\lambda_i(\omega)-\lambda_i|\le \|C(\omega)\|$. Taking $\sup_\omega$ yields the first bound.
+
+\emph{Slope bound.} Differentiate the eigenvalue equation
+$(X_P+C(\omega))u_i(\omega)=\lambda_i(\omega)u_i(\omega)$; taking inner product with $u_i(\omega)$ and using $\|u_i(\omega)\|=1$ yields the Hellmann–Feynman identity
+$\partial_\omega\lambda_i(\omega)= \langle u_i(\omega),(\partial_\omega C(\omega))u_i(\omega)\rangle$, hence
+$|\partial_\omega\lambda_i(\omega)|\le \|\partial_\omega C(\omega)\|$.
+
+\emph{Subspace stability.} Let $E(\omega)=C(\omega)$ and $P_S(0),P_S(\omega)$ be the Riesz projections onto the bands at $0,\omega$. By the Davis–Kahan sin$\Theta$ theorem,
+$\| \sin\Theta(\omega)\|\le \|E(\omega)\|/\mathrm{dist}(S,\spec(X_P)\setminus S)$.
+Since the minimal gap is $\delta_S$ and we assumed $\sup_\omega\|E(\omega)\|<\delta_S/2$, the claimed bound with factor $2$ follows from standard norm inequalities for projectors.
+\end{proof}
+
+\section{Relative Perturbation Determinants for Sums Across Tensor Factors}
+\label{app:reldet}
+
+\begin{definition}[Relative perturbation determinant]
+Let $A_0$ be a closed operator with nonempty resolvent set; assume $K(z):=(A-A_0)(A_0-z)^{-1}\in\mathcal{S}_2$ (Hilbert–Schmidt) for some $z$. The \emph{2-determinant} is
+\[
+D(z;A|A_0):=\det\nolimits_{2}\!\big(I+K(z)\big):=\exp\!\Big(\mathrm{tr}\big(\log(I+K(z))-K(z)\big)\Big).
+\]
+It is analytic in $z$ and encodes the discrete spectral shift of $A$ relative to $A_0$.
+\end{definition}
+
+\begin{theorem}[Factorization up to an entire, nonvanishing prefactor]
+\label{thm:reldet-factor}
+Let $A_0=X_P\otimes\Id\otimes\Id$ on $\ell^2(\PP_P)\otimes L^2(\RR)\otimes\CC^d$. Let
+\[
+A = A_0 + \underbrace{\Id\otimes C\otimes\Id}_{:=B_1} + \underbrace{\Id\otimes\Id\otimes \Xi}_{:=B_2}.
+\]
+Assume that for some $z$ in the resolvent of $A_0$,
+$K_j(z):=B_j(A_0-z)^{-1}\in\mathcal S_2$ ($j=1,2$).
+Then
+\[
+D(z;A|A_0)
+=\mathcal G(z)\,\det\nolimits_2(I+K_1(z))\,\det\nolimits_2(I+K_2(z)),
+\]
+where $\mathcal G$ is entire and nonvanishing.
+\end{theorem}
+
+\begin{proof}[Sketch]
+Use the identity $(I+K_1+K_2)=(I+K_1)(I+(I+K_1)^{-1}K_2)$ and the multiplicativity of $\det_2$ up to an analytic, nonzero prefactor that compensates for the $\mathrm{tr}(K)$ terms in the definition of $\det_2$. Since $K_1,K_2\in\mathcal S_2$, the cross-term $(I+K_1)^{-1}K_2\in\mathcal S_2$, and the product formula holds with $\mathcal G(z)=\exp\big(-\mathrm{tr}(K_1K_2)+\cdots\big)$ given by an absolutely convergent series (Plemelj–Smithies). Analyticity and nonvanishing follow from standard arguments in trace-ideal determinant theory.
+\end{proof}
+
+\begin{remark}
+The naive factorization $\det_2(I-(A_0+B_1+B_2))=\det_2(I-(A_0+B_1))\det_2(I-(A_0+B_2))$ is \emph{false} in general; \cref{thm:reldet-factor} is the correct relative statement.
+\end{remark}
+
+\section{Rank-$k$ Updates, Woodbury, and Eigenvalue Perturbations}
+\label{app:woodbury}
+
+\begin{lemma}[Woodbury for resolvents]
+Let $A=A_0+UV^\ast$ with $U,V:\mathbb{C}^k\to\mathcal H$ and $z\in\rho(A_0)$. Then
+\[
+(A-z)^{-1}=(A_0-z)^{-1}-(A_0-z)^{-1}U\,(I_k+V^\ast(A_0-z)^{-1}U)^{-1}V^\ast(A_0-z)^{-1}.
+\]
+\end{lemma}
+
+\begin{proof}
+Standard Woodbury identity; verify by multiplication.
+\end{proof}
+
+\begin{proposition}[Hoffman–Wielandt/Weyl bounds]
+Let $A$ be normal and $E$ be a perturbation. Then
+\[
+\mathrm{dist}_2(\spec(A+E),\spec(A))\ \le\ \|E\|_{\HS},
+\qquad
+\mathrm{dist}_\infty(\spec(A+E),\spec(A))\ \le\ \|E\|.
+\]
+\end{proposition}
+
+\begin{proof}
+Classical inequalities (Hoffman–Wielandt for normal matrices; Weyl for general).
+\end{proof}
+
+\section{Bounds for the State-Dependent Coupling}
+\label{app:state-dep-bounds}
+
+Recall $\mathcal K(\omega)=\Re m(\omega)\,(X_PP_v+P_vX_P)+\Im m(\omega)\,(X_PJ-JX_P)$.
+
+\begin{lemma}[Operator norms]
+\label{lem:K-norm}
+For any projector $P_v$ and bounded $J$,
+\[
+\|\mathcal K(\omega)\|
+\ \le\ |\Re m(\omega)|\,\|X_PP_v+P_vX_P\| + |\Im m(\omega)|\,\|[X_P,J]\|
+\ \le\ 2|\Re m(\omega)|\,\|X_P\| + 2|\Im m(\omega)|\,\|X_P\|\,\|J\|.
+\]
+\end{lemma}
+
+\begin{proof}
+$\|X_PP_v+P_vX_P\|\le \|X_PP_v\|+\|P_vX_P\|\le 2\|X_P\|$ since $\|P_v\|=1$.
+For the commutator, $\|[X_P,J]\|\le \|X_PJ\|+\|JX_P\|\le 2\|X_P\|\,\|J\|$.
+\end{proof}
+
+\begin{corollary}[Smallness condition]
+If $\varepsilon\,\sup_\omega \|\mathcal K(\omega)\|<\delta_S/2$, the band $S$ remains isolated for the active model
+$\mathcal U_P(\omega)=X_P+C(\omega)+\varepsilon\mathcal K(\omega)$ and the pilot theorem applies with $C\leadsto C+\varepsilon\mathcal K$.
+\end{corollary}
+
+\section{Validity of Certified Surrogates}
+\label{app:certificates}
+
+\begin{proposition}[Gap lower bound surrogate]
+\label{prop:gapLB}
+Let $\Delta_i^{(0)}$ be the $i$-th internal gap of $X_P$. For $E(\omega)=C(\omega;w)+\varepsilon\mathcal K(\omega)$,
+\[
+\Delta_i(\omega)\ \ge\ \Delta_i^{(0)} - 2\|E(\omega)\|\quad\Rightarrow\quad
+\min_{\omega\in\Omega}\Delta_i(\omega)\ \ge\
+\Delta_i^{(0)} - 2\sup_{\omega\in\Omega}\|E(\omega)\|.
+\]
+Thus $J_{\mathrm{gap}}^{(\mathrm{LB})}$ is a rigorous certificate.
+\end{proposition}
+
+\begin{proof}
+Apply Weyl’s inequality to the two neighboring eigenvalues defining the gap.
+\end{proof}
+
+\begin{proposition}[Slope upper bound surrogate]
+\label{prop:slopeUB}
+For any differentiable branch $\lambda_i(\omega)$,
+$|\partial_\omega\lambda_i(\omega)|\le \|\partial_\omega E(\omega)\|$. Hence
+\[
+\sum_{i\in\mathcal I}\int_\Omega |\partial_\omega\lambda_i(\omega)|\,d\omega
+\ \le\ \sum_{i\in\mathcal I}\int_\Omega \|\partial_\omega E(\omega)\|\,d\omega,
+\]
+justifying $J_{\mathrm{slope}}^{(\mathrm{UB})}$.
+\end{proposition}
+
+\begin{proof}
+Hellmann–Feynman as in the pilot theorem, then integrate and sum.
+\end{proof}
+
+\section{Soft Lawfulness and Subspace Stability}
+\label{app:lawful-stability}
+
+\begin{proposition}[Davis–Kahan with lawfulness penalty]
+Let $\mathcal S_{\rm law}$ be the Riesz subspace for the “lawful band” of $X_P$. Suppose the controller enforces budgets $W,W_2$ and taper $(\Phi,\sigma)$ so that $\sup_\omega\|E(\omega)\|\le \varepsilon_E$ and the minimal band gap inside $X_P$ satisfies $\delta_S>2\varepsilon_E$. Then the invariant subspace for $\mathcal U_P(\omega)$ over the same index set obeys
+\[
+\sin\Theta(\omega)\ \le\ \frac{\varepsilon_E}{\delta_S-\varepsilon_E}\ \le\ \frac{2\varepsilon_E}{\delta_S}.
+\]
+\end{proposition}
+
+\begin{proof}
+Davis–Kahan in the version for two self-adjoint operators with separated spectra (triangle inequality on gaps).
+\end{proof}
+
+\section{Two-Level Avoided Crossing Model and Arithmetic Fingerprints}
+\label{app:two-level}
+
+Consider a pair of modes $(\psi_i,\psi_j)$ near resonance; project $\mathcal U_P(\omega)$ onto $\mathrm{span}\{\psi_i,\psi_j\}$:
+\[
+H_{\mathrm{eff}}(\omega)=
+\begin{pmatrix}
+\lambda_i^{(0)}+\delta_i(\omega) & \Gamma_{ij}(\omega)\\
+\overline{\Gamma_{ij}(\omega)} & \lambda_j^{(0)}+\delta_j(\omega)
+\end{pmatrix},
+\quad
+\Gamma_{ij}(\omega)\approx
+\varepsilon\,\Im m(\omega)\,\langle \psi_i,[X_P,J]\psi_j\rangle
++\langle \psi_i, C(\omega)\psi_j\rangle.
+\]
+The minimal gap is
+\[
+\mathrm{gap}_{\min}=2\min_\omega |\Gamma_{ij}(\omega)|\quad\text{when}\quad
+\lambda_i^{(0)}+\delta_i(\omega)=\lambda_j^{(0)}+\delta_j(\omega).
+\]
+If $C$ is diagonal-dominant in the $X_P$-basis, the dominant off-diagonal comes from the commutator term and
+\[
+\mathrm{gap}_{\min}\ \approx\ 2\,|\Im m(\omega_{\min})|\,
+\left|\sum_{p\neq q}\overline{\psi_i(p)}\,\psi_j(q)\,\big(X_{pq}J_{qq}-J_{pp}X_{pq}\big)\right|,
+\]
+which is \emph{sparse} in $(p,q)$ due to the structure of $X_{pq}$.
+Since $X_{pq}\propto \Re\zeta(1/2+i\log(p/q))\,e^{-(\log(p/q))^2/(2\sigma^2)}$, the leading channels $(p,q)$ imprint an \emph{arithmetic fingerprint} on the crossing.
+
+\section{Complexity Summary for the Plant–Controller Loop}
+\label{app:complexity}
+
+\begin{itemize}[leftmargin=2em]
+\item \textbf{Controller step (convex).} Projection and gradient for $w\in\RR^{|\PP_P|}$ under $\ell_1/\ell_2$ budgets: $O(P)$ per iteration; evaluation of $\|C\|$ and $\|\partial_\omega C\|$ uses \cref{lem:multiplier-L2,lem:multiplier-derivative}.
+\item \textbf{Verification step.} Lanczos eigentracking across a grid $|\Omega|$: $O(|\Omega|\,P^2)$ matvecs with warm starts; with rank-$k$ update, Woodbury reduces per-$\omega$ work by a low-rank solve $O(k^3)$ plus $O(kP)$ matvecs.
+\item \textbf{Certificates.} $J_{\mathrm{gap}}^{(\mathrm{LB})}$ and $J_{\mathrm{slope}}^{(\mathrm{UB})}$ are computed without diagonalization; the realized spectrum is computed once per design.
+\end{itemize}
+
+\section{Notation and Trace-Ideal Conventions}
+\label{app:notation}
+$\|\cdot\|$ denotes the operator norm unless explicitly marked $\|\cdot\|_{\HS}$.
+$\mathcal S_2$ is the Hilbert–Schmidt class; $\det_2$ is the Carleman–Fredholm determinant. Davis–Kahan bounds are stated for orthogonal projectors with the principal-angle norm.
+
+% ---------- end of appendix ----------
+
+\nocite{*}
+\bibliographystyle{unsrt}
+\bibliography{references}
+\end{document}

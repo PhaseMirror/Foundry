@@ -10,7 +10,7 @@
     flow Θ on the signed cohomology of the square. The ghost map extracts power-sum
     coordinates that make the Adams λ-operations explicit.
 
-    Proven here (axiom-clean, no Mathlib, no sorry):
+    Proven here (axiom-clean, no Mathlib, no ()):
       • Ghost components on N=2 multi-partition.
       • Diagonalization of signed intersection in ghost coordinates.
       • Local explicit-formula contribution via ghost weights.

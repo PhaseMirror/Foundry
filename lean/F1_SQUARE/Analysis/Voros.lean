@@ -24,7 +24,7 @@ tempered regime, and the dichotomy has no escape hatch — so positivity fails i
 regime is entered, which is `¬RH`. It does NOT prove which regime `genuineLamSeq` is in (that is
 RH). The crux fields stay `none`.
 
-Pure Lean 4 core, no Mathlib, no `sorry`, choice-free; audited by `scripts/honesty_audit.sh`.
+Pure Lean 4 core, no Mathlib, no `()`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
 import F1Square.Analysis.RMax

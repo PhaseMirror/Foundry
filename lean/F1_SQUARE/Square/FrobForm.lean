@@ -31,7 +31,7 @@ HONEST SCOPE. Nothing here asserts the genuine full form is negative-semidefinit
 This brick supplies the OBJECT — the full primitive form on a carrier that can hold it — and the
 exact bridge that a definiteness proof would travel. The crux fields stay `none`.
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 

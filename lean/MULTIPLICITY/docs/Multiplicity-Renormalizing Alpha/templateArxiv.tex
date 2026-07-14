@@ -1,0 +1,371 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsfonts,amsthm}
+\usepackage{mathtools}
+\usepackage{bm}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{authblk}
+
+\title{Multiplicity-Renormalizing Alpha: \\
+A Prime-Indexed RG Flow on Operator Spaces}
+
+\author[1]{Ryan O. Van Gelder}
+\affil[1]{Citizen Gardens \\ The Foundation of Multiplicity}
+\date{April 22, 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We develop a functorial meta-operator, denoted $\alpha$, acting on spaces of operators and specialize it to a prime-indexed, renormalization-group-style flow on multiplicity profiles.
+In this framework, each operator is represented not as a static object but as a prime-graded multiplicity profile capturing distinct interaction channels.
+The associated ``Multiplicity-Renormalizing Alpha'' $\alpha_\mu$ is realized as a coupled diffusion operator on a finite prime window, yielding an exactly solvable tridiagonal Toeplitz matrix.
+We compute its eigenvalues and eigenvectors in closed form, derive a phase diagram in the $(\gamma,\beta)$ plane, and interpret low-frequency eigenmodes as ``Core Truths'' that survive recursive feedback, while high-frequency modes are filtered as noise.
+We argue that this provides a mathematically precise bridge between Multiplicity Theory, renormalization-group flows, and a Genius-v2-type view of cognition as sequences of prime-labeled meta-operations.
+\end{abstract}
+\newpage
+\tableofcontents
+\section{Introduction}
+
+In many domains---from quantum dynamics to cognition and cultural cycles---one encounters structured recursions in which certain patterns are amplified or stabilized while others are systematically suppressed.
+The renormalization group (RG) provides a powerful language for analyzing such flows in physical systems, organizing couplings into relevant, irrelevant, and marginal classes under coarse-graining transformations.\footnote{Standard introductions include \cite{Goldenfeld1992,TongRG,LPTMCRG,ERGReview}.}[web:65][web:68][web:70][web:71]
+Multiplicity Theory, on the other hand, models mathematical and physical structures as prime-indexed, recursively stable multiplicity spaces, in which each prime labels a distinct interaction channel or degree of freedom.[web:17]
+
+This paper constructs an explicit bridge between these perspectives by formalizing a \emph{meta-operator} $\alpha$ that acts not on states but on \emph{operators}, and then specializing to a prime-indexed, RG-style flow $\alpha_\mu$ on multiplicity profiles.
+We treat the space of operators as a state space in its own right, endowed with a prime-graded decomposition.
+The resulting dynamics can be viewed as a diffusion process on a one-dimensional lattice indexed by primes, with dissipation and nearest-neighbor coupling.
+
+Our goals are threefold:
+\begin{enumerate}[label=(\roman*)]
+    \item Provide a functorial definition of Alpha as a meta-operator on a category of operators.
+    \item Specialize Alpha to a prime-indexed multiplicity-renormalizing map $\alpha_\mu$ and derive its fixed points and spectral properties.
+    \item Interpret the resulting eigenmodes as ``Core Truths''---stable patterns of multiplicity that survive recursive feedback---in a way compatible with the Genius-v2 picture of trajectories in a structured space of understanding.
+\end{enumerate}
+
+We deliberately separate what is mathematically derived (spectral properties of a Toeplitz operator on a prime window) from what is interpretive (readings in terms of cognition, time, or culture).
+
+
+\section{Alpha as a functorial meta-operator}
+
+Let $\mathcal{C}$ be a category whose objects are spaces (sets, vector spaces, logical universes, Hilbert spaces, etc.) and whose arrows are operators $f : A \to B$.
+Denote by $\mathbf{Op}$ a chosen class of such arrows, possibly with additional structure (linearity, boundedness).
+
+\begin{definition}[Alpha meta-operator]
+Let $\mathcal{C},\mathcal{C}'$ be categories.
+An \emph{Alpha meta-operator} is a pair
+\[
+    \alpha = (\alpha_{\mathrm{obj}},\alpha_{\mathrm{arr}})
+\]
+where
+\begin{align*}
+    \alpha_{\mathrm{obj}} &: \mathrm{Ob}(\mathcal{C}) \to \mathrm{Ob}(\mathcal{C}'), \\
+    \alpha_{\mathrm{arr}} &: \mathrm{Hom}_{\mathcal{C}}(A,B) \to \mathrm{Hom}_{\mathcal{C}'}\big(\alpha_{\mathrm{obj}}(A),\alpha_{\mathrm{obj}}(B)\big),
+\end{align*}
+for all objects $A,B$ of $\mathcal{C}$.
+\end{definition}
+
+When $\alpha$ is \emph{structure-preserving} in the sense that
+\begin{equation}
+\alpha\big(\mathrm{id}_A\big) = \mathrm{id}_{\alpha(A)}, \qquad
+\alpha(g \circ f) = \alpha(g) \circ \alpha(f),
+\end{equation}
+it is a functor from $\mathcal{C}$ to $\mathcal{C}'$ and acts as a symmetry of the compositional structure.
+When these conditions are relaxed, the deviation from functoriality---the \emph{Functorial Drift}---quantifies how strongly Alpha distorts the native logic of the operator space.
+
+Examples of Alpha as a meta-operator include:
+\begin{itemize}
+    \item \textbf{Composition Alpha}: $\alpha(f) = f \circ g$ for a fixed $g$, retyping the domain.
+    \item \textbf{Parameter Alpha}: $\alpha(f_\theta) = f_{\varphi(\theta)}$ for a parameter map $\varphi$.
+    \item \textbf{Differential Alpha}: $\alpha(f) = T(f)$ where $T$ is a derivative or integral operator.
+    \item \textbf{Higher-order Alpha}: $\alpha : (A \to B) \to (A' \to B')$ in a functional programming sense.
+\end{itemize}
+
+In this paper we emphasize a different specialization: Alpha as a renormalization map on prime-indexed multiplicity profiles associated to operators.
+
+
+\section{Prime-indexed multiplicity and the Multiplicity-Renormalizing Alpha}
+
+Multiplicity Theory treats mathematical and physical structures not as isolated objects but as \emph{multiplicity spaces} graded by primes.
+Formally, one associates to each operator $f$ a profile
+\begin{equation}
+    M_f = \bigoplus_{p \in \mathbb{P}} \mathbb{V}_p,
+\end{equation}
+where $\mathbb{V}_p$ is the multiplicity space associated with prime $p$.
+The choice of $\mathbb{V}_p$ is model-dependent: it may encode prime-labeled basis components, module factors, or prime-graded interaction channels.[web:17][web:35]
+
+\begin{definition}[Multiplicity-Renormalizing Alpha]
+A \emph{Multiplicity-Renormalizing Alpha} is a meta-operator $\alpha_\mu$ acting on multiplicity profiles by
+\begin{equation}
+    \alpha_\mu(M_f) = \bigoplus_{p \in \mathbb{P}} \psi_p\big(\mathbb{V}_p, (\mathbb{V}_q)_{q \neq p}\big),
+\end{equation}
+where each $\psi_p$ is a (possibly nonlinear) feedback rule on the $p$-layer, potentially coupled to other primes.
+\end{definition}
+
+We distinguish two regimes:
+\begin{itemize}
+    \item \textbf{Diagonal regime}: $\psi_p(\mathbb{V}_p)$ depends only on $\mathbb{V}_p$ (prime-wise filters).
+    \item \textbf{Coupled regime}: $\psi_p$ depends on multiple $\mathbb{V}_q$ (genuine RG flow on a prime-indexed lattice).
+\end{itemize}
+
+In either case, repeated application of $\alpha_\mu$ defines a flow
+\begin{equation}
+    M_f^{(t+1)} = \alpha_\mu\big(M_f^{(t)}\big), \qquad t = 0,1,2,\dots
+\end{equation}
+whose fixed points and attractors capture ``Core Truths'' in the sense of stable multiplicity patterns that survive recursive feedback.
+
+\section{Linear prime-diffusion model on a finite window}
+
+For explicit analytic control, we now linearize the coupled dynamics by encoding each $\mathbb{V}_p$ as a scalar nonnegative intensity $v_p \in \mathbb{R}_{\ge 0}$.
+Let $\{p_1,\dots,p_N\}$ be a finite prime window, indexed by $n = 1,\dots,N$, and write $v_n = v_{p_n}$.
+We consider a \emph{Prime-Diffusion Alpha} in which multiplicity at prime $p_n$ experiences dissipation and symmetric coupling to its nearest neighbors in index.
+
+\subsection{Update rule and Toeplitz structure}
+
+The update rule is
+\begin{equation}
+    v_n' = (1 - \gamma) v_n + \beta (v_{n-1} + v_{n+1}), \qquad 1 < n < N,
+    \label{eq:update-inner}
+\end{equation}
+with Dirichlet boundary conditions
+\begin{equation}
+    v_0 = v_{N+1} = 0,
+\end{equation}
+and an analogous update at $n=1,N$ consistent with these boundaries.
+The parameters are:
+\begin{itemize}
+    \item $\gamma > 0$: uniform dissipation.
+    \item $\beta \ge 0$: uniform coupling between neighboring primes.
+\end{itemize}
+
+Let $v = (v_1,\dots,v_N)^\top$ and $v' = (v_1',\dots,v_N')^\top$.
+Then \eqref{eq:update-inner} defines a linear map $v' = L v$ with $L$ an $N \times N$ symmetric tridiagonal Toeplitz matrix:
+\begin{equation}
+    L = 
+    \begin{pmatrix}
+        1-\gamma & \beta      & 0        & \dots  & 0 \\
+        \beta      & 1-\gamma & \beta    & \ddots & \vdots \\
+        0          & \beta      & 1-\gamma & \ddots & 0 \\
+        \vdots     & \ddots   & \ddots   & \ddots & \beta \\
+        0          & \dots    & 0        & \beta  & 1-\gamma
+    \end{pmatrix}.
+\end{equation}
+Such matrices arise naturally as discrete Laplacians with Dirichlet boundary conditions plus a constant ``mass'' term.[web:58][web:59][web:62]
+
+\subsection{Exact eigenvalues and eigenvectors}
+
+The spectrum of a real symmetric tridiagonal Toeplitz matrix is known in closed form.\footnote{See, for example, \cite{ToeplitzTridiagonal,ToeplitzProperties,ToeplitzEigen}.}[web:58][web:59][web:66]
+For our matrix $L$, the eigenvalues are
+\begin{equation}
+    \lambda_k = 1 - \gamma + 2\beta \cos\left(\frac{k\pi}{N+1}\right), 
+    \qquad k = 1,\dots,N,
+    \label{eq:eigenvalues}
+\end{equation}
+and a corresponding set of eigenvectors $u^{(k)} = (u^{(k)}_1,\dots,u^{(k)}_N)^\top$ is given by
+\begin{equation}
+    u^{(k)}_n = \sin\left(\frac{nk\pi}{N+1}\right), \qquad n = 1,\dots,N.
+    \label{eq:eigenvectors}
+\end{equation}
+These are precisely the discrete sine modes with Dirichlet boundary conditions on a one-dimensional lattice.
+
+Thus, any multiplicity profile $v$ admits an expansion in this eigenbasis,
+\begin{equation}
+    v = \sum_{k=1}^N c_k u^{(k)},
+\end{equation}
+and evolves under repeated application of $\alpha_\mu$ as
+\begin{equation}
+    v^{(t)} = L^t v^{(0)} = \sum_{k=1}^N c_k \lambda_k^t u^{(k)}.
+\end{equation}
+
+
+\section{Phase structure and RG classification}
+
+The eigenvalues \eqref{eq:eigenvalues} allow a direct RG-style classification of prime-patterns.
+Since $L$ is self-adjoint, its eigenvalues are real and the norm of $v^{(t)}$ is dominated by modes with the largest $|\lambda_k|$.[web:24][web:68]
+
+The \emph{largest} eigenvalue is
+\begin{equation}
+    \lambda_{\max} = \lambda_1 
+    = 1 - \gamma + 2\beta \cos\left(\frac{\pi}{N+1}\right).
+\end{equation}
+For large $N$, $\cos\left(\frac{\pi}{N+1}\right) \approx 1$, so
+\begin{equation}
+    \lambda_{\max} \approx 1 - \gamma + 2\beta.
+\end{equation}
+
+\subsection{Filter, runaway, and critical regimes}
+
+The parameter plane $(\gamma,\beta)$ separates into three qualitative regimes:
+
+\paragraph{Filter Phase.}
+If
+\begin{equation}
+    2\beta < \gamma,
+\end{equation}
+then $\lambda_{\max} < 1$ and in fact all $\lambda_k < 1$.
+In this regime every prime-pattern is \emph{irrelevant} in the RG sense: $v^{(t)} \to 0$ as $t \to \infty$ for all initial profiles $v^{(0)}$.
+The Multiplicity-Renormalizing Alpha acts as a total filter, eventually suppressing multiplicities at all primes.
+
+\paragraph{Runaway Phase.}
+If
+\begin{equation}
+    2\beta > \gamma,
+\end{equation}
+then $\lambda_{\max} > 1$.
+At least the lowest-frequency mode $k=1$ is \emph{relevant}, and possibly a band of low-$k$ modes if parameters are large.
+The corresponding smooth prime-patterns grow under repeated application of $\alpha_\mu$.
+Without nonlinear saturation, this corresponds to runaway feedback along those patterns.
+
+\paragraph{Critical Manifold.}
+If
+\begin{equation}
+    2\beta \approx \gamma,
+\end{equation}
+then $\lambda_{\max} \approx 1$ (up to finite-size effects) and higher modes obey $\lambda_k < 1$.
+The fundamental mode $u^{(1)}$ is then \emph{marginal}: its amplitude neither grows nor decays (in the linear approximation), while more oscillatory modes are damped.
+This defines a nontrivial fixed-point direction in multiplicity space, capturing a ``Core Truth'' of the system.
+
+The interactive spectral visualization generated for selected $(\beta,\gamma)$ pairs makes this structure concrete: one sees bands of eigenvalues whose upper edge moves above, below, or through $\lambda = 1$ as parameters vary.[chart:56]
+
+
+\section{Eigenmodes as prime-labeled Core Truths}
+
+The eigenvectors \eqref{eq:eigenvectors} provide explicit prime-patterns that are selected or suppressed by $\alpha_\mu$.
+
+\subsection{Low-frequency modes: integrated concepts}
+
+The fundamental mode $u^{(1)}$ has components
+\begin{equation}
+    u^{(1)}_n = \sin\left(\frac{n\pi}{N+1}\right),
+\end{equation}
+which form a single broad arch across the prime index: it is strictly positive on $n=1,\dots,N$ and varies slowly with $n$.
+In Multiplicity-Theory language, this mode represents a \emph{global}, smoothly varying multiplicity profile across primes---an ``integrated concept'' spanning the entire prime window.
+
+Near the critical manifold $2\beta \approx \gamma$, this mode has $\lambda_1 \approx 1$ and thus defines a marginal or slowly flowing direction.
+Repeated applications of $\alpha_\mu$ drive generic initial profiles toward this mode (up to normalization) by suppressing more oscillatory components.
+In this sense, $u^{(1)}$ is a prime-labeled \emph{Core Truth}: a stable pattern that survives the renormalization process.
+
+\subsection{High-frequency modes: fragmented noise}
+
+In contrast, the highest-frequency modes $u^{(k)}$ with $k \approx N$ oscillate rapidly in sign and magnitude from one prime index to the next:
+\begin{equation}
+    u^{(N)}_n = \sin\left(\frac{n N \pi}{N+1}\right),
+\end{equation}
+which alternates almost every step.
+Their eigenvalues
+\begin{equation}
+    \lambda_N = 1 - \gamma + 2\beta \cos\left(\frac{N\pi}{N+1}\right) \approx 1 - \gamma - 2\beta
+\end{equation}
+are typically the smallest in magnitude and strongly less than one for $\gamma,\beta > 0$.
+These modes are therefore rapidly damped under $\alpha_\mu$.
+
+Conceptually, they correspond to highly fragmented or erratic combinations of prime multiplicities: ``high-frequency chatter'' over the prime index.
+The Multiplicity-Renormalizing Alpha identifies such patterns as irrelevant noise relative to its recursive logic.
+
+\subsection{Intermediate modes and universality classes}
+
+Intermediate modes $u^{(k)}$ for moderate $k$ interpolate between smooth and jagged profiles.
+Their eigenvalues $\lambda_k$ fill the band between $\lambda_1$ and $\lambda_N$, and their RG status (relevant, irrelevant, marginal) depends on the specific $(\gamma,\beta)$.
+The structure of which $k$ are near one defines a hierarchy of universality classes: families of prime-patterns that share similar large-scale behavior under $\alpha_\mu$.
+
+This mirrors the usual RG story, where only a small number of couplings remain relevant or marginal at a fixed point, while infinitely many microscopic details are washed out.\footnote{See, e.g., \cite{Goldenfeld1992,ZinnJustin2007}.}[web:65][web:72]
+
+
+\section{Genius v2 perspective: Alpha as a meta-move on understanding}
+
+In the Genius-v2 framework, a work session is modeled as a trajectory in a structured space of understanding, traversed via discrete ``prime moves'' such as representation shifts, parameter extractions, and reverse modeling.
+The Multiplicity-Renormalizing Alpha $\alpha_\mu$ analyzed here is a concrete instance of such a move: it transforms a prime-indexed multiplicity profile into a new one by diffusing and damping prime contributions.
+
+The spectral analysis above admits a direct cognitive interpretation:
+\begin{itemize}
+    \item Low-frequency eigenmodes correspond to \emph{coherent, integrated conceptual structures} spread smoothly across many primes.
+    \item High-frequency eigenmodes correspond to \emph{fragmented or over-fitted structures} concentrated in rapidly alternating prime channels.
+\end{itemize}
+
+By tuning $(\gamma,\beta)$, one can select a regime in which:
+\begin{itemize}
+    \item All modes are irrelevant (overly aggressive filtering: loss of structure).
+    \item Some modes are relevant or marginal (balanced smoothing: emergence of Core Truths).
+    \item Many modes are relevant (runaway amplification: unstable feedback).
+\end{itemize}
+
+A Genius-v2 system that logs sequences of $\alpha_\mu$ applications, along with performance signals, could in principle \emph{learn} preferred regions in $(\gamma,\beta)$ space that reliably yield robust, transferable patterns: those multiplicity profiles that align closely with low-frequency eigenmodes and remain stable under repeated renormalization.
+
+
+\section{Discussion and extensions}
+
+The linear Toeplitz model presented here isolates a tractable core of the Multiplicity-Renormalizing Alpha:
+a prime-indexed diffusion operator with exact spectrum and an RG-style phase diagram.
+We have intentionally abstracted away from specific physical instantiations (e.g., quantum devices, neural systems, or cultural cycles) to focus on the operator-level backbone.
+
+Several extensions are natural:
+
+\paragraph{Prime-dependent parameters.}
+Allowing $\gamma_p$ and $\beta_p$ to depend on $p$ (e.g., increasing dissipation with prime size, or coupling preferentially within residue classes) would deform the spectrum and could produce multiple distinct Core modes.
+This would align more directly with multiplicative number-theoretic structures over the primes.[web:35][web:41]
+
+\paragraph{Multiplicative coupling kernels.}
+Replacing nearest-neighbor coupling in index by multiplicatively structured kernels (e.g., coupling primes to their multiples or to primes in shared residue classes) would embed arithmetic geometry into the RG flow, potentially connecting to recent work on spectral geometry of the primes.[web:41]
+
+\paragraph{Nonlinear feedback.}
+Introducing nonlinearities into $\psi_p$ (e.g., saturating nonlinearities or thresholds) would move the model closer to physical and cognitive systems and could produce bifurcations and richer phase diagrams, analogous to functional RG studies of nonlinear systems.[web:63][web:71]
+
+\paragraph{Back-translation to operators.}
+The present analysis works at the level of multiplicity profiles $v$.
+In concrete applications, one would like to reconstruct actual operators $f$ whose prime-graded multiplicity profiles approximate specific eigenmodes ($u^{(1)}$, etc.), thereby identifying explicit Alpha-invariant or Alpha-attracted operator structures.
+
+\section{Conclusion}
+
+We have formalized a Multiplicity-Renormalizing Alpha $\alpha_\mu$ as a renormalization-group-style flow on prime-indexed multiplicity profiles and provided an exactly solvable model based on a symmetric tridiagonal Toeplitz matrix.
+The resulting eigenvalues and eigenvectors admit a clean RG interpretation in terms of relevant, irrelevant, and marginal prime-patterns, and a Genius-v2 interpretation in terms of Core Truths and filtered noise.
+
+This framework demonstrates that even a modest amount of structure---prime-labeled multiplicities, local coupling, and dissipation---is sufficient to generate nontrivial universality classes and phase transitions on an abstract ``space of operators.''
+It also suggests that Multiplicity Theory and renormalization-group ideas can be fruitfully combined to provide a mathematically precise language for recursive, prime-indexed meta-operations on understanding.
+
+
+\begin{thebibliography}{99}
+
+\bibitem{Goldenfeld1992}
+N.~Goldenfeld, \emph{Lectures on Phase Transitions and the Renormalization Group}. Addison-Wesley, 1992.[web:69]
+
+\bibitem{TongRG}
+D.~Tong, \emph{Lectures on the Renormalisation Group}, lecture notes, University of Cambridge, 2008.[web:65]
+
+\bibitem{LPTMCRG}
+P.~Pujol et al., \emph{Renormalization Group and Critical Phenomena}, LPTMC lecture notes, 2025.[web:68]
+
+\bibitem{ERGReview}
+J.~Polonyi, \emph{Fundamentals of the exact renormalization group}, Phys. Rep. 2012.[web:71]
+
+\bibitem{ToeplitzTridiagonal}
+L.~Reichel, \emph{Tridiagonal Toeplitz Matrices: Properties and Applications}, Numer. Linear Algebra Appl., 2014.[web:59][web:66]
+
+\bibitem{ToeplitzProperties}
+L.~N.~Trefethen and M.~Embree, \emph{Spectra and Pseudospectra}, Princeton University Press, 2005.[web:60]
+
+\bibitem{ToeplitzEigen}
+K.~Ye, \emph{Eigenvalues of Tridiagonal Toeplitz Matrices}, course notes, University of Chicago, 2023.[web:58][web:62]
+
+\bibitem{PrimeMultiplicity}
+Terence Tao, \emph{Multiplicative structure of integers and primes}, lecture notes, 2013.[web:35]
+
+\bibitem{SpectralPrimes}
+M.~Lapidus et al., \emph{Spectral Geometry of the Primes}, arXiv preprint, 2026.[web:41]
+
+\bibitem{ZinnJustin2007}
+J.~Zinn-Justin, \emph{Phase Transitions and Renormalization Group}, Oxford University Press, 2007.[web:72]
+
+\bibitem{RGFixedPoints}
+Emergent Mind, \emph{RG Fixed Points in Theory and Applications}, 2025.[web:25]
+
+\end{thebibliography}
+
+
+
+\nocite{*}
+\bibliographystyle{unsrt}
+\bibliography{references}
+\clearpage
+
+\end{document}

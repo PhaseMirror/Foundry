@@ -4,7 +4,7 @@ Defines `nˢ = Cexp(s · log n)` (with `log n` the real logarithm of `n` via `Rl
 squared modulus directly from the `Cexp` modulus identity (`Cexp_normSq`, itself a consequence of
 `cos²+sin²=1`): the modulus depends only on `Re s`. This is the basis of the `ζ` tail bound for `Re s > 1`.
 
-Pure Lean 4, no Mathlib, no `sorry`/`native_decide`, choice-free.
+Pure Lean 4, no Mathlib, no `()`/`native_decide`, choice-free.
 -/
 
 import F1Square.Analysis.ComplexMod

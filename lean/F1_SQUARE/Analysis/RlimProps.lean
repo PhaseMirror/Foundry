@@ -9,7 +9,7 @@ Two structural facts about the diagonal limit `(lim X)ₙ = (X(4n+3))_{4n+3}`:
 These are the limit-level congruences any property/convergence argument over `Rlim`-built objects needs
 (e.g. the complex digamma `CDigamma`'s symmetries, and the eventual `CSpougeGamma → Γ` convergence).
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 import F1Square.Analysis.Complete

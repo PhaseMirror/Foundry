@@ -8,7 +8,7 @@ Mirrors `Rartanh_congr` exactly with `artSum → arctanSum`: the diagonal gap is
 Lipschitz estimate `geoEvenSum ρ · |t−t'|` (`arctanSum_Lip_le`, `RArctan.lean`), with `geoEvenSum ≤ 2`
 (`geoEvenSum_le_two`, shared and sign-independent) and `|t−t'| ≤ 2/(R+1)` from `Req`.
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 

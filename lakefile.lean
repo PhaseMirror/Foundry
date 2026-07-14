@@ -7,14 +7,13 @@ package "ADR-Scaffold" {
 }
 
 lean_lib "ADR" {
-  srcDir := "src/ADR"
+  srcDir := "src"
 }
 
 lean_lib "Analytic" {
-  srcDir := "src/Analytic"
+  srcDir := "src"
 }
 lean_exe test {
-  root := Test.main
-  srcDir := "src"
+  root := `TestMain
   supportInterpreter := true
 }

@@ -11,7 +11,7 @@
    arithmetic square) satisfies the T3 signature requirement:
      signature = (1, rankNS - 1) on the primitive complement of H.
 
-   Verified here (axiom-clean, no Mathlib, no sorry):
+   Verified here (axiom-clean, no Mathlib, no ()):
      • For N = 1, the single-prime template with Hasse-satisfying parameters
        passes the signature test (reduction to IntersectionTemplate.t1_signature_hasse).
      • The test is structurally decidable for any finite N.

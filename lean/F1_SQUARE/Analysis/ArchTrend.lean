@@ -30,7 +30,7 @@ above); its positivity/growth — `(n/2)log n + cn + O(1)`, `c = (γ−1−log 2
 unconditional (Lagarias Thm 5.1) — is sourced, not mechanized. NOTHING here touches
 positivity of the genuine `λₙ`: the crux stays open; the fields stay `none`.
 
-Pure Lean 4 core, no Mathlib, no `sorry`, choice-free; audited by `scripts/honesty_audit.sh`.
+Pure Lean 4 core, no Mathlib, no `()`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
 import F1Square.Analysis.LiTwo

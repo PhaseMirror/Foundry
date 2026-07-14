@@ -26,7 +26,7 @@ a proof of RH: its hypothesis — every Cayley factor of unit modulus (`AllZeros
 the line, equivalently producing the positivity WITHOUT the hypothesis) is the open content; the crux
 fields stay `none`. Producing the witness UNCONDITIONALLY is exactly solving RH.
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 

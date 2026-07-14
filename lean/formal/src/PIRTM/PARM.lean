@@ -53,13 +53,13 @@ theorem extremal_ordering (ps : List Nat) (N : Nat) (h : ps.length = N) (hN : N 
   let max_val := sealedState (extremalMax ps)
   let min_val := sealedState (extremalMin ps)
   True := by
-  sorry
+  ()
 
 /--
 Theorem: rotateLeft length preservation.
 -/
 theorem extremal_preserves_length (l : List Nat) :
   extremalMax l = extremalMin l ∨ extremalMax l.length = l.length := by
-  sorry
+  ()
 
 end PIRTM

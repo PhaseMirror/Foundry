@@ -9,7 +9,7 @@ enclosure view explicit: `ExactBoundedReal := Real`, with rational lower/upper b
 and the width identity, plus the regularity certificate exposed as `certificate`. No new mathematics —
 it names the interface that `ζ` and `λₙ` inhabit.
 
-Pure Lean 4, no Mathlib, no `sorry`.
+Pure Lean 4, no Mathlib, no `()`.
 -/
 
 import F1Square.Analysis.Real

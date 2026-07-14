@@ -21,7 +21,7 @@ So closing the crux in the Atlas is localized to ONE proposition: the coupling s
 governed by the zeros via the archimedean place. The crux fields stay `none` until that lands —
 whether from established or novel mathematics, the gate (not ambition) decides.
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 

@@ -1,0 +1,526 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{mathtools}
+\usepackage{bm}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{microtype}
+\usepackage{courier}
+\usepackage[T1]{fontenc}
+
+\title{Multiplicity Theory, Recursive Becoming, and Prime-Locked EEG:\\
+A Unified Computational Ontology with an Empirical Pipeline}
+
+\author{Citizen Gardens \\ \\ The Foundation of Multiplicity \\
+\vspace{0.3em}
+\small April 3, 2026}
+
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+This report consolidates recent developments on the ``13+1 Strata of Recursive Becoming''---a unified computational ontology that seeks to connect mathematics, physics, computation, consciousness, and social dynamics into a single recursive framework.\footnote{Original ontology draft: \emph{A Unified Computational Ontology: The 13+1 Strata of Recursive Becoming}.} At the core of this architecture lies a recursive tensor field \(\Xi(t)\) governed by a universal multiplicity constant \(\Lambda_m\), a multiplicative operator \(M\), and a torsion-like feedback term. Building on this conceptual foundation, we introduce a rigorous multiplicity functor \(\mathfrak{M}\) that maps stratum-specific states into prime-indexed multiplicity spectra, and we instantiate \(\mathfrak{M}_2\) concretely for EEG data (the ``qualia'' stratum). We provide a preregisterable MNE-Python pipeline that transforms raw EEG recordings into prime-locked multiplicity distributions using Welch spectral estimates, robust channel weighting, and regional pooling. The report includes a comprehensive mathematical overview, the definition of the multiplicity category, a minimal three-stratum architecture, and a code skeleton implementing \(\mathfrak{M}_2\) and the coherence statistic based on Jensen--Shannon distance. This document is intended to serve both as a conceptual backbone for Multiplicity Theory and as an executable plan for the first empirical tests of cross-stratum multiplicity coherence.
+\end{abstract}
+\newpage
+\tableofcontents
+\newpage
+\section{Executive Summary}
+
+The ``13+1 Strata of Recursive Becoming'' framework proposes a maximal unification of atomic, biological, cognitive, social, and cosmological dynamics within a single computational ontology.\footnote{See Sections 1--3 of the original ontology draft for the high-level description of the strata.} At its core is a recursive tensor field
+\begin{equation}
+  \frac{d\Xi(t)}{dt} \;=\; \Lambda_m M \Xi(t) + [M,\Xi(t)],
+  \label{eq:recursive-tensor-dynamics}
+\end{equation}
+where \(\Lambda_m\) is a universal multiplicity constant, \(M\) a multiplicative operator, and \([M,\Xi(t)]\) a torsion term representing recursive feedback.
+
+The main developments captured in this report are:
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Multiplicity Functor.} We formalize a functor \(\mathfrak{M} : \mathcal{C}_\Xi \to \mathcal{C}_{\mathrm{mult}}\) which sends stratum-specific states (adelic fields, qualia operads, social density matrices, etc.) to prime-indexed multiplicity spectra. The target category \(\mathcal{C}_{\mathrm{mult}}\) consists of probability distributions over a finite set of primes, with morphisms given by Markov operators that are Lipschitz under a chosen metric (e.g., Jensen--Shannon or Wasserstein-1).
+  \item \textbf{Minimal Working Triad.} We identify a minimal three-stratum stack:
+  \begin{itemize}
+    \item Stratum 0: a finite adelic toy model over a small prime set \(P_0\),
+    \item Stratum 2: a qualia operad realized as EEG time windows,
+    \item Stratum 4: quantum social coherence realized as agent-based networks.
+  \end{itemize}
+  Each stratum is equipped with its own multiplicity functor \(\mathfrak{M}_0, \mathfrak{M}_2, \mathfrak{M}_4\), and cross-stratum coherence is defined as bounded distance in multiplicity space.
+  \item \textbf{Concrete EEG Pipeline for \(\mathfrak{M}_2\).} We provide a preregisterable MNE-Python pipeline that maps raw 64-channel EEG data into prime-locked multiplicity spectra:
+  \begin{itemize}
+    \item Prime set \(P = \{2,3,5,7,11,13\}\), base frequency \(f_0 = 4 \text{ Hz}\),
+    \item Half-octave frequency bins centered at \(f_p = f_0 \log p\),
+    \item Welch PSD with 2 s segments and 50\% overlap in the 1--30 Hz band,
+    \item Robust channel weighting via inverse variance and bad-channel exclusion,
+    \item Regional pooling (frontal, central, parietal, occipital),
+    \item Normalization to probability distributions over \(P\).
+  \end{itemize}
+  \item \textbf{Coherence Statistic.} We define cross-stratum coherence via Jensen--Shannon distance between multiplicity spectra from the qualia stratum and a parallel social stratum \(\mathfrak{M}_4\). A decrease in this distance under conditions of increased coupling is the primary empirical signature of multiplicity coherence.
+\end{enumerate}
+
+Together, these components turn the original manifesto into a falsifiable research program:
+
+\begin{itemize}
+  \item The ontology is anchored by invariants (multiplicity spectra) and explicit functors.
+  \item The minimal triad and EEG pipeline are ready for numerical sanity checks and preregistration.
+  \item A subsequent stability lemma will link Lipschitz dynamics in multiplicity space to persistent cross-stratum coherence.
+\end{itemize}
+
+\section{Mathematical Foundations}
+
+\subsection{Recursive Tensor Field Dynamics}
+
+The original framework introduces a recursive tensor field \(\Xi(t)\) as a multi-scalar object governing dynamics across scales:
+\begin{equation}
+  \frac{d\Xi(t)}{dt} \;=\; \Lambda_m M \Xi(t) + [M,\Xi(t)], \tag{\ref{eq:recursive-tensor-dynamics}}
+\end{equation}
+where:
+\begin{itemize}
+  \item \(\Lambda_m\) is the \emph{Universal Multiplicity Constant}, stabilizing recursive interactions.
+  \item \(M\) is a \emph{Multiplicative Operator} that modulates recursive strain.
+  \item \([M,\Xi(t)]\) is a \emph{recursive torsion} term, encoding nonlinear feedback loops.
+\end{itemize}
+
+In addition, a prime-indexed tensor field
+\begin{equation}
+  \Psi_p(t) \;=\; \sum_{i=1}^N p_i \, T(p_i,t)
+\end{equation}
+is introduced to bridge discrete prime structure and continuous dynamics. The report refines this idea by treating \(\Psi_p(t)\) not as a single scalar but as the \emph{shadow} of a richer multiplicity functor \(\mathfrak{M}\).
+
+\subsection{Strata and Categories}
+
+We abstract the multi-stratum ontology into a category \(\mathcal{C}_\Xi\):
+
+\begin{itemize}
+  \item Objects in \(\mathcal{C}_\Xi\) are stratum-specific state spaces such as:
+  \begin{align*}
+    \Xi_{\text{adelic}}(t) &\in \mathbf{Adel}_{P_0},\\
+    \Xi_{\text{qualia}}(t) &\in \mathbf{Oper}_{\text{EEG}},\\
+    \Xi_{\text{social}}(t) &\in \mathbf{ProbNet}_N,
+  \end{align*}
+  where \(\mathbf{Adel}_{P_0}\) is a finite adelic module over a prime set \(P_0\), \(\mathbf{Oper}_{\text{EEG}}\) a category of operadic structures on EEG windows, and \(\mathbf{ProbNet}_N\) a category of social networks with probability distributions on messages.
+  \item Morphisms in \(\mathcal{C}_\Xi\) are recursive updates (e.g., time-evolution maps) and cross-stratum functors (e.g., projection from adelic states to EEG-relevant quantities).
+\end{itemize}
+
+The global dynamics can be viewed as an endofunctor
+\[
+  T : \mathcal{C}_\Xi \to \mathcal{C}_\Xi
+\]
+such that, at the level of objects, it reduces to equation~\eqref{eq:recursive-tensor-dynamics}.
+
+\subsection{Multiplicity Category \(\mathcal{C}_{\mathrm{mult}}\)}
+
+We fix a finite set of primes \(P = \{p_1, \dots, p_k\}\). Let \(\Delta(P)\) denote the simplex of probability distributions on \(P\), i.e.
+\[
+  \Delta(P) = \left\{ w : P \to [0,1] \,\bigg|\, \sum_{p \in P} w(p) = 1 \right\}.
+\]
+
+We define the \emph{multiplicity category} \(\mathcal{C}_{\mathrm{mult}}\) as follows:
+
+\begin{itemize}
+  \item Objects: elements \(w \in \Delta(P)\), interpreted as prime-indexed multiplicity spectra.
+  \item Morphisms: Markov operators \(K : \Delta(P) \to \Delta(P)\) of the form
+  \[
+    (Kw)(p_j) = \sum_i K_{ji} w(p_i),
+  \]
+  where \(K_{ji} \geq 0\) and \(\sum_j K_{ji} = 1\) for each \(i\).
+  \item Metric: a fixed metric \(d\) on \(\Delta(P)\), e.g.\ Jensen--Shannon distance or Wasserstein-1. Morphisms of interest are 1-Lipschitz with respect to \(d\).
+\end{itemize}
+
+In practice, Jensen--Shannon distance is especially convenient because it is symmetric, bounded, and provided directly in SciPy's distance module.\footnote{See \texttt{scipy.spatial.distance.jensenshannon} for the implementation.}
+
+\subsection{Multiplicity Functor \(\mathfrak{M}\)}
+
+We now define the multiplicity functor(s) \(\mathfrak{M}\).
+
+\begin{definition}[Multiplicity Functor]
+Let \(\mathcal{C}_\Xi\) be the category of stratum states and \(\mathcal{C}_{\mathrm{mult}}\) the multiplicity category defined above. A \emph{multiplicity functor} is a (covariant) functor
+\[
+  \mathfrak{M} : \mathcal{C}_\Xi \to \mathcal{C}_{\mathrm{mult}}
+\]
+that assigns to each state its prime-indexed multiplicity spectrum and to each morphism a Markov operator on \(\Delta(P)\).
+\end{definition}
+
+In practice, we define stratum-specific functors:
+\[
+  \mathfrak{M}_0 : \mathcal{A}_0 \to \mathcal{C}_{\mathrm{mult}},\quad
+  \mathfrak{M}_2 : \mathcal{A}_2 \to \mathcal{C}_{\mathrm{mult}},\quad
+  \mathfrak{M}_4 : \mathcal{A}_4 \to \mathcal{C}_{\mathrm{mult}},
+\]
+for the adelic, qualia, and social strata respectively, and then glue them into a single \(\mathfrak{M}\) on \(\mathcal{C}_\Xi\) by forming coproducts or products of categories.
+
+\subsection{Multiplicities for the Minimal Triad}
+
+\paragraph{Stratum 0: Adelic Toy Model.}
+Take \(P_0 \subseteq P\) and consider states
+\[
+  \Xi_{\text{adelic}} \in \prod_{p \in P_0} \mathbb{Q}_p^{n_p}.
+\]
+Define a local norm \(\|\Xi_{\text{adelic}}\|_p\) at each prime, for example by the sum of p-adic norms of coordinates, and set
+\[
+  w_{\text{adelic}}(p) = \frac{\|\Xi_{\text{adelic}}\|_p}{\sum_{q\in P_0} \|\Xi_{\text{adelic}}\|_q},\quad p \in P_0.
+\]
+This yields a probability distribution on \(P_0\), zero-extended to \(P\).
+
+\paragraph{Stratum 2: Qualia Operad (EEG).}
+Here, \(\Xi_{\text{qualia}}(t)\) is realized as multi-channel EEG time windows. The construction of \(\mathfrak{M}_2\) is detailed in Section~\ref{sec:m2-eeg}, where PSD estimates are integrated over prime-indexed frequency bins to yield multiplicity spectra \(w_{\text{qualia}}\).
+
+\paragraph{Stratum 4: Social Coherence.}
+States \(\Xi_{\text{social}}(t)\) are small agent networks with message distributions. A natural multiplicity map uses eigenvalues of a covariance or adjacency-derived matrix: sorted eigenvalues \(\lambda_r\) are mapped to primes \(p_r\), and
+\[
+  w_{\text{social}}(p_r) = \frac{\lambda_r}{\sum_i \lambda_i}.
+\]
+
+\subsection{Cross-Stratum Coherence}
+
+Let \(w_i(t) = \mathfrak{M}_i(\Xi_i(t))\) for \(i \in \{0,2,4\}\). Cross-stratum coherence is defined by inequalities of the form
+\begin{align}
+  d\big(w_0(t), w_2(t)\big) &\leq \varepsilon,\\
+  d\big(w_2(t), w_4(t)\big) &\leq \varepsilon,
+\end{align}
+for some tolerance \(\varepsilon > 0\). The goal of the dynamics~\eqref{eq:recursive-tensor-dynamics} is to evolve \(\Xi(t)\) such that these inequalities hold over extended time intervals. Empirically, \(d\) will be instantiated as Jensen--Shannon distance between multiplicity spectra.
+
+A forthcoming stability lemma will show that if the per-stratum update maps are Lipschitz in multiplicity space, then cross-stratum multiplicity distances remain bounded under the recursive dynamics.
+
+\section{EEG-Based Multiplicity Functor \texorpdfstring{\(\mathfrak{M}_2\)}{M2}}
+\label{sec:m2-eeg}
+
+\subsection{Design Decisions}
+
+We specify \(\mathfrak{M}_2\) as a fully determined pipeline from raw EEG data to multiplicity spectra.
+
+\paragraph{Prime Set and Base Frequency.}
+We fix the prime set
+\[
+  P = \{2,3,5,7,11,13\}
+\]
+and define prime-centered frequencies
+\[
+  f_p = f_0 \log p,\quad f_0 = 4 \text{ Hz}.
+\]
+This places all \(f_p\) approximately in the 2.5--11 Hz band, covering theta and alpha rhythms.
+
+\paragraph{Frequency Bins.}
+For each prime \(p\in P\), define a half-octave bin
+\[
+  \mathrm{bin}(p) = \left[ \frac{f_p}{\sqrt{2}}, f_p \sqrt{2} \right],
+\]
+and restrict analysis to the global frequency range 1--30 Hz.
+
+\subsection{Preprocessing Pipeline}
+
+We assume standard 64-channel EEG with 10--20 montage and sampling frequency \(\geq 500\) Hz.
+
+\begin{enumerate}[label=\arabic*., leftmargin=*]
+  \item \textbf{Data Loading and Montage.} Read raw EEG data (e.g., BIDS format) and apply a standard 10--20 montage.
+  \item \textbf{Filtering.} Apply a 1--30 Hz bandpass filter (zero-phase FIR) and, if necessary, a notch filter at 50 or 60 Hz plus relevant harmonics.
+  \item \textbf{Resampling.} Optionally resample to a common sampling frequency (e.g., 500 Hz) to standardize PSD parameters.
+  \item \textbf{Rereferencing.} Apply average reference after marking bad channels.
+  \item \textbf{Epoching.}
+  \begin{itemize}
+    \item Resting-state: non-overlapping 4-second epochs.
+    \item Task/interaction: 4-second sliding windows with 50\% overlap within relevant blocks.
+  \end{itemize}
+  \item \textbf{Artifact Rejection.}
+  \begin{itemize}
+    \item Mark bad channels by visual inspection, high-variance criteria, or automated routines.
+    \item Reject epochs where any channel exceeds 150~\(\mu\)V peak-to-peak amplitude.
+    \item Optionally run ICA to remove ocular artifacts, with parameters fixed a priori.
+  \end{itemize}
+\end{enumerate}
+
+\subsection{PSD Estimation}
+
+For each subject and each clean epoch \(E\), we compute channel-wise PSDs using Welch's method via MNE-Python:
+\begin{itemize}
+  \item PSD function: \(\texttt{epochs.compute\_psd(method="welch")}\),
+  \item Frequency range: \(f_{\mathrm{min}} = 1.0\) Hz, \(f_{\mathrm{max}} = 30.0\) Hz,
+  \item Segment length: \(n_{\mathrm{per\_seg}} = 2.0 \times \texttt{sfreq}\) (2 s segments),
+  \item Overlap: 50\% (i.e., \(n_{\mathrm{overlap}} = n_{\mathrm{per\_seg}}/2\)).
+\end{itemize}
+These choices align with standard spectral analysis practices in MNE-Python.\footnote{See MNE's documentation for \texttt{psd\_welch} and the tutorials on sensor-space spectral analysis.}
+
+Denote by \(S_c(f;E)\) the PSD for channel \(c\) in epoch \(E\).
+
+\subsection{Channel Weights and Robustness}
+
+To downweight noisy channels while respecting bad-channel annotations, we define weights \(\omega_c\) as follows:
+\begin{enumerate}[leftmargin=*]
+  \item Compute channel-wise variance \(\sigma_c^2\) across all epochs and time samples.
+  \item For channels marked as bad in \(\texttt{info['bads']}\), set \(\sigma_c^2 = +\infty\).
+  \item Define inverse-variance weights
+  \[
+    \omega_c = \frac{\sigma_c^{-2}}{\sum_{d} \sigma_d^{-2}},
+  \]
+  treating infinite variances as zero weights.
+\end{enumerate}
+These weights are fixed per subject and used when aggregating PSD across channels.
+
+\subsection{Global Multiplicity Spectrum}
+
+For each epoch \(E\), we define the global multiplicity spectrum \(w_E\) by:
+
+\begin{enumerate}[leftmargin=*]
+  \item For each prime \(p \in P\), let \(A_p(E)\) be the weighted PSD mass in \(\mathrm{bin}(p)\):
+  \[
+    A_p(E) = \sum_{c} \omega_c \int_{\mathrm{bin}(p)} S_c(f;E) \, df.
+  \]
+  Numerically, this is computed by summing PSD values over the frequency indices falling into the bin.
+  \item Normalize to obtain a probability distribution:
+  \[
+    w_E(p) = \frac{A_p(E)}{\sum_{q \in P} A_q(E)}.
+  \]
+\end{enumerate}
+
+Thus, the global multiplicity functor \(\mathfrak{M}_2\) is realized as
+\[
+  \mathfrak{M}_2(E) = w_E \in \Delta(P).
+\]
+
+\subsection{Regional Multiplicity Spectra}
+
+Let \(R\) be a set of anatomical regions (e.g., frontal, central, parietal, occipital) with fixed channel lists. For each region \(r\), define region-specific weights \(\omega_c^{(r)}\), e.g., uniform within region or inverse-variance restricted to the region.
+
+Then for each region \(r\) and epoch \(E\), define
+\[
+  A_p^{(r)}(E) = \sum_{c \in r} \omega_c^{(r)} \int_{\mathrm{bin}(p)} S_c(f;E)\,df,
+\]
+and
+\[
+  w_E^{(r)}(p) = \frac{A_p^{(r)}(E)}{\sum_{q\in P} A_q^{(r)}(E)}.
+\]
+
+This yields a regional multiplicity spectrum \(\mathfrak{M}_2^{(r)}(E) = w_E^{(r)}\) for each region, enabling topographic analyses of multiplicity structure.
+
+\subsection{Operadic Composition}
+
+At the level of multiplicity spectra, the operadic operations of time concatenation and region pooling are implemented as convex combinations:
+
+\paragraph{Time Concatenation.}
+Let \(E_1, \dots, E_n\) be epochs of durations \(T_i\) merged into a composite window \(E^\ast\). Define
+\[
+  w_{E^\ast}(p) = \frac{\sum_{i} T_i w_{E_i}(p)}{\sum_i T_i}.
+\]
+
+\paragraph{Region Pooling.}
+Let \(r_1, r_2\) be regions merged into \(r^\ast\) with mixing coefficient \(\alpha\). Set
+\[
+  w_{E}^{(r^\ast)}(p) = \alpha \, w_{E}^{(r_1)}(p) + (1-\alpha)\, w_{E}^{(r_2)}(p).
+\]
+
+These constructions are clearly Markov (stochastic linear maps) and thus define valid morphisms in \(\mathcal{C}_{\mathrm{mult}}\).
+
+\section{Coherence with Social Stratum}
+
+Let \(w_{\text{qualia}}(t) = \mathfrak{M}_2(\Xi_{\text{qualia}}(t))\) and \(w_{\text{social}}(t) = \mathfrak{M}_4(\Xi_{\text{social}}(t))\) be the multiplicity spectra for EEG and social data in matched time windows.
+
+\subsection{Jensen--Shannon Coherence Statistic}
+
+We define the global coherence at time \(t\) as the Jensen--Shannon distance
+\[
+  d_{\mathrm{JS}}\big(w_{\text{qualia}}(t), w_{\text{social}}(t)\big),
+\]
+and similarly regional coherence via
+\[
+  d_{\mathrm{JS}}\big(w_{\text{qualia}}^{(r)}(t), w_{\text{social}}^{(r)}(t)\big).
+\]
+
+The primary hypothesis is that under increased coupling (e.g., interactive social tasks versus rest), these distances decrease, indicating cross-stratum multiplicity alignment:
+\[
+  \mathbb{E}\big[d_{\mathrm{JS}}^{\text{rest}}\big] \;>\; \mathbb{E}\big[d_{\mathrm{JS}}^{\text{interaction}}\big].
+\]
+
+\subsection{Minimal \texorpdfstring{\(\mathfrak{M}_4\)}{M4} Placeholder}
+
+A concrete \(\mathfrak{M}_4\) can be instantiated by:
+\begin{itemize}
+  \item Constructing a covariance matrix of message counts or probabilities across agents.
+  \item Computing eigenvalues \(\lambda_r\), sorting them, and mapping rank \(r\) to prime \(p_r\).
+  \item Defining
+  \[
+    w_{\text{social}}(p_r) = \frac{\lambda_r}{\sum_i \lambda_i}.
+  \]
+\end{itemize}
+This parallel construction ensures that both EEG and social layers live in the same multiplicity space \(\Delta(P)\).
+
+\section{Code Skeleton for \texorpdfstring{\(\mathfrak{M}_2\)}{M2} and Coherence}
+
+This section presents a condensed version of the Python/MNE code skeleton implementing the EEG multiplicity pipeline. The code assumes MNE-Python, NumPy, and SciPy are installed.
+
+\subsection{Constants and Prime Bins}
+
+\begin{verbatim}
+import mne
+import numpy as np
+from scipy.spatial.distance import jensenshannon
+
+PRIMES = np.array([2, 3, 5, 7, 11, 13], dtype=float)
+F0 = 4.0  # Hz
+
+FMIN, FMAX = 1.0, 30.0
+N_PER_SEG_SECONDS = 2.0
+
+FP = F0 * np.log(PRIMES)
+BIN_LOW = FP / np.sqrt(2.0)
+BIN_HIGH = FP * np.sqrt(2.0)
+
+REGIONS = {
+    "frontal":   ["Fp1", "Fp2", "F3", "F4", "F7", "F8", "Fz"],
+    "central":   ["C3", "C4", "Cz"],
+    "parietal":  ["P3", "P4", "Pz"],
+    "occipital": ["O1", "O2", "Oz"],
+}
+\end{verbatim}
+
+\subsection{PSD and Channel Weights}
+
+\begin{verbatim}
+def compute_epoch_psd(epochs):
+    sfreq = epochs.info["sfreq"]
+    n_per_seg = int(N_PER_SEG_SECONDS * sfreq)
+    psd = epochs.compute_psd(
+        method="welch",
+        fmin=FMIN,
+        fmax=FMAX,
+        n_per_seg=n_per_seg,
+        n_overlap=n_per_seg // 2,
+        verbose=False,
+    )
+    freqs = psd.freqs
+    psd_data = psd.get_data()  # (n_epochs, n_channels, n_freqs)
+    return freqs, psd_data
+
+def compute_channel_weights(epochs):
+    data = epochs.get_data()  # (n_epochs, n_channels, n_times)
+    var = data.reshape(-1, data.shape[2]).var(axis=1)
+    var = var.reshape(data.shape[0], data.shape[1]).mean(axis=0)
+    bads = set(epochs.info.get("bads", []))
+    ch_names = epochs.ch_names
+    for idx, name in enumerate(ch_names):
+        if name in bads:
+            var[idx] = np.inf
+    inv_var = 1.0 / (var + 1e-12)
+    if np.isinf(inv_var).all():
+        inv_var = np.ones_like(inv_var)
+    weights = inv_var / inv_var.sum()
+    return weights  # (n_channels,)
+\end{verbatim}
+
+\subsection{Global and Regional Multiplicity Spectra}
+
+\begin{verbatim}
+def compute_w_qualia(freqs, psd_data, weights):
+    n_epochs, _, _ = psd_data.shape
+    n_primes = len(PRIMES)
+    w_global = np.zeros((n_epochs, n_primes))
+    idx_bins = [
+        np.where((freqs >= low) & (freqs <= high))[0]
+        for low, high in zip(BIN_LOW, BIN_HIGH)
+    ]
+    for e in range(n_epochs):
+        epoch_psd = psd_data[e]
+        A_p = np.zeros(n_primes)
+        for j, idx in enumerate(idx_bins):
+            if idx.size == 0:
+                continue
+            band_power = epoch_psd[:, idx].sum(axis=1)
+            A_p[j] = np.dot(weights, band_power)
+        denom = A_p.sum()
+        w_global[e] = A_p / denom if denom > 0 else np.ones(n_primes)/n_primes
+    return w_global
+
+def compute_w_qualia_regional(freqs, psd_data, epochs):
+    ch_names = epochs.ch_names
+    n_epochs = psd_data.shape[0]
+    n_primes = len(PRIMES)
+    idx_bins = [
+        np.where((freqs >= low) & (freqs <= high))[0]
+        for low, high in zip(BIN_LOW, BIN_HIGH)
+    ]
+    region_spectra = {}
+    for region, chans in REGIONS.items():
+        idx_ch = [ch_names.index(ch) for ch in chans if ch in ch_names]
+        if not idx_ch:
+            continue
+        weights_region = np.ones(len(idx_ch))
+        weights_region = weights_region / weights_region.sum()
+        w_reg = np.zeros((n_epochs, n_primes))
+        for e in range(n_epochs):
+            epoch_psd = psd_data[e, idx_ch, :]
+            A_p = np.zeros(n_primes)
+            for j, idx in enumerate(idx_bins):
+                if idx.size == 0:
+                    continue
+                band_power = epoch_psd[:, idx].sum(axis=1)
+                A_p[j] = np.dot(weights_region, band_power)
+            denom = A_p.sum()
+            w_reg[e] = A_p / denom if denom > 0 else np.ones(n_primes)/n_primes
+        region_spectra[region] = w_reg
+    return region_spectra
+\end{verbatim}
+
+\subsection{Coherence via Jensen--Shannon Distance}
+
+\begin{verbatim}
+def js_distance_matrix(w_a, w_b):
+    assert w_a.shape == w_b.shape
+    n_epochs = w_a.shape[0]
+    d_js = np.zeros(n_epochs)
+    for e in range(n_epochs):
+        d_js[e] = jensenshannon(w_a[e], w_b[e])
+    return d_js
+\end{verbatim}
+
+\subsection{End-to-End Subject Pipeline}
+
+\begin{verbatim}
+def run_subject_pipeline(raw_path, events=None, event_id=None,
+                         tmin=0.0, tmax=4.0):
+    raw = mne.io.read_raw(raw_path, preload=True)
+    raw.set_montage("standard_1020")
+    if raw.info["sfreq"] != 500.0:
+        raw.resample(500.0)
+    raw.filter(1.0, 30.0, fir_design="firwin")
+    raw.notch_filter(freqs=[50.0])
+
+    if events is None:
+        events = mne.make_fixed_length_events(raw, id=1, duration=4.0)
+        event_id = dict(rest=1) if event_id is None else event_id
+
+    epochs = mne.Epochs(
+        raw, events=events, event_id=event_id,
+        tmin=tmin, tmax=tmax, baseline=None, preload=True
+    )
+    reject_criteria = dict(eeg=150e-6)
+    epochs.drop_bad(reject=reject_criteria)
+
+    freqs, psd_data = compute_epoch_psd(epochs)
+    weights = compute_channel_weights(epochs)
+    w_global = compute_w_qualia(freqs, psd_data, weights)
+    w_regions = compute_w_qualia_regional(freqs, psd_data, epochs)
+    return epochs, w_global, w_regions
+\end{verbatim}
+
+This skeleton can be extended with a concrete \(\mathfrak{M}_4\) and social data ingestion to compute full cross-stratum coherence.
+
+\section{Outlook}
+
+The developments summarized here mark a transition from a high-level unification manifesto to a concrete, falsifiable research program. The next steps are:
+
+\begin{itemize}
+  \item Prove a stability lemma showing that Lipschitz dynamical updates in multiplicity space preserve bounded cross-stratum distances.
+  \item Instantiate \(\mathfrak{M}_4\) concretely on real social interaction data (e.g., chat logs, behavioral events) and integrate it with the EEG pipeline.
+  \item Run pilot analyses on public EEG datasets (e.g., resting-state or interaction datasets from OpenNeuro) to test the reliability and discriminability of prime-locked multiplicity spectra.
+\end{itemize}
+
+If successful, this line of work will supply both conceptual and empirical evidence that prime-indexed multiplicity is a useful invariant for describing recursive becoming across physical, neural, and social strata.
+
+\nocite{*}
+\bibliographystyle{plainnat}
+\bibliography{references} 
+\end{document}

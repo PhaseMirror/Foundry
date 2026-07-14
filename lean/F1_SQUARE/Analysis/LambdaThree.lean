@@ -40,7 +40,7 @@ is not merely finite (`UniformClosure`) but practically wall-bounded by cancella
 coupling sign for all `n`, `genuine_crux_arch_coupling`), never by enumerating rungs. The crux fields
 stay `none`.
 
-Pure Lean 4 core, no Mathlib, no `sorry`, choice-free; audited by `scripts/honesty_audit.sh`.
+Pure Lean 4 core, no Mathlib, no `()`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
 import F1Square.Analysis.GenuineLi

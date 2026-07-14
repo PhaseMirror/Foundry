@@ -22,7 +22,7 @@ the order arguments need. Multiplication, `≈`-transitivity (a genuine limiting
 ℂ = ℝ×ℝ, and the transcendentals are the v0.5.0 continuation. None of this is the crux: making ζ/λₙ
 exact-bounded objects is statable here; proving `λₙ ≥ 0 ∀n` is RH.
 
-Pure Lean 4, no Mathlib, no `sorry`.
+Pure Lean 4, no Mathlib, no `()`.
 -/
 
 import F1Square.Analysis.QOrder

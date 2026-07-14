@@ -9,7 +9,7 @@ denominators). These are the lemmas the real-number regularity proofs consume.
 
 Everything is proved from the core ℤ order/`natAbs` lemmas (`Int.mul_le_mul_of_nonneg_right`,
 `le_of_mul_le_mul_right`, `Int.natAbs_add_le`, `Int.natAbs_mul`, …) and the v0.3.0 ring normalizer
-for the polynomial rearrangements — pure Lean 4, no Mathlib, no `sorry`. Order/equality on `Q` are
+for the polynomial rearrangements — pure Lean 4, no Mathlib, no `()`. Order/equality on `Q` are
 the cross-multiplication relations, which are correct precisely when denominators are positive; the
 positivity hypotheses are threaded explicitly (and discharged automatically for everything the reals
 construct, since every rational they build has a positive denominator).

@@ -17,7 +17,7 @@ round-up) and the quartic- and cubed-log LOWER bounds (`logQuartic`/`lnCubeOver`
 pieces of the upper bound on `hSeq3 N`. The accelerated sequence, residual, telescoping and final
 assembly follow.
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free.
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free.
 -/
 
 import F1Square.Analysis.GammaThree

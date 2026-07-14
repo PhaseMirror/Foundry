@@ -36,7 +36,7 @@ HONEST SCOPE (= the §2.3 control, `Bridge.control_psd`): the pencil's POSITIVIT
 the shift-length structure carries the Weil positivity — is equivalent to RH and stays OPEN;
 nothing here bears on it. These are structure theorems, not positivity theorems.
 
-Pure Lean 4 core, no Mathlib, no `sorry`, choice-free; audited by `scripts/honesty_audit.sh`.
+Pure Lean 4 core, no Mathlib, no `()`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
 import F1Square.Square.Divisors

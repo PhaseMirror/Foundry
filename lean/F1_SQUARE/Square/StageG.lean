@@ -22,7 +22,7 @@ So positivity is not output, the crux fields stay `none`, and RH stays open — 
 line. `stageG_frontier_located` packages this as one adjudication theorem, the v0.21.0 analog of
 `genuine_crux_frontier_located`.
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 

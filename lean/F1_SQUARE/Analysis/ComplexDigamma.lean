@@ -14,7 +14,7 @@ witness (`CdigammaArg_witness`, mirroring `digammaArg_witness`), and the complex
 The per-term bounds, the regular partial sums, and the limit object `CDigamma` follow in later
 increments through the generic `RReg_of_real_bound` convergence engine.
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
 import F1Square.Analysis.ComplexInv

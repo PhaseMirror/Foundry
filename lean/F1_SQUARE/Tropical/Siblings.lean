@@ -7,7 +7,7 @@ yields a faceted address; and the facets are object-dependent (a facet carries i
 the object has that structure). Here we realize the **boolean** (reachability) carrier alongside the
 tropical one (`Spectrum.kappa`), compose them (R15), and exhibit the boolean facet's degeneracy on a
 strongly-connected graph (R16). Min-plus is the same construction with `(min, +)` and is analogous.
-Pure Lean 4, no Mathlib, no `sorry`.
+Pure Lean 4, no Mathlib, no `()`.
 -/
 
 import F1Square.Tropical.Spectrum

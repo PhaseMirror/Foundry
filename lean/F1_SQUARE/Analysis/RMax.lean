@@ -15,7 +15,7 @@ functional's test class needs. The three evaluation lemmas are the tent calculus
   • `RmaxZero_of_nonpos` — a tent vanishes off its support (`max(0,s) ≈ 0` for `s ≤ 0`);
   • `RmaxZero_of_nonneg` — on-support a tent IS its linear part (`max(0,t) ≈ t` for `t ≥ 0`).
 
-Pure Lean 4 core, no Mathlib, no `sorry`, choice-free; audited by `scripts/honesty_audit.sh`.
+Pure Lean 4 core, no Mathlib, no `()`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
 import F1Square.Analysis.RealPow

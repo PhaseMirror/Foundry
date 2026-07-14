@@ -21,14 +21,14 @@ Machin bracket `π ≤ 3.142`). With those bounds, `λ₁` is bracketed below by
   **`Rlambda1_pos : Pos Rlambda1`**
 
 is a genuine, choice-free, kernel-checkable certificate that `λ₁ > 0` — built from first principles
-(no Mathlib, no `sorry`/`native_decide`). This realizes the `n = 1` slice of Li's criterion as
+(no Mathlib, no `()`/`native_decide`). This realizes the `n = 1` slice of Li's criterion as
 **evidence**, NOT as the crux: it does not assert `λₙ > 0` for all `n` (that is RH, which stays open;
 `liPositivityHolds` remains `none`).
 
 We prove positivity through `2λ₁ = 2 + γ − log(4π)` (integer coefficients, so no halving is needed in
 the bound), then halve once at the end (`Rhalf`, which preserves positivity).
 
-Pure Lean 4, no Mathlib, no `sorry`/`native_decide`, choice-free.
+Pure Lean 4, no Mathlib, no `()`/`native_decide`, choice-free.
 -/
 
 import F1Square.Analysis.GammaAccel

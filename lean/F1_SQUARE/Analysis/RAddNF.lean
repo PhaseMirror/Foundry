@@ -15,7 +15,7 @@ reusable engine for the γ₂ regularity (cubic-log telescoping), the `λₙ` as
 tree into a list; `RsumL_perm` + `RsumL_cancel_head` reduce two lists to a common canonical
 multiset.
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free.
+Pure Lean 4 core, no Mathlib, no `()`/`native_decide`, choice-free.
 -/
 
 import F1Square.Analysis.RealPow

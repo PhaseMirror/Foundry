@@ -1,0 +1,465 @@
+% !TEX program = pdflatex
+\documentclass[11pt]{article}
+
+% -------------------------------------------------
+% PACKAGES
+% -------------------------------------------------
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath, amssymb, amsthm, mathtools}
+\usepackage{bm}
+\usepackage{siunitx}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{cleveref}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{caption}
+\usepackage{booktabs}
+
+% -------------------------------------------------
+% HYPERREF COLORS
+% -------------------------------------------------
+\definecolor{linkblue}{HTML}{0645AD}
+\definecolor{teal}{HTML}{0F766E}
+\definecolor{orange}{HTML}{B45309}
+\definecolor{gray70}{gray}{0.70}
+\definecolor{gray50}{gray}{0.50}
+\hypersetup{colorlinks=true,linkcolor=linkblue,citecolor=teal,urlcolor=linkblue}
+
+% -------------------------------------------------
+% LISTINGS (Python)
+% -------------------------------------------------
+\lstdefinestyle{py}{
+  language=Python,
+  basicstyle=\ttfamily\footnotesize,
+  keywordstyle=\bfseries\color{teal},
+  stringstyle=\color{orange},
+  commentstyle=\itshape\color{gray50},
+  showstringspaces=false,
+  columns=fullflexible,
+  keepspaces=true,
+  breaklines=true,
+  frame=single,
+  framerule=0.3pt,
+  rulecolor=\color{gray70},
+  numbers=left,
+  numberstyle=\tiny\color{gray50},
+  numbersep=8pt,
+  tabsize=2
+}
+
+% -------------------------------------------------
+% MATH MACROS
+% -------------------------------------------------
+\DeclarePairedDelimiter{\norm}{\lVert}{\rVert}
+\DeclarePairedDelimiter{\abs}{\lvert}{\rvert}
+\newcommand{\w}{\bm{w}}
+\newcommand{\bb}{\bm{b}}
+\newcommand{\LL}{\bm{L}}
+\newcommand{\Tbudget}{T}
+\newcommand{\GapLB}{\mathrm{GapLB}}
+\newcommand{\SlopeUB}{\mathrm{SlopeUB}}
+\newcommand{\Margin}{\mathrm{Margin}}
+
+\newtheorem{definition}{Definition}
+\newtheorem{proposition}{Proposition}
+\newtheorem{remark}{Remark}
+
+% -------------------------------------------------
+% TITLE
+% -------------------------------------------------
+\title{Mitobit (ACE/PETC Revision):\\A Certified Toy Pipeline for Resonant Eigenflow}
+\author{Tyler Van Osdol \& Ryan Van Gelder}
+\date{October 4, 2025}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We formalize a lightweight, reproducible revision of the \emph{Mitobit} demo that upgrades it from a terminal spectacle into a \emph{certified toy controller}. The revision adds an Arithmetic Control Engine (ACE; \cite{ACE}) safety envelope and Prime-Encoded Tensor Calculus (PETC; \cite{PETC}) invariants. Concretely: (i) proposals are projected onto a weighted-$\ell_1$ budget via soft-thresholding, (ii) each cycle emits \(\GapLB\), \(\SlopeUB\), and \(\Margin\) surrogates that gate actuation, and (iii) prime-signature conservation is checked to ensure lawful operations. We provide the minimal theory and a self-contained Python implementation suitable for CI and reproducible runs.
+\end{abstract}
+
+\section{Introduction}
+\label{sec:intro}
+The original \emph{Mitobit} program is an entertaining terminal theater: a pipeline transforms a prime-labeled lattice through a sequence of stages (``mitobit activation'' and ``eigenflow projection'') and renders a colorful verdict. To render the demo scientifically meaningful, we embed two IFMD components:
+\begin{enumerate}[leftmargin=2.2em]
+  \item \textbf{ACE safety envelope} (\cite{ACE}): a projection into a budgeted set complemented with simple spectral and slope surrogates that act as a \emph{sufficient} certificate for bounded behavior.
+  \item \textbf{PETC invariants} (\cite{PETC}): prime-axis signatures for tensors and a lawfulness test ensuring that operations do not introduce unsupported prime axes.
+\end{enumerate}
+The resulting system keeps the vibe (via a \texttt{--theater} mode) while becoming deterministic, testable, and analyzable.
+
+\section{ACE Safety Envelope}
+\label{sec:ace}
+Let $\w\in\mathbb{R}^d$ denote a per-cycle proposal vector (``logits''). Given positive weights $\bb\in\mathbb{R}^d$ and budget $\Tbudget>0$, define the weighted-$\ell_1$ ball
+\begin{equation}
+\mathcal{B}_{\ell_1}(\bb,\Tbudget)~:=~\Big\{\,x\in\mathbb{R}^d:~\sum_{i=1}^d b_i\,\abs{x_i}\le \Tbudget\,\Big\}.
+\end{equation}
+
+\paragraph{Projection.} The ACE envelope projects $\w$ onto $\mathcal{B}_{\ell_1}(\bb,\Tbudget)$ via the convex program $\min_x \tfrac{1}{2}\norm{x-\w}_2^2$ s.t. $\sum_i b_i\abs{x_i}\le\Tbudget$. The solution is the weighted soft-thresholding
+\begin{equation}
+\Pi_{\ell_1}(\w)_i~=~\operatorname{sign}(w_i)\,\max\big\{\,\abs{w_i}-\lambda\,b_i,~0\,\big\},
+\end{equation}
+where the dual parameter $\lambda\ge 0$ is chosen so that $\sum_i b_i\abs{\Pi_{\ell_1}(\w)_i}=\Tbudget$ whenever the constraint is active.
+
+\paragraph{Per-cycle ACE surrogates.} Let $\delta_S>0$ denote a spectral gap surrogate and $\LL\in\mathbb{R}^d_+$ a vector of local Lipschitz surrogates. For the projected vector $\widehat{\w}=\Pi_{\ell_1}(\w)$ and an observed lattice norm $\norm{X}_2$, we compute
+\begin{align}
+\GapLB &:= \delta_S - 2\sum_i b_i\,\abs{\widehat{w}_i},\\
+\SlopeUB &:= \sum_i L_i\,\abs{\widehat{w}_i},\\
+\Margin &:= 1-\varepsilon-\big(\,\norm{X}_2+\sum_i b_i\,\abs{\widehat{w}_i}\,\big),
+\end{align}
+with small slack $\varepsilon>0$.
+
+\begin{proposition}[ACE sufficient certificate]
+If $\GapLB>0$, $\SlopeUB<1$, and $\Margin>0$, then the cycle is \emph{ACE-safe} in the sense of the envelope: the proposal is budget-feasible, contracts relative to the surrogate gap, and obeys a one-step slope bound.\footnote{These are \emph{sufficient} conditions used as an operational gate; they do not claim global optimality.}
+\end{proposition}
+
+\section{PETC Prime-Signature Lawfulness}
+\label{sec:petc}
+In PETC, each coordinate axis $i$ is labeled by a prime $p_i$. For a vector $v\in\mathbb{R}^d$ and tolerance $\tau>0$, define the \emph{prime signature}
+\begin{equation}
+\mathsf{Sig}(v)~:=~\{\,p_i~:~\abs{v_i}>\tau\,\}.
+\end{equation}
+
+\begin{definition}[Lawfulness]
+An operation $v\mapsto v'$ is \emph{lawful} if $\mathsf{Sig}(v')\subseteq \mathsf{Sig}(v)$. Intuitively, projections/contractions should not activate \emph{new} prime axes.
+\end{definition}
+
+This predicate is used as a Boolean gate alongside the ACE surrogates. Only cycles that are both ACE-safe and PETC-lawful are permitted to actuate.
+
+\section{Implementation}
+\label{sec:impl}
+\Cref{lst:code} contains a compact Python implementation that realizes the above envelope and predicate while preserving the original demo's aesthetics (via \texttt{--theater}). It is self-contained, deterministic with \texttt{--seed}, and emits per-cycle JSONL logs for reproducibility.
+
+\begin{lstlisting}[style=py,caption={Mitobit (ACE/PETC revision). Self-contained script with weighted-$\ell_1$ projection, ACE surrogates, and PETC prime-lawfulness.},label={lst:code}]
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Mitobit — ACE/PETC revision
+---------------------------------------------------------
+Safety envelope (ACE: Tyler Van Osdol):
+  • Weighted-ℓ1 projection of 'w' onto Σ b_i |w_i| ≤ T
+  • Surrogates per-cycle: GapLB = δ_S − 2 Σ b_i |w_i|
+                          SlopeUB = Σ L_i |w_i|
+  • Margin = 1 − ε − (‖X‖ + Σ b_i |w_i|)
+
+Prime-law invariants (PETC: Ryan Van Gelder):
+  • Each axis tagged by a prime p_i
+  • 'conservation_ok' checks that lawful ops keep the active prime signature
+
+Run modes:
+  • --theater prints banners & gags (unchanged vibe)
+  • JSONL metrics emitted every cycle for reproducibility
+
+This file is intentionally self-contained and deterministic with --seed.
+"""
+
+import argparse
+import json
+import math
+import random
+import time
+from typing import Dict, List, Tuple
+
+# ---------- Small utils ----------
+
+def l2_norm(v: List[float]) -> float:
+    return math.sqrt(sum(x * x for x in v))
+
+def sign(x: float) -> float:
+    return -1.0 if x < 0 else (1.0 if x > 0 else 0.0)
+
+def dot(a: List[float], b: List[float]) -> float:
+    return sum(x * y for x, y in zip(a, b))
+
+def scalar_mul(alpha: float, v: List[float]) -> List[float]:
+    return [alpha * x for x in v]
+
+def add(a: List[float], b: List[float]) -> List[float]:
+    return [x + y for x, y in zip(a, b)]
+
+def soft_threshold_weighted_l1(w: List[float], b: List[float], T: float) -> List[float]:
+    """
+    Projection onto weighted-ℓ1 ball {x: Σ b_i |x_i| ≤ T} via dual λ-search.
+    Closed-form shrinkage: x_i = sign(w_i) * max(|w_i| - λ * b_i, 0).
+    """
+    current = sum(bi * abs(wi) for wi, bi in zip(w, b))
+    if current <= T:
+        return w[:]  # already feasible
+
+    # Upper bound for λ: if λ >= max(|w_i| / b_i) all coords go to 0
+    lam_lo, lam_hi = 0.0, max((abs(wi) / bi) for wi, bi in zip(w, b) if bi > 0)
+
+    for _ in range(60):  # binary search
+        lam = 0.5 * (lam_lo + lam_hi)
+        x_abs_shrunk = [max(abs(wi) - lam * bi, 0.0) for wi, bi in zip(w, b)]
+        s = sum(bi * xi for xi, bi in zip(x_abs_shrunk, b))
+        if s > T:
+            lam_lo = lam
+        else:
+            lam_hi = lam
+
+    lam = lam_hi
+    out = [sign(wi) * max(abs(wi) - lam * bi, 0.0) for wi, bi in zip(w, b)]
+    return out
+
+# ---------- ACE guard (safety envelope) ----------
+
+class ACEGuard:
+    """
+    Arithmetic Control Engine (ACE) envelope.
+    - Projects 'w' to Σ b_i |w_i| ≤ T
+    - Emits (GapLB, SlopeUB, Margin) surrogates
+    """
+    def __init__(
+        self,
+        b_weights: List[float],
+        L_weights: List[float],
+        T_budget: float = 1.0,
+        delta_S: float = 0.35,
+        eps: float = 0.05,
+    ):
+        assert len(b_weights) == len(L_weights)
+        self.b = b_weights
+        self.L = L_weights
+        self.T = T_budget
+        self.delta_S = delta_S
+        self.eps = eps
+
+    def project_and_certify(self, w: List[float], X_norm: float) -> Tuple[List[float], Dict[str, float]]:
+        w_proj = soft_threshold_weighted_l1(w, self.b, self.T)
+        l1w = sum(bi * abs(wi) for wi, bi in zip(w_proj, self.b))
+        gap_lb = self.delta_S - 2.0 * l1w
+        slope_ub = sum(Li * abs(wi) for wi, Li in zip(w_proj, self.L))
+        margin = 1.0 - self.eps - (X_norm + l1w)
+        safe = (gap_lb > 0.0) and (slope_ub < 1.0) and (margin > 0.0)
+        return w_proj, {
+            "L1w": round(l1w, 6),
+            "GapLB": round(gap_lb, 6),
+            "SlopeUB": round(slope_ub, 6),
+            "Margin": round(margin, 6),
+            "SAFE": bool(safe),
+        }
+
+# ---------- PETC prime-signature checks ----------
+
+def prime_signature(v: List[float], primes: List[int], tol: float = 1e-9) -> Tuple[int, Tuple[int, ...]]:
+    """
+    Prime-Encoded Tensor Calculus (PETC) signature.
+    We treat axis i as labeled by prime p_i; signature is the sorted tuple
+    of active primes whose coordinate magnitude exceeds 'tol'.
+    Returns (count_active, tuple_of_primes)
+    """
+    active = [p for x, p in zip(v, primes) if abs(x) > tol]
+    active_sorted = tuple(sorted(active))
+    return len(active_sorted), active_sorted
+
+
+def conservation_ok(before: List[float], after: List[float], primes: List[int], tol: float = 1e-9) -> bool:
+    """
+    Lawfulness check: projection/normalization should NOT introduce
+    *new* prime axes; we allow dropping negligible ones (contraction).
+    """
+    _, sig_b = prime_signature(before, primes, tol)
+    _, sig_a = prime_signature(after, primes, tol)
+    set_b, set_a = set(sig_b), set(sig_a)
+    # Lawful iff active-after ⊆ active-before
+    return set_a.issubset(set_b)
+
+# ---------- HoloCore (pipeline) ----------
+
+class HoloCore:
+    """
+    Pipeline: prime lattice -> mitobit activation -> eigenflow -> logits.
+    Keeps the flavor of the original demo but now plumbed through ACE/PETC.
+    """
+    def __init__(self, primes: List[int], seed: int = 42):
+        self.primes = primes[:]
+        random.seed(seed)
+        self.rng = random.Random(seed)
+
+        # Fixed theta for logits (deterministic)
+        self.theta = [self.rng.uniform(-0.3, 0.3) for _ in self.primes]
+
+    # ---- stages ----
+
+    def prime_lattice(self, cycle: int) -> List[float]:
+        """
+        Build a small vector tied to primes; deterministic per cycle.
+        """
+        base = []
+        for i, p in enumerate(self.primes):
+            # Mildly oscillatory amplitude anchored by prime
+            phase = 0.37 * (cycle + 1) * (i + 1)
+            amp = 0.5 + 0.5 * math.sin(phase)
+            base.append(amp * (1.0 / p))
+        return base
+
+    def mitobit_activation(self, v: List[float], gain: float = 2.0) -> List[float]:
+        return [math.tanh(gain * x) for x in v]
+
+    def eigenflow_projection(self, v: List[float]) -> List[float]:
+        nrm = l2_norm(v)
+        if nrm == 0.0:
+            return v[:]
+        return [x / nrm for x in v]
+
+    def logits(self, v: List[float]) -> List[float]:
+        # Simple linear readout + small deterministic “noise”
+        baseline = dot(v, self.theta)
+        return [baseline * vi + 0.03 * self.theta[i] for i, vi in enumerate(v)]
+
+# ---------- Theater bits (optional) ----------
+
+CSI = "\x1b["
+
+def color(txt: str, code: str) -> str:
+    return f"{CSI}{code}m{txt}{CSI}0m"
+
+def banner():
+    line = "=" * 54
+    print(color(line, "36"))
+    print(color("  ✦ MITOBIT — Resonant Eigenflow (ACE/PETC Certified Toy) ✦  ", "36"))
+    print(color(line, "36"))
+
+def render_verdict(metrics: Dict[str, float], lawful: bool, theater: bool):
+    verdict = "SAFE" if metrics["SAFE"] else "UNSAFE"
+    tag = ("LAWFUL" if lawful else "UNLAWFUL")
+    if theater:
+        shades = "32" if metrics["SAFE"] else "31"
+        print(color(f"  Verdict: {verdict} · PETC: {tag}", shades))
+        print(f"  GapLB={metrics['GapLB']} | SlopeUB={metrics['SlopeUB']} | Margin={metrics['Margin']} | L1w={metrics['L1w']}")
+    else:
+        print(f"{verdict} PETC={tag} GapLB={metrics['GapLB']} SlopeUB={metrics['SlopeUB']} Margin={metrics['Margin']} L1w={metrics['L1w']}")
+
+# ---------- Main loop ----------
+
+def main():
+    ap = argparse.ArgumentParser(description="Mitobit (ACE/PETC revision)")
+    ap.add_argument("--max-cycles", type=int, default=5, help="Number of cycles (no infinite loops).")
+    ap.add_argument("--seed", type=int, default=42, help="Deterministic seed.")
+    ap.add_argument("--primes", type=str, default="2,3,5,7,11", help="Comma-separated prime set.")
+    ap.add_argument("--budget", type=float, default=1.0, help="ACE Σ b_i|w_i| ≤ T budget T.")
+    ap.add_argument("--deltaS", type=float, default=0.35, help="ACE spectral gap surrogate δ_S.")
+    ap.add_argument("--eps", type=float, default=0.05, help="ACE small slack ε.")
+    ap.add_argument("--theater", action="store_true", help="Enable banners and colorized spectacle.")
+    ap.add_argument("--log", type=str, default="mitobit_run.jsonl", help="Per-cycle JSONL log path.")
+    args = ap.parse_args()
+
+    # Determinism everywhere
+    random.seed(args.seed)
+    primes = [int(x.strip()) for x in args.primes.split(",") if x.strip()]
+    primes = [p for p in primes if p > 1]
+
+    # Weights: mild bias by prime (heavier penalty for larger p is optional; keep neutral here)
+    b_weights = [1.0 for _ in primes]
+    # Lipschitz weights: slightly favor small primes; keep < 1 to allow room
+    L_weights = [1.0 / max(3.0, float(p)) for p in primes]
+
+    ace = ACEGuard(b_weights=b_weights, L_weights=L_weights, T_budget=args.budget, delta_S=args.deltaS, eps=args.eps)
+    hc = HoloCore(primes=primes, seed=args.seed)
+
+    if args.theater:
+        banner()
+
+    with open(args.log, "w") as logf:
+        for cycle in range(1, args.max_cycles + 1):
+            # Stage 1: lattice
+            X = hc.prime_lattice(cycle)
+            Xn = l2_norm(X)
+
+            # Stage 2: activation
+            A = hc.mitobit_activation(X)
+
+            # Stage 3: eigenflow (unit vector; PETC should preserve active axes)
+            E_before = A[:]
+            E = hc.eigenflow_projection(A)
+
+            # Stage 4: logits (proposal)
+            w_raw = hc.logits(E)
+
+            # ACE safety: projection + certificates
+            w_proj, metrics = ace.project_and_certify(w_raw, X_norm=Xn)
+
+            # PETC lawfulness check
+            lawful = conservation_ok(before=E_before, after=E, primes=primes)
+
+            # Decide actuation: only if SAFE & LAWFUL
+            actuate = metrics["SAFE"] and lawful
+
+            # Theater output
+            if args.theater:
+                print(color(f"\nCycle {cycle:02d}", "35"))
+                print(f"  Active primes: {primes}")
+                render_verdict(metrics, lawful, theater=True)
+                if actuate:
+                    print(color("  ▶ Actuation permitted (overdrive on).", "32"))
+                else:
+                    print(color("  ■ Actuation blocked (safe mode).", "31"))
+            else:
+                render_verdict(metrics, lawful, theater=False)
+
+            # Persist structured metrics
+            payload = {
+                "cycle": cycle,
+                "seed": args.seed,
+                "primes": primes,
+                "X_norm": round(Xn, 6),
+                "metrics": metrics,
+                "PETC_lawful": lawful,
+                "actuate": actuate,
+                "timestamp": time.time(),
+            }
+            logf.write(json.dumps(payload) + "\n")
+            logf.flush()
+
+            # Gentle pacing for theater mode
+            if args.theater:
+                time.sleep(0.25)
+
+    if args.theater:
+        print()
+        print(color("Run complete • metrics saved to JSONL • certified toy behavior achieved.", "36"))
+
+if __name__ == "__main__":
+    main()
+\end{lstlisting}
+
+\section{Reproducibility and Usage}
+\label{sec:repro}
+\paragraph{Deterministic runs.} Use a fixed seed and explicit prime set:
+\begin{verbatim}
+python mitobit.py --seed 7 --primes 2,3,5,7,11 --max-cycles 8 --theater
+\end{verbatim}
+
+\paragraph{JSONL schema.} Each cycle appends one line to \texttt{mitobit\_run.jsonl}:
+\begin{verbatim}
+{ "cycle": int, "seed": int, "primes": [int], "X_norm": float,
+  "metrics": {"L1w": float, "GapLB": float, "SlopeUB": float, "Margin": float, "SAFE": bool},
+  "PETC_lawful": bool, "actuate": bool, "timestamp": float }
+\end{verbatim}
+
+\section{Test Plan (CI-friendly)}
+\label{sec:tests}
+For default parameters, we recommend three unit tests:
+\begin{enumerate}[leftmargin=2.2em]
+  \item \textbf{Projection feasibility:} after calling \texttt{project\_and\_certify}, verify $\sum_i b_i\abs{\widehat{w}_i}\le \Tbudget$ up to numerical tolerance.
+  \item \textbf{Surrogate certificate:} under default \texttt{--budget}, \texttt{--deltaS}, and \texttt{--eps}, check that $\GapLB>0$, $\SlopeUB<1$, and $\Margin>0$ hold for at least one cycle.
+  \item \textbf{PETC lawfulness:} eigenflow projection never activates new prime axes: $\mathsf{Sig}(E)\subseteq\mathsf{Sig}(A)$ for all cycles.
+\end{enumerate}
+
+\section{Discussion}
+The envelope presented here mirrors the minimal ACE contract (budget feasibility, gap, and slope) and a PETC lawfulness predicate (signature non-expansion). While intentionally simple, these checks convert a playful demo into a reproducible artifact with \emph{operational guarantees}. Parameters $(\delta_S,\,\LL,\,\varepsilon)$ are user-tunable surrogates; tightening them increases conservatism.
+
+\section{Conclusion}
+We provided a compact formalization and a ready-to-run implementation that adds actionable safety and invariants to \emph{Mitobit}. This pattern---project, certify, and check signatures---is broadly reusable across IFMD-style pipelines.
+
+
+\nocite{*}
+\bibliographystyle{plain}
+\bibliography{references}
+\end{document}

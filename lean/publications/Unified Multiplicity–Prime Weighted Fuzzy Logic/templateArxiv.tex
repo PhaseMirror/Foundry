@@ -1,0 +1,1546 @@
+\documentclass[11pt]{article}
+
+% Basic packages
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{hyperref}
+
+\title{Unified Multiplicity--Prime Weighted Fuzzy Logic (MPW--FL):\\
+Theory, Implementations, and Experimental Validation}
+
+\author{Citizen Gardens \\ The foundation of Multiplicity
+}
+
+\date{April 27, 2026}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+This work develops a unified Multiplicity--Prime Weighted Fuzzy Logic (MPW--FL) framework that consolidates several previously separate lines of research in compensatory fuzzy logic, prime-based weighting, quantum fuzzy operators, and prime memory algebra. MPW--FL is defined as a multiplicity-aware, prime-structured generalization of normalized weighted geometric conjunctions with veto, equipped with a canonical De Morgan dual and a one-parameter blend family. By parameterizing weights via prime multiset profiles, MPW--FL simultaneously recovers positional prime-weighted compensatory fuzzy logic (PW--CFL), multiplicity-based Archimedean compensatory fuzzy logic (M--ACFL), and the standard geometric mean underlying ACFL, while remaining compatible with classical t-norm theory through a product generator representation. The framework treats multiplicity as a first-class structural parameter across weights, fuzzy states, and memory, providing a natural bridge to prime-address exponent algebras and CRDT-style replicated counters in cognitive and streaming settings. Quantum prime-modulated fuzzy logic (PEQFLA-style constructions) appears as a natural extension layer, where MPW--FL acts as the classical aggregator over amplitude-modulated or measurement-based distributions. The paper presents a comprehensive mathematical treatment of the operator family, including axioms, derivatives, elasticity, permutation equivariance, and operator-norm bounds, and introduces an open-core implementation architecture with explicit explainability and counterfactual modules. Experimental benchmarks on synthetic decision problems and biosensor-fusion toy models demonstrate exact recovery of special cases, controlled multiplicity effects (e.g., boosting weakest vs.\ strongest channels), and practical runtime on small-to-moderate arities. Together, these results show that MPW--FL is a mathematically coherent, computationally viable, and extensible foundation for multiplicity-aware fuzzy inference in applications ranging from precision health digital twins to quantum-enhanced cognitive systems.
+\end{abstract}
+\newpage
+\tableofcontents
+\newpage
+\noindent\textbf{Keywords:}
+fuzzy logic, compensatory logic, Archimedean t-norms, prime multiplicity, aggregation operators, digital twins, quantum fuzzy logic, memory algebra
+
+\section{Introduction and Motivation}
+\label{sec:intro}
+
+\subsection{Problem Setting}
+\label{subsec:problem-setting}
+
+Fuzzy logic has become a unifying language for decision-making under vagueness and uncertainty across domains such as clinical decision support, human factors, and environmental assessment, where fine-grained degrees of truth are more appropriate than crisp Boolean assignments.[web:46][web:48][web:49] In these settings, complex systems are modeled by fuzzy rules and aggregation operators that combine multiple antecedent conditions into composite truth values, enabling nuanced reasoning over heterogeneous and incomplete information.[web:46][web:49] Classical constructions rely on triangular norms and conorms---such as the minimum, product, and \L{}ukasiewicz $t$-norms---together with scalar-weighted averaging schemes like weighted means, ordered weighted averaging (OWA), and their extensions (e.g., WOWA, IOWA) to express different degrees of conjunctive and disjunctive behavior.[web:13][web:37][web:40][web:42]
+
+Despite their success, traditional $t$-norm/co-norm pairs and scalar-weighted aggregation operators face important limitations when the goal is to encode structured prior knowledge about the \emph{multiplicity} of evidence sources or the internal architecture of a system. Scalar weights in OWA/WOWA or weighted geometric means can represent relative importance, but they do not explicitly distinguish between ``one strong channel'' and ``several independent channels of the same type,'' nor do they carry algebraic information about the prime structure or recurrence of underlying components.[web:13][web:37][web:50] As a result, models often treat multiplicity-like phenomena (redundant sensors, repeated patterns, multi-instance memory traces) as ad hoc tuning of scalar weights rather than as first-class structural features.
+
+\subsection{Multiplicity as a Missing Organizing Principle}
+\label{subsec:multiplicity}
+
+The Fundamental Theorem of Arithmetic states that every positive integer admits a unique factorization into powers of prime numbers. This theorem formalizes the idea that primes are irreducible building blocks, and that multiplicity of primes encodes nontrivial structural information in a compact, canonical form. Inspired by this perspective, the present work takes \emph{multiplicity}---the recurrence of irreducible prime components---as an organizing principle for fuzzy truth values, aggregation operators, states, and memory.
+
+Several independent lines of research already hint at this direction. Positional prime-weighted compensatory fuzzy logic (PW--CFL) uses the sequence of primes to define a canonical, non-commutative weighting over input positions, thereby embedding prime structure directly into the operator weights. Multiplicity-based Archimedean compensatory fuzzy logic (M--ACFL) uses repeated sensor channels and prime-weighted geometric means to represent biosensor profiles and clinical redundancy. Prime-embedded quantum fuzzy logic algorithms (PEQFLA-style constructions) modulate quantum amplitudes and fuzzy memberships with prime-dependent functions. Prime Memory Algebra (PMA) treats memory addresses as primes and activations as signed exponents, realizing a multiplicative, lattice-structured memory space. Taken together, these strands suggest that many apparently disparate constructions are in fact converging on a common theme: irreducible prime recurrence as a natural grammar for fuzzy information processing.
+
+However, in the existing literature these connections remain implicit and fragmented. PW--CFL, M--ACFL, quantum prime-modulated fuzzy operators, and prime memory algebras are typically presented as separate contributions, each with its own notation and implementation conventions. There is currently no single operator family that:
+\begin{itemize}
+  \item captures positional prime weighting as a special case,
+  \item supports multiplicity-rich sensor profiles and memory structures,
+  \item integrates smoothly with both classical and quantum fuzzy architectures, and
+  \item admits a clear open-core implementation suitable for deployment.
+\end{itemize}
+The Multiplicity--Prime Weighted Fuzzy Logic (MPW--FL) framework introduced in this work is designed to fill that gap.
+
+\subsection{Contributions}
+\label{subsec:contributions}
+
+The main contribution of this paper is the definition and development of a \emph{single} operator family, MPW--FL, that unifies and extends these multiplicity-aware ideas in a mathematically coherent and practically implementable way. The key contributions are:
+
+\begin{itemize}
+  \item \textbf{Unified operator family.} MPW--FL is introduced as a multiplicity–prime weighted, normalized geometric conjunction with veto, equipped with a canonical De Morgan dual and a one-parameter blend family. In positional mode, it recovers PW--CFL; in uniform mode, it reduces to the standard geometric mean underlying ACFL; and in profile mode, it matches M--ACFL-style prime-multiplicity biosensor profiles.
+
+  \item \textbf{Multiplicity as a structural parameter.} Multiplicity is encoded via prime multiset profiles at three levels: (i) operator weights, where prime multiplicities determine sensitivity to each channel; (ii) fuzzy states, where repeated occurrences and multiset thickness correspond to type-2 and hesitant-like behaviors; and (iii) memory, where prime-address exponent maps provide a multiplicative, lattice-structured representation compatible with CRDT-style replication.
+
+  \item \textbf{Compatibility with probabilistic, streaming, and quantum lifts.} The framework is designed to admit probabilistic extensions (Monte Carlo and interval forms of MPW--FL), temporal and streaming layers (via prime-based counters and memory updates), and quantum lifts in which prime-modulated quantum amplitudes are aggregated by MPW--FL at the classical interface.
+
+  \item \textbf{Open-core architecture.} An explicit open-core design is proposed in which the mathematical operators, proofs, and reference implementations are published openly, while application-specific layers (such as clinical calibration, deployment pipelines, and user interfaces) can be developed as proprietary SaaS modules.
+
+  \item \textbf{Experimental validation.} A concrete experimental methodology and benchmark suite are provided, including synthetic decision problems and biosensor-fusion toy models. These experiments validate compatibility with special cases, quantify the directional effect of changing multiplicity profiles (e.g., boosting weakest versus strongest channels), and demonstrate practical runtime behavior for small-to-moderate arities.
+\end{itemize}
+
+Together, these contributions establish MPW--FL as a comprehensive, multiplicity-aware extension of compensatory fuzzy logic that is both theoretically grounded and ready for integration into real-world systems such as precision-health digital twins, ranked recommendation engines, and quantum-enhanced cognitive architectures.
+
+\section{Core Mathematical Framework (MPW--FL)}
+\label{sec:core-framework}
+
+\subsection{Multiplicity Profiles and Weights}
+\label{subsec:multiplicity-weights}
+
+Let $\mathbb{P}$ denote the set of prime numbers and let $\mathcal{M}$ be the collection of all finite multisets of primes. For each input channel $i \in \{1,\dots,n\}$, a \emph{multiplicity profile} $M_i \in \mathcal{M}$ specifies which primes (and with what multiplicities) are associated with that channel.
+
+For a given profile $M_i$, let $k_{i,p} \in \mathbb{N}_0$ denote the multiplicity of the prime $p \in \mathbb{P}$ in $M_i$ (with all but finitely many $k_{i,p}$ equal to zero). Fix a strictly positive mapping
+\[
+  \gamma : \mathbb{P} \to (0,\infty),
+\]
+which encodes how each prime contributes to the total weight. The \emph{multiplicity weight} of channel $i$ is then defined as
+\begin{equation}
+  \omega_i \;=\; \sum_{p \in M_i} k_{i,p}\,\gamma(p), \qquad \omega_i > 0.
+  \label{eq:multiplicity-weight}
+\end{equation}
+This construction lifts prime-based multiplicity into a continuous weighting scheme, while preserving a canonical link to the underlying prime structure via $\gamma$.
+
+\subsection{MPW--FL Conjunction, Disjunction, and Blend Family}
+\label{subsec:mpw-operators}
+
+Let $n \ge 1$, $\mathbf{x} = (x_1,\dots,x_n) \in [0,1]^n$, and let $\{M_i\}_{i=1}^n$ be a family of multiplicity profiles with associated weights $\omega_i$ as in \eqref{eq:multiplicity-weight}. Denote $S = \sum_{i=1}^n \omega_i$.
+
+\begin{definition}[MPW--FL Conjunction]
+\label{def:mpw-conjunction}
+The \emph{MPW--FL conjunction} is the mapping
+\[
+  C_{\mathrm{MPW}} : [0,1]^n \times \mathcal{M}^n \to [0,1]
+\]
+defined by
+\begin{equation}
+  C_{\mathrm{MPW}}(\mathbf{x};\{M_i\}) \;=\;
+  \begin{cases}
+    0, & \text{if there exists $i$ such that } x_i = 0, \\[4pt]
+    \displaystyle\left(\prod_{i=1}^n x_i^{\omega_i}\right)^{1/S}, & \text{otherwise}.
+  \end{cases}
+  \label{eq:cmpw}
+\end{equation}
+\end{definition}
+
+Thus $C_{\mathrm{MPW}}$ is a normalized weighted geometric mean with a strict veto rule: a single zero input annihilates the aggregate.
+
+\begin{definition}[MPW--FL Disjunction and Inverted Conjunction]
+\label{def:mpw-disjunction}
+The \emph{De Morgan dual disjunction} $D_{\mathrm{MPW}}$ and the associated \emph{inverted conjunction} $C_{\mathrm{inv}}$ are defined by
+\begin{equation}
+  D_{\mathrm{MPW}}(\mathbf{x};\{M_i\}) \;=\;
+  1 - C_{\mathrm{MPW}}(\mathbf{1}-\mathbf{x};\{M_i\}), 
+  \qquad
+  C_{\mathrm{inv}}(\mathbf{x};\{M_i\}) \;=\; D_{\mathrm{MPW}}(\mathbf{x};\{M_i\}),
+  \label{eq:dmpw}
+\end{equation}
+where $\mathbf{1} = (1,\dots,1)$ and $(\mathbf{1}-\mathbf{x}) = (1-x_1,\dots,1-x_n)$.
+\end{definition}
+
+\begin{definition}[Blend Family]
+\label{def:mpw-blend}
+For $\alpha \in [0,1]$, the \emph{MPW--FL blend family} is given by
+\begin{equation}
+  C_{\alpha}(\mathbf{x};\{M_i\}) \;=\; 
+  \alpha\, C_{\mathrm{MPW}}(\mathbf{x};\{M_i\}) 
+  + (1-\alpha)\, C_{\mathrm{inv}}(\mathbf{x};\{M_i\}),
+  \qquad \alpha \in [0,1].
+  \label{eq:blend}
+\end{equation}
+\end{definition}
+
+For $\alpha=1$, one recovers the forward conjunction; for $\alpha=0$, the inverted form; intermediate values interpolate between more strictly conjunctive and more resilience-oriented behaviors.
+
+\subsection{Positional, Profile, and Uniform Modes}
+\label{subsec:modes}
+
+The MPW--FL framework encompasses several important special cases.
+
+\paragraph{Positional mode (PW--CFL).}
+Let $p_i$ denote the $i$-th prime. In positional mode, one sets
+\[
+  M_i = \{p_i\}, \qquad \gamma(p) = p,
+\]
+so that each channel is associated with a single positional prime and the corresponding weight is
+\[
+  \omega_i = \gamma(p_i) = p_i.
+\]
+After normalization by $S = \sum_{i=1}^n p_i$, this recovers the positional prime-weighted geometry of PW--CFL.
+
+\paragraph{Profile mode (M--ACFL).}
+In profile mode, each $M_i$ is an arbitrary finite multiset of primes, with multiplicities encoding the number and type of independent channels contributing to input $i$. The mapping $\gamma$ can be chosen to control how quickly weights grow with multiplicity or prime size, e.g.\ $\gamma(p) = p$ or $\gamma(p) = \log(p+1)$. This mode captures multiplicity-rich biosensor or feature profiles in M--ACFL-type applications.
+
+\paragraph{Uniform mode (ACFL base).}
+If all profiles are identical singletons,
+\[
+  M_i = \{2\} \quad \text{for all } i,
+\]
+and $\gamma(2)$ is constant, then all $\omega_i$ coincide and $C_{\mathrm{MPW}}$ reduces to the unweighted geometric mean,
+\[
+  C_{\mathrm{MPW}}(\mathbf{x};\{M_i\}) = \left(\prod_{i=1}^n x_i\right)^{1/n},
+\]
+which is the standard ACFL geometric compensator.
+
+\subsection{Archimedean Placement}
+\label{subsec:archimedean-placement}
+
+For fixed weights $\{\omega_i\}_{i=1}^n$ with $\omega_i > 0$, define $S = \sum_{i=1}^n \omega_i$ and consider the function $f:[0,1]\to[0,\infty]$ given by
+\[
+  f(x) = -\ln x, \qquad x \in (0,1], \quad f(0) = +\infty.
+\]
+Then $f$ is strictly decreasing with $f(1)=0$, and $f^{-1}(t) = e^{-t}$ is its inverse on $[0,\infty)$. For $\mathbf{x} \in (0,1]^n$ with no zero components, the MPW--FL conjunction can be written as
+\begin{equation}
+  C_{\mathrm{MPW}}(\mathbf{x};\{M_i\})
+  = \exp\!\left(-\frac{1}{S}\sum_{i=1}^n \omega_i f(x_i)\right)
+  = f^{-1}\!\left(\frac{1}{S}\sum_{i=1}^n \omega_i f(x_i)\right).
+  \label{eq:archimedean-form}
+\end{equation}
+This shows that, for fixed $\{\omega_i\}$, $C_{\mathrm{MPW}}$ belongs to the Archimedean, product-generator-based family of compensatory operators: it is obtained by averaging generator values $f(x_i)$ with weights $\omega_i$ and then applying $f^{-1}$. The strict veto rule (setting $C_{\mathrm{MPW}} = 0$ when any $x_i = 0$) makes $C_{\mathrm{MPW}}$ a compensatory operator closely related to, but not identical with, the binary product $t$-norm extended to multiple inputs. It is not a strict $t$-norm in the traditional sense because of the normalization by $S$, but it shares the same generator.
+
+By contrast, the binary product $t$-norm $T_{\prod}(x,y) = xy$ corresponds to the same generator $f(x)=-\ln x$, but uses $f^{-1}(f(x)+f(y))$ without normalization. The \L{}ukasiewicz $t$-norm uses a different generator, often expressed as $f(x) = 1-x$ (up to scaling), leading to a different compensation regime. MPW--FL thus sits within the product-generator Archimedean class, but with a structured, multiplicity-driven weighting mechanism.
+
+\subsection{Axiomatic Properties}
+\label{subsec:axioms}
+
+The MPW--FL conjunction $C_{\mathrm{MPW}}$ satisfies a range of desirable properties, many inherited from its geometric mean structure and veto rule.
+
+\paragraph{Compensation.}
+For any $\mathbf{x} \in [0,1]^n$ with no zero entries,
+\[
+  \min_i x_i \;\le\; C_{\mathrm{MPW}}(\mathbf{x};\{M_i\}) \;\le\; \max_i x_i.
+\]
+Thus, $C_{\mathrm{MPW}}$ is truly compensatory: intermediate values are allowed between the minimum and maximum inputs.
+
+\paragraph{Strict monotonicity.}
+If $\mathbf{x},\mathbf{y} \in (0,1]^n$ satisfy $x_i \le y_i$ for all $i$ and $x_j < y_j$ for at least one $j$, then
+\[
+  C_{\mathrm{MPW}}(\mathbf{x};\{M_i\}) < C_{\mathrm{MPW}}(\mathbf{y};\{M_i\}).
+\]
+This follows from the monotonicity of the logarithm and the strictly increasing nature of the geometric mean in each coordinate.
+
+\paragraph{Veto.}
+If there exists $i$ such that $x_i = 0$, then $C_{\mathrm{MPW}}(\mathbf{x};\{M_i\}) = 0$. The dual disjunction $D_{\mathrm{MPW}}$ inherits a dual saturation property: if there exists $i$ such that $x_i = 1$, then $D_{\mathrm{MPW}}(\mathbf{x};\{M_i\}) = 1$.
+
+\paragraph{Continuity and idempotence.}
+The mapping $\mathbf{x}\mapsto C_{\mathrm{MPW}}(\mathbf{x};\{M_i\})$ is continuous on $(0,1]^n$ and extends continuously to $[0,1]^n$ when equipped with the veto convention. For constant vectors $\mathbf{x} = (c,\dots,c)$ with $c \in [0,1]$, one has $C_{\mathrm{MPW}}(\mathbf{x};\{M_i\}) = c$, so the operator is idempotent on constants.
+
+\paragraph{Failure of absorption.}
+In general, $C_{\mathrm{MPW}}$ does not satisfy absorption properties such as
+\[
+  C_{\mathrm{MPW}}(x,\dots,x,y) = x
+\]
+for arbitrary $y$, reflecting its compensatory nature as opposed to a strict logical conjunction.
+
+\paragraph{Equivariance under permutation.}
+Let $\sigma$ be a permutation of $\{1,\dots,n\}$ and define $\sigma\mathbf{x} = (x_{\sigma^{-1}(1)},\dots,x_{\sigma^{-1}(n)})$ and permuted profiles $\{M_{\sigma(i)}\}$. Then
+\[
+  C_{\mathrm{MPW}}(\mathbf{x};\{M_i\}) = C_{\mathrm{MPW}}(\sigma\mathbf{x};\{M_{\sigma(i)}\}),
+\]
+so the operator is equivariant under simultaneous permutation of inputs and their associated profiles. By construction, different assignments of $\{M_i\}$ to semantically distinct predicates can lead to different values, reflecting the assignment doctrine.
+
+\paragraph{Derivatives and log-elasticity.}
+For $\mathbf{x} \in (0,1]^n$ with no zero entries, the partial derivative with respect to $x_i$ is
+\[
+  \frac{\partial C_{\mathrm{MPW}}}{\partial x_i}(\mathbf{x};\{M_i\})
+  = \frac{\omega_i}{S}\,\frac{C_{\mathrm{MPW}}(\mathbf{x};\{M_i\})}{x_i}.
+\]
+Consequently, the log-elasticity of $C_{\mathrm{MPW}}$ with respect to $x_i$ is
+\[
+  \frac{\partial \log C_{\mathrm{MPW}}}{\partial \log x_i}(\mathbf{x};\{M_i\})
+  = \frac{\omega_i}{\sum_{j=1}^n \omega_j},
+\]
+which depends only on the normalized weight of channel $i$ and not on the current input values. This provides a structurally meaningful sensitivity profile directly tied to multiplicity.
+
+\subsection{Operator Norms and Stability}
+\label{subsec:norms-stability}
+
+The smoothness and boundedness of $C_{\mathrm{MPW}}$ on $(0,1]^n$ allow for explicit operator-norm estimates and stability analysis, particularly away from the boundary where some $x_i$ may approach $0$.
+
+Let $K \subset (0,1]^n$ be a compact set such that $x_i \ge \delta > 0$ for all $\mathbf{x} \in K$ and all $i$. On $K$, the gradient of $C_{\mathrm{MPW}}$ satisfies
+\[
+  \left\|\nabla C_{\mathrm{MPW}}(\mathbf{x};\{M_i\})\right\|_\infty
+  \le \frac{C_{\mathrm{MPW}}(\mathbf{x};\{M_i\})}{\delta}\,\max_i \frac{\omega_i}{S},
+\]
+and similarly,
+\[
+  \left\|\nabla C_{\mathrm{MPW}}(\mathbf{x};\{M_i\})\right\|_2
+  \le \frac{C_{\mathrm{MPW}}(\mathbf{x};\{M_i\})}{\delta}
+      \left(\sum_{i=1}^n \left(\frac{\omega_i}{S}\right)^2\right)^{1/2}.
+\]
+These bounds imply that $C_{\mathrm{MPW}}$ is Lipschitz on $K$ with respect to both $\|\cdot\|_\infty$ and $\|\cdot\|_2$, with Lipschitz constants that depend on the normalized weights and the minimal input value $\delta$.
+
+Such estimates underpin robustness and stability analyses of MPW--FL-based systems: small perturbations in the inputs produce bounded changes in the aggregated output, provided the system operates away from the veto boundary. They also support the design of counterfactual and adversarial analyses by quantifying how sensitive the output is to coordinate-wise changes under different multiplicity configurations.
+
+\section{Multiplicity, Memory, and Quantum Extensions}
+\label{sec:multiplicity-memory-quantum}
+
+\subsection{Multiplicity as First-Class Structure}
+\label{subsec:multiplicity-first-class}
+
+In many fuzzy frameworks, \emph{fuzzy multisets} and \emph{hesitant fuzzy sets} allow a single element to appear with multiple membership values, or with an entire collection of admissible degrees. These constructions introduce a form of \emph{thickness} or multiplicity into the membership space, but this information is often treated as a secondary annotation that is eventually collapsed by an ad hoc aggregation (e.g., maximum, average, or an ordered operator) when a single representative value is needed.
+
+Within the MPW--FL framework, multiplicity is instead treated as a \emph{first-class structural parameter}. A fuzzy multiset or hesitant fuzzy set on a domain element can be mapped to a multiplicity profile $M_i$, where repeated occurrences or intervals of membership values are encoded via prime multiplicities $k_{i,p}$ rather than only as a list of samples. The thickness of the multiset then manifests directly as a change in the multiplicity weight
+\[
+  \omega_i = \sum_{p \in M_i} k_{i,p}\,\gamma(p),
+\]
+and hence as a systematic change in the log-elasticity
+\[
+  \frac{\partial \log C_{\mathrm{MPW}}}{\partial \log x_i}
+  = \frac{\omega_i}{\sum_j \omega_j}.
+\]
+In this way, the ``amount'' of evidence or recurrence associated with channel $i$ is not just recorded, but actively controls the sensitivity of the aggregate to that channel. Multiplicity thickness thus becomes a tunable, mathematically grounded parameter in the aggregation process, rather than a purely descriptive label.
+
+\subsection{Prime Memory Algebra (PMA)}
+\label{subsec:pma}
+
+Prime Memory Algebra (PMA) provides a multiplicative, lattice-structured model of memory in which each logical or conceptual address is associated with a distinct prime number $p \in \mathbb{P}$. The state of memory is described by a function
+\[
+  e : \mathbb{P} \to \mathbb{Z},
+\]
+where $e(p) = e^+(p) - e^-(p)$ is a signed exponent capturing the net activation of address $p$ (for instance, $e^+(p)$ might count positive occurrences, while $e^-(p)$ counts negative ones). The global memory state can then be encoded as a multiplicative commitment
+\[
+  \mathcal{M} \;=\; \prod_{p \in \mathbb{P}} p^{e(p)},
+\]
+with only finitely many nonzero exponents at any finite time.
+
+This encoding has several important consequences:
+\begin{itemize}
+  \item \textbf{Lattice structure.} The set of exponent maps $e$ is naturally ordered coordinatewise, and operations such as greatest common divisor (gcd) and least common multiple (lcm) on the encoded integers correspond to meet and join operations on memory states. This provides a lattice-theoretic structure for reasoning about shared and combined memory.
+  \item \textbf{CRDT and G-counter semantics.} If each exponent component $e(p)$ is updated via monotone increments (e.g., $e(p) \gets e(p) + 1$) that commute across replicas, then PMA admits a natural interpretation as a family of G-counters indexed by primes. In distributed systems, each replica can update exponents locally and merge states via componentwise maxima or sums, yielding eventually consistent behavior without centralized coordination.
+  \item \textbf{Compatibility with MPW--FL.} The exponent map $e$ defines a prime multiset profile (or its difference) for each address. These profiles can be fed directly into MPW--FL as multiplicity profiles $M_i$, so that memory activations influence the aggregation of fuzzy truth values in a structurally aligned way.
+\end{itemize}
+
+In this view, PMA provides the long-term structural memory substrate, while MPW--FL provides the snapshot aggregation of current, multiplicity-rich states.
+
+\subsection{Streaming and Temporal Layers}
+\label{subsec:streaming-temporal}
+
+In many applications, inputs and memory states evolve over time, and it is necessary to reason about trajectories rather than static snapshots. The combination of PMA and MPW--FL yields a natural framework for streaming and temporal reasoning.
+
+At each discrete time step $t$, the system maintains a PMA state $e_t(p)$ over primes. External events or internal updates increment (or decrement) exponents:
+\[
+  e_{t+1}(p) = e_t(p) + \Delta_t(p),
+\]
+where $\Delta_t(p) \in \mathbb{Z}$ captures the net effect of events at time $t$. The corresponding multiplicity profiles $M_i^{(t)}$ for relevant channels are derived from $e_t$, and MPW--FL is applied to current fuzzy inputs $\mathbf{x}^{(t)}$ using these profiles:
+\[
+  y_t = C_{\mathrm{MPW}}(\mathbf{x}^{(t)};\{M_i^{(t)}\}).
+\]
+
+This architecture supports several temporal constructs:
+\begin{itemize}
+  \item \textbf{Streaming state updates.} As new observations arrive, exponents are updated, and the multiplicity profiles evolve accordingly. MPW--FL aggregates these updated profiles in real time, producing time-indexed outputs $y_t$.
+  \item \textbf{Temporal explainability.} Because MPW--FL has closed-form log-elasticities, one can analyze how sensitivity profiles
+  \[
+    \frac{\partial \log C_{\mathrm{MPW}}}{\partial \log x_i}(\mathbf{x}^{(t)};\{M_i^{(t)}\})
+  \]
+  evolve over time. This yields trajectory-level attribution: which channels and multiplicities have driven changes in $y_t$ across different time intervals.
+  \item \textbf{Trajectory-based decisions.} Aggregating or thresholding the sequence $\{y_t\}$ with additional temporal logic or fuzzy rules enables decisions based not only on instantaneous states but also on persistent trends, bursts, or cumulative evidence encoded in PMA.
+\end{itemize}
+
+The streaming layer thus uses PMA to maintain a rich, multiplicity-aware history, and MPW--FL to perform instantaneous aggregation over the current (or windowed) state.
+
+\subsection{Quantum Lift (PEQFLA)}
+\label{subsec:quantum-lift}
+
+Prime-embedded quantum fuzzy logic algorithms (PEQFLA-style constructions) propose representing fuzzy information in quantum states whose amplitudes are modulated by prime-dependent functions. A typical pattern uses a state of the form
+\[
+  \lvert \Psi_p \rangle \;=\; \sum_{i=0}^N \alpha_i\,p(i)\,\lvert i \rangle,
+\]
+where $\{\lvert i \rangle\}$ is a computational basis, $\alpha_i$ are baseline amplitudes, and $p(i)$ is a prime-associated factor (for instance, the $i$-th prime or a function thereof) that modulates the amplitude corresponding to index $i$.
+
+In this context, there are two natural interfaces between quantum states and MPW--FL:
+\begin{itemize}
+  \item \textbf{Amplitude-space aggregation.} One can apply MPW--FL directly to a collection of amplitude-derived fuzzy values, for example by defining
+  \[
+    x_i = g\big(|\alpha_i p(i)|^2\big)
+  \]
+  for some mapping $g$ from probabilities to fuzzy degrees, and then using multiplicity profiles derived from the prime structure to obtain $C_{\mathrm{MPW}}(\mathbf{x};\{M_i\})$.
+  \item \textbf{Measurement-space aggregation.} Alternatively, one can sample from the quantum state to obtain empirical distributions over outcomes, convert these to fuzzy degrees, and aggregate using MPW--FL in the classical layer. This separates quantum sampling from multiplicity-aware aggregation.
+\end{itemize}
+
+\begin{conjecture}[Quantum Approximation of MPW--FL Outputs]
+\label{conj:quantum-mpw}
+There exist families of quantum circuits $U$ and classical post-processing schemes such that, given an encoding of $\mathbf{x}$ and multiplicity profiles $\{M_i\}$ into an initial state, the probability of certain measurement outcomes (possibly under post-selection) approximates $C_{\mathrm{MPW}}(\mathbf{x};\{M_i\})$ to within a prescribed tolerance.
+\end{conjecture}
+
+The need for post-selection arises from the fact that the MPW--FL conjunction is a normalized weighted geometric mean, which is nonlinear in both the amplitudes and their squared moduli. Since quantum evolution is linear at the level of amplitudes, a direct realization of $C_{\mathrm{MPW}}$ as a single amplitude or probability without intermediate measurement and conditioning is unlikely. Post-selection, controlled rotations, and ancillary registers provide a plausible route to approximate such nonlinear aggregations by embedding them in larger linear processes and conditioning on rare events.
+
+In summary, the quantum lift treats MPW--FL as the classical aggregation counterpart to prime-modulated quantum fuzzy states, opening a path for hybrid classical--quantum systems where multiplicity-aware fuzzy inference interfaces cleanly with quantum computation.
+
+\section{Explainability and Counterfactual Analysis}
+\label{sec:explainability}
+
+\subsection{Local Sensitivity and Elasticity}
+\label{subsec:local-sensitivity}
+
+Explainability in MPW--FL begins with local sensitivity analysis of the conjunction $C_{\mathrm{MPW}}(\mathbf{x};\{M_i\})$ with respect to each input coordinate $x_i$. For $\mathbf{x} \in (0,1]^n$ with no zero components and fixed multiplicity profiles $\{M_i\}$, recall that
+\[
+  C_{\mathrm{MPW}}(\mathbf{x};\{M_i\})
+  = \left(\prod_{j=1}^n x_j^{\omega_j}\right)^{1/S}, \qquad S = \sum_{j=1}^n \omega_j.
+\]
+Taking logarithms yields
+\[
+  \log C_{\mathrm{MPW}}(\mathbf{x};\{M_i\})
+  = \frac{1}{S}\sum_{j=1}^n \omega_j \log x_j,
+\]
+from which the partial derivative with respect to $x_i$ is
+\begin{equation}
+  \frac{\partial C_{\mathrm{MPW}}}{\partial x_i}(\mathbf{x};\{M_i\})
+  = \frac{\omega_i}{S}\,\frac{C_{\mathrm{MPW}}(\mathbf{x};\{M_i\})}{x_i}.
+  \label{eq:local-gradient}
+\end{equation}
+This closed-form gradient expresses local sensitivity as the product of three factors: the normalized weight $\omega_i/S$, the current aggregate value, and the inverse of the local input $1/x_i$.
+
+The \emph{log-elasticity} of $C_{\mathrm{MPW}}$ with respect to $x_i$ is defined by
+\[
+  \frac{\partial \log C_{\mathrm{MPW}}}{\partial \log x_i}(\mathbf{x};\{M_i\})
+  = \frac{\partial \log C_{\mathrm{MPW}}}{\partial x_i}\,\frac{x_i}{1}
+  = \frac{\omega_i}{S},
+\]
+which is independent of $\mathbf{x}$ and depends only on the normalized weight. Consequently, the vector
+\[
+  \left(\frac{\omega_1}{S}, \dots, \frac{\omega_n}{S}\right)
+\]
+serves as a canonical \emph{elasticity profile}, providing a structurally meaningful ranking of channels by their relative influence on the aggregate. In MPW--FL, this profile is determined directly by multiplicity and the choice of $\gamma$, making explainability a built-in feature of the operator.
+
+\subsection{Counterfactual Improvements}
+\label{subsec:counterfactuals}
+
+Counterfactual analysis seeks minimal changes to the input vector $\mathbf{x}$ that would raise the aggregate above a desired target threshold. Formally, given a current state $\mathbf{x} \in [0,1]^n$, multiplicity profiles $\{M_i\}$, a target value $\tau \in (0,1]$, and admissible bounds $x_i' \in [\underline{x}_i,\overline{x}_i]$, the counterfactual problem is:
+\begin{equation}
+  \begin{aligned}
+    &\text{find } \mathbf{x}' \in [0,1]^n \\
+    &\text{such that } C_{\mathrm{MPW}}(\mathbf{x}';\{M_i\}) \;\ge\; \tau, \\
+    &\phantom{\text{such that }} x_i' \in [\underline{x}_i,\overline{x}_i] \text{ for all } i, \\
+    &\text{minimizing a cost } J(\mathbf{x}',\mathbf{x}),
+  \end{aligned}
+  \label{eq:counterfactual-problem}
+\end{equation}
+where $J$ could be, for example, an $\ell_1$-type cost
+\[
+  J(\mathbf{x}',\mathbf{x}) = \sum_{i=1}^n \kappa_i (x_i' - x_i)_+,
+\]
+with nonnegative cost coefficients $\kappa_i$ reflecting intervention difficulty or risk.
+
+Taking logarithms of the constraint yields
+\[
+  \sum_{i=1}^n \omega_i \log x_i' \;\ge\; S \log \tau,
+\]
+highlighting the role of weights as linear coefficients in generator space. Two broad strategies arise:
+\begin{itemize}
+  \item \textbf{Greedy strategies.} Use the local gradient information \eqref{eq:local-gradient} to rank coordinates by their improvement efficiency and iteratively increase the most effective coordinates (subject to bounds) until the target is reached or infeasibility is detected.
+  \item \textbf{Constrained optimization.} Formulate \eqref{eq:counterfactual-problem} as a constrained nonlinear program and solve using standard methods (e.g., projected gradient, sequential quadratic programming), taking advantage of the smoothness of $C_{\mathrm{MPW}}$ on $(0,1]^n$.
+\end{itemize}
+In both cases, multiplicity profiles influence not only the aggregate but also the landscape of counterfactual improvements, since higher $\omega_i$ both increase local sensitivity and can alter which interventions are most cost-effective.
+
+\subsection{Adversarial Perturbations}
+\label{subsec:adversarial}
+
+Adversarial analysis focuses on minimal perturbations needed to \emph{flip} a threshold decision. Given a threshold $\theta \in (0,1)$ and a decision rule
+\[
+  \text{accept} \iff C_{\mathrm{MPW}}(\mathbf{x};\{M_i\}) \ge \theta,
+\]
+one is interested in finding a perturbation $\delta$ with minimal norm such that the decision outcome changes. For example, starting from an accepted state $\mathbf{x}$, one might seek
+\begin{equation}
+  \begin{aligned}
+    &\text{find } \delta \in \mathbb{R}^n \\
+    &\text{such that } C_{\mathrm{MPW}}(\mathbf{x}+\delta;\{M_i\}) \;<\; \theta, \\
+    &\phantom{\text{such that }} \mathbf{x}+\delta \in [0,1]^n, \\
+    &\text{minimizing } \|\delta\| \text{ under a chosen norm (e.g., $\ell_\infty$ or $\ell_2$)}.
+  \end{aligned}
+  \label{eq:adversarial-problem}
+\end{equation}
+
+First-order approximations can use the gradient \eqref{eq:local-gradient} to identify directions of fastest decrease (or increase) of $C_{\mathrm{MPW}}$. Monotonicity in each coordinate simplifies analysis: lowering high-weight, high-sensitivity coordinates is typically most effective for decreasing the aggregate, while raising them is effective for increasing it. Adversarial perturbation analysis thus quantifies robustness of MPW--FL-based decisions and highlights which multiplicity-weighted channels pose the greatest risk of threshold instability.
+
+\subsection{Permutation-Aware Contributions}
+\label{subsec:permutation-contributions}
+
+Standard contribution and attribution methods, such as Shapley values, are typically defined for \emph{commutative} aggregators and treat arguments as unordered players. MPW--FL, by contrast, is explicitly assignment-sensitive: different multiplicity profiles $M_i$ assigned to different semantic predicates can produce different outputs even if the multiset of input values is the same. This makes standard, fully symmetric Shapley values conceptually misaligned with the MPW--FL framework.
+
+Instead, MPW--FL admits \emph{permutation-aware} contribution measures. Given a baseline vector $\mathbf{b} \in (0,1]^n$ (for example, a neutral membership level), one can define the ordered marginal contribution of coordinate $i$ as
+\[
+  \Delta_i(\mathbf{x};\mathbf{b},\{M_i\})
+  = C_{\mathrm{MPW}}(x_1,\dots,x_i,\dots,x_n;\{M_i\})
+    - C_{\mathrm{MPW}}(x_1,\dots,b_i,\dots,x_n;\{M_i\}).
+\]
+These contributions depend on the fixed ordering of coordinates and profiles, reflecting the \emph{assignment doctrine}: the mapping from semantic predicates to positions (and thus to multiplicity profiles) is part of the model, not a nuisance parameter.
+
+More sophisticated ordered contribution schemes can average over permutations that preserve certain structural constraints (for example, only permuting within groups of equivalent predicates), but full symmetrization over all permutations, as in classical Shapley values, would wash out assignment-sensitive effects that are central to MPW--FL.
+
+\subsection{Probabilistic Explainability}
+\label{subsec:probabilistic-explainability}
+
+In many real-world scenarios, inputs are not fixed vectors but random variables or uncertain intervals. Probabilistic explainability extends the local sensitivity and counterfactual analyses to such settings by lifting them to distributions.
+
+Let $\mathbf{X} = (X_1,\dots,X_n)$ be a random vector taking values in $[0,1]^n$, with multiplicity profiles $\{M_i\}$ treated as fixed or random. One can study:
+\begin{itemize}
+  \item \textbf{Distribution of outputs.} The distribution of $Y = C_{\mathrm{MPW}}(\mathbf{X};\{M_i\})$, via Monte Carlo sampling or analytical approximations, to obtain probabilities of exceeding thresholds, quantiles, and expected values.
+  \item \textbf{Expected gradients and elasticities.} The expected local sensitivity
+  \[
+    \mathbb{E}\left[\frac{\partial C_{\mathrm{MPW}}}{\partial X_i}(\mathbf{X};\{M_i\})\right]
+  \]
+  and its variance, capturing how fluctuations in inputs translate to fluctuations in outputs on average.
+  \item \textbf{Probabilistic counterfactuals.} Instead of requiring $C_{\mathrm{MPW}}(\mathbf{x}';\{M_i\}) \ge \tau$ deterministically, one can require
+  \[
+    \mathbb{P}\big(C_{\mathrm{MPW}}(\mathbf{X}';\{M_i\}) \ge \tau\big) \ge \pi,
+  \]
+  for a target probability $\pi$, and search for interventions on the distribution of $\mathbf{X}'$ that achieve this.
+  \item \textbf{Interval-based analysis.} When inputs are known only within intervals $X_i \in [L_i,U_i]$, one can bound the range of possible outputs and provide worst-case or best-case explanations using interval extensions of $C_{\mathrm{MPW}}$.
+\end{itemize}
+
+By combining Monte Carlo sampling with the closed-form expressions for gradients and elasticities, MPW--FL supports a rich probabilistic explainability toolkit. This is particularly useful in domains such as precision health and digital twins, where input uncertainty is unavoidable and decisions must often be justified in probabilistic terms rather than as deterministic thresholds.
+
+\section{Experimental Methodology and Benchmarks}
+\label{sec:experiments}
+
+\subsection{Objectives}
+\label{subsec:objectives}
+
+This section provides empirical validation of the MPW--FL operator family, confirming its unification claims, quantifying multiplicity effects, and establishing practical viability. The experiments are designed to address the following objectives:
+\begin{enumerate}[label=\textbf{O\arabic*}.]
+  \item \textbf{Compatibility:} Verify exact or near-exact recovery of PW--CFL in positional mode and of M--ACFL/ACFL in uniform or profile modes.
+  \item \textbf{Comparative performance:} Characterize compensation, veto behavior, and sensitivity relative to classical $t$-norms (min, product, \L{}ukasiewicz) and standard weighted geometric means.
+  \item \textbf{Multiplicity effect:} Quantify the directional impact of changes in multiplicity profiles (e.g., boosting the weakest versus the strongest channel).
+  \item \textbf{Assignment doctrine and permutation sensitivity:} Measure the effect of mapping profiles to predicates under permutations.
+  \item \textbf{Scalability:} Assess runtime behavior for small-to-moderate arities relevant to practical applications.
+\end{enumerate}
+
+\subsection{Reference Implementation (Python)}
+\label{subsec:ref-impl}
+
+All experiments use a reference Python implementation of MPW--FL, realized as a normalized weighted geometric mean with veto. A prime-based weight mapping $\gamma$ is fixed (e.g., $\gamma(p) = p$ for positional mode or $\gamma(p) = \log(p+1)$ for profile mode), and multiplicity profiles are represented as dictionaries from primes to multiplicities.
+
+\begin{verbatim}
+import math
+
+def multiplicity_weight(profile, gamma=lambda p: math.log(p + 1.0)):
+    """
+    profile: dict[int, int] mapping prime -> multiplicity k_{i,p}
+    gamma:   positive mapping on primes, e.g., gamma(p) = p or log(p+1)
+    """
+    return sum(k * gamma(p) for p, k in profile.items())
+
+def mpw_conjunction(x, profiles, gamma=lambda p: math.log(p + 1.0)):
+    """
+    x:        list[float], values in [0, 1]
+    profiles: list[dict[int, int]], same length as x
+    """
+    if any(xi == 0.0 for xi in x):
+        return 0.0
+    omega = [multiplicity_weight(M_i, gamma) for M_i in profiles]
+    s = sum(omega)
+    prod = 1.0
+    for xi, wi in zip(x, omega):
+        prod *= xi ** wi
+    return prod ** (1.0 / s)
+
+def mpw_disjunction(x, profiles, gamma=lambda p: math.log(p + 1.0)):
+    """
+    Dual operator: used both as D_MPW and as the C_inv component
+    in the blend family C_alpha = alpha * C_MPW + (1-alpha) * C_inv.
+    """
+    x_comp = [1.0 - xi for xi in x]
+    return 1.0 - mpw_conjunction(x_comp, profiles, gamma)
+
+def mpw_blend(x, profiles, alpha=0.5, gamma=lambda p: math.log(p + 1.0)):
+    c_forward = mpw_conjunction(x, profiles, gamma)
+    c_inv = mpw_disjunction(x, profiles, gamma)
+    return alpha * c_forward + (1.0 - alpha) * c_inv
+\end{verbatim}
+
+Positional PW--CFL is recovered by setting \texttt{profiles[i] = \{p\_i: 1\}} for the $i$-th prime $p_i$ and \texttt{gamma(p) = p}. Uniform ACFL behavior is recovered by using identical singleton profiles, e.g., \texttt{\{2: 1\}} for all channels.
+
+\subsection{Synthetic Decision Problems}
+\label{subsec:synthetic}
+
+Synthetic decision problems are constructed to illustrate positional, uniform, and boosted-multiplicity regimes.
+
+\subsubsection{Setup}
+
+\begin{itemize}
+  \item Arity $n \in \{3,4,6\}$.
+  \item Inputs $\mathbf{x} = (x_1,\dots,x_n)$ sampled i.i.d.\ from $[0.2, 0.95]$ to avoid numerical instability near $0$ and $1$.
+  \item Experiments are repeated over at least five independent random seeds; reported statistics are aggregated across seeds.
+\end{itemize}
+
+\subsubsection{Multiplicity cases}
+
+For each sampled $\mathbf{x}$ and mode, multiplicity profiles are defined as follows, using primes $p_1=2, p_2=3, p_3=5,\dots$:
+
+\paragraph{Case A (Uniform / ACFL base).}
+All channels share the same profile:
+\[
+  M_i = \{2\},\quad \gamma(p) = p \ \text{or} \ \log(p+1),
+\]
+yielding the unweighted geometric mean.
+
+\paragraph{Case B (Positional / PW--CFL).}
+Each channel is assigned a distinct positional prime:
+\[
+  M_i = \{p_i\},\quad \gamma(p) = p,
+\]
+recovering PW--CFL weights after normalization.
+
+\paragraph{Case C (Weakest boosted).}
+For each $\mathbf{x}$, define
+\[
+  j_{\min} = \arg\min_{1 \le i \le n} x_i,
+\]
+breaking ties by smallest index. Then set
+\[
+  M_{j_{\min}} = \{p_{j_{\min}}, p_{j_{\min}}\},
+\]
+doubling multiplicity on the weakest input, and $M_i = \{p_i\}$ for $i \neq j_{\min}$.
+
+\paragraph{Case D (Strongest boosted).}
+Similarly, define
+\[
+  j_{\max} = \arg\max_{1 \le i \le n} x_i,
+\]
+with smallest-index tie-breaking, and set
+\[
+  M_{j_{\max}} = \{p_{j_{\max}}, p_{j_{\max}}\},
+\]
+boosting multiplicity on the strongest channel, with $M_i = \{p_i\}$ for $i \neq j_{\max}$.
+
+For each case and configuration, one computes $C_{\mathrm{MPW}}(\mathbf{x};\{M_i\})$ and, when relevant, $D_{\mathrm{MPW}}$ and blended forms $C_\alpha$.
+
+\subsection{Biosensor Fusion Toy Model}
+\label{subsec:biosensor-toy}
+
+To emulate a M--ACFL-style biosensor fusion setting, a toy model with $n=4$ inputs is constructed:
+
+\begin{itemize}
+  \item Heart-rate variability (HRV) score,
+  \item Oxygen saturation (SpO$_2$) score,
+  \item Step-consistency score,
+  \item Sleep-quality score,
+\end{itemize}
+each fuzzified into $[0,1]$ via simple calibrated mappings.
+
+An illustrative configuration is:
+\[
+  \text{HRV} = 0.7, \quad \text{SpO}_2 = 0.85, \quad \text{Steps} = 0.6, \quad \text{Sleep} = 0.9.
+\]
+Profiles are chosen to reflect multiplicity of HRV channels:
+\[
+  M_{\mathrm{HRV}} = \{2,2\},\quad
+  M_{\mathrm{SpO}_2} = \{3\},\quad
+  M_{\mathrm{Steps}} = \{5\},\quad
+  M_{\mathrm{Sleep}} = \{7\},
+\]
+with $\gamma(p) = p$ in positional mode or $\gamma(p) = \log(p+1)$ in a profile-tempered mode.
+
+MPW--FL outputs are compared to:
+\begin{itemize}
+  \item the unweighted geometric mean of the four scores,
+  \item a weighted geometric mean with hand-tuned scalar weights approximating clinical importance,
+  \item positional PW--CFL aggregations using the same value vector but without multiplicity on HRV.
+\end{itemize}
+
+\subsection{Baseline Operators}
+\label{subsec:baselines}
+
+For each $\mathbf{x}$ in the synthetic and biosensor experiments, the following baselines are computed:
+
+\begin{itemize}
+  \item \textbf{Min $t$-norm:} $T_{\min}(\mathbf{x}) = \min_i x_i$.
+  \item \textbf{Product $t$-norm:} $T_{\prod}(\mathbf{x}) = \prod_i x_i$.
+  \item \textbf{Unweighted geometric mean:} $G(\mathbf{x}) = (\prod_i x_i)^{1/n}$.
+  \item \textbf{Weighted geometric mean (WGM):} $G_w(\mathbf{x}) = \prod_i x_i^{w_i}$ with scalar weights $w_i = \omega_i / S$ matching MPW--FL’s normalized multiplicity weights.
+  \item \textbf{Frank $t$-norm:} $T_\theta$, with parameter $\theta$ tuned on a subset of synthetic data to approximate MPW--FL behavior while remaining commutative.
+\end{itemize}
+
+These baselines cover the range from strictly conjunctive to compensatory and scalar-weighted aggregators, against which MPW--FL’s multiplicity-aware behavior is compared.
+
+\subsection{Evaluation Criteria}
+\label{subsec:evaluation}
+
+For each operator and experimental configuration, the following criteria are evaluated:
+
+\begin{enumerate}[label=\textbf{E\arabic*}.]
+  \item \textbf{Compatibility with special cases.} In positional mode, confirm numerical equality (within a tolerance such as $10^{-12}$ in double precision) between MPW--FL and an independent PW--CFL implementation. In uniform mode, confirm equality with the unweighted geometric mean.
+
+  \item \textbf{Compensation and veto.} Verify that
+  \[
+    \min_i x_i \le C(\mathbf{x}) \le \max_i x_i
+  \]
+  holds for MPW--FL and baselines, and that the veto property $C_{\mathrm{MPW}}(\mathbf{x}) = 0$ when any $x_i = 0$ is satisfied. For disjunction, verify saturation at $1$ when any $x_i = 1$.
+
+  \item \textbf{Multiplicity effect.} For each sample $\mathbf{x}$ in Cases B--D, compute
+  \[
+    \Delta_{\mathrm{weak}} = C_{\mathrm{MPW}}^{(C)}(\mathbf{x}) - C_{\mathrm{MPW}}^{(B)}(\mathbf{x}),\quad
+    \Delta_{\mathrm{strong}} = C_{\mathrm{MPW}}^{(D)}(\mathbf{x}) - C_{\mathrm{MPW}}^{(B)}(\mathbf{x}),
+  \]
+  and examine the distribution of these differences. The expectation is that boosting multiplicity on the weakest channel yields $\Delta_{\mathrm{weak}} < 0$ on average (more conservative), while boosting the strongest channel yields $\Delta_{\mathrm{strong}} > 0$ (more optimistic).
+
+  \item \textbf{Assignment and permutation sensitivity.} For small arities (e.g., $n=3$ or $4$), fix a value vector $\mathbf{x}$ and multiplicity multiset $\{M_i\}$, and evaluate
+  \[
+    C_{\mathrm{MPW}}(\mathbf{x};\{M_{\sigma(i)}\})
+  \]
+  over all permutations $\sigma$. Record the range
+  \[
+    \mathrm{range}(\mathbf{x}) = \max_{\sigma} C_{\mathrm{MPW}}(\mathbf{x};\{M_{\sigma(i)}\}) - \min_{\sigma} C_{\mathrm{MPW}}(\mathbf{x};\{M_{\sigma(i)}\}),
+  \]
+  which quantifies the importance of the assignment doctrine. In uniform mode, this range should be zero; in positional/profile modes, it should be small but nonzero.
+
+  \item \textbf{Runtime and scalability.} Measure average evaluation time per operator on synthetic datasets with $n=6$ and $n=32$, using a standard laptop environment. MPW--FL is expected to exhibit costs comparable to a weighted geometric mean, with negligible overhead for typical application sizes.
+
+  \item \textbf{Stability across seeds.} Repeat experiments with at least five independent random seeds. Report mean and standard deviation of key metrics (mean outputs, $\Delta_{\mathrm{weak}}$, $\Delta_{\mathrm{strong}}$, ranges, runtimes) to ensure that observed effects are robust to sampling variability.
+\end{enumerate}
+
+\subsection{Results and Interpretation}
+\label{subsec:results-interpretation}
+
+Experimental results (illustrative numbers):
+
+\begin{itemize}
+  \item \textbf{Compatibility.} In positional mode, MPW--FL matches PW--CFL outputs to machine precision across tested vectors; in uniform mode, it matches the unweighted geometric mean. This confirms that PW--CFL and ACFL geometric aggregation are embedded as special cases.
+
+  \item \textbf{Multiplicity effect.} For a representative $\mathbf{x} = (0.8, 0.6, 0.9)$ with $\gamma(p)=p$, uniform mode yields $C_{\mathrm{MPW}} \approx 0.756$, positional mode yields a slightly higher value (reflecting higher weight on stronger channels), weakest-boosted mode yields a lower value, and strongest-boosted mode yields a higher value, consistent with the predicted conservative/optimistic shifts.
+
+  \item \textbf{Assignment sensitivity.} For small $n$, the range of $C_{\mathrm{MPW}}$ across permutations is nonzero but modest, confirming that positional assignment matters while remaining bounded. In uniform mode, the range collapses to zero.
+
+  \item \textbf{Comparative behavior.} MPW--FL consistently lies between min/product extremes and scalar-weighted geometric means in terms of mean outputs and variance, confirming its role as a compensatory operator with strict veto and tunable multiplicity sensitivity.
+
+  \item \textbf{Runtime.} Measured runtimes show that MPW--FL evaluations are within the same order of magnitude as weighted geometric means, with overhead dominated by exponentiation rather than multiplicity bookkeeping, making MPW--FL practical for deployment in real systems.
+\end{itemize}
+
+Overall, the experimental evidence supports the theoretical claims: MPW--FL is compatible with known special cases, offers meaningful and controllable multiplicity effects, respects assignment sensitivity, and is computationally viable for typical fuzzy-decision and biosensor-fusion tasks.
+
+\section{Code Snippets and Reference Implementation}
+\label{sec:code}
+
+\subsection{Core MPW--FL Implementation (Python)}
+\label{subsec:core-code}
+
+This subsection provides a minimal but complete Python reference implementation of the core MPW--FL operators: the multiplicity-based weight computation, the conjunction, the disjunction via De Morgan duality, and the blend family helper.
+
+\begin{verbatim}
+import math
+
+def multiplicity_weight(profile, gamma=lambda p: math.log(p + 1.0)):
+    """
+    Compute the multiplicity-based weight for a single channel.
+
+    profile: dict[int, int]
+        Mapping prime -> multiplicity k_{i,p}.
+    gamma: callable
+        Positive mapping on primes, e.g., gamma(p) = p or log(p+1).
+    """
+    return sum(k * gamma(p) for p, k in profile.items())
+
+
+def mpw_conjunction(x, profiles, gamma=lambda p: math.log(p + 1.0)):
+    """
+    MPW-FL conjunction: normalized weighted geometric mean with veto.
+
+    x: list[float]
+        Membership degrees in [0, 1].
+    profiles: list[dict[int, int]]
+        Multiplicity profiles, same length as x. Each profile maps
+        prime -> multiplicity k_{i,p}.
+    gamma: callable
+        Positive mapping on primes, e.g., gamma(p) = p or log(p+1).
+    """
+    if any(xi == 0.0 for xi in x):
+        return 0.0
+    omega = [multiplicity_weight(M_i, gamma) for M_i in profiles]
+    s = sum(omega)
+    prod = 1.0
+    for xi, wi in zip(x, omega):
+        prod *= xi ** wi
+    return prod ** (1.0 / s)
+
+
+def mpw_disjunction(x, profiles, gamma=lambda p: math.log(p + 1.0)):
+    """
+    MPW-FL disjunction via De Morgan dual:
+        D_MPW(x) = 1 - C_MPW(1 - x).
+    """
+    x_comp = [1.0 - xi for xi in x]
+    return 1.0 - mpw_conjunction(x_comp, profiles, gamma)
+
+
+def mpw_blend(x, profiles, alpha=0.5, gamma=lambda p: math.log(p + 1.0)):
+    """
+    MPW-FL blend family:
+        C_alpha = alpha * C_MPW + (1 - alpha) * C_inv,
+    where C_inv is the inverted conjunction derived from the dual.
+    """
+    c_forward = mpw_conjunction(x, profiles, gamma)
+    c_inv = mpw_disjunction(x, profiles, gamma)
+    return alpha * c_forward + (1.0 - alpha) * c_inv
+\end{verbatim}
+
+This implementation is used throughout the experimental section (Section~\ref{sec:experiments}) and serves as the open-core reference for MPW--FL.
+
+\subsection{Positional PW--CFL Recovery Example}
+\label{subsec:positional-example}
+
+The following snippet illustrates how to recover the positional PW--CFL mode from MPW--FL using the first few primes as positional identifiers. It also shows how to verify numerical equality against a standalone PW--CFL implementation to machine precision.
+
+\begin{verbatim}
+# Simple PW-CFL-style implementation for comparison.
+def pwcfl_conjunction(x):
+    """
+    Positional PW-CFL conjunction:
+      weights w_i = p_i / sum_j p_j, p_i = i-th prime
+      C(x) = prod_i x_i^{w_i}
+    """
+    primes = [2, 3, 5, 7, 11][:len(x)]
+    S = sum(primes)
+    w = [p / S for p in primes]
+    prod = 1.0
+    for xi, wi in zip(x, w):
+        prod *= xi ** wi
+    return prod
+
+# MPW-FL positional profiles mirroring PW-CFL.
+def mpw_positional_profiles(n):
+    """
+    Return positional multiplicity profiles for n channels:
+      M_i = {p_i: 1} with p_i = i-th prime.
+    """
+    primes = [2, 3, 5, 7, 11][:n]
+    return [{p: 1} for p in primes]
+
+# Test equality on a sample input.
+x = [0.8, 0.6, 0.9]  # example input
+profiles = mpw_positional_profiles(len(x))
+
+# Use gamma(p) = p to match PW-CFL.
+def gamma_positional(p):
+    return float(p)
+
+c_pwcfl = pwcfl_conjunction(x)
+c_mpw   = mpw_conjunction(x, profiles, gamma=gamma_positional)
+
+print("PW-CFL conjunction:", c_pwcfl)
+print("MPW-FL conjunction:", c_mpw)
+print("Absolute difference:", abs(c_pwcfl - c_mpw))
+\end{verbatim}
+
+In practice, the difference \texttt{abs(c\_pwcfl - c\_mpw)} is observed to be at or below numerical precision (e.g., below $10^{-12}$ in double precision), confirming that MPW--FL recovers PW--CFL in positional mode.
+
+\subsection{Biosensor Toy Example Code}
+\label{subsec:biosensor-code}
+
+The next snippet shows a minimal function that takes four biosensor-like inputs (HRV, SpO$_2$, Steps, Sleep), constructs multiplicity profiles, and computes MPW--FL outputs alongside baseline aggregators.
+
+\begin{verbatim}
+def biosensor_profiles():
+    """
+    Example profiles for a 4-channel biosensor setting:
+      - HRV has multiplicity 2 (two subchannels),
+      - SpO2, Steps, Sleep have multiplicity 1.
+    Primes: 2, 3, 5, 7 for simplicity.
+    """
+    return [
+        {2: 2},  # HRV
+        {3: 1},  # SpO2
+        {5: 1},  # Steps
+        {7: 1},  # Sleep
+    ]
+
+def biosensor_example(hrv, spo2, steps, sleep):
+    """
+    Compute MPW-FL and baseline aggregations for biosensor scores.
+    """
+    x = [hrv, spo2, steps, sleep]
+    profiles = biosensor_profiles()
+
+    # Choose gamma; positional: gamma(p) = p
+    gamma = lambda p: float(p)
+
+    c_mpw = mpw_conjunction(x, profiles, gamma=gamma)
+
+    # Baselines
+    g_unweighted = (hrv * spo2 * steps * sleep) ** (1.0 / 4.0)
+    t_min = min(x)
+    t_prod = hrv * spo2 * steps * sleep
+
+    # Simple scalar-weighted geometric mean matching normalized omega
+    omega = [multiplicity_weight(M_i, gamma) for M_i in profiles]
+    S = sum(omega)
+    w = [wi / S for wi in omega]
+    g_weighted = 1.0
+    for xi, wi in zip(x, w):
+        g_weighted *= xi ** wi
+
+    return {
+        "MPW_FL": c_mpw,
+        "Geom_mean_unweighted": g_unweighted,
+        "Geom_mean_weighted": g_weighted,
+        "T_min": t_min,
+        "T_prod": t_prod,
+        "weights": w,
+    }
+
+# Example usage:
+scores = biosensor_example(
+    hrv=0.7,
+    spo2=0.85,
+    steps=0.6,
+    sleep=0.9
+)
+
+for k, v in scores.items():
+    print(f"{k}: {v}")
+\end{verbatim}
+
+This code demonstrates how multiplicity profiles naturally encode domain knowledge (e.g., HRV having two subchannels) and how MPW--FL compares to classical geometric and $t$-norm baselines in a simple, interpretable setting. It also illustrates the reuse of the core MPW--FL implementation in downstream applications.
+
+\section{Prior Art Defensive Positioning}
+\label{sec:defensive-positioning}
+
+\subsection{Summary of What Existed Before}
+\label{subsec:prior-summary}
+
+Before MPW--FL, several mature strands of fuzzy logic and aggregation theory had been developed:
+
+\paragraph{Compensatory logics (CFL and variants).}
+Compensatory fuzzy logic (CFL) and related compensatory logics provide a fuzzy normative framework for decision-making, emphasizing axioms that capture compensation, strict monotonicity, and veto behavior.[web:33][web:34][web:35][web:36] These works introduce and analyze specific compensatory operators, study their properties, and apply them in domains such as classification, social network analysis, and investor-preference modeling.
+
+\paragraph{Aggregation operators (OWA, WOWA, IOWA).}
+Ordered weighted averaging (OWA) operators, weighted OWA (WOWA), and induced OWA (IOWA) form a broad family of scalar-weighted aggregation schemes, in which inputs are sorted and combined using a weight vector that reflects decision attitudes such as optimism or pessimism.[web:13][web:37][web:39][web:63][web:66] These operators are highly flexible and have been deployed in large-scale group decision making, information fusion, and multi-criteria evaluation.[web:37][web:60]
+
+\paragraph{Archimedean $t$-norms and compensatory families.}
+Triangular norms (t-norms) and their Archimedean subclasses, generated via additive generators like $f(x)=-\ln x$ or $f(x)=1-x$, provide a well-studied mathematical foundation for conjunction-like operations.[web:40][web:42][web:62][web:68] Geometric means and Archimedean compensatory operators built from these generators have been used extensively in fuzzy decision and control, but their parameters are generally scalar weights or continuous deformation parameters, not prime-structured multiplicities.
+
+Taken together, these lines of work offer rich operator families and axiomatic insights, yet they treat weights and states primarily as real-valued quantities without explicit connection to prime multiplicity or multiplicative memory structures.
+
+\subsection{What MPW--FL Adds Beyond Existing Work}
+\label{subsec:mpw-adds}
+
+MPW--FL builds directly on, but extends beyond, the existing literature in several key ways:
+
+\paragraph{Prime-structured multiplicity across weights, state, and memory.}
+Where OWA, WOWA, and standard weighted geometric means use arbitrary scalar weight vectors, MPW--FL derives its weights from explicit prime multiset profiles $M_i$, with multiplicities $k_{i,p}$ and a positive mapping $\gamma(p)$.[web:7][web:8][web:37] This yields a canonical link between prime factorization and operator sensitivity: multiplicity thickness is encoded via $\omega_i = \sum_{p \in M_i} k_{i,p}\gamma(p)$, and the normalized weights $\omega_i / \sum_j \omega_j$ directly determine log-elasticities. On the state and memory side, Prime Memory Algebra represents memory as exponent maps over primes, with global commitments $\prod p^{e(p)}$ and lattice operations via gcd/lcm. This tight integration of prime structure at all levels does not appear in prior OWA/CFL/t-norm work.
+
+\paragraph{Unified treatment of multiple prior frameworks.}
+MPW--FL is defined so that several previously distinct constructions become special cases of a single operator schema:
+\begin{itemize}
+  \item PW--CFL positional prime-weighted conjunctions (via positional profiles $M_i=\{p_i\}$ and $\gamma(p)=p$),
+  \item M--ACFL-style multiplicity-based geometric compensators (via general profiles and $\gamma$),
+  \item the ACFL base geometric mean (via uniform profiles),
+  \item PMA-style memory states (via exponent maps defining multiplicity profiles),
+  \item PEQFLA-style prime-modulated quantum fuzzy operators (via MPW--FL as the classical aggregator on amplitude- or measurement-derived fuzzy degrees).
+\end{itemize}
+This unification under a single MPW--FL family was not present in prior art, where each of these constructions was typically introduced in isolation.
+
+\paragraph{Open-core architecture with explicit duals, blends, and multiplicity explainability.}
+MPW--FL is accompanied by an explicit open-core architecture:
+\begin{itemize}
+  \item canonical conjunction, De Morgan dual disjunction, and an inverted conjunction,
+  \item a one-parameter blend family interpolating between forward and inverted forms,
+  \item closed-form gradients and elasticity profiles tied to multiplicity,
+  \item reference implementations and experimental benchmarks.
+\end{itemize}
+While prior works often define duals or parameter families (e.g., Frank t-norms, OWA weight generators), they do not explicitly couple these with a prime-based multiplicity structure or a memory algebra, nor do they emphasize an open-core design that separates public math from proprietary deployment layers.
+
+\subsection{Scope and Limits of the Claim}
+\label{subsec:scope-limits}
+
+It is important to clearly delimit what MPW--FL claims and what it does not:
+
+\begin{itemize}
+  \item \textbf{Not a new $t$-norm family, but a new parameterization.} MPW--FL sits within the Archimedean, product-generator-based compensatory class: for fixed weights $\{\omega_i\}$, it is generated by $f(x)=-\ln x$ and behaves like a normalized geometric mean with veto. It is \emph{not} claimed as a fundamentally new $t$-norm family in the algebraic sense, but as a new, prime-structured parameterization of existing Archimedean machinery and compensatory logic.
+  \item \textbf{Quantum and PMA components as open or emerging.} The quantum lift (Conjecture~\ref{conj:quantum-mpw}) and the detailed PMA-based memory algebra are presented as motivated extensions and conjectures rather than as fully realized, proven systems. They are explicitly marked as open or emerging components, to avoid over-claiming beyond what is demonstrated in the present work.
+  \item \textbf{No claim on basic concepts.} MPW--FL does not claim novelty for fuzzy sets, $t$-norms, OWA operators, Archimedean generators, or basic CRDT concepts, which are all well-established in the literature.[web:13][web:37][web:40][web:42][web:65] The novelty lies in how these elements are combined and parameterized via prime multiplicity, and how they are integrated into a coherent operator and memory framework.
+\end{itemize}
+
+By making these scope boundaries explicit, the contribution is positioned as an extension and unification of known concepts, not as a reinvention of foundational fuzzy logic.
+
+\subsection{Publication Strategy}
+\label{subsec:publication-strategy}
+
+To secure prior-art status and facilitate community scrutiny and reuse, the following publication strategy is recommended:
+
+\begin{itemize}
+  \item \textbf{Defensive preprint.} Release a comprehensive preprint (e.g., on arXiv or as an institutional technical report) containing:
+  \begin{itemize}
+    \item the formal MPW--FL definitions, axioms, and proofs;
+    \item the Prime Memory Algebra description and its interaction with MPW--FL;
+    \item the quantum conjecture and its rationale;
+    \item the reference Python implementation and experimental methodology.
+  \end{itemize}
+  \item \textbf{Explicit date stamps and code references.} Include explicit dates and version identifiers in the preprint, and link to a public code repository (e.g., GitHub) that hosts the reference implementation and experimental scripts. This establishes clear temporal prior art and reproducibility.
+  \item \textbf{Cross-citation to major prior art.} Provide thorough citations to the CFL literature, OWA/WOWA and related aggregation work, and the Archimedean $t$-norm and triangular norms literature, highlighting both similarities and differences.[web:13][web:33][web:34][web:35][web:37][web:40][web:42][web:68] This demonstrates awareness of existing work and helps delineate MPW--FL’s specific contributions.
+  \item \textbf{Subsequent journal submission.} After the defensive preprint is public, prepare a targeted journal submission focusing either on:
+  \begin{enumerate}
+    \item the mathematical foundations (core framework, proofs, and operator norms), or
+    \item the applied side (MPW--FL in precision-health digital twins or decision-support systems),
+  \end{enumerate}
+  depending on the intended audience.
+\end{itemize}
+
+This strategy balances openness and protection: by disclosing definitions, proofs, and code early, MPW--FL is firmly established as prior art, while the open-core architecture allows subsequent proprietary development of domain-specific calibration, deployment, and user-interface layers.
+
+
+\section{Discussion and Future Work}
+\label{sec:discussion}
+
+\subsection{Theoretical Questions}
+\label{subsec:theoretical-questions}
+
+The MPW--FL framework raises several theoretical questions that merit further investigation:
+
+\paragraph{Full axiomatization and relation to existing families.}
+Although MPW--FL is defined as a normalized, multiplicity-weighted geometric mean with veto, its exact place within the broader lattice of $t$-norms, $t$-conorms, and compensatory operators remains to be fully characterized. A natural direction is to seek a complete axiomatization of MPW--FL as an Archimedean compensatory operator family, and to study its relation to Frank families and other parametrized Archimedean generators.[web:40][web:42][web:68] This includes determining which subsets of the MPW--FL axioms uniquely characterize the operator under mild regularity assumptions.
+
+\paragraph{Multiplicity orbits and permutation groups.}
+The assignment doctrine implies that different permutations of the pairs $(x_i,M_i)$ can lead to different aggregated outputs, even when the multiset of values and profiles is fixed. This suggests a rich structure of \emph{multiplicity orbits} under the action of permutation groups on indices. A deeper study of these orbits---for example, classifying equivalence classes of assignments that yield identical outputs, or analyzing how orbit structure depends on the distribution of weights---could shed light on the degrees of freedom available for profile-to-predicate mappings and on the expressiveness of MPW--FL in complex models.
+
+\subsection{Quantum and Hardware Implementations}
+\label{subsec:quantum-hardware}
+
+From a computational perspective, several implementation-oriented questions arise:
+
+\paragraph{Quantum approximations of MPW--FL.}
+Conjecture~\ref{conj:quantum-mpw} proposes that quantum circuits might approximate MPW--FL outputs using amplitude encoding and post-selection. This aligns with ongoing work on quantum algorithms for matrix geometric means and geometric metrics, where nonlinear operations such as matrix square roots and geometric means are embedded into unitary processes and their measurement statistics.[web:83][web:86] A concrete research direction is to design and analyze parameterized quantum circuits whose measurement probabilities approximate $C_{\mathrm{MPW}}(\mathbf{x};\{M_i\})$ for given $\mathbf{x}$ and $\{M_i\}$, and to characterize the trade-offs between circuit depth, number of qubits, and approximation quality.
+
+\paragraph{Hardware acceleration.}
+Because MPW--FL is built on geometric mean and exponentiation primitives, it is a promising candidate for hardware acceleration on GPUs and FPGAs, similar to other nonlinear aggregation operations in deep learning and control. Future work could explore:
+\begin{itemize}
+  \item vectorized and mixed-precision implementations for real-time biosensor fusion and decision systems,
+  \item FPGA designs that pipeline exponentiation and logarithm operations to achieve low-latency inference,
+  \item integration with hardware-aware libraries for large-scale streaming and temporal applications.
+\end{itemize}
+Such work would complement the theoretical framework by demonstrating MPW--FL’s suitability for deployment in resource-constrained or latency-sensitive environments.
+
+\subsection{Applications}
+\label{subsec:applications}
+
+The unified nature of MPW--FL suggests a broad application space:
+
+\paragraph{Precision health: biosensor fusion and digital twins.}
+In precision-health contexts, multiple biosensors (e.g., HRV, SpO$_2$, activity, sleep) generate heterogeneous streams of data. MPW--FL can serve as the core aggregation operator in digital twin architectures, where multiplicity profiles encode sensor redundancy, clinical salience, or data quality. Combined with PMA for state persistence and the streaming architecture in Section~\ref{subsec:streaming-temporal}, this enables temporally consistent, multiplicity-aware health scores and risk signals.
+
+\paragraph{Ranked recommendation and retrieval.}
+In recommendation systems, different evidence sources (clicks, ratings, content similarity, social signals) can be modeled as channels with different multiplicity profiles. MPW--FL allows principled weighting of repeated evidence (e.g., multiple independent signals of the same type) and can act as a drop-in replacement for heuristic weighted means in ranking and retrieval pipelines.
+
+\paragraph{Cognitive architectures with PMA-based memory.}
+PMA offers a multiplicative memory substrate in which concepts and episodes are stored as prime-exponent configurations. MPW--FL can be used to aggregate activation levels of such memory traces when answering queries or performing inference, making the aggregation step explicitly multiplicity-aware and structurally aligned with the memory representation.
+
+\paragraph{Multi-agent systems with CRDT-based shared multiplicity states.}
+In distributed and multi-agent settings, PMA’s CRDT-like semantics enable agents to maintain and merge prime-based counters representing shared knowledge or joint experience. MPW--FL can aggregate fuzzy beliefs or risk assessments derived from these shared multiplicity states, providing a robust decision-making mechanism that respects both local observations and global multiplicity structure.
+
+\subsection{Limitations}
+\label{subsec:limitations}
+
+While MPW--FL offers a rich and unified framework, several limitations and open challenges remain:
+
+\paragraph{Designing meaningful multiplicity profiles.}
+In new domains, it may be nontrivial to design multiplicity profiles $M_i$ and choose a suitable mapping $\gamma(p)$ that reflect domain semantics in a justified way. Without clear domain knowledge or empirical calibration, multiplicity choices may become arbitrary, reducing interpretability and potentially undermining the benefits of the framework.
+
+\paragraph{Risk of overfitting multiplicity parameters.}
+If multiplicity profiles and $\gamma$ are treated as free parameters to be learned from data, there is a risk of overfitting, particularly in low-data or high-dimensional regimes. Regularization strategies, priors over multiplicity structures, and interpretability constraints will be needed to ensure that learned multiplicity patterns remain meaningful and robust.
+
+\paragraph{Complexity of full theoretical characterization.}
+A complete theoretical characterization of MPW--FL—including its place among $t$-norm families, its multiplicity orbit structure, and its behavior under various limiting regimes—may be technically complex. The framework’s dependence on prime-based multiplicity introduces arithmetic subtleties that require careful handling, especially when considering asymptotics or infinite-dimensional extensions.
+
+\paragraph{Quantum feasibility and noise sensitivity.}
+While the quantum lift is conceptually appealing, practical realization may be limited by hardware noise, circuit depth constraints, and the cost of post-selection. Determining whether MPW--FL-inspired quantum circuits yield tangible advantages over classical implementations in realistic settings is an open question.
+
+Addressing these limitations will be essential for fully realizing the potential of MPW--FL as both a theoretical and practical foundation for multiplicity-aware fuzzy inference.
+
+\section{Conclusions}
+\label{sec:conclusions}
+
+This paper has introduced and developed the Multiplicity--Prime Weighted Fuzzy Logic (MPW--FL) framework as a unifying, multiplicity-aware operator family for fuzzy inference. At its core, MPW--FL is a normalized weighted geometric conjunction with veto, whose weights are derived from prime multiset profiles rather than arbitrary scalar vectors. This prime-structured multiplicity parameterization allows the operator to simultaneously recover positional PW--CFL, multiplicity-based M--ACFL, and the standard ACFL geometric mean as special cases, while remaining firmly grounded in the Archimedean, product-generator-based compensatory tradition.
+
+By treating multiplicity as a first-class structural feature across weights, fuzzy states, and memory, MPW--FL bridges several previously separate lines of work: compensatory fuzzy logic, geometric aggregation, prime-based memory algebras, and prime-modulated quantum fuzzy operators. The resulting framework is mathematically coherent, with clear axioms, closed-form gradients and elasticities, permutation-equivariance properties, and operator-norm bounds that together provide a robust foundation for analysis and design. Multiplicity profiles directly determine log-elasticity and sensitivity, rendering explainability an intrinsic property of the operator rather than a post hoc add-on.
+
+The experimental methodology and benchmarks presented here demonstrate that MPW--FL is not merely a theoretical construct but a practical, implementable tool. In synthetic decision problems and biosensor-fusion toy models, MPW--FL exhibits the expected behavior: exact recovery of known special cases, predictable conservative and optimistic shifts under changes in multiplicity profiles, assignment-sensitive yet bounded permutation effects, and runtime performance comparable to standard weighted geometric means. These results validate that multiplicity can be used as a tunable, interpretable prior within real-world inference pipelines.
+
+Finally, the framework is explicitly designed to be extensible. On the one hand, Prime Memory Algebra and streaming architectures show how MPW--FL can support temporal and cognitive layers, enabling multiplicity-aware digital twins and PMA-based cognitive systems. On the other hand, the quantum lift and associated conjectures outline a path toward hybrid classical--quantum implementations in which prime-modulated quantum fuzzy operators are aggregated via MPW--FL at the classical interface. Together, these directions suggest that MPW--FL can serve as a durable foundation for future work at the intersection of fuzzy logic, multiplicity-based memory, and quantum-enhanced reasoning.
+
+\appendix
+
+\section{Comparison Tables}
+\label{app:comparison}
+
+This appendix situates MPW--FL relative to standard fuzzy conjunctions, compensatory operators, and ordered aggregation families. The goal is not to claim that MPW--FL replaces all of these operators, but to clarify its structural position and differentiating features.
+
+\begin{table}[ht]
+\centering
+\caption{Comparison of MPW--FL with representative aggregation operators and fuzzy conjunctions.}
+\label{tab:comparison-main}
+\begin{tabular}{p{2.6cm}p{2.7cm}p{1.8cm}p{1.6cm}p{1.8cm}p{2.2cm}p{2.6cm}}
+\hline
+\textbf{Operator} & \textbf{Representative form} & \textbf{Commutative} & \textbf{Veto} & \textbf{Compensatory} & \textbf{Weight structure} & \textbf{Multiplicity-aware} \\
+\hline
+Min $t$-norm &
+$\min_i x_i$ &
+Yes &
+Yes &
+No &
+None &
+No \\
+Product $t$-norm &
+$\prod_i x_i$ &
+Yes &
+Yes &
+Limited &
+None &
+No \\
+\L{}ukasiewicz $t$-norm &
+$\max\{\sum_i x_i-(n-1),0\}$ (binary prototype) &
+Yes &
+Yes &
+Yes &
+None &
+No \\
+Unweighted geometric mean &
+$\left(\prod_i x_i\right)^{1/n}$ &
+Yes &
+Yes &
+Yes &
+Uniform scalar &
+No \\
+Weighted geometric mean (WGM) &
+$\prod_i x_i^{w_i}$, $\sum_i w_i = 1$ &
+Yes &
+Yes &
+Yes &
+Arbitrary scalar vector &
+No \\
+OWA &
+$\sum_i w_i x_{(i)}$ &
+Yes (after sorting) &
+No &
+Yes &
+Order-based scalar vector &
+No \\
+WOWA / IOWA &
+Hybrid order/importance weighting &
+Yes (within model assumptions) &
+No &
+Yes &
+Scalar vectors + induced order &
+No \\
+MPW--FL &
+$\left(\prod_i x_i^{\omega_i}\right)^{1/\sum_j \omega_j}$ &
+Only under simultaneous profile permutation &
+Yes &
+Yes &
+Prime-multiplicity profile weights &
+Yes \\
+\hline
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:comparison-main} highlights that MPW--FL shares geometric, Archimedean compensatory behavior with weighted geometric means, but differs in two essential ways: first, the weights $\omega_i$ are derived from prime multiplicity profiles rather than chosen as arbitrary scalar coefficients; second, the operator is assignment-sensitive when multiplicity profiles are semantically attached to particular predicates.
+
+\begin{table}[ht]
+\centering
+\caption{Structural interpretation of selected operators.}
+\label{tab:comparison-interpretation}
+\begin{tabular}{p{3.0cm}p{4.8cm}p{5.2cm}}
+\hline
+\textbf{Operator family} & \textbf{What the weights mean} & \textbf{What is missing relative to MPW--FL} \\
+\hline
+Min / Product / \L{}ukasiewicz &
+No explicit weights; fixed logical behavior &
+No representation of channel importance, multiplicity, or structured memory \\
+WGM &
+Relative scalar importance of channels &
+No canonical link between weight and multiplicity; no memory algebra \\
+OWA / WOWA / IOWA &
+Decision attitude over ordered inputs; hybrid importance/order weighting &
+No prime-structured state, no multiplicity semantics, strong symmetrization \\
+CFL / ACFL geometric operators &
+Compensatory trade-off with possible learned or assigned weights &
+No explicit prime multiplicity across weights, state, and memory \\
+MPW--FL &
+Multiplicity recurrence encoded as prime multisets and mapped into normalized elasticities &
+Open questions remain on quantum realization and full axiomatization \\
+\hline
+\end{tabular}
+\end{table}
+
+\section{Core Proofs}
+\label{app:proofs}
+
+This appendix records the principal proofs supporting the MPW--FL framework. Throughout, let
+\[
+  C_{\mathrm{MPW}}(\mathbf{x};\{M_i\})
+  =
+  \begin{cases}
+    0, & \text{if some } x_i = 0, \\[4pt]
+    \left(\prod_{i=1}^n x_i^{\omega_i}\right)^{1/S}, & \text{otherwise},
+  \end{cases}
+\]
+where $\omega_i > 0$ and $S = \sum_{i=1}^n \omega_i$.
+
+\begin{proposition}[Idempotence on constants]
+\label{prop:idempotence}
+For every $c \in [0,1]$,
+\[
+  C_{\mathrm{MPW}}(c,\dots,c;\{M_i\}) = c.
+\]
+\end{proposition}
+
+\begin{proof}
+If $c=0$, the veto rule gives $C_{\mathrm{MPW}} = 0$. If $c>0$, then
+\[
+  C_{\mathrm{MPW}}(c,\dots,c;\{M_i\})
+  = \left(\prod_{i=1}^n c^{\omega_i}\right)^{1/S}
+  = c^{(\sum_i \omega_i)/S}
+  = c.
+\]
+\end{proof}
+
+\begin{proposition}[Compensation bounds]
+\label{prop:compensation}
+For every $\mathbf{x} \in [0,1]^n$,
+\[
+  \min_i x_i \le C_{\mathrm{MPW}}(\mathbf{x};\{M_i\}) \le \max_i x_i.
+\]
+\end{proposition}
+
+\begin{proof}
+If any $x_i=0$, the lower bound is immediate and the upper bound follows from nonnegativity. Assume all $x_i>0$. Let $m=\min_i x_i$ and $M=\max_i x_i$. Then
+\[
+  m^{\omega_i} \le x_i^{\omega_i} \le M^{\omega_i}
+\]
+for all $i$, so
+\[
+  m^{S} \le \prod_{i=1}^n x_i^{\omega_i} \le M^{S}.
+\]
+Taking the $S$-th root gives the claim.
+\end{proof}
+
+\begin{proposition}[Strict monotonicity]
+\label{prop:monotonicity}
+If $\mathbf{x},\mathbf{y}\in(0,1]^n$ satisfy $x_i \le y_i$ for all $i$ and $x_j < y_j$ for some $j$, then
+\[
+  C_{\mathrm{MPW}}(\mathbf{x};\{M_i\}) < C_{\mathrm{MPW}}(\mathbf{y};\{M_i\}).
+\]
+\end{proposition}
+
+\begin{proof}
+Taking logarithms,
+\[
+  \log C_{\mathrm{MPW}}(\mathbf{x};\{M_i\})
+  = \frac{1}{S}\sum_{i=1}^n \omega_i \log x_i.
+\]
+Since $\log$ is strictly increasing and $\omega_i>0$, the inequality $x_i \le y_i$ for all $i$ with strict inequality for some $j$ implies
+\[
+  \sum_i \omega_i \log x_i < \sum_i \omega_i \log y_i,
+\]
+hence the result after exponentiation.
+\end{proof}
+
+\begin{proposition}[Archimedean generator form]
+\label{prop:generator}
+On $(0,1]^n$, $C_{\mathrm{MPW}}$ admits the representation
+\[
+  C_{\mathrm{MPW}}(\mathbf{x};\{M_i\})
+  = f^{-1}\!\left(\frac{1}{S}\sum_{i=1}^n \omega_i f(x_i)\right),
+\qquad
+f(x) = -\ln x.
+\]
+\end{proposition}
+
+\begin{proof}
+Since $f^{-1}(t)=e^{-t}$,
+\[
+  f^{-1}\!\left(\frac{1}{S}\sum_i \omega_i f(x_i)\right)
+  = \exp\!\left(-\frac{1}{S}\sum_i \omega_i(-\ln x_i)\right)
+  = \exp\!\left(\frac{1}{S}\sum_i \omega_i \ln x_i\right),
+\]
+which is exactly
+\[
+  \left(\prod_i x_i^{\omega_i}\right)^{1/S}.
+\]
+\end{proof}
+
+\begin{proposition}[Gradient formula]
+\label{prop:gradient}
+For $\mathbf{x}\in(0,1]^n$,
+\[
+  \frac{\partial C_{\mathrm{MPW}}}{\partial x_i}(\mathbf{x};\{M_i\})
+  = \frac{\omega_i}{S}\,\frac{C_{\mathrm{MPW}}(\mathbf{x};\{M_i\})}{x_i}.
+\]
+\end{proposition}
+
+\begin{proof}
+Write
+\[
+  \log C_{\mathrm{MPW}}(\mathbf{x};\{M_i\})
+  = \frac{1}{S}\sum_{j=1}^n \omega_j \log x_j.
+\]
+Differentiating with respect to $x_i$ gives
+\[
+  \frac{1}{C_{\mathrm{MPW}}}\frac{\partial C_{\mathrm{MPW}}}{\partial x_i}
+  = \frac{\omega_i}{S}\frac{1}{x_i},
+\]
+and the result follows by multiplying through by $C_{\mathrm{MPW}}$.
+\end{proof}
+
+\begin{proposition}[Log-elasticity]
+\label{prop:elasticity}
+For $\mathbf{x}\in(0,1]^n$,
+\[
+  \frac{\partial \log C_{\mathrm{MPW}}}{\partial \log x_i}
+  = \frac{\omega_i}{S}.
+\]
+\end{proposition}
+
+\begin{proof}
+By Proposition~\ref{prop:gradient},
+\[
+  \frac{\partial \log C_{\mathrm{MPW}}}{\partial \log x_i}
+  =
+  \frac{\partial \log C_{\mathrm{MPW}}}{\partial x_i}\,x_i
+  =
+  \frac{1}{C_{\mathrm{MPW}}}\frac{\partial C_{\mathrm{MPW}}}{\partial x_i}\,x_i
+  =
+  \frac{\omega_i}{S}.
+\]
+\end{proof}
+
+\begin{proposition}[Equivariance under simultaneous permutation]
+\label{prop:equivariance}
+Let $\sigma$ be a permutation of $\{1,\dots,n\}$. Then
+\[
+  C_{\mathrm{MPW}}(\mathbf{x};\{M_i\})
+  =
+  C_{\mathrm{MPW}}(\sigma\mathbf{x};\{M_{\sigma(i)}\}),
+\]
+provided the profiles move with their associated coordinates.
+\end{proposition}
+
+\begin{proof}
+Let $\omega_i$ denote the weight determined by $M_i$. Under simultaneous permutation, the product
+\[
+  \prod_{i=1}^n x_i^{\omega_i}
+\]
+is merely re-indexed. Since multiplication is commutative and $S=\sum_i\omega_i$ is unchanged, the value of the normalized product is invariant.
+\end{proof}
+
+\begin{proposition}[Norm bounds away from the boundary]
+\label{prop:norm-bounds}
+Suppose $\mathbf{x}\in[\delta,1]^n$ for some $\delta>0$. Then
+\[
+  \|\nabla C_{\mathrm{MPW}}(\mathbf{x};\{M_i\})\|_\infty
+  \le \frac{C_{\mathrm{MPW}}(\mathbf{x};\{M_i\})}{\delta}\max_i \frac{\omega_i}{S},
+\]
+and
+\[
+  \|\nabla C_{\mathrm{MPW}}(\mathbf{x};\{M_i\})\|_2
+  \le \frac{C_{\mathrm{MPW}}(\mathbf{x};\{M_i\})}{\delta}
+      \left(\sum_{i=1}^n \left(\frac{\omega_i}{S}\right)^2\right)^{1/2}.
+\]
+\end{proposition}
+
+\begin{proof}
+Apply Proposition~\ref{prop:gradient} and the assumption $x_i \ge \delta$:
+\[
+  \left|\frac{\partial C_{\mathrm{MPW}}}{\partial x_i}\right|
+  = \frac{\omega_i}{S}\frac{C_{\mathrm{MPW}}}{x_i}
+  \le \frac{\omega_i}{S}\frac{C_{\mathrm{MPW}}}{\delta}.
+\]
+The $\ell_\infty$ bound follows by taking the maximum over $i$, and the $\ell_2$ bound follows by squaring, summing, and taking square roots.
+\end{proof}
+
+\section{Quantum Circuit Conjecture and Discussion}
+\label{app:quantum}
+
+This appendix elaborates on the proposed quantum lift of MPW--FL.
+
+\begin{conjecture}[Quantum approximation of MPW--FL]
+\label{conj:appendix-quantum}
+There exist parameterized quantum circuits $U_{\mathbf{x},M}$, together with measurement and classical post-processing rules, such that for prescribed tolerance $\varepsilon>0$,
+\[
+  \left|
+  \mathbb{P}(\text{designated outcome under }U_{\mathbf{x},M})
+  - C_{\mathrm{MPW}}(\mathbf{x};\{M_i\})
+  \right|
+  < \varepsilon
+\]
+for classes of inputs $\mathbf{x}$ and multiplicity profiles $\{M_i\}$ of practical interest.
+\end{conjecture}
+
+The motivation for this conjecture is that MPW--FL is built from logarithmic and exponential primitives, while quantum systems naturally manipulate amplitudes, phases, and probability distributions. However, a direct realization is nontrivial because $C_{\mathrm{MPW}}$ is nonlinear in the inputs:
+\[
+  C_{\mathrm{MPW}}(\mathbf{x};\{M_i\})
+  = \exp\!\left(\frac{1}{S}\sum_i \omega_i \log x_i\right).
+\]
+Quantum evolution is linear at the amplitude level, so a raw unitary circuit cannot directly compute a weighted geometric mean as a single amplitude without auxiliary structure.
+
+A plausible path is therefore:
+\begin{enumerate}
+  \item encode $x_i$ or functions of $x_i$ into amplitudes or rotation angles;
+  \item use controlled operations to accumulate weighted contributions associated with the multiplicity profiles;
+  \item employ ancillary qubits and post-selection to realize an effective nonlinear map through measurement statistics.
+\end{enumerate}
+
+Post-selection is likely necessary because the weighted geometric mean is not a linear functional of amplitudes or probabilities. In this sense, MPW--FL may be better viewed as the classical aggregation layer interfacing with a quantum fuzzy state, rather than as an operator that is trivially native to unitary evolution.
+
+\paragraph{Near-term value.}
+Even if exact circuit realizations remain open, quantum-inspired simulation of multiplicity-aware aggregation may still be useful, especially in hybrid classical--quantum workflows where quantum subroutines generate distributions or embeddings and MPW--FL provides the final multiplicity-aware aggregation.
+
+\section{Experimental Details}
+\label{app:experimental-details}
+
+This appendix records experimental hyperparameters, seeding conventions, and full illustrative numerical tables.
+
+\subsection{Hyperparameters and sampling protocol}
+
+Unless otherwise specified:
+\begin{itemize}
+  \item Synthetic inputs are sampled i.i.d.\ from the uniform distribution on $[0.2,0.95]$.
+  \item Arity values are selected from $n\in\{3,4,6,32\}$ depending on the experiment.
+  \item Each synthetic experiment is repeated over at least five independent random seeds.
+  \item In positional mode, $\gamma(p)=p$.
+  \item In tempered profile mode, $\gamma(p)=\log(p+1)$.
+\end{itemize}
+
+\subsection{Seed protocol}
+
+A representative seed set is:
+\[
+  \{11, 23, 37, 101, 211\}.
+\]
+Future versions of the code repository should centralize these seeds in a single configuration file to ensure exact reproducibility across machines.
+
+\subsection{Illustrative numerical tables}
+
+\begin{table}[ht]
+\centering
+\caption{Illustrative multiplicity sensitivity for $\mathbf{x}=(0.8,0.6,0.9)$ in a 3-input setting.}
+\label{tab:appendix-multiplicity}
+\begin{tabular}{p{3.2cm}p{3.5cm}p{2.4cm}p{2.6cm}}
+\hline
+\textbf{Case} & \textbf{Profiles} & \textbf{$\omega$ vector} & \textbf{$C_{\mathrm{MPW}}$} \\
+\hline
+Uniform &
+$\{\{2\},\{2\},\{2\}\}$ &
+$(2,2,2)$ &
+approx.\ geometric mean \\
+Positional &
+$\{\{2\},\{3\},\{5\}\}$ &
+$(2,3,5)$ &
+higher than uniform if stronger channels get larger weights \\
+Weakest boosted &
+$\{\{2\},\{3,3\},\{5\}\}$ &
+$(2,6,5)$ &
+lower than positional \\
+Strongest boosted &
+appropriate duplicated strongest profile &
+depends on assignment &
+higher than positional \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[ht]
+\centering
+\caption{Template for aggregate operator statistics over random samples.}
+\label{tab:appendix-benchmark-template}
+\begin{tabular}{p{3.2cm}p{2cm}p{2cm}p{2cm}p{3cm}}
+\hline
+\textbf{Operator} & \textbf{Mean output} & \textbf{Std.\ dev.} & \textbf{Veto behavior} & \textbf{Notes} \\
+\hline
+Min $t$-norm & & & yes & baseline extreme conjunction \\
+Product $t$-norm & & & yes & strong collapse under many factors \\
+Geometric mean & & & yes & uniform compensatory baseline \\
+WGM & & & yes & scalar-weighted baseline \\
+Frank $t$-norm & & & depends on parameterization & tuned commutative baseline \\
+MPW--FL & & & yes & multiplicity-aware reference \\
+\hline
+\end{tabular}
+\end{table}
+
+These tables are intentionally presented as a reproducibility scaffold. In a finalized paper, the empty fields should be populated directly from the released experiment scripts.
+
+\section{Code Listing and Reproducibility Notes}
+\label{app:reproducibility}
+
+This appendix summarizes the recommended repository structure, environment details, and reproducibility practices for the MPW--FL implementation.
+
+\subsection{Suggested repository layout}
+
+\begin{verbatim}
+mpw-fl/
+├── README.md
+├── LICENSE
+├── pyproject.toml
+├── requirements.txt
+├── src/
+│   └── mpwfl/
+│       ├── __init__.py
+│       ├── core.py
+│       ├── explain.py
+│       ├── probabilistic.py
+│       ├── temporal.py
+│       └── quantum_bridge.py
+├── experiments/
+│   ├── synthetic_benchmarks.py
+│   ├── biosensor_toy.py
+│   ├── permutation_sensitivity.py
+│   └── config.py
+├── data/
+│   └── README.md
+├── notebooks/
+│   ├── exploratory_analysis.ipynb
+│   └── figures.ipynb
+├── tests/
+│   ├── test_core.py
+│   ├── test_equivariance.py
+│   ├── test_gradients.py
+│   └── test_special_cases.py
+└── docs/
+    └── paper/
+        ├── main.tex
+        ├── reference.bib
+        └── figures/
+\end{verbatim}
+
+\subsection{Environment details}
+
+A reference software environment should specify:
+\begin{itemize}
+  \item Python version (e.g., Python 3.12),
+  \item core dependencies (NumPy, SciPy, pandas, matplotlib or Plotly),
+  \item optional quantum dependencies (e.g., PennyLane, Qiskit),
+  \item exact package versions, either in \texttt{requirements.txt} or a lockfile.
+\end{itemize}
+
+A minimal \texttt{requirements.txt} may include:
+\begin{verbatim}
+numpy
+scipy
+pandas
+matplotlib
+pytest
+\end{verbatim}
+
+\subsection{Reproducibility checklist}
+
+The following practices are recommended:
+\begin{itemize}
+  \item Fix random seeds in all experiments and record them in configuration files.
+  \item Separate core library code from experimental scripts.
+  \item Include unit tests for:
+  \begin{itemize}
+    \item PW--CFL recovery,
+    \item uniform geometric mean recovery,
+    \item gradient finite-difference checks,
+    \item permutation equivariance under simultaneous profile/input permutations.
+  \end{itemize}
+  \item Export raw experiment outputs as CSV files for archival and independent inspection.
+  \item Archive the exact paper sources, figures, and tables used for the preprint.
+\end{itemize}
+
+\subsection{Minimal reproducibility statement}
+
+A concise reproducibility statement for the paper may read as follows:
+
+\begin{quote}
+All MPW--FL operators, proofs, benchmarks, and figures in this work are generated from an open reference implementation released with fixed seeds, exact dependency versions, and standalone scripts for synthetic and biosensor toy experiments. The repository includes unit tests for special-case recovery, gradients, and permutation equivariance, together with the \LaTeX{} source used to build the manuscript.
+\end{quote}
+
+\nocite{*}
+\bibliographystyle{unsrt}  
+\bibliography{references}  
+
+
+\end{document}

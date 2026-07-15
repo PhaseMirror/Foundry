@@ -1,3 +1,5 @@
+import ADR.Core
+
 /-!
 # PhaseMirror module
 

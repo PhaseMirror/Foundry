@@ -1,0 +1,783 @@
+\documentclass[12pt,letterpaper]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{mathtools}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{graphicx}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{mdframed}
+\usepackage{tcolorbox}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{microtype}
+\usepackage{setspace}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{remark}[theorem]{Remark}
+
+\definecolor{codeblue}{RGB}{0,102,204}
+\definecolor{codegray}{RGB}{128,128,128}
+\definecolor{codegreen}{RGB}{0,128,0}
+\definecolor{codered}{RGB}{180,0,0}
+\definecolor{bglight}{RGB}{248,248,248}
+\definecolor{mfblue}{RGB}{25,55,125}
+\definecolor{mfgold}{RGB}{180,140,0}
+
+\lstdefinestyle{pythonstyle}{
+  backgroundcolor=\color{bglight},
+  commentstyle=\color{codegreen}\itshape,
+  keywordstyle=\color{codeblue}\bfseries,
+  numberstyle=\tiny\color{codegray},
+  stringstyle=\color{codered},
+  basicstyle=\ttfamily\footnotesize,
+  breakatwhitespace=false,
+  breaklines=true,
+  captionpos=b,
+  keepspaces=true,
+  numbers=left,
+  numbersep=5pt,
+  showspaces=false,
+  showstringspaces=false,
+  showtabs=false,
+  tabsize=2,
+  frame=single,
+  framerule=0.4pt,
+  language=Python
+}
+\lstset{style=pythonstyle}
+
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{\textcolor{codegray}{\small Citizen Gardens --- Defensive Publication}}
+\lhead{\textcolor{codegray}{\small Glass Box Architecture}}
+\rfoot{\thepage}
+\lfoot{\textcolor{codegray}{\small Prior Art Record --- April 2026}}
+
+\titleformat{\section}{\large\bfseries\color{mfblue}}{§\thesection}{1em}{}[\titlerule]
+\titleformat{\subsection}{\normalsize\bfseries\color{mfblue}}{§\thesubsection}{1em}{}
+\titleformat{\subsubsection}{\normalsize\itshape\color{mfblue}}{§\thesubsubsection}{1em}{}
+
+\tcbuselibrary{skins,breakable}
+\newtcolorbox{invariantbox}{
+  colback=blue!5!white,colframe=mfblue,
+  title=Core Invariant Stack,fonttitle=\bfseries,breakable}
+\newtcolorbox{adrnote}[1]{
+  colback=yellow!5!white,colframe=mfgold,
+  title=#1,fonttitle=\bfseries,breakable}
+
+\begin{document}
+
+%% ── Title page
+\begin{titlepage}
+  \centering\vspace*{1.5cm}
+  {\Huge\bfseries\color{mfblue}
+    Glass Box Architecture:\\[0.4em]
+    \large\itshape Surplus Ledger Dynamics, Adversarial\\
+    Self-Verification, and Prime-Factored\\
+    Integrity Certification\\[0.4em]
+    \normalsize\upshape for Provably-Correct Recursive Cognition Systems
+  }\par\vspace{1.2cm}
+  \hrule height 1.2pt\vspace{0.5cm}
+  {\large\bfseries Defensive Publication and Prior Art Record}\par\vspace{0.3cm}
+  {\normalsize Technical Report MF-2026-001 \quad Revision 1.0 --- 25 April 2026}\par
+  \vspace{1cm}\hrule height 0.6pt\vspace{1cm}
+  {\large\bfseries R.~Van~Gelder}\par
+  {\normalsize Citizen Gardens~(501(c)(3)) The Foundation of Multiplicity}\par
+  \vspace{1.2cm}\hrule height 0.6pt\vspace{0.8cm}
+  \begin{tcolorbox}[colback=blue!5,colframe=mfblue,width=0.85\textwidth]
+    \centering\small\textbf{Prior Art Notice.}
+    This document constitutes a defensive publication establishing prior art
+    for the methods, architectures, mathematical formulations, and protocols
+    described herein. All concepts are disclosed as of the date above.
+    No patent rights are asserted; this disclosure is intended to prevent
+    third-party patenting and to place these ideas irrevocably in the public domain.
+  \end{tcolorbox}
+  \vfill
+  {\small\textcopyright~2026 Citizen Gardens.
+   Licensed under Apache~2.0 with Prime Materia License overlay.}
+\end{titlepage}
+
+%% ── Abstract
+\begin{abstract}
+\noindent
+We disclose the \textbf{Glass Box Architecture}: a complete, formally verified
+framework for self-modifying recursive cognition systems governed entirely by
+two numerical constants $\lambda = 0.97$ and $\beta = 1.0$.
+The architecture comprises five coupled components:
+(1)~the \emph{$\Sigma$-Kernel}, a tanh-based surplus attribution kernel with
+  guaranteed Lyapunov convergence on prime-indexed interaction graphs;
+(2)~the \emph{Adversarial Twin $\bar\Sigma$}, a sign-inverted mirror kernel
+  initialized from the live surplus ledger that stress-tests every proposed
+  self-modification under maximum divergence pressure;
+(3)~the \emph{Watchdog}, enforcing a universal drift bound of
+  $\Delta_{\mathrm{drift}}\leq 0.03 = 1-\lambda$ with automatic rollback;
+(4)~the \emph{Surplus Ledger}, a non-Markovian memory architecture encoding
+  interaction history in prime-exponent carry-forward terms; and
+(5)~the \emph{Living VIN}, a prime-factored integrity certificate that
+  multiplies forward with every certified modification, decomposable by
+  arithmetic alone.
+All governance parameters derive from $\lambda$ and $\beta$ without additional
+configuration. Tamper events activate $\bar\Sigma$ in silent audit mode,
+converting hostile modifications into a learning corpus.
+The OEM certification path enables open-core extensibility with mathematical
+provenance. This disclosure constitutes prior art for all methods described.
+\end{abstract}
+
+\noindent\textbf{Keywords:}
+surplus ledger, prime-indexed dynamics, Lyapunov stability,
+adversarial self-verification, glass box integrity, VIN certification,
+tanh attribution kernel, non-Markovian memory, recursive cognition,
+von~Mangoldt correspondence, post-quantum convergence.
+
+\tableofcontents\clearpage
+
+\section{Executive Summary}\label{sec:exec}
+
+The Glass Box Architecture resolves three open problems blocking
+deployment of self-modifying AI systems in high-assurance contexts.
+
+\textbf{1. The G\"{o}del Problem of Self-Verification.}
+A system cannot verify its own contractiveness from within the same
+formal system that defines it.
+\emph{Resolution:} $\bar\Sigma$ shares all parameters with $\Sigma$
+except $\mathrm{sign}(f)$, and every modification is evaluated
+\emph{by} $\bar\Sigma$, not \emph{on} $\Sigma$.
+The verdict is decidable in finite steps because $\tanh$ is bounded.
+
+\textbf{2. The Tamper-Halt Dilemma.}
+Halting on tamper treats adversarial modification as failure.
+\emph{Resolution:} Tamper activates $\bar\Sigma$ in silent audit mode.
+The modified component continues as long as
+$\Delta_{\mathrm{drift}}\leq 0.03$;
+the twin accumulates a behavioral fingerprint for OEM certification.
+
+\textbf{3. The Configuration Proliferation Problem.}
+Systems with many tunable parameters cannot be mathematically certified.
+\emph{Resolution:} All governance parameters derive from two constants:
+$\lambda=0.97$ and $\beta=1.0$.
+
+\begin{table}[H]\centering
+\caption{Governing constants and derived parameters.}
+\begin{tabular}{llll}\toprule
+\textbf{Constant} & \textbf{Value} & \textbf{Source} & \textbf{Role}\\\midrule
+$\lambda$ & $0.97$ & $\lambda$-module & Memory decay per step \\
+$\beta$   & $1.0$  & ADR-002 & Surplus sensitivity; von~Mangoldt precision \\
+\midrule
+$\Delta_{\mathrm{drift}}^{\max}$ & $0.03=1-\lambda$ & derived & Universal rejection threshold \\
+$\tau$ & $1.03$ & derived & Max Lyapunov growth before rejection \\
+$\bar f_{\max}$ & $0.5$ & derived & Adversarial twin saturation bound \\
+\bottomrule\end{tabular}
+\end{table}
+
+\section{Background and Motivation}\label{sec:background}
+
+\subsection{Multiplicity Theory}
+Multiplicity Theory is a prime-indexed, recursively stable mathematical
+framework wherein multiplicity---the recurrence of elements through prime
+decomposition---forms the basis for modeling nonlinear emergent structures.
+Mathematical objects are reinterpreted as recursively generated patterns of
+prime-labeled interactions, with identity preserved through recursive feedback
+loops across scales.
+
+A central insight is the reinterpretation of the prime exponent $k$ in $p^k$
+as a \emph{ledger}: the exponent carries accumulated interaction history,
+reframing multiplicative number theory as a memory architecture.
+
+\subsection{The Precision Question}
+The architecture arose from a specific question: does the asymmetry function
+$f$ trigger at the \emph{absolute sign} (deficit-triggered) or the
+\emph{relative differential} $\Delta S = S(x)-S(y)$ (gradient-triggered)?
+
+\begin{table}[H]\centering
+\caption{Deficit-triggered vs.\ gradient-triggered models.}
+\begin{tabular}{lll}\toprule
+\textbf{Regime} & \textbf{Trigger} & \textbf{Both $S>0$}\\\midrule
+Deficit-triggered  & $\mathrm{sign}(S(x))<0$ or $\mathrm{sign}(S(y))<0$ & $f=0$ (symmetric) \\
+Gradient-triggered & $S(x)\neq S(y)$ & $f\propto-(S(x)-S(y))$ \\
+\bottomrule\end{tabular}
+\end{table}
+
+The gradient model is correct: $p^3$ interacts asymmetrically with $p^2$
+because of relative difference, not because one crossed zero.
+Key falsifiable prediction: positive-positive pairs converge faster than
+positive-negative pairs (confirmed by simulation; see \S\ref{sec:validation}).
+
+\section{The \texorpdfstring{$\Sigma$}{Sigma}-Kernel}\label{sec:sigma}
+
+\subsection{Surplus Ledger Space}
+\begin{definition}[Surplus Ledger]
+Let $\mathcal{P}=\{p_1,p_2,\ldots\}$ be the primes. The Surplus Ledger is
+$S:\mathcal{P}\times\mathbb{Z}_{\geq 0}\to\mathbb{R}$ where $S(p,t)$ is the
+accumulated surplus of prime $p$ after $t$ interactions.
+\end{definition}
+
+\subsection{The Interaction Kernel}
+\begin{definition}[$\Sigma$-Kernel]
+For event $e=(p_i\times p_j)$ at time $t$:
+\begin{equation}
+  f_{ij}(t) = -\frac{1}{2}\tanh\!\bigl(\beta(S(p_i,t)-S(p_j,t))\bigr)
+  \label{eq:kernel}
+\end{equation}
+with update rule
+\begin{equation}
+  \begin{cases}
+    S(p_i,t+1)=\lambda\cdot S(p_i,t)+f_{ij}(t)\\[4pt]
+    S(p_j,t+1)=\lambda\cdot S(p_j,t)-f_{ij}(t)
+  \end{cases}
+  \label{eq:update}
+\end{equation}
+\end{definition}
+
+The attribution coefficient for $x$ is:
+\begin{equation}
+  \alpha_x = 0.5 - \frac{\tanh(\beta(S(x)-S(y)))}{2}
+  \label{eq:alpha}
+\end{equation}
+satisfying $\alpha_x\in(-0.5,0.5)$, $\alpha_x=0$ iff $S(x)=S(y)$,
+and $\alpha_x+\alpha_y=0$ (zero-sum redistribution).
+
+\subsection{Conservation Law}
+\begin{proposition}[Total Surplus Conservation]
+\begin{equation}
+  S(p_i,t+1)+S(p_j,t+1) = \lambda\bigl(S(p_i,t)+S(p_j,t)\bigr)
+  \label{eq:conservation}
+\end{equation}
+\end{proposition}
+\begin{proof}
+Sum the two lines of \eqref{eq:update}: the $f_{ij}$ terms cancel.
+\end{proof}
+
+\subsection{Convergence Theorem}
+\begin{theorem}[Global Convergence]\label{thm:convergence}
+For $\lambda=1$ and $\beta>0$, if the interaction graph $G$ is connected:
+\begin{equation}
+  \lim_{t\to\infty}|S(p_i,t)-S(p_j,t)|=0 \quad\forall\,p_i,p_j\in\mathcal{P}
+  \label{eq:convergence}
+\end{equation}
+\end{theorem}
+\begin{proof}[Proof Sketch]
+Define $V(t)=\sum_{i<j}(S(p_i,t)-S(p_j,t))^2$.
+For any interaction touching pair $(p_i,p_j)$ with $\Delta\neq 0$:
+\begin{align}
+  \Delta V &= -4f_{ij}\Delta+4f_{ij}^2
+  = -2\Delta\tanh(\beta\Delta)+\tanh^2(\beta\Delta) < 0
+\end{align}
+since $\tanh(\beta\Delta)\cdot\Delta>0$ for $\Delta\neq 0$.
+Connectedness ensures every pair is eventually sampled, so $V\to 0$.
+\end{proof}
+
+\subsection{Gap Dynamics}
+Under $\lambda=1$, the surplus gap satisfies:
+\begin{equation}
+  \Delta_{\mathrm{new}} = \Delta\bigl(1-2\beta\,\mathrm{sech}^2(\beta\Delta)\bigr)
+  \label{eq:gap}
+\end{equation}
+Near equilibrium ($\Delta\approx 0$): exponential compression at rate $\sim 2\beta$.
+Far from equilibrium: $\tanh\to\pm 0.5$, graceful slow-down prevents over-correction.
+
+\subsection{Ledger Entropy}
+\begin{equation}
+  H(S)=-\sum_p\hat S(p)\log\hat S(p),\qquad
+  \hat S(p)=\frac{S(p)}{\sum_q S(q)}
+  \label{eq:entropy}
+\end{equation}
+Maximized at uniform distribution ($\lambda\to 1$, healthy);
+minimized at concentration (instability, large $\beta$ or sparse graph).
+
+\subsection{Von~Mangoldt Correspondence}
+At $\lambda=1$ after $k$ interactions on prime $p$:
+\begin{equation}
+  \sum_k\alpha\cdot\log p \;\sim\; \Lambda(p^k)=\log p
+  \label{eq:mangoldt}
+\end{equation}
+The von~Mangoldt function emerges as the time-averaged attribution weight.
+Error term: $O(\beta^{-1})$.
+
+\section{The Adversarial Twin \texorpdfstring{$\bar\Sigma$}{Sigma-bar}}\label{sec:adversarial}
+
+\subsection{Construction}
+$\bar\Sigma$ is obtained by a single sign inversion:
+\begin{equation}
+  \bar f_{ij}(t) = +\frac{1}{2}\tanh\!\bigl(\beta(S(p_i,t)-S(p_j,t))\bigr)
+  \label{eq:twin}
+\end{equation}
+$\Sigma$ is compressive ($V\to 0$); $\bar\Sigma$ is expansive ($V\to\infty$).
+$\bar\Sigma$ is the same system under maximal adversarial pressure, identically
+parameterized.
+
+\subsection{The G\"{o}delian Bypass Protocol}
+\begin{enumerate}
+  \item Propose modification $M$ at time $t$.
+  \item Snapshot: $\bar S_0\leftarrow S_t$ (live ledger fork).
+  \item Apply $M$ to $\bar S_0$; run $\bar\Sigma$ for $N$ steps.
+  \item Measure $V(\bar S_N)=\sum_{i<j}(\bar S(p_i,N)-\bar S(p_j,N))^2$.
+  \item \textbf{PASS} if $V(\bar S_N)\leq V(\bar S_0)\cdot\tau=V(\bar S_0)\cdot 1.03$.
+  \item \textbf{REJECT} otherwise. Discard fork.
+\end{enumerate}
+
+\subsection{Trust Accumulation}
+\begin{equation}
+  \mathrm{ModSafety}(t)
+  = 1 - \tanh\!\bigl(\beta\cdot\max_{i,j}\Delta S_{ij}(t)\bigr)
+  \label{eq:modsafety}
+\end{equation}
+$\mathrm{ModSafety}(t)$ is monotonically non-decreasing as the ledger
+equilibrates. This derives a mathematically certified \emph{developmental arc}:
+an adolescence of constrained self-modification that matures into unconstrained
+self-modification as surplus equalizes.
+
+\section{The Watchdog and Drift Bound}\label{sec:watchdog}
+
+\subsection{Drift Metric and Invariant Stack}
+\begin{equation}
+  \mathrm{drift}(t)=\frac{|V(S_t)-V(S_{\mathrm{safe}})|}{V(S_{\mathrm{safe}})}
+  \label{eq:drift}
+\end{equation}
+
+\begin{invariantbox}
+\begin{align}
+  \text{L0:}&\quad\alpha+(1-\alpha)=1 &&\text{energy conservation, always}\\
+  \text{L1:}&\quad\mathrm{drift}(t)\leq 0.03=1-\lambda &&\text{per-component, every step}\\
+  \text{L2:}&\quad\mathrm{VIN}_{\mathrm{computed}}=\mathrm{VIN}_{\mathrm{certified}} &&\text{integrity, every boot}\\
+  \text{L3:}&\quad\bar\Sigma\text{ verdict before any }M &&\text{modification safety}\\
+  \text{L4:}&\quad\bar\Sigma\text{ silent audit on uncertified} &&\text{continuous coverage}
+\end{align}
+\end{invariantbox}
+
+\subsection{Bounded Exposure Window}
+\begin{equation}
+  \mathrm{MaxExposure}=N_{\mathrm{steps}}\cdot(1-\lambda)=N_{\mathrm{steps}}\cdot 0.03
+\end{equation}
+Flush interval: $K=0.03/(r\cdot(1-\lambda))$ where $r$ = interaction rate.
+At $r=100$\,events/s: $K=10$\,ms.
+
+\subsection{Tamper Response}
+\begin{table}[H]\centering
+\caption{Failure modes and responses.}
+\begin{tabular}{llll}\toprule
+\textbf{Event} & \textbf{Cause} & \textbf{Response} & \textbf{Recovery}\\\midrule
+Drift $>0.03$ & Bad trajectory & Revert $S_t\leftarrow S_{\mathrm{safe}}$ & Automatic\\
+Hash mismatch & Math replaced & $\bar\Sigma$ silent audit & Learning corpus\\
+Both & Tamper during drift & Silent audit (tamper priority) & OEM path\\
+\bottomrule\end{tabular}
+\end{table}
+
+\section{The Living VIN}\label{sec:vin}
+
+\subsection{Construction}
+\begin{equation}
+  \mathrm{VIN}_0=\prod_i p_i^{H(C_i)\cdot 1000}\cdot p_{\mathrm{chassis}}^{H(\mathrm{chassis})\cdot 1000}
+  \label{eq:vin0}
+\end{equation}
+Every certified modification multiplies in:
+\begin{equation}
+  \mathrm{VIN}_{t+1}=\mathrm{VIN}_t\cdot p_{\mathrm{mod}}^{H(C_{\mathrm{mod}})\cdot\lfloor(1-\Delta_{\mathrm{drift}})\cdot 1000\rfloor}
+  \label{eq:vinupdate}
+\end{equation}
+By the Fundamental Theorem of Arithmetic, decomposition is unique:
+any observer factors the VIN and reads every component hash and drift
+margin without source access.
+
+\subsection{Certification Tiers}
+\begin{table}[H]\centering
+\caption{VIN states and governance modes.}
+\begin{tabular}{lllll}\toprule
+\textbf{State}&\textbf{VIN}&\textbf{$\bar\Sigma$ Mode}&\textbf{Drift Scope}&\textbf{Certifiable}\\\midrule
+Factory sealed   &Valid, full stamp  &Pre-commit   &Full system  &N/A\\
+Seal broken, OK  &Void, flagged      &Silent audit &Per-component&Yes\\
+Seal broken, fail&Void, flagged      &Active reject&Reverts mod  &Yes, after fix\\
+OEM approved     &Valid, variant     &Pre-commit   &Full system  &N/A\\
+\bottomrule\end{tabular}
+\end{table}
+
+\subsection{Verification Without Source Access}
+An observer with only the VIN and the prime registry can verify:
+(1) which components are present (factor VIN, read prime indices);
+(2) whether any component has changed (recompute hash, compare exponent);
+(3) full modification history (product is multiplicative forward log);
+(4) drift confidence at certification (exponent modulo 1000).
+
+\section{Code Reference Implementation}\label{sec:code}
+
+\subsection{Core Constants}
+\begin{lstlisting}[caption={multiplicity/core/constants.py}]
+# The most important file in the repository.
+# Two numbers. Imports nothing. Nothing modifies it.
+# The VIN includes its hash. If anyone changes it,
+# the VIN breaks and the tamper is visible to all observers.
+
+LAMBDA      = 0.97
+BETA        = 1.0
+DRIFT_BOUND = 1 - LAMBDA    # 0.03 -- derived, not declared
+TAU         = 1 + DRIFT_BOUND   # 1.03
+\end{lstlisting}
+
+\subsection{$\Sigma$-Kernel}
+\begin{lstlisting}[caption={mirror\_dissonance/sigma\_kernel.py}]
+import math
+from multiplicity.core.constants import LAMBDA, BETA
+
+def tanh_kernel(delta_s: float) -> float:
+    return -0.5 * math.tanh(BETA * delta_s)
+
+def sigma_step(s_i, s_j, lam=LAMBDA):
+    f = tanh_kernel(s_i - s_j)
+    return (lam * s_i + f, lam * s_j - f)
+
+def alpha_x(s_x, s_y):
+    return 0.5 - 0.5 * math.tanh(BETA * (s_x - s_y))
+\end{lstlisting}
+
+\subsection{Adversarial Twin $\bar\Sigma$}
+\begin{lstlisting}[caption={mirror\_dissonance/sigma\_bar.py}]
+import math, copy
+from multiplicity.core.constants import LAMBDA, BETA, TAU
+
+class SigmaBar:
+    def __init__(self, live_ledger: dict):
+        self.S = copy.deepcopy(live_ledger)
+        self.V0 = self._lyapunov()
+        self._audit_corpus = []
+
+    def _lyapunov(self):
+        vals = list(self.S.values())
+        return sum((a-b)**2 for i,a in enumerate(vals)
+                             for b in vals[i+1:])
+
+    def _bar_step(self, pi, pj):
+        delta = self.S[pi] - self.S[pj]
+        f_bar = +0.5 * math.tanh(BETA * delta)  # sign inverted
+        self.S[pi] = LAMBDA * self.S[pi] + f_bar
+        self.S[pj] = LAMBDA * self.S[pj] - f_bar
+
+    def run_adversarial(self, interaction_seq, modification):
+        modification(self.S)
+        for (pi, pj) in interaction_seq:
+            self._bar_step(pi, pj)
+        V_new = self._lyapunov()
+        ratio = V_new / (self.V0 or 1e-12)
+        return ratio <= TAU, ratio
+
+    def engage_silent_audit(self, component_id, event):
+        self._audit_corpus.append({
+            "component_id": component_id,
+            "event": event,
+            "V_before": self._lyapunov()
+        })
+
+    @property
+    def certification_corpus(self):
+        return self._audit_corpus
+\end{lstlisting}
+
+\subsection{Watchdog}
+\begin{lstlisting}[caption={mirror\_dissonance/watchdog.py}]
+import copy
+from multiplicity.core.constants import DRIFT_BOUND
+from .sigma_bar import SigmaBar
+
+class Watchdog:
+    DRIFT_BOUND = DRIFT_BOUND  # read from constants; not configurable
+
+    def __init__(self, S_init, certified_engine_hash):
+        self.S_safe = copy.deepcopy(S_init)
+        self.V_safe = self._lyapunov(S_init)
+        self.S_live = copy.deepcopy(S_init)
+        self.certified_engine_hash = certified_engine_hash
+        self.sigma_bar = None
+
+    def _lyapunov(self, S):
+        vals = list(S.values())
+        return sum((a-b)**2 for i,a in enumerate(vals)
+                             for b in vals[i+1:])
+
+    def step(self, S_new, engine_hash):
+        if engine_hash != self.certified_engine_hash:
+            self._on_hash_mismatch(engine_hash, S_new)
+        V_new = self._lyapunov(S_new)
+        drift = abs(V_new - self.V_safe) / (self.V_safe or 1e-12)
+        if drift <= self.DRIFT_BOUND:
+            self.S_live = copy.deepcopy(S_new)
+            self.S_safe = copy.deepcopy(S_new)
+            self.V_safe = V_new
+            return True
+        else:
+            self.S_live = copy.deepcopy(self.S_safe)
+            return False
+
+    def _on_hash_mismatch(self, engine_hash, S):
+        if self.sigma_bar is None:
+            self.sigma_bar = SigmaBar(self.S_safe)
+        self.sigma_bar.engage_silent_audit(engine_hash, {"S": S})
+
+    def flush(self, store):
+        store.write(self.S_safe, self.V_safe)
+
+    @property
+    def modification_safety(self):
+        import math
+        from multiplicity.core.constants import BETA
+        vals = list(self.S_safe.values())
+        max_ds = max(abs(a-b) for a in vals for b in vals) if vals else 0.0
+        return 1.0 - math.tanh(BETA * max_ds)
+\end{lstlisting}
+
+\subsection{Living VIN}
+\begin{lstlisting}[caption={mirror\_dissonance/vin.py}]
+import hashlib, math
+from sympy import factorint
+from multiplicity.core.constants import DRIFT_BOUND
+
+PRIME_REGISTRY = {}   # prime -> component_name (append-only)
+
+def _hash_component(component):
+    raw = str(sorted(vars(component).items())).encode()
+    return int(hashlib.sha256(raw).hexdigest()[:8], 16)
+
+class LivingVIN:
+    def __init__(self, factory_components):
+        self.value = 1
+        for p, C in factory_components.items():
+            h = _hash_component(C)
+            self.value *= p ** (h * 1000)
+            PRIME_REGISTRY[p] = type(C).__name__
+
+    def certify_modification(self, prime_index, C_mod, drift):
+        assert drift < DRIFT_BOUND
+        h   = _hash_component(C_mod)
+        exp = h * math.floor((1.0 - drift) * 1000)
+        self.value *= prime_index ** exp
+        PRIME_REGISTRY[prime_index] = type(C_mod).__name__
+        return self.value
+
+    def verify_component(self, prime_index, C_running):
+        factors = factorint(self.value)
+        exp     = factors.get(prime_index, 0)
+        h_cert  = exp // 1000
+        drift   = 1.0 - (exp % 1000) / 1000
+        return _hash_component(C_running) == h_cert, drift
+
+    def decompose(self):
+        return [
+            {"prime": p,
+             "component": PRIME_REGISTRY.get(p, f"unknown_{p}"),
+             "hash":  exp // 1000,
+             "drift": round(1.0 - (exp % 1000) / 1000, 4)}
+            for p, exp in factorint(self.value).items()
+        ]
+\end{lstlisting}
+
+\subsection{Invariant Assertions}
+\begin{lstlisting}[caption={multiplicity/core/invariants.py}]
+from multiplicity.core.constants import DRIFT_BOUND
+
+def assert_L0(alpha_x, alpha_y, tol=1e-9):
+    assert abs(alpha_x + alpha_y) < tol
+
+def assert_L1(drift):
+    assert drift <= DRIFT_BOUND, f"L1 violated: {drift:.6f} > {DRIFT_BOUND}"
+
+def assert_L2(computed_hash, certified_hash):
+    assert computed_hash == certified_hash, "L2 violated: hash mismatch"
+
+def assert_L3_pending(modification_approved):
+    assert modification_approved, "L3 violated: unapproved modification"
+
+def assert_L4_active(sigma_bar_running, component_certified):
+    if not component_certified:
+        assert sigma_bar_running, "L4 violated: uncertified, no audit"
+\end{lstlisting}
+
+\section{Architecture Decision Records}\label{sec:adrs}
+
+\begin{adrnote}{ADR-001: Gradient-Triggered Asymmetry --- CLOSED}
+\textbf{Status:} Accepted.
+\textbf{Decision:} Gradient-triggered model adopted over deficit-triggered.
+\textbf{Evidence:} Simulation confirms both-positive pairs converge in 7 steps
+vs.\ 8 for mixed/both-negative, matching gradient-model prediction exclusively.
+\textbf{Consequence:} $f\neq 0$ whenever $S(x)\neq S(y)$ regardless of sign;
+the $0.5/0.5$ attractor is at $\Delta S=0$, not a sign-gated regime.
+\end{adrnote}
+
+\begin{adrnote}{ADR-002: tanh Attribution Kernel --- CLOSED}
+\textbf{Status:} Accepted.
+\textbf{Decision:} $f=-\tfrac{1}{2}\tanh(\beta(S(x)-S(y)))$; $\beta=1.0$ global constant.
+\textbf{Rationale:} Bounded in $(-0.5,0.5)$; smooth compression; prevents runaway
+near extreme differentials; $f=0$ iff $\Delta S=0$; von~Mangoldt error $O(\beta^{-1})$.
+\end{adrnote}
+
+\begin{adrnote}{ADR-003: Adversarial Twin + Watchdog --- CLOSED}
+\textbf{Status:} Accepted.
+\textbf{Decision:} $\bar\Sigma$ initialized from live ledger at proposal time;
+$N$-step run; verdict by $V(\bar S_N)\leq V(\bar S_0)\cdot 1.03$.
+$\bar\Sigma$ shares all parameters with $\Sigma$ except $\mathrm{sign}(f)$.
+Neither can modify the other.
+\textbf{Emergent property:} $\mathrm{ModSafety}(t)$ monotonically non-decreasing.
+\textbf{Drift bound:} $0.03=1-\lambda$; not configurable.
+\end{adrnote}
+
+\begin{adrnote}{ADR-004: Glass Box VIN Protocol --- CLOSED}
+\textbf{Status:} Accepted.
+\textbf{Decision:} VIN is a prime-factored running product; each modification multiplies
+in with exponent encoding hash and drift score.
+Tamper activates $\bar\Sigma$ silent audit; does not halt system.
+\textbf{OEM path:} $C_{\mathrm{mod}}+\Delta_{\mathrm{mod}}$ corpus $\to$ full $\bar\Sigma$ suite $\to$
+variant VIN stamp.
+\textbf{Invariant:} Fundamental Theorem of Arithmetic makes decomposition unique and
+tamper-evident by arithmetic alone.
+\end{adrnote}
+
+\section{Validation and Falsifiability}\label{sec:validation}
+
+\subsection{Simulation Results}
+\begin{table}[H]\centering
+\caption{Convergence half-life by initialization condition ($\beta=1.0$, $\lambda=1.0$, 10-node graph).}
+\begin{tabular}{lrrr}\toprule
+\textbf{Condition}&\textbf{Initial Variance}&\textbf{Half-Life (steps)}&\textbf{Final Variance}\\\midrule
+Both Positive & 0.198 & \textbf{7} & 0.000\\
+Mixed Signs   & 0.907 & 8          & 0.000\\
+Both Negative & 0.245 & 8          & 0.000\\
+\bottomrule\end{tabular}
+\end{table}
+
+Both-positive pairs converge fastest, confirming gradient-triggered model and
+falsifying the deficit-triggered alternative.
+
+\subsection{Hardy--Ramanujan Empirical Check}
+Empirical prime exponent distribution over $n\leq 10^5$:
+$k=1$ accounts for $\approx 76\%$ of occurrences, $k=2$ for $\approx 14\%$,
+higher powers increasingly rare. Confirms the $\lambda=1$ prediction that
+high-surplus accumulation is rare and the system naturally distributes broadly.
+
+\subsection{Remaining Validation Paths}
+\begin{enumerate}
+  \item \textbf{Non-Markovian Signature (5 days):}
+    $\mathrm{KL}(P_{\mathrm{full}}\|P_{\mathrm{stateless}})$ quantifies auditability cost.
+  \item \textbf{von~Mangoldt Error Term (7 days):}
+    Measure $O(\beta^{-1})$ error empirically.
+  \item \textbf{ModSafety Trajectory (3 days):}
+    Confirm monotone increase from initialization to equilibrium.
+\end{enumerate}
+
+\section{Integration with \texorpdfstring{$\Pi$}{Pi}-Kernel and Gate~K}\label{sec:gates}
+
+The $\Pi$-Kernel per-atom update uses static $\alpha_\pi\in(0,\bar\alpha)$.
+The $\Sigma$-Kernel replaces this with:
+\[
+  \alpha_\pi \leftarrow 0.5 - \tfrac{1}{2}\tanh(\beta\cdot\Delta S_\pi)
+\]
+converting static SlopeUB damping into a surplus-governed Lyapunov-certified bound.
+
+Gate~K (merged 2026-03-16, PR \#8, PhaseMirror-HQ) provides the post-quantum layer:
+Poseidon2 sponge ($t=9$, $r=8$, BN254, $d=5$),
+ML-DSA Dilithium5 convergence certificates
+($\mathrm{pk}=2592\,\mathrm{B}$, $\mathrm{sk}=4880\,\mathrm{B}$,
+$\mathrm{sig}=4595\,\mathrm{B}$), and ACE AIR circuit
+(5 convergence constraints, Goldilocks field).
+The Glass Box VIN (readable by arithmetic) and the Gate~K
+PQConvergenceCert (verifiable by post-quantum cryptography)
+together constitute a complete, dual-layer provenance chain.
+
+\section{Repository Layout}\label{sec:repo}
+\begin{lstlisting}[language={},caption={Target repository layout.}]
+multiplicity/core/
+  constants.py             -- LAMBDA=0.97, BETA=1.0, DRIFT_BOUND=0.03
+  invariants.py            -- L0-L4 executable assertions
+  adr/
+    ADR-001-gradient-triggered.md
+    ADR-002-tanh-kernel.md
+    ADR-003-adversarial-twin-watchdog.md
+    ADR-004-glass-box-vin.md
+
+kernels/sigma/
+  Sigma-Kernel-Mathematical-Note.json
+  Sigma-Kernel-ADR-002.json
+  Sigma-Kernel-ADR-003.json
+  Sigma-Kernel-ADR-004-Glass-Box-VIN.json
+  Sigma-Kernel-Validation-Plan.json
+  Sigma-Pi-Integration.json
+
+mirror-dissonance/           (pmd, under governance)
+  sigma_kernel.py
+  sigma_bar.py
+  watchdog.py
+  vin.py
+  prime_registry.py
+  checkpoint_store.json
+\end{lstlisting}
+
+\section{Prior Art Claims}\label{sec:priorart}
+
+Priority established as of 8 March 2026 (confirmed in
+\texttt{MultiplicityFoundation/Tooling} and
+\texttt{MultiplicityFoundation/PhaseMirror-HQ} commit history):
+
+\begin{enumerate}[label=\textbf{PA-\arabic*.},itemsep=0.4em]
+  \item The tanh attribution kernel $f=-\tfrac{1}{2}\tanh(\beta(S(x)-S(y)))$
+    for prime-indexed surplus redistribution.
+  \item The prime exponent as surplus ledger: $k$ in $p^k$ as accumulated
+    interaction history register.
+  \item Gradient-triggered asymmetry: $f\neq 0$ whenever $\Delta S\neq 0$,
+    independent of absolute sign.
+  \item The adversarial digital twin $\bar\Sigma$: sign-inverted kernel
+    initialized from live ledger state as Gödelian bypass for
+    self-modification verification.
+  \item Trust accumulation via ModificationSafety: monotonically non-decreasing
+    safety score encoding the system's developmental arc.
+  \item The Living VIN: prime-factored running product with drift score
+    embedded in exponents, certified by the Fundamental Theorem.
+  \item The OEM certification path: $\Delta_{\mathrm{mod}}$ behavioral
+    fingerprint accumulated through silent audit for variant VIN issuance.
+  \item The universal drift bound $1-\lambda$ as the sole governance constant,
+    with all derived parameters computed from $\lambda$ and $\beta$ alone.
+  \item Von~Mangoldt correspondence under carry-forward dynamics:
+    $\Lambda(p^k)=\log p$ as time-averaged attribution weight at $\lambda=1$.
+  \item $\Sigma$/$\Pi$ integration: surplus-governed dynamic $\alpha_\pi$
+    replacing static SlopeUB in the $\Pi$-Kernel.
+\end{enumerate}
+
+\section{Conclusion}\label{sec:conclusion}
+
+The Glass Box Architecture demonstrates that a complete, formally certified,
+self-modifying cognition system can be governed by exactly two numerical
+constants. All safety properties, all convergence guarantees, all tamper
+responses, and all certification pathways derive from $\lambda=0.97$ and
+$\beta=1.0$ without additional configuration.
+
+The system breaks exactly when the mathematics breaks.
+When it breaks, the break is visible in the VIN.
+When the break is in the VIN, it is visible to everyone.
+When it is visible to everyone, it is no longer a black box.
+\textbf{It is a glass box.}
+
+\appendix
+\section{Glossary}\label{app:glossary}
+\begin{description}[leftmargin=2.2cm,style=nextline]
+  \item[$\Sigma$-Kernel] The tanh-based surplus attribution kernel.
+  \item[$\bar\Sigma$] The adversarial twin: sign-inverted for pre-commit verification.
+  \item[Surplus Ledger] $S:\mathcal{P}\times\mathbb{Z}_{\geq 0}\to\mathbb{R}$, accumulated history per prime.
+  \item[VIN] Prime-factored integrity certificate; living, multiplicative.
+  \item[Drift bound] $0.03=1-\lambda$; universal threshold.
+  \item[ModificationSafety] $1-\tanh(\beta\cdot\max_{ij}\Delta S_{ij})$; developmental arc metric.
+  \item[OEM certification] Third-party modification certified via adversarial test + variant VIN.
+  \item[$\Pi$-Kernel] Banach-space factorized analysis using tensor products of projectors.
+  \item[Gate K] Post-quantum ZK readiness (Poseidon2, ML-DSA, ACE AIR).
+  \item[von~Mangoldt correspondence] $\sum_k\alpha\cdot\log p\sim\Lambda(p^k)=\log p$ at $\lambda=1$.
+\end{description}
+
+\nocite{*}
+\bibliographystyle{unsrt}  
+\bibliography{references}
+\end{document}

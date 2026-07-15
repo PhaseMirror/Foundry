@@ -1,0 +1,926 @@
+% PIRTM-ACE×PETC: Prime-Indexed Recursive Tensor Model with ACE Safety and PETC Lawfulness
+\documentclass[11pt]{article}
+
+% --- Packages ---
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{amsmath,amsthm,amssymb,amsfonts,mathtools}
+\usepackage{bm}
+\usepackage{microtype}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{cleveref}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{graphicx}
+
+% --- Hyperref setup ---
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  citecolor=blue,
+  urlcolor=blue
+}
+
+% --- Listings (Python) ---
+\definecolor{codebg}{RGB}{247,247,247}
+\definecolor{codestring}{RGB}{163,21,21}
+\definecolor{codecomment}{RGB}{0,128,0}
+\definecolor{codekeyword}{RGB}{0,0,180}
+\lstdefinestyle{py}{
+  language=Python,
+  basicstyle=\ttfamily\small,
+  backgroundcolor=\color{codebg},
+  keywordstyle=\color{codekeyword}\bfseries,
+  stringstyle=\color{codestring},
+  commentstyle=\color{codecomment}\itshape,
+  showstringspaces=false,
+  frame=single,
+  framerule=0.4pt,
+  rulecolor=\color{black},
+  columns=fullflexible,
+  keepspaces=true,
+  tabsize=2,
+  breaklines=true,
+  numbers=left,
+  numbersep=6pt,
+  numberstyle=\tiny\color{gray}
+}
+
+% --- Theorem Environments ---
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+% --- Macros ---
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\norm}[1]{\left\lVert #1 \right\rVert}
+\newcommand{\abs}[1]{\left\lvert #1 \right\rvert}
+\newcommand{\braces}[1]{\left\{ #1 \right\}}
+\newcommand{\angles}[1]{\left\langle #1 \right\rangle}
+\newcommand{\op}{\mathrm{op}}
+\newcommand{\Id}{\mathrm{Id}}
+\newcommand{\Kop}{\mathcal{K}}
+
+\begin{document}
+
+
+\title{PIRTM --- Core Technical Disclosure \\ Defensive Publication / Prior Art}
+\author {Ryan Van Gelder (PETC) \& Tyler Van Osdol (ACE) \\ \\ Citizen Gardens}
+\date{\today}
+\maketitle
+
+\begin{abstract}
+We present a complete, engineering-ready formulation of the Prime-Indexed Recursive Tensor Model (PIRTM) integrated with the Arithmetic Control Engine (ACE) for safety certificates and the Prime-Encoded Tensor Calculus (PETC) for lawful prime-weighted structure. The core dynamics are affine-linear with a prime-decomposed gain operator. We prove necessary and sufficient convergence conditions (spectral radius $<1$), provide sufficient ACE--PETC budget tests, give robustness and time-varying extensions, and supply drop-in Python implementations including exact weighted-$\ell_1$ projection, monitoring utilities, fixed-point estimators with certified tails, and adaptive margin control. Throughout we adhere to the notational convention that the gain acts by operator application $K\,T$ (\emph{not} tensor product), reserving $\otimes$ for true space tensor products.
+\end{abstract}
+\newpage
+\tableofcontents
+
+\section{Introduction}
+PIRTM models the evolution of a tensor-valued state $T_t$ under a prime-weighted linear operator with an affine forcing term. To guarantee safe and predictable behavior, we combine:
+\begin{itemize}[leftmargin=*]
+  \item \textbf{PETC}: a structural layer that encodes prime indices, exponents and operator bounds $b_p$, producing a lawful ledger for $\{(p,\alpha,b_p)\}$ and raw weights;
+  \item \textbf{ACE}: a certification layer that enforces a contraction budget via exact weighted-$\ell_1$ projection and yields online certificates (contraction gap, rate upper bounds).
+\end{itemize}
+This report consolidates the mathematical foundation (convergence, robustness) and the production-grade implementation (projection, monitoring and solvers).
+
+\section{Notation and Setting}
+Let $(H,\norm{\cdot})$ be a Banach space suitable for the tensor $T_t\in H$. For a list of primes $P_N=\{p_1,\dots,p_N\}$ and bounded linear maps $B_p:H\to H$ with operator bounds $\norm{B_p}\le b_p$, define prime weights
+\[
+  w_p := \Lambda_p\,p^{\alpha}, \qquad \alpha\in\R, \ \Lambda_p\in\R.
+\]
+The gain operator is the (finite) sum
+\[
+  K := \sum_{p\in P_N} w_p\,B_p, \qquad \text{acting by application } (K\,X)=\sum_{p} w_p\,B_p(X).
+\]
+We reserve $\otimes$ for explicit tensor products of spaces; we \emph{do not} write $K\otimes T$ for the state update.
+
+\section{Core Recurrence: Scalar and Operator Forms}
+\subsection{Scalar/Mode-wise Form}
+For each mode $(m,n)$, the state obeys
+\begin{equation}
+  T_{t+1}(m,n) = k_m\,T_t(m,n) + F(m,n), \qquad k_m := \sum_{p\in P_N} \Lambda_m\, p^{\alpha}.
+  \label{eq:scalar}
+\end{equation}
+This is a specialization of the operator model when each $B_p$ acts as the identity on the $(m,n)$-mode.
+
+\subsection{Operator Form}
+For the full tensor state $T_t\in H$ we have
+\begin{equation}
+  T_{t+1} = F + K\,T_t, \qquad K = \sum_{p\in P_N} w_p\,B_p, \quad w_p=\Lambda_p\,p^{\alpha}.
+  \label{eq:operator}
+\end{equation}
+
+\section{Convergence Theory}
+\begin{theorem}[Fixed point and convergence]
+Consider \eqref{eq:operator}. The following are equivalent:
+\begin{enumerate}[label=(\roman*),leftmargin=*]
+  \item The spectral radius satisfies $\rho(K)<1$.
+  \item The operator $(I-K)$ is invertible with Neumann series $(I-K)^{-1}=\sum_{j\ge 0} K^j$ converging in operator norm.
+  \item For every $T_0\in H$, the sequence $T_{t+1}=F+K\,T_t$ converges to the unique fixed point $T_\infty=(I-K)^{-1}F$ with linear rate bounded by $\norm{K}^t$.
+\end{enumerate}
+\end{theorem}
+\begin{proof}
+$(i)\Rightarrow(ii)$: If $\rho(K)<1$, then there exists a submultiplicative operator norm with $\norm{K}<1$, which yields the Neumann series. $(ii)\Rightarrow(iii)$: Summation of $K^jF$ and the Banach fixed-point theorem give uniqueness and linear convergence. $(iii)\Rightarrow(i)$: If iterates converge for all $T_0$ then $1$ is not in the spectrum of $K$ and $\rho(K)<1$.
+\end{proof}
+
+\begin{corollary}[Scalar specialization]
+If each $B_p=\Id$, then $K=k\,\Id$ with $k=\sum_p w_p$. Convergence holds iff $|k|<1$, and the fixed point and rate are
+\[
+  T_\infty = \frac{F}{1-k}, \qquad |T_t-T_\infty| \le |k|^t\,|T_0-T_\infty|.
+\]
+\end{corollary}
+
+\subsection{ACE--PETC Sufficient Test}
+A practical sufficient condition enforced by ACE with PETC bounds is
+\begin{equation}
+  \sum_{p\in P_N} b_p\,|w_p|\; <\; 1-\varepsilon, \qquad (\varepsilon>0),
+  \label{eq:ace-budget}
+\end{equation}
+which implies $\norm{K}\le \sum_p b_p|w_p| < 1$ and hence $\rho(K)<1$.
+
+\subsection{Infinite-prime extension}
+If $P_N\uparrow P$ and $\sum_{p\in P} b_p\,|\Lambda_p|\,p^{\alpha} < 1$ (e.g., $\alpha<-1$ with bounded $\Lambda_p$ and $b_p$), then the series for $K$ converges absolutely in operator norm and all results above hold.
+
+\section{Robustness and Time-Varying Systems}
+\begin{proposition}[Sensitivity of the fixed point]
+Let $\norm{K}\le 1-\delta$ with $\delta\in(0,1)$. For perturbations $\Delta K$ and $\Delta F$ with $\norm{\Delta K}<\delta$, the fixed point shifts by
+\[
+  \Delta T_\infty = (I-K)^{-1}\,\Delta F + (I-K)^{-1}\,\Delta K\,(I-K)^{-1}F + \mathcal{O}(\norm{\Delta K}^2),
+\]
+so that $\norm{\Delta T_\infty}\le \delta^{-1}\norm{\Delta F} + \delta^{-2}\norm{\Delta K}\,\norm{F}+\ldots$.
+\end{proposition}
+
+\begin{theorem}[Uniform contraction for time-varying gains]
+Suppose $T_{t+1}=F_t+K_t T_t$ with $\sup_t\norm{K_t}\le 1-\delta$ and bounded $F_t$. Then
+\[
+  \norm{T_t}\le (1-\delta)^t\,\norm{T_0} + \frac{1}{\delta}\,\sup_{j\le t}\norm{F_j},
+\]
+so the system is BIBO-stable and tracks slowly varying fixed points with error $\mathcal{O}(\delta^{-1})$.
+\end{theorem}
+
+\section{ACE$\times$PETC Integration}
+\paragraph{PETC (lawfulness).} PETC supplies the prime-signature ledger $\{(p,\alpha,b_p)\}$ and raw weights $w_p=\Lambda_p p^{\alpha}$. It also specifies admissible decay profiles in $\Lambda_p$ when $\alpha\ge -1$ so that \eqref{eq:ace-budget} still holds.
+
+\paragraph{ACE (safety).} ACE enforces the weighted-$\ell_1$ budget \eqref{eq:ace-budget} via a 1-Lipschitz projection (soft-thresholding by a common multiplier), preserving contraction margins. Online metrics: the contraction upper bound $\widehat{\norm{K}}=\sum_p b_p|w_p|$, the gap $\mathrm{gapLB}=1-\widehat{\norm{K}}$, and a rate upper bound $\mathrm{SlopeUB}=\widehat{\norm{K}}$.
+
+\section{Algorithms and Reference Implementations}
+\subsection{Exact weighted-$\ell_1$ projection (ACE)}
+\begin{algorithm}[H]
+\caption{Weighted-$\ell_1$ projection by bisection}
+\begin{algorithmic}[1]
+\Require raw weights $w$, PETC bounds $b$, budget $\tau\in(0,1)$
+\If{$\sum_i b_i|w_i|\le \tau$} \State \Return $w$ \EndIf
+\State Set $\lambda\in[0,\max_i |w_i|/\max(b_i,\epsilon)]$
+\While{budget error $>\,$tol and iters $<\,$max}
+  \State $w^{\mathrm{proj}}_i \leftarrow \mathrm{sign}(w_i)\,\max(0, |w_i|-\lambda b_i)$
+  \State $\mathrm{budget}\leftarrow \sum_i b_i |w^{\mathrm{proj}}_i|$
+  \State Adjust $\lambda$ by bisection to meet $\mathrm{budget}=\tau$
+\EndWhile
+\State \Return $w^{\mathrm{proj}}$
+\end{algorithmic}
+\end{algorithm}
+
+\paragraph{Python.}
+\begin{lstlisting}[style=py,caption={Exact weighted-$\ell_1$ projection (ACE budget)}]
+from typing import List
+import numpy as np
+
+def project_weighted_l1(w: List[float], b: List[float], tau: float, 
+                        tol: float = 1e-9, max_iters: int = 80) -> List[float]:
+    """
+    Projects weights to exactly meet ACE budget via bisection.
+    Returns projected w satisfying sum(b_i * |w_i|) ≈ tau.
+    """
+    current_budget = sum(b_i * abs(w_i) for w_i, b_i in zip(w, b))
+    if current_budget <= tau:
+        return w.copy()
+
+    lo, hi = 0.0, max(abs(w_i) / max(b_i, 1e-15) for w_i, b_i in zip(w, b))
+    w_proj = w.copy()
+    for _ in range(max_iters):
+        lam = 0.5 * (lo + hi)
+        w_proj = [
+            np.sign(w_i) * max(0.0, abs(w_i) - lam * b_i)
+            for w_i, b_i in zip(w, b)
+        ]
+        budget = sum(b_i * abs(wi) for wi, b_i in zip(w_proj, b))
+        if abs(budget - tau) < tol:
+            break
+        if budget > tau:
+            lo = lam
+        else:
+            hi = lam
+    return w_proj
+\end{lstlisting}
+
+\subsection{Unified ACE--PETC update (scalar and operator cases)}
+\begin{lstlisting}[style=py,caption={One PIRTM step with ACE×PETC certification}]
+from typing import List, Callable, Dict, Tuple
+import numpy as np
+
+Tensor = np.ndarray
+LinearOp = Callable[[Tensor], Tensor]
+
+
+def ace_petc_step(T: Tensor, F: Tensor, primes: List[int], alpha: float,
+                  Lambda: List[float], B_ops: List[LinearOp] = None,
+                  b_p: List[float] = None, tau: float = 0.9
+                  ) -> Tuple[Tensor, Dict, Dict]:
+    """
+    One step of PIRTM recurrence with ACE×PETC certification.
+    Returns: T_next, margins, debug
+    """
+    w_raw = [Lam_i * (p ** alpha) for p, Lam_i in zip(primes, Lambda)]
+
+    if B_ops is None:
+        # Scalar specialization
+        b_scalar = b_p if b_p is not None else [1.0] * len(primes)
+        w_proj = project_weighted_l1(w_raw, b_scalar, tau)
+        k_eff = sum(w_proj)
+        T_next = k_eff * T + F
+        margins = {
+            "||K||": abs(k_eff),
+            "gapLB": 1.0 - abs(k_eff),
+            "contraction_rate": abs(k_eff),
+            "budget_used": sum(b_i * abs(w_i) for w_i, b_i in zip(w_proj, b_scalar)),
+        }
+        debug = {"w": w_proj, "k_eff": k_eff, "w_raw": w_raw}
+        return T_next, margins, debug
+
+    # Operator case
+    assert b_p is not None and len(b_p) == len(primes)
+    w_proj = project_weighted_l1(w_raw, b_p, tau)
+
+    def K_operator(X: Tensor) -> Tensor:
+        Y = np.zeros_like(X)
+        for w_i, B_i in zip(w_proj, B_ops):
+            Y = Y + w_i * B_i(X)
+        return Y
+
+    T_next = K_operator(T) + F
+    K_norm_upper = sum(abs(w_i) * bp for w_i, bp in zip(w_proj, b_p))
+    margins = {
+        "||K||_ub": K_norm_upper,
+        "gapLB": 1.0 - K_norm_upper,
+        "contraction_rate": K_norm_upper,
+        "budget_used": K_norm_upper,
+    }
+    debug = {"w": w_proj, "K_norm_ub": K_norm_upper, "K_operator": K_operator}
+    return T_next, margins, debug
+\end{lstlisting}
+
+\subsection{Monitoring and safety status}
+\begin{lstlisting}[style=py,caption={Real-time ACE margins monitor}]
+class PIRTMMonitor:
+    """Real-time monitoring of ACE×PETC safety margins"""
+    def __init__(self, tau: float = 0.9, window: int = 100, norm_fn=None):
+        self.tau = tau
+        self.window = window
+        self.norm_fn = norm_fn if norm_fn is not None else \
+            (lambda x: float(np.linalg.norm(np.asarray(x))))
+        self.history = {"K_norm": [], "gapLB": [], "T_diff": [], "sensitivity": []}
+
+    def update(self, margins: Dict, T_prev: Tensor, T_current: Tensor):
+        K_norm = margins.get("||K||", margins.get("||K||_ub", 0.0))
+        gap = margins.get("gapLB", 0.0)
+        self.history["K_norm"].append(K_norm)
+        self.history["gapLB"].append(gap)
+        self.history["T_diff"].append(self.norm_fn(np.asarray(T_current) - np.asarray(T_prev)))
+        self.history["sensitivity"].append(1.0 / max(gap, 1e-9))
+        for key in self.history:
+            if len(self.history[key]) > self.window:
+                self.history[key].pop(0)
+
+    def safety_status(self) -> Dict:
+        if not self.history["K_norm"]:
+            return {"status": "NO_DATA"}
+        recent_K = float(np.mean(self.history["K_norm"][ -5: ]))
+        recent_gap = float(np.mean(self.history["gapLB"][ -5: ]))
+        if recent_K > self.tau:
+            status = "VIOLATION"
+        elif recent_gap < 0.05:
+            status = "CRITICAL"
+        elif recent_gap < 0.10:
+            status = "WARNING"
+        else:
+            status = "SAFE"
+        return {
+            "status": status,
+            "avg_contraction": recent_K,
+            "avg_gap": recent_gap,
+            "sensitivity": 1.0 / max(recent_gap, 1e-9),
+        }
+\end{lstlisting}
+
+\subsection{Fixed-point estimator with certified tail}
+\begin{lstlisting}[style=py,caption={(I - K)^{-1}F via Neumann series with tail certificate}]
+def fixed_point_estimate(F: Tensor,
+                         K_apply: LinearOp,
+                         K_norm_ub: float,
+                         tol: float = 1e-8,
+                         max_terms: int = 10_000) -> Tensor:
+    """Computes (I - K)^{-1} F via Neumann series; requires K_norm_ub < 1."""
+    assert K_norm_ub < 1.0, "Neumann series requires ||K|| < 1."
+    S = np.zeros_like(F)
+    term = F.copy()
+    tau = K_norm_ub
+    for j in range(max_terms):
+        S = S + term
+        tail_bound = (tau ** (j + 1)) * float(np.linalg.norm(np.asarray(F))) / (1 - tau)
+        if tail_bound <= tol:
+            break
+        term = K_apply(term)
+    return S
+\end{lstlisting}
+
+\subsection{Adaptive budget to maintain a target gap}
+\begin{lstlisting}[style=py,caption={Simple adaptive policy for τ to keep a safety gap}]
+def adapt_tau(tau: float, gapLB: float, gap_target: float = 0.1, eta: float = 0.5) -> float:
+    """If gapLB < target, move tau toward 1 - gap_target by factor eta."""
+    if gapLB < gap_target:
+        return (1 - eta) * tau + eta * (1.0 - gap_target)
+    return tau
+\end{lstlisting}
+
+\subsection{Infinite-prime convergence check (corrected)}
+\begin{lstlisting}[style=py,caption={Absolute convergence test for ∑ b_p|Λ_p|p^α}]
+def check_infinite_prime_convergence(alpha: float, Lambda_bound: float, b_bound: float) -> bool:
+    """Returns True iff α < -1 and bounds are finite and nonnegative."""
+    ok_bounds = np.isfinite(Lambda_bound) and np.isfinite(b_bound) and (Lambda_bound >= 0) and (b_bound >= 0)
+    return (alpha < -1) and ok_bounds
+\end{lstlisting}
+
+\subsection{Usage example (scalar case)}
+\begin{lstlisting}[style=py,caption={Scalar PIRTM loop with monitoring and fixed-point estimate}]
+primes = [2, 3, 5, 7, 11]
+alpha = -1.5
+Lambda = [0.1] * len(primes)
+F = 1.0
+T = 0.0
+
+monitor = PIRTMMonitor(tau=0.85)
+for step in range(100):
+    T_next, margins, debug = ace_petc_step(T, F, primes, alpha, Lambda, tau=0.85)
+    monitor.update(margins, T, T_next)
+    T = T_next
+    if step % 10 == 0:
+        status = monitor.safety_status()
+        print(f"Step {step}: {status['status']} (K={margins.get('||K||', 0):.3f}, gap={margins['gapLB']:.3f})")
+
+# Fixed point
+k_eff = debug['k_eff']
+T_inf = F / (1 - k_eff)
+print(f"Fixed point: {T_inf:.6f}")
+\end{lstlisting}
+
+\subsection{Design Guidelines and Checklists}
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Choose $\alpha$}: start with $\alpha\in(-2,-1)$; adjust $\Lambda_p$ to keep $\sum b_p|w_p|\le \tau$.
+  \item \textbf{Projection}: always use the exact weighted-$\ell_1$ projection (not uniform scaling).
+  \item \textbf{Monitoring}: log $\widehat{\norm{K}}$, gap $1-\widehat{\norm{K}}$, and $\norm{T_{t+1}-T_t}$.
+  \item \textbf{Safety margins}: begin with $\tau\le 0.9$; adapt using \texttt{adapt\_tau} only when margins erode.
+  \item \textbf{Infinite primes}: ensure $\sum_p b_p|\Lambda_p|p^{\alpha}<1$ (e.g., $\alpha<-1$ with bounded $\Lambda_p$, $b_p$), noting this is sufficient but not necessary.
+\end{itemize}
+
+\subsection{Conclusions}
+The PIRTM dynamics combined with ACE and PETC yield a contractive, well-conditioned, and monitorable system. The theory (spectral radius criterion, budget-based sufficiency) aligns exactly with the provided implementations (projection, monitors, fixed-point estimation), enabling reliable deployment.
+
+\section{Lightweight Scalar Friendly}
+We study a prime-indexed linear iteration for tensors,
+\begin{equation*}
+  T_{t+1}=F+k\,T_t, \quad k\in\R,
+\end{equation*}
+and show that convergence is guaranteed \emph{iff} $|k|<1$. ``Prime structure'' is treated as a \emph{dictionary} (representation/regularization) and as \emph{typing metadata} via the \textbf{Prime-Encoded Tensor Calculus (PETC; Ryan Van Gelder)} \cite{VanGelderPETC}, rather than as a physical law. Stability and safety are certified with a 1-Lipschitz projection from the \textbf{Arithmetic Control Engine (ACE; Tyler Van Osdol)} \cite{VanOsdolACE}. We replace universal constants with explicit budgets, move speculative physics to future work with a parameter-identification plan, and add a preregistered experimental protocol.
+\end{abstract}
+
+\subsection{Notation and Setup}
+Let $(\Hhh,\|\cdot\|)$ be a real Banach space (e.g., $\ell_2$ coefficients under a fixed dictionary). Fix a finite prime set $P_N=\{p_1,\dots,p_N\}$. A \emph{prime dictionary} is a collection $\D=\{\phi_p\}_{p\in P_N}\subset\Hhh$ used for expansions and penalties; we make no basis/completeness claim. For external drive $F\in\Hhh$, define the scalar gain
+\begin{equation}
+  k\;=\;\sum_{p\in P_N}\Lambda_p\,p^{\alpha},\qquad \Lambda_p\in\R,\;\alpha\in\R.
+  \label{eq:gain}
+\end{equation}
+Older drafts used a single $\Lambda$; here we allow per-prime $\Lambda_p$.
+
+\subsection{Convergence and Safety}
+\begin{theorem}[Convergence $\Leftrightarrow$ contraction]\label{thm:contraction}
+Let $\mathcal T(X)=F+kX$ on $\Hhh$. If $|k|<1$, then for any $T_0$,
+\begin{equation*}
+  T_t \to T_\infty = \frac{1}{1-k}\,F,
+\end{equation*}
+with linear rate $|k|$.
+\end{theorem}
+\begin{proof}
+We have $\|\mathcal T(X)-\mathcal T(Y)\|=|k|\,\|X-Y\|$. If $|k|<1$, $\mathcal T$ is a contraction; apply Banach's fixed-point theorem \cite{BauschkeCombettes2017}.
+\end{proof}
+
+\begin{lemma}[One sufficient route to $|k|<1$]\label{lem:sufficient}
+If $\Lambda_p\ge 0$ and $\alpha<-1$, then
+\begin{equation*}
+  |k|=\sum_{p\in P_N}\Lambda_p p^{\alpha}
+  \;\le\; \Big(\max_{p}\Lambda_p\Big)\sum_{i=1}^{N}p_i^{\alpha}.
+\end{equation*}
+Choosing $\max_p\Lambda_p$ small enough makes $|k|<1$. \emph{(Sufficient, not necessary.)}
+\end{lemma}
+
+\paragraph{ACE safety wrapper (spectral certification).} Let $S\subset\Hhh$ be a safety/regularization set (e.g., a weighted-$\ell_1$ ball on dictionary coefficients). Let $\Pi_S$ be the Euclidean projection onto $S$ (1-Lipschitz). The ACE-wrapped update
+\begin{equation}
+  T_{t+1} \,=\, \Pi_S\!\big(F+k\,T_t\big)
+  \label{eq:ace}
+\end{equation}
+has global Lipschitz constant $\le |k|$; thus $|k|<1$ gives a certified contraction and feasibility $T_t\in S$ for all $t$.
+
+\subsection{PETC Typing: Prime Structure as Metadata}
+Expand $T=\sum_{p\in P_N} w_p\,\phi_p$. Each coefficient $w_p$ carries a PETC ``prime type'' tag \cite{VanGelderPETC}. We impose a \emph{prime-mix budget}
+\begin{equation}
+  \sum_{p\in P_N} b_p\,|w_p(T)| \;\le\; \tau,\qquad b_p>0,
+  \label{eq:budget}
+\end{equation}
+which is enforced via the projection $\Pi_S$ (weighted soft-thresholding on $w_p$). Optional \emph{prime gating} $g_p(\alpha,\Lambda_p)=\Lambda_p p^{\alpha}$ modulates proposals but is bounded by the same budget; no ``universal constant'' is assumed.
+
+\subsection{Algorithm (ACE$\times$PETC-compliant)}
+\noindent\textbf{Inputs.} $F$, dictionary $\{\phi_p\}$, weights $\{\Lambda_p\}$, exponent $\alpha$, budget $(b_p,\tau)$.
+
+\begin{enumerate}[leftmargin=2em,label=\arabic*.]
+  \item \textbf{Gain synthesis.} Compute $k$ from \cref{eq:gain}. If $|k|\ge 1$, shrink $\Lambda_p$ and/or $P_N$ until $|k|<1$.
+  \item \textbf{Projection set.} Define $S=\{T:\sum_p b_p|w_p(T)|\le \tau\}$. Use $\Pi_S$ (1-Lipschitz).
+  \item \textbf{Iteration.} $T_{t+1}=\Pi_S(F+kT_t)$ as in \cref{eq:ace}.
+  \item \textbf{Stopping.} Stop when $\|T_{t+1}-T_t\|\le\varepsilon$; output $T_\infty$.
+\end{enumerate}
+\noindent\emph{Properties.} Certified convergence (\cref{thm:contraction}), feasibility (ACE), and auditable prime composition (PETC).
+
+\subsection{Practical Guidance}
+\paragraph{Choosing $\alpha,\Lambda_p,P_N$.} Pick $P_N$ by model/compute budget; start with $\alpha\in(-2,-1)$ and uniform $\Lambda_p=\Lambda$; use \cref{lem:sufficient} to get a safe $\Lambda$ with margin $\varepsilon\in[0.1,0.3]$; tune $(b_p,\tau)$ and re-check $|k|<1$.
+\paragraph{Diagnostics.} Track $|k|$, budget usage $\sum b_p|w_p|$, and prime-mix histograms per iteration. If convergence slows, reduce $|k|$, tighten $\tau$, or shrink $P_N$.
+
+\subsection{Experimental Protocol (Preregistered)}
+\textbf{Benchmarks.} MSD-PrimeMix (multi-scale disturbances with controlled prime-spread).\\
+\textbf{Baselines.} LQR (if model known), projected gradient with fixed step, Adam; RL baseline (e.g., TD3/DQN as applicable).\\
+\textbf{Metrics.} Task cost, settling time, safety-violation count, robustness vs. disturbance amplitude/sparsity; report mean$\pm$95\% CI over 10 seeds.\\
+\textbf{Ablations.} With/without ACE; with/without PETC budget; vary $\alpha$ at fixed $|k|$; expand/shrink $P_N$.\\
+\textbf{Reporting.} Publish code/configs; include certificate traces (GapLB, SlopeUB).
+
+\subsection{Related Work}
+Contractions and projection operators are classical \cite{BauschkeCombettes2017}; proximal methods and Lipschitz projections connect to the modern optimization toolkit \cite{ParikhBoyd2014}. Weighted $\ell_1$ projections and soft-thresholding date to wavelet shrinkage \cite{DonohoJohnstone1994} and LASSO \cite{Tibshirani1996}. Prime-indexed dictionaries fit within sparse coding and dictionary learning \cite{MallatZhang1993,OlshausenField1996,Mairal2010}. Lipschitz-controlled neural networks relate via Parseval regularization \cite{Cisse2017Parseval} and spectral normalization \cite{Miyato2018SN}. The ACE and PETC frameworks formalize safety via contraction certificates and structural typing, respectively \cite{VanOsdolACE,VanGelderPETC}.
+
+\subsection{Limitations}
+The linear core is intentional; nonlinear variants require fresh contraction proofs (local or global). Dictionary choice is application-dependent; performance hinges on whether $\{\phi_p\}$ captures salient structure.
+
+\subsection{Future Work}
+\textbf{Operator learning.} Learn diagonal-plus-low-rank operators in the prime dictionary with PETC regularizers; verify a contraction region.\\
+\textbf{Physical identification.} Units-consistent maps from data to $(\Lambda_p,\alpha)$ with uncertainty quantification.\\
+\textbf{Nonlinear plants.} ACE-style sector-bounded contractions and piecewise certificates.
+\section{The Prime-Recursive Foundations of Mathematical Existence}
+\label{sec:prime_recursive_foundations}
+
+\medskip
+
+A central question is whether diverse structures—algebraic, topological, or computational—can be generated by a single, prime-based, recursive mechanism. We formalize this as a meta-recursive \emph{prime-indexed} constructor that is both \emph{auditable} (PETC: unambiguous retrospection) and \emph{stable} (ACE: certified contraction).
+
+\subsection{The Meta-Recursive Function (ACE\texorpdfstring{$\times$}{x}PETC Form)}
+Let $P_N=\{p_1,\dots,p_N\}$ be the first $N$ primes. Let $H$ be a Banach space of (typed) tensors. For each prime $p\in P_N$ choose a bounded linear channel $B_p:H\!\to\!H$ with $\|B_p\|\le b_p$. Define prime weights
+\[
+w_p=\Lambda_p\,p^{\alpha},\quad \Lambda_p\in\mathbb{R}\ (\text{typically }\Lambda_p\ge0),\quad \alpha< -1\ \text{(sufficient decay)}.
+\]
+The \emph{gain operator} and the \emph{meta-recursion} are
+\begin{equation}
+\label{eq:gain_and_meta}
+\mathcal{K}=\sum_{p\in P_N} w_p B_p,\qquad
+T_{t+1}=\mathcal{M}(P_N;T_t):=F+\mathcal{K}\,T_t.
+\end{equation}
+This refines the informal sum $\sum_{p} \Lambda\,p^\alpha T_{p}^{(m,n)}$ into an operator form while keeping primes explicit as independent channels.
+
+\begin{assumption}[ACE Contraction Budget]
+\label{as:budget}
+\textstyle \sum_{p\in P_N} |w_p|\,b_p \;<\;1 \quad\Longrightarrow\quad \|\mathcal{K}\|\le\sum_{p}|w_p|b_p<1.
+\end{assumption}
+
+\begin{theorem}[Convergence \& Fixed Point]
+\label{thm:convergence}
+Under Assumption~\ref{as:budget}, the affine map $T\mapsto F+\mathcal{K}T$ is a strict contraction on $(H,\|\cdot\|)$. Hence there exists a unique fixed point
+\[
+T_\infty=(I-\mathcal{K})^{-1}F,
+\]
+and for any $T_0$ one has linear convergence
+$\|T_t-T_\infty\|\le \|\mathcal{K}\|^{\,t}\,\|T_0-T_\infty\|$.
+In the scalar special case ($T\in\mathbb{R}$, $\mathcal{K}=k\in(-1,1)$) this reduces to $T_\infty=\frac{F}{1-k}$.
+\end{theorem}
+
+\begin{theorem}[Uniqueness \& Stability under Projection]
+\label{thm:uniqueness}
+Let $\Pi_S$ be a nonexpansive projection (e.g., a convex projection) and consider the projected recursion
+\[
+T_{t+1}=\Pi_S\!\big(F+\mathcal{K}T_t\big).
+\]
+If Assumption~\ref{as:budget} holds, then $T\mapsto \Pi_S(F+\mathcal{K}T)$ is also a contraction with constant $\le\|\mathcal{K}\|<1$; therefore it admits a unique fixed point in $S$ and the iteration converges linearly to it.
+\end{theorem}
+
+\begin{remark}[Safe Design Regime for Prime Weights]
+A sufficient (not necessary) recipe: choose $\alpha< -1$, $\Lambda_p\ge0$, and cap $\Lambda_p\le\bar\Lambda$ so that $\sum_{p\in P_N}\Lambda_p p^{\alpha} b_p<1$. Increasing $N$ or tightening $\bar\Lambda$ preserves the margin.
+\end{remark}
+
+\subsection{PETC: Prime-Signature Ledger for Unambiguous Retrospection}
+Let $\mathbb{P}$ be the set of primes. A \emph{prime signature} is a finitely supported vector $e=(e_p)_{p\in\mathbb{P}}\in\mathbb{Z}^{(\mathbb{P})}$. Define the multiplicity map
+\[
+M(e)=\prod_{p} p^{e_p}\in\mathbb{Q}_{>0}.
+\]
+Composition of interactions is $e+e'$ (multiset union); undo/consumption is $e-e'$; dualization is $-e$.
+Unique factorization makes the history canonical: $e_p=v_p(M(e))$ records how many times the $p$-tagged event occurred.
+
+\begin{definition}[Conservation Certificate]
+For any typed operation with inputs $X_1,\dots,X_r$ and output $Y$, PETC conservation requires
+\(
+e(Y)=\sum_{i=1}^r e(X_i).
+\)
+A system is \emph{ledger-consistent} if the equality holds for all executed operations.
+\end{definition}
+
+\begin{proposition}[Lossless Retrospection]
+If a system is ledger-consistent, then for every state the accumulated signature $e$ determines the exact multiset of prime-tagged interactions that occurred, via $e_p=v_p(M(e))$.
+\end{proposition}
+
+\paragraph{Complexity.}
+Maintain $e$ as a sparse map (prime $\mapsto$ exponent). Updates/audits run in $O(|\mathrm{supp}(e)|)$—no integer factorization is needed.
+
+\subsection{Interpretation as a Universal Constructor}
+\label{subsec:universal_constructor}
+\textbf{Recursive self-modification.} The assignment $T_{t+1}=\mathcal{M}(P_N;T_t)$ mirrors prior states via $\mathcal{K}$, with uniqueness/convergence guaranteed by Theorems~\ref{thm:convergence}–\ref{thm:uniqueness}.
+
+\textbf{Structure emergence.} Choosing $F$ (drive) and $\{B_p\}$ (channels) yields a wide class of constructs: neural weights, quantum states, algebraic operators, or kernel process states.
+
+\textbf{Universality (within $H$).} Iteration converges to $T_\infty=(I-\mathcal{K})^{-1}F$; by selecting $F$ and $\{B_p\}$ appropriately, one can encode a broad family of objects in tensor space.
+
+\subsection{Examples of Emergent Structures}
+\begin{enumerate}
+  \item \textbf{Algebraic Systems.} Let $B_p$ be structured projectors/sparsity masks; $F$ encodes a group/semiring operation tensor. Contraction yields stable algebraic updates.
+  \item \textbf{Topological/Geometric Bases.} Choose $B_p$ as basis selectors; prime indices organize connectivity. Stable decompositions follow from Theorem~\ref{thm:convergence}.
+  \item \textbf{Tensor Networks.} Let $B_p$ act on tensor cores/edges; the fixed point realizes a high-dimensional network with controlled growth.
+  \item \textbf{Reinforcement Learning.} Take $T$ as weights, $F$ as TD/gradient drive, and $B_p$ as feature filters. Stability ensures convergent Q/policy updates.
+  \item \textbf{Kernel-Level Scheduling.} Model dispatch channels as $B_p$ and resource demand as $F$ for a multiplicity-driven scheduler (Section~\ref{sec:kernel_multiplicity}).
+\end{enumerate}
+
+\begin{theorem}[Fractal Stability via Prime-Indexed IFS]
+\label{thm:fractal_systems}
+If $H=\prod_{j} H_j$ with componentwise contractions $\{T\mapsto F+\mathcal{K}T\}$ whose constants are $<1$, then the induced self-map on $H$ is a contraction; the unique attractor $T_\infty$ is the limit of a prime-indexed iterated function system (IFS). Hierarchical prime partitioning induces self-similar structure in the limit.
+\end{theorem}
+
+\subsection{Refinements: Compression, Hierarchies, Causality, and Performance}
+\paragraph{Signature compression (checkpointing).}
+At epoch $k$, store $c_k\!\gets\!e$ and reset $e\!\gets\!0$. The rolled signature $\overline{e}=\sum_{k} c_k + e$ equals the uncheckpointed signature, preserving audits exactly.
+
+\paragraph{Exact/approximate/log-space conservation.}
+Prefer exact exponent equality $\sum_i e(X_i)=e(Y)$. For noise, allow $\|\sum_i e(X_i)-e(Y)\|_\infty\le\varepsilon$. If only $M(e)$ is accessible, use $\sum_i\sum_p e_p(X_i)\log p \approx \sum_p e_p(Y)\log p$ with tolerance $\eta$.
+
+\paragraph{Hierarchical rollups.}
+For a module tree $\mathcal{T}$ with local signatures $e[u]$, define $E[u]=e[u]+\sum_{v\in\mathrm{Children}(u)}E[v]$. If primitives are conservative, then $E[u]$ matches $u$'s external interface; conservation at the root implies global conservation.
+
+\paragraph{Causality (optional).}
+Augment PETC with a DAG $G=(V,E)$; label each edge with its prime increment. The justification set for a node (state) is the multiset union along any source–node path; its signature equals the state’s PETC signature.
+
+\subsection{ACE: Exact Weighted-\texorpdfstring{$\ell_1$}{l1} Projection}
+We enforce $\sum_p b_p|w_p|\le\tau<1$ via the exact projection onto the weighted ball. Let $z_p=b_p|w_p|$. If $\sum_p z_p\le\tau$ return $w$; else find $\theta\ge0$ with $\sum_p \max(z_p-\theta,0)=\tau$ and set
+\[
+w_p^\star=\mathrm{sign}(w_p)\,\frac{\max(z_p-\theta,0)}{b_p}.
+\]
+This is the weighted analogue of soft-thresholding; $\theta$ can be found by sorting $\{z_p\}$ and a cumulative scan.
+
+\subsection{Kernel-Level Multiplicity Scheduler}
+\label{sec:kernel_multiplicity}
+Associate each queue/class with a prime $p$; maintain PETC signatures per process and per core. Use ACE to allocate per-prime weights $w_p$ under $\sum b_p|w_p|\le\tau<1$; update dispatch decisions via $T_{t+1}=F+\mathcal{K}T_t$ where $T$ aggregates runnable-state indicators and $F$ encodes exogenous demand. PETC provides exact provenance for merges/splits; ACE maintains stability and responsiveness through budgeted adjustments.
+
+\subsection{Algorithms and Code (Runnable Sketches)}
+
+\paragraph{PETC prime ledger with checkpointing and exact conservation.}
+\begin{verbatim}
+class PrimeLedger:
+    def __init__(self):
+        self.sig = {}          # dict[int -> int], sparse exponents e_p
+        self.checkpoints = []  # list[dict[int -> int]]
+
+    def add_event(self, p: int, mult: int = 1, sign: int = +1):
+        self.sig[p] = self.sig.get(p, 0) + sign * mult
+        if self.sig[p] == 0: self.sig.pop(p)
+
+    def checkpoint(self):
+        self.checkpoints.append(self.sig.copy())
+        self.sig.clear()
+
+    def rolled_signature(self):
+        roll = {}
+        def add_map(dst, src, sgn=+1):
+            for p, e in src.items():
+                dst[p] = dst.get(p, 0) + sgn * e
+                if dst[p] == 0: dst.pop(p)
+        for ck in self.checkpoints: add_map(roll, ck, +1)
+        add_map(roll, self.sig, +1)
+        return roll
+
+def conservation_ok_exact(inputs, out) -> bool:
+    acc = {}
+    def add(dst, src, sgn=+1):
+        for p, e in src.items():
+            dst[p] = dst.get(p, 0) + sgn * e
+            if dst[p] == 0: dst.pop(p)
+    for L in inputs: add(acc, L.rolled_signature(), +1)
+    add(acc, out.rolled_signature(), -1)
+    return len(acc) == 0
+\end{verbatim}
+
+\paragraph{Optional log-space surrogate (tolerant).}
+\begin{verbatim}
+import math
+
+def log_signature(sig: dict[int,int]) -> float:
+    return sum(e * math.log(p) for p, e in sig.items())
+
+def conservation_ok_log(inputs, out, eta: float = 1e-9):
+    lhs = sum(log_signature(L.rolled_signature()) for L in inputs)
+    rhs = log_signature(out.rolled_signature())
+    return abs(lhs - rhs) <= eta
+\end{verbatim}
+
+\paragraph{ACE exact weighted-\(\ell_1\) projection and prime-indexed operator.}
+\begin{verbatim}
+import math
+import numpy as np
+
+def project_weighted_l1(w: dict[int,float], b: dict[int,float], tau: float):
+    z = {p: b[p] * abs(w[p]) for p in w}
+    S = sum(z.values())
+    if S <= tau: return w
+    items = sorted(z.items(), key=lambda kv: kv[1], reverse=True)
+    cumsum, theta = 0.0, 0.0
+    for k, (_, zk) in enumerate(items, start=1):
+        cumsum += zk
+        theta = (cumsum - tau) / k
+        if k == len(items) or items[k][1] <= theta < items[k-1][1]:
+            break
+    w_star = {}
+    for p in w:
+        val = max(z[p] - theta, 0.0) / max(b[p], 1e-12)
+        w_star[p] = math.copysign(val, w[p])
+    return w_star
+
+class PrimeAffine:
+    def __init__(self, B_ops: dict[int, callable], b_norms: dict[int,float], tau: float = 0.9):
+        self.B = B_ops     # p -> H->H
+        self.b = b_norms   # p -> ||B_p||
+        self.tau = tau
+        self.w  = {p: 0.0 for p in B_ops}
+
+    def set_weights(self, Lambda: dict[int,float], alpha: float):
+        w = {p: Lambda.get(p, 0.0) * (p ** alpha) for p in self.B}
+        self.w = project_weighted_l1(w, self.b, self.tau)
+
+    def K_apply(self, T):
+        acc = 0 * T
+        for p, Bp in self.B.items():
+            acc = acc + self.w[p] * Bp(T)
+        return acc
+
+    def step(self, T, F):
+        return F + self.K_apply(T)
+\end{verbatim}
+
+\paragraph{End-to-end loop (with PETC logging and ACE budget check).}
+\begin{verbatim}
+def run_loop(T0, F, prime_affine: PrimeAffine, ledger: PrimeLedger,
+             prime_of_update: int, steps: int = 100):
+    T = T0
+    for t in range(steps):
+        ledger.add_event(prime_of_update, mult=1, sign=+1)   # PETC log
+        T_next = prime_affine.step(T, F)                     # ACE step
+        budget = sum(abs(prime_affine.w[p]) * prime_affine.b[p] for p in prime_affine.w)
+        assert budget < 1.0, "ACE budget violated: not a contraction"
+        T = T_next
+    return T
+\end{verbatim}
+
+\subsection{Operational Checklist}
+\begin{enumerate}
+  \item \textbf{Ledger (PETC).} Assign primes to components/events; maintain signatures additively; enforce conservation. Use checkpointing and hierarchical rollups for scale; optionally attach a causality DAG.
+  \item \textbf{Weights (ACE).} Set $w_p=\Lambda_p p^\alpha$ with $\alpha< -1$ (sufficient) and project onto $\sum b_p|w_p|\le\tau<1$ via weighted-$\ell_1$ projection.
+  \item \textbf{Certificates.} Monitor budget $\sum b_p|w_p|$, and (optionally) gap/slope margins during learning.
+  \item \textbf{Convergence.} By Theorems~\ref{thm:convergence}–\ref{thm:uniqueness}, $T_{t+1}=F+\mathcal{K}T_t$ (or its projected form) converges uniquely to a fixed point at rate $\|\mathcal{K}\|$.
+\end{enumerate}
+
+\appendix
+\section{Handy Design Bound for $|k|$}\label{app:design-bound}
+For uniform $\Lambda_p=\Lambda$ and $\alpha<-1$,
+\begin{equation*}
+  |k|=\Lambda \sum_{i=1}^{N}p_i^{\alpha}.
+\end{equation*}
+Solve $|k|=1-\varepsilon$ for $\Lambda$ to initialize with margin $\varepsilon$.
+
+\paragraph{Reproducibility Checklist (suggested).} Provide code/configs; fix seeds; publish CSV logs for $|k|$, budget usage, and certificate traces; include README with environment and commit hash.
+
+\section{Prime-Recursive Mechanical Stabilization: PETC \texorpdfstring{$\times$}{x} ACE Formalization}
+\label{sec:pirtm_formal}
+
+\paragraph{Attribution.}
+\textsc{ACE} (Arithmetic Control Engine): Tyler Van Osdol. \;
+\textsc{PETC} (Prime-Encoded Tensor Calculus): Ryan Van Gelder.
+
+\subsection{Prime-Signature Ledger (PETC) for Unambiguous Retrospection}
+Let $\mathbb{P}$ denote the set of primes. A \emph{prime signature} is a finitely supported vector
+$e \in \mathbb{Z}^{(\mathbb{P})}$; we write $e=(e_p)_{p \in \mathbb{P}}$ with $e_p=0$ for all but finitely many $p$.
+Define the \emph{multiplicity map}
+\[
+  M(e) \;=\; \prod_{p\in\mathbb{P}} p^{e_p} \;\in\; \mathbb{Q}_{>0}.
+\]
+Operations are componentwise: composition of events is $e+e'$, undo/consumption is $e-e'$, dualization is $-e$.
+This realizes the slogan ``\emph{multiply primes now, factor later}'' as \emph{add exponents now, read them later}:
+unique factorization ensures that $e$ (hence the full interaction multiset) is recoverable without ambiguity.
+
+\begin{definition}[Conservation Certificate]
+For any typed operation $\Phi$ with inputs $X_1,\dots,X_r$ and output $Y$, the PETC \emph{conservation check} requires
+\(
+  e(Y) \;=\; \sum_{i=1}^r e(X_i).
+\)
+A system is \emph{ledger-consistent} if the equality holds for all executed $\Phi$.
+\end{definition}
+
+\begin{proposition}[Lossless Retrospection]
+If a system is ledger-consistent, then for every state the accumulated signature $e$ determines the exact
+multiset of prime-tagged interactions that occurred (with multiplicities), via the valuation $e_p = v_p(M(e))$.
+\end{proposition}
+
+\noindent\textbf{Complexity.}
+Maintain $e$ as a sparse map (prime $\mapsto$ exponent). Updates and audits are $O(|\mathrm{supp}(e)|)$; no integer factorization is required.
+
+\subsection{Prime-Indexed Affine Recursion (ACE-Certified)}
+Let $H$ be a Banach space of tensors (axes carry PETC types).
+For each prime $p$ choose a bounded linear ``channel'' $B_p:H\!\to\!H$ with $\|B_p\|\le b_p$.
+Choose per-prime weights $w_p=\Lambda_p\,p^{\alpha}$ (design knob: $\Lambda_p\in\mathbb{R}$, typically $\Lambda_p\ge 0$, and $\alpha< -1$ for decay).
+Define the gain operator
+\[
+  \mathcal{K}\;=\;\sum_{p\in P_N} w_p\,B_p,
+\qquad
+  \|\mathcal{K}\| \;\le\; \sum_{p\in P_N} |w_p|\,b_p.
+\]
+The \emph{meta-recursion} is the affine map
+\begin{equation}
+  \label{eq:affine}
+  T_{t+1} \;=\; F \;+\; \mathcal{K}\,T_t,
+\end{equation}
+which collapses your original sum into an operator form while keeping primes as explicit channels.
+
+\begin{assumption}[ACE Contraction Budget]\label{as:budget}
+$\displaystyle \sum_{p\in P_N} |w_p|\,b_p \;<\;1.$
+\end{assumption}
+
+\begin{theorem}[Fixed Point, Uniqueness, and Linear Rate]
+Under Assumption~\ref{as:budget}, the recursion \eqref{eq:affine} is a strict contraction on $(H,\|\cdot\|)$.
+Hence there exists a unique fixed point $T_\infty = (I-\mathcal{K})^{-1}F$ and for any $T_0$
+\[
+  \|T_{t}-T_\infty\| \;\le\; \|\mathcal{K}\|^{\,t}\,\|T_0-T_\infty\|.
+\]
+In the scalar special case $T\in\mathbb{R}$ and $\mathcal{K}=k\in(-1,1)$, $T_\infty=\frac{F}{1-k}$.
+\end{theorem}
+
+\begin{remark}[Safe Design Regime]
+A sufficient (not necessary) recipe is $\alpha< -1$, $\Lambda_p\ge 0$, and a global cap $\Lambda_p\le \bar\Lambda$ chosen so that
+$\sum_{p\in P_N} \Lambda_p p^{\alpha} b_p < 1$. Increase $N$ or tighten $\bar\Lambda$ to keep the margin.
+\end{remark}
+
+\paragraph{ACE Safety Certificates.}
+Let $\delta_S>0$ be a certified lower bound on the system's stability gap in the absence of $\mathcal{K}$,
+and let $L_p$ bound the local schedule slope contributed by channel $B_p$.
+Define
+\[
+  \mathrm{GapLB}(w) := \delta_S - 2\sum_{p\in P_N} b_p |w_p|, 
+  \qquad
+  \mathrm{SlopeUB}(w) := \sum_{p\in P_N} L_p |w_p|.
+\]
+Operate under the constraints $\mathrm{GapLB}(w)>0$ and $\mathrm{SlopeUB}(w)<1$.
+These provide online, quantitative margins for stability and non-expansiveness during learning.
+
+\subsection{Algorithms and Code Snippets}
+
+\paragraph{PETC Prime Ledger (lossless history).}
+\begin{verbatim}
+class PrimeLedger:
+    def __init__(self):
+        self.sig = {}  # dict[int -> int], sparse exponents e_p
+
+    def add_event(self, p: int, mult: int = 1, sign: int = +1):
+        # sign=+1 for occurrence, -1 for consumption/undo
+        self.sig[p] = self.sig.get(p, 0) + sign * mult
+        if self.sig[p] == 0:
+            self.sig.pop(p)
+
+    def valuation(self, p: int) -> int:
+        return self.sig.get(p, 0)
+
+    def multiplicity_Q(self):
+        # returns numerator, denominator of product p^{e_p}
+        num, den = 1, 1
+        for p, e in self.sig.items():
+            if e >= 0: num *= p ** e
+            else:      den *= p ** (-e)
+        return num, den
+
+def conservation_ok(inputs, output) -> bool:
+    # Check PETC conservation: sum(e_in) == e_out
+    acc = {}
+    def add_into(dst, src, sgn=+1):
+        for p, e in src.sig.items():
+            dst[p] = dst.get(p, 0) + sgn * e
+            if dst[p] == 0: dst.pop(p)
+    for L in inputs: add_into(acc, L, +1)
+    add_into(acc, output, -1)
+    return len(acc) == 0
+\end{verbatim}
+
+\paragraph{ACE-Certified Affine Update with Budget Projection.}
+We implement a simple (conservative) weighted-$\ell_1$ shrinkage to enforce the budget
+$\sum_p b_p |w_p| \le \tau < 1$. Replace \texttt{shrink\_wl1} with an exact weighted-$\ell_1$ projection if needed.
+
+\begin{verbatim}
+import numpy as np
+
+def shrink_wl1(w, b, tau):
+    # Conservative shrink: scale if the budget is exceeded
+    # w, b are dict[int->float]. Returns dict[int->float].
+    budget = sum(abs(w[p]) * b[p] for p in w)
+    if budget <= tau: return w
+    scale = tau / budget
+    return {p: scale * w[p] for p in w}
+
+class PrimeAffine:
+    def __init__(self, B_ops, b_norms, tau=0.9):
+        # B_ops: dict[int -> callable H->H], b_norms: dict[int->float] with ||B_p||<=b_p
+        self.B = B_ops
+        self.b = b_norms
+        self.tau = tau
+        self.w  = {p: 0.0 for p in B_ops}  # start neutral
+
+    def set_weights(self, Lambda, alpha):
+        # Lambda: dict[int->float], alpha< -1 recommended
+        w = {p: Lambda.get(p, 0.0) * (p ** alpha) for p in self.B}
+        self.w = shrink_wl1(w, self.b, self.tau)  # enforce ACE budget
+
+    def K_apply(self, T):
+        acc = 0 * T
+        for p, Bp in self.B.items():
+            acc = acc + self.w[p] * Bp(T)
+        return acc
+
+    def step(self, T, F):
+        # One affine contraction step: T_{t+1} = F + K T_t
+        return F + self.K_apply(T)
+\end{verbatim}
+
+\paragraph{End-to-End Loop with Ledger and Stability Checks.}
+\begin{verbatim}
+def run_loop(T0, F, prime_affine, ledger, prime_of_update, steps=100):
+    T = T0
+    for t in range(steps):
+        # Log the update event in PETC:
+        ledger.add_event(prime_of_update, mult=1, sign=+1)
+
+        # ACE contraction step:
+        T_next = prime_affine.step(T, F)
+
+        # Optional: online margin monitoring
+        budget = sum(abs(prime_affine.w[p]) * prime_affine.b[p] for p in prime_affine.w)
+        assert budget < 1.0, "ACE budget violated: not a contraction"
+
+        T = T_next
+    return T
+\end{verbatim}
+
+\subsection{Design Pattern and Examples}
+\begin{itemize}
+  \item \textbf{RL / Control.} Let $T$ be a weight tensor (e.g., linear Q or policy params), $F$ the external drive
+        (TD target / gradient), and $B_p$ prime-typed feature filters. PETC logs every gradient/apply step; ACE ensures
+        $\sum b_p |w_p| < 1$ for stable convergence to $T_\infty$.
+  \item \textbf{Tensor Networks / Algebraic Systems.} Choose $B_p$ as structured projectors or sparsity masks whose norms
+        are known. PETC ensures typed contractions respect multiplicity conservation; ACE budgets keep the build-up stable.
+  \item \textbf{Auditing \& Replay.} Given a terminal signature $e$, valuations $e_p$ give exact interaction counts
+        (multiset multiplicities). The system can replay or attribute decisions without ambiguity.
+\end{itemize}
+
+\subsection{Takeaways (Operational Rules)}
+\begin{enumerate}
+  \item \textbf{Ledger:} assign each component/event a prime; update signatures additively; enforce PETC conservation.
+  \item \textbf{Weights:} set $w_p=\Lambda_p p^\alpha$ with $\alpha< -1$ (sufficient) and cap $\Lambda_p$ to satisfy
+        $\sum |w_p| b_p < 1$.
+  \item \textbf{Certificates:} monitor $\mathrm{GapLB}(w)>0$ and $\mathrm{SlopeUB}(w)<1$ online.
+  \item \textbf{Convergence:} $T_{t+1}=F+\mathcal{K}T_t$ contracts to $T_\infty=(I-\mathcal{K})^{-1}F$ with linear rate $\|\mathcal{K}\|$.
+\end{enumerate}
+
+
+\nocite{*}
+\bibliographystyle{plain}
+\bibliography{references}
+
+\end{document}

@@ -1,0 +1,183 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath, amssymb, amsfonts, graphicx, hyperref, tikz, enumitem}
+\usepackage[top=1in, bottom=1in, left=1in, right=1in]{geometry}
+\hypersetup{colorlinks=true, linkcolor=blue, citecolor=blue, urlcolor=blue}
+
+\title{\textbf{GRIMS + Λₘ: A Self-Reflective Framework for Lawful Recursive Cognition and Ethical System Evolution}}
+\author{In Legacy of Nicole Thorp)
+\vspace{1mm}
+\date{July 2025}
+
+\begin{document}
+\maketitle
+
+\section{Definitions, Axioms, and Theorems}
+
+\subsection{Abstract Framework}
+
+Let \(S\) be a state space and let \(P\) be a finite set of distinct prime numbers.  
+For each \(p\in P\) let \(S_p\) be a component space.  
+A \emph{decomposition map}
+\[
+D : S \longrightarrow \prod_{p\in P} S_p
+\]
+assigns to every state \(x\in S\) its prime-indexed components \(D(x)=(x_p)_{p\in P}\).
+
+A \emph{governance functional} \(G:S\to\mathbb{R}\) quantifies the desirability or ethical cost of a state.  
+A family of \emph{constraint functions} \(C_i:S\to\mathbb{R},\; i=1,\dots,m\) defines the set of \emph{lawful} states:
+\[
+\mathcal{A} := \{ x\in S \mid C_i(x)\le 0\ \text{for all }i\}.
+\]
+
+A \emph{recursive update rule} is given by a map
+\[
+U : S \times \mathcal{U} \longrightarrow S,
+\]
+where \(\mathcal{U}\) is a space of possible update actions.  
+Starting from an initial state \(x_0\), the system evolves as
+\[
+x_{t+1} = 
+\begin{cases}
+U(x_t,u_t) & \text{if } U(x_t,u_t)\in\mathcal{A} \text{ and } G(U(x_t,u_t))\le G(x_t),\\[4pt]
+x_t & \text{otherwise}.
+\end{cases}
+\]
+Thus an update is accepted only when it preserves lawfulness and does not increase the governance score.
+
+\subsubsection{Prime‑indexed structure}
+We assume that the update can be factored through the prime decomposition.  
+For each prime \(p\) there is a local update operator
+\[
+U_p : S_p \times \mathcal{U}_p \longrightarrow S_p,
+\]
+and a reconstruction map
+\[
+R : \prod_{p\in P} S_p \longrightarrow S
+\]
+such that
+\[
+U(x,u) = R\bigl( U_p(x_p,u_p) \bigr)_{p\in P},
+\]
+where \(u_p\) denotes the component of the action \(u\) in \(\mathcal{U}_p\).  
+In other words, the global update is obtained by applying local updates component‑wise and then reconstructing a global state.
+
+\subsubsection{Drift and correction}
+Define the \emph{drift} of a proposed update by
+\[
+\delta(x_t,x_{t+1}') = \bigl\| D(x_{t+1}') - D(x_t) \bigr\|,
+\]
+where \(\|\cdot\|\) is a norm on \(\prod_p S_p\) and \(x_{t+1}' = U(x_t,u_t)\).  
+If \(\delta(x_t,x_{t+1}') > \tau\) for a fixed threshold \(\tau>0\), we apply a correction operator
+\[
+x_{t+1} \leftarrow \Pi_{\mathcal{A}}(x_{t+1}'),
+\]
+with \(\Pi_{\mathcal{A}}\) a projection onto the admissible set \(\mathcal{A}\) (e.g., the nearest point in \(\mathcal{A}\) w.r.t. a suitable metric).  
+Correction ensures that large component‑wise deviations are pulled back into the lawful region.
+
+\subsubsection{Axioms}
+\begin{enumerate}
+\item[(A1) \textsc{Decomposition axiom}] Every state admits a prime‑indexed decomposition via \(D\).
+\item[(A2) \textsc{Constraint axiom}] A lawful state must satisfy \(C_i(x)\le 0\) for all \(i\).
+\item[(A3) \textsc{Monotone governance axiom}] Accepted updates never increase \(G\).
+\item[(A4) \textsc{Correction axiom}] Proposals with drift exceeding \(\tau\) are projected back into \(\mathcal{A}\).
+\end{enumerate}
+
+\subsection{Concrete Instantiation: A Residue Number System (RNS)}
+
+Let \(P = \{p_1,p_2,\dots,p_k\}\) be distinct primes and set \(M = \prod_{i=1}^k p_i\).  
+Choose the state space \(S = \{0,1,\dots,M-1\}\) (integers modulo \(M\)).  
+For each prime \(p_i\) define \(S_{p_i} = \mathbb{Z}/p_i\mathbb{Z}\) (the ring of residues modulo \(p_i\)).  
+The decomposition map is the residue map
+\[
+D(x) = (x \bmod p_1,\; x \bmod p_2,\; \dots,\; x \bmod p_k).
+\]
+The Chinese Remainder Theorem guarantees that \(D\) is a bijection onto \(\prod_i S_{p_i}\); its inverse \(R\) reconstructs the unique integer in \([0,M-1]\) from its residues.
+
+Let the governance functional be \(G(x)=|x - x^*|\) for a fixed target \(x^*\in S\) (e.g., an “ethical” reference state).  
+Constraints might be simple bounds, e.g., \(C_1(x)=x - L\) and \(C_2(x)=U - x\) so that \(\mathcal{A}=[L,U]\cap S\) for some \(0\le L<U<M\).
+
+For each prime \(p_i\) we define a local update operator that mimics a desired arithmetic operation, say addition of a constant \(c_i\) modulo \(p_i\):
+\[
+U_{p_i}(y,c_i) = (y + c_i) \bmod p_i,\qquad y\in S_{p_i}.
+\]
+A global action \(u\) consists of a list \((c_1,\dots,c_k)\); the global update is then
+\[
+U(x,u) = R\bigl( (x\bmod p_1 + c_1)\bmod p_1,\; \dots,\; (x\bmod p_k + c_k)\bmod p_k \bigr).
+\]
+Because the RNS representation is linear, \(U(x,u) = (x + r) \bmod M\) where \(r\) is the integer reconstructed from the residues \((c_1,\dots,c_k)\) – provided that the addition does not exceed \(M-1\) (otherwise the reconstruction gives a different integer due to wraparound). This example illustrates how prime indexing arises naturally from modular arithmetic and how local updates compose to a global one.
+
+Drift can be measured by the Euclidean distance between residue vectors, e.g.,
+\[
+\delta(x,x') = \sqrt{\sum_{i=1}^k \bigl((x\bmod p_i)-(x'\bmod p_i)\bigr)^2},
+\]
+and if this exceeds \(\tau\) we project the proposed state back onto \([L,U]\) by simple clipping.
+
+\subsection{Theorems}
+
+\begin{theorem}[Invariance and Monotonicity]
+If \(\mathcal{A}\) is closed and \(G\) is bounded below on \(\mathcal{A}\), then every sequence \(\{x_t\}\) generated by the recursive update rule satisfies:
+\begin{itemize}
+\item \(x_t\in\mathcal{A}\) for all \(t\) (admissibility),
+\item \(G(x_{t+1})\le G(x_t)\) (non‑increasing governance).
+\end{itemize}
+\end{theorem}
+\begin{proof}[Sketch]
+Admissibility is enforced by the acceptance condition (for updates that pass checks) and by the correction operator (for updates that are projected). The governance score either stays the same (when an update is rejected) or decreases (when an accepted update satisfies \(G(x_{t+1}')\le G(x_t)\)). Since \(G\) is bounded below, the sequence cannot decrease indefinitely. \end{proof}
+
+\begin{theorem}[Bounded Drift under Correction]
+Assume the projection \(\Pi_{\mathcal{A}}\) is nonexpansive in the norm used for drift, i.e.,
+\(\|\Pi_{\mathcal{A}}(a)-\Pi_{\mathcal{A}}(b)\|\le \|a-b\|\) for all \(a,b\in S\).  
+If the drift threshold \(\tau\) is finite, then the corrected sequence satisfies
+\[
+\|D(x_{t+1})-D(x_t)\| \le \max\{\tau,\; \text{diam}(\mathcal{A})\}
+\]
+and the prime‑indexed components never diverge unboundedly.
+\end{theorem}
+\begin{proof}[Sketch]
+If an update is accepted without correction, its drift is at most \(\tau\). If it is corrected, we have \(x_{t+1}=\Pi_{\mathcal{A}}(x_{t+1}')\). Nonexpansiveness together with the fact that \(x_t\in\mathcal{A}\) implies \(\|D(x_{t+1})-D(x_t)\|\le \|D(x_{t+1}')-D(x_t)\|\). If the drift of the uncorrected proposal exceeded \(\tau\), the corrected step’s drift is bounded by the diameter of \(\mathcal{A}\) in the component space. Hence all steps are bounded. \end{proof}
+
+\begin{theorem}[Stability from Local Stability]
+Suppose each local operator \(U_p\) is \emph{stable} in the sense that there exists a constant \(L_p\ge0\) such that for any \(y,y'\in S_p\) and any action \(u_p\in\mathcal{U}_p\),
+\[
+\|U_p(y,u_p)-U_p(y',u_p)\|_p \le L_p\|y-y'\|_p,
+\]
+where \(\|\cdot\|_p\) is a norm on \(S_p\). Then the reconstructed global update \(U\) is Lipschitz continuous with constant \(\max_p L_p\) in the product norm \(\|D(x)\| = \max_p \|x_p\|_p\) (or a suitable combination). Consequently, small perturbations in the state lead to proportionally small changes in the next state, ensuring robustness.
+\end{theorem}
+\begin{proof}[Sketch]
+Write \(D(U(x,u)) = (U_p(x_p,u_p))_{p\in P}\). Then for any \(x,x'\),
+\[
+\|D(U(x,u))-D(U(x',u))\| \le \max_p L_p \|x_p-x_p'\|_p \le (\max_p L_p)\,\|D(x)-D(x')\|.
+\]
+Hence the global transition is Lipschitz with the stated constant. \end{proof}
+
+\subsection{Algorithmic Form}
+
+The following steps are executed at each time \(t\):
+
+\begin{enumerate}
+\item Decompose the current state: \((x_p)_{p\in P} = D(x_t)\).
+\item Receive a proposed local action \(u_t\) (or generate one from a policy).
+\item Compute the uncorrected successor:
+      \[
+      x_{t+1}' = R\bigl( U_p(x_p, (u_t)_p) \bigr)_{p\in P}.
+      \]
+\item Verify constraints: if \(x_{t+1}'\notin\mathcal{A}\) or \(G(x_{t+1}') > G(x_t)\), reject the update and set \(x_{t+1}=x_t\).
+\item Otherwise compute drift \(\delta(x_t,x_{t+1}')\).
+      If \(\delta(x_t,x_{t+1}') \le \tau\), accept: \(x_{t+1}=x_{t+1}'\).
+      Else apply correction: \(x_{t+1} = \Pi_{\mathcal{A}}(x_{t+1}')\).
+\item Record the drift and any correction events for monitoring.
+\end{enumerate}
+
+\subsection{Expected Outcomes}
+
+This framework yields three measurable behaviors:
+\begin{itemize}
+\item \textbf{Constraint satisfaction:} All visited states lie in \(\mathcal{A}\).
+\item \textbf{Bounded drift:} The prime‑indexed components change by at most \(\max\{\tau,\text{diam}(\mathcal{A})\}\) per step.
+\item \textbf{Traceability:} Because updates are composed from local, prime‑indexed operations, the effect of each action can be traced back to individual components, simplifying auditing and explanation.
+\end{itemize}
+The concrete RNS example makes every component computable and testable, paving the way for numerical experiments that compare this recursive constrained system with standard constrained optimizers.
+
+
+
+\end{document}

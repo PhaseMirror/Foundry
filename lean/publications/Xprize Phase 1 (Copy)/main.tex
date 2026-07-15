@@ -1,0 +1,260 @@
+% main.tex
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{microtype}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{enumitem}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage[round]{natbib}
+
+\title{Quantum-Assisted Hypergraph Urban Sensing (QAHUS):\\
+Edge-Efficient Vision, Spatiotemporal Hypergraph Forecasting, and Constrained Decision Support}
+\author{Team Archive200 \\
+\small (Names omitted for blind review / competition submission)}
+\date{June 2025 (revised and technicalized)}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We propose a computationally efficient, deployable framework that links \emph{edge vision} to
+\emph{city-scale forecasting and decision support} via a \emph{dynamic hypergraph} representation of urban systems.
+The core idea is to (i) extract low-latency visual signals on resource-constrained devices, (ii) fuse them with
+heterogeneous civic data streams into a time-evolving hypergraph, (iii) forecast and detect anomalies using
+spatiotemporal hypergraph learning, and (iv) plan interventions under explicit safety, fairness, and privacy
+constraints. The quantum contribution targets two near-term bottlenecks: (a) fast similarity computation via
+quantum feature maps / kernels for anomaly detection and regime classification, and (b) quantum-assisted
+optimization (QUBO/QAOA/annealing) for constrained resource allocation. The overall system is designed to be
+auditable, privacy-preserving (via differential privacy where appropriate), and compatible with modern
+governance requirements.
+\end{abstract}
+
+\section{Project Description}
+
+\subsection{Elevator Pitch}
+We are developing a computationally efficient vision-to-decision framework that transforms how machines
+perceive and respond to real-world environments. By combining high precision, seamless scalability, and
+real-time adaptability, the system enables intelligent visual processing that can evolve from low-power
+edge devices to advanced autonomous systems. Deployed across healthcare, robotics, environmental monitoring,
+and smart-city operations, the framework bridges the gap between accuracy and responsiveness.
+
+\subsection{High-Level Description}
+Urban environments and critical domains require systems that can (i) see locally with low latency, (ii) fuse
+multiple data sources reliably, and (iii) recommend actions under constraints. We unify these requirements
+with a pipeline:
+
+\begin{enumerate}[leftmargin=*]
+\item \textbf{Edge vision}: on-device detection/tracking/segmentation with mobile architectures
+(e.g., MobileNet-family backbones) to produce structured counts, trajectories, and events.
+\item \textbf{Urban hypergraph fusion}: represent entities (intersections, facilities, sensor clusters, cohorts)
+as nodes, and \emph{multi-way relations} (e.g., ``this set of sensors jointly characterizes this corridor at time $t$'')
+as hyperedges.
+\item \textbf{Spatiotemporal learning}: predict flows/risks and detect anomalous regimes using hypergraph neural
+networks adapted to temporal forecasting.
+\item \textbf{Constrained decision support}: recommend interventions using explicit constraints (safety,
+service-level, equity), solved via primal--dual methods and/or safe policy learning.
+\item \textbf{Quantum assistance}: accelerate key subroutines for similarity and combinatorial optimization on
+near-term quantum hardware.
+\end{enumerate}
+
+\subsection{Innovation (What is New Here?)}
+The novelty is \emph{not} a single algorithmic trick, but a coherent, deployable architecture that:
+(i) runs end-to-end under tight compute budgets,
+(ii) uses a hypergraph (not just pairwise graphs) for multi-agent, multi-sensor relations,
+(iii) encodes \emph{governance constraints} as first-class mathematical objects, and
+(iv) introduces quantum subroutines where they plausibly help (kernel evaluation and discrete optimization).
+
+\section{Alignment with UN Sustainable Development Goals (SDGs)}
+The system supports SDG 9 (Industry, Innovation, and Infrastructure) through efficient, low-cost deployment;
+SDG 11 (Sustainable Cities and Communities) through real-time monitoring and planning; SDG 13 (Climate Action)
+through rapid detection of environmental risks; and SDG 3 (Good Health and Well-being) through assistive
+monitoring and diagnostics.
+
+\section{QAHUS Technical Framework}
+
+\subsection{Dynamic Urban Hypergraph Model}
+Let the city at time $t$ be a weighted hypergraph
+\[
+\mathcal{H}_t = (V, \mathcal{E}_t, w_t),
+\]
+where $V$ indexes entities (locations, facilities, sensor regions), and each hyperedge
+$e \in \mathcal{E}_t$ connects a \emph{set} of vertices that jointly participate in an event, constraint, or latent factor.
+Let $x_t(v) \in \mathbb{R}^d$ be the feature vector for node $v$ at time $t$ (from edge vision, IoT, mobility, etc.).
+Hyperedge features can be represented as pooled statistics
+\[
+x_t(e) = \mathrm{pool}\{x_t(v): v\in e\},
+\]
+with learned pooling (attention) or fixed pooling (mean/max) depending on deployment constraints.
+
+Hypergraphs naturally represent multi-way dependencies that pairwise graphs often approximate poorly
+(e.g., one incident involving multiple intersections and transit nodes simultaneously). We build on
+hypergraph neural network ideas, using a hyperedge-induced convolution operator. \citep{feng2019hypergraph}
+
+\subsection{Edge Vision Layer}
+We assume cameras and/or low-power vision sensors provide raw frames locally.
+A mobile network (e.g., MobileNetV2-style inverted residual blocks) yields on-device detections and tracks,
+and outputs a compact event stream (counts, queues, trajectories, near-miss alerts). \citep{sandler2018mobilenetv2}
+
+This output is \emph{intentionally compressed}: the system is designed to avoid shipping raw video whenever
+possible, improving privacy and reducing bandwidth.
+
+\subsection{Spatiotemporal Forecasting on Hypergraphs}
+For forecasting, we adapt the spatiotemporal graph learning literature to hypergraphs.
+Graph baselines include DCRNN and STGCN; QAHUS generalizes these to multi-way relations. \citep{li2018dcrnn,yu2018stgcn}
+
+A simple (and deployable) template is:
+\[
+h_{t+1} = \mathrm{GRU}\Big(h_t,\ \mathrm{HyperConv}(x_t, \mathcal{H}_t)\Big),
+\quad
+\hat{y}_{t+\Delta} = g(h_{t+1}),
+\]
+where $\mathrm{HyperConv}$ is a hypergraph convolution (e.g., via incidence-based message passing), and $g$
+produces forecasts (flows, occupancies, risk scores). In practice, we also use temporal convolutions or
+Transformers when compute budgets allow.
+
+\subsection{Consistency Constraints via Sheaf-Theoretic Data Fusion (Optional but Powerful)}
+Many urban deployments suffer from \emph{inconsistent} multi-sensor reporting (missingness, calibration drift).
+Cellular sheaves provide a principled way to encode \emph{local consistency maps} and to measure global
+inconsistency via cohomological obstruction. \citep{curry2014sheaves,hansen2019spectral}
+
+Operationally: attach measurements to cells (nodes/edges/hyperedges) and enforce linear restriction maps
+that express ``what these two sensors should agree on.'' A large inconsistency score triggers recalibration,
+down-weighting, or conservative decision modes.
+
+\section{Quantum Contribution}
+
+\subsection{Quantum Feature Maps and Kernels for Regime Classification}
+We use quantum feature maps to compute similarities
+\[
+K(x,x') = \left|\langle \phi_\theta(x) \mid \phi_\theta(x') \rangle\right|^2,
+\]
+where $\lvert \phi_\theta(x)\rangle$ is a parameterized circuit embedding of classical features.
+These kernels can be used for anomaly detection, regime classification, and hybrid models that combine
+classical encoders with quantum similarity layers. \citep{havlicek2019supervised,schuld2019qkernel}
+
+We emphasize that QAHUS does \emph{not} require quantum advantage to be useful: the kernel module is a swap-in
+component evaluated against classical approximations.
+
+\subsection{Quantum-Assisted Constrained Resource Allocation}
+Many civic interventions (dispatching responders, rerouting flows, placing temporary controls) reduce to
+combinatorial optimization with constraints. We encode a decision vector $z\in\{0,1\}^m$ and minimize an
+energy
+\[
+\min_{z\in\{0,1\}^m}\; z^\top Q z \quad \text{s.t.}\quad Az \le b,
+\]
+which can be converted to a penalized QUBO and solved with quantum annealing or QAOA-style heuristics,
+then verified and refined classically. The constrained formulation and dual methods follow standard convex
+optimization principles. \citep{boyd2004convex,rubinstein2004crossentropy}
+
+\section{Ethics, Safety, and Governance as Mathematical Constraints}
+
+\subsection{Constrained Decision-Making}
+We treat governance requirements as explicit constraints: safety caps, minimum service levels, and fairness
+constraints over affected groups/regions. A constrained MDP viewpoint is natural:
+maximize utility while keeping cumulative constraint costs below thresholds. \citep{altman1999cmdp,achiam2017cpo}
+
+\subsection{Privacy}
+We avoid raw-video centralization where possible and apply differential privacy to aggregated releases
+(e.g., publicly shared counts or mobility summaries). \citep{dwork2006dp,dwork2014foundations,abadi2016dpdl}
+
+\subsection{Fairness and Disparate Impact}
+We evaluate interventions for group-level performance disparities (e.g., unequal false positive rates in
+enforcement-like settings, or unequal service delays). We use standard fairness criteria such as equality
+of opportunity and we explicitly audit for disparate impact risks. \citep{hardt2016equality,barocas2016bigdata}
+
+\section{Algorithms}
+
+\begin{algorithm}[t]
+\caption{QAHUS Processing Pipeline (Deployable Template)}
+\begin{algorithmic}[1]
+\Require Sensors/vision frames $I_t$, civic data streams $s_t$, hypergraph schema $\Pi$
+\Ensure Forecasts $\hat{y}_{t+\Delta}$, anomalies $a_t$, recommended actions $z_t$
+\State $u_t \leftarrow \mathrm{EdgeVision}(I_t)$ \Comment{detections/tracks/events}
+\State $x_t \leftarrow \mathrm{Fuse}(u_t, s_t)$ \Comment{compact node/hyperedge features}
+\State $\mathcal{H}_t \leftarrow \mathrm{BuildHypergraph}(x_t;\Pi)$
+\State $c_t \leftarrow \mathrm{ConsistencyCheck}(\mathcal{H}_t)$ \Comment{optional sheaf-based}
+\State $\hat{y}_{t+\Delta}, a_t \leftarrow \mathrm{ST\text{-}HyperForecast}(\mathcal{H}_t, c_t)$
+\State $\kappa_t \leftarrow \mathrm{QuantumKernelEval}(x_t)$ \Comment{optional regime similarity}
+\State $z_t \leftarrow \mathrm{ConstrainedPlan}(\hat{y}_{t+\Delta}, a_t, \kappa_t)$
+\State \Return $\hat{y}_{t+\Delta}, a_t, z_t$
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[t]
+\caption{Counterfactual / Digital-Twin Scenario Search (Classical + Optional Quantum)}
+\begin{algorithmic}[1]
+\Require Initial state $\mathcal{H}_t$, intervention family $\mathcal{Z}$, constraints $\mathcal{C}$
+\Ensure Counterfactual set $\{(z^{(i)}, \hat{y}^{(i)})\}_{i=1}^N$
+\State Initialize proposal distribution over interventions $\pi_0(z)$
+\For{$k=0$ to $K-1$}
+  \State Sample candidates $z^{(i)} \sim \pi_k$
+  \State Score via simulator/forecast $\hat{y}^{(i)} \leftarrow \mathrm{Sim}(\mathcal{H}_t, z^{(i)})$
+  \State Filter infeasible candidates violating $\mathcal{C}$
+  \State Update $\pi_{k+1}$ toward elite samples (Cross-Entropy Method)
+\EndFor
+\State \Return best $N$ feasible counterfactuals
+\end{algorithmic}
+\end{algorithm}
+
+\section{Evaluation Plan}
+
+\subsection{Datasets}
+We evaluate on publicly used spatiotemporal forecasting benchmarks (e.g., traffic sensor networks) and
+on domain-specific datasets available to partners. Baselines include graph forecasting methods and
+hypergraph ablations. \citep{li2018dcrnn,yu2018stgcn,feng2019hypergraph}
+
+\subsection{Metrics}
+\begin{itemize}[leftmargin=*]
+\item Forecasting: MAE/RMSE/MAPE; calibration and coverage for probabilistic forecasts.
+\item Detection: AUROC/AUPRC; time-to-detect for incidents.
+\item Planning: constraint violation rate; utility under constraints; robustness under missing data.
+\item Compute: latency, energy, memory footprint (edge and server).
+\item Governance: DP budget accounting; group disparity metrics; auditability.
+\end{itemize}
+
+\begin{table}[t]
+\centering
+\caption{Benchmark Template (Report with Confidence Intervals)}
+\begin{tabular}{lcccc}
+\toprule
+Metric & Classical ST-GNN & Hypergraph (classical) & QAHUS (no-quantum) & QAHUS (quantum-assisted)\\
+\midrule
+Traffic MAE (lower better) & TBD & TBD & TBD & TBD \\
+Anomaly AUROC (higher better) & TBD & TBD & TBD & TBD \\
+Constraint violations (\%) & TBD & TBD & TBD & TBD \\
+Edge latency (ms) & TBD & TBD & TBD & TBD \\
+Energy per inference (mJ) & TBD & TBD & TBD & TBD \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Ethical and Regulatory Considerations}
+We implement governance by design: minimal raw data retention, differential privacy for releases,
+fairness audits, and explicit constrained decision-making. We document model cards, data provenance,
+and intervention logs suitable for oversight.
+
+\section{Future Directions}
+\begin{itemize}[leftmargin=*]
+\item Real-time integration with smart-city APIs and emergency management dashboards.
+\item Larger-scale digital twins (multi-million agent simulations) with validated calibration.
+\item Hardware-in-the-loop evaluation of quantum subroutines and classical fallbacks.
+\item Peer-reviewed dissemination and standardization contributions.
+\end{itemize}
+
+\section{Conclusion}
+QAHUS turns edge-efficient vision into a city-scale forecasting and constrained decision-support stack
+via dynamic hypergraphs. The quantum components target plausible near-term acceleration points
+(similarity kernels and discrete optimization) without being single points of failure: the system remains
+useful in fully classical mode. By explicitly encoding safety, privacy, and fairness as constraints,
+QAHUS aims to be both high-performance and governance-ready.
+
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+\end{document}

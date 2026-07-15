@@ -9,7 +9,7 @@ import UOR.Individuals.Observable
 import UOR.Individuals.Op
 import UOR.Individuals.Schema
 
-open UOR.Primitives
+open Core.UOR
 
 namespace UOR.Bridge.Proof
 

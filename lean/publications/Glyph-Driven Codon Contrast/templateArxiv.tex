@@ -1,0 +1,309 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsfonts,amsthm}
+\usepackage{bm}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true, linkcolor=blue, urlcolor=blue, citecolor=blue}
+
+\title{Glyph-Driven Codon Contrast:\\
+A Falsifiable Bridge Between Symbolic Multiplicity and Biophysical Feature Space}
+\author{Multiplicity Theory Working Notes}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We describe a pilot framework that links prime-indexed glyph multiplicity to biophysical contrast features over coding sequences. On the biological side, we adopt the Codon-Contrast system: a 64-dimensional codon delta vector, a 64-dimensional Walsh--Hadamard biophysical contrast transform, and four flow metrics (transition ratio, GC bias per move, wobble-transition fraction, and flow entropy).\cite{codoncontrast} On the symbolic side, we use an 8-bit selector encoding glyph operations in a simplified commuting fragment (duplication, enclosure, base identity, medical-context flag). This selector is mapped through a resonance layer into 96 equivalence classes with exactly 32 classes of size 4 and 64 of size 2, enforcing a prime-like degeneracy structure. We provide a self-contained Python implementation and a permutation-based validation protocol over codon-aligned ortholog sets (e.g.\ TRPA1), designed to falsify or vindicate any claimed predictive link between glyph multiplicity and directions in biophysical contrast space.\cite{glyphengine}
+\end{abstract}
+
+\section{Executive Summary}
+
+The goal is to test a sharp, falsifiable conjecture:
+\emph{Do multiplicity features derived from ancient glyphs (in a prime-indexed operator sense) correspond to coherent directions in a low-dimensional, biophysically grounded feature space over genes targeted by the associated remedies?}\cite{glyphengine}
+
+On the biology side, we fix the target category $\mathcal{B}$ as the Codon-Contrast feature space:
+\begin{itemize}
+  \item A 64-dimensional integer delta vector $\Delta h \in \mathbb{Z}^{64}$ capturing net codon count changes under a fixed lexicographic ordering of $\{A,C,G,T\}^3$;
+  \item A 64-dimensional real vector of Walsh--Hadamard biophysical contrasts $w \in \mathbb{R}^{64}$ obtained by a length-64 FWHT after reindexing codons according to a 6-bit GC/PUR signature per position (GC1, PUR1, GC2, PUR2, GC3, PUR3), L1-normalized to yield scale-free contrasts;\cite{codoncontrast}
+  \item Four scalar flow metrics summarizing substitution patterns: transition ratio, GC bias per move, wobble-transition fraction, and flow entropy.\cite{codoncontrast}
+\end{itemize}
+
+On the glyph side, we restrict attention to a commuting fragment of the glyph operator algebra (duplication and enclosure) and encode each glyph instance as an 8-bit selector $s\in\{0,1\}^8$ summarizing duplication, enclosure, stroke (here fixed), base glyph identity, and medical-context status. This selector is mapped via a deterministic resonance mapping to a class label $c(s)\in\{0,\dots,95\}$, with preimage counts enforcing a $32/64$ split between size-4 and size-2 classes.\cite{glyphengine}
+
+The combined feature representation for a pair of codon-aligned sequences $(S_1,S_2)$ and a glyph selector $s$ is a hybrid vector
+\[
+  h_{\text{hyb}}(S_1,S_2,s) = \bigl(w(S_1,S_2),\, e(c(s))\bigr) \in \mathbb{R}^{160},
+\]
+where $w\in\mathbb{R}^{64}$ is the Walsh contrast vector and $e(c(s))\in\{0,1\}^{96}$ is a one-hot embedding of the resonance class. We then perform purely structural tests: first, a permutation-based assessment of non-random structure in Codon-Contrast features over ortholog sets; second, if structure exists, correlation tests between glyph-derived resonance classes and specific Codon-Contrast directions.
+
+\section{Mathematical Overview}
+
+\subsection{Biological Feature Space via Codon-Contrast}
+
+Let $\Sigma = \{A,C,G,T\}$ and $\mathcal{C} = \Sigma^3$ denote the 64 codons, indexed lexicographically:
+\begin{equation}
+ \mathcal{C} = \{c_0, c_1,\dots, c_{63}\}.
+\end{equation}
+For a pair of codon-aligned coding sequences $S_1,S_2 \in \mathcal{C}^{L}$ (length $L$ codons), we define codon counts
+\begin{equation}
+  n_k^{(1)} = \#\{i : S_1[i] = c_k\},\qquad
+  n_k^{(2)} = \#\{i : S_2[i] = c_k\}
+\end{equation}
+and the codon delta vector
+\begin{equation}
+  \Delta h_k = n_k^{(2)} - n_k^{(1)},\qquad k = 0,\dots,63.
+\end{equation}
+By construction, $\sum_{k=0}^{63} \Delta h_k = 0$, and $\Delta h$ encodes the exact net codon-level substitutions under a fixed frame and strand.\cite{codoncontrast}
+
+To introduce biophysical structure, we map each codon $c\in\mathcal{C}$ to a 6-bit signature capturing GC and purine/pyrimidine properties at each position:
+\begin{equation}
+ \phi(c) = (\mathrm{GC}_1,\mathrm{PUR}_1,\mathrm{GC}_2,\mathrm{PUR}_2,\mathrm{GC}_3,\mathrm{PUR}_3) \in \{0,1\}^6,
+\end{equation}
+where, e.g., $\mathrm{GC}_i = 1$ if the $i$-th nucleotide is G or C, and $\mathrm{PUR}_i = 1$ if it is A or G.\cite{codoncontrast} This defines a permutation $\pi$ of $\{0,\dots,63\}$ such that indices are ordered by $\phi$.
+
+Let $P$ be the $64\times 64$ permutation matrix implementing this reindexing, and let $H_{64}$ be the standard $64\times 64$ Hadamard matrix, recursively defined by
+\begin{equation}
+H_1 = \begin{bmatrix}1\end{bmatrix}, \quad
+H_{2n} = \begin{bmatrix}H_n & H_n\\ H_n & -H_n\end{bmatrix}.
+\end{equation}
+The unnormalized Walsh--Hadamard biophysical contrasts are
+\begin{equation}
+  \tilde{w} = H_{64}\, P\, \Delta h \in \mathbb{R}^{64}.
+\end{equation}
+Let $\|\tilde{w}\|_1 = \sum_{k}|\tilde{w}_k|$. When $\|\tilde{w}\|_1>0$, we define the normalized contrast vector
+\begin{equation}
+  w = \frac{\tilde{w}}{\|\tilde{w}\|_1} \in \mathbb{R}^{64}.
+\end{equation}
+Each coordinate $w_k$ can be interpreted as a contrast along a particular combination of GC/PUR properties and their interactions, and the L1 normalization makes $w$ scale-free.\cite{codoncontrast}
+
+In addition, four flow metrics summarize aggregate substitution structure over all positions:
+\begin{itemize}
+ \item Transition ratio:
+       \[
+       r_{\text{trans}} = \frac{\#\text{transitions }(A\leftrightarrow G, C\leftrightarrow T)}{\#\text{all substitutions}};
+       \]
+ \item Wobble-transition fraction:
+       \[
+       f_{\text{wobble}} = \frac{\#\text{transitions at third codon position}}{\#\text{all transitions}};
+       \]
+ \item GC bias per move:
+       \[
+       b_{\text{GC}} = \frac{\sum_{\text{substitutions}} (\mathrm{GC}(n_2) - \mathrm{GC}(n_1))}{\#\text{all substitutions}};
+       \]
+ \item Flow entropy:
+       \[
+       H_{\text{flow}} = -\sum_{(n_1\to n_2)} p_{(n_1\to n_2)} \log_2 p_{(n_1\to n_2)},
+       \]
+       where $p_{(n_1\to n_2)}$ is the empirical frequency of each nucleotide-level move.\cite{codoncontrast}
+\end{itemize}
+
+Thus for each pair $(S_1,S_2)$ we obtain a structured biological feature triple:
+\begin{equation}
+ (\Delta h, w, F_{\text{flow}}) \in \mathbb{Z}^{64} \times \mathbb{R}^{64} \times \mathbb{R}^4.
+\end{equation}
+
+\subsection{Glyph Selectors and Resonance Classes}
+
+On the glyph side, we consider a commuting fragment of a prime-generated operator monoid acting on base glyphs. In the present pilot, we restrict to three observable operations:
+\begin{itemize}
+  \item Duplication $p_1$ (visual duplication of a glyph, interpreted as a dimerization-like operation);
+  \item Enclosure $p_2$ (enclosing a glyph by a determinative or cartouche);
+  \item A medical-context flag capturing whether the glyph appears in a medicinal context in the corpus.\cite{glyphengine}
+\end{itemize}
+Base glyphs are assigned discrete identities (e.g.\ garlic, willow, opium, etc.). For the 6-glyph pilot, we encode each glyph instance as an 8-bit selector
+\begin{equation}
+ s \in \{0,1\}^8,
+\end{equation}
+with bit assignments chosen as:
+\begin{itemize}
+  \item $b_0$: duplication present (1 if any $p_1$ applied);
+  \item $b_1$: enclosure present (1 if any $p_2$ applied);
+  \item $b_2$: stroke modification (fixed 0 in this fragment);
+  \item $b_3$: medical-context flag (1 if glyph appears in a documented medical context);
+  \item $b_4,b_5,b_6,b_7$: 4-bit base glyph identity code (0--15).
+\end{itemize}
+Thus each glyph instance (e.g.\ single garlic, duplicated garlic, etc.) is deterministically mapped to an 8-bit selector value.
+
+We then define a resonance mapping
+\begin{equation}
+  \rho : \{0,1\}^8 \to \{0,\dots,95\} \times \{2,4\} \times \{0,1\},
+\end{equation}
+such that for each selector $s$ we obtain:
+\begin{itemize}
+  \item a class label $c(s)\in\{0,\dots,95\}$;
+  \item a degeneracy $d(s)\in\{2,4\}$ (number of selectors in its equivalence class);
+  \item a Boolean flag $\mathrm{size4}(s)$ indicating whether $d(s)=4$.
+\end{itemize}
+The mapping is constructed to satisfy:
+\begin{equation}
+ \#\{c : \#\rho^{-1}(c) = 4\} = 32,\quad
+ \#\{c : \#\rho^{-1}(c) = 2\} = 64,
+\end{equation}
+and
+\begin{equation}
+ \sum_{c} \#\rho^{-1}(c) = 256.
+\end{equation}
+That is, the 256 possible selectors partition into 96 resonance classes, with an exact $32/64$ split in class degeneracy.\cite{glyphengine}
+
+In code, this is implemented via a deterministic packing of certain bits (treated as ``free'' indices) and a compressed parameter $e\in\{-1,0,1\}$ derived from a specific pair of bits, but the key mathematical property is the enforced class-cardinality structure, checked at initialization.
+
+For each selector $s$, we also define a one-hot embedding
+\begin{equation}
+ e(c(s)) \in \{0,1\}^{96},\quad e(c(s))_j =
+ \begin{cases}
+ 1, & j=c(s),\\
+ 0, & \text{otherwise},
+ \end{cases}
+\end{equation}
+and a normalized resonance index
+\begin{equation}
+ r_{\text{idx}}(s) = \frac{c(s)}{95} + \mathbf{1}\{d(s)=4\}\cdot \frac{1}{2},
+\end{equation}
+which serves as a combinatorial scalar coordinate (not yet claimed to be a biophysical invariant).\cite{glyphengine}
+
+\subsection{Hybrid Feature Vector and Validation Strategy}
+
+Given a codon-aligned sequence pair $(S_1,S_2)$ and an associated glyph selector $s$, we define the hybrid vector
+\begin{equation}
+ h_{\text{hyb}}(S_1,S_2,s) = \bigl(w(S_1,S_2),\, e(c(s))\bigr) \in \mathbb{R}^{160},
+\end{equation}
+which lives in a direct sum of the 64-dimensional contrast space and the 96-dimensional resonance class simplex. This provides a structured joint representation of biological substitution patterns and symbolic multiplicity class.
+
+Our validation strategy is deliberately staged:
+\begin{enumerate}
+  \item \textbf{Structural test in Codon-Contrast space:} For a given gene family (e.g.\ TRPA1 orthologs), compute $(\Delta h, w, F_{\text{flow}})$ for all sequence pairs and evaluate whether the variance of each contrast coordinate and flow metric exceeds that obtained under a null model where codons are randomly permuted within each sequence. This is assessed by a permutation test yielding empirical p-values for each feature coordinate.\cite{codoncontrast}
+  \item \textbf{Glyph--resonance overlay (only if Step 1 passes):} If the biophysical contrast space shows non-random structure, map the relevant glyphs (e.g.\ garlic, willow, opium glyphs) to selectors $s$ and classes $c(s)$, and then test whether resonance classes or indices correlate with specific contrast coordinates or flow metrics more strongly than codon-only baselines. Failure to find such correlations falsifies the strong glyph--biophysics functor hypothesis for the chosen operation fragment.
+\end{enumerate}
+
+\section{Core Python Implementation}
+
+For concreteness, we include a compressed version of the key Python structures. The actual file is designed as a standalone script.
+
+\subsection{Codon-Contrast and Flow Metrics}
+
+\begin{verbatim}
+NUCLEOTIDES = ['A','C','G','T']
+CODONS = [a+b+c for a in NUCLEOTIDES for b in NUCLEOTIDES for c in NUCLEOTIDES]
+CODON_INDEX = {c:i for i,c in enumerate(CODONS)}
+
+def codon_delta(seq1, seq2):
+    delta = np.zeros(64, dtype=int)
+    for i in range(0, len(seq1), 3):
+        c1 = seq1[i:i+3]; c2 = seq2[i:i+3]
+        if c1 in CODON_INDEX and c2 in CODON_INDEX:
+            delta[CODON_INDEX[c2]] += 1
+            delta[CODON_INDEX[c1]] -= 1
+    return delta
+
+def compute_flow_metrics(seq1, seq2):
+    total = transitions = gc_drift = wobble_transitions = 0
+    move_counts = Counter()
+    for i in range(0, len(seq1), 3):
+        c1 = seq1[i:i+3]; c2 = seq2[i:i+3]
+        for pos,(n1,n2) in enumerate(zip(c1,c2)):
+            if n1 == n2: continue
+            total += 1; move_counts[(n1,n2)] += 1
+            if (n1,n2) in {('A','G'),('G','A'),('C','T'),('T','C')}:
+                transitions += 1
+                if pos == 2: wobble_transitions += 1
+            gc_drift += (1 if n2 in 'GC' else 0) - (1 if n1 in 'GC' else 0)
+    if total == 0:
+        return dict(transition_ratio=0.0, wobble_fraction=0.0,
+                    gc_bias=0.0, flow_entropy=0.0)
+    tr = transitions / total
+    wf = wobble_transitions / transitions if transitions else 0.0
+    gc_bias = gc_drift / total
+    H = 0.0
+    for count in move_counts.values():
+        p = count / total; H -= p * math.log2(p)
+    return dict(transition_ratio=tr, wobble_fraction=wf,
+                gc_bias=gc_bias, flow_entropy=H)
+
+# H64 built recursively as a 64x64 Hadamard matrix
+H64 = hadamard(64)
+
+def codon_contrast(seq1, seq2):
+    delta = codon_delta(seq1, seq2)
+    walsh = H64 @ delta
+    flow = compute_flow_metrics(seq1, seq2)
+    return dict(delta_h=delta, walsh=walsh, flow=flow)
+\end{verbatim}
+
+\subsection{Resonance Mapping and Pilot Glyph Selectors}
+
+\begin{verbatim}
+class ResonanceMapper:
+    def __init__(self):
+        mapping = []
+        for i in range(256):
+            sel = f"{i:08b}"
+            bits = [int(b) for b in sel]
+            b0,b1,b2,b3,b4,b5,b6,b7 = bits
+            free = (b1<<4)|(b2<<3)|(b3<<2)|(b6<<1)|b7
+            if   (b4,b5) == (0,1): e = -1
+            elif (b4,b5) == (1,0): e = 1
+            else:                  e = 0
+            e_offset = e + 1
+            class_id = free * 3 + e_offset
+            degeneracy = 4 if (b4 == b5) else 2
+            is_size4 = (b4 == b5)
+            mapping.append(dict(selector=sel, class_id=class_id,
+                                degeneracy=degeneracy,
+                                is_size4=is_size4,
+                                resonance_index=class_id/95.0 +
+                                               (0.5 if is_size4 else 0.0)))
+        self.mapping = mapping
+        class_ids = [m["class_id"] for m in mapping]
+        assert len(set(class_ids)) == 96
+        counts = Counter(class_ids)
+        size4 = [cid for cid,cnt in counts.items() if cnt==4]
+        size2 = [cid for cid,cnt in counts.items() if cnt==2]
+        assert len(size4) == 32 and len(size2) == 64
+
+    def from_selector(self, selector_str):
+        for item in self.mapping:
+            if item["selector"] == selector_str: return item
+        raise ValueError("Selector not found")
+\end{verbatim}
+
+For the pilot, base glyphs (garlic, willow, opium, castor, royal, stroke) are assigned IDs in $\{0,\dots,5\}$, with selectors constructed as:
+\begin{verbatim}
+base_ids = {"garlic":0, "willow":1, "opium":2,
+            "castor":3, "royal":4, "stroke":5}
+
+def make_selector(base_name, dup=0, enc=0, stroke=0):
+    base_id = base_ids[base_name]
+    med = 1 if base_name in ["garlic","willow","opium","castor"] else 0
+    val = (base_id<<4) | (med<<3) | (stroke<<2) | (enc<<1) | dup
+    return f"{val:08b}"
+
+single_glyphs = {base: make_selector(base,0,0) for base in base_ids}
+\end{verbatim}
+
+\section{Permutation Test Protocol}
+
+Let $\{S^{(j)}\}_{j=1}^N$ be a set of codon-aligned ortholog sequences (e.g.\ TRPA1 in $N$ species).\cite{codoncontrast} For each unordered pair $(i,j)$, compute $w^{(ij)}$ and $F_{\text{flow}}^{(ij)}$. For each contrast coordinate $k$ and each flow metric $m$, compute the observed variance over pairs:
+\begin{align}
+  \sigma^2_{k,\text{obs}} &= \mathrm{Var}_{i<j}\bigl(w^{(ij)}_k\bigr),\\
+  \sigma^2_{m,\text{obs}} &= \mathrm{Var}_{i<j}\bigl(F^{(ij)}_{\text{flow},m}\bigr).
+\end{align}
+
+To generate a null distribution, randomly permute codons within each $S^{(j)}$, recompute the features over all pairs, and record $\sigma^{2,(b)}_{k,\text{perm}}$ and $\sigma^{2,(b)}_{m,\text{perm}}$ for $b=1,\dots,B$ permutations. Empirical p-values are then
+\begin{align}
+  p_k &= \frac{1}{B}\sum_{b=1}^B \mathbf{1}\{\sigma^{2,(b)}_{k,\text{perm}}\ge \sigma^2_{k,\text{obs}}\},\\
+  p_m &= \frac{1}{B}\sum_{b=1}^B \mathbf{1}\{\sigma^{2,(b)}_{m,\text{perm}}\ge \sigma^2_{m,\text{obs}}\}.
+\end{align}
+If few coordinates have $p<0.05$, the Codon-Contrast space is effectively noise for this gene, and any glyph→biology mapping should be regarded as falsified for that target. If multiple coordinates are significant, one can further test whether resonance classes $c(s)$ or resonance indices $r_{\text{idx}}(s)$ for appropriate glyphs explain additional variance or correlation beyond codon-only baselines.
+
+\section{Conclusion and Outlook}
+
+The present construction yields a fully specified, falsifiable bridge between symbolic multiplicity and codon-level biophysical contrasts. On the biological side, everything rests on the validated Codon-Contrast framework, which is rigorously defined and performance-tested but explicitly advertised as a feature engine rather than a fitness model.\cite{codoncontrast} On the symbolic side, we have imposed a strict 256$\to$96 class structure on glyph selectors, with exact degeneracy counts, to prevent unconstrained pattern-matching.\cite{glyphengine}
+
+The key next steps are empirical: (i) run the permutation test on a curated TRPA1 (or other target) ortholog alignment to verify the existence of non-random structure in contrast space; (ii) if such structure is present, test whether glyph-derived resonance classes for documented medicinal glyphs (e.g.\ garlic, willow) correspond to stable directions in Codon-Contrast space. Success would motivate deeper work on the functorial relationship between prime-indexed glyph operators and biochemical transformations; failure would provide a sharp boundary on how far symbolic multiplicity can be pushed into biophysics.
+
+\nocite{*}
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+\end{document}

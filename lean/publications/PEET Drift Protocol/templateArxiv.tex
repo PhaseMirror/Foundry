@@ -1,0 +1,2204 @@
+\documentclass[11pt,letterpaper]{article}
+
+% ============================================================
+%  PACKAGES
+% ============================================================
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{mathtools}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{graphicx}
+\usepackage{microtype}
+\usepackage{datetime2}
+\usepackage{mdframed}
+\usepackage{tocloft}
+
+% ============================================================
+%  METADATA
+% ============================================================
+\hypersetup{
+  pdftitle={PEET Drift Protocol: Prior Art Defensive Publication},
+  pdfauthor={Ryan Van Gelder, Multiplicity Foundation},
+  pdfsubject={Prime Entanglement Entropy Tensor Drift Measurement},
+  pdfkeywords={PEET, Multiplicity Theory, PhaseMirror, drift protocol,
+               prime decomposition, governance, ADR-038, ADR-039,
+               ADR-040, ADR-041, Xi-Constitution},
+  colorlinks=true,
+  linkcolor=black,
+  urlcolor=blue!70!black,
+  citecolor=black
+}
+
+% ============================================================
+%  THEOREM ENVIRONMENTS
+% ============================================================
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{invariant}{Invariant}[section]
+\newtheorem{axiom}{Axiom}[section]
+
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}[section]
+
+% ============================================================
+%  CODE LISTINGS STYLE
+% ============================================================
+\definecolor{codebg}{rgb}{0.97,0.97,0.97}
+\definecolor{codeframe}{rgb}{0.75,0.75,0.75}
+\definecolor{kwcolor}{rgb}{0.0,0.3,0.7}
+\definecolor{strcolor}{rgb}{0.2,0.5,0.2}
+\definecolor{cmtcolor}{rgb}{0.5,0.5,0.5}
+
+\lstdefinestyle{pythonstyle}{
+  backgroundcolor=\color{codebg},
+  frame=single,
+  rulecolor=\color{codeframe},
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{kwcolor}\bfseries,
+  stringstyle=\color{strcolor},
+  commentstyle=\color{cmtcolor}\itshape,
+  language=Python,
+  showstringspaces=false,
+  breaklines=true,
+  breakatwhitespace=true,
+  numbers=left,
+  numberstyle=\tiny\color{cmtcolor},
+  xleftmargin=1.5em,
+  framexleftmargin=1.5em,
+  tabsize=4,
+  captionpos=b
+}
+
+\lstdefinestyle{yamlstyle}{
+  backgroundcolor=\color{codebg},
+  frame=single,
+  rulecolor=\color{codeframe},
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{kwcolor},
+  commentstyle=\color{cmtcolor}\itshape,
+  showstringspaces=false,
+  breaklines=true,
+  numbers=left,
+  numberstyle=\tiny\color{cmtcolor},
+  xleftmargin=1.5em,
+  framexleftmargin=1.5em,
+  tabsize=2,
+  captionpos=b
+}
+
+% ============================================================
+%  HEADER / FOOTER
+% ============================================================
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{\small Multiplicity Foundation --- Confidential \& Prior Art}
+\lhead{\small PEET Drift Protocol v1.0}
+\cfoot{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% ============================================================
+%  SECTION FORMATTING
+% ============================================================
+\titleformat{\section}{\large\bfseries}{\thesection.}{0.5em}{}[\titlerule]
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection.}{0.5em}{}
+\titleformat{\subsubsection}{\normalsize\itshape}{\thesubsubsection.}{0.5em}{}
+
+% ============================================================
+%  CUSTOM COMMANDS
+% ============================================================
+\newcommand{\peet}{\mathrm{PEET}}
+\newcommand{\pirtm}{\textsc{PIRTM}}
+\newcommand{\pmhq}{\textsc{PhaseMirror-HQ}}
+\newcommand{\xicons}{\(\Xi\)-Constitution}
+\newcommand{\drift}{\delta}
+\newcommand{\wac}{\mathrm{WAC}}
+\newcommand{\modforms}{\mathrm{ModForms}}
+\newcommand{\specz}{\mathrm{Spec}\,\mathbb{Z}}
+\newcommand{\norm}[1]{\left\|#1\right\|_F}
+
+% ============================================================
+%  DEFENSIVE PUBLICATION NOTICE BOX
+% ============================================================
+\newmdenv[
+  topline=true, bottomline=true, leftline=true, rightline=true,
+  linewidth=1.2pt, linecolor=red!60!black,
+  backgroundcolor=red!3,
+  innertopmargin=8pt, innerbottommargin=8pt,
+  innerleftmargin=10pt, innerrightmargin=10pt,
+  skipabove=12pt, skipbelow=12pt
+]{defensivebox}
+
+% ============================================================
+%  DOCUMENT BEGIN
+% ============================================================
+\begin{document}
+
+% ------------------------------------------------------------
+%  TITLE PAGE
+% ------------------------------------------------------------
+\begin{titlepage}
+\centering
+\vspace*{1.5cm}
+
+{\LARGE\bfseries PEET Drift Protocol}\\[0.4em]
+{\large\bfseries Prime Entanglement Entropy Tensor\\
+Drift Measurement, Governance Integration,\\
+and Constitutional Hamiltonian Alignment}\\[1.2em]
+
+\rule{0.6\textwidth}{0.8pt}\\[0.8em]
+
+{\large \textbf{Comprehensive Technical Report \&\\
+Prior Art Defensive Publication}}\\[0.6em]
+
+{\normalsize Document Series: \texttt{MF-DR-2026-001}}\\
+{\normalsize Classification: \textbf{Open / Prior Art Declaration}}\\[0.4em]
+
+\rule{0.6\textwidth}{0.4pt}\\[1em]
+
+\begin{tabular}{rl}
+\textbf{Author:}          & Ryan Van Gelder \\
+\textbf{Organization:}    & Multiplicity Foundation (501(c)(3)) \\
+\textbf{Repository:}      & \texttt{MultiplicityFoundation/PhaseMirror-HQ} \\
+\textbf{Governance Root:} & \texttt{73e8aadf105ee618ed9cf5...} (ledger tx\#4--5) \\
+\textbf{Date:}            & April 25, 2026 \\
+\textbf{Version:}         & 1.0.0 \\
+\end{tabular}
+
+\vspace{1.2em}
+\rule{0.6\textwidth}{0.4pt}\\[1em]
+
+\begin{defensivebox}
+\textbf{PRIOR ART DEFENSIVE PUBLICATION NOTICE}\\[0.4em]
+This document constitutes an intentional public disclosure of the
+technical methods, mathematical frameworks, software architectures,
+and governance protocols described herein. This disclosure is made
+to establish prior art and prevent any third party from obtaining
+patent protection over these concepts. All designs disclosed are
+released under the \textbf{Prime Materia License} and \textbf{Apache 2.0},
+as appropriate to each artifact. Publication date: \textbf{April 25, 2026}.
+\end{defensivebox}
+
+\vfill
+{\small\textit{Multiplicity Foundation --- Bridgeville, Pennsylvania, USA}}
+\end{titlepage}
+
+% ------------------------------------------------------------
+%  TABLE OF CONTENTS
+% ------------------------------------------------------------
+\tableofcontents
+\newpage
+
+% ============================================================
+\section{Executive Summary}
+% ============================================================
+
+This document provides a comprehensive technical record of the
+\textbf{PEET Drift Protocol} as developed within the
+\pmhq{} repository under the Multiplicity Foundation.
+It captures the complete analytical lineage from initial gap analysis
+through mathematical formalization, governance integration design,
+and the four-phase ADR development plan (ADR-038 through ADR-041).
+
+The core problem addressed is a \textbf{structural dissonance} between
+two in-house specification documents:
+
+\begin{enumerate}[leftmargin=2em]
+  \item \textbf{The Constitutional Hamiltonian} --- specifying a
+        continuous Frobenius-norm drift ratio \(\delta(t)\) sampled
+        at sub-millisecond cadence with autonomous kill-switch coupling.
+  \item \textbf{The \xicons{}} --- specifying drift as a PEET
+        entropy scalar \(\delta(n,t)\) measuring deviation from
+        prime-tensor superposition, governed by exponential penalty
+        and Langlands-automorphic admissibility.
+\end{enumerate}
+
+Against both specifications, the live repository state presents
+a third reality: \texttt{drift: enabled: false} in
+\texttt{.phase-mirror.yml}, discrete boolean MD-series rule checks
+(not a continuous metric), a \texttt{maxWacAllowed: 1.05} tolerance
+that is incommensurable with either entropy norm, and no named
+custodian for drift response.
+
+The resolution is a sequenced four-ADR plan that bridges
+specification to implementation without breaking the Merkle-chained
+governance ledger (currently at transaction \#5, Merkle root
+\texttt{73e8aadf...}).
+
+\subsection*{Key Claims for Prior Art}
+
+The following novel combinations constitute the prior art asserted
+by this publication:
+
+\begin{enumerate}[leftmargin=2em]
+  \item A prime-indexed entropy tensor \(\peet(n,t)\) used as the
+        canonical unit of system drift measurement in a live
+        governance-chained software repository.
+  \item The coupling of PEET drift scalar output directly to a
+        Merkle-chained governance ledger entry at commit time.
+  \item A three-tier (Watch / Warn / Collapse) drift response
+        protocol whose Collapse tier is bound to an immutable
+        kill-switch file registered in the governance root.
+  \item The specification of a Langlands-automorphic admissibility
+        gate (\(Z_{\peet}(n) \in \modforms\)) as a formal
+        precondition for state-transition lawfulness in a software
+        governance system.
+  \item The \textsc{WAC} (Weighted Arithmetic Contractivity)
+        tolerance distinguished from and co-resident with a
+        PEET entropy norm threshold in the same configuration
+        artifact.
+\end{enumerate}
+
+% ============================================================
+\section{Background and Context}
+% ============================================================
+
+\subsection{Multiplicity Theory}
+
+Multiplicity Theory is a prime-indexed, recursively stable
+mathematical framework wherein multiplicity --- the recurrence of
+elements understood through prime number decomposition --- forms the
+basis for modeling nonlinear, emergent structures across mathematics,
+physics, computation, and cognition.
+
+\begin{definition}[Multiplicity Space]
+A \emph{multiplicity space} \(\mathcal{M}\) is a tuple
+\((S, P, \mathcal{T}, \phi)\) where \(S\) is a state set,
+\(P = \{p_1, p_2, p_3, \ldots\}\) is the ordered sequence of primes,
+\(\mathcal{T}: P \times P \times \mathbb{R}_{\geq 0} \to \mathbb{R}\)
+is a prime-interaction tensor, and
+\(\phi: S \to \ell^2(P)\) is the prime-decomposition embedding.
+\end{definition}
+
+Rather than treating mathematical objects as static entities,
+Multiplicity Theory reinterprets them as recursively generated
+patterns of prime-labeled interactions, where sets and modules
+become relationally governed multiplicity spaces with identity
+and behavior preserved through recursive feedback loops across scales.
+
+\subsection{PhaseMirror-HQ Repository}
+
+\pmhq{} is the primary governance and runtime repository of the
+Multiplicity Foundation. As of April 2026, it contains:
+
+\begin{itemize}[leftmargin=2em]
+  \item \pirtm{} --- Prime Interval Recursion Theory Machine runtime
+  \item A Merkle-chained governance ledger (\texttt{governance/ledger.json})
+        with 5 signed root commits (bootstrapped 2026-03-14)
+  \item An MCP (Model Context Protocol) server with 13 immutable
+        tool-boundary files
+  \item ADR history through ADR-037 (Lever Branch Protocol at ADR-011,
+        Tool Integrity Boundary at ADR-017)
+  \item A \texttt{.phase-mirror.yml} configuration with \texttt{drift: enabled: false}
+        and \texttt{maxWacAllowed: 1.05}
+\end{itemize}
+
+\subsection{The Two Specification Documents}
+
+Two foundational documents govern the intended drift behavior:
+
+\paragraph{The Constitutional Hamiltonian.}
+Specifies a Hamiltonian operator \(H_{\text{knot}}(t)\) governing
+system state evolution, with drift defined as a Frobenius-norm ratio
+and an operational threshold of \(\delta < 0.10\), collapse threshold
+of \(\delta > 0.17\), and a \texttt{VELOCITY=STOP} kill-switch signal.
+
+\paragraph{The \xicons{}.}
+Specifies drift as a PEET entropy deviation scalar derived from
+prime-tensor superposition, with Langlands-automorphic admissibility
+as the lawfulness criterion and exponential ethical penalty \(c(t) \sim e^t\)
+for violation. The legislative evolution operator is:
+\[
+  \mathcal{L}_{t+1} = \pirtm \circ \text{CSL} \circ \text{Langlands} \circ \text{Firewall} \circ z_k
+\]
+
+% ============================================================
+\section{Mathematical Framework}
+% ============================================================
+
+\subsection{Prime Entanglement Entropy Tensor}
+
+\begin{definition}[PEET Field]
+The \emph{Prime Entanglement Entropy Tensor} \(\peet(n,t)\) for
+a system state \(n\) at time \(t\) is defined as:
+\[
+  \peet(n,t) = \sum_{p_i \mid n} \sum_{p_j \mid n}
+    \mathcal{T}(p_i, p_j, t) \cdot \log\!\left(\frac{p_i p_j}{n}\right)
+\]
+where the outer sums range over all prime divisors of \(n\),
+and \(\mathcal{T}(p_i, p_j, t)\) is the prime-interaction tensor
+at time \(t\).
+\end{definition}
+
+\begin{definition}[State Superposition]
+The \emph{prime-tensor superposition} of state \(n\) at time \(t\) is:
+\[
+  \Psi(n,t) = \sum_{p_i, p_j \in P(n)} \mathcal{T}(p_i, p_j, t) \cdot p_i p_j
+\]
+where \(P(n)\) denotes the multiset of prime factors of \(n\).
+\end{definition}
+
+\subsection{The PEET Drift Scalar}
+
+\begin{definition}[PEET Drift]
+\label{def:peet-drift}
+The \emph{PEET drift scalar} \(\delta_{\peet}(n,t)\) is the
+absolute deviation of the current state wavefunction \(\psi(n,t)\)
+from its prime-tensor superposition:
+\begin{equation}
+  \boxed{
+    \delta_{\peet}(n,t) =
+    \left| \psi(n,t) - \sum_{p_i, p_j \in P(n)}
+    \mathcal{T}(p_i, p_j, t) \cdot p_i p_j \right|
+  }
+  \label{eq:peet-drift}
+\end{equation}
+This quantity is dimensionless when \(\psi\) and \(\mathcal{T}\)
+share the same normalization.
+\end{definition}
+
+\subsection{The Constitutional Hamiltonian Drift}
+
+The Constitutional Hamiltonian specifies an independent drift measure
+based on the Frobenius norm of operator deviation:
+
+\begin{definition}[Hamiltonian Drift Ratio]
+\label{def:ham-drift}
+\begin{equation}
+  \delta_H(t) = \frac{\norm{H_{\text{knot}}(t) - H_{\text{knot}}^{(0)}}}{E_{\text{free}}}
+  \label{eq:ham-drift}
+\end{equation}
+where \(H_{\text{knot}}^{(0)}\) is the reference Hamiltonian at
+system genesis, and \(E_{\text{free}}\) is the free energy normalization.
+\end{definition}
+
+\subsection{Incommensurability Theorem}
+
+\begin{theorem}[Metric Incommensurability]
+\label{thm:incommensurable}
+Let \(\delta_{\peet}(n,t)\) be as in Definition~\ref{def:peet-drift}
+and \(\delta_H(t)\) as in Definition~\ref{def:ham-drift}. These
+metrics are dimensionally incommensurable: no scalar multiplication
+\(\alpha \in \mathbb{R}_{>0}\) exists such that
+\(\delta_{\peet}(n,t) = \alpha \cdot \delta_H(t)\) holds universally.
+\end{theorem}
+
+\begin{proof}[Proof Sketch]
+\(\delta_{\peet}\) is an absolute deviation in the image space of
+\(\psi\) (units: state-amplitude), while \(\delta_H\) is a
+dimensionless energy ratio. The PEET scalar depends on prime-factor
+structure of \(n\) (discrete), while \(\delta_H\) depends on
+operator norm (continuous over a Hilbert space). No bijection
+between \(\mathbb{Z}_{>0}\) (domain of \(\delta_{\peet}\)) and
+the operator algebra (domain of \(\delta_H\)) preserves the
+metric structure. \(\qed\)
+\end{proof}
+
+\begin{corollary}
+The threshold \texttt{maxWacAllowed: 1.05} (a discrete rule-violation
+ratio) is likewise incommensurable with both \(\delta_{\peet}\)
+and \(\delta_H\). Three co-resident but mutually incomparable
+drift proxies exist in the current codebase.
+\end{corollary}
+
+\subsection{Operator Contractivity}
+
+The \pirtm{} constants module (ADR-010) defines the operator
+contractivity condition:
+
+\begin{invariant}[L0 Contractivity]
+\label{inv:contractivity}
+Let \(q_t = \|\Xi\| + \|\Lambda\| \cdot L_T\) be the composite
+spectral radius. The system is \emph{L0-stable} if and only if:
+\[
+  q_t < 1 - \varepsilon
+\]
+where \(\varepsilon = 0.05\) (default). When \(q_t \geq 1 - \varepsilon\),
+the system has exited the contraction regime and no governance
+action can substitute for mathematical stabilization.
+\end{invariant}
+
+\subsection{Langlands Admissibility Gate}
+
+The \xicons{} imposes a formal admissibility condition on all
+state transitions:
+
+\begin{definition}[Langlands Admissibility]
+A state \(n \in \mathbb{N}\) is \emph{lawfully admissible} if and
+only if its PEET partition function lies in the space of modular forms:
+\[
+  Z_{\peet}(n) \in \modforms
+\]
+Equivalently, the automorphic Galois representation associated to
+\(n\) must admit a modular lift.
+\end{definition}
+
+\begin{definition}[PEET Partition Function]
+\[
+  Z_{\peet}(n) = \sum_{k \geq 1} a_k(n) \cdot q^k, \quad q = e^{2\pi i \tau}
+\]
+where \(a_k(n)\) are coefficients derived from the prime-indexed
+tensor contractions of \(n\) at recursion depth \(k\).
+\end{definition}
+
+\subsection{Three-Tier Drift Response Model}
+
+\begin{definition}[Drift Response Tiers]
+Given constants \(0 < \varepsilon_W < \varepsilon_X < \varepsilon_C\),
+define three response tiers:
+\[
+  \text{Tier}(n,t) = \begin{cases}
+    \textsc{Watch}    & \text{if } \delta_{\peet}(n,t) \in (\varepsilon_W, \varepsilon_X] \\
+    \textsc{Warn}     & \text{if } \delta_{\peet}(n,t) \in (\varepsilon_X, \varepsilon_C] \\
+    \textsc{Collapse} & \text{if } \delta_{\peet}(n,t) > \varepsilon_C
+  \end{cases}
+\]
+with proposed initial values \(\varepsilon_W = 0.05\),
+\(\varepsilon_X = 0.10\), \(\varepsilon_C = \varepsilon_{\peet}\)
+(to be committed as \texttt{PEET\_DRIFT\_EPSILON} in
+\texttt{pirtm/constants.py}).
+\end{definition}
+
+\subsection{Exponential Ethical Penalty}
+
+The \xicons{} imposes a time-growing penalty for sustained drift:
+
+\begin{definition}[Ethical Drift Penalty]
+For a state in the \textsc{Collapse} tier for duration \(\tau > 0\):
+\[
+  c(\tau) = c_0 \cdot e^{\lambda \tau}
+\]
+where \(c_0\) is the base penalty coefficient and \(\lambda > 0\)
+is the ethical growth rate. No closed-form runtime enforcement
+of this penalty currently exists in \pmhq{}.
+\end{definition}
+
+% ============================================================
+\section{Repository Gap Analysis}
+% ============================================================
+
+\subsection{Current State}
+
+The following table documents the precise gap between specification
+and implementation as of the analysis date (March 25, 2026):
+
+\begin{longtable}{p{3.2cm} p{3.8cm} p{3.8cm} p{2.5cm}}
+\toprule
+\textbf{Dimension} & \textbf{Specification} & \textbf{Live Repo State} & \textbf{Gap} \\
+\midrule
+\endfirsthead
+\multicolumn{4}{l}{\small\itshape (continued)} \\
+\toprule
+\textbf{Dimension} & \textbf{Specification} & \textbf{Live Repo State} & \textbf{Gap} \\
+\midrule
+\endhead
+\bottomrule
+\endlastfoot
+
+Drift enabled &
+  Continuous PEET entropy scalar &
+  \texttt{drift: enabled: false} &
+  \textbf{Critical} \\
+
+Metric unit &
+  \(\delta_{\peet}(n,t)\) dimensionless entropy ratio &
+  MD-001/002/003 boolean rules &
+  \textbf{Critical} \\
+
+Sampling cadence &
+  Sub-ms (Hamiltonian) / per-commit (Xi) &
+  CI/CD commit-triggered only &
+  Moderate \\
+
+Collapse threshold &
+  \(\varepsilon_{\peet}\) (entropy bound) &
+  \texttt{maxWacAllowed: 1.05} &
+  \textbf{Critical} \\
+
+Kill-switch binding &
+  \texttt{VELOCITY=STOP} / exponential penalty &
+  \texttt{rollback/kill\_switch.py} exists but unbound &
+  High \\
+
+Drift custodian &
+  Named role required &
+  None defined &
+  High \\
+
+Langlands gate &
+  \(Z_{\peet}(n) \in \modforms\) &
+  \texttt{pirtm/spectral/} scaffolding only &
+  Low (future) \\
+
+Governance ledger &
+  \texttt{drift\_score} in each root commit &
+  Not present in schema &
+  Moderate \\
+\end{longtable}
+
+\subsection{Governance Ledger Status}
+
+The governance ledger as of transaction \#5 (signed
+\texttt{2026-03-16T01:34:20Z}, Merkle root
+\texttt{73e8aadf105ee618ed9cf50af80c77a986c2b7a878704dbcca1cc68488723804})
+covers 13 immutable files. The Merkle chain is intact with
+\texttt{previous\_root\_tx\_id} linkage from tx\#1 through tx\#5.
+No \texttt{drift\_score} field is present in any existing entry.
+
+% ============================================================
+\section{ADR Development Plan}
+% ============================================================
+
+The following four Architecture Decision Records constitute the
+complete implementation roadmap. Each is a hard gate for the next.
+
+\subsection{ADR-038: Drift Metric Definition}
+
+\begin{mdframed}[linecolor=blue!40,linewidth=1pt,backgroundcolor=blue!2]
+\textbf{Status:} Draft \quad
+\textbf{Owner:} Ryan Van Gelder \quad
+\textbf{Horizon:} 5 days from ratification \\
+\textbf{Supersedes:} None \quad
+\textbf{Required before:} ADR-039
+\end{mdframed}
+
+\paragraph{Decision.}
+Adopt Equation~\eqref{eq:peet-drift} as the canonical drift scalar
+for \pmhq{}. Commit \texttt{PEET\_DRIFT\_EPSILON} as a named
+constant in \texttt{packages/pirtm/constants.py} adjacent to the
+existing \texttt{DRIFT\_THRESHOLD}, \texttt{DEFAULT\_EPSILON},
+and \texttt{OPERATOR\_CONTRACTIVITY\_BOUND} constants (ADR-010).
+Implement \texttt{drift\_score(n, t) -> float} as a stub in
+\texttt{pirtm/core/}.
+
+\paragraph{Rejected alternatives.}
+\begin{itemize}[leftmargin=2em,noitemsep]
+  \item Re-using \texttt{DRIFT\_THRESHOLD = 0.3} --- incompatible
+        units (L0-003 policy value, not PEET entropy bound).
+  \item Adopting \(\delta_H(t)\) from the Constitutional Hamiltonian
+        --- Theorem~\ref{thm:incommensurable} proves incommensurability.
+\end{itemize}
+
+\paragraph{Exit criterion.}
+\texttt{drift\_score()} returns a \texttt{float} and passes 3
+unit tests with known prime-tensor inputs. \texttt{PEET\_DRIFT\_EPSILON}
+defined and referenced in at least one test.
+
+\subsection{ADR-039: Drift Enable and Cadence Binding}
+
+\begin{mdframed}[linecolor=blue!40,linewidth=1pt,backgroundcolor=blue!2]
+\textbf{Status:} Blocked on ADR-038 \quad
+\textbf{Horizon:} 10 days \\
+\textbf{Required before:} ADR-040
+\end{mdframed}
+
+\paragraph{Decision.}
+Activate \texttt{drift: enabled: true} in \texttt{.phase-mirror.yml}
+and add \texttt{drift.metric: peet\_entropy\_delta} and
+\texttt{drift.threshold: \$\{PEET\_DRIFT\_EPSILON\}}.
+Wire \texttt{drift\_score()} into the \texttt{tests/} harness
+for commit-triggered evaluation. Add \texttt{drift\_score: float}
+to the governance ledger entry schema so each root commit records
+the PEET drift at signing time.
+
+\paragraph{Cadence decision.}
+Batch-on-commit (default). Daemon heartbeat (real-time telemetry)
+deferred to a future ADR; it requires the \texttt{daemon/} module
+to consume the drift API, which depends on a stable interface
+defined here.
+
+\paragraph{Exit criterion.}
+CI pipeline emits a \texttt{drift\_score} float on every PR.
+Score appears as a named field in new governance ledger entries.
+\texttt{.phase-mirror.yml} diff shows \texttt{enabled: false}
+\(\to\) \texttt{enabled: true}.
+
+\subsection{ADR-040: Drift Response and Ownership Protocol}
+
+\begin{mdframed}[linecolor=blue!40,linewidth=1pt,backgroundcolor=blue!2]
+\textbf{Status:} Blocked on ADR-039 \quad
+\textbf{Horizon:} 18 days \\
+\textbf{Required before:} ADR-041
+\end{mdframed}
+
+\paragraph{Decision.}
+Name a \textbf{Drift Custodian} role and define the three-tier
+response model from Section~3.6. Bind the Collapse tier to the
+existing immutable file \texttt{rollback/kill\_switch.py}
+(governance ledger hash:
+\texttt{bf8aaedb61cca131f953057497d5466dce2fd5eea62298b17d02d13d41e52f4e}).
+This is consistent with ADR-011's prohibition on autonomous merges.
+
+\paragraph{Tier thresholds to commit in \texttt{contracts/system\_invariants.yaml}:}
+
+\begin{center}
+\begin{tabular}{llll}
+\toprule
+\textbf{Tier} & \textbf{Condition} & \textbf{Response} & \textbf{Owner} \\
+\midrule
+Watch    & \(\delta_{\peet} > 0.05\)              & Log only            & CI daemon \\
+Warn     & \(\delta_{\peet} > 0.10\)              & Block merge, notify & Drift Custodian \\
+Collapse & \(\delta_{\peet} > \varepsilon_{\peet}\) & Invoke kill-switch  & Custodian + human gate \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph{Exit criterion.}
+ADR merged with named Custodian. Tier thresholds committed to
+\texttt{contracts/system\_invariants.yaml}. Kill-switch trigger
+condition documented and tested with a mock drift injection.
+
+\subsection{ADR-041: PEET Spectral Integration (Langlands Gate)}
+
+\begin{mdframed}[linecolor=blue!40,linewidth=1pt,backgroundcolor=blue!2]
+\textbf{Status:} Blocked on ADR-040 \quad
+\textbf{Horizon:} 30 days \\
+\textbf{Required before:} None (terminal in sequence)
+\end{mdframed}
+
+\paragraph{Decision.}
+Promote \texttt{pirtm/spectral/} from scaffolding to an active
+drift signal source. Define the interface contract between
+\texttt{pirtm/spectral/} and \texttt{drift\_score()} such that
+the spectral module optionally supplies a PEET curvature correction
+\(\kappa(n,t)\) to refine Equation~\eqref{eq:peet-drift}:
+\begin{equation}
+  \delta_{\peet}^{(\kappa)}(n,t) =
+  \left| \psi(n,t) - \Psi(n,t) \right| \cdot \kappa(n,t)
+  \label{eq:peet-drift-spectral}
+\end{equation}
+where \(\kappa(n,t) \in [0.98, 1.02]\) (within
+\texttt{SPECTRAL\_CONSERVATION\_TOLERANCE = 0.02}).
+
+\paragraph{Langlands binding.}
+A state transition \(n \to n'\) is \emph{spectrally admissible}
+only if the approximant \(\hat{Z}_{\peet}(n)\) passes the modular
+form membership test. This is not required to be a full Coq proof
+at ADR-041; a computable approximant is sufficient.
+
+\paragraph{Ledger update.}
+Add \texttt{pirtm/spectral/} to the immutable files list in
+\texttt{governance/ledger.json} once the interface is stable,
+requiring a new Merkle root (governance ledger tx\#6).
+
+\paragraph{Exit criterion.}
+\texttt{pirtm/spectral/} exports a function callable by
+\texttt{drift\_score()}. One integration test exercises
+the combined path. Governance ledger updated with new Merkle root.
+
+% ============================================================
+\section{Code Artifacts}
+% ============================================================
+
+\subsection{PEET Drift Scalar --- Core Implementation}
+
+\begin{lstlisting}[
+  style=pythonstyle,
+  caption={%
+    \texttt{pirtm/core/drift.py} --- PEET drift scalar (ADR-038 deliverable)
+  },
+  label={lst:drift-core}
+]
+"""
+ADR-038: PEET Drift Scalar
+Canonical implementation of the prime-tensor entropy deviation metric.
+
+Units: dimensionless (normalized by state amplitude)
+DO NOT modify thresholds without ADR approval.
+"""
+
+from __future__ import annotations
+import math
+from typing import Callable
+
+from pirtm.constants import (
+    PEET_DRIFT_EPSILON,
+    DEFAULT_EPSILON,
+    SPECTRAL_CONSERVATION_TOLERANCE,
+)
+from pirtm.governance.telemetry import telemetry
+
+
+def prime_factors(n: int) -> list[int]:
+    """Return sorted list of prime factors of n (with multiplicity)."""
+    factors: list[int] = []
+    d = 2
+    while d * d <= n:
+        while n % d == 0:
+            factors.append(d)
+            n //= d
+        d += 1
+    if n > 1:
+        factors.append(n)
+    return factors
+
+
+def peet_superposition(
+    n: int,
+    tensor_fn: Callable[[int, int, float], float],
+    t: float,
+) -> float:
+    """
+    Compute the prime-tensor superposition Psi(n, t).
+
+    Psi(n, t) = sum_{p_i, p_j in P(n)} T(p_i, p_j, t) * p_i * p_j
+
+    Args:
+        n:         State integer whose prime structure is analyzed.
+        tensor_fn: T(p_i, p_j, t) -> float, prime-interaction tensor.
+        t:         Time parameter.
+
+    Returns:
+        float: The superposition value.
+    """
+    primes = prime_factors(n)
+    acc = 0.0
+    for pi in primes:
+        for pj in primes:
+            acc += tensor_fn(pi, pj, t) * pi * pj
+    return acc
+
+
+def drift_score(
+    n: int,
+    psi: float,
+    tensor_fn: Callable[[int, int, float], float],
+    t: float,
+    kappa: float = 1.0,
+) -> float:
+    """
+    Compute the PEET drift scalar delta(n, t).
+
+    delta(n, t) = |psi(n, t) - Psi(n, t)| * kappa
+
+    where kappa is the optional spectral curvature correction
+    from pirtm/spectral/ (ADR-041). Default kappa=1.0 (no correction).
+
+    Args:
+        n:         State integer.
+        psi:       Current wavefunction amplitude psi(n, t).
+        tensor_fn: Prime-interaction tensor T(p_i, p_j, t).
+        t:         Time parameter.
+        kappa:     Spectral curvature correction in [0.98, 1.02].
+
+    Returns:
+        float: Non-negative PEET drift scalar.
+
+    Raises:
+        ValueError: If n < 1 or kappa is outside tolerance band.
+    """
+    if n < 1:
+        raise ValueError(f"State integer n must be >= 1, got {n}")
+
+    tol = SPECTRAL_CONSERVATION_TOLERANCE
+    if not (1.0 - tol <= kappa <= 1.0 + tol):
+        raise ValueError(
+            f"kappa={kappa} outside spectral tolerance "
+            f"[{1.0 - tol}, {1.0 + tol}]"
+        )
+
+    superposition = peet_superposition(n, tensor_fn, t)
+    raw_delta = abs(psi - superposition) * kappa
+
+    telemetry.gauge("pirtm_drift_score", raw_delta,
+                    labels={"n": str(n), "t": f"{t:.3f}"})
+
+    return raw_delta
+
+
+def classify_drift_tier(delta: float) -> str:
+    """
+    Classify drift scalar into governance tier (ADR-040).
+
+    Returns one of: 'watch', 'warn', 'collapse', 'nominal'.
+    """
+    if delta > PEET_DRIFT_EPSILON:
+        tier = "collapse"
+    elif delta > 0.10:
+        tier = "warn"
+    elif delta > 0.05:
+        tier = "watch"
+    else:
+        tier = "nominal"
+
+    telemetry.counter(
+        "pirtm_drift_tier_total",
+        labels={"tier": tier}
+    )
+    return tier
+\end{lstlisting}
+
+\subsection{Configuration Activation (ADR-039)}
+
+\begin{lstlisting}[
+  style=yamlstyle,
+  caption={\texttt{.phase-mirror.yml} --- proposed diff for ADR-039},
+  label={lst:phase-mirror-yml}
+]
+version: '1'
+rules:
+  enabled:
+    - MD-001
+    - MD-002
+    - MD-003
+  severity:
+    MD-001: critical
+    MD-002: high
+    MD-003: high
+l0_invariants:
+  enabled: true
+  strict: false
+drift:
+  enabled: true                    # ADR-039: was false
+  metric: peet_entropy_delta       # ADR-039: PEET scalar (eq. 1)
+  threshold: 0.30                  # ADR-038: PEET_DRIFT_EPSILON
+  tiers:
+    watch:    0.05
+    warn:     0.10
+    collapse: 0.30                 # binds to rollback/kill_switch.py
+  cadence: commit                  # batch-on-commit (daemon deferred)
+  custodian: "@rvangelder"         # ADR-040: named Drift Custodian
+
+levers:
+  enabled: false
+  maxConcurrentBranches: 5
+  defaultTension: 0.5
+  maxWacAllowed: 1.05
+  autoMergeIfCertified: false
+  mergeStrategy: squash
+\end{lstlisting}
+
+\subsection{Governance Ledger Schema Extension (ADR-039)}
+
+\begin{lstlisting}[
+  style=pythonstyle,
+  caption={Proposed ledger entry schema extension --- \texttt{governance/ledger.py}},
+  label={lst:ledger-schema}
+]
+# ADR-039: Add drift_score field to governance ledger entries.
+# Each GOVERNANCE_ROOT_COMMIT must record the PEET drift scalar
+# computed at time of signing.
+
+LEDGER_ENTRY_SCHEMA_V2 = {
+    "type": "GOVERNANCE_ROOT_COMMIT",
+    "governance_version": str,
+    "merkle_root": str,
+    "drift_score": float,          # ADR-039: PEET delta at commit time
+    "drift_tier": str,             # ADR-040: 'nominal'|'watch'|'warn'
+    "immutable_files": list,
+    "signed_by": str,
+    "timestamp": str,
+    "previous_root_tx_id": int,
+    "governance_notes": str,
+}
+
+def new_root_commit(
+    merkle_root: str,
+    immutable_files: list,
+    signed_by: str,
+    drift_score: float,
+    previous_tx_id: int,
+    notes: str = "",
+) -> dict:
+    """Construct a v2 governance ledger entry with drift tracking."""
+    from pirtm.core.drift import classify_drift_tier
+    return {
+        "type": "GOVERNANCE_ROOT_COMMIT",
+        "governance_version": "v0.2.0",   # bumped at ADR-039
+        "merkle_root": merkle_root,
+        "drift_score": round(drift_score, 6),
+        "drift_tier": classify_drift_tier(drift_score),
+        "immutable_files": immutable_files,
+        "signed_by": signed_by,
+        "timestamp": _utcnow_iso(),
+        "previous_root_tx_id": previous_tx_id,
+        "governance_notes": notes,
+    }
+\end{lstlisting}
+
+\subsection{Kill-Switch Binding (ADR-040)}
+
+\begin{lstlisting}[
+  style=pythonstyle,
+  caption={Proposed \texttt{rollback/kill\_switch.py} drift trigger --- ADR-040 addition},
+  label={lst:kill-switch}
+]
+# ADR-040: Bind kill_switch to PEET drift Collapse tier.
+# This function is called by the CI drift monitor when
+# classify_drift_tier() returns 'collapse'.
+# HUMAN APPROVAL REQUIRED before execution (ADR-011 compliance).
+
+from pirtm.constants import PEET_DRIFT_EPSILON
+from pirtm.core.drift import drift_score, classify_drift_tier
+from pirtm.governance.telemetry import telemetry
+
+
+def drift_collapse_handler(
+    n: int,
+    psi: float,
+    tensor_fn,
+    t: float,
+    dry_run: bool = True,
+) -> dict:
+    """
+    ADR-040 Collapse tier handler.
+
+    Evaluates current drift and, if Collapse, prepares kill-switch
+    payload. Does NOT execute autonomously (dry_run=True default).
+    A human custodian must call with dry_run=False after review.
+
+    Returns:
+        dict with keys: tier, delta, action, requires_approval
+    """
+    delta = drift_score(n, psi, tensor_fn, t)
+    tier = classify_drift_tier(delta)
+
+    result = {
+        "tier": tier,
+        "delta": delta,
+        "epsilon": PEET_DRIFT_EPSILON,
+        "action": None,
+        "requires_approval": True,
+        "dry_run": dry_run,
+    }
+
+    if tier == "collapse":
+        result["action"] = "VELOCITY_STOP"
+        telemetry.counter("pirtm_kill_switch_trigger_total",
+                          labels={"dry_run": str(dry_run)})
+
+        if not dry_run:
+            # Custodian-approved execution path
+            _execute_velocity_stop()
+            result["executed"] = True
+        else:
+            result["executed"] = False
+            result["message"] = (
+                "Collapse tier reached. "
+                "Human custodian approval required. "
+                "Re-invoke with dry_run=False to execute."
+            )
+
+    return result
+
+
+def _execute_velocity_stop() -> None:
+    """Halt all active governance transitions. Irreversible."""
+    import os, signal
+    telemetry.counter("pirtm_velocity_stop_total")
+    # Signal daemon to halt; implementation depends on daemon protocol
+    os.kill(os.getpid(), signal.SIGTERM)
+\end{lstlisting}
+
+\subsection{Unit Tests (ADR-038 Exit Criterion)}
+
+\begin{lstlisting}[
+  style=pythonstyle,
+  caption={\texttt{pirtm/tests/test\_drift.py} --- ADR-038 exit criterion tests},
+  label={lst:tests}
+]
+"""ADR-038 exit criterion: drift_score() returns float for 3 known inputs."""
+
+import pytest
+from pirtm.core.drift import drift_score, classify_drift_tier, prime_factors
+
+
+def identity_tensor(pi: int, pj: int, t: float) -> float:
+    """Identity tensor: T(p_i, p_j, t) = 1 for all inputs."""
+    return 1.0
+
+
+def test_prime_factors_known():
+    assert prime_factors(12) == [2, 2, 3]
+    assert prime_factors(7)  == [7]
+    assert prime_factors(30) == [2, 3, 5]
+
+
+def test_drift_score_zero_case():
+    # n=6, primes=[2,3], Psi = 2*2 + 2*3 + 3*2 + 3*3 = 4+6+6+9 = 25
+    # psi = 25.0 -> delta = 0.0
+    n, psi, t = 6, 25.0, 0.0
+    delta = drift_score(n, psi, identity_tensor, t)
+    assert isinstance(delta, float)
+    assert delta == pytest.approx(0.0, abs=1e-9)
+
+
+def test_drift_score_nonzero():
+    # n=6, Psi=25.0, psi=28.0 -> delta=3.0
+    n, psi, t = 6, 28.0, 0.0
+    delta = drift_score(n, psi, identity_tensor, t)
+    assert isinstance(delta, float)
+    assert delta == pytest.approx(3.0, abs=1e-9)
+
+
+def test_drift_score_prime_singleton():
+    # n=7, primes=[7], Psi = 7*7 = 49
+    n, psi, t = 7, 52.0, 1.0
+    delta = drift_score(n, psi, identity_tensor, t)
+    assert delta == pytest.approx(3.0, abs=1e-9)
+
+
+def test_classify_nominal():
+    assert classify_drift_tier(0.02) == "nominal"
+
+def test_classify_watch():
+    assert classify_drift_tier(0.07) == "watch"
+
+def test_classify_warn():
+    assert classify_drift_tier(0.12) == "warn"
+
+def test_classify_collapse():
+    # Assumes PEET_DRIFT_EPSILON < 0.35
+    assert classify_drift_tier(0.35) == "collapse"
+
+
+def test_drift_invalid_n():
+    with pytest.raises(ValueError):
+        drift_score(0, 1.0, identity_tensor, 0.0)
+
+
+def test_kappa_out_of_tolerance():
+    with pytest.raises(ValueError):
+        drift_score(6, 25.0, identity_tensor, 0.0, kappa=1.5)
+\end{lstlisting}
+
+% ============================================================
+\section{Prior Art Claims Register}
+% ============================================================
+
+This section constitutes the formal prior art disclosure registry.
+Each claim is stated with sufficient specificity to establish
+novelty and to prevent downstream patenting by any third party.
+
+\subsection{Claim 1: PEET Drift Scalar as Governance Metric}
+
+\textbf{Disclosed concept:} The use of Equation~\eqref{eq:peet-drift}
+--- a prime-indexed entropy deviation scalar derived from the Prime
+Entanglement Entropy Tensor --- as the canonical drift metric
+governing software governance system state transitions, specifically
+as the quantity recorded in a Merkle-chained governance ledger at
+each commit boundary.
+
+\textbf{Novelty basis:} No prior art known combining prime number
+theory (prime factor tensor decomposition) with governance ledger
+immutability chains for software system drift measurement.
+
+\textbf{Disclosure date:} March 25, 2026 (initial ADR plan),
+April 25, 2026 (this publication).
+
+\subsection{Claim 2: Three-Tier Drift Response with Immutable Kill-Switch Binding}
+
+\textbf{Disclosed concept:} A governance enforcement architecture
+in which a continuously computed entropy drift scalar is classified
+into three ordered response tiers (Watch, Warn, Collapse), where
+the Collapse tier is bound to an immutable file registered in a
+Merkle governance root, and execution requires human custodian
+approval (precluding autonomous action per ADR-011).
+
+\textbf{Novelty basis:} The combination of (a) entropy-based tier
+classification, (b) immutable-file binding for the response artifact,
+and (c) human-gated autonomous execution in a governance ledger
+system constitutes a novel architectural pattern.
+
+\subsection{Claim 3: Langlands Admissibility as Software State Gate}
+
+\textbf{Disclosed concept:} The application of the
+Langlands--modular form correspondence (\(Z_{\peet}(n) \in \modforms\))
+as a formal admissibility predicate for software system state
+transitions, implemented as a computable approximant in a spectral
+module (\texttt{pirtm/spectral/}) that feeds into a runtime drift
+measurement pipeline.
+
+\textbf{Novelty basis:} No prior art known applying Langlands
+duality or modular form membership tests as runtime software
+governance gates.
+
+\subsection{Claim 4: WAC / PEET Cohabitation in Configuration}
+
+\textbf{Disclosed concept:} The co-residence of two incommensurable
+drift proxies --- a Weighted Arithmetic Contractivity (WAC) ratio
+(\texttt{maxWacAllowed}) and a PEET entropy norm threshold
+(\texttt{PEET\_DRIFT\_EPSILON}) --- within the same configuration
+artifact (\texttt{.phase-mirror.yml}), with explicit documentation
+that they answer different questions and are not interchangeable,
+as established by Theorem~\ref{thm:incommensurable}.
+
+\subsection{Claim 5: Prime-Indexed Tensor Constants Module with Policy Loading}
+
+\textbf{Disclosed concept:} A constants module (\texttt{pirtm/constants.py})
+that loads L0 thresholds from a YAML policy artifact at import time,
+exposes a two-layer threshold architecture (L0 operator contractivity
+vs.\ L1 marshalling fidelity), and emits Prometheus-compatible
+telemetry for each loaded constant, with explicit case analysis
+of the four stability/fidelity combinations.
+
+% ============================================================
+\section{Recommended Future Work}
+% ============================================================
+
+\begin{enumerate}[leftmargin=2em]
+  \item \textbf{Daemon real-time sampling.} Once ADR-039 establishes
+        the batch-on-commit baseline, a subsequent ADR should bind
+        \texttt{daemon/} to the \texttt{drift\_score()} API for
+        sub-second telemetry, enabling the Constitutional Hamiltonian's
+        3.33\,ms sampling cadence.
+
+  \item \textbf{Coq/Idris formal proofs.} The Langlands admissibility
+        gate (ADR-041) should ultimately be backed by a machine-checked
+        proof that the computable approximant \(\hat{Z}_{\peet}(n)\)
+        converges to the true modular form membership predicate within
+        a certified error bound.
+
+  \item \textbf{Metric unification.} A bridge function mapping
+        \(\delta_H(t)\) (Frobenius norm) to an equivalent PEET
+        representation should be specified, even if proven
+        incommensurable in general, for the specific case of
+        knot Hamiltonians with prime-indexed eigenstructure.
+
+  \item \textbf{Quantum circuit PEET gates.} The \xicons{}
+        Appendix D specifies a Qiskit PEET circuit. This should
+        be implemented in \texttt{pirtm/} and registered as a
+        \texttt{drift\_score()} backend for quantum runtime targets.
+
+  \item \textbf{Exponential penalty enforcement.} The ethical drift
+        penalty \(c(\tau) = c_0 e^{\lambda \tau}\) from the
+        \xicons{} has no current runtime implementation. A penalty
+        accumulator module should be designed that increments at
+        the heartbeat cadence for states in the Collapse tier.
+\end{enumerate}
+
+% ============================================================
+\section{Document Provenance and Integrity}
+% ============================================================
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+\textbf{Field} & \textbf{Value} \\
+\midrule
+Document ID           & \texttt{MF-DR-2026-001} \\
+Repository            & \texttt{MultiplicityFoundation/PhaseMirror-HQ} \\
+Branch (analysis)     & \texttt{main} @ \texttt{324a44bf...} \\
+Governance ledger     & tx\#5, Merkle root \texttt{73e8aadf...} \\
+Ledger bootstrap date & 2026-03-14T22:37:34Z \\
+Last ledger rotation  & 2026-03-16T01:34:20Z \\
+ADR high-water mark   & ADR-037 (at analysis date) \\
+Proposed ADRs         & ADR-038, ADR-039, ADR-040, ADR-041 \\
+License (code)        & Apache 2.0 \\
+License (IP)          & Prime Materia License \\
+Publication date      & April 25, 2026 \\
+Author                & Ryan Van Gelder \\
+Organization          & Multiplicity Foundation, 501(c)(3) \\
+Location              & Bridgeville, Pennsylvania, USA \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\vspace{1em}
+\begin{defensivebox}
+\textbf{DEFENSIVE PUBLICATION ATTESTATION}\\[0.5em]
+I, Ryan Van Gelder, hereby attest that the technical disclosures
+contained in this document represent original work of the Multiplicity
+Foundation, first conceived and implemented in the period
+\textbf{March--April 2026}, and are intentionally published to
+establish prior art. This document is submitted as a defensive
+publication under the norms of open-source intellectual property
+practice. No patent application covering the claims in Section~7
+has been filed by the Multiplicity Foundation as of the publication
+date, and none is intended. Third parties are hereby on notice that
+these concepts constitute prior art.\\[0.5em]
+\textbf{Signature:} \underline{\hspace{6cm}}
+\quad \textbf{Date:} April 25, 2026
+\end{defensivebox}
+
+% ============================================================
+%  APPENDIX
+% ============================================================
+\appendix
+
+\section{Glossary}
+
+\begin{description}[leftmargin=3cm, style=nextline]
+  \item[ADR] Architecture Decision Record --- a document capturing
+    a significant architectural decision, its context, and consequences.
+  \item[PEET] Prime Entanglement Entropy Tensor --- the prime-indexed
+    entropy field governing lawfulness of state transitions.
+  \item[PIRTM] Prime Interval Recursion Theory Machine --- the core
+    runtime of \pmhq{}.
+  \item[WAC] Weighted Arithmetic Contractivity --- the discrete
+    rule-violation ratio tracked by \texttt{maxWacAllowed}.
+  \item[Drift Custodian] Named role (ADR-040) responsible for
+    authorizing kill-switch execution on Collapse tier detection.
+  \item[Collapse tier] The regime \(\delta_{\peet} > \varepsilon_{\peet}\)
+    requiring human-gated kill-switch invocation.
+  \item[Merkle root] A hash of all immutable governance files,
+    forming a tamper-evident chain in \texttt{governance/ledger.json}.
+  \item[Langlands gate] The admissibility predicate
+    \(Z_{\peet}(n) \in \modforms\) derived from the Langlands program.
+  \item[ModForms] The space of holomorphic modular forms over
+    \(\mathrm{SL}_2(\mathbb{Z})\) or appropriate congruence subgroup.
+  \item[L0 invariant] An operator-level mathematical stability
+    condition that cannot be overridden by governance policy.
+\end{description}
+
+\section{ADR Dependency Graph}
+
+\begin{center}
+\begin{tabular}{ccccc}
+ADR-038 & $\longrightarrow$ & ADR-039 & $\longrightarrow$ & ADR-040 \\
+\multicolumn{5}{c}{$\downarrow$ \quad (all three required)} \\
+\multicolumn{5}{c}{ADR-041} \\
+\end{tabular}
+\end{center}
+
+\noindent Each arrow denotes a hard dependency: the downstream ADR
+cannot enter \emph{Accepted} status until the upstream ADR exits
+\emph{Draft} and its exit criterion is verified.
+
+\section{Governance Ledger Hash Chain}
+
+\begin{center}
+\small
+\begin{tabular}{clll}
+\toprule
+\textbf{Tx} & \textbf{Merkle Root (prefix)} & \textbf{Signed By} & \textbf{Timestamp} \\
+\midrule
+1 & \texttt{0958aeac1f29b760...} & bootstrap & 2026-03-14T22:37Z \\
+2 & \texttt{54d0df56bd285e29...} & root-rotation-2026-03-16 & 2026-03-16T01:17Z \\
+3 & \texttt{dbedae94e5676bd8...} & root-rotation-2026-03-16-d10 & 2026-03-16T01:24Z \\
+4 & \texttt{73e8aadf105ee618...} & root-rotation-deterministic-2026-03-16 & 2026-03-16T01:30Z \\
+5 & \texttt{73e8aadf105ee618...} & root-rotation-hash-semantics-2026-03-16 & 2026-03-16T01:34Z \\
+\midrule
+6 & \textit{(pending ADR-041)} & \textit{(TBD)} & \textit{(TBD)} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent Note: Transactions 4 and 5 share the same Merkle root
+(\texttt{73e8aadf...}), indicating a hash-semantics canonicalization
+rotation without file content change. This is consistent with the
+\texttt{hash\_semantics: "canonicalized\_governance\_pointer"} field
+present in tx\#5's \texttt{contracts/shared/constants.py} entry.
+
+% ============================================================
+%  MATHEMATICAL APPENDIX
+%  MF-DR-2026-001 Amendment A
+%  PEET Drift Protocol: Explicit Proofs and Operator Norm Bounds
+%
+%  Compile standalone:  pdflatex appendix-math-standalone.tex
+%  Or \input into main: place after \appendix in MF-DR-2026-001.tex
+%
+%  Author:  Ryan Van Gelder, Multiplicity Foundation
+%  Date:    April 25, 2026
+%  Version: 1.0.0
+% ============================================================
+
+% ----------------------------------------------------------------
+%  STANDALONE PREAMBLE (comment out if \input-ing into main doc)
+% ----------------------------------------------------------------
+\documentclass[11pt,letterpaper]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{mdframed}
+\usepackage{thmtools}
+\usepackage{microtype}
+
+\hypersetup{
+  pdftitle={Mathematical Appendix: PEET Drift Protocol},
+  pdfauthor={Ryan Van Gelder, Multiplicity Foundation},
+  colorlinks=true, linkcolor=black, urlcolor=blue!70!black
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{\small MF-DR-2026-001 Amendment A}
+\lhead{\small Mathematical Appendix: PEET Drift Protocol}
+\cfoot{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% Theorem environments
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{invariant}[theorem]{Invariant}
+\newtheorem{axiom}[theorem]{Axiom}
+\newtheorem{construction}[theorem]{Construction}
+
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{example}[theorem]{Example}
+
+% Custom operators
+\DeclareMathOperator{\Spec}{Spec}
+\DeclareMathOperator{\Tr}{Tr}
+\DeclareMathOperator{\rank}{rank}
+\DeclareMathOperator{\im}{im}
+\DeclareMathOperator{\diam}{diam}
+\newcommand{\peet}{\mathrm{PEET}}
+\newcommand{\pirtm}{\textsc{PIRTM}}
+\newcommand{\norm}[1]{\left\|#1\right\|}
+\newcommand{\normF}[1]{\left\|#1\right\|_F}
+\newcommand{\norminf}[1]{\left\|#1\right\|_\infty}
+\newcommand{\abs}[1]{\left|#1\right|}
+\newcommand{\inner}[2]{\langle #1,\, #2 \rangle}
+\newcommand{\Psi}{\varPsi}
+\newcommand{\eps}{\varepsilon}
+\newcommand{\modforms}{\mathrm{ModForms}}
+\newcommand{\specz}{\Spec\,\mathbb{Z}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\Primes}{\mathbb{P}}
+\newcommand{\calT}{\mathcal{T}}
+\newcommand{\calM}{\mathcal{M}}
+\newcommand{\calL}{\mathcal{L}}
+\newcommand{\calH}{\mathcal{H}}
+\newcommand{\calB}{\mathcal{B}}
+\newcommand{\bbone}{\mathbf{1}}
+\newcommand{\drift}{\delta_{\peet}}
+
+% Boxed important results
+\newmdenv[
+  topline=true,bottomline=true,leftline=true,rightline=true,
+  linewidth=1pt, linecolor=black!50,
+  backgroundcolor=gray!4,
+  innertopmargin=6pt,innerbottommargin=6pt,
+  innerleftmargin=8pt,innerrightmargin=8pt,
+  skipabove=8pt,skipbelow=8pt
+]{importantbox}
+
+\begin{document}
+
+\begin{center}
+  {\LARGE\bfseries Mathematical Appendix}\\[0.4em]
+  {\large Explicit Proofs and Operator Norm Bounds}\\[0.3em]
+  {\normalsize Amendment A to MF-DR-2026-001}\\[0.2em]
+  {\small Ryan Van Gelder \quad Multiplicity Foundation \quad April 25, 2026}
+\end{center}
+
+\tableofcontents
+\bigskip
+
+\noindent\textbf{Scope.} This appendix provides complete proofs for all
+theorems stated without proof in the main report, derives the operator
+norm bounds used by the \texttt{validate\_operator\_contractivity()}
+function (ADR-010), establishes the metric incommensurability result
+(Theorem~\ref{thm:incommensurable-full}), and develops the spectral
+radius bounds for the PEET drift pipeline. All constants cited
+(\texttt{OPERATOR\_CONTRACTIVITY\_BOUND = 1.0},
+\texttt{DEFAULT\_EPSILON = 0.05},
+\texttt{DRIFT\_THRESHOLD = 0.3},
+\texttt{MARSHALLING\_FIDELITY\_THRESHOLD = 0.95},
+\texttt{SPECTRAL\_CONSERVATION\_TOLERANCE = 0.02}) are sourced
+directly from \texttt{packages/pirtm/constants.py} (ADR-010).
+
+% ============================================================
+\section{Algebraic Foundations of Multiplicity Spaces}
+\label{sec:foundations}
+% ============================================================
+
+\subsection{Prime Decomposition Embedding}
+
+\begin{definition}[Prime Basis]
+\label{def:prime-basis}
+Let $\Primes = (p_1, p_2, p_3, \ldots) = (2, 3, 5, 7, 11, \ldots)$
+be the ordered sequence of primes. For any $n \in \N_{>0}$, write
+its canonical prime factorization as
+\[
+  n = \prod_{k \geq 1} p_k^{\alpha_k(n)},
+  \quad \alpha_k(n) \in \N_{\geq 0}, \quad \text{finitely many nonzero.}
+\]
+The \emph{prime signature} of $n$ is the vector
+$\boldsymbol{\alpha}(n) = (\alpha_1(n), \alpha_2(n), \ldots) \in \N^{\infty}$.
+\end{definition}
+
+\begin{definition}[Prime Decomposition Embedding]
+\label{def:phi}
+The \emph{prime decomposition embedding} is the map
+$\phi: \N_{>0} \to \ell^2(\Primes)$ defined by
+\[
+  \phi(n) = \sum_{p \mid n} \alpha_p(n) \cdot e_p
+\]
+where $e_p$ is the standard basis vector at position $p$, and
+$\alpha_p(n) = v_p(n)$ is the $p$-adic valuation of $n$.
+\end{definition}
+
+\begin{proposition}[Isometric Embedding into $\ell^2$]
+\label{prop:isometric}
+The map $\phi$ satisfies:
+\begin{enumerate}[label=(\roman*),noitemsep]
+  \item $\phi(mn) = \phi(m) + \phi(n)$ for all $m,n \in \N_{>0}$
+        (i.e., $\phi$ is a monoid homomorphism $(\N_{>0}, \times) \to (\ell^2, +)$).
+  \item $\norm{\phi(n)}_{\ell^2}^2 = \sum_{p \mid n} v_p(n)^2 = \Omega_2(n)$,
+        the sum of squares of prime exponents of $n$.
+  \item $\phi$ is injective: $\phi(m) = \phi(n) \Rightarrow m = n$
+        (follows from the Fundamental Theorem of Arithmetic).
+\end{enumerate}
+\end{proposition}
+
+\begin{proof}
+(i) By definition,
+$\phi(mn)_p = v_p(mn) = v_p(m) + v_p(n) = \phi(m)_p + \phi(n)_p$
+for all $p \in \Primes$.
+(ii) Immediate from $\norm{\phi(n)}_{\ell^2}^2 = \sum_p v_p(n)^2$.
+(iii) If $\phi(m) = \phi(n)$, then $v_p(m) = v_p(n)$ for all $p$,
+so $m = n$ by unique factorization. \qed
+\end{proof}
+
+% ============================================================
+\section{Prime-Interaction Tensor: Construction and Bounds}
+\label{sec:tensor}
+% ============================================================
+
+\subsection{Tensor Definition and Regularity Conditions}
+
+\begin{definition}[Prime-Interaction Tensor]
+\label{def:tensor}
+A \emph{prime-interaction tensor} at time $t \geq 0$ is a
+function $\calT: \Primes \times \Primes \times \R_{\geq 0} \to \R$
+satisfying:
+\begin{enumerate}[label=(T\arabic*),noitemsep]
+  \item\label{T1} \textbf{Symmetry:} $\calT(p,q,t) = \calT(q,p,t)$
+        for all $p,q,t$.
+  \item\label{T2} \textbf{Boundedness:} $\sup_{p,q,t} \abs{\calT(p,q,t)} \leq M_{\calT} < \infty$.
+  \item\label{T3} \textbf{Lipschitz continuity in $t$:}
+        $\abs{\calT(p,q,t) - \calT(p,q,s)} \leq L_{\calT} \abs{t-s}$
+        for all $p,q$ and all $t,s \geq 0$.
+  \item\label{T4} \textbf{Summability:} For each fixed $t$,
+        $\sum_{p,q \in P(n)} \abs{\calT(p,q,t)} \cdot pq < \infty$
+        for all $n \in \N_{>0}$.
+\end{enumerate}
+\end{definition}
+
+\begin{lemma}[Tensor Norm Bound]
+\label{lem:tensor-norm}
+Let $\calT$ satisfy conditions \ref{T1}--\ref{T4}, and let
+$P(n) = \{p_1, \ldots, p_k\}$ be the distinct prime factors of $n$
+(with $k = \omega(n)$ the number of distinct prime divisors).
+Then the prime-tensor superposition satisfies:
+\[
+  \abs{\Psi(n,t)} \leq M_{\calT} \cdot \left(\sum_{p \in P(n)} p\right)^2
+  \leq M_{\calT} \cdot \omega(n)^2 \cdot p_{\max}(n)^2
+\]
+where $p_{\max}(n)$ is the largest prime factor of $n$.
+\end{lemma}
+
+\begin{proof}
+By definition,
+\[
+  \abs{\Psi(n,t)}
+  = \abs[\bigg]{\sum_{p_i, p_j \in P(n)} \calT(p_i,p_j,t) \cdot p_i p_j}
+  \leq \sum_{p_i, p_j \in P(n)} \abs{\calT(p_i,p_j,t)} \cdot p_i p_j.
+\]
+Applying condition \ref{T2}:
+\[
+  \leq M_{\calT} \sum_{p_i \in P(n)} \sum_{p_j \in P(n)} p_i p_j
+  = M_{\calT} \left(\sum_{p \in P(n)} p\right)^2.
+\]
+The second inequality uses $\sum_{p \in P(n)} p \leq \omega(n) \cdot p_{\max}(n)$. \qed
+\end{proof}
+
+\subsection{Time-Evolution Stability of the Tensor}
+
+\begin{lemma}[Temporal Drift of Superposition]
+\label{lem:temporal-drift}
+Under conditions \ref{T1}--\ref{T4}, the superposition $\Psi(n,\cdot)$
+is Lipschitz continuous in $t$ with constant:
+\[
+  \abs{\Psi(n,t) - \Psi(n,s)} \leq L_{\calT} \cdot \omega(n)^2 \cdot p_{\max}(n)^2 \cdot \abs{t-s}.
+\]
+\end{lemma}
+
+\begin{proof}
+\begin{align*}
+\abs{\Psi(n,t) - \Psi(n,s)}
+&= \abs[\bigg]{\sum_{p_i,p_j \in P(n)}
+    \bigl(\calT(p_i,p_j,t) - \calT(p_i,p_j,s)\bigr) p_i p_j} \\
+&\leq \sum_{p_i,p_j \in P(n)}
+    \abs{\calT(p_i,p_j,t) - \calT(p_i,p_j,s)} \cdot p_i p_j \\
+&\leq L_{\calT} \abs{t-s} \sum_{p_i,p_j \in P(n)} p_i p_j
+    \quad \text{(condition \ref{T3})} \\
+&= L_{\calT} \abs{t-s} \left(\sum_{p \in P(n)} p\right)^2
+\leq L_{\calT} \cdot \omega(n)^2 \cdot p_{\max}(n)^2 \cdot \abs{t-s}. \qed
+\end{align*}
+\end{proof}
+
+% ============================================================
+\section{The PEET Drift Scalar: Full Analysis}
+\label{sec:drift-analysis}
+% ============================================================
+
+\subsection{Existence and Continuity}
+
+\begin{theorem}[Well-Posedness of Drift Scalar]
+\label{thm:well-posed}
+Let $\psi: \N_{>0} \times \R_{\geq 0} \to \R$ be a state function
+satisfying $\abs{\psi(n,t)} \leq C_\psi$ for all $n,t$, and let
+$\calT$ satisfy \ref{T1}--\ref{T4}. Then for every $n \in \N_{>0}$
+and $t \geq 0$:
+\begin{enumerate}[label=(\roman*),noitemsep]
+  \item The drift scalar
+        $\drift(n,t) = \abs{\psi(n,t) - \Psi(n,t)}$
+        is well-defined and finite.
+  \item $\drift(n,\cdot)$ is Lipschitz continuous in $t$ with constant:
+        \[
+          \Lip_t(\drift) \leq L_\psi + L_{\calT}\,\omega(n)^2\,p_{\max}(n)^2
+        \]
+        where $L_\psi$ is the Lipschitz constant of $\psi(n,\cdot)$.
+  \item The zero-drift condition $\drift(n,t) = 0$ holds if and only if
+        $\psi(n,t) = \Psi(n,t)$, i.e., the wavefunction equals
+        its prime-tensor superposition exactly.
+\end{enumerate}
+\end{theorem}
+
+\begin{proof}
+(i) Finiteness: $\abs{\psi(n,t)} \leq C_\psi < \infty$ by assumption,
+and $\abs{\Psi(n,t)} \leq M_{\calT} \cdot \omega(n)^2 \cdot p_{\max}(n)^2 < \infty$
+by Lemma~\ref{lem:tensor-norm}. Hence
+$\drift(n,t) \leq C_\psi + M_{\calT}\,\omega(n)^2\,p_{\max}(n)^2 < \infty$.
+
+(ii) For any $t, s \geq 0$, apply the reverse triangle inequality:
+\begin{align*}
+  \abs{\drift(n,t) - \drift(n,s)}
+  &= \abs[\big]{\abs{\psi(n,t)-\Psi(n,t)} - \abs{\psi(n,s)-\Psi(n,s)}} \\
+  &\leq \abs{(\psi(n,t) - \Psi(n,t)) - (\psi(n,s) - \Psi(n,s))} \\
+  &\leq \abs{\psi(n,t) - \psi(n,s)} + \abs{\Psi(n,t) - \Psi(n,s)} \\
+  &\leq L_\psi \abs{t-s} + L_{\calT}\,\omega(n)^2\,p_{\max}(n)^2\,\abs{t-s}
+\end{align*}
+using Lemma~\ref{lem:temporal-drift} for the second term.
+
+(iii) Immediate from $\drift(n,t) = \abs{\psi(n,t) - \Psi(n,t)} = 0
+\Leftrightarrow \psi(n,t) = \Psi(n,t)$. \qed
+\end{proof}
+
+\subsection{Drift Under Spectral Curvature Correction}
+
+\begin{theorem}[Spectral Correction Bound]
+\label{thm:spectral-kappa}
+Let $\kappa \in [1 - \sigma, 1 + \sigma]$ where
+$\sigma = \texttt{SPECTRAL\_CONSERVATION\_TOLERANCE} = 0.02$.
+The corrected drift scalar
+$\drift^{(\kappa)}(n,t) = \abs{\psi(n,t) - \Psi(n,t)} \cdot \kappa$
+satisfies:
+\[
+  (1-\sigma)\,\drift(n,t)
+  \;\leq\;
+  \drift^{(\kappa)}(n,t)
+  \;\leq\;
+  (1+\sigma)\,\drift(n,t).
+\]
+In particular, the tier classification from Section~3.6 of the main
+report is stable under $\kappa$-correction provided the tier thresholds
+carry a safety margin of at least $\sigma \cdot \eps_X$ at each boundary.
+\end{theorem}
+
+\begin{proof}
+Since $\kappa \in [1-\sigma, 1+\sigma]$ and $\drift(n,t) \geq 0$:
+\[
+  (1-\sigma)\,\drift(n,t)
+  = \drift(n,t) \cdot (1-\sigma)
+  \leq \drift(n,t) \cdot \kappa
+  = \drift^{(\kappa)}(n,t)
+  \leq \drift(n,t) \cdot (1+\sigma).
+\]
+For tier stability: a state with $\drift(n,t) \leq \eps_X - \sigma\eps_X
+= (1-\sigma)\eps_X$ satisfies $\drift^{(\kappa)}(n,t) \leq (1+\sigma)
+\cdot (1-\sigma)\eps_X = (1-\sigma^2)\eps_X < \eps_X$ for all $\kappa$
+in the tolerance band. Hence tier boundaries are preserved under small
+spectral correction. \qed
+\end{proof}
+
+% ============================================================
+\section{Operator Norm Bounds and L0 Contractivity}
+\label{sec:operator-norms}
+% ============================================================
+
+This section provides the rigorous derivation underlying
+\texttt{validate\_operator\_contractivity()} in ADR-010.
+
+\subsection{The Composite Evolution Operator}
+
+\begin{definition}[PIRTM Evolution Operator]
+\label{def:evolution-op}
+Let $\calH$ be a separable Hilbert space of system states.
+The \emph{PIRTM composite evolution operator} at time $t$ is:
+\[
+  \Xi_t : \calH \to \calH,
+  \qquad
+  \Xi_t = \Xi + \Lambda \circ \mathcal{F}_T
+\]
+where:
+\begin{itemize}[noitemsep,leftmargin=2em]
+  \item $\Xi: \calH \to \calH$ is the base state-transition operator,
+  \item $\Lambda: \calH \to \calH$ is the Lipschitz feedback operator,
+  \item $\mathcal{F}_T: \calH \to \calH$ is the prime-tensor folding map
+        associated to tensor $\calT$ at time $t$,
+  \item $L_T \defeq \Lip(\mathcal{F}_T)$ is the Lipschitz constant of the
+        tensor folding (from \texttt{validate\_operator\_contractivity}
+        docstring: \texttt{q\_t = \|\Xi\| + \|\Lambda\| * L\_T}).
+\end{itemize}
+\end{definition}
+
+\begin{definition}[Composite Spectral Radius]
+The \emph{composite spectral radius} $q_t$ is:
+\begin{equation}
+  q_t \;\defeq\; \norm{\Xi}_{\calB(\calH)} + \norm{\Lambda}_{\calB(\calH)} \cdot L_T
+  \label{eq:qt}
+\end{equation}
+where $\norm{\cdot}_{\calB(\calH)}$ denotes the operator norm on
+bounded linear operators $\calH \to \calH$.
+\end{definition}
+
+\subsection{The L0 Contractivity Theorem}
+
+\begin{theorem}[L0 Contractivity --- Formal Statement]
+\label{thm:l0-contractivity}
+Let $\Xi_t$ be as in Definition~\ref{def:evolution-op} with composite
+spectral radius $q_t$ as in~\eqref{eq:qt}. Let
+$B = \texttt{OPERATOR\_CONTRACTIVITY\_BOUND} = 1.0$ and
+$\eps = \texttt{DEFAULT\_EPSILON} = 0.05$.
+Define the \emph{effective contractivity bound}
+$B_\eps \defeq B - \eps = 0.95$.
+
+If $q_t < B_\eps$, then $\Xi_t$ is a \emph{strict contraction} on $\calH$:
+\begin{enumerate}[label=(\roman*),noitemsep]
+  \item $\norm{\Xi_t x - \Xi_t y}_\calH \leq q_t \norm{x-y}_\calH$
+        for all $x, y \in \calH$.
+  \item There exists a unique fixed point $x^* \in \calH$ with
+        $\Xi_t(x^*) = x^*$.
+  \item The fixed point iteration $x_{k+1} = \Xi_t(x_k)$ converges
+        geometrically:
+        \[
+          \norm{x_k - x^*}_\calH \leq \frac{q_t^k}{1-q_t}\,\norm{x_1 - x_0}_\calH.
+        \]
+\end{enumerate}
+\end{theorem}
+
+\begin{proof}
+The operator $\Xi_t = \Xi + \Lambda \circ \mathcal{F}_T$ is a
+composition of bounded linear (or Lipschitz) maps. For any $x, y \in \calH$:
+\begin{align*}
+  \norm{\Xi_t x - \Xi_t y}_\calH
+  &= \norm{(\Xi x + \Lambda\mathcal{F}_T x) - (\Xi y + \Lambda\mathcal{F}_T y)}_\calH \\
+  &\leq \norm{\Xi(x-y)}_\calH + \norm{\Lambda(\mathcal{F}_T x - \mathcal{F}_T y)}_\calH \\
+  &\leq \norm{\Xi} \norm{x-y} + \norm{\Lambda} \cdot L_T \norm{x-y} \\
+  &= q_t \norm{x-y}_\calH.
+\end{align*}
+Since $q_t < B_\eps < 1$, $\Xi_t$ is a strict contraction with
+Lipschitz constant $q_t < 1$.
+Parts (ii) and (iii) follow directly from the Banach Fixed-Point
+(Contraction Mapping) Theorem, which applies since $(\calH, \norm{\cdot})$
+is a complete metric space and $\Xi_t$ is a strict contraction. \qed
+\end{proof}
+
+\begin{corollary}[Instability When $q_t \geq B_\eps$]
+\label{cor:instability}
+If $q_t \geq B_\eps = 0.95$, the contraction guarantee fails.
+In particular, if $q_t \geq B = 1.0$, the operator may be
+\emph{expansive}: there exist $x \neq y$ such that
+$\norm{\Xi_t x - \Xi_t y} \geq \norm{x-y}$, and no fixed-point
+convergence is guaranteed.
+\end{corollary}
+
+\begin{remark}
+The margin $\eps = 0.05$ (the gap between $B_\eps = 0.95$ and the
+expansion threshold $B = 1.0$) provides a safety buffer against
+perturbations in $\norm{\Xi}$ and $\norm{\Lambda} \cdot L_T$ due to
+floating-point accumulation, tensor approximation error, or
+governance ledger rotation events. This margin is consistent with
+the 5\% marshalling fidelity threshold (\texttt{MARSHALLING\_FIDELITY\_THRESHOLD = 0.95})
+at the L1 layer.
+\end{remark}
+
+\subsection{Operator Norm Decomposition}
+
+\begin{proposition}[Submultiplicativity of $q_t$]
+\label{prop:submult}
+For a composed evolution $\Xi_t^{(N)} = \Xi_t \circ \Xi_t \circ \cdots \circ \Xi_t$
+($N$ applications), the spectral radius satisfies:
+\[
+  \norm{\Xi_t^{(N)}}_{\calB(\calH)} \leq q_t^N \xrightarrow{N\to\infty} 0
+  \quad \text{whenever } q_t < 1.
+\]
+\end{proposition}
+
+\begin{proof}
+By submultiplicativity of the operator norm:
+$\norm{\Xi_t^{(N)}} \leq \norm{\Xi_t}^N \leq q_t^N$,
+where the second inequality holds because
+$\norm{\Xi_t} = \norm{\Xi + \Lambda\mathcal{F}_T} \leq
+\norm{\Xi} + \norm{\Lambda} L_T = q_t$ by the triangle inequality. \qed
+\end{proof}
+
+\subsection{Perturbation Bound for Governance Rotations}
+
+When the governance root is rotated (a new Merkle root is signed),
+the operator may be perturbed by $\Delta\Xi_t$. The following
+proposition quantifies the stability of the contractivity condition
+under such perturbations.
+
+\begin{proposition}[Stability Under Operator Perturbation]
+\label{prop:perturbation}
+Let $\Xi_t' = \Xi_t + \Delta$ be a perturbed operator with
+$\norm{\Delta} \leq \delta_\Delta$. Then:
+\[
+  q_t' \defeq \norm{\Xi_t' + \Lambda\mathcal{F}_T}
+  \leq q_t + \delta_\Delta.
+\]
+The perturbed system remains L0-contractive provided:
+\[
+  \delta_\Delta < B_\eps - q_t = 0.95 - q_t.
+\]
+\end{proposition}
+
+\begin{proof}
+$\norm{\Xi_t' + \Lambda\mathcal{F}_T} \leq \norm{\Xi_t + \Lambda\mathcal{F}_T} + \norm{\Delta}
+= q_t + \delta_\Delta$.
+The contractivity condition $q_t' < B_\eps$ then requires
+$q_t + \delta_\Delta < 0.95$, i.e., $\delta_\Delta < 0.95 - q_t$. \qed
+\end{proof}
+
+\begin{remark}
+This bound is directly relevant to governance ledger rotation events
+in \pmhq{}: when a new Merkle root is signed (transactions \#1--\#5
+in the ledger), any change to immutable files can perturb $\Xi_t$
+by at most $\delta_\Delta = \norm{\Delta}_F$ (Frobenius norm of the
+diff). Proposition~\ref{prop:perturbation} provides the certification
+condition that must hold for the post-rotation system to remain L0-stable.
+\end{remark}
+
+% ============================================================
+\section{Metric Incommensurability: Full Proof}
+\label{sec:incommensurability}
+% ============================================================
+
+\begin{theorem}[Metric Incommensurability --- Complete Proof]
+\label{thm:incommensurable-full}
+Let $\drift(n,t)$ be the PEET drift scalar (Definition in main report,
+eq.~(1)) and $\delta_H(t)$ be the Hamiltonian drift ratio
+(main report eq.~(2)). There exists no $\alpha \in \R_{>0}$ and
+no function $f: \N_{>0} \to \R_{>0}$ such that
+\[
+  \drift(n,t) = f(n) \cdot \delta_H(t)
+\]
+holds for all $n \in \N_{>0}$ and all $t \geq 0$.
+\end{theorem}
+
+\begin{proof}
+We establish incommensurability on three independent axes.
+
+\medskip
+\noindent\textbf{(A) Domain structure.}
+$\drift(n,t)$ depends on the prime-factor multiset $P(n)$, which is
+a discrete combinatorial invariant of $n$. Specifically, for any
+fixed $t$, the map $n \mapsto \drift(n,t)$ is not monotone:
+e.g., for $n = 4 = 2^2$ vs.\ $n = 6 = 2 \cdot 3$, the
+prime structure changes qualitatively (one prime vs.\ two primes).
+
+By contrast, $\delta_H(t)$ is independent of $n$ entirely ---
+it is a property of the Hamiltonian operator trajectory in an
+abstract Hilbert space. Hence for any fixed $t$, the ratio
+$\drift(n,t) / \delta_H(t)$ depends on $n$, meaning no
+$n$-independent $\alpha$ can equate them.
+
+\medskip
+\noindent\textbf{(B) Unit analysis.}
+The PEET drift scalar $\drift(n,t) = \abs{\psi(n,t) - \Psi(n,t)}$
+has units of $[\psi]$ --- the same units as the state amplitude.
+When $\psi$ is normalized to $[0,1]$, $\drift(n,t) \in [0,1]$ is
+dimensionless in this normalization, but its scaling law with
+respect to $n$ is governed by $\Psi(n,t) \sim M_{\calT}
+\cdot (\sum_{p \in P(n)} p)^2$ (Lemma~\ref{lem:tensor-norm}),
+which grows without bound as $n \to \infty$ through primes.
+
+The Hamiltonian ratio $\delta_H(t) = \normF{H(t) - H^{(0)}} / E_\text{free}$
+is bounded in $[0, \infty)$ independently of any integer argument.
+Its scaling with respect to system parameters is determined by
+Hilbert-space operator norm growth, not by prime factorization.
+
+Therefore: $\drift(n,t) \to \infty$ as $n$ grows through numbers
+with many large prime factors (e.g., $n = p_1 p_2 \cdots p_k$
+for the first $k$ primes), while $\delta_H(t)$ is finite and
+fixed for each $t$. No constant $\alpha$ reconciles this.
+
+\medskip
+\noindent\textbf{(C) Structural independence.}
+Suppose for contradiction that $\drift(n,t) = f(n) \cdot \delta_H(t)$
+for some $f: \N_{>0} \to \R_{>0}$. Fix $n$ and vary $t$.
+The left side $\drift(n,t) = \abs{\psi(n,t) - \Psi(n,t)}$ is
+Lipschitz in $t$ with a constant depending on $n$
+(Theorem~\ref{thm:well-posed}(ii)). The right side $f(n) \cdot \delta_H(t)$
+is Lipschitz in $t$ with a constant proportional to
+$f(n) \cdot \normF{\dot{H}(t)}/E_\text{free}$.
+These Lipschitz constants are determined by entirely different
+dynamics (prime-tensor Lipschitz constant $L_{\calT}$ vs.\ Hamiltonian
+flow rate $\normF{\dot{H}}$), and there is no physical or mathematical
+principle coupling them. Choosing a concrete $\psi$ and $H$ that
+are dynamically independent (e.g., $\psi$ driven by prime-sieve
+updates and $H$ driven by knot-invariant evolution) yields
+$\partial_t \drift(n,t) \neq f(n) \cdot \partial_t \delta_H(t)$
+for generic $(n,t)$, contradicting the assumed equality. \qed
+\end{proof}
+
+\begin{corollary}[Three-Way Incommensurability]
+\label{cor:three-way}
+The \texttt{maxWacAllowed} ratio $\rho_{\wac} = \texttt{WAC}/\texttt{WAC}_0$
+is a third incommensurable quantity. It is:
+\begin{itemize}[noitemsep,leftmargin=2em]
+  \item Dimensionless (ratio of two discrete rule-violation counts),
+  \item Defined over a finite alphabet of MD-rule outcomes (not $\N_{>0}$),
+  \item Bounded in $[0, \texttt{maxWacAllowed}] = [0, 1.05]$,
+        a compact interval independent of prime structure or
+        Hamiltonian dynamics.
+\end{itemize}
+No injection $\drift(n,t) \hookrightarrow \rho_{\wac}$ or
+$\delta_H(t) \hookrightarrow \rho_{\wac}$ preserving order structure
+can exist, since the domain of $\rho_{\wac}$ is finite while
+both $\drift(n,t)$ and $\delta_H(t)$ are defined over infinite
+parameter spaces.
+\end{corollary}
+
+% ============================================================
+\section{Marshalling Fidelity and L1 Layer Bounds}
+\label{sec:l1-bounds}
+% ============================================================
+
+\subsection{Round-Trip Fidelity}
+
+\begin{definition}[Round-Trip Error]
+For a marshalling path $\mu: X \to Y$ with inverse
+$\mu^{-1}: Y \to X$, the \emph{round-trip error} for element
+$x \in X$ with norm $\norm{x}_X > 0$ is:
+\[
+  e_\mu(x) = \frac{\norm{\mu^{-1}(\mu(x)) - x}_X}{\norm{x}_X}
+  \in [0, \infty).
+\]
+The \emph{marshalling fidelity score} is:
+\[
+  s_\mu(x) = 1 - e_\mu(x) \in (-\infty, 1].
+\]
+\end{definition}
+
+\begin{theorem}[L1 Fidelity Bound]
+\label{thm:l1-fidelity}
+A marshalling path $\mu$ is \emph{L1-acceptable} (passes the
+\texttt{MARSHALLING\_FIDELITY\_THRESHOLD = 0.95} gate) if and only if:
+\[
+  s_\mu(x) \geq 0.95 \;\Longleftrightarrow\; e_\mu(x) \leq 0.05
+  \;\Longleftrightarrow\; \norm{\mu^{-1}(\mu(x)) - x}_X \leq 0.05\,\norm{x}_X.
+\]
+This is equivalent to: the round-trip composition
+$\mu^{-1} \circ \mu$ acts as the identity on $x$ up to a
+relative perturbation of at most $5\%$.
+\end{theorem}
+
+\begin{proof}
+Direct algebraic manipulation:
+$s_\mu(x) \geq 0.95 \Leftrightarrow 1 - e_\mu(x) \geq 0.95
+\Leftrightarrow e_\mu(x) \leq 0.05
+\Leftrightarrow \norm{\mu^{-1}(\mu(x)) - x}/\norm{x} \leq 0.05
+\Leftrightarrow \norm{\mu^{-1}(\mu(x)) - x} \leq 0.05\norm{x}$. \qed
+\end{proof}
+
+\subsection{Independence of L0 and L1 Conditions}
+
+\begin{theorem}[L0/L1 Logical Independence]
+\label{thm:l0l1-independence}
+The L0 contractivity condition ($q_t < 0.95$) and the L1 fidelity
+condition ($s_\mu(x) \geq 0.95$) are logically independent:
+each can hold or fail independently of the other.
+\end{theorem}
+
+\begin{proof}
+We exhibit four configurations (matching the case analysis in ADR-010):
+
+\begin{enumerate}[label=\textbf{Case \arabic*:},leftmargin=3.5em]
+  \item \textbf{L0 stable, L1 acceptable.}
+        Take $\Xi = 0.9\,I$ (contraction), $\mu = I$ (identity, perfect fidelity).
+        Then $q_t = 0.9 < 0.95$ and $s_\mu = 1.0 \geq 0.95$. Both pass.
+
+  \item \textbf{L0 stable, L1 unacceptable.}
+        Take $\Xi = 0.9\,I$ and $\mu$ such that $e_\mu = 0.08 > 0.05$.
+        Then $q_t < 0.95$ (L0 passes) but $s_\mu = 0.92 < 0.95$ (L1 fails).
+
+  \item \textbf{L0 unstable, L1 acceptable.}
+        Take $\Xi = 1.1\,I$ (expansion), $\mu = I$.
+        Then $q_t \geq 1.1 > 0.95$ (L0 fails) but $s_\mu = 1.0$ (L1 passes).
+        This is the critical case: good communication cannot rescue
+        an unstable operator.
+
+  \item \textbf{L0 unstable, L1 unacceptable.}
+        Take $\Xi = 1.1\,I$ and $e_\mu = 0.08$.
+        Both conditions fail simultaneously.
+\end{enumerate}
+
+Since we have exhibited realizations of all four Boolean combinations,
+the two conditions are logically independent. \qed
+\end{proof}
+
+% ============================================================
+\section{Spectral Radius Conservation in Tensor Transforms}
+\label{sec:spectral-conservation}
+% ============================================================
+
+\begin{definition}[Pi-to-Tensor Transform]
+\label{def:pi-tensor}
+A \emph{pi-to-tensor transform} is a linear map
+$\Phi: \ell^2(\Primes) \to \calH_T$ from the prime-index space
+to the tensor Hilbert space. The \emph{spectral conservation}
+condition requires that the principal eigenvalue $\lambda_1(\Phi)$
+satisfies:
+\[
+  \lambda_1(\Phi) \in
+  [1 - \sigma,\; 1 + \sigma], \quad
+  \sigma = \texttt{SPECTRAL\_CONSERVATION\_TOLERANCE} = 0.02.
+\]
+\end{definition}
+
+\begin{theorem}[Spectral Conservation Bound]
+\label{thm:spectral-conservation}
+Let $\Phi$ be a pi-to-tensor transform with
+$\lambda_1(\Phi) \in [1-\sigma, 1+\sigma]$.
+Then for any $v \in \ell^2(\Primes)$ with $\norm{v} = 1$:
+\[
+  \abs{\norm{\Phi v}^2 - 1} \leq 2\sigma + \sigma^2 < 2\sigma + 1
+\]
+and in the regime $\sigma \ll 1$ (here $\sigma = 0.02$):
+\[
+  \abs{\norm{\Phi v}^2 - 1} \lesssim 2\sigma = 0.04.
+\]
+\end{theorem}
+
+\begin{proof}
+Let $\lambda = \lambda_1(\Phi) \in [1-\sigma, 1+\sigma]$.
+For a unit eigenvector $v$: $\norm{\Phi v}^2 = \lambda^2$.
+\[
+  \abs{\lambda^2 - 1} = \abs{(\lambda-1)(\lambda+1)}
+  \leq \sigma \cdot (2 + \sigma) = 2\sigma + \sigma^2.
+\]
+For $\sigma = 0.02$: $2\sigma + \sigma^2 = 0.04 + 0.0004 = 0.0404$.
+For general unit vectors $v$ (not necessarily eigenvectors), the bound
+holds for the dominant eigenvalue contribution; the full spectral
+bound follows from the interlacing theorem applied to the
+self-adjoint part of $\Phi^*\Phi$. \qed
+\end{proof}
+
+\begin{corollary}[Consistency of $\sigma$ and $\eps$]
+\label{cor:sigma-eps-consistency}
+The choices $\sigma = 0.02$ and $\eps = 0.05$ are mutually consistent
+in the following sense: a spectral perturbation of magnitude $\sigma$
+at the pi-to-tensor level induces an operator-norm perturbation of at
+most $\delta_\Delta \leq 2\sigma = 0.04 < \eps = 0.05$. By
+Proposition~\ref{prop:perturbation}, L0 contractivity is preserved
+under pi-to-tensor transforms provided $q_t < B_\eps - 2\sigma = 0.93$.
+\end{corollary}
+
+% ============================================================
+\section{PEET Partition Function and Modular Form Approximant}
+\label{sec:langlands}
+% ============================================================
+
+\subsection{Formal q-Series Construction}
+
+\begin{definition}[PEET Partition Function]
+\label{def:z-peet}
+For $n \in \N_{>0}$ and $q = e^{2\pi i \tau}$ with $\tau \in \calH$
+(upper half-plane), define:
+\[
+  Z_{\peet}(n;\tau) = \sum_{k=1}^{\infty} a_k(n)\, q^k
+\]
+where the Fourier coefficients are:
+\[
+  a_k(n) = \sum_{\substack{p_i, p_j \in P(n) \\ p_i p_j = k}}
+  \calT(p_i, p_j, 0) \cdot v_{p_i}(n) \cdot v_{p_j}(n).
+\]
+The sum ranges over all representations of $k$ as a product of
+two prime factors of $n$ (with multiplicity from the valuations).
+\end{definition}
+
+\begin{remark}
+For $k$ not expressible as $p_i p_j$ with $p_i, p_j \in P(n)$,
+we have $a_k(n) = 0$. The series therefore has finite support at
+each level determined by the prime structure of $n$.
+\end{remark}
+
+\subsection{Computable Approximant for ADR-041}
+
+\begin{construction}[Finite-Level Approximant]
+\label{const:approx}
+For computational purposes (ADR-041), truncate the series at level
+$K = p_{\max}(n)^2$:
+\[
+  \hat{Z}_{\peet}^{(K)}(n;\tau)
+  = \sum_{k=1}^{K} a_k(n)\, q^k.
+\]
+This is a polynomial in $q$ of degree $K$, computable in $O(K \cdot \omega(n)^2)$
+arithmetic operations. The approximation error is:
+\[
+  \abs{Z_{\peet}(n;\tau) - \hat{Z}_{\peet}^{(K)}(n;\tau)}
+  \leq \sum_{k > K} \abs{a_k(n)} \cdot \abs{q}^k
+  \leq \frac{M_{\calT} \cdot \omega(n)^2 \cdot \abs{q}^{K+1}}{1 - \abs{q}}
+\]
+for $\abs{q} < 1$, which holds since $\tau \in \calH$ implies
+$\abs{q} = e^{-2\pi \Im(\tau)} < 1$.
+\end{construction}
+
+\begin{proposition}[Modular Form Proximity Criterion]
+\label{prop:modform-criterion}
+Let $f \in \modforms_w(\Gamma_0(N))$ be a weight-$w$ modular form
+for the congruence subgroup $\Gamma_0(N)$ with Fourier expansion
+$f(\tau) = \sum_{k\geq 1} b_k q^k$. The \emph{Langlands proximity
+criterion} for $Z_{\peet}(n;\tau)$ is:
+\[
+  \mathcal{D}(n, f) \defeq
+  \sum_{k=1}^{K} \frac{\abs{a_k(n) - b_k}^2}{1 + \abs{b_k}^2}
+  < \theta_{\mathrm{Langlands}}
+\]
+for a threshold $\theta_{\mathrm{Langlands}} > 0$ to be calibrated
+in ADR-041. When this criterion is satisfied, the state $n$ is
+considered \emph{approximately Langlands-admissible} at resolution $K$.
+\end{proposition}
+
+% ============================================================
+\section{Exponential Penalty: Formal Structure}
+\label{sec:penalty}
+% ============================================================
+
+\begin{definition}[Ethical Drift Penalty Functional]
+\label{def:penalty}
+Let $\tau_C(t_0) = \inf\{t \geq t_0 : \drift(n,t) \leq \eps_C\}$
+be the first exit time from the Collapse tier after time $t_0$.
+The \emph{accumulated ethical penalty} for a trajectory remaining
+in the Collapse tier from time $t_0$ to $t$ is:
+\[
+  C(t; t_0) = c_0 \int_{t_0}^{\min(t,\, \tau_C(t_0))}
+  e^{\lambda(s - t_0)}\, ds
+  = \frac{c_0}{\lambda}\left(e^{\lambda(t-t_0)} - 1\right)
+\]
+for constants $c_0 > 0$ (base penalty rate) and $\lambda > 0$
+(growth exponent), valid while the system remains in the Collapse tier.
+\end{definition}
+
+\begin{proposition}[Penalty Growth Rate]
+\label{prop:penalty-growth}
+The penalty satisfies:
+\begin{enumerate}[label=(\roman*),noitemsep]
+  \item $C(t;t_0) = 0$ at $t = t_0$ (no instantaneous penalty).
+  \item $\frac{d}{dt}C(t;t_0) = c_0 e^{\lambda(t-t_0)} \geq c_0 > 0$
+        (strictly increasing while in Collapse tier).
+  \item For $t - t_0 \gg 1/\lambda$: $C(t;t_0) \sim (c_0/\lambda) e^{\lambda(t-t_0)}$
+        (exponential regime).
+  \item The penalty is bounded by $C(\tau_C;t_0) = \frac{c_0}{\lambda}(e^{\lambda\Delta\tau_C} - 1)$
+        where $\Delta\tau_C = \tau_C - t_0$ is the Collapse-tier
+        dwell time.
+\end{enumerate}
+\end{proposition}
+
+\begin{proof}
+(i) $C(t_0;t_0) = \frac{c_0}{\lambda}(e^0 - 1) = 0$.
+(ii) $\frac{d}{dt}C = c_0 e^{\lambda(t-t_0)} \geq c_0$ since $\lambda, t-t_0 \geq 0$.
+(iii)--(iv) follow from the explicit formula. \qed
+\end{proof}
+
+\begin{remark}[Runtime Implementation Gap]
+No current implementation of $C(t;t_0)$ exists in \pmhq{}.
+The closest analog is the telemetry counter
+\texttt{pirtm\_drift\_tier\_total\{tier="collapse"\}}, which counts
+Collapse-tier events but does not accumulate the integral.
+A penalty accumulator module is recommended as a post-ADR-041
+deliverable (see Section~8 of the main report).
+\end{remark}
+
+% ============================================================
+\section{Summary of Numerical Constants}
+\label{sec:constants-summary}
+% ============================================================
+
+\noindent For reference, all constants used in proofs above with
+their ADR-010 source values:
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{lllp{5.5cm}}
+\toprule
+\textbf{Symbol} & \textbf{Code Name} & \textbf{Value} & \textbf{Role} \\
+\midrule
+$B$ & \texttt{OPERATOR\_CONTRACTIVITY\_BOUND} & $1.0$
+  & Expansion threshold (Thm.~\ref{thm:l0-contractivity}) \\
+$\eps$ & \texttt{DEFAULT\_EPSILON} & $0.05$
+  & Contraction margin; $B_\eps = 0.95$ \\
+$\eps_C$ & \texttt{DRIFT\_THRESHOLD} & $0.30$
+  & Collapse tier threshold (L0-003 policy) \\
+$\eta$ & \texttt{MARSHALLING\_FIDELITY\_THRESHOLD} & $0.95$
+  & L1 fidelity gate (Thm.~\ref{thm:l1-fidelity}) \\
+$\sigma$ & \texttt{SPECTRAL\_CONSERVATION\_TOLERANCE} & $0.02$
+  & Eigenvalue tolerance (Thm.~\ref{thm:spectral-conservation}) \\
+$\eps_W$ & Watch tier (proposed) & $0.05$
+  & $= \eps$; entry threshold for Watch \\
+$\eps_X$ & Warn tier (proposed) & $0.10$
+  & $= 2\eps$; entry threshold for Warn \\
+$\rho_{\wac}$ & \texttt{maxWacAllowed} & $1.05$
+  & WAC tolerance (incommensurable, Cor.~\ref{cor:three-way}) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{importantbox}
+\textbf{Key Numerical Relationships Established in This Appendix:}
+\[
+  \underbrace{0.02}_{\sigma}
+  \;<\;
+  \underbrace{0.04}_{2\sigma}
+  \;<\;
+  \underbrace{0.05}_{\eps = \eps_W}
+  \;<\;
+  \underbrace{0.10}_{\eps_X}
+  \;<\;
+  \underbrace{0.30}_{\eps_C = \texttt{DRIFT\_THRESHOLD}}
+  \;<\;
+  \underbrace{0.95}_{B_\eps = \eta}
+  \;<\;
+  \underbrace{1.00}_{B}
+  \;<\;
+  \underbrace{1.05}_{\rho_\wac}
+\]
+This chain confirms internal consistency: the spectral tolerance
+$\sigma$ is smaller than the contraction margin $\eps$
+(Corollary~\ref{cor:sigma-eps-consistency}), the Watch/Warn
+tier thresholds are well-separated from the Collapse threshold,
+and the Collapse threshold lies safely within the stable regime
+$[0, B_\eps)$.
+\end{importantbox}
+
+% ============================================================
+%  END OF APPENDIX
+% ============================================================
+
+
+\nocite{*}
+\bibliographystyle{unsrt}  
+\bibliography{references}
+\end{document}

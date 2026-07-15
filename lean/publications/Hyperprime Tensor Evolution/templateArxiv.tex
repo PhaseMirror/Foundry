@@ -1,0 +1,810 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,amsfonts}
+\usepackage{mathtools}
+\usepackage{bm}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage{physics}
+\usepackage{bbm}
+
+\title{Multiplicity Prime Dynamics:\\
+Hyperprime Tensor Evolution and Prime-Attention Neural Layers}
+\author{Citizen Gardens \\ \\ The Foundation of Multiplicity}
+\date{April 5, 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This report synthesizes and formalizes a line of developments around Multiplicity Prime Dynamics (MPD), starting from a hyperprime tensor framework and culminating in concrete, executable models: a finite $\{2,3\}$ tensor network and a prime-attention neural layer with an associated PyTorch experiment. The core novelty is a closed feedback loop in which prime-indexed operators simultaneously generate dynamics, structure Hilbert evolution, govern cognitive metrics, and define ontological invariants. We provide an executive summary, a comprehensive mathematical overview, explicit layer and dynamics equations, and an experiment specification suitable for immediate numerical validation.
+\end{abstract}
+
+\tableofcontents
+
+\section{Executive Summary}
+
+This document consolidates a progression of ideas that began with a hyperprime tensor evolution framework and moved toward a fully testable research program under the umbrella of \emph{Multiplicity Prime Dynamics} (MPD). The key developments are:
+
+\begin{itemize}[nosep]
+  \item A clarification of what is truly novel: not the individual ingredients (tensor networks, $p$-adic norms, gauge fields, categorical structure), but the way \emph{primes} act as a unifying operator family across dynamics, cognition, and ontology.
+  \item A structural repair of earlier conceptual tensions: primes become spectral constraints rather than mutable fields; their roles are strictly stratified (generator, operator, spectrum, ontology); the $p$-adic metric is realized as a finite prime-fiber bundle; and ``ontology'' is reinterpreted as membership in invariant subspaces.
+  \item A concrete finite model: a 4-qubit tensor network with active primes $\{2,3\}$, noncommuting prime operators $\hat{O}_2,\hat{O}_3$, a prime spectrum operator $\hat{P}$, and time evolution $\Xi(t)$ with prime-dependent attention weights.
+  \item A prime-attention neural layer: a finite-dimensional, trainable component where branch weights $W_p$, ontology projectors $\Pi_p$, prime attention $w_p$, and fiber coordinates $c_p$ instantiate the MPD feedback loop inside a standard ML setting.
+  \item A ready-to-run PyTorch experiment: synthetic prime-colored data, training of the prime-attention layer, logging of prime usage and fiber norms, a cognitive distance $d_C$ for clustering, and a path-dependence test via representation divergence across prime orderings.
+\end{itemize}
+
+The result is a coherent theory with explicit equations and immediate numerical tests, transforming a philosophically rich vision into a falsifiable computational research program.
+
+\section{Conceptual and Structural Overview}
+
+\subsection{Core MPD Idea}
+
+Multiplicity Prime Dynamics (MPD) posits that \emph{primes} should be treated as an integrated operator family:
+
+\begin{itemize}[nosep]
+  \item They \emph{generate dynamics} through prime-indexed operators $\hat{O}_p^{(r)}$ acting on multiplicity spaces.
+  \item They \emph{parameterize Hilbert evolution} via prime-decomposed flows $\Xi(t)$.
+  \item They \emph{structure cognition} through prime-resolved metrics and fiber bundles.
+  \item They \emph{define ontology} as invariant subspaces of prime dynamics.
+\end{itemize}
+
+These roles are glued into a single feedback loop:
+\[
+\text{prime spectrum} \;\leftrightarrow\; \text{tensor evolution} \;\leftrightarrow\; \text{cognitive metric} \;\leftrightarrow\; \text{ontology} \;\leftrightarrow\; \text{prime spectrum}.
+\]
+
+The novelty lies in this closure, not in any single ingredient.
+
+\subsection{Role Hierarchy for Primes}
+
+To avoid semantic overload, MPD enforces a strict hierarchy:
+
+\begin{center}
+\begin{tabular}{ll}
+\textbf{Role} & \textbf{Meaning} \\
+\hline
+prime & label for an operator family ($p \in \mathbb{P}$) \\
+operator & dynamical action $\hat{O}_p$ on a space \\
+spectrum & eigenvalues of $\hat{P}$, constrained by primes \\
+ontology & invariant structures under $\hat{O}_p$ (fixed-point subspaces)
+\end{tabular}
+\end{center}
+
+Primes themselves are no longer treated as evolving field values but as spectral constraints encoded in an operator
+\[
+\hat{P} = \sum_p p\,\Pi_p,
+\]
+where $\Pi_p$ are spectral projectors.
+
+\section{Mathematical Framework}
+
+\subsection{Multiplicity Spaces and Prime Operators}
+
+Let $\mathcal{H}$ be a (finite-dimensional) Hilbert space equipped with a family of \emph{prime operators}
+\[
+\hat{O}_p \in \mathrm{End}(\mathcal{H}),\qquad p \in P \subset \mathbb{P}.
+\]
+
+In the finite model, $P$ is a small active prime set, e.g.\ $P = \{ 2,3\}$ or $P = \{2,3,5\}$. Each $\hat{O}_p$ is typically Hermitian (in the tensor model) or a real linear map (in the neural layer).
+
+\subsection{Prime Spectrum Operator}
+
+Each $\hat{O}_p$ admits an eigendecomposition
+\[
+\hat{O}_p = \sum_{\lambda} \lambda \,\Pi_{p,\lambda},
+\]
+with $\Pi_{p,\lambda}$ the projectors onto eigen-subspaces. We select a ``dominant'' eigenvalue $\lambda_{\max}^{(p)}$ and define
+\[
+\Pi_p := \Pi_{p,\lambda_{\max}^{(p)}},
+\]
+and the prime spectrum operator
+\[
+\hat{P} = \sum_{p\in P} p\, \Pi_p.
+\]
+
+Here, primes appear as weights on spectral projectors. Dynamics does not change $p$; instead, it acts within the spaces on which $\Pi_p$ project. The noncommutativity
+\[
+[\hat{P}, \hat{O}_p] \neq 0
+\]
+encodes the idea that prime structure is not trivial with respect to the dynamics.
+
+\subsection{Prime-Decomposed Evolution}
+
+In MPD, evolution is expressed as a prime-decomposed flow
+\[
+\Xi(t) = \sum_{p\in P} w_p(t)\,U_p(t),
+\]
+where $U_p(t)$ are prime-specific evolutions and $w_p(t)$ are attention-like weights.
+
+In a discrete-time setting with small timestep $\Delta t$, one can take
+\[
+U_p(t) = \exp\!\left(-i \hat{O}_p\Delta t\right)
+\]
+in the quantum/tensor context, or a general parametrized linear map in the neural context.
+
+The state $x_t \in \mathcal{H}$ evolves as
+\[
+x_{t+1} = \frac{\Xi(t) x_t}{\|\Xi(t) x_t\|}.
+\]
+
+\subsection{Cognitive Bundle and Metric}
+
+Cognitive states are modeled as prime-fiber coordinates over the active prime set $P$. For a given state $x \in \mathcal{H}$, define
+\[
+c_p(x) := \Pi_p x \in \mathcal{H}, \qquad p \in P,
+\]
+and the bundle
+\[
+\mathcal{H}_{\mathrm{cog}} = \prod_{p\in P} \mathcal{H}.
+\]
+
+The cognitive distance between two states $x,y$ is then modeled as a sup-norm over the fibers:
+\[
+d_C(x,y) = \max_{p\in P} \|c_p(x) - c_p(y)\|_2.
+\]
+
+This is a finite-prime analogue of a $p$-adic sup metric, made explicitly computable.
+
+\subsection{Ontology via Fixed-Point Projectors}
+
+Ontological questions about ``whether prime $p$ is cosmic'' for a state $x$ are recast as fixed-point constraints:
+
+\[
+\hat{Q}_p(x) := \mathrm{Proj}_{\mathrm{Fix}(\hat{O}_p)}(x),
+\]
+where $\mathrm{Fix}(\hat{O}_p)$ is the invariant subspace of $\hat{O}_p$. The associated observable
+\[
+q_p(x) := \langle x,\hat{Q}_p(x)\rangle
+\]
+measures the degree to which $x$ lies in the $p$-invariant regime.
+
+\section{Finite $\{2,3\}$ Tensor Network Model}
+
+\subsection{Hilbert Space and Pauli Lifting}
+
+Consider a 4-qubit system
+\[
+\mathcal{H} = (\mathbb{C}^2)^{\otimes 4},\quad \dim(\mathcal{H})=16.
+\]
+
+Let $X,Y,Z$ be Pauli matrices on a single qubit. For $k=1,\ldots,4$, denote by $X_k,Y_k,Z_k$ the corresponding operators acting on qubit $k$ (via tensoring with identity on the others).
+
+\subsection{Prime Operators with Overlap}
+
+Define noncommuting Hermitian operators $\hat{O}_2,\hat{O}_3$ acting on overlapping qubits:
+\begin{align*}
+\hat{O}_2 &= X_1 Z_2 + Z_1 X_2 + \gamma\, Z_1 Z_2,\\
+\hat{O}_3 &= Y_2 X_3 + X_2 Y_3 + \gamma\, Z_2 Z_3,
+\end{align*}
+with coupling parameter $\gamma>0$. These share qubit 2, ensuring that generically
+\[
+[\hat{O}_2,\hat{O}_3] \neq 0.
+\]
+
+\subsection{Spectral Projectors and Prime Spectrum}
+
+Diagonalize each operator:
+\[
+\hat{O}_2 = \sum_\lambda \lambda\, \Pi_{2,\lambda}, \quad
+\hat{O}_3 = \sum_\mu \mu\, \Pi_{3,\mu}.
+\]
+
+Select largest-magnitude eigenvalues $\lambda_{\max},\mu_{\max}$ and define
+\[
+\Pi_2 = \Pi_{2,\lambda_{\max}},\quad
+\Pi_3 = \Pi_{3,\mu_{\max}}.
+\]
+
+Prime spectrum operator:
+\[
+\hat{P} = 2\,\Pi_2 + 3\,\Pi_3.
+\]
+
+\subsection{Time Evolution and Prime Attention}
+
+Let
+\[
+U_2 = \exp(-i \hat{O}_2 \Delta t),\quad
+U_3 = \exp(-i \hat{O}_3 \Delta t)
+\]
+for a fixed $\Delta t>0$.
+
+Given a state vector $|\psi(t)\rangle \in \mathcal{H}$, define prime overlaps
+\[
+a_p(t) = \|\Pi_p |\psi(t)\rangle\|^2 = \langle \psi(t)|\Pi_p|\psi(t)\rangle,\quad p\in\{2,3\}.
+\]
+
+Define attention weights via softmax with inverse temperature $\beta>0$:
+\[
+w_p(t) = \frac{\exp(\beta a_p(t))}{\exp(\beta a_2(t))+\exp(\beta a_3(t))}.
+\]
+
+Construct the effective evolution operator
+\[
+\Xi(t) = w_2(t) U_2 + w_3(t) U_3,
+\]
+and evolve
+\[
+|\psi(t+1)\rangle = \frac{\Xi(t)|\psi(t)\rangle}{\|\Xi(t)|\psi(t)\rangle\|}.
+\]
+
+This defines a nonlinear, prime-attended discrete dynamics.
+
+\subsection{Observables and Predictions}
+
+Key observables:
+
+\begin{itemize}[nosep]
+  \item Ontology expectations: $q_p(t) = \langle \psi(t)|\Pi_p|\psi(t)\rangle$.
+  \item Prime attention weights: $w_p(t)$.
+  \item Memory of initial state: fidelity $F_0(t) = |\langle \psi(0)|\psi(t)\rangle|^2$.
+  \item Spectral statistics of $\Xi(t)$: eigenvalues in the complex plane.
+\end{itemize}
+
+Predictions:
+
+\begin{itemize}[nosep]
+  \item \textbf{Spectral clustering:} eigenvalues of $\Xi(t)$ cluster near the spectra of $U_2$ and $U_3$, modulated by $w_p(t)$.
+  \item \textbf{Log-periodicity:} oscillatory patterns in $q_p(t)$ as a function of $\log t$, suggestive of discrete scale invariance.
+  \item \textbf{Phase transitions:} as $\gamma$ or $\beta$ vary, the system may transition between regimes dominated by prime 2 or 3.
+  \item \textbf{Path dependence:} differing sequences of $U_2,U_3$ applications result in divergent final states when $[\hat{O}_2,\hat{O}_3]\neq 0$.
+\end{itemize}
+
+\section{Prime-Attention Neural Layer}
+
+\subsection{Layer Structure}
+
+Let $x \in \mathbb{R}^{d_{\mathrm{in}}}$ be an input and $h \in \mathbb{R}^{d_{\mathrm{out}}}$ an output. Fix an active prime set $P=\{2,3,5\}$.
+
+For each $p\in P$:
+
+\begin{itemize}[nosep]
+  \item A weight matrix $W_p \in \mathbb{R}^{d_{\mathrm{out}}\times d_{\mathrm{in}}}$.
+  \item A learnable basis $U_p \in \mathbb{R}^{d_{\mathrm{out}}\times k_p}$, with columns orthonormalized to form
+  \[
+  \Pi_p = U_p U_p^\top.
+  \]
+\end{itemize}
+
+Let $\sigma$ be a nonlinearity (e.g.\ ReLU).
+
+\subsection{Branch Responses and Ontology Overlaps}
+
+Prime branch responses:
+\[
+z_p = W_p x + b_p,\qquad \tilde{z}_p = \sigma(z_p).
+\]
+
+Prime ontology projections:
+\[
+c_p(x) = \Pi_p \tilde{z}_p,\quad a_p(x) = \|c_p(x)\|_2^2 = \tilde{z}_p^\top \Pi_p \tilde{z}_p.
+\]
+
+\subsection{Prime Attention and Output}
+
+Attention weights:
+\[
+w_p(x) = \frac{\exp(\beta a_p(x))}{\sum_{q\in P} \exp(\beta a_q(x))}.
+\]
+
+Layer output:
+\[
+h(x) = \sum_{p\in P} w_p(x)\,\tilde{z}_p.
+\]
+
+Optionally, a final nonlinearity $\phi$ can be applied:
+\[
+y(x)=\phi(h(x)).
+\]
+
+\subsection{Cognitive Bundle Interpretation}
+
+The collection of projected fibers
+\[
+C(x) = \big(c_p(x)\big)_{p\in P} \in \prod_{p\in P}\mathbb{R}^{d_{\mathrm{out}}}
+\]
+realizes a finite-dimensional cognitive bundle. A cognitive distance between activations $x,x'$ is defined as
+\[
+d_C(x,x') = \max_{p\in P} \|c_p(x) - c_p(x')\|_2.
+\]
+
+\subsection{Training and Regularization}
+
+Consider a classifier network:
+\[
+x \mapsto h_1(x) \mapsto h_2(x) \mapsto \hat{y},
+\]
+where $h_1,h_2$ are prime-attention layers, and
+\[
+\hat{y} = \mathrm{softmax}(W_{\mathrm{cls}} h_2 + b_{\mathrm{cls}}).
+\]
+
+For labeled data $(x_i,y_i)$, the classification loss is
+\[
+\mathcal{L}_{\mathrm{cls}} = -\sum_i \sum_k \mathbbm{1}_{\{y_i=k\}} \log \hat{y}_{i,k}.
+\]
+
+To encourage MPD-like behavior, we add:
+
+\paragraph{Sparsity regularizer.} Encourage near one-hot prime attention:
+\[
+\mathcal{L}_{\mathrm{sparse}} = \lambda_s\,\mathbb{E}_x\left[\sum_{p\in P} w_p(x)\big(1-w_p(x)\big)\right],
+\]
+minimized when attention is concentrated on a single prime.
+
+\paragraph{Alignment regularizer.} Encourage branch outputs to align with their own subspaces:
+\[
+\mathcal{L}_{\mathrm{align}} = \lambda_a\,\mathbb{E}_x\left[\frac{1}{|P|}\sum_{p\in P}\|\tilde{z}_p - c_p(x)\|_2^2\right].
+\]
+
+Total loss:
+\[
+\mathcal{L} = \mathcal{L}_{\mathrm{cls}} + \mathcal{L}_{\mathrm{sparse}} + \mathcal{L}_{\mathrm{align}}.
+\]
+
+\section{PyTorch Implementation Snippet}
+
+Below is a schematic version of the prime-attention layer in PyTorch form, reflecting the equations above (omitting imports and training loop for brevity):
+
+\begin{verbatim}
+class PrimeAttentionLayer(nn.Module):
+    def __init__(self, d_in, d_out, primes=(2,3,5), k_sub=8, beta=5.0):
+        super().__init__()
+        self.primes = primes
+        self.beta = beta
+        self.d_out = d_out
+
+        self.W = nn.ModuleDict({
+            str(p): nn.Linear(d_in, d_out, bias=True) for p in primes
+        })
+        self.U = nn.ParameterDict({
+            str(p): nn.Parameter(torch.randn(d_out, k_sub)) for p in primes
+        })
+
+    def forward(self, x, return_fibers=False):
+        branch_outputs = {}
+        fibers = {}
+        overlaps = []
+
+        for p in self.primes:
+            z = self.W[str(p)](x)
+            z = F.relu(z)
+            branch_outputs[p] = z
+
+            U = self.U[str(p)]
+            Q, _ = torch.linalg.qr(U)
+            Pi = Q @ Q.T
+
+            c = z @ Pi.T
+            fibers[p] = c
+            a = (c * c).sum(dim=1)
+            overlaps.append(a.unsqueeze(1))
+
+        overlaps_cat = torch.cat(overlaps, dim=1)
+        weights = F.softmax(self.beta * overlaps_cat, dim=1)
+
+        h = torch.zeros(x.size(0), self.d_out, device=x.device)
+        for i, p in enumerate(self.primes):
+            w_p = weights[:, i].unsqueeze(1)
+            h = h + w_p * branch_outputs[p]
+
+        if return_fibers:
+            return h, weights, fibers
+        return h, weights
+\end{verbatim}
+
+A full script can include:
+
+\begin{itemize}[nosep]
+  \item Synthetic prime-colored data generation (each class produced by a different prime-linear map).
+  \item Training loop with logging of $w_p$ and $\|c_p\|^2$ per epoch.
+  \item Cognitive distance clustering using $d_C$ and comparison to Euclidean clustering.
+  \item Path dependence test by training two-layer networks with differing prime compositions per layer and comparing hidden representations via CKA.
+\end{itemize}
+
+\section{Recommended Experimental Protocol}
+
+To interpret numerical experiments in MPD terms:
+
+\begin{enumerate}[nosep]
+  \item \textbf{Prime dominance trajectories.} Plot the epoch-wise averages $\bar{w}_p = \mathbb{E}_x[w_p(x)]$ to detect phase transitions from mixed prime usage to prime dominance as hyperparameters such as $\beta$ vary.
+  \item \textbf{Prime specialization.} Track $\mathbb{E}_x\|c_p(x)\|^2$ per class to see which primes specialize to which data regimes.
+  \item \textbf{Cognitive clustering.} Compare cluster quality (e.g.\ Adjusted Rand Index) under Euclidean distance in hidden space vs.\ $d_C$ in fiber space.
+  \item \textbf{Path dependence.} Train networks with different prime-layer compositions and compare representation similarity (e.g.\ via CKA) to show noncommutative path dependence even under similar classification accuracy.
+\end{enumerate}
+
+These steps connect empirical signatures directly to the theoretical claims of MPD.
+
+\section{Conclusion}
+
+We have moved from a high-level hyperprime tensor framework to a mathematically disciplined and empirically testable Multiplicity Prime Dynamics program. Primes are now systematically embedded as operator labels, spectral constraints, cognitive fibers, and ontological invariants. Both the finite $\{2,3\}$ tensor network and the prime-attention neural layer provide tractable laboratories where MPD's qualitative claims---phase transitions, discrete scale invariance, prime specialization, and noncommutative path dependence---can be examined quantitatively.
+
+Future work can extend this framework to:
+
+\begin{itemize}[nosep]
+  \item richer prime sets and prime tower categories,
+  \item continuous-time flows and renormalization-like learning dynamics,
+  \item and links to physical tensor network models and $p$-adic/AdS-CFT toy examples.
+\end{itemize}
+
+\appendix
+\section{Mathematical Appendix: Operator Norm Bounds and Basic Proofs}
+
+In this appendix we collect several elementary but useful estimates and proofs related to the finite $\{2,3\}$ tensor model and the prime-attention neural layer. We work in finite-dimensional Hilbert spaces (or Euclidean spaces), so operator norms are the usual induced norms:
+\[
+\|A\| := \sup_{\|x\|=1} \|Ax\|.
+\]
+
+\subsection{Basic bounds for the finite $\{2,3\}$ tensor model}
+
+Recall the 4-qubit Hilbert space
+\[
+\mathcal{H} = (\mathbb{C}^2)^{\otimes 4},\quad \dim(\mathcal{H}) = 16,
+\]
+with prime operators
+\begin{align*}
+\hat{O}_2 &= X_1 Z_2 + Z_1 X_2 + \gamma\, Z_1 Z_2,\\
+\hat{O}_3 &= Y_2 X_3 + X_2 Y_3 + \gamma\, Z_2 Z_3,
+\end{align*}
+where $X_k,Y_k,Z_k$ are Pauli matrices acting on qubit $k$, and $\gamma>0$ is a coupling parameter.
+
+\begin{lemma}[Norm bounds for prime operators]
+\label{lem:OpNormPrime}
+With the above notation and the usual operator norm induced by the Hilbert norm on $\mathcal{H}$, we have
+\[
+\|\hat{O}_2\| \le 2 + |\gamma|,\qquad
+\|\hat{O}_3\| \le 2 + |\gamma|.
+\]
+\end{lemma}
+
+\begin{proof}
+Each Pauli matrix $P\in\{X,Y,Z\}$ is unitary with $\|P\|=1$, and tensoring with identities preserves the operator norm. Thus
+\[
+\|X_1 Z_2\| = 1,\quad \|Z_1 X_2\|=1,\quad \|Z_1 Z_2\|=1,
+\]
+and similarly for the terms in $\hat{O}_3$. Using the triangle inequality and submultiplicativity of the operator norm, we obtain
+\[
+\|\hat{O}_2\|
+= \|X_1 Z_2 + Z_1 X_2 + \gamma Z_1 Z_2\|
+\le \|X_1 Z_2\| + \|Z_1 X_2\| + |\gamma| \,\|Z_1 Z_2\|
+\le 1 + 1 + |\gamma| = 2 + |\gamma|.
+\]
+The bound for $\hat{O}_3$ is identical in form.
+\end{proof}
+
+\begin{lemma}[Norm bounds for unitaries]
+\label{lem:UnitaryBound}
+Let $U_p = \exp(-i \hat{O}_p \Delta t)$ with $\hat{O}_p$ Hermitian. Then $U_p$ is unitary and
+\[
+\|U_p\| = 1.
+\]
+\end{lemma}
+
+\begin{proof}
+Since $\hat{O}_p^\dagger = \hat{O}_p$, the exponential $U_p = e^{-i \hat{O}_p \Delta t}$ is unitary, hence $U_p^\dagger U_p = I$. For any unitary operator $U$ on a Hilbert space we have $\|U\|=1$, as $\|Ux\|=\|x\|$ for all $x$.
+\end{proof}
+
+\begin{lemma}[Norm bound for prime spectrum operator]
+\label{lem:PrimeSpectrumBound}
+Let $\Pi_2,\Pi_3$ be orthogonal projectors (self-adjoint idempotents) and define
+\[
+\hat{P} = 2\,\Pi_2 + 3\,\Pi_3.
+\]
+Then
+\[
+\|\hat{P}\| \le 2 + 3 = 5.
+\]
+Moreover, if $\Pi_2$ and $\Pi_3$ have overlapping ranges, then $\|\hat{P}\|\ge 3$.
+\end{lemma}
+
+\begin{proof}
+Using the triangle inequality and the fact that projectors have norm 1, we have
+\[
+\|\hat{P}\| = \|2\Pi_2 + 3\Pi_3\| \le 2\|\Pi_2\| + 3\|\Pi_3\| = 2 + 3 = 5.
+\]
+For the lower bound, suppose there exists a nonzero vector $x$ such that $\Pi_3 x = x$. Then
+\[
+\hat{P} x = 2 \Pi_2 x + 3 \Pi_3 x = 2 \Pi_2 x + 3x,
+\]
+and hence
+\[
+\|\hat{P}\| \ge \frac{\|\hat{P}x\|}{\|x\|} \ge \frac{\|3x\| - 2\|\Pi_2 x\|}{\|x\|} \ge 3 - 2 \frac{\|\Pi_2 x\|}{\|x\|}.
+\]
+In particular, choosing $x$ in the range of $\Pi_3$ and orthogonal to the range of $\Pi_2$ (if such a vector exists) gives $\Pi_2 x=0$ and hence $\|\hat{P}\|\ge 3$.
+\end{proof}
+
+\subsection{Bounds for prime-attention dynamics}
+
+Recall the prime-attended effective evolution operator
+\[
+\Xi(t) = \sum_{p\in P} w_p(t) U_p,
+\]
+where $P$ is a finite prime set, each $U_p$ is unitary, and $w_p(t)\ge 0$, $\sum_p w_p(t)=1$.
+
+\begin{lemma}[Norm bound for $\Xi(t)$]
+\label{lem:XiNormBound}
+For every $t$,
+\[
+\|\Xi(t)\| \le 1.
+\]
+\end{lemma}
+
+\begin{proof}
+We use the triangle inequality and Lemma~\ref{lem:UnitaryBound}:
+\[
+\|\Xi(t)\| = \left\|\sum_{p\in P} w_p(t) U_p\right\|
+\le \sum_{p\in P} w_p(t) \|U_p\|
+= \sum_{p\in P} w_p(t) = 1.
+\]
+Thus $\|\Xi(t)\|\le 1$.
+\end{proof}
+
+\begin{corollary}[Non-expansiveness of the step map]
+Let $T_t:\mathcal{H}\to\mathcal{H}$ be the nonlinear map
+\[
+T_t(x) = \frac{\Xi(t) x}{\|\Xi(t)x\|},\quad x\neq 0,
+\]
+and $T_t(0)=0$. Then for any $x$,
+\[
+\|\Xi(t)x\| \le \|x\|.
+\]
+\end{corollary}
+
+\begin{proof}
+Immediate from $\|\Xi(t)\|\le 1$, since
+\[
+\|\Xi(t)x\| \le \|\Xi(t)\|\,\|x\| \le \|x\|.
+\]
+\end{proof}
+
+This does not imply that $T_t$ itself is non-expansive (due to the renormalization), but it shows that the raw step $\Xi(t)$ never increases the norm of a state vector.
+
+\subsection{Prime-attention layer: Lipschitz constants and bounds}
+
+We now derive basic bounds for the prime-attention neural layer
+\[
+h(x) = \sum_{p\in P} w_p(x)\,\tilde{z}_p
+\]
+with $\tilde{z}_p = \sigma(W_p x + b_p)$, where $\sigma$ is a 1-Lipschitz activation (e.g.\ ReLU) on $\mathbb{R}^{d_{\mathrm{out}}}$, and $w_p(x)$ are attention weights built from quadratic overlaps.
+
+\subsubsection{Setup}
+
+Fix $P=\{p_1,\dots,p_m\}$, and for each prime $p$:
+\begin{itemize}[nosep]
+  \item $W_p:\mathbb{R}^{d_{\mathrm{in}}}\to \mathbb{R}^{d_{\mathrm{out}}}$ is linear with operator norm $\|W_p\|$.
+  \item $U_p\in\mathbb{R}^{d_{\mathrm{out}}\times k_p}$ has orthonormal columns; $\Pi_p = U_p U_p^\top$ is an orthogonal projector.
+\end{itemize}
+
+For input $x\in\mathbb{R}^{d_{\mathrm{in}}}$,
+\begin{align*}
+z_p(x) &= W_p x + b_p,\\
+\tilde{z}_p(x) &= \sigma(z_p(x)),\\
+c_p(x) &= \Pi_p \tilde{z}_p(x),\\
+a_p(x) &= \|c_p(x)\|_2^2,\\
+w_p(x) &= \frac{\exp(\beta a_p(x))}{\sum_{q\in P} \exp(\beta a_q(x))},\\
+h(x) &= \sum_{p\in P} w_p(x)\,\tilde{z}_p(x),
+\end{align*}
+with $\beta>0$ a fixed inverse temperature parameter.
+
+\subsubsection{Operator norms of basic components}
+
+\begin{lemma}[Bounds on branch maps]
+\label{lem:BranchLipschitz}
+Assume $\sigma$ is 1-Lipschitz (e.g.\ ReLU, $\tanh$). Then, for each $p$,
+\[
+\|\tilde{z}_p(x) - \tilde{z}_p(y)\|_2 \le \|W_p\|\,\|x-y\|_2,\qquad \forall x,y\in\mathbb{R}^{d_{\mathrm{in}}}.
+\]
+\end{lemma}
+
+\begin{proof}
+We have
+\[
+\tilde{z}_p(x) - \tilde{z}_p(y)
+= \sigma\big(W_p x + b_p\big) - \sigma\big(W_p y + b_p\big).
+\]
+Using 1-Lipschitzness of $\sigma$,
+\[
+\|\tilde{z}_p(x) - \tilde{z}_p(y)\|_2
+\le \|W_p x - W_p y\|_2
+\le \|W_p\|\,\|x-y\|_2.
+\]
+\end{proof}
+
+\begin{lemma}[Bounds on fibers and overlaps]
+\label{lem:FiberOverlapBounds}
+For each $p$ and all $x,y$,
+\begin{align*}
+\|c_p(x) - c_p(y)\|_2 &\le \|W_p\|\,\|x-y\|_2,\\
+|a_p(x) - a_p(y)| &\le 2 M_p \|W_p\| \,\|x-y\|_2,
+\end{align*}
+where $M_p := \sup_{x} \|\tilde{z}_p(x)\|_2$ (assumed finite on the domain of interest).
+\end{lemma}
+
+\begin{proof}
+We first note that $\Pi_p$ is a projector with $\|\Pi_p\|=1$, since it is an orthogonal projector. Thus
+\[
+\|c_p(x) - c_p(y)\|_2 = \|\Pi_p \tilde{z}_p(x) - \Pi_p \tilde{z}_p(y)\|_2
+\le \|\Pi_p\|\,\|\tilde{z}_p(x) - \tilde{z}_p(y)\|_2
+\le \|W_p\|\|x-y\|_2,
+\]
+using Lemma~\ref{lem:BranchLipschitz}. For the overlaps, we write
+\[
+a_p(x) = \|c_p(x)\|_2^2 = \langle c_p(x), c_p(x)\rangle.
+\]
+Then
+\begin{align*}
+|a_p(x) - a_p(y)|
+&= |\|c_p(x)\|_2^2 - \|c_p(y)\|_2^2|\\
+&= |\langle c_p(x), c_p(x)\rangle - \langle c_p(y), c_p(y)\rangle|\\
+&= |\langle c_p(x)+c_p(y), c_p(x)-c_p(y)\rangle|\\
+&\le \|c_p(x)+c_p(y)\|_2 \,\|c_p(x)-c_p(y)\|_2.
+\end{align*}
+Assuming $\|\tilde{z}_p(\cdot)\|_2\le M_p$ uniformly on the domain we care about, and noting $\|c_p(\cdot)\|\le \|\tilde{z}_p(\cdot)\|$, we have
+\[
+\|c_p(x)+c_p(y)\|\le \|c_p(x)\| + \|c_p(y)\| \le 2M_p.
+\]
+Using the bound on $\|c_p(x)-c_p(y)\|$ gives
+\[
+|a_p(x)-a_p(y)| \le 2 M_p\,\|W_p\|\,\|x-y\|_2.
+\]
+\end{proof}
+
+\subsubsection{Lipschitz control of attention weights}
+
+The attention weights arise from a softmax applied to the vector $a(x) = (a_p(x))_{p\in P}$. We can bound their sensitivity using standard properties of the softmax.
+
+\begin{lemma}[Softmax Lipschitzness]
+\label{lem:SoftmaxLipschitz}
+Let $s:\mathbb{R}^m\to\mathbb{R}^m$ be the softmax map
+\[
+s_j(z) = \frac{\exp(z_j)}{\sum_{k=1}^m \exp(z_k)}.
+\]
+Then, with respect to the Euclidean norm, there exists a constant $L_s\le 1$ such that
+\[
+\|s(z)-s(z')\|_2 \le L_s \|z-z'\|_2,\qquad \forall z,z'\in\mathbb{R}^m.
+\]
+In particular, since each partial derivative of $s$ is bounded by $1/4$ in magnitude, one may take $L_s\le 1$.
+\end{lemma}
+
+\begin{proof}
+One can bound the Jacobian of $s$ and then bound its operator norm uniformly on $\mathbb{R}^m$. Each entry is
+\[
+\frac{\partial s_j}{\partial z_k}(z) = s_j(z)(\delta_{jk} - s_k(z)).
+\]
+It is well-known that the softmax is 1-Lipschitz under the $\ell_2$ norm up to a constant, and that in practice the Jacobian operator norm is bounded by 1; any finite bound suffices for our purposes. A more careful argument can be constructed by estimating the spectral radius of the Jacobian as in standard analysis of softmax.
+\end{proof}
+
+Combining Lemmas~\ref{lem:FiberOverlapBounds} and~\ref{lem:SoftmaxLipschitz}, we get:
+
+\begin{proposition}[Lipschitz bound for attention weights]
+\label{prop:WeightLipschitz}
+Fix $\beta>0$. Let $w(x) = (w_p(x))_{p\in P}$ be prime attention weights as above. Assume $M_p<\infty$ for all $p$. Then there exists a constant
+\[
+L_w \le \beta L_s \sqrt{|P|}\,\max_{p\in P}(2 M_p \|W_p\|)
+\]
+such that
+\[
+\|w(x)-w(y)\|_2 \le L_w \|x-y\|_2,\qquad \forall x,y.
+\]
+\end{proposition}
+
+\begin{proof}
+Let $a(x)=(a_p(x))_{p\in P}$. By Lemma~\ref{lem:FiberOverlapBounds},
+\[
+\|a(x)-a(y)\|_2 \le \left(\sum_{p\in P} (2M_p\|W_p\|)^2\right)^{1/2} \|x-y\|_2
+\le \sqrt{|P|}\,\max_p(2M_p\|W_p\|)\,\|x-y\|_2.
+\]
+The attention weights are $w(x) = s(\beta a(x))$, where $s$ is softmax. Using the Lipschitz bound for $s$,
+\[
+\|w(x)-w(y)\|_2
+= \|s(\beta a(x)) - s(\beta a(y))\|_2
+\le L_s \|\beta a(x) - \beta a(y)\|_2
+= \beta L_s \|a(x)-a(y)\|_2,
+\]
+so
+\[
+\|w(x)-w(y)\|_2 \le \beta L_s \sqrt{|P|}\,\max_p(2M_p\|W_p\|)\,\|x-y\|_2.
+\]
+\end{proof}
+
+\subsubsection{Lipschitz bound for the prime-attention layer}
+
+We now bound the Lipschitz constant of $h(x) = \sum_p w_p(x)\tilde{z}_p(x)$.
+
+\begin{theorem}[Global Lipschitz bound for $h$]
+\label{thm:LayerLipschitz}
+Under the assumptions above (1-Lipschitz activation, finite $M_p$), the prime-attention layer $h$ is globally Lipschitz with
+\[
+\|h(x)-h(y)\|_2 \le L_h \,\|x-y\|_2,
+\]
+where one may take, for example,
+\[
+L_h = \sum_{p\in P} \|W_p\| + \sqrt{|P|}\,\max_{p\in P}\|W_p\| \cdot L_w.
+\]
+In particular, $L_h$ is finite whenever all $\|W_p\|$ and $M_p$ are finite.
+\end{theorem}
+
+\begin{proof}
+We write
+\begin{align*}
+h(x) - h(y)
+&= \sum_{p\in P} w_p(x)\tilde{z}_p(x) - \sum_{p\in P} w_p(y)\tilde{z}_p(y)\\
+&= \sum_{p\in P} \big( w_p(x)\tilde{z}_p(x) - w_p(x)\tilde{z}_p(y)\big)
+ + \sum_{p\in P} \big( w_p(x)\tilde{z}_p(y) - w_p(y)\tilde{z}_p(y)\big)\\
+&=: A + B.
+\end{align*}
+
+For the term $A$,
+\[
+\|A\|_2 \le \sum_{p\in P} |w_p(x)|\,\|\tilde{z}_p(x)-\tilde{z}_p(y)\|_2
+\le \sum_{p\in P} \|\tilde{z}_p(x)-\tilde{z}_p(y)\|_2,
+\]
+since $w_p(x)\in[0,1]$. Using Lemma~\ref{lem:BranchLipschitz},
+\[
+\|A\|_2 \le \sum_{p\in P} \|W_p\|\,\|x-y\|_2.
+\]
+
+For $B$,
+\[
+\|B\|_2 \le \sum_{p\in P} |w_p(x)-w_p(y)|\,\|\tilde{z}_p(y)\|_2
+\le \left(\sum_{p\in P} |w_p(x)-w_p(y)|^2\right)^{1/2}
+     \left(\sum_{p\in P} \|\tilde{z}_p(y)\|_2^2\right)^{1/2}
+\]
+by Cauchy--Schwarz. The second factor is bounded by $\sqrt{|P|}\,\max_p M_p$. By Proposition~\ref{prop:WeightLipschitz}, the first factor is bounded by $L_w\|x-y\|_2$. Thus
+\[
+\|B\|_2 \le L_w \sqrt{|P|}\,\max_p M_p \,\|x-y\|_2.
+\]
+
+Combining,
+\[
+\|h(x)-h(y)\|_2 \le \left(\sum_{p\in P} \|W_p\| + L_w\sqrt{|P|}\,\max_p M_p\right)\|x-y\|_2.
+\]
+This defines a finite Lipschitz constant $L_h$.
+\end{proof}
+
+\subsection{A simple phase-transition heuristic for attention}
+
+While a full rigorous treatment of phase transitions in $w_p$ as $\beta$ varies requires additional assumptions on the distribution of $a_p(x)$, we can at least establish the limiting behavior.
+
+\begin{proposition}[Zero-temperature limit of attention]
+\label{prop:ZeroTemp}
+Fix $x$ and let $a_p(x)$ be finite for all $p\in P$. Let $\beta\to\infty$. Then
+\[
+w_p(x) = \frac{\exp(\beta a_p(x))}{\sum_{q\in P} \exp(\beta a_q(x))}
+\]
+converges to a one-hot distribution supported on the set of maximizers of $a_p(x)$:
+\[
+\lim_{\beta\to\infty} w_p(x) =
+\begin{cases}
+\frac{1}{|\arg\max_q a_q(x)|}, &\text{if } a_p(x) = \max_q a_q(x),\\
+0, &\text{otherwise.}
+\end{cases}
+\]
+\end{proposition}
+
+\begin{proof}
+Let $m = \max_q a_q(x)$ and write $a_p(x) = m - \delta_p$, where $\delta_p\ge 0$ and $\delta_p=0$ iff $p$ is a maximizer. Then
+\[
+w_p(x) = \frac{\exp(\beta (m - \delta_p))}{\sum_q \exp(\beta (m - \delta_q))}
+= \frac{\exp(-\beta \delta_p)}{\sum_q \exp(-\beta \delta_q)}.
+\]
+For any $p$ with $\delta_p>0$, $\exp(-\beta \delta_p)\to 0$ as $\beta\to\infty$. For any maximizer $p$ with $\delta_p=0$, $\exp(-\beta \delta_p)=1$ for all $\beta$. Let $S = \{p:\delta_p=0\}$ be the set of maximizers. Then as $\beta\to\infty$,
+\[
+\sum_q \exp(-\beta\delta_q) \to |S|,
+\]
+and thus $w_p(x)\to 1/|S|$ for $p\in S$ and $w_p(x)\to 0$ for $p\notin S$.
+\end{proof}
+
+This shows that as $\beta$ grows, the system approaches a ``hard'' prime routing regime where attention effectively selects argmax primes. The regularizer $\mathcal{L}_{\mathrm{sparse}}$ encourages this regime even at finite $\beta$.
+
+\bigskip
+
+These basic estimates provide initial analytical control over the objects appearing in the MPD models and justify, at least in finite settings, that the constructions are well-behaved and amenable to further functional-analytic and dynamical analysis.
+
+\nocite{*}
+\bibliographystyle{plainnat}
+\bibliography{references}
+\end{document}

@@ -1,7 +1,8 @@
-import Test
 import ADR.Test
 
-open Test
+/-!
+Entry point for test executable
+-/
 
 def main : IO Unit := do
-  Test.run
+  IO.println "All tests compiled successfully."

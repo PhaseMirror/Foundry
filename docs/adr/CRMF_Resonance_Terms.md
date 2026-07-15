@@ -2,7 +2,8 @@
 ## Coupled Resonance Multiplicity Frameworks – Formal Investigation
 
 **Version 1.0 – 2026-07-05**  
-**Status:** Exploratory ADR – definitions, theorems, and integration path proposed.
+## Status
+**Adopted**
 
 ---
 
@@ -165,6 +166,13 @@ CRMF resonance terms complete the layered architecture by adding **typed, prime-
 
 This gives a mathematically rigorous home for the “resonance-coupled” ideas announced in the foundational Multiplicity Theory paper and supplies a clear implementation and formalization path for the next generation of certified, adaptive, multi-scale prime-encoded systems.
 
+## 9. MOC/CRMF Contraction Certificate Production Ratification (ADR-068)
+
+As of **ADR-068**, CRMF Resonance terms are explicitly ratified for production within the Sovereign Core.
+- The theorem `resonance_preserves_contraction` is mechanically verified in `Prime/lean/Core/CRMF/Crmf.lean`.
+- The Rust certifier `fermat-certifier` verifies spectral bounds via Kani and emits non-forgeable `ContractionCertificate` payloads.
+- Every valid CRMF term deployment triggers an `Archivum` ledger entry (`MocCertificateProof`), linking the mathematical soundness directly to the hardware quote.
+
 **End of ADR**
 
-*References to prior layers: PETC (Oct 2025), Multiplicity Theory (Oct 2025), Compact-Closed Enrichment, Free CompactClosed Category, Prime Monomial Matrices, PIRTM Tensor-Recursive Kernels (all July 2026).*
+*References to prior layers: PETC (Oct 2025), Multiplicity Theory (Oct 2025), Compact-Closed Enrichment, Free CompactClosed Category, Prime Monomial Matrices, PIRTM Tensor-Recursive Kernels, MOC/CRMF Contraction Certificate Production Ratification (ADR-068).*

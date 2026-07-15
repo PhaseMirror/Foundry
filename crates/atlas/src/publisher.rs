@@ -80,6 +80,17 @@ fn main() -> Result<()> {
         proof_hash: "LEAN_PROOF_HASH_108_CORE".to_string(), // Anchored to Core
         state_commitment: bundle.state_commitment,
         p_kernel_signature: String::new(),
+        // ---------- MOC‑specific Triple‑Lock checks ----------
+        // If this manifest originates from the MOC module, enforce an extra
+        // proof‑hash prefix requirement. This exemplifies a stricter policy
+        // that downstream agents must satisfy before the manifest can be
+        // ratified into the Triple‑Lock.
+        if manifest.proof_hash.starts_with("MOC_HASH") {
+            // Pass – the MOC proof hash is present.
+        } else {
+            eprintln!("[PUBLISHER] REJECT: MOC manifest missing required proof‑hash prefix.");
+            std::process::exit(1);
+        }
     };
 
     // 4. Sign by P-Kernel (Simulation)

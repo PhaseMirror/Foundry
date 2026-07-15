@@ -1,0 +1,383 @@
+\documentclass[11pt]{article}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{hyperref}
+
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{theorem}[definition]{Theorem}
+\newtheorem{proposition}[definition]{Proposition}
+\newtheorem{corollary}[definition]{Corollary}
+
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\ReB}{\operatorname{Re}}
+\newcommand{\ImB}{\operatorname{Im}}
+\newcommand{\argB}{\operatorname{arg}}
+\newcommand{\boxeq}{\boxed}
+\newcommand{\rh}{\text{RH}}
+
+\title{Spectral Fixed Point Theory 2.0: Core Derivation via a Zero-Free Wall}
+\author{Ryan O. Van Gelder}
+\date{December 30, 2025}
+
+\begin{document}
+\maketitle
+
+\section{Preliminaries}
+Let $\zeta(s)$ be the Riemann zeta function and let $\rho=\beta+i\gamma$ denote its non-trivial zeros (counted with multiplicity).
+Define
+\[
+\beta_0 := \sup_{\rho}\ReB(\rho)\in \Big[\tfrac12,1\Big].
+\]
+The Riemann Hypothesis is equivalent to $\beta_0=\tfrac12$.
+
+For $b\in[\tfrac12,1)$, we take $\argB\zeta(b+it)$ to mean the imaginary part of a branch of $\log\zeta$ defined along the vertical line $\Re(s)=b$ by continuous variation (with the standard convention that zeros/pole crossings are handled via the contour method used in \cite{SBM2009}).
+
+\section{The SBM Master Identity and Instability Mass}
+
+\subsection{Contour integral setup}
+Sekatskii, Beltraminelli, and Merlini (SBM) \cite{SBM2009} consider a rectangular contour $C$ and the contour integral
+\[
+I=\oint_C g(z)\,\log\zeta(z)\,dz,
+\qquad
+g(z):=-i\frac{z-b}{\big(c^2-(z-b)^2\big)\big(d^2-(z-b)^2\big)},
+\]
+where $c,d>0$ and $c\neq d$. Evaluating $I$ by residues and comparing with its evaluation on the left edge $z=b+it$ yields an identity involving an integral of $\arg\zeta(b+it)$ and an explicit sum over zeros to the right of the wall $\Re(s)=b$.
+
+\subsection{Identity with explicit zero term}
+Define the weight function
+\[
+W_{c,d}(t) := \frac{t}{(c^2+t^2)(d^2+t^2)}.
+\]
+SBM obtain an equality of the form (their Eq.\,(1), specialized to $b<1$)
+\begin{equation}\label{eq:SBM_master}
+\int_{0}^{\infty}W_{c,d}(t)\,\argB\zeta(b+it)\,dt
+=\mathcal{C}_{\mathrm{expl}}(b;c,d)-S(b;c,d),
+\end{equation}
+where $\mathcal{C}_{\mathrm{expl}}(b;c,d)$ is the explicit closed-form expression given below, and
+\[
+S(b;c,d)=\sum_{\rho:\ReB(\rho)>b}\Big(\text{explicit contribution from }\rho\Big),
+\]
+is a sum over \emph{exactly those zeros with $\ReB(\rho)>b$} (multiplicity included, conjugates paired). SBM emphasize that the sum is taken over zeros $\rho_k=\sigma_k+it_k$ with $b<\sigma_k$ and that conjugate pairs are combined to yield a real contribution. \cite[see Eq.\,(1) and surrounding discussion]{SBM2009}
+
+\subsection{The explicit closed-form constant}
+The constant $\mathcal{C}_{\mathrm{expl}}(b;c,d)$ is given by
+\begin{equation}\label{eq:C_expl}
+\boxeq{
+\mathcal{C}_{\mathrm{expl}}(b;c,d)
+:=
+\frac{\pi}{2\,(d^2-c^2)}\,
+\ln\!\left| \frac{\zeta(b+d)}{\zeta(b+c)} \right|
++
+\frac{\pi}{2\,(d^2-c^2)}\,
+\ln\!\left| \frac{\bigl(d^2-(1-b)^2\bigr)\,c^2}
+                 {\bigl(c^2-(1-b)^2\bigr)\,d^2} \right|.
+}
+\end{equation}
+This expression arises from the residues at the poles of the kernel $g(z)$ at $z=b+c$, $z=b+d$, and the contribution from the pole of $\zeta$ at $z=1$, as derived in \cite{SBM2009}.
+
+\begin{remark}[On positivity/sign control]
+SBM discuss sufficient conditions under which each off-wall zero contributes with the same sign, by comparing $c,d$ to the smallest ordinate $t_{\min}$ of any hypothetical zero with $\Re(\rho)>1/2$. They then give an explicit numerical admissibility regime for $(c,d)$ based on the verified height range available at the time of writing \cite{SBM2009}. This sign discussion is logically separate from the core equivalence (the integral equality holds iff there are no zeros with $\Re(\rho)>b$), but it motivates interpreting $S(b;c,d)$ as an ``instability mass.''
+\end{remark}
+
+\begin{definition}[Volchkov--Sekatskii divergence]
+Fix admissible parameters $(c,d)$. Define the divergence as the absolute deviation from the SBM equality:
+\[
+\boxeq{
+\Delta_V(b;c,d)
+:=
+\Bigl|\,
+\mathcal{C}_{\mathrm{expl}}(b;c,d)
+-
+\int_{0}^{\infty}W_{c,d}(t)\,\argB\zeta(b+it)\,dt
+\Bigr|.
+}
+\]
+By \eqref{eq:SBM_master}, one has $\Delta_V(b;c,d)=|S(b;c,d)|$, and in the same-sign regime discussed by SBM one further has $\Delta_V(b;c,d)=S(b;c,d)\ge0$.
+\end{definition}
+
+\section{The theorem backbone: a zero-free wall}
+
+\begin{theorem}[SBM zero-free wall equivalence \cite{SBM2009}]\label{thm:SBMwall}
+Let $c,d>0$ with $c\neq d$, and let $b$ satisfy $1>b\ge\tfrac12$ and the admissibility hypotheses of SBM Theorem 1 (including the treatment of the limiting cases $b+c=1$, $b+d=1$). Then
+\[
+\boxeq{\Delta_V(b;c,d)=0\quad\iff\quad \nexists\,\rho\text{ with }\ReB(\rho)>b.}
+\]
+In particular,
+\[
+\boxeq{\RH\iff \Delta_V(\tfrac12;c,d)=0.}
+\]
+\end{theorem}
+
+\section{SFPT equilibrium as a global, coercive wall}
+
+\begin{definition}[SFPT spectral fixed point]
+For fixed admissible $(c,d)$, define
+\[
+\mathcal{B}_{c,d}
+:=
+\{\,b\in[\tfrac12,1):\Delta_V(b;c,d)=0\,\},
+\qquad
+\boxeq{b_*:=\inf\bigl(\mathcal{B}_{c,d}\cup\{1\}\bigr).}
+\]
+\end{definition}
+
+\begin{proposition}[Fixed point equals the supremum of zero real parts]
+Let $\beta_0=\sup_{\rho}\ReB(\rho)$. For admissible $(c,d)$,
+\[
+\boxeq{b_*=\beta_0.}
+\]
+\end{proposition}
+
+\begin{proof}
+We consider two cases.
+\begin{itemize}
+    \item \textbf{Case $\beta_0=1$:} For every $b<1$, there exists a zero with $\ReB(\rho)>b$ (by definition of $\beta_0$). Hence, by Theorem~\ref{thm:SBMwall}, $\Delta_V(b;c,d)\neq 0$. Therefore $\mathcal{B}_{c,d}=\varnothing$ and $b_*=\inf\{1\}=1=\beta_0$.
+    \item \textbf{Case $\beta_0<1$:} If $b>\beta_0$, then no zero satisfies $\ReB(\rho)>b$, so $\Delta_V(b;c,d)=0$ by Theorem~\ref{thm:SBMwall}. If $b<\beta_0$, then there exists a zero with $\ReB(\rho)>b$, so $\Delta_V(b;c,d)\neq 0$ by Theorem~\ref{thm:SBMwall}. Therefore $\mathcal{B}_{c,d}=[\beta_0,1)\cap[\tfrac12,1)=[\beta_0,1)$ and $b_*=\beta_0$.
+\end{itemize}
+\end{proof}
+
+\begin{corollary}[RH as a global equilibrium]
+\[
+\boxeq{\RH\iff b_*=\tfrac12.}
+\]
+This is a statement of \textbf{global wall minimality} (``the first zero-free wall occurs at $1/2$''), not a symmetry-forced local stationarity condition.
+\end{corollary}
+
+\section{Computational SFPT core: prime--zero truncation mismatch}
+The preceding sections are theorem-backed but ``zero-side.'' SFPT adds a computable proxy designed to converge to $\Delta_V$.
+
+\subsection{Prime-side phase surrogate}
+Define a smoothed truncation using von Mangoldt weights:
+\[
+\log \zeta_N(s) := \sum_{n \le N} \frac{\Lambda(n)}{n^s \log n}\, w_N(n),
+\]
+with a smoothing kernel $w_N$ (e.g.\ Ces\`aro or Gaussian). Define $\argB\zeta_N(b+it)$ by continuous phase tracking along $t$.
+
+\subsection{Zero-side phase surrogate}
+Given zeros $\rho$ with $|\ImB(\rho)|\le T$, define $\argB\zeta_T(b+it)$ via a truncated Hadamard/argument-principle representation (with the pole and $\Gamma$-factor handled consistently if one works with $\xi$ instead of $\zeta$).
+
+\subsection{SFPT computable free-energy divergence}
+\begin{definition}[SFPT free-energy divergence]
+\[
+\boxeq{
+\Delta_{N,T}(b;c,d)
+:=
+\int_0^\infty W_{c,d}(t)\,
+\bigl|\argB\zeta_N(b+it)-\argB\zeta_T(b+it)\bigr|^2\,dt.
+}
+\end{definition}
+
+\subsection{SFPT convergence postulate (explicitly labeled)}
+Under appropriate smoothing, branch conventions, and coupled limits $(N,T\to\infty)$,
+\[
+\Delta_{N,T}(b;c,d)\longrightarrow \Delta_V(b;c,d).
+\]
+This is the computational bridge: SFPT aims to approximate a known RH-equivalent obstruction by a measurable prime--zero mismatch, without assuming RH.
+
+\section*{Proof sketch (contour $\to$ residues $\to$ zero-wall)}
+The identity \eqref{eq:SBM_master} follows by applying the residue theorem to $I=\oint_C g(z)\log\zeta(z)\,dz$ with a rectangular contour $C$ whose left edge is $\Re(z)=b$ and whose right edge is taken to the right of $b+c$ and $b+d$ (and then sent to $\infty$ in the SBM argument). On the left edge $z=b+it$ one has $g(b+it)=\frac{t}{(c^2+t^2)(d^2+t^2)}\in\R$, so taking the imaginary part of the contour identity produces the weighted integral of $\arg\zeta(b+it)$. The poles of $g(z)$ at $z=b+c$ and $z=b+d$ produce the first logarithmic term in $\mathcal{C}_{\mathrm{expl}}(b;c,d)$, while the pole of $\zeta$ at $z=1$ contributes the second logarithmic term (handled via the generalized Littlewood theorem as in \cite{SBM2009}). Each nontrivial zero $\rho$ inside the contour contributes a term to $S(b;c,d)$, and in the limiting contour these are precisely the zeros with $\ReB(\rho)>b$. Thus $\Delta_V(b;c,d)=|S(b;c,d)|$ measures the total obstruction coming from zeros lying to the right of the wall $\Re(s)=b$.
+
+\section{Numerical Methods}\label{sec:numerical}
+
+This section specifies a concrete, reproducible protocol for computing the theorem-backed divergence
+\(\Delta_V(b;c,d)\) and the SFPT proxy \(\Delta_{N,T}(b;c,d)\), together with grid rules, tolerances,
+and diagnostics designed to detect branch, truncation-tail, and insufficient-spectrum artifacts.
+
+\subsection{Canonical parameters and \(b\)-grid}\label{subsec:params}
+Unless otherwise stated we fix
+\[
+(c,d)=\left(\tfrac32,\tfrac72\right),
+\qquad
+W_{c,d}(t)=\frac{t}{(c^2+t^2)(d^2+t^2)}.
+\]
+We evaluate on a coarse grid \(b\in\{0.55,0.60,0.65,0.70,0.75,0.80\}\) and then refine locally near any
+observed transition or threshold in \(\Delta_V(b;c,d)\) or \(\Delta_{N,T}(b;c,d)\).
+We avoid \(b=\tfrac12\) in initial numerics to prevent phase discontinuities at critical-line zeros.
+
+\subsection{Computing \(\arg\zeta(b+it)\) without phase unwrapping}\label{subsec:arg}
+To avoid branch/unwrap discontinuities, we compute \(\arg\zeta(b+it)\) from an ODE driven by the
+logarithmic derivative. For \(s=b+it\),
+\begin{equation}\label{eq:dargdt}
+\frac{d}{dt}\arg\zeta(b+it)=\Re\!\left(\frac{\zeta'}{\zeta}(b+it)\right).
+\end{equation}
+We therefore define the continuous argument by
+\begin{equation}\label{eq:arg_from_logderiv}
+\arg\zeta(b+it)=\Arg(\zeta(b))+\int_{0}^{t}\Re\!\left(\frac{\zeta'}{\zeta}(b+i\tau)\right)d\tau,
+\end{equation}
+where \(\Arg(\zeta(b))\) is the principal argument of the real number \(\zeta(b)\) (i.e.\ \(0\) if
+\(\zeta(b)>0\) and \(\pi\) if \(\zeta(b)<0\)); this pins the absolute phase at \(t=0\) and ensures
+continuity in \(t\).
+
+\subsection{\(t\)-grid and quadrature}\label{subsec:grid}
+All \(t\)-integrals \(\int_0^\infty (\cdots)\,dt\) are truncated to \([0,T_{\max}]\) and evaluated with
+composite Simpson's rule on a piecewise-uniform grid:
+\[
+\Delta t=
+\begin{cases}
+h_1=0.005, & t\in[0,5],\\
+h_2=0.02, & t\in(5,50],\\
+h_3=0.10, & t\in(50,T_{\max}].
+\end{cases}
+\]
+Default \(T_{\max}=300\). Tail stability is assessed by repeating the computation with \(2T_{\max}\).
+(Heuristically \(W_{c,d}(t)\sim t^{-3}\), so the weighted tail is typically mild, but we enforce this
+numerically.)
+
+\subsection{Gold-standard divergence \(\Delta_V(b;c,d)\)}\label{subsec:deltaV}
+For each \(b\) we compute the explicit constant
+\begin{equation}\label{eq:Cexpl_numeric}
+\mathcal{C}_{\mathrm{expl}}(b;c,d)
+=
+\frac{\pi}{2(d^2-c^2)}
+\left[
+\ln\left|\frac{\zeta(b+d)}{\zeta(b+c)}\right|
++
+\ln\left|\frac{(d^2-(1-b)^2)c^2}{(c^2-(1-b)^2)d^2}\right|
+\right].
+\end{equation}
+We then compute \(\arg\zeta(b+it)\) on the grid via \eqref{eq:arg_from_logderiv} using
+high-precision evaluation of \(\Re(\zeta'/\zeta)(b+it)\), and evaluate
+\begin{equation}\label{eq:Ibcd}
+I(b;c,d):=\int_{0}^{T_{\max}} W_{c,d}(t)\,\arg\zeta(b+it)\,dt.
+\end{equation}
+Finally,
+\begin{equation}\label{eq:DeltaV_num}
+\Delta_V(b;c,d):=\left|\mathcal{C}_{\mathrm{expl}}(b;c,d)-I(b;c,d)\right|.
+\end{equation}
+
+\paragraph{Recommended tolerances.}
+We accept a computed \(\Delta_V(b;c,d)\) value only if all the following hold:
+\begin{enumerate}
+\item \textbf{Tail test:} \(|I_{2T_{\max}}-I_{T_{\max}}|\le \varepsilon_{\mathrm{tail}}\) with
+\(\varepsilon_{\mathrm{tail}}=10^{-6}\) (tighten to \(10^{-8}\) for final plots).
+\item \textbf{Mesh refinement:} halving each \(h_i\) changes \(I(b;c,d)\) by at most
+\(\varepsilon_{\mathrm{mesh}}=10^{-6}\).
+\item \textbf{Precision test:} increasing working precision (e.g.\ \(p\to p+40\) digits) changes
+\(I(b;c,d)\) by at most \(\varepsilon_{\mathrm{prec}}=10^{-7}\).
+\end{enumerate}
+
+\subsection{SFPT proxy \(\Delta_{N,T}(b;c,d)\)}\label{subsec:deltaNT}
+We define two continuous-phase surrogates \(\arg\zeta_N\) (prime side) and \(\arg\zeta_T\) (zero side),
+both normalized at \(t=0\) to \(\Arg(\zeta(b))\).
+
+\paragraph{Prime-side log-derivative surrogate.}
+Fix a smoothing kernel; default is Gaussian
+\[
+w_N(n)=\exp\!\bigl(-(n/N)^2\bigr).
+\]
+Define
+\begin{equation}\label{eq:logderiv_prime}
+\left(\frac{\zeta'}{\zeta}\right)_N(s):=-\sum_{n\le N}\Lambda(n)\,n^{-s}\,w_N(n).
+\end{equation}
+Then set
+\begin{equation}\label{eq:arg_prime}
+\arg\zeta_N(b+it)
+:=
+\Arg(\zeta(b))
++
+\int_0^t \Re\!\left(\frac{\zeta'}{\zeta}\right)_N(b+i\tau)\,d\tau.
+\end{equation}
+
+\paragraph{Zero-side log-derivative surrogate.}
+Let \(\xi(s)=\tfrac12 s(s-1)\pi^{-s/2}\Gamma(s/2)\zeta(s)\).
+Using a zero list \(\{\rho:|\Im(\rho)|\le T\}\), approximate
+\begin{equation}\label{eq:logderiv_xi_trunc}
+\left(\frac{\xi'}{\xi}\right)_T(s)\approx \sum_{|\Im(\rho)|\le T}\frac{1}{s-\rho}.
+\end{equation}
+Then define
+\begin{equation}\label{eq:logderiv_zero}
+\left(\frac{\zeta'}{\zeta}\right)_T(s)
+:=
+\left(\frac{\xi'}{\xi}\right)_T(s)
+-\frac{1}{s}-\frac{1}{s-1}+\frac12\log\pi-\frac12\frac{\Gamma'}{\Gamma}\!\left(\frac{s}{2}\right),
+\end{equation}
+and set
+\begin{equation}\label{eq:arg_zero}
+\arg\zeta_T(b+it)
+:=
+\Arg(\zeta(b))
++
+\int_0^t \Re\!\left(\frac{\zeta'}{\zeta}\right)_T(b+i\tau)\,d\tau.
+\end{equation}
+
+\paragraph{SFPT proxy divergence.}
+With these surrogates we compute
+\begin{equation}\label{eq:DeltaNT}
+\Delta_{N,T}(b;c,d)
+:=
+\int_0^{T_{\max}} W_{c,d}(t)\,
+\bigl|\arg\zeta_N(b+it)-\arg\zeta_T(b+it)\bigr|^2\,dt.
+\end{equation}
+
+\paragraph{Recommended schedules and tolerances.}
+We recommend
+\[
+N\in\{10^4,10^5,10^6\},
+\qquad
+T\in\{T_{\max}+50,\;2T_{\max}+50\},
+\]
+with acceptance conditioned on:
+\begin{enumerate}
+\item \textbf{Normalization check:} \(\arg\zeta_N(b)=\arg\zeta_T(b)=\Arg(\zeta(b))\) (to numerical
+roundoff).
+\item \textbf{Monotone improvement:} for fixed \(b\), \(\Delta_{N,T}(b;c,d)\) should decrease (or at
+least stabilize) as \(N\) and \(T\) increase past a transient regime.
+\item \textbf{Tail test:} doubling \(T_{\max}\) changes \(\Delta_{N,T}\) by at most
+\(\varepsilon^{(2)}_{\mathrm{tail}}=10^{-6}\).
+\end{enumerate}
+
+\subsection{Diagnostic checklist}\label{subsec:diagnostics}
+Table~\ref{tab:diagnostics} lists common failure modes and how to resolve them.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{p{0.35\linewidth} p{0.28\linewidth} p{0.32\linewidth}}
+\hline
+\textbf{Symptom} & \textbf{Likely cause} & \textbf{Fix / test} \\
+\hline
+\(\arg\zeta(b+it)\) exhibits jumps of size \(\approx 2\pi\) &
+Branch/unwrap bug (phase tracking) &
+Use \eqref{eq:arg_from_logderiv} (integrate \(\Re(\zeta'/\zeta)\)) instead of direct \(\arg\) evaluation; verify continuity on a dense grid. \\
+\hline
+\(\Delta_V\) or \(I(b;c,d)\) changes materially when \(T_{\max}\) doubles &
+Tail truncation bug &
+Increase \(T_{\max}\); enforce \(|I_{2T_{\max}}-I_{T_{\max}}|\le \varepsilon_{\mathrm{tail}}\); consider extending the coarse-grid region with larger \(T_{\max}\). \\
+\hline
+\(\Delta_{N,T}\) does not improve as \(T\) increases &
+Insufficient \(T\) (too few zeros / spectral truncation) &
+Increase \(T\) (at least \(T\ge 2T_{\max}\)); spot-check \(\arg\zeta_T\) against a high-precision direct \(\arg\zeta\) at random \(t\)-points. \\
+\hline
+\(\Delta_{N,T}\) does not improve as \(N\) increases &
+Insufficient \(N\) or poor smoothing &
+Increase \(N\); use smoother \(w_N\) (Gaussian default); verify stability under modest changes of the smoothing scale. \\
+\hline
+Results change when increasing working precision &
+Precision bug / cancellation &
+Raise precision (e.g.\ \(p\to p+40\) digits) until \(\varepsilon_{\mathrm{prec}}\) is met; avoid subtracting nearly equal large quantities without extra precision. \\
+\hline
+Mesh halving changes outputs significantly &
+Quadrature / grid resolution bug &
+Halve \(\Delta t\) in each region; verify Simpson stability; densify near \(t\) where \(\Re(\zeta'/\zeta)\) is large. \\
+\hline
+\end{tabular}
+\caption{Numerical diagnostics for the SBM-based SFPT 2.0 implementation.}
+\label{tab:diagnostics}
+\end{table}
+
+
+\bibliographystyle{alpha}
+\begin{thebibliography}{9}
+
+\bibitem[SBM09]{SBM2009}
+S.~K. Sekatskii, S.~Beltraminelli, D.~Merlini.
+\newblock \emph{A few equalities involving integrals of the logarithm of the Riemann zeta-function and equivalent to the Riemann hypothesis II}.
+\newblock arXiv:0904.1277 (2009).
+
+\bibitem[Vol95]{Volchkov1995}
+V.~V. Volchkov.
+\newblock \emph{On an equality equivalent to the Riemann hypothesis}.
+\newblock Ukrainian Mathematical Journal \textbf{47} (1995), 491--493.
+
+\end{thebibliography}
+\end{document}

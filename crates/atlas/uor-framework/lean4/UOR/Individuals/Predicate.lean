@@ -5,7 +5,7 @@
 import UOR.Structures
 import UOR.Individuals.State
 
-open UOR.Primitives
+open Core.UOR
 
 namespace UOR.Kernel.Predicate
 

@@ -9,7 +9,7 @@ use tracing::{info, Level};
 #[macro_use]
 mod logging;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct StateTransition {
     pub id: String,
     pub r_sc: f64,
@@ -152,31 +152,50 @@ impl SigmaKernel {
         
         let check = self.engine.run(&transition, &self.thresholds);
         
-        if !check.passes_tau_r || !check.passes_l_eff {
-            let breach_type = if !check.passes_l_eff { "LipschitzContraction".to_string() } else { "ResonanceDelta".to_string() };
-            log_dissonance_trap!(transition.id, breach_type, format!("R_sc={}, L_eff={}", check.r_sc, check.l_eff));
-            let log = ConflictLogSchema::new(&transition.id, check.r_sc, check.l_eff, self.thresholds.tau_r, breach_type);
-            
-            // Wire to mirror-dissonance as mandated by ADR-402
-            let md_log = mirror_dissonance::schemas::ConflictLogSchema {
-                receipt_hash: log.receipt_hash.clone(),
-                r_sc: log.r_sc,
-                l_eff: log.l_eff,
-                tau_r: log.tau_r,
-                breach_type: log.breach_type.clone(),
-                timestamp: chrono::Utc::now().to_rfc3339(),
-            };
-            let violations = mirror_dissonance::check_physical_dissonance(&md_log);
-            if !violations.is_empty() {
-                // Physical rules correctly trapped
-                let _ = self.ledger.stamp_pweh(&log);
-                return Err(DissonanceError::ThresholdViolation { r_sc: check.r_sc, l_eff: check.l_eff });
+        // 1. Construct the SpectralState from the evaluated transitions.
+        let state = SpectralState {
+            resonance_functional: check.r_sc,
+            drift: check.r_sc - self.thresholds.r_sc_reference, // Using a basic drift proxy for now
+            effective_lipschitz: check.l_eff,
+        };
+
+        // 2. Guardian Lock: Pass through sigma_check
+        let witness_result = sigma_check(&state, self.thresholds.tau_r);
+
+        match witness_result {
+            Ok(witness) => {
+                // Emit Archivum Witness (Examiner lock evidence)
+                let proof = archivum::SigmaProof::new(
+                    hex::encode(witness.state_hash),
+                    witness.invariant_holds,
+                    format!("{:?}", witness.dissonance_level),
+                );
+                let _ = self.ledger.stamp_sigma_proof(&proof);
+
+                let block = TransitionBlock::new_ratified(transition.id);
+                self.ledger.append_block(&block).map_err(|_| DissonanceError::ThresholdViolation { r_sc: check.r_sc, l_eff: check.l_eff })?;
+                Ok(block)
+            }
+            Err(SigmaViolation::InvariantBreach { l_eff, drift }) => {
+                let breach_type = if l_eff >= 1.0 { "LipschitzContraction".to_string() } else { "ResonanceDelta".to_string() };
+                log_dissonance_trap!(transition.id, breach_type, format!("R_sc={}, L_eff={}, drift={}", check.r_sc, check.l_eff, drift));
+                let log = ConflictLogSchema::new(&transition.id, check.r_sc, check.l_eff, self.thresholds.tau_r, breach_type);
+                
+                let md_log = mirror_dissonance::schemas::ConflictLogSchema {
+                    receipt_hash: log.receipt_hash.clone(),
+                    r_sc: log.r_sc,
+                    l_eff: log.l_eff,
+                    tau_r: log.tau_r,
+                    breach_type: log.breach_type.clone(),
+                    timestamp: chrono::Utc::now().to_rfc3339(),
+                };
+                let violations = mirror_dissonance::check_physical_dissonance(&md_log);
+                if !violations.is_empty() {
+                    let _ = self.ledger.stamp_pweh(&log);
+                }
+                Err(DissonanceError::ThresholdViolation { r_sc: check.r_sc, l_eff: check.l_eff })
             }
         }
-
-        let block = TransitionBlock::new_ratified(transition.id);
-        self.ledger.append_block(&block).map_err(|_| DissonanceError::ThresholdViolation { r_sc: check.r_sc, l_eff: check.l_eff })?;
-        Ok(block)
     }
 }
 
@@ -221,7 +240,7 @@ mod tests {
 
         let fail_tx = StateTransition {
             id: "tx-tau-fail".to_string(),
-            r_sc: 47.06998900,
+            r_sc: 1000.0, // High r_sc to force a tau_r drift violation
             l_eff: 0.5,
         };
         let err = kernel.evaluate(fail_tx).unwrap_err();
@@ -236,5 +255,99 @@ mod tests {
         log_dissonance_trap!("tx-2", "trap", "details");
         log_validation_failure!("field", 42, 7);
         log_error!("err", field = "value");
+    }
+}
+
+// --- ADR-062 SigmaKernel Production Implementation ---
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct SpectralState {
+    pub resonance_functional: f64,
+    pub drift: f64,
+    pub effective_lipschitz: f64,
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, PartialEq)]
+pub enum DissonanceLevel {
+    Safe,
+    Warning,
+    Critical,
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct SigmaWitness {
+    pub state_hash: [u8; 32],
+    pub invariant_holds: bool,
+    pub dissonance_level: DissonanceLevel,
+    pub timestamp: i64,
+}
+
+pub enum SigmaViolation {
+    InvariantBreach { l_eff: f64, drift: f64 },
+}
+
+pub fn sigma_check(
+    state: &SpectralState,
+    tau_r: f64,
+) -> Result<SigmaWitness, SigmaViolation> {
+    let invariant_holds = state.effective_lipschitz < 1.0 && state.drift <= tau_r;
+    
+    let dissonance = match () {
+        _ if state.effective_lipschitz >= 1.0 => DissonanceLevel::Critical,
+        _ if state.drift > tau_r => DissonanceLevel::Critical,
+        _ if state.drift > 0.9 * tau_r => DissonanceLevel::Warning,
+        _ => DissonanceLevel::Safe,
+    };
+    
+    if !invariant_holds {
+        return Err(SigmaViolation::InvariantBreach {
+            l_eff: state.effective_lipschitz,
+            drift: state.drift,
+        });
+    }
+    
+    let witness = SigmaWitness {
+        state_hash: blake3::hash(&serde_json::to_vec(state).unwrap()).into(),
+        invariant_holds,
+        dissonance_level: dissonance.clone(),
+        timestamp: chrono::Utc::now().timestamp(),
+    };
+
+    Ok(witness)
+}
+
+#[cfg(kani)]
+mod verification {
+    use super::*;
+
+    #[kani::proof]
+    fn verify_sigma_check_soundness() {
+        let r_sc: f64 = kani::any();
+        let drift: f64 = kani::any();
+        let l_eff: f64 = kani::any();
+        let tau_r: f64 = kani::any();
+        
+        kani::assume(r_sc.is_finite() && drift.is_finite() && l_eff.is_finite() && tau_r.is_finite());
+        kani::assume(tau_r > 0.0);
+        
+        let state = SpectralState {
+            resonance_functional: r_sc,
+            drift,
+            effective_lipschitz: l_eff,
+        };
+        
+        let result = sigma_check(&state, tau_r);
+        
+        match result {
+            Ok(witness) => {
+                kani::assert(l_eff < 1.0, "Effective Lipschitz must be strictly less than 1.0 on success");
+                kani::assert(drift <= tau_r, "Drift must be less than or equal to tau_r on success");
+                kani::assert(witness.invariant_holds, "Witness must correctly record that invariants hold");
+                kani::assert(witness.dissonance_level != DissonanceLevel::Critical, "Witness cannot record Critical on success");
+            }
+            Err(_) => {
+                kani::assert(l_eff >= 1.0 || drift > tau_r, "Sigma Kernel rejected a valid state transition");
+            }
+        }
     }
 }

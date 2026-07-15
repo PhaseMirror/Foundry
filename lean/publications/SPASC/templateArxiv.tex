@@ -1,0 +1,313 @@
+% !TEX program = pdflatex
+\documentclass[11pt]{article}
+
+% --------------------------------------------------
+% Packages
+% --------------------------------------------------
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsfonts,mathtools}
+\usepackage{bm}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{siunitx}
+\usepackage{microtype}
+\usepackage{enumitem}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage[capitalise]{cleveref}
+\usepackage{listings}
+\usepackage{inconsolata}
+
+% --------------------------------------------------
+% Hyperref setup
+% --------------------------------------------------
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!
+  60!black,
+  citecolor=blue!
+  60!black,
+  urlcolor=blue!
+  60!black
+}
+
+% --------------------------------------------------
+% Listings (code) setup
+% --------------------------------------------------
+\lstdefinestyle{spasc}{
+  language=Python,
+  basicstyle=\linespread{1}\footnotesize\ttfamily,
+  numbers=left,
+  numberstyle=\tiny, numbersep=6pt,
+  frame=tb,
+  columns=fullflexible,
+  keepspaces=true,
+  showstringspaces=false,
+  tabsize=2,
+  breaklines=true,
+  keywordstyle=\color{blue!60!black}\bfseries,
+  commentstyle=\color{green!40!black},
+  stringstyle=\color{red!60!black}
+}
+
+% --------------------------------------------------
+% Math macros & theorem styles
+% --------------------------------------------------
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Var}{\operatorname{Var}}
+\newcommand{\Diag}{\operatorname{Diag}}
+\newcommand{\softmax}{\operatorname{softmax}}
+\newcommand{\norm}[1]{\left\lVert #1 \right\rVert}
+\newcommand{\Tr}{\operatorname{Tr}}
+
+\usepackage{amsthm}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}
+
+% --------------------------------------------------
+% Title
+% --------------------------------------------------
+\title{Structured Prime-Attention with Stability-Ensuring Control (SPASC)\\\large A Rigorous Specification, Training Protocol, and Diagnostic Framework}
+\author{\normalsize In Legacy Of Wayne Boatwright \\ \\ Formalized by: \\ Tyler Van Osdol \& Ryan Van Gelder}
+
+\date{\today}
+
+\begin{document}
+\maketitle
+\begin{abstract}
+We study a transformer attention variant---\emph{Structured Prime-Attention with Stability-Ensuring Control (SPASC)}---that biases scores with a prime-indexed quadratic-residue mask while maintaining bounded, certifiable dynamics via an ACE safety wrapper and PETC typing.
+\\[4pt]
+\textbf{Why this matters:} We hypothesize that inducing explicit arithmetic structure inside attention improves compositional reasoning and out-of-distribution generalization. As a \emph{mechanistic proxy} for useful internal structure, we test whether a unitarized spectrum constructed from SPASC exhibits eigenphase statistics closer to the Sato--Tate law than baselines.
+\\[4pt]
+\textbf{Contributions:} (i) a principled prime-mask with density-correct centering, (ii) stability-aligned entropy-band and row-Lipschitz penalties, (iii) a projection onto a weighted-$\ell_1$ safety set with slope and gap certificates, and (iv) a preregistered statistical protocol, including unitarization sensitivity and controls that distinguish prime structure from generic periodicity.
+\\[4pt]
+\textbf{Claim (falsifiable).} On modular-arithmetic sequence tasks and small LM probes, \textbf{SPASC} yields eigenphase distributions closer to Sato--Tate (by KS/CvM/Wasserstein distances) than: standard attention, \emph{prime-masked attention without our regularizers}, prime-masked without ACE, \emph{cyclic periodic masks}, and residue-permuted controls.
+\end{abstract}
+
+\section{Motivation}
+Modern language models benefit from inductive biases that mirror task symmetries. Arithmetic and modular composition recur across code, math, and tokenization artifacts. We posit that embedding \emph{multiplicative-group structure} into attention encourages smooth, non-degenerate spectra that correlate with more composable internal representations.
+Sato--Tate alignment is \emph{not a theorem of capability}; it is a \emph{mechanistic proxy} for ``healthy'' spectral geometry: broadly spread phases (no spectral spikes), consistent with robust, non-peaky attention dynamics.
+Therefore we: (a) engineer stability guarantees with ACE (independent of the proxy), and (b) measure whether prime structure nudges spectra toward that proxy relative to matched controls.
+
+\section{Notation and Typed Model (PETC)}
+Tokens $x_{1:n}$, hidden states $X\in\R^{n\times d}$. Projections: $Q=XW_Q$, $K=XW_K$, $V=XW_V$. Head dimension $d_h$; temperature $\tau=\sqrt{d_h}$. For an odd prime $p$, define index maps $\iota(i)=i\bmod p$ and $\kappa(j)=j\bmod p$. PETC assigns \emph{prime signatures} to tensor axes so that any contraction or reshape preserves the $\bmod p$ typing (runtime checks fail closed).
+
+\section{Prime-Masked Attention (Rationale and Definition)}
+Define the quadratic-residue mask
+\begin{align}
+  B_p(i,j) &= \mathbf{1}\{\, \iota(i) \equiv \kappa(j)^2 \ (\mathrm{mod}\ p)\,\},\\
+  \widetilde{B}_p &= B_p - \lambda_m,\qquad \lambda_m = \E[B_p(i,j)] \approx \tfrac{1}{2}~\text{(empirical per $p$)}.
+\end{align}
+Let raw scores $S = QK^\top/\tau$. The SPASC-biased scores and attention are
+\begin{equation}
+  S_p = S + \beta\,\widetilde{B}_p, \qquad A_p = \softmax_{\text{row}}(S_p), \qquad Y = A_p V.
+\end{equation}
+\paragraph{Why quadratic residues (not ``magic'').}
+They instantiate nonlinear, multiplicative structure in $\mathbb{F}_p^\times$ (vs. additive periodicity), yielding structured but nontrivial sparsity with balanced density. Controls in \S\ref{sec:protocol} and \S\ref{sec:ablations} test whether gains stem from this algebraic structure rather than generic sparsity or periodicity.
+
+\section{Regularizers (Entropy-Band and Row-Lipschitz)}
+For row $r$, let $P_r$ be the probability vector (row of $A_p$).
+\paragraph{Entropy-band penalty.}
+\begin{equation}
+  \mathcal{L}_{\mathrm{ent}} = \frac{1}{n}\sum_{r=1}^n \Big[\max(0, H_{\min} - H(P_r)) + \max(0, H(P_r) - H_{\max})\Big],\quad H(P_r)=-\sum_j P_{rj}\log P_{rj},
+\end{equation}
+with $H_{\min}=\alpha_{\text{low}}\log n$, $H_{\max}=\alpha_{\text{high}}\log n$, $0<\alpha_{\text{low}}<\alpha_{\text{high}}\le 1$.
+\paragraph{Row-Lipschitz surrogate (softmax Jacobian link).}
+For row-softmax with temperature $\tau$,
+\begin{equation}
+  \frac{\partial\,\softmax(z/\tau)}{\partial z} = \frac{1}{\tau}\big[\Diag(p) - pp^\top\big],\quad \big\|\Diag(p) - pp^\top\big\|_2 \le \tfrac{1}{2},
+\end{equation}
+so the \emph{local} Lipschitz constant is $\le \tfrac{1}{2\tau}$. To keep rows in a benign regime, we constrain the spectral norm of scores:
+\begin{equation}
+  \mathcal{L}_{\mathrm{slope}} = \max\big(0,\,\|S_p\|_2 - \tau_s\big),
+\end{equation}
+with $\tau_s$ set by ACE. The SPASC regularizer is $\mathcal{L}_{\mathrm{CSL}}=\lambda_{\mathrm{ent}}\mathcal{L}_{\mathrm{ent}}+\lambda_{\mathrm{slope}}\mathcal{L}_{\mathrm{slope}}$.
+
+\section{Safety Wrapper via ACE}
+ACE imposes certificates independent of estimator optimism.
+\paragraph{Safety set (weighted-$\ell_1$).}
+\begin{equation}
+  \mathcal{S}=\Big\{w:\sum_c \alpha_c\,\|w_c\|_1\le B\Big\},
+\end{equation}
+with groups $w_c$ (e.g., $W_Q,W_K,W_V$, head biases), weights $\alpha_c>0$, and budget $B$.
+\paragraph{Projected update and certificates.}
+Given proposal $\tilde w = w - \eta\nabla_w \mathcal{L}$, project $w^+=\Pi_{\mathcal{S}}(\tilde w)$ by weighted soft-thresholding. Compute \textbf{SlopeUB} (empirical Jacobian bound by power iteration) and \textbf{GapLB} (spectral gap of the symmetrized attention $A_p^{\mathrm{sym}}=(A_p+A_p^\top)/2$). If SlopeUB$\ge1$ or GapLB$\le\gamma_{\min}$, tighten $B$ or increase $\lambda_{\mathrm{slope}}$ and re-project.
+
+\section{Unitarization and Eigenphases}
+Row-stochastic $A_p$ is not unitary; we study spectra after a principled unitarization of pre-softmax geometry.
+\paragraph{Primary choice (exponential map).}
+Form a centered, scaled Hermitian score surrogate
+\begin{equation}
+  H_p=\frac{S_p-\mu I}{\sigma},\qquad \mu=\tfrac{1}{n}\Tr(S_p),\ \ \sigma>0~\text{(empirical std)},
+\end{equation}
+then set $U_p=\exp(iH_p)$. \textbf{This map is well-defined and numerically stable for any $H_p$, preserves the eigenspace structure of $H_p$, and connects to continuous-time flows.}
+\paragraph{Alternative unitarizations (for robustness).}
+Cayley: $U^{\mathrm{Cay}}=(I+iH_p)(I-iH_p)^{-1}$; Polar-unitary: $U^{\mathrm{Pol}} = H_p(H_p^\ast H_p)^{-1/2}$ (regularized); Schur-unitarization via unitary factor of a normal approximation. \emph{We do not claim canonicity}; \S\ref{sec:ablations} tests sensitivity.
+\paragraph{Sato--Tate comparison.}
+Let eigenvalues of $U_p$ be $e^{i\varphi_j}$, define phases $\theta_j = ((\varphi_j\bmod\pi)/\pi)\in[0,1]$, and compare to density $f_{\text{ST}}(\theta)=\tfrac{2}{\pi}\sin^2(\pi\theta)$.
+
+\section{Datasets and Tasks}
+\textbf{QR-Sequence:} Predict $x_{i+1}\bmod p$ given $x_i$ and prime $p$ with distractors; length $n\in[64,512]$. \textbf{Mod-LM probe:} Character-level LM with interleaved modular snippets. Standard padding/masks; PETC typing guards reshape/contraction.
+
+\section{Experimental Protocol and Conditions}
+\label{sec:protocol}
+Small transformer (4--6 layers, 8--12 heads); primes $p\in\{53,59,\dots,997\}$ (10 values); 10 seeds/condition. Conditions: (1) \textbf{SPASC}, (2) \textbf{PM-noCSL}, (3) \textbf{PM-CSL-noACE}, (4) \textbf{Base}, (5) \textbf{PM-perm}, (6) \textbf{Label-shuffle}, (7) \textbf{Cyclic-noCSL} (mask $B(i,j)=\mathbf{1}\{\iota(i)\equiv\kappa(j)+c\ (\mathrm{mod}\ p)\}$ with fixed $c$).
+Training uses matched budgets/steps; release all seeds/configs.
+
+\section{Statistical Tests and Success Criteria}
+For each head/layer/seed/$p$: compute $\{\theta_j\}$ from $U_p$. Distances to Sato--Tate: KS, Cram\'er--von Mises, and 1-Wasserstein. Primary success: in $\ge 60\%$ of heads, SPASC shows significantly smaller KS \emph{and} Wasserstein than Base and PM-noCSL (Holm--Bonferroni, $p<0.05$) with median Wasserstein reduction $\ge 0.02$. Report $n$ (tokens, heads), CIs, and per-head scatter. No best-seed cherry-picking.
+
+\section{Risk \\ Ethics Monitoring}
+Define a scalar risk monitor $R_t$ combining (a) rate of change in logits entropy, (b) out-of-distribution mask activations (KL between active $B_p$ rows and training histograms), and (c) ACE margins (1$-$SlopeUB, GapLB$-\gamma_{\min}$). If $R_t>R_{\max}$: decrease $B$, raise $\lambda_{\mathrm{slope}}$, reduce $\beta$, or rate-limit decoding. Ethics is engineered via thresholds/fallbacks; we make no claim that symmetry implies ethics.
+
+\section{Implementation Notes}
+Projection: weighted soft-thresholding for $\ell_1$ ball; $\mathcal{O}(\#\text{params})$. Certificates: power iteration (5--10 iters/epoch) for SlopeUB; GapLB via Lanczos on $A_p^{\mathrm{sym}}$. PETC runtime checks assert that every contraction preserves prime signatures. Ledger saves $\{\alpha_c,B,\tau_s,\beta,\lambda_{\mathrm{ent}},\lambda_{\mathrm{slope}},H_{\min},H_{\max}\}$.
+
+\section{Code Snippets}
+\subsection*{Python: Prime Mask, SPASC Scores, and Entropy-Band}
+\begin{lstlisting}[style=spasc,caption={Prime mask, centered density, SPASC-biased scores and entropy-band penalty.}]
+import torch
+
+def prime_mask(i_idx, j_idx, p: int):
+    # i_idx: (n,), j_idx: (n,), entries are token positions 0..n-1
+    i_mod = i_idx % p
+    j_mod = j_idx % p
+    # B_p[i,j] = 1 if i ≡ j^2 (mod p)
+    B = (i_mod[:, None] == (j_mod[None, :] ** 2) % p).float()
+    lam = B.mean()  # empirical λ_m
+    return B - lam  # centered mask \tilde{B}_p
+
+def spasc_scores(Q, K, tau, beta, Btilde):
+    # S = Q K^T / tau
+    S = (Q @ K.transpose(-1, -2)) / tau
+    return S + beta * Btilde
+
+def entropy_band(A, Hmin, Hmax, eps=1e-12):
+    P = A.clamp_min(eps)
+    H = -(P * P.log()).sum(dim=-1)
+    low = torch.relu(Hmin - H)
+    high = torch.relu(H - Hmax)
+    return (low + high).mean()
+\end{lstlisting}
+
+\subsection*{Python: Weighted-$\ell_1$ Projection (ACE) and Certificates}
+\begin{lstlisting}[style=spasc,caption={ACE projection onto weighted-ℓ1 ball and simple certificate stubs.}]
+@torch.no_grad()
+def weighted_l1_project(w_flat, alphas, B):
+    # w_flat: concatenated parameter vector; alphas: same shape weights
+    z = torch.abs(w_flat) / (alphas + 1e-12)
+    if (alphas * torch.abs(w_flat)).sum() <= B:
+        return w_flat
+    # Find threshold τ by sorting (projection onto weighted l1 ball)
+    s, idx = torch.sort(z, descending=True)
+    cumsum = torch.cumsum((alphas[idx] * s), dim=0)
+    rho = torch.nonzero(s * alphas[idx] > (cumsum - B), as_tuple=False).max()
+    tau = (cumsum[rho] - B) / (alphas[idx][rho] + 1e-12)
+    w_proj = torch.sign(w_flat) * torch.clamp(z - tau / (alphas + 1e-12), min=0.0) * (alphas + 1e-12)
+    return w_proj
+
+@torch.no_grad()
+def slope_upper_bound(model, iters=10):
+    # Power-iteration style proxy of Jacobian spectral norm (layerwise)
+    # Implementation detail left as a stub; use finite diffs or autodiff-vector products
+    return torch.tensor(0.8)  # placeholder < 1
+
+@torch.no_grad()
+def spectral_gap(A):
+    # Gap of symmetrized attention
+    As = 0.5 * (A + A.transpose(-1, -2))
+    # Use Lanczos (torch.lobpcg) to estimate top two eigenvalues
+    evals = torch.linalg.eigvalsh(As)
+    return (evals.max() - evals.sort().values[-2])
+\end{lstlisting}
+
+\subsection*{Python: Unitarization Variants and ST Distances}
+\begin{lstlisting}[style=spasc,caption={Exponential-map unitarization, Cayley alternative, and Sato–Tate distances.}]
+import math
+
+def unitarize_exp(Sp):
+    # Center and scale
+    mu = Sp.trace() / Sp.shape[-1]
+    Spc = Sp - mu * torch.eye(Sp.shape[-1], device=Sp.device, dtype=Sp.dtype)
+    sigma = Spc.std().clamp_min(1e-6)
+    Hp = Spc / sigma
+    # exp(iH)
+    iH = 1j * Hp.to(torch.complex64)
+    return torch.linalg.matrix_exp(iH)
+
+def unitarize_cayley(Sp):
+    mu = Sp.trace() / Sp.shape[-1]
+    Spc = Sp - mu * torch.eye(Sp.shape[-1], device=Sp.device, dtype=Sp.dtype)
+    sigma = Spc.std().clamp_min(1e-6)
+    Hp = (Spc / sigma).to(torch.complex64)
+    I = torch.eye(Sp.shape[-1], dtype=torch.complex64, device=Sp.device)
+    return (I + 1j*Hp) @ torch.linalg.inv(I - 1j*Hp)
+
+def st_distances(U):
+    # eigenphases mapped to [0,1]
+    w = torch.linalg.eigvals(U)
+    phi = torch.angle(w)
+    theta = (phi.remainder(math.pi)) / math.pi
+    # Compare to Sato–Tate density via empirical CDF metrics (placeholder)
+    # Implement KS, CvM, and Wasserstein over [0,1]
+    return {"ks": 0.1, "cvm": 0.05, "w1": 0.03}
+\end{lstlisting}
+
+\section{Training Objective and Pseudocode}
+\begin{equation}
+\min_{w\in\mathcal{S}}\ \mathcal{L}_{\mathrm{task}}(w) + \lambda_{\mathrm{ent}}\mathcal{L}_{\mathrm{ent}}(w) + \lambda_{\mathrm{slope}}\mathcal{L}_{\mathrm{slope}}(w)\ \ \text{s.t.}\ \ \text{SlopeUB}(w)<1,\ \text{GapLB}(w)>\gamma_{\min}.
+\end{equation}
+
+\begin{algorithm}[H]
+\caption{SPASC step with ACE projection and certificates}
+\begin{algorithmic}[1]
+\State $S\gets QK^\top/\sqrt{d_h}$; $\widetilde{B}_p\gets$ centered prime mask; $S_p\gets S+\beta\widetilde{B}_p$
+\State $A\gets \softmax_{\text{row}}(S_p)$; $Y\gets A V$
+\State $\mathcal{L}_{\mathrm{ent}},\,\mathcal{L}_{\mathrm{slope}},\,\mathcal{L}_{\mathrm{task}} \ \rightarrow \ \mathcal{L}_{\mathrm{total}}$
+\State $\tilde w \gets w - \eta\,\nabla_w\mathcal{L}_{\mathrm{total}}$
+\State $w^+ \gets \Pi_{\mathcal{S}}(\tilde w)$ via weighted soft-thresholding
+\State Compute SlopeUB, GapLB; if violation: tighten $B$ or increase $\lambda_{\mathrm{slope}}$ and re-project
+\end{algorithmic}
+\end{algorithm}
+
+\section{Ablations and Sanity Checks}
+\label{sec:ablations}
+$\beta$-sweep; entropy-band widths; remove PETC; ACE off; head-drop. \textbf{Unitarization Sensitivity:} repeat statistics using $U^{\mathrm{Cay}}$, polar, and Schur variants; vary $\sigma$ (std vs. MAD vs. spectral-radius scaling) and $\mu$ (trace vs. median). \textbf{Success Criterion:} SPASC's superiority over Base, PM-noCSL, and \textbf{Cyclic-noCSL} (per \S9's significance tests) holds across \emph{all} unitarization choices. \textbf{Prime vs Periodic:} compare SPASC to Cyclic-noCSL at matched density.
+
+\section{Limitations}
+Sato--Tate is a diagnostic proxy, not proof of automorphy nor a direct measure of capability. Certificates guarantee slope/gap only. Unitarization introduces modeling decisions we explicitly test.
+
+\section{Related Work (Curated)}
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Spectral analyses of neural networks.} Using operator spectra to study deep nets; our eigenphase approach uses a unitary proxy to probe internal geometry.
+  \item \textbf{Lipschitz control and stability.} ACE aligns with Lipschitz-bounding methods (e.g., spectral normalization, Jacobian penalties) and verification-inspired runtime checks.
+  \item \textbf{Structured attention biases.} Fixed, task-informed patterns (sparse/local attention); our prime mask injects \emph{multiplicative} structure rather than additive periodicity.
+  \item \textbf{Sato--Tate as a statistical null.} A number-theoretic law used here as a null for phase dispersion, analogous to RMT baselines.
+  \item \textbf{Unitary maps in ML.} Exponential and Cayley maps as standard Lie-group parameterizations for unitary/orthogonal models.
+\end{itemize}
+
+\section{Conclusion}
+SPASC is a constrained inductive bias for arithmetic structure, paired with stability-ensuring control and transparent statistics. If spectra consistently move toward Sato--Tate across unitarizations and non-prime controls, we gain evidence that multiplicative structure fosters healthier attention geometry---a hypothesis about compositional generalization that our protocol cleanly tests and can falsify.
+
+\section*{Acknowledgements}
+We formalize and certify using \textbf{ACE (Tyler Van Osdol)} and prime-typed tensor structure via \textbf{PETC (Ryan Van Gelder)}, consistent with IFMD's rigor and safety goals.
+
+\section*{Reproducibility Checklist (Condensed)}
+\begin{itemize}[leftmargin=*]
+  \item Seeds, configs, and code to regenerate $U_p$ and all statistics.
+  \item Unit tests: mask density $\lambda_m$, projection correctness, certificate monotonicity.
+  \item Logs: SlopeUB and GapLB over training; ablation sweeps.
+\end{itemize}
+
+\nocite{*}
+\bibliographystyle{unsrt}
+\bibliography{references}
+\end{document}
+
+
+

@@ -171,7 +171,8 @@ import ADR.Proofs
 namespace ADR
 
 def toMarkdown (adrs : List ADR) : String :=
-  adrs.foldl (fun acc a => acc ++ s!"# {a.title}\nStatus: {a.status}\n...\n") ""
+## Status
+**Adopted**
 
 def exportToDocs (adrs : List ADR) : IO Unit := do
   IO.FS.writeFile "docs/adrs.md" (toMarkdown adrs)

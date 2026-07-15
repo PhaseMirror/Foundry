@@ -1,0 +1,926 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,amsfonts}
+\usepackage{mathtools}
+\usepackage{bm}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{authblk}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  citecolor=blue,
+  urlcolor=blue
+}
+
+\title{The Langlands Multiplicity Prism:\\
+Certified Prime-Indexed Control as a Multiplicity Space}
+
+\author[1]{(Draft) Multiplicity Theory Group}
+\affil[1]{Bridgeville, PA}
+
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We give a unified, mathematically typed reformulation of the ``Langlands Prism'' control architecture as a prime-indexed multiplicity system. The original framework couples a certified contraction-based core (ACE) with a feature-rich estimator (PETC) driven by arithmetic observables. We re-express this as a three-layer composition on a multiplicity Hilbert bundle: an arithmetic feature layer mapping to control proposals, a lawfulness layer realized as a firmly non-expansive projection onto a viability kernel in control space, and a prime-fibered dynamics layer acting on a lifted multiplicity state. Control weights become sections over the discrete base of primes, and sparsity, transfer, and projection are reinterpreted geometrically. We formalize the resulting projected dynamical system, clarify its bilinear structure, state a precise multiplicity-transfer hypothesis, and provide a minimal code sketch illustrating the projected control loop.
+\end{abstract}
+
+\tableofcontents
+
+\section{Executive Summary}
+
+This report fuses three ingredients into a single, closed formalism:
+\begin{enumerate}[label=(\roman*)]
+  \item A \emph{certified} contraction-based control core (ACE) with prime-indexed channels and explicit operator norm budgets.
+  \item A \emph{feature-rich} estimator layer (PETC) that maps bounded arithmetic observables (e.g.\ Hecke-type features) and task statistics into raw control proposals.
+  \item A \emph{Multiplicity-theoretic} reinterpretation in which the entire system acts on a prime-indexed Hilbert space, with control weights forming sections over the discrete base of primes.
+\end{enumerate}
+
+The central structural result is a three-layer factorization:
+\[
+\Psi_{t+1}
+= \mathbb U\bigl(\omega_t; w_t^\ast\bigr)\Psi_t + \eta_t,\quad
+w_t^\ast = \Pi_S\bigl(\mathcal M_{\mathrm{PETC}}(\phi_t, \xi_t)\bigr),
+\]
+where:
+\begin{itemize}
+  \item $\Psi_t \in \mathcal H_{\mathrm{mult}} := \ell^2(\mathcal P)\otimes\mathcal K$ is the \emph{multiplicity state}.
+  \item $\phi_t \in \mathcal F_{\mathrm{arith}}$ is an arithmetic feature field over primes.
+  \item $\xi_t$ is a task/plant observable.
+  \item $\mathcal M_{\mathrm{PETC}}$ is the estimator (linear or small MLP).
+  \item $w_t^\ast$ is the \emph{lawful} control spectrum in a convex safety set $S$.
+  \item $\Pi_S$ is the metric projection onto $S$, a firmly non-expansive operator.
+  \item $\mathbb U$ is a prime-fibered evolution operator that is contractive for all $w_t^\ast\in S$.
+\end{itemize}
+
+We interpret $w_t^\ast$ not merely as a vector of gains, but as a section
+\[
+w_t^\ast \in \Gamma(\mathcal P,\mathbb R),
+\]
+over the discrete prime base $\mathcal P$. Sparsity is then restriction of support of this section, transfer is extension to new prime bases, and projection is bundle-constrained clipping.
+
+From the point of view of control theory, the architecture becomes a projected dynamical system on $\mathcal H_{\mathrm{mult}}\times S$ endowed with a contraction certificate. From the point of view of Multiplicity Theory, it realizes a prime-indexed multiplicity space with a lawfulness operator enforcing recursive stability.
+
+\section{Core Architecture}
+
+\subsection{Original ACE + PETC Setup}
+
+Let $(H,\langle\cdot,\cdot\rangle)$ be a Hilbert space and consider the discrete-time evolution
+\begin{equation}
+  \xi_{t+1} = U(\omega_t; w_t)\,\xi_t,
+  \label{eq:base-evolution}
+\end{equation}
+with
+\begin{equation}
+  U(\omega; w)
+  = X(\omega) + \sum_{p\in\mathcal P} w_p\, B_p(\omega),
+  \label{eq:U-operator}
+\end{equation}
+where:
+\begin{itemize}
+  \item $\omega_t$ is an exogenous parameter (disturbance, configuration, or context).
+  \item $X(\omega)$ is a nominal operator that is strictly contractive:
+  \[
+    \|X(\omega)\| \le \beta_X < 1.
+  \]
+  \item For each prime $p$ in a finite set $\mathcal P$, $B_p(\omega)$ is a bounded channel operator with
+  \[
+    \|B_p(\omega)\| \le b_p,
+  \]
+  and possibly additional commutator bounds if desired.
+  \item $w_t = (w_{t,p})_{p\in\mathcal P}\in \mathbb R^{|\mathcal P|}$ is the control spectrum.
+\end{itemize}
+
+Define the \emph{safety set}
+\begin{equation}
+  S
+  := \left\{
+    w\in\mathbb R^{|\mathcal P|}:
+    \|X\| + \sum_{p} b_p |w_p|
+    \le 1 - \varepsilon,\quad
+    \sum_{p} \alpha_p |w_p| \le \tau
+  \right\},
+  \label{eq:safety-set}
+\end{equation}
+with margin $\varepsilon\in(0,1)$ and an optional global regularization budget $(\alpha_p,\tau)$.
+
+\begin{theorem}[ACE Contraction Certificate]
+If $w\in S$, then
+\[
+\|U(\omega; w)\|\le 1-\varepsilon
+\]
+for all admissible $\omega$. Consequently, the system \eqref{eq:base-evolution} is a strict contraction and admits a unique fixed point $\xi^\ast$ with global exponential convergence
+\[
+\|\xi_t - \xi^\ast\| \le (1-\varepsilon)^t \|\xi_0 - \xi^\ast\|.
+\]
+\end{theorem}
+
+\begin{proof}
+By subadditivity of the operator norm,
+\[
+\|U(\omega;w)\|
+\le \|X(\omega)\| + \sum_{p} |w_p|\,\|B_p(\omega)\|
+\le \|X\| + \sum_p b_p |w_p|
+\le 1 - \varepsilon.
+\]
+Banach's fixed-point theorem then yields existence and uniqueness of the fixed point and the exponential convergence rate.
+\end{proof}
+
+\subsection{Estimator (PETC) and Projection}
+
+The estimator layer (PETC) maps arithmetic features and task statistics to a raw control proposal:
+\begin{equation}
+  \tilde w_t = \mathcal M_{\mathrm{PETC}}(\phi_t,\xi_t),
+\end{equation}
+where:
+\begin{itemize}
+  \item $\phi_t$ denotes arithmetic features: for each $p\in\mathcal P$, a bounded real vector $\phi_p(t)\in\mathbb R^d$ derived from normalized local eigenvalues and metadata (e.g.\ $|\lambda_p|$, exponential moving averages, ramification flags).
+  \item $\xi_t$ is a plant statistic or observation (e.g.\ state estimate, output).
+  \item $\mathcal M_{\mathrm{PETC}}$ is a linear model or small MLP.
+\end{itemize}
+
+The \emph{certified} control spectrum is obtained via projection onto $S$:
+\begin{equation}
+  w_t^\ast
+  := \Pi_S(\tilde w_t)
+  := \arg\min_{w\in S} \tfrac12 \|w - \tilde w_t\|^2.
+  \label{eq:projection}
+\end{equation}
+
+For the special case of a pure weighted-$\ell_1$ budget
+\[
+B := \left\{w:\ \sum_p b_p |w_p| \le T\right\},\quad b_p>0,
+\]
+the projection admits a soft-threshold form:
+\begin{equation}
+  w_p^\ast = \mathrm{sign}(\tilde w_p)\,\max\{|\tilde w_p| - \theta b_p,\,0\},
+\end{equation}
+where $\theta\ge 0$ is chosen so that the constraint is active when needed,
+\[
+\sum_p b_p |w_p^\ast| = T
+\]
+if $\sum_p b_p|\tilde w_p|>T$.
+
+\section{Three-Layer Factorization}
+
+\subsection{Typed Layers}
+
+We now express the system as a composition of three maps with explicit types.
+
+\paragraph{(A) Feature Layer (Arithmetic $\to$ Control Proposal).}
+
+Let $\mathcal F_{\mathrm{arith}}$ denote the space of bounded arithmetic feature fields (over primes) paired with plant statistics. At time $t$ we have
+\[
+\phi_t \in \mathcal F_{\mathrm{arith}},\quad
+\xi_t\in H,
+\]
+and the estimator
+\[
+\tilde w_t = \mathcal M_{\mathrm{PETC}}(\phi_t,\xi_t)\in\mathbb R^{|\mathcal P|}.
+\]
+
+\paragraph{(B) Lawfulness Layer (Projection $\to$ Admissible Control).}
+
+The projection
+\[
+w_t^\ast = \Pi_S(\tilde w_t),\quad S\subset\mathbb R^{|\mathcal P|},
+\]
+maps proposals into the safety set $S$ defined in \eqref{eq:safety-set}. Since $S$ is a closed convex subset of a Hilbert space, the metric projection $\Pi_S$ is single-valued and \emph{firmly non-expansive}:
+\begin{equation}
+  \|\Pi_S(x) - \Pi_S(y)\|^2
+  \le \langle \Pi_S(x)-\Pi_S(y),\, x-y\rangle,\quad \forall x,y\in\mathbb R^{|\mathcal P|}.
+\end{equation}
+
+This property is stronger than mere non-expansiveness and is key for stability analyses of projected dynamical systems.
+
+\paragraph{(C) Multiplicity Dynamics Layer (Prime-Fiber Evolution).}
+
+Define the multiplicity Hilbert space
+\[
+\mathcal H_{\mathrm{mult}}
+:= \ell^2(\mathcal P)\otimes\mathcal K,
+\]
+where $\mathcal K$ is the plant state space (often identified with $H$ in the original setup) and $\mathcal P$ is the finite set of active primes. A multiplicity state is
+\[
+\Psi_t = \sum_{p\in\mathcal P} \psi_{t,p}\otimes |p\rangle,\quad \psi_{t,p}\in\mathcal K.
+\]
+
+We lift the operator $U(\omega;w)$ to an operator on $\mathcal H_{\mathrm{mult}}$:
+\begin{equation}
+  \mathbb U(\omega;w)
+  := X(\omega)\otimes I_{\ell^2(\mathcal P)}
+     + \sum_{p\in\mathcal P} w_p\, B_p(\omega)\otimes |p\rangle\langle p|.
+  \label{eq:lifted-U}
+\end{equation}
+
+The multiplicity evolution with disturbance $\eta_t$ is
+\begin{equation}
+  \Psi_{t+1}
+  = \mathbb U(\omega_t; w_t^\ast)\,\Psi_t + \eta_t.
+  \label{eq:multiplicity-evolution}
+\end{equation}
+
+\subsection{Closed Compositional System}
+
+Combining all three layers yields a closed, typed dynamical system:
+\begin{equation}
+  \boxed{
+  \Psi_{t+1}
+  = \mathbb U\bigl(\omega_t; \Pi_S(\mathcal M_{\mathrm{PETC}}(\phi_t,\xi_t))\bigr)\,\Psi_t + \eta_t.
+  }
+  \label{eq:closed-system}
+\end{equation}
+
+Each map has a clear domain and codomain:
+\[
+(\phi_t,\xi_t)
+\overset{\mathcal M_{\mathrm{PETC}}}{\longmapsto}
+\tilde w_t
+\overset{\Pi_S}{\longmapsto}
+w_t^\ast
+\overset{\mathbb U(\omega_t;\cdot)}{\longmapsto}
+\Psi_{t+1}.
+\]
+
+\section{Control as Section over Prime Fibers}
+
+\subsection{Sections over $\mathcal P$}
+
+Instead of treating $w_t^\ast$ as a mere vector, we interpret it as a section of a trivial bundle over the discrete base $\mathcal P$:
+\[
+w_t^\ast \in \Gamma(\mathcal P,\mathbb R)
+\cong \mathbb R^{|\mathcal P|}.
+\]
+
+In measure-theoretic notation, the lifted operator \eqref{eq:lifted-U} can be written as
+\begin{equation}
+  \mathbb U(\omega;w_t^\*)
+  = X(\omega)\otimes I
+  + \int_{\mathcal P} w_t^\*(p)\, B_p(\omega)\otimes dE_p,
+\end{equation}
+where in the discrete case $dE_p = |p\rangle\langle p|$.
+
+\subsection{Geometric Interpretations}
+
+This section viewpoint yields three important interpretations:
+\begin{itemize}
+  \item \textbf{Sparsity as support restriction:}
+  sparsity in $w_t^\ast$ corresponds to restriction of the section's support
+  \[
+  \operatorname{supp}(w_t^\ast) \subset \mathcal P.
+  \]
+  \item \textbf{Transfer as extension of sections:}
+  when moving from one prime set $P_{\text{train}}$ to a disjoint set $P_{\text{test}}$, transfer becomes extension (or redefinition) of sections across bases.
+  \item \textbf{Projection as bundle-constrained clipping:}
+  the projection $\Pi_S$ enforces a global budget $\|X\|+\sum b_p|w_p|\le 1-\varepsilon$, acting on the section but respecting the fiber structure (each prime coordinate is shrunk via a weighted soft-threshold).
+\end{itemize}
+
+This moves the architecture from analogy into a bona fide instance of geometric control theory on a discrete base space.
+
+\section{Lawfulness and Viability}
+
+\subsection{Viability Kernel in Control Space}
+
+We can reinterpret the safety set $S$ as an inner approximation to a \emph{viability kernel} in control space:
+\[
+S = \{w:\ \mathbb U(\cdot;w)\ \text{is a strict contraction on }\mathcal H_{\mathrm{mult}}\}.
+\]
+Under the norm budget construction, we obtain a conservative, explicit description of such an $S$ via \eqref{eq:safety-set}.
+
+\subsection{Projected Dynamical System}
+
+The closed-loop dynamics can be seen as a \emph{projected dynamical system} on $\mathcal H_{\mathrm{mult}}\times S$:
+\begin{equation}
+\begin{cases}
+  \Psi_{t+1} = \mathbb U(\omega_t; w_t^\ast)\,\Psi_t + \eta_t,\\[3pt]
+  w_t^\ast = \Pi_S\bigl(\mathcal M_{\mathrm{PETC}}(\phi_t,\xi_t)\bigr),
+\end{cases}
+\end{equation}
+with $\Pi_S$ firmly non-expansive. This connects the architecture to the classical theory of monotone operators and projected dynamical systems.
+
+\section{Bilinear Structure and Ontology}
+
+\subsection{Distinguishing State, Features, and Control}
+
+We enforce the following ontological separation:
+\begin{itemize}
+  \item $\Psi_t$: multiplicity state in $\mathcal H_{\mathrm{mult}}$.
+  \item $\phi_t$: arithmetic feature field over primes.
+  \item $w_t^\ast$: lawful control section over primes.
+\end{itemize}
+
+It is crucial that $w_p\neq \psi_p$: the control gain $w_p$ acts on the channel $B_p$; it is not a component of the state.
+
+\subsection{Bilinear System Form}
+
+In the original (non-lifted) plant space, the dynamics are control-affine (discrete bilinear):
+\begin{equation}
+  \xi_{t+1}
+  = X(\omega_t)\,\xi_t + \sum_{p\in\mathcal P} w_{t,p}^\ast\, B_p(\omega_t)\,\xi_t.
+\end{equation}
+This mirrors the standard control-affine form
+\[
+\dot x = f(x) + \sum_i u_i\, g_i(x).
+\]
+
+This explains:
+\begin{itemize}
+  \item Why the projection acts on $w_t$, not on $\Psi_t$: we regulate the control gains rather than the state directly.
+  \item Why the prime indexing is a channel structure, not a spectral decomposition of the state.
+\end{itemize}
+
+\section{Lyapunov Perspective (Sketch)}
+
+We provide a brief outline; this can be expanded into a full proof section.
+
+Define a Lyapunov functional, e.g.
+\[
+V(\Psi) = \|\Psi\|^2,
+\]
+on $\mathcal H_{\mathrm{mult}}$. Under the ACE contraction condition, for any fixed admissible $w\in S$ we have
+\[
+\|\mathbb U(\omega;w)\Psi\|
+\le (1-\varepsilon)\,\|\Psi\|.
+\]
+In the disturbance-free case $\eta_t=0$, this implies
+\[
+V(\Psi_{t+1}) - V(\Psi_t)
+\le \bigl((1-\varepsilon)^2 - 1\bigr)V(\Psi_t)
+= -c\,V(\Psi_t),
+\]
+with $c = 1 - (1-\varepsilon)^2 > 0$.
+
+If $w_t^\ast$ evolves in $S$ via any sequence of projections, the same bound applies uniformly:
+\[
+\|\Psi_{t+1}\|
+\le (1-\varepsilon)\|\Psi_t\|.
+\]
+This gives a global, uniform decay rate explicitly controlled by the ACE margin $\varepsilon$.
+
+\section{Multiplicity Transfer Hypothesis}
+
+\subsection{Disturbance Family}
+
+Consider a disturbance of the form
+\[
+d(t) = \sum_{p\in P} a_p \sin(\omega_p t),
+\]
+where $P$ is a finite prime set partitioned into disjoint training and test subsets:
+\[
+P = P_{\text{train}}\cup P_{\text{test}},\quad P_{\text{train}}\cap P_{\text{test}}=\emptyset.
+\]
+
+\subsection{Hypothesis}
+
+Let the arithmetic feature field $\phi_t$ encode local arithmetic structure (e.g.\ normalized eigenvalues and transforms) per prime. Consider two controllers:
+\begin{itemize}
+  \item An \emph{arith} controller with arithmetic features.
+  \item A \emph{non-arith} controller with matched capacity but without arithmetic features.
+\end{itemize}
+
+Define regret on $P_{\text{test}}$ (e.g.\ excess quadratic cost relative to an oracle) for each controller: $\mathrm{Regret}(P_{\text{test}})_{\text{arith}}$ and $\mathrm{Regret}(P_{\text{test}})_{\text{non-arith}}$.
+
+\textbf{Multiplicity Transfer Hypothesis:}
+\[
+\mathrm{Regret}(P_{\text{test}})_{\text{arith}}
+<
+\mathrm{Regret}(P_{\text{test}})_{\text{non-arith}},
+\]
+subject to maintaining positive certificate margin
+\[
+m_t := 1 - \varepsilon - \bigl(\|X\| + \sum_p b_p |w_{t,p}^\ast|\bigr) > 0,
+\quad \forall t.
+\]
+
+The framework is \emph{falsified} in a strong sense if:
+\begin{itemize}
+  \item There is no regret improvement on $P_{\text{test}}$ despite arithmetic features; or
+  \item Any apparent improvement requires negative margins (violating the contraction certificate).
+\end{itemize}
+
+\section{Minimal Code Sketch}
+
+We include a minimal pseudocode-style implementation of the projected control loop in a NumPy-like syntax. This can be translated into your preferred stack.
+
+\subsection*{Weighted $\ell_1$ Projection}
+
+\begin{verbatim}
+import numpy as np
+
+def weighted_l1_project(w_tilde, b, T):
+    """
+    Project w_tilde onto B = {w: sum_i b_i |w_i| <= T}.
+    Returns w_star and dual threshold theta.
+    """
+    b = np.asarray(b, dtype=float)
+    w = np.asarray(w_tilde, dtype=float)
+    if np.dot(b, np.abs(w)) <= T:
+        return w.copy(), 0.0
+
+    # Sort by |w_i| / b_i
+    r = np.abs(w) / b
+    order = np.argsort(-r)
+    b_ord, r_ord = b[order], r[order]
+
+    # Prefix sums
+    csum_b = np.cumsum(b_ord)
+    csum_br = np.cumsum(b_ord * r_ord)
+
+    theta = 0.0
+    for k in range(len(w)):
+        denom = np.sum(b_ord[:k+1]**2)
+        theta_k = (csum_br[k] - T) / denom
+        if theta_k >= 0:
+            theta = theta_k
+            break
+
+    w_star = np.sign(w) * np.maximum(np.abs(w) - theta * b, 0.0)
+    return w_star, theta
+\end{verbatim}
+
+\subsection*{Prime-Fibered Simulator Skeleton}
+
+\begin{verbatim}
+class PrimeMixSim:
+    def __init__(self, n=2, P=32, seed=0):
+        rng = np.random.default_rng(seed)
+        # Near-contractive X
+        U, _ = np.linalg.qr(rng.standard_normal((n, n)))
+        s = 0.9
+        self.X = U * s
+        # Prime channels
+        self.B = [rng.standard_normal((n, n)) / np.sqrt(n) for _ in range(P)]
+        self.b = np.array([np.linalg.norm(Bp, 2) for Bp in self.B])
+        self.n = n
+        self.P = P
+
+    def step(self, xi, w):
+        U = self.X.copy()
+        for p in range(self.P):
+            U = U + w[p] * self.B[p]
+        return U @ xi
+
+def build_features(P, ema_kappa=0.9, seed=1):
+    rng = np.random.default_rng(seed)
+    lam = 2 * (rng.random(P) - 0.5)   # mock lambda_p in [-1,1]
+    ema = np.zeros(P)
+    for p in range(1, P):
+        ema[p] = ema_kappa * ema[p-1] + (1 - ema_kappa) * lam[p]
+    phi = np.vstack([lam, np.abs(lam), ema, np.ones(P)])  # shape (4, P)
+    return phi
+
+def estimator_linear(phi):
+    rng = np.random.default_rng(42)
+    d, P = phi.shape
+    W = rng.standard_normal((P, d)) / np.sqrt(d)
+    return np.diag(W @ phi)  # proposal w_tilde
+
+# Example control loop
+P = 32
+sim = PrimeMixSim(P=P)
+phi = build_features(P)
+w_tilde = estimator_linear(phi)
+T = 0.08  # choose so ||X|| + T <= 1 - eps
+w_star, theta = weighted_l1_project(w_tilde, sim.b, T)
+
+xi = np.ones(sim.n)
+for t in range(100):
+    xi = sim.step(xi, w_star)
+\end{verbatim}
+
+This illustrates the core pattern:
+\[
+\tilde w_t \to w_t^\ast = \Pi_S(\tilde w_t) \to \text{contractive update of }\xi_t.
+\]
+
+\section{Conclusions and Next Steps}
+
+We have:
+\begin{itemize}
+  \item Recast the ACE+PETC architecture as a three-layer, well-typed multiplicity system acting on $\mathcal H_{\mathrm{mult}} = \ell^2(\mathcal P)\otimes\mathcal K$.
+  \item Interpreted control weights as sections over primes, with sparsity, transfer, and lawfulness all expressed geometrically.
+  \item Connected the ACE safety set to a viability kernel and framed the closed-loop system as a projected dynamical system with a contraction certificate.
+  \item Outlined a Lyapunov viewpoint and a precise multiplicity-transfer hypothesis amenable to empirical falsification.
+\end{itemize}
+
+Immediate next steps include:
+\begin{enumerate}
+  \item Formalizing the Lyapunov decay inequality for general sequences $w_t^\ast\in S$ with disturbance, including robustness margins.
+  \item Implementing the multiplicity-transfer benchmark (train vs.\ test prime sets) with arithmetic vs.\ non-arithmetic features and reporting regret under fixed certificate margins.
+  \item Extending the bundle viewpoint to nontrivial base spaces and richer fiber types to explore more general multiplicity structures.
+\end{enumerate}
+
+\appendix
+\section*{Mathematical Appendix}
+\addcontentsline{toc}{section}{Mathematical Appendix}
+
+In this appendix we collect explicit proofs and operator norm bounds used in the development of the prime-indexed multiplicity control architecture. We work throughout in (real or complex) Hilbert spaces with the usual operator norm.
+
+\section{Contraction Certificate and Operator Bounds}
+
+\subsection{Setup and notation}
+
+Let $(H,\langle\cdot,\cdot\rangle)$ be a Hilbert space and let $\mathcal P$ be a finite set of primes (channels). For each admissible parameter $\omega$ we consider
+\[
+U(\omega;w) = X(\omega) + \sum_{p\in\mathcal P} w_p\,B_p(\omega),
+\]
+where:
+\begin{itemize}
+  \item $X(\omega):H\to H$ is a bounded linear operator with
+  \begin{equation}
+    \|X(\omega)\| \le \beta_X < 1
+    \quad\text{for all admissible }\omega,
+    \label{eq:X-bound}
+  \end{equation}
+  and we write $\|X\|:=\sup_\omega \|X(\omega)\|\le\beta_X$.
+  \item $B_p(\omega):H\to H$ are bounded channel operators with
+  \begin{equation}
+    \|B_p(\omega)\| \le b_p,\qquad b_p>0,
+    \quad\text{for all admissible }\omega.
+    \label{eq:Bp-bound}
+  \end{equation}
+\end{itemize}
+
+We define the \emph{safety set} in control space as
+\begin{equation}
+  S
+  :=
+  \biggl\{
+    w\in\mathbb R^{|\mathcal P|}:
+    \|X\| + \sum_{p\in\mathcal P} b_p |w_p| \le 1-\varepsilon,\quad
+    \sum_{p\in\mathcal P} \alpha_p |w_p| \le \tau
+  \biggr\},
+  \label{eq:def-S}
+\end{equation}
+with fixed parameters $\varepsilon\in(0,1)$, weights $\alpha_p\ge 0$, and budget $\tau\ge 0$.
+
+\subsection{Contraction certificate}
+
+\begin{theorem}[Contraction under norm budgets]\label{thm:contraction}
+Assume \eqref{eq:X-bound}--\eqref{eq:Bp-bound} and let $w\in S$. Then for all admissible $\omega$,
+\begin{equation}
+  \|U(\omega;w)\| \le 1-\varepsilon.
+\end{equation}
+Consequently, for the discrete-time system
+\begin{equation}
+  \xi_{t+1} = U(\omega_t;w)\,\xi_t
+  \label{eq:discrete-system-appendix}
+\end{equation}
+with fixed $w\in S$, there exists a unique fixed point $\xi^\ast\in H$ such that
+\[
+\|\xi_t - \xi^\ast\|
+\le (1-\varepsilon)^t \|\xi_0 - \xi^\ast\|,\qquad t=0,1,2,\dots.
+\]
+\end{theorem}
+
+\begin{proof}
+By the triangle inequality and subadditivity of the operator norm,
+\[
+\|U(\omega;w)\|
+\le \|X(\omega)\| + \sum_{p\in\mathcal P} |w_p|\,\|B_p(\omega)\|.
+\]
+Using the uniform bounds \eqref{eq:X-bound} and \eqref{eq:Bp-bound}, we have
+\[
+\|U(\omega;w)\|
+\le \|X\| + \sum_{p\in\mathcal P} b_p |w_p|.
+\]
+If $w\in S$, then by definition
+\[
+\|X\| + \sum_{p\in\mathcal P} b_p |w_p| \le 1 - \varepsilon,
+\]
+so
+\[
+\|U(\omega;w)\| \le 1-\varepsilon
+\]
+for all admissible $\omega$.
+
+For the fixed-$w$ system \eqref{eq:discrete-system-appendix}, the map
+\[
+T(\xi) := U(\omega;w)\,\xi
+\]
+is a strict contraction on $H$ with Lipschitz constant at most $1-\varepsilon$. Hence the Banach fixed-point theorem applies, yielding a unique fixed point $\xi^\ast\in H$ and the exponential convergence bound
+\[
+\|\xi_t - \xi^\ast\|
+\le (1-\varepsilon)^t \|\xi_0 - \xi^\ast\|.
+\]
+\end{proof}
+
+\subsection{Margin and viability interpretation}
+
+Define the \emph{certificate margin}
+\begin{equation}
+  m(w) := 1 - \varepsilon - \Bigl(\|X\| + \sum_{p\in\mathcal P} b_p |w_p|\Bigr).
+  \label{eq:margin-def}
+\end{equation}
+By construction, $w\in S$ implies $m(w)\ge 0$. The bound
+\[
+\|U(\omega;w)\|\le 1-\varepsilon - m(w)
+\]
+makes explicit how slack in the budget shrinks the effective Lipschitz constant.
+
+\section{Metric Projection and Firm Non-Expansiveness}
+
+\subsection{Metric projection onto a closed convex set}
+
+Let $E$ be a Hilbert space and let $C\subset E$ be nonempty, closed, and convex. For $x\in E$, define the metric projection
+\[
+P_C(x) := \arg\min_{z\in C}\|z-x\|.
+\]
+Standard results in convex analysis imply:
+\begin{itemize}
+  \item For each $x\in E$, the minimizer exists and is unique.
+  \item The map $P_C:E\to C$ is non-expansive:
+  \[
+    \|P_C(x)-P_C(y)\| \le \|x-y\|\quad\forall x,y\in E.
+  \]
+\end{itemize}
+
+In our setting, $E = \mathbb R^{|\mathcal P|}$ and $C=S$ given by \eqref{eq:def-S}. We write $\Pi_S := P_S$.
+
+\subsection{Characterization and firm non-expansiveness}
+
+\begin{lemma}[Characterization of $P_C$]\label{lem:projection-characterization}
+Let $x\in E$ and $z=P_C(x)$. Then for all $y\in C$,
+\[
+\langle x - z,\, y - z\rangle \le 0.
+\]
+Conversely, if $z\in C$ satisfies this inequality for all $y\in C$, then $z = P_C(x)$.
+\end{lemma}
+
+\begin{proof}
+See, e.g., standard texts on convex analysis or monotone operator theory. For completeness: the inequality expresses the first-order optimality condition for the convex function $y\mapsto \tfrac12\|y-x\|^2$ over $C$. If $z$ minimizes this function over $C$, any feasible direction $y-z$ cannot decrease it, yielding the stated inner-product condition. Conversely, the condition implies that $z$ is a global minimizer.
+\end{proof}
+
+\begin{theorem}[Firm non-expansiveness of $P_C$]\label{thm:firmly-nonexpansive}
+Let $C\subset E$ be nonempty, closed, and convex, and let $P_C$ be its metric projection. Then for all $x,y\in E$,
+\begin{equation}
+  \|P_C(x) - P_C(y)\|^2
+  \le \langle P_C(x)-P_C(y),\, x-y\rangle.
+  \label{eq:firm-NE}
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+Let $z_x:=P_C(x)$ and $z_y:=P_C(y)$. By Lemma~\ref{lem:projection-characterization} applied to $x$ and $z_x$, taking $y=z_y\in C$,
+\[
+\langle x - z_x,\, z_y - z_x\rangle \le 0
+\quad\Longrightarrow\quad
+\langle x - z_x,\, z_x - z_y\rangle \ge 0.
+\]
+Similarly, applying the lemma to $y$ and $z_y$ with $y=z_x$ gives
+\[
+\langle y - z_y,\, z_x - z_y\rangle \le 0.
+\]
+
+Subtracting these inequalities yields
+\[
+\langle x - z_x - (y - z_y),\, z_x - z_y\rangle \ge 0,
+\]
+so
+\begin{align*}
+\langle x-y,\, z_x - z_y\rangle
+&\ge \langle z_x - z_y,\, z_x - z_y\rangle\\
+&= \|z_x - z_y\|^2.
+\end{align*}
+This is exactly \eqref{eq:firm-NE}.
+\end{proof}
+
+In our notation, with $C=S$ and $P_C=\Pi_S$, we obtain:
+\begin{equation}
+  \|\Pi_S(x) - \Pi_S(y)\|^2
+  \le \langle \Pi_S(x)-\Pi_S(y),\, x-y\rangle,\quad \forall x,y\in\mathbb R^{|\mathcal P|},
+\end{equation}
+which is the firm non-expansiveness property quoted in the main text.
+
+\section{Weighted \texorpdfstring{$\ell_1$}{l1} Projection}
+
+\subsection{Problem statement}
+
+Given weights $b_p>0$ and a budget $T>0$, consider the weighted $\ell_1$ ball
+\[
+B := \left\{w\in\mathbb R^{|\mathcal P|}:\ \sum_{p\in\mathcal P} b_p |w_p| \le T\right\}.
+\]
+For any $\tilde w\in \mathbb R^{|\mathcal P|}$, we want to solve
+\begin{equation}
+  \min_{w\in B} \tfrac12\|w - \tilde w\|^2.
+  \label{eq:l1-projection-problem}
+\end{equation}
+When $\sum_p b_p|\tilde w_p|\le T$ the solution is trivially $w^\ast=\tilde w$. We therefore focus on the case where the budget is active.
+
+\subsection{Lagrangian and KKT conditions}
+
+Introduce a Lagrange multiplier $\theta\ge 0$ for the constraint $\sum b_p|w_p|\le T$. The Lagrangian is
+\[
+\mathcal L(w,\theta) = \tfrac12\|w - \tilde w\|^2 + \theta\Bigl(\sum_{p} b_p |w_p| - T\Bigr).
+\]
+
+The KKT conditions for optimality are:
+\begin{enumerate}[label=(\roman*)]
+  \item Stationarity: for each $p$,
+  \[
+    0 \in \partial_{w_p} \mathcal L(w^\ast,\theta)
+    = w_p^\ast - \tilde w_p + \theta b_p\,\partial |w_p^\ast|.
+  \]
+  \item Complementary slackness: $\theta \Bigl(\sum_p b_p |w_p^\ast| - T\Bigr)=0$.
+  \item Primal feasibility: $\sum_p b_p |w_p^\ast|\le T$.
+  \item Dual feasibility: $\theta\ge 0$.
+\end{enumerate}
+
+\subsection{Soft-threshold solution}
+
+Consider first the case $w_p^\ast\neq 0$. Then $\partial |w_p^\ast| = \{\mathrm{sign}(w_p^\ast)\}$, so stationarity gives
+\[
+w_p^\ast - \tilde w_p + \theta b_p\,\mathrm{sign}(w_p^\ast)=0.
+\]
+Thus
+\[
+w_p^\ast
+= \tilde w_p - \theta b_p\,\mathrm{sign}(w_p^\ast).
+\]
+
+We claim that $\mathrm{sign}(w_p^\ast) = \mathrm{sign}(\tilde w_p)$. If not, then (for instance) $\tilde w_p>0$ but $w_p^\ast<0$, implying
+\[
+w_p^\ast = \tilde w_p - \theta b_p (-1) = \tilde w_p + \theta b_p > 0,
+\]
+a contradiction. Hence
+\[
+w_p^\ast
+= \tilde w_p - \theta b_p\,\mathrm{sign}(\tilde w_p)
+= \mathrm{sign}(\tilde w_p)\bigl(|\tilde w_p| - \theta b_p\bigr).
+\]
+
+For coordinates where $w_p^\ast = 0$, stationarity reduces to
+\[
+0 \in -\tilde w_p + \theta b_p\,\partial|0|,
+\]
+i.e.\ $\tilde w_p \in \theta b_p\,[-1,1]$, or $|\tilde w_p|\le \theta b_p$.
+
+Combining these cases, we obtain the soft-threshold form
+\begin{equation}
+  w_p^\ast(\theta)
+  = \mathrm{sign}(\tilde w_p)\,\max\{|\tilde w_p| - \theta b_p,\,0\}.
+  \label{eq:soft-threshold}
+\end{equation}
+
+\subsection{Choosing \texorpdfstring{$\theta$}{theta}}
+
+Let
+\[
+\varphi(\theta)
+:= \sum_{p\in\mathcal P} b_p |w_p^\ast(\theta)|
+= \sum_{p\in\mathcal P} b_p\,\max\{|\tilde w_p| - \theta b_p,\,0\}.
+\]
+Then $\varphi$ is continuous, strictly decreasing on $[0,\infty)$, with
+\[
+\varphi(0) = \sum_p b_p|\tilde w_p|,\qquad
+\lim_{\theta\to\infty} \varphi(\theta)=0.
+\]
+
+\begin{lemma}
+If $\sum_p b_p|\tilde w_p| > T$, there exists a unique $\theta_\ast>0$ such that
+\[
+\varphi(\theta_\ast)=T.
+\]
+The corresponding $w^\ast(\theta_\ast)$ given by \eqref{eq:soft-threshold} is the unique solution of \eqref{eq:l1-projection-problem}.
+\end{lemma}
+
+\begin{proof}
+By continuity and monotonicity, $\varphi$ maps $[0,\infty)$ onto $(0,\sum_p b_p|\tilde w_p|]$, so by the intermediate value theorem there is a unique $\theta_\ast\ge 0$ with $\varphi(\theta_\ast)=T$. Strict inequality $\sum_p b_p|\tilde w_p|>T$ ensures $\theta_\ast>0$.
+
+The KKT conditions are satisfied by $w^\ast(\theta_\ast)$ with this $\theta_\ast$: stationarity and dual feasibility hold by construction, primal feasibility holds by the definition of $B$, and complementary slackness holds because the constraint is tight ($\varphi(\theta_\ast)=T$). Uniqueness of the metric projection onto a strictly convex objective and convex set implies uniqueness of $w^\ast(\theta_\ast)$.
+\end{proof}
+
+An $O(|\mathcal P|\log|\mathcal P|)$ algorithm arises by sorting the ratios $|\tilde w_p|/b_p$, computing prefix sums, and identifying the active threshold range; we omit the full algorithmic derivation here, as it is standard and follows from the monotonicity of $\varphi$.
+
+\section{Multiplicty Space Lift and Norm Bounds}
+
+\subsection{Lifted operator on $\ell^2(\mathcal P)\otimes\mathcal K$}
+
+Let $\mathcal K$ be a Hilbert space (plant state space) and define
+\[
+\mathcal H_{\mathrm{mult}}
+:= \ell^2(\mathcal P)\otimes\mathcal K.
+\]
+Elements of $\mathcal H_{\mathrm{mult}}$ can be written as
+\[
+\Psi = \sum_{p\in\mathcal P} \psi_p \otimes |p\rangle,\quad \psi_p\in\mathcal K.
+\]
+
+We define the lifted operator
+\[
+\mathbb U(\omega;w)
+:= X(\omega)\otimes I_{\ell^2(\mathcal P)}
+   + \sum_{p\in\mathcal P} w_p\,B_p(\omega)\otimes |p\rangle\langle p|.
+\]
+
+\begin{lemma}[Norm bound for the lifted operator]\label{lem:lifted-norm}
+Under the assumptions \eqref{eq:X-bound}--\eqref{eq:Bp-bound}, for all $w\in\mathbb R^{|\mathcal P|}$ and admissible $\omega$,
+\[
+\|\mathbb U(\omega;w)\|
+\le \|X\| + \sum_{p\in\mathcal P} b_p |w_p|.
+\]
+In particular, if $w\in S$, then
+\[
+\|\mathbb U(\omega;w)\|\le 1 - \varepsilon.
+\]
+\end{lemma}
+
+\begin{proof}
+Let $\Psi\in\mathcal H_{\mathrm{mult}}$ be of unit norm and write
+\[
+\Psi = \sum_{p\in\mathcal P} \psi_p\otimes|p\rangle.
+\]
+Then
+\begin{align*}
+\mathbb U(\omega;w)\Psi
+&= \left(X(\omega)\otimes I\right)\Psi
+   + \sum_{p\in\mathcal P} w_p\, B_p(\omega)\otimes |p\rangle\langle p|\Psi\\
+&= \sum_{p\in\mathcal P} X(\omega)\psi_p\otimes|p\rangle
+   + \sum_{p\in\mathcal P} w_p\, B_p(\omega)\psi_p\otimes|p\rangle\\
+&= \sum_{p\in\mathcal P} \bigl(X(\omega)\psi_p + w_p B_p(\omega)\psi_p\bigr)\otimes|p\rangle.
+\end{align*}
+By the definition of the tensor norm,
+\begin{align*}
+\|\mathbb U(\omega;w)\Psi\|^2
+&= \sum_{p\in\mathcal P} \bigl\|X(\omega)\psi_p + w_p B_p(\omega)\psi_p\bigr\|^2\\
+&\le \sum_p \left(\|X(\omega)\psi_p\| + |w_p|\,\|B_p(\omega)\psi_p\|\right)^2\\
+&\le \sum_p \left(\|X(\omega)\|\,\|\psi_p\| + |w_p|\,\|B_p(\omega)\|\,\|\psi_p\|\right)^2\\
+&\le \sum_p \left(\|X\| + |w_p| b_p\right)^2 \|\psi_p\|^2\\
+&\le \left(\|X\| + \sum_p |w_p| b_p\right)^2 \sum_p \|\psi_p\|^2.
+\end{align*}
+Since $\|\Psi\|^2 = \sum_p \|\psi_p\|^2 = 1$, we obtain
+\[
+\|\mathbb U(\omega;w)\Psi\|
+\le \|X\| + \sum_{p\in\mathcal P} b_p |w_p|.
+\]
+Taking the supremum over unit-norm $\Psi$ yields the claimed operator norm bound. The final statement follows by $w\in S$ as before.
+\end{proof}
+
+\section{Lyapunov Functional and Decay Inequality}
+
+\subsection{Disturbance-free case}
+
+Consider the multiplicity evolution
+\[
+\Psi_{t+1} = \mathbb U(\omega_t;w_t^\ast)\,\Psi_t,
+\]
+with $w_t^\ast\in S$ for all $t$ (e.g.\ each $w_t^\ast$ obtained by projection onto $S$). Define $V:\mathcal H_{\mathrm{mult}}\to\mathbb R_{\ge 0}$ by
+\[
+V(\Psi) := \|\Psi\|^2.
+\]
+
+By Lemma~\ref{lem:lifted-norm}, for each $t$ and admissible $\omega_t$,
+\[
+\|\mathbb U(\omega_t;w_t^\ast)\|
+\le 1-\varepsilon.
+\]
+Hence
+\begin{align*}
+V(\Psi_{t+1})
+&= \|\Psi_{t+1}\|^2
+= \|\mathbb U(\omega_t;w_t^\ast)\Psi_t\|^2\\
+&\le \|\mathbb U(\omega_t;w_t^\ast)\|^2 \,\|\Psi_t\|^2\\
+&\le (1-\varepsilon)^2 V(\Psi_t).
+\end{align*}
+Therefore,
+\begin{equation}
+  V(\Psi_{t+1}) - V(\Psi_t)
+  \le \bigl((1-\varepsilon)^2 - 1\bigr) V(\Psi_t)
+  = -c V(\Psi_t),
+  \quad c := 1-(1-\varepsilon)^2>0.
+\end{equation}
+
+\subsection{With additive disturbance}
+
+If we include an additive disturbance $\eta_t\in\mathcal H_{\mathrm{mult}}$,
+\[
+\Psi_{t+1} = \mathbb U(\omega_t;w_t^\ast)\,\Psi_t + \eta_t,
+\]
+then
+\begin{align*}
+\|\Psi_{t+1}\|
+&\le \|\mathbb U(\omega_t;w_t^\ast)\Psi_t\| + \|\eta_t\|\\
+&\le (1-\varepsilon)\|\Psi_t\| + \|\eta_t\|.
+\end{align*}
+Squaring and applying $(a+b)^2\le (1+\delta)a^2 + (1+1/\delta)b^2$ for any $\delta>0$ yields
+\[
+V(\Psi_{t+1})
+\le (1+\delta)(1-\varepsilon)^2 V(\Psi_t)
+ + (1+1/\delta)\|\eta_t\|^2.
+\]
+This can be used to derive an input-to-state stability (ISS) type bound; we omit the full ISS derivation, as it follows standard lines in discrete-time Lyapunov analysis.
+
+\bigskip
+
+This concludes the mathematical appendix of explicit proofs and operator norm bounds used in the main text.
+
+
+\nocite{*}
+\bibliographystyle{plainnat}
+\bibliography{references}
+\end{document}

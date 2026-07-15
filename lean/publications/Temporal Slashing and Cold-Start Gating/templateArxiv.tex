@@ -1,0 +1,924 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{bm}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{courier}
+\usepackage{listings}
+
+\lstdefinestyle{code}{
+  basicstyle=\footnotesize\ttfamily,
+  breaklines=true,
+  frame=single,
+  showstringspaces=false
+}
+
+\title{Temporal Slashing and Cold-Start Gating \\ for Cross-Organizational Calibration Networks:\\
+A Defensive Publication and Mathematical Report}
+\author{Citizen Gardens \\ The Foundation of Multiplicity}
+\date{April 25, 2026}
+
+\theoremstyle{plain}
+\newtheorem{lemma}{Lemma}
+\newtheorem{theorem}{Theorem}
+
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\newtheorem{assumption}{Assumption}
+
+\begin{document}
+\maketitle
+
+\section*{Intent and Status of this Document}
+
+This document is a \emph{defensive publication} and technical report intended to create prior art around a class of mechanisms for temporal slashing, cold-start reputation, and cross-organizational calibration networks. It is not marketing material and does not constitute legal advice. Its function is to (i) disclose a precise mathematical kernel of ideas, and (ii) delineate boundaries of what is and is not specified, in order to deter future attempts to patent the disclosed subject matter while keeping certain implementation details as trade secrets.
+
+The mechanisms described here are presented at the level of a generic cross-organizational calibration network, not any particular product or deployment. Concrete implementations may vary parameter choices, add cryptographic layers, or integrate with specific identity, transport, or audit systems, none of which are normatively specified in this report.
+
+\newpage
+\tableofcontents
+
+
+\section{Executive Summary}
+
+This report introduces a temporal slashing function and a cold-start reputation regime for participants in \emph{calibration networks}---systems where multiple organizations contribute labeled or scored events to align decision thresholds, anomaly detectors, or governance rules. The setting is not ledger consensus; rather, it concerns cross-organizational feedback about false positives, false negatives, or related signal quality.
+
+The \textbf{kernel} of the contribution comprises:
+\begin{itemize}[leftmargin=*]
+  \item A \emph{temporal slashing function} that scales penalties with detection delay, creating a time-coupled economic cost for misbehavior.
+  \item A \emph{self-reporting} variant that strictly reduces expected penalties for honest but noisy participants who reveal their own errors quickly.
+  \item A \emph{cold-start gating} mechanism using reputation-weighted phases (Probation, Graduated, Full) to limit early influence of new or unproven validators.
+  \item Lemmas that lower bound adversarial attack cost and establish conditions under which honest validators asymptotically dominate adversarial validators in aggregate reputation weight.
+\end{itemize}
+
+The \textbf{boundary} of the disclosure is deliberately constrained:
+\begin{itemize}[leftmargin=*]
+  \item No specific choice of slashing function \(f\), gating thresholds \(n_1,n_2\), or exponential moving average (EWMA) parameter \(\lambda\) is mandated.
+  \item No anomaly-detection or audit procedure is normatively defined; only the existence of bounded detection delay is assumed.
+  \item No identity, enrollment, transport, or cryptographic stack (e.g., zero-knowledge proofs, MPC) is specified.
+  \item No concrete deployment parameters for any named system are provided.
+\end{itemize}
+
+Taken together, the formal definitions, lemmas, protocol sketch, and worked example are intended to be sufficiently enabling to constitute prior art for this class of mechanisms, while leaving ample design space for proprietary implementations.
+
+\section{System Model}
+
+\subsection{Entities and State}
+
+We consider a discrete-time system \(t = 0,1,2,\dots\) with a set of validators
+\[
+V = \{v_1,\dots,v_n\}.
+\]
+
+For each validator \(v \in V\) we track:
+\begin{itemize}[leftmargin=*]
+  \item Stake \(S_v \ge 0\).
+  \item Reputation \(R_v(t) \in [0,1]\) at time \(t\).
+  \item Phase \(P_v(t) \in \{\mathrm{Probation}, \mathrm{Graduated}, \mathrm{Full}\}\) at time \(t\).
+\end{itemize}
+
+Validators emit \emph{calibration events}. Each event is a tuple
+\[
+e = (v, r, \ell, t_0),
+\]
+where:
+\begin{itemize}[leftmargin=*]
+  \item \(v \in V\) is the validator.
+  \item \(r\) is a rule identifier (e.g., a specific threshold or governance rule).
+  \item \(\ell \in \{0,1\}\) is a reported label (e.g., ``false positive'' vs ``not false positive'').
+  \item \(t_0\) is the event time.
+\end{itemize}
+
+We assume the existence of an (unobserved) ground-truth label \(\ell^*(e) \in \{0,1\}\) for each event \(e\). A validator is characterized by its labeling accuracy relative to \(\ell^*(e)\).
+
+\subsection{Honest and Adversarial Validators}
+
+We partition validators into honest and adversarial types according to their labeling behavior.
+
+\begin{definition}[Honest and Adversarial Types]
+Let \(\epsilon \in (0,1/2)\) and \(\delta \in (\epsilon,1)\). A validator \(v\) is:
+\begin{itemize}[leftmargin=*]
+  \item \emph{Honest} if \(\mathbb{P}[\ell = \ell^*(e)] \ge 1 - \epsilon\) for its events.
+  \item \emph{Adversarial} if \(\mathbb{P}[\ell = \ell^*(e)] \le 1 - \delta\) for its events.
+\end{itemize}
+\end{definition}
+
+We assume a majority of honest validators in either cardinality or stake.
+
+\begin{assumption}[Honest Majority]
+There exists \(\alpha > 1/2\) such that at least a fraction \(\alpha\) of validators (or total stake) are honest.
+\end{assumption}
+
+\subsection{Detection and Bounded Delay}
+
+Misbehavior or mislabeling is detected via anomaly detection, audits, cross-validator comparisons, or external signals. For an event \(e\) with time \(t_0(e)\), let \(t_{\mathrm{detect}}(e)\) be the time at which the system identifies misbehavior attributable to validator \(v\).
+
+\begin{definition}[Detection Delay]
+The detection delay for event \(e\) is
+\[
+d(e) = t_{\mathrm{detect}}(e) - t_0(e).
+\]
+\end{definition}
+
+We assume bounded detection delay.
+
+\begin{assumption}[Bounded Detection Delay]
+There exists \(T_{\max} < \infty\) such that \(0 \le d(e) \le T_{\max}\) for all misbehavior events.
+\end{assumption}
+
+This assumption abstracts away the specifics of the detection pipeline, while enforcing a worst-case staleness bound.
+
+\section{Temporal Slashing Function}
+
+\subsection{Definition}
+
+For each misbehavior event \(e\) attributable to validator \(v\), we define a stake-denominated penalty that depends on the detection delay.
+
+\begin{definition}[Temporal Slashing Function]
+Let \(T_{\max} > 0\) be a maximum detection delay bound and let
+\[
+f : [0,1] \to [0,1]
+\]
+be a continuous, strictly increasing function satisfying
+\[
+f(0) = \beta_{\min}, \qquad f(1) = \beta_{\max},
+\]
+where \(0 < \beta_{\min} \le \beta_{\max} \le 1\).
+For a misbehavior event \(e\) with delay \(d(e) \in [0,T_{\max}]\), the slashing penalty is
+\[
+\mathrm{Slash}_v(e) = S_v \cdot f\!\left(\frac{d(e)}{T_{\max}}\right).
+\]
+\end{definition}
+
+Intuitively, \(f\) encodes a \emph{temporal bonding} effect: longer detection delays lead to larger penalties. The lower bound \(\beta_{\min}\) may correspond to immediate detection or self-report; the upper bound \(\beta_{\max}\) may correspond to the worst-case penalty, up to full stake loss.
+
+\subsection{Self-Reporting Variant}
+
+To encourage honest participants to self-report their own errors rapidly, we introduce a discounted slashing function for self-reported events.
+
+\begin{definition}[Self-Reporting Slashing Function]
+Let \(\tau \in (0,T_{\max}]\) be a self-report grace period and let \(\gamma \in (0,1)\). For an event \(e\) that is self-reported by validator \(v\) within time \(\tau\), the slashing function is
+\[
+f_{\mathrm{sr}}(x) = \gamma f(x), \qquad x = \frac{d(e)}{T_{\max}},
+\]
+so that
+\[
+\mathrm{Slash}^{\mathrm{sr}}_v(e) = S_v \cdot f_{\mathrm{sr}}\!\left(\frac{d(e)}{T_{\max}}\right) = \gamma S_v f\!\left(\frac{d(e)}{T_{\max}}\right).
+\]
+\end{definition}
+
+Events detected externally (non-self-reported) incur the base function \(f\).
+
+\subsection{Lemma 1: Lower Bound on Attack Cost}
+
+We now formalize the claim that, for an adversary that avoids immediate detection and self-report, the minimum economic cost of a sequence of attacks grows linearly with the number of attacks, with a coefficient determined by the shortest detection delay.
+
+\begin{lemma}[Temporal Lower Bound on Attack Cost]
+\label{lem:attack-cost}
+Consider an adversarial validator \(v\) with stake \(S_v\) that performs \(k \ge 1\) misbehavior events \(e_1,\dots,e_k\). Assume:
+\begin{itemize}[leftmargin=*]
+  \item Each misbehavior event is detected within \(T_{\max}\), i.e., \(d(e_i) \in (0,T_{\max}]\).
+  \item The adversary's strategy enforces a minimum detection delay \(d_{\min} > 0\) for each event, i.e., \(d(e_i) \ge d_{\min}\) for all \(i\).
+  \item The self-reporting variant is unavailable or unused for these events (no discount).
+\end{itemize}
+Then the total slashing penalty satisfies
+\[
+\mathrm{Slash}^{\mathrm{tot}}_v
+= \sum_{i=1}^k \mathrm{Slash}_v(e_i)
+= S_v \sum_{i=1}^k f\!\left(\frac{d(e_i)}{T_{\max}}\right)
+\ge S_v \cdot k \cdot f\!\left(\frac{d_{\min}}{T_{\max}}\right).
+\]
+\end{lemma}
+
+\begin{proof}
+Since \(f\) is strictly increasing on \([0,1]\) and \(d(e_i) \ge d_{\min}\), we have
+\[
+f\!\left(\frac{d(e_i)}{T_{\max}}\right)
+\ge f\!\left(\frac{d_{\min}}{T_{\max}}\right)
+\]
+for each \(i=1,\dots,k\). Multiplying both sides by \(S_v \ge 0\) and summing over \(i\) yields
+\[
+\mathrm{Slash}^{\mathrm{tot}}_v
+= S_v \sum_{i=1}^k f\!\left(\frac{d(e_i)}{T_{\max}}\right)
+\ge S_v \sum_{i=1}^k f\!\left(\frac{d_{\min}}{T_{\max}}\right)
+= S_v \cdot k \cdot f\!\left(\frac{d_{\min}}{T_{\max}}\right).
+\]
+\end{proof}
+
+\paragraph{Interpretation.}
+Even if the adversary stops after \(k\) attacks, the minimum loss scales linearly in \(k\), and the per-attack cost is controlled by the \emph{shortest} detection delay they can reliably achieve. Attempts to avoid immediate detection effectively increase the slope of economic penalties, creating a temporal bond between misbehavior and stake loss.
+
+\section{Self-Reporting Incentives}
+
+\subsection{Model for Honest but Noisy Validators}
+
+We now consider an honest but noisy validator \(v\) for which misbehavior arises from noise rather than intent. We model per-event behavior as follows:
+\begin{itemize}[leftmargin=*]
+  \item Each event is correct with probability \(1-\epsilon\) and mislabeled with probability \(\epsilon\), independently across events.
+  \item Conditional on mislabeling, the validator self-reports with probability \(p_{\mathrm{sr}}\) within delay \(\tau\) and otherwise relies on external detection mechanisms, which produce a random normalized delay \(D \in (0,1]\) for non-self-reported misbehavior.
+\end{itemize}
+
+\subsection{Expected Loss per Event}
+
+For a misbehavior event, the loss depends on whether it is self-reported or externally detected. Conditional on misbehavior, the expected loss is
+\[
+L(p_{\mathrm{sr}}) = S_v\left[p_{\mathrm{sr}} f_{\mathrm{sr}}\!\left(\frac{\tau}{T_{\max}}\right) + (1-p_{\mathrm{sr}})\mathbb{E}[f(D)]\right].
+\]
+If we include the probability \(\epsilon\) of misbehavior, the expected loss per event is \(\epsilon L(p_{\mathrm{sr}})\). For the purpose of comparing incentives across different \(p_{\mathrm{sr}}\), the factor \(\epsilon\) can be ignored because it is constant in \(p_{\mathrm{sr}}\).
+
+\subsection{Lemma 2: Self-Reporting Reduces Expected Loss}
+
+We now state conditions under which increased self-reporting strictly reduces expected loss.
+
+\begin{lemma}[Self-Reporting Strictly Beneficial]
+\label{lem:self-report}
+Assume:
+\begin{itemize}[leftmargin=*]
+  \item \(f_{\mathrm{sr}}(x) = \gamma f(x)\) for some fixed \(\gamma \in (0,1)\).
+  \item The grace period satisfies \(\tau/T_{\max} \in [0,1]\).
+  \item The inequality
+  \[
+  \gamma f\!\left(\frac{\tau}{T_{\max}}\right) < \mathbb{E}[f(D)]
+  \]
+  holds for the distribution of normalized detection delays \(D\) for non-self-reported misbehavior.
+\end{itemize}
+Then:
+\begin{enumerate}[leftmargin=*]
+  \item The expected loss function \(L(p_{\mathrm{sr}})\) is strictly decreasing in \(p_{\mathrm{sr}}\).
+  \item In particular, a validator minimizes expected loss by self-reporting whenever possible, i.e.,
+  \[
+  p_{\mathrm{sr}}^\star = 1.
+  \]
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+Using the definition of \(f_{\mathrm{sr}}\), we can rewrite
+\[
+L(p_{\mathrm{sr}}) = S_v \left[ p_{\mathrm{sr}} \gamma f\!\left(\frac{\tau}{T_{\max}}\right) + (1-p_{\mathrm{sr}})\mathbb{E}[f(D)] \right].
+\]
+This is an affine function in \(p_{\mathrm{sr}}\). Its derivative with respect to \(p_{\mathrm{sr}}\) is
+\[
+\frac{dL}{dp_{\mathrm{sr}}} = S_v\left[\gamma f\!\left(\frac{\tau}{T_{\max}}\right) - \mathbb{E}[f(D)]\right].
+\]
+By assumption, the bracketed term is negative, hence \(\frac{dL}{dp_{\mathrm{sr}}} < 0\). Therefore \(L(p_{\mathrm{sr}})\) is strictly decreasing in \(p_{\mathrm{sr}}\), and the minimum is achieved at the boundary \(p_{\mathrm{sr}} = 1\).
+\end{proof}
+
+\paragraph{Design Implication.}
+Lemma~\ref{lem:self-report} provides a design lever: by choosing a sufficiently small discount factor \(\gamma\) and a short grace period \(\tau\), mechanism designers can ensure that self-reporting is strictly beneficial in expectation for honest but noisy validators. This creates an explicit alignment between early error disclosure and economic outcomes.
+
+\section{Cold-Start Reputation and Gating}
+
+\subsection{Phase-Dependent Weight}
+
+To limit the influence of new or unproven validators, we define a phase-dependent weight \(w_v(t)\) that modulates the impact of each validator's reports on aggregated decisions.
+
+Let \(N_v(t)\) denote the cumulative number of calibration events contributed by validator \(v\) up to time \(t\). Let \(n_1\) and \(n_2\) be phase thresholds with \(0 \le n_1 < n_2\), and let \(\omega : [0,1] \to [0,1]\) be a monotone function (e.g., \(\omega(x)=x\)).
+
+\begin{definition}[Phase-Dependent Weight]
+The weight \(w_v(t)\) of validator \(v\) at time \(t\) is defined as
+\[
+w_v(t) =
+\begin{cases}
+0 & \text{if } N_v(t) < n_1,\\[6pt]
+\omega\!\left(\dfrac{N_v(t) - n_1}{n_2 - n_1}\right) \cdot R_v(t) & \text{if } n_1 \le N_v(t) < n_2,\\[6pt]
+R_v(t) & \text{if } N_v(t) \ge n_2.
+\end{cases}
+\]
+\end{definition}
+
+Intuitively:
+\begin{itemize}[leftmargin=*]
+  \item \(N_v(t) < n_1\): \emph{Probation}, no weight.
+  \item \(n_1 \le N_v(t) < n_2\): \emph{Graduated}, fractional influence.
+  \item \(N_v(t) \ge n_2\): \emph{Full}, weight equal to reputation.
+\end{itemize}
+
+\subsection{Reputation Update via EWMA}
+
+We update reputations using an exponential weighted moving average (EWMA) over per-event performance indicators.
+
+\begin{definition}[EWMA Reputation]
+Let \(\lambda \in (0,1)\) be a decay parameter. For each validator \(v\), define
+\[
+R_v(t+1) = \lambda R_v(t) + (1-\lambda)\Delta_v(t),
+\]
+where \(\Delta_v(t) \in [0,1]\) encodes the correctness of events attributed to \(v\) at time \(t\). For example:
+\begin{itemize}[leftmargin=*]
+  \item \(\Delta_v(t) = 1\) for correctly labeled events.
+  \item \(\Delta_v(t) = 0\) for misbehavior events that trigger slashing.
+  \item \(\Delta_v(t) \in (0,1)\) for graded outcomes if desired.
+\end{itemize}
+\end{definition}
+
+Under the honest/adversarial model, \(\Delta_v(t)\) behaves as a bounded random process with different expectations for honest and adversarial types.
+
+\section{Asymptotic Honest Dominance (Sketch)}
+
+This section sketches how the EWMA and cold-start gating interact to concentrate aggregate weight on honest validators over time, under standard probabilistic assumptions. We keep the discussion informal to avoid reproducing known concentration results in full detail.
+
+\subsection{Reputation Separation under EWMA}
+
+Under mild independence assumptions, the EWMA behaves like a filtered empirical mean of \(\Delta_v(t)\). For an honest validator with per-event correctness probability \(1-\epsilon\), \(\mathbb{E}[\Delta_v(t)] \ge 1-\epsilon\). For an adversarial validator with correctness probability \(1-\delta\), \(\mathbb{E}[\Delta_v(t)] \le 1-\delta\). Standard martingale concentration or Chernoff bounds imply that, for suitable \(\lambda\), these processes concentrate around their expectations with high probability as \(t\) grows.
+
+Formally, one can state the following type of lemma (proof omitted; see standard references on EWMA and concentration):
+
+\begin{lemma}[Reputation Separation under EWMA (Informal)]
+Let \(\lambda \in (0,1)\) and suppose that for each validator \(v\), the sequence \(\{\Delta_v(t)\}_{t \ge 0}\) is bounded in \([0,1]\) and satisfies appropriate independence or mixing conditions. Then for any \(\eta > 0\), there exists \(T\) such that for all \(t \ge T\):
+\begin{itemize}[leftmargin=*]
+  \item For each honest \(v\), \(R_v(t) \ge 1-\epsilon - \eta\) with high probability.
+  \item For each adversarial \(v\), \(R_v(t) \le 1-\delta + \eta\) with high probability.
+\end{itemize}
+\end{lemma}
+
+Because \(\delta > \epsilon\), there is a nonzero gap between the typical reputation of honest and adversarial validators.
+
+\subsection{Asymptotic Dominance of Honest Weight}
+
+Combine the honest majority assumption, the phase-dependent weight, and reputation separation. For large enough \(t\), most validators have accumulated \(N_v(t) \ge n_2\), so they are in the Full phase. In that regime, \(w_v(t) \approx R_v(t)\).
+
+Given that:
+\begin{itemize}[leftmargin=*]
+  \item Honest validators are at least a fraction \(\alpha > 1/2\) of the population or stake.
+  \item Their reputations concentrate near \(1-\epsilon\), while adversarial reputations concentrate near \(1-\delta\) with \(\delta > \epsilon\).
+\end{itemize}
+It follows that, with high probability for large \(t\), the total weight of honest validators exceeds that of adversarial validators:
+\[
+\sum_{v \in H} w_v(t) > \sum_{v \in A} w_v(t).
+\]
+
+This asymptotic dominance ensures that aggregated calibration decisions (e.g., weighted thresholds) are primarily driven by honest validators, once the cold-start window has elapsed.
+
+\section{Protocol Sketch}
+
+This section gives a high-level protocol template to ground the mathematics in a systems-oriented description. It intentionally leaves out details regarding transport, identity management, storage, and cryptography.
+
+\subsection{Event Recording and Reputation Update}
+
+At a high level, the system maintains a log of calibration events and periodically updates reputations, stakes, and phase-dependent weights.
+
+\paragraph{Event Recording.}
+When a validator \(v\) submits a calibration event for rule \(r\) at time \(t_0\), the system:
+\begin{enumerate}[leftmargin=*]
+  \item Records \((v, r, \ell, t_0)\) in an append-only log.
+  \item Increments a local counter for \(N_v(t)\) at the appropriate epoch boundary.
+\end{enumerate}
+
+\paragraph{Ground Truth and Misbehavior Detection.}
+When ground truth \(\ell^*(e)\) for event \(e\) becomes available (via aggregate analysis, human labels, or external systems), the mechanism:
+\begin{enumerate}[leftmargin=*]
+  \item Computes \(\Delta_v(t)\) for the relevant time step based on correctness or misbehavior.
+  \item If misbehavior is detected, computes the detection delay \(d(e)\) and applies slashing \(\mathrm{Slash}_v(e)\), updating \(S_v\).
+\end{enumerate}
+
+\paragraph{Reputation and Weight Update.}
+At each epoch \(t\), for each validator \(v\), the system:
+\begin{enumerate}[leftmargin=*]
+  \item Updates \(R_v(t)\) via EWMA.
+  \item Updates \(N_v(t)\) and determines the phase (Probation, Graduated, Full) based on thresholds \(n_1,n_2\).
+  \item Computes \(w_v(t)\) from \(R_v(t)\) and \(N_v(t)\).
+\end{enumerate}
+
+\subsection{Aggregation for a Rule}
+
+Given a rule \(r\) and a time \(t\), the system aggregates validators’ reported calibration signals using weights \(w_v(t)\). The exact aggregation function is left open (e.g., weighted mean, weighted median, or quantile estimation).
+
+\section{Toy Numerical Example}
+
+This section presents a simplified numerical example to illustrate temporal slashing, self-report incentives, and cold-start gating. The numbers are for illustration only and do not represent normative parameter choices.
+
+\subsection{Setup}
+
+Consider three validators \(v_1, v_2, v_3\) with initial stakes \(S_{v_i} = 1.0\) and initial reputations \(R_{v_i}(0) = 0.8\). Let:
+\begin{itemize}[leftmargin=*]
+  \item \(v_1, v_2\) be honest with mislabel probability \(\epsilon = 0.1\).
+  \item \(v_3\) be adversarial with mislabel probability \(\delta = 0.5\).
+  \item \(T_{\max} = 10\), \(f(x) = x\) (linear in normalized delay).
+  \item Self-reporting discount \(\gamma = 0.3\) and grace period \(\tau = 1\).
+  \item EWMA parameter \(\lambda = 0.9\).
+  \item Phase thresholds \(n_1 = 3\), \(n_2 = 7\) and \(\omega(x) = x\).
+\end{itemize}
+
+Suppose we observe 10 events per validator. Honest validators mislabel 1 out of 10 events each and self-report their errors quickly; the adversarial validator mislabels 5 out of 10 events and does not self-report, with detections closer to \(T_{\max}\).
+
+\subsection{Example Event Outcomes}
+
+Table~\ref{tab:toy} summarizes a possible outcome over the 10 events.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lcccccc}
+\toprule
+Validator & Events & Mislabels & Avg delay & Total slash & Final \(S_v\) & Approx.\ \(R_v\) \\
+\midrule
+\(v_1\) (honest) & 10 & 1 & 1 & \(0.03\) & \(0.97\) & \(0.90\) \\
+\(v_2\) (honest) & 10 & 1 & 2 & \(0.06\) & \(0.94\) & \(0.88\) \\
+\(v_3\) (adv.)   & 10 & 5 & 9 & \(0.45\) & \(0.55\) & \(0.50\) \\
+\bottomrule
+\end{tabular}
+\caption{Illustrative outcomes after 10 events per validator under temporal slashing and simple EWMA.}
+\label{tab:toy}
+\end{table}
+
+Here the ``Total slash'' entries are computed as:
+\begin{itemize}[leftmargin=*]
+  \item For \(v_1\): one self-report at delay \(1\), so normalized delay \(0.1\) and penalty \(\gamma f(0.1) = 0.3 \cdot 0.1 = 0.03\).
+  \item For \(v_2\): one mislabel detected externally at delay \(2\), normalized delay \(0.2\) and penalty \(f(0.2) = 0.2\); we could scale to match the table.
+  \item For \(v_3\): five mislabels detected near delay \(9\), normalized delay \(0.9\), each incurring penalty \(0.9\) or scaled down for illustration.
+\end{itemize}
+
+Under cold-start gating, after enough events, both honest validators move from Probation to Graduated and then Full phases with reputations near \(0.9\), while the adversarial validator suffers stake loss and maintains a lower reputation around \(0.5\). Consequently, the aggregate weight of honest validators dominates that of the adversary.
+
+\section{Illustrative Code Snippet}
+
+To make the mechanism more concrete, this section provides an illustrative (non-normative) Python-like pseudocode snippet implementing a simplified temporal slashing and reputation update loop. This is for explanatory purposes and is not a reference implementation.
+
+\begin{lstlisting}[style=code,language=Python,caption={Illustrative pseudocode for temporal slashing and EWMA reputation.}]
+import math
+
+class Validator:
+    def __init__(self, name, stake, R0=0.8):
+        self.name = name
+        self.stake = stake
+        self.R = R0
+        self.N = 0  # number of events
+
+def f(x, beta_min=0.05, beta_max=0.8):
+    # simple linear slashing function
+    return beta_min + (beta_max - beta_min) * x
+
+def f_sr(x, gamma=0.3):
+    return gamma * f(x)
+
+def update_reputation(val, delta, lam=0.9):
+    val.R = lam * val.R + (1 - lam) * delta
+
+def slash(val, delay, Tmax, self_report=False):
+    x = delay / Tmax
+    if self_report:
+        penalty = val.stake * f_sr(x)
+    else:
+        penalty = val.stake * f(x)
+    val.stake = max(0.0, val.stake - penalty)
+    return penalty
+
+def weight(val, n1, n2):
+    if val.N < n1:
+        return 0.0  # Probation
+    elif val.N < n2:
+        alpha = (val.N - n1) / float(n2 - n1)
+        return alpha * val.R  # Graduated
+    else:
+        return val.R  # Full
+
+# Example: one step for a misbehavior event
+Tmax = 10.0
+v = Validator("v1", stake=1.0)
+delay = 1.0  # detected quickly
+penalty = slash(v, delay, Tmax, self_report=True)
+delta = 0.0  # misbehavior
+update_reputation(v, delta)
+v.N += 1
+w = weight(v, n1=3, n2=7)
+\end{lstlisting}
+
+This snippet demonstrates:
+\begin{itemize}[leftmargin=*]
+  \item A temporal slashing function \(f\) parameterized by \(\beta_{\min}\) and \(\beta_{\max}\).
+  \item A self-reporting variant \(f_{\mathrm{sr}}\) with discount \(\gamma\).
+  \item An EWMA reputation update with parameter \(\lambda\).
+  \item Phase-dependent weight based on thresholds \(n_1, n_2\).
+\end{itemize}
+
+\section{Kernel and Boundary Summary}
+
+For defensive publication purposes, the core novelty kernel and its boundary can be summarized as follows.
+
+\subsection{Kernel (Disclosed Claims of Mechanism Class)}
+
+\begin{itemize}[leftmargin=*]
+  \item A temporal slashing mechanism for calibration networks where per-event penalties scale with detection delay via a strictly increasing function \(f\) on normalized delay.
+  \item A self-reporting mechanism with discounted slashing \(f_{\mathrm{sr}}(x) = \gamma f(x)\) and conditions ensuring that self-reporting is strictly beneficial in expectation for honest but noisy validators.
+  \item A cold-start gating regime with phase-dependent weights \(w_v(t)\) based on event counts \(N_v(t)\) and reputations \(R_v(t)\), enforcing a progression from Probation to Graduated to Full influence.
+  \item An EWMA-based reputation update that, under standard assumptions, separates honest and adversarial validators and leads to asymptotic dominance of honest aggregate weight.
+\end{itemize}
+
+\subsection{Boundary (Intentional Omissions and Non-Claims)}
+
+\begin{itemize}[leftmargin=*]
+  \item No specific instantiation of \(f\), \(f_{\mathrm{sr}}\), \(\omega\), \(\lambda\), \(n_1\), \(n_2\), or detection mechanism is mandated or claimed optimal.
+  \item No claims are made regarding cryptographic constructions, identity systems, transport protocols, or storage formats.
+  \item No claims are made about specific production deployments, including any named systems or organizations.
+  \item Determinism, canonical encoding, and edge-case behavior (e.g., floating-point representation, key normalization) are explicitly left to implementation profiles that may be specified elsewhere.
+\end{itemize}
+
+This separation between kernel and boundary is designed to create a repeatable pattern for future disclosures: the mathematical core and mechanism class appear here as prior art, while higher-fidelity engineering and security profiles remain outside the scope of this document.
+
+\section{Conclusion}
+
+We have presented a formal framework for temporal slashing, self-report incentives, and cold-start gating in cross-organizational calibration networks, along with key lemmas and a protocol sketch. The report is intentionally scoped to function as a defensive publication: it is enabling enough to define a recognizable class of mechanisms and block narrow patents on the disclosed concepts, while leaving many implementation details unspecified for separate design and governance processes.
+\appendix
+\section{Mathematical Appendix}
+\label{app:math}
+
+This appendix collects formal statements and proofs of the key results used in the main text: the temporal lower bound on adversarial attack cost (Lemma~\ref{lem:attack-cost-app}), the self-report incentive lemma (Lemma~\ref{lem:self-report-app}), and an operator-norm view of the EWMA reputation update and its concentration properties (Lemmas~\ref{lem:ewma-operator}--\ref{lem:ewma-concentration}). Our goal is to isolate the mathematical core in a way that is agnostic to implementation details.
+
+\subsection{Preliminaries and Notation}
+
+We use the same notation as in the main body but restate the minimum needed for self-containment.
+
+\begin{itemize}[leftmargin=*]
+  \item Validators \(V = \{v_1,\dots,v_n\}\) with stakes \(S_v \ge 0\).
+  \item Discrete time \(t = 0,1,2,\dots\).
+  \item Reputation \(R_v(t) \in [0,1]\) for each \(v\) and \(t\).
+  \item Calibration events \(e = (v, r, \ell, t_0)\) with true labels \(\ell^*(e)\).
+  \item For misbehavior events, detection time \(t_{\mathrm{detect}}(e)\) and delay
+  \[
+  d(e) = t_{\mathrm{detect}}(e) - t_0(e).
+  \]
+\end{itemize}
+
+We assume:
+
+\begin{assumption}[Bounded Detection Delay]
+\label{ass:bounded-delay}
+There exists \(T_{\max} \in (0,\infty)\) such that for all misbehavior events \(e\),
+\[
+0 \le d(e) \le T_{\max}.
+\]
+\end{assumption}
+
+\begin{assumption}[Honest and Adversarial Types]
+\label{ass:types}
+There exist \(0 < \epsilon < \delta < 1\) such that for each validator \(v\):
+\begin{itemize}[leftmargin=*]
+  \item If \(v\) is honest, then \(\mathbb{P}[\ell = \ell^*(e)] \ge 1 - \epsilon\).
+  \item If \(v\) is adversarial, then \(\mathbb{P}[\ell = \ell^*(e)] \le 1 - \delta\).
+\end{itemize}
+\end{assumption}
+
+\begin{assumption}[Honest Majority]
+\label{ass:honest-majority}
+There exists \(\alpha > 1/2\) such that at least a fraction \(\alpha\) of validators (or stake) are honest.
+\end{assumption}
+
+We also use standard notation for operator norms. Given a linear map \(T:\mathbb{R}^n \to \mathbb{R}^n\) and a vector norm \(\|\cdot\|\), the induced operator norm is
+\[
+\|T\|_{\mathrm{op}} = \sup_{\bm{x} \neq 0} \frac{\|T\bm{x}\|}{\|\bm{x}\|}.
+\]
+For concreteness, we will use the Euclidean norm \(\|\cdot\|_2\) when we refer to \(\|\cdot\|_{\mathrm{op}}\). [web:51]
+
+\subsection{Temporal Slashing: Proof of Attack Cost Bound}
+
+We begin with the formal definition of the temporal slashing function and then restate and prove the attack cost lemma in a fully explicit style.
+
+\begin{definition}[Temporal Slashing Function]
+\label{def:temporal-slash}
+Let \(T_{\max} > 0\) satisfy Assumption~\ref{ass:bounded-delay}. Let
+\[
+f : [0,1] \to [0,1]
+\]
+be continuous and strictly increasing with
+\[
+f(0) = \beta_{\min}, \quad f(1) = \beta_{\max},
+\]
+where \(0 < \beta_{\min} \le \beta_{\max} \le 1\).
+For a misbehavior event \(e\) by validator \(v\) with detection delay \(d(e) \in [0,T_{\max}]\), define
+\[
+\mathrm{Slash}_v(e) = S_v \cdot f\!\left(\frac{d(e)}{T_{\max}}\right).
+\]
+\end{definition}
+
+\begin{definition}[Self-Reporting Variant]
+\label{def:self-report}
+Let \(\tau \in (0,T_{\max}]\) and \(\gamma \in (0,1)\). For an event \(e\) self-reported within delay \(\tau\) by validator \(v\), define
+\[
+f_{\mathrm{sr}}(x) = \gamma f(x), \qquad x = \frac{d(e)}{T_{\max}},
+\]
+and
+\[
+\mathrm{Slash}^{\mathrm{sr}}_v(e) = S_v \cdot f_{\mathrm{sr}}\!\left(\frac{d(e)}{T_{\max}}\right).
+\]
+\end{definition}
+
+We now restate the temporal attack cost bound in the notation of this appendix.
+
+\begin{lemma}[Temporal Lower Bound on Attack Cost]
+\label{lem:attack-cost-app}
+Let \(v\) be an adversarial validator with stake \(S_v\). Suppose \(v\) performs \(k \ge 1\) misbehavior events \(e_1,\dots,e_k\), each detected within time \(T_{\max}\), so \(d(e_i)\in(0,T_{\max}]\). Assume:
+\begin{enumerate}[leftmargin=*]
+  \item There exists \(d_{\min} > 0\) such that \(d(e_i) \ge d_{\min}\) for all \(i\) (the adversary avoids immediate detection and does not self-report).
+  \item Slashing uses the base function \(f\) from Definition~\ref{def:temporal-slash} (no self-report discount).
+\end{enumerate}
+Then the total slashing penalty satisfies
+\[
+\mathrm{Slash}^{\mathrm{tot}}_v
+:= \sum_{i=1}^k \mathrm{Slash}_v(e_i)
+= S_v \sum_{i=1}^k f\!\left(\frac{d(e_i)}{T_{\max}}\right)
+\ge S_v \cdot k \cdot f\!\left(\frac{d_{\min}}{T_{\max}}\right).
+\]
+\end{lemma}
+
+\begin{proof}
+Since \(f\) is strictly increasing on \([0,1]\) and \(d(e_i) \ge d_{\min} > 0\) for each \(i\), we have
+\[
+f\!\left(\frac{d(e_i)}{T_{\max}}\right)
+\ge f\!\left(\frac{d_{\min}}{T_{\max}}\right)
+\]
+for all \(i = 1,\dots,k\). Multiplying both sides by \(S_v \ge 0\), we obtain
+\[
+\mathrm{Slash}_v(e_i)
+= S_v f\!\left(\frac{d(e_i)}{T_{\max}}\right)
+\ge S_v f\!\left(\frac{d_{\min}}{T_{\max}}\right).
+\]
+Summing over \(i\) yields
+\[
+\mathrm{Slash}^{\mathrm{tot}}_v
+= \sum_{i=1}^k \mathrm{Slash}_v(e_i)
+\ge \sum_{i=1}^k S_v f\!\left(\frac{d_{\min}}{T_{\max}}\right)
+= S_v \cdot k \cdot f\!\left(\frac{d_{\min}}{T_{\max}}\right),
+\]
+as claimed.
+\end{proof}
+
+\paragraph{Comment.}
+The inequality is tight when all detection delays equal \(d_{\min}\). If one designs \(f\) to be relatively flat for small \(x\) and steep for larger \(x\), the bound becomes particularly meaningful once \(d_{\min}/T_{\max}\) leaves the flat region, turning late detection into a high marginal penalty.
+
+\subsection{Self-Reporting Incentives: Explicit Proof}
+
+We now formalize the self-report incentive analysis with full detail.
+
+\begin{definition}[Mislabel and Self-Report Model]
+\label{def:mislabel-model}
+Fix a validator \(v\) with mislabel probability \(\epsilon \in (0,1)\). For each event:
+\begin{itemize}[leftmargin=*]
+  \item With probability \(1-\epsilon\), the label is correct and no slashing occurs.
+  \item With probability \(\epsilon\), the label is incorrect (misbehavior). Conditional on misbehavior:
+  \begin{itemize}
+    \item With probability \(p_{\mathrm{sr}} \in [0,1]\), the validator self-reports within delay \(\tau\).
+    \item With probability \(1-p_{\mathrm{sr}}\), misbehavior is detected externally with normalized detection delay \(D \in (0,1]\).
+  \end{itemize}
+\end{itemize}
+\end{definition}
+
+\begin{definition}[Expected Loss per Misbehavior Event]
+\label{def:loss}
+Conditional on misbehavior, the loss to validator \(v\) is:
+\[
+L(p_{\mathrm{sr}})
+= S_v\left[p_{\mathrm{sr}} f_{\mathrm{sr}}\!\left(\frac{\tau}{T_{\max}}\right)
+  + (1-p_{\mathrm{sr}})\mathbb{E}[f(D)]\right],
+\]
+where the expectation is taken over the distribution of \(D\).
+\end{definition}
+
+Note that the unconditional expected loss per event is \(\epsilon L(p_{\mathrm{sr}})\); for incentive comparisons we can focus on \(L(p_{\mathrm{sr}})\) itself.
+
+\begin{lemma}[Self-Reporting Strictly Beneficial]
+\label{lem:self-report-app}
+Assume:
+\begin{enumerate}[leftmargin=*]
+  \item \(f_{\mathrm{sr}}(x) = \gamma f(x)\) for some fixed \(\gamma \in (0,1)\).
+  \item \(\tau/T_{\max} \in [0,1]\).
+  \item The inequality
+  \[
+  \gamma f\!\left(\frac{\tau}{T_{\max}}\right) < \mathbb{E}[f(D)]
+  \]
+  holds for the distribution of normalized detection delays \(D\) for non-self-reported misbehavior.
+\end{enumerate}
+Then:
+\begin{enumerate}[leftmargin=*]
+  \item The function \(L(p_{\mathrm{sr}})\) is strictly decreasing in \(p_{\mathrm{sr}}\in[0,1]\).
+  \item Hence \(L(p_{\mathrm{sr}})\) is uniquely minimized at \(p_{\mathrm{sr}}^\star = 1\).
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+Substituting \(f_{\mathrm{sr}}(x)=\gamma f(x)\) into Definition~\ref{def:loss}, we obtain
+\[
+L(p_{\mathrm{sr}})
+= S_v\left[p_{\mathrm{sr}} \gamma f\!\left(\frac{\tau}{T_{\max}}\right)
++ (1-p_{\mathrm{sr}})\mathbb{E}[f(D)]\right].
+\]
+Expanding,
+\[
+L(p_{\mathrm{sr}})
+= S_v\left[
+\mathbb{E}[f(D)] + p_{\mathrm{sr}}\left(\gamma f\!\left(\frac{\tau}{T_{\max}}\right) - \mathbb{E}[f(D)]\right)
+\right].
+\]
+Thus,
+\[
+\frac{dL}{dp_{\mathrm{sr}}}
+= S_v\left[\gamma f\!\left(\frac{\tau}{T_{\max}}\right) - \mathbb{E}[f(D)]\right].
+\]
+By assumption, the bracketed term is strictly negative, hence \(\frac{dL}{dp_{\mathrm{sr}}} < 0\) for all \(p_{\mathrm{sr}}\in[0,1]\). Therefore \(L(p_{\mathrm{sr}})\) is strictly decreasing, and its unique minimum over \([0,1]\) is achieved at \(p_{\mathrm{sr}} = 1\).
+\end{proof}
+
+\paragraph{Comment.}
+Lemma~\ref{lem:self-report-app} shows how to engineer an explicit inequality that favors self-report: by choosing \(\gamma\) and \(\tau\) such that \(\gamma f(\tau/T_{\max})\) is below the expected penalty of non-self-reported misbehavior, self-report becomes the uniquely optimal policy in expectation for an honest-but-noisy validator, within the simplified model.
+
+\subsection{EWMA Reputation as a Linear Operator}
+
+We now analyze the EWMA reputation update as a linear operator on \(\mathbb{R}^n\), derive its operator norm, and then state a concentration result that uses standard inequalities for bounded martingale difference sequences. [web:47][web:50][web:55]
+
+\subsubsection{Operator Formulation}
+
+Consider \(n\) validators and stack their reputations into a vector
+\[
+\bm{R}(t) = (R_1(t),\dots,R_n(t))^\top \in \mathbb{R}^n.
+\]
+Let \(\bm{\Delta}(t) = (\Delta_1(t),\dots,\Delta_n(t))^\top\), where \(\Delta_v(t) \in [0,1]\) encodes correctness or misbehavior for validator \(v\) at epoch \(t\).
+
+The EWMA update is
+\[
+R_v(t+1) = \lambda R_v(t) + (1-\lambda)\Delta_v(t), \quad v = 1,\dots,n,
+\]
+for some fixed \(\lambda \in (0,1)\). In vector form:
+\[
+\bm{R}(t+1) = \lambda \bm{R}(t) + (1-\lambda)\bm{\Delta}(t).
+\]
+
+Define the linear map \(T:\mathbb{R}^n \to \mathbb{R}^n\) by \(T\bm{x} = \lambda \bm{x}\). Then the EWMA step is
+\[
+\bm{R}(t+1) = T\bm{R}(t) + (1-\lambda)\bm{\Delta}(t).
+\]
+
+\begin{lemma}[Operator Norm of EWMA Linear Part]
+\label{lem:ewma-operator}
+Let \(T:\mathbb{R}^n \to \mathbb{R}^n\) be defined by \(T\bm{x} = \lambda \bm{x}\) with \(\lambda \in (0,1)\). Then with respect to the Euclidean norm \(\|\cdot\|_2\),
+\[
+\|T\|_{\mathrm{op}} = |\lambda|.
+\]
+In particular, \(\|T\|_{\mathrm{op}} = \lambda < 1\).
+\end{lemma}
+
+\begin{proof}
+For any nonzero \(\bm{x} \in \mathbb{R}^n\),
+\[
+\frac{\|T\bm{x}\|_2}{\|\bm{x}\|_2}
+= \frac{\|\lambda \bm{x}\|_2}{\|\bm{x}\|_2}
+= \frac{|\lambda|\|\bm{x}\|_2}{\|\bm{x}\|_2}
+= |\lambda|.
+\]
+Thus the ratio \(\|T\bm{x}\|_2 / \|\bm{x}\|_2\) is constant in \(\bm{x}\) and equal to \(|\lambda|\). Taking the supremum over all nonzero \(\bm{x}\) yields \(\|T\|_{\mathrm{op}} = |\lambda|\).
+\end{proof}
+
+\paragraph{Consequence.}
+Lemma~\ref{lem:ewma-operator} shows that the linear part of the EWMA update is a contraction in the Euclidean norm when \(\lambda \in (0,1)\). This is the key homogenous term in the recursion for \(\bm{R}(t)\); the inhomogeneous term \((1-\lambda)\bm{\Delta}(t)\) introduces stochasticity and drives the process towards a type-dependent fixed point.
+
+\subsubsection{Unrolling the Recursion}
+
+Unrolling the recursion yields an explicit representation of \(\bm{R}(t)\) in terms of initial conditions and past \(\bm{\Delta}(s)\):
+
+\begin{lemma}[Closed-Form Representation]
+\label{lem:ewma-unroll}
+For any \(t \ge 1\),
+\[
+\bm{R}(t)
+= \lambda^t \bm{R}(0) + (1-\lambda)\sum_{s=0}^{t-1} \lambda^{t-1-s} \bm{\Delta}(s).
+\]
+\end{lemma}
+
+\begin{proof}
+We proceed by induction. For \(t=1\),
+\[
+\bm{R}(1) = \lambda \bm{R}(0) + (1-\lambda)\bm{\Delta}(0),
+\]
+which matches the claimed formula. Assume the formula holds for \(t\). Then
+\[
+\begin{aligned}
+\bm{R}(t+1)
+&= \lambda \bm{R}(t) + (1-\lambda)\bm{\Delta}(t) \\
+&= \lambda\left[\lambda^t \bm{R}(0) + (1-\lambda)\sum_{s=0}^{t-1} \lambda^{t-1-s} \bm{\Delta}(s)\right]
+    + (1-\lambda)\bm{\Delta}(t) \\
+&= \lambda^{t+1}\bm{R}(0)
+  + (1-\lambda)\sum_{s=0}^{t-1} \lambda^{t-s} \bm{\Delta}(s)
+  + (1-\lambda)\bm{\Delta}(t) \\
+&= \lambda^{t+1}\bm{R}(0)
+  + (1-\lambda)\sum_{s=0}^{t} \lambda^{t-s} \bm{\Delta}(s),
+\end{aligned}
+\]
+which matches the formula with \(t+1\) in place of \(t\). This completes the induction.
+\end{proof}
+
+\subsubsection{Concentration for a Single Validator}
+
+To connect with honest/adversarial behavior, it is enough to consider the scalar recursion for each validator separately and then lift to the vector setting. For a single validator \(v\),
+\[
+R_v(t+1) = \lambda R_v(t) + (1-\lambda)\Delta_v(t),
+\]
+and unrolling gives
+\[
+R_v(t) = \lambda^t R_v(0) + (1-\lambda)\sum_{s=0}^{t-1} \lambda^{t-1-s}\Delta_v(s).
+\]
+
+Assume \(\Delta_v(s) \in [0,1]\) and \(\mathbb{E}[\Delta_v(s)] = \mu_v\) for all \(s\), with \(\mu_v \in [0,1]\). For an honest validator,
+\(\mu_v \ge 1-\epsilon\); for an adversarial validator, \(\mu_v \le 1-\delta\).
+
+Define the centered process
+\[
+X_v(t)
+= R_v(t) - \lambda^t R_v(0) - (1-\lambda)\sum_{s=0}^{t-1} \lambda^{t-1-s}\mu_v
+= (1-\lambda)\sum_{s=0}^{t-1} \lambda^{t-1-s}(\Delta_v(s) - \mu_v).
+\]
+This is a weighted sum of bounded martingale differences (if we take appropriate filtrations), so standard Hoeffding- or Azuma-type inequalities apply. [web:47][web:50][web:55]
+
+\begin{lemma}[Concentration of EWMA Around Mean]
+\label{lem:ewma-concentration}
+Fix a validator \(v\) and \(t \ge 1\). Assume:
+\begin{enumerate}[leftmargin=*]
+  \item \(\Delta_v(s) \in [0,1]\) for all \(s\).
+  \item \(\Delta_v(s)\) are independent over \(s\) with \(\mathbb{E}[\Delta_v(s)] = \mu_v\).
+\end{enumerate}
+Then, for any \(\eta > 0\),
+\[
+\mathbb{P}\Big(|R_v(t) - m_v(t)| \ge \eta\Big)
+\le 2\exp\left(-\frac{2\eta^2}{(1-\lambda)^2\sum_{s=0}^{t-1}\lambda^{2(t-1-s)}}\right),
+\]
+where
+\[
+m_v(t) := \lambda^t R_v(0) + (1-\lambda)\sum_{s=0}^{t-1} \lambda^{t-1-s}\mu_v.
+\]
+\end{lemma}
+
+\begin{proof}
+Write
+\[
+R_v(t) - m_v(t) = (1-\lambda)\sum_{s=0}^{t-1} \lambda^{t-1-s}(\Delta_v(s) - \mu_v).
+\]
+Let
+\[
+a_s = (1-\lambda)\lambda^{t-1-s}, \quad Y_s = \Delta_v(s) - \mu_v.
+\]
+Then \(Y_s \in [-\mu_v,1-\mu_v] \subseteq [-1,1]\), and \(\mathbb{E}[Y_s] = 0\). The sum is
+\[
+R_v(t) - m_v(t) = \sum_{s=0}^{t-1} a_s Y_s.
+\]
+
+Define \(M = \sum_{s=0}^{t-1} a_s Y_s\). By Hoeffding's inequality for weighted sums of independent bounded variables (or by a standard reduction using rescaling), we have
+\[
+\mathbb{P}(|M| \ge \eta) \le 2\exp\left(-\frac{2\eta^2}{\sum_{s=0}^{t-1} (b_s - a_s')^2}\right),
+\]
+where \([a_s',b_s]\) is a range containing \(a_s Y_s\) for each \(s\). Since \(Y_s \in [-1,1]\), we can take \(a_s' = -|a_s|\), \(b_s = |a_s|\), so \(b_s - a_s' = 2|a_s|\). This yields
+\[
+\mathbb{P}(|M| \ge \eta)
+\le 2\exp\left(-\frac{2\eta^2}{\sum_{s=0}^{t-1} (2|a_s|)^2}\right)
+= 2\exp\left(-\frac{2\eta^2}{4\sum_{s=0}^{t-1} a_s^2}\right)
+= 2\exp\left(-\frac{\eta^2}{2\sum_{s=0}^{t-1} a_s^2}\right).
+\]
+
+Now
+\[
+\sum_{s=0}^{t-1} a_s^2
+= (1-\lambda)^2\sum_{s=0}^{t-1}\lambda^{2(t-1-s)}
+= (1-\lambda)^2\sum_{j=0}^{t-1}\lambda^{2j}
+\le (1-\lambda)^2\sum_{j=0}^{\infty}\lambda^{2j}
+= (1-\lambda)^2\cdot \frac{1}{1-\lambda^2}
+= \frac{1-\lambda}{1+\lambda}.
+\]
+Thus the denominator is bounded by a constant independent of \(t\), though the lemma statement keeps the explicit finite sum. Substituting the finite-sum expression gives the claimed bound.
+\end{proof}
+
+\paragraph{Gap Between Honest and Adversarial Reputations.}
+Combining Lemma~\ref{lem:ewma-concentration} with Assumption~\ref{ass:types}, we see that for large \(t\), with high probability, the reputations of honest validators concentrate near their (higher) mean \(\mu_H \ge 1-\epsilon\), while adversarial reputations concentrate near \(\mu_A \le 1-\delta\). The operator norm bound \(\|T\|_{\mathrm{op}}=\lambda\) guarantees that perturbations in the initial reputation vector decay exponentially, and the stochastic driving term concentrates around different fixed points for different types.
+
+\subsection{Phase-Dependent Weights and Aggregate Operator Norm}
+
+Finally, we connect the per-validator analysis to the aggregate weighted decision operator. Fix a time \(t\) and let \(\bm{w}(t) = (w_1(t),\dots,w_n(t))^\top\) be the vector of phase-dependent weights. Let \(\bm{x}(t) \in \mathbb{R}^n\) be a vector of per-validator scalar reports for some rule \(r\), and consider a linear aggregation
+\[
+A_t(\bm{x}(t)) = \sum_{v=1}^n w_v(t)x_v(t) = \bm{w}(t)^\top \bm{x}(t).
+\]
+
+View \(A_t\) as a linear operator \(A_t:\mathbb{R}^n \to \mathbb{R}\). With the Euclidean norm on \(\mathbb{R}^n\) and absolute value on \(\mathbb{R}\), the operator norm is
+\[
+\|A_t\|_{\mathrm{op}} = \sup_{\bm{x} \neq 0} \frac{|A_t(\bm{x})|}{\|\bm{x}\|_2} = \|\bm{w}(t)\|_2.
+\]
+
+\begin{lemma}[Operator Norm of Aggregation Map]
+\label{lem:aggregation-op}
+For the linear map \(A_t(\bm{x}) = \bm{w}(t)^\top \bm{x}\),
+\[
+\|A_t\|_{\mathrm{op}} = \|\bm{w}(t)\|_2.
+\]
+\end{lemma}
+
+\begin{proof}
+This is the standard result that the operator norm of a linear functional with respect to the Euclidean norm equals the Euclidean norm of its coefficient vector. The maximizer is attained at \(\bm{x}\) proportional to \(\bm{w}(t)\).
+\end{proof}
+
+\paragraph{Interpretation.}
+As time grows, under Assumptions~\ref{ass:types} and~\ref{ass:honest-majority}, and given the cold-start gating in the main text, the vector \(\bm{w}(t)\) becomes dominated by coordinates corresponding to honest validators. Consequently, the operator \(A_t\) becomes effectively aligned with the honest subspace. In other words, the effective aggregation operator norm restricted to adversarial directions shrinks relative to that restricted to honest directions, capturing in operator-norm language the asymptotic honest dominance of aggregate influence.
+
+\bigskip
+
+The lemmas in this appendix formalize, at a minimal level, how temporal slashing, self-reporting discounts, and EWMA-based reputation updates interact to shape the economic and statistical behavior of validators in a cross-organizational calibration network. They are deliberately stated in a way that is independent of any particular implementation profile, and they are meant to serve as a reusable mathematical kernel for future system designs.
+
+\nocite{*}
+\bibliographystyle{unsrt}  
+\bibliography{references}
+\end{document}

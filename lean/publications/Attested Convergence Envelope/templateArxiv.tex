@@ -1,0 +1,468 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{bm}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage{mathtools}
+\usepackage{booktabs}
+\usepackage{listings}
+\usepackage[T1]{fontenc}
+\usepackage[scaled=0.9]{inconsolata}
+\usepackage{courier}
+
+\lstdefinestyle{code}{
+  basicstyle=\footnotesize\ttfamily,
+  breaklines=true,
+  frame=single,
+  columns=fullflexible,
+  numbers=left,
+  numberstyle=\tiny,
+  xleftmargin=2em,
+  framexleftmargin=1.5em
+}
+
+\title{ACE as a Standalone Enforcement Layer\\
+Attested Convergence, Spectral Governance, and ZK-Ready Variance Control}
+
+\author{Multiplicity Foundation\\
+\vspace{0.25em}
+\small{Draft technical report (FV-8 aligned)}}
+
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+This report consolidates a sequence of architectural and mathematical developments culminating in FV-8: an ACE-based enforcement layer that (i) bounds statistical variance in spectral convergence, (ii) prevents private witness leakage in audit trails, and (iii) cryptographically scores the integrity of a dataset's convergence trajectory. The system is designed to support zero-knowledge proof environments and to satisfy patent law requirements under 35 U.S.C.\,§112 and §101. The report provides an executive summary, a comprehensive mathematical overview (including the evolution from FV-4 through FV-6 to FV-8), a formal description of the IFMD (Iterative Formal Multiplicity Dynamics) alignment, and illustrative code snippets showing how the ACE layer is implemented as a standalone library.
+\end{abstract}
+
+\tableofcontents
+
+\newpage
+
+\section{Executive Summary}
+
+ACE (Attested Convergence Envelope) started as a protocol for controlling and certifying contraction in a structured learning system (CRMF C6), operating over prime-weighted Walsh--Hadamard spectral embeddings of codon usage distributions. Over successive revisions (FV-4 through FV-8), the design converged to a more general and cleaner architecture:
+
+\begin{itemize}[nosep]
+  \item It decouples the spectral machinery from the biologically specific details.
+  \item It replaces CLT-based tautological convergence claims with data-dependent, signal-to-noise gated contraction metrics.
+  \item It re-architects audit and proof systems to avoid witness leakage and Fiat--Shamir circularity.
+  \item It integrates a governed retry mechanism (\texttt{retry\_nonce}) that turns p-hacking and dataset re-shuffling into a visible, budgeted metric.
+\end{itemize}
+
+The result is a general-purpose enforcement layer that can be applied far beyond codon usage:
+it can sit in front of any stochastic or data-driven process to enforce:
+
+\begin{enumerate}[nosep]
+  \item \textbf{Variance bounding:} a three-split protocol and WAC (Windowed Average Contraction) monitoring ensure that convergence metrics are unbiased and non-tautological.
+  \item \textbf{Witness privacy:} a whitelist-driven audit chain prevents raw witness vectors or sensitive arrays from leaking into logs or proofs.
+  \item \textbf{Data-dependent utility:} a spectral governor computes an $L_1$-normalized convergence intensity $X_n$ and an SNR-based gate, ensuring that certificates attest genuine structure, not mere statistical laws.
+\end{enumerate}
+
+From a legal standpoint, this design avoids §101 ``Alice'' vulnerabilities (claims that merely repackage statistical laws), and satisfies §112(a) enablement and §112(b) definiteness by committing parameter bundles and CAS registrations that make each certificate deterministic, reproducible, and machine-checkable.
+
+\section{High-Level Architecture}
+
+\subsection{Roles of ACE in the Stack}
+
+ACE sits between raw data and downstream algorithms (including zero-knowledge proof systems), acting as a \emph{governor} and \emph{firewall}. Conceptually:
+
+\begin{itemize}[nosep]
+  \item Upstream: it receives a dataset (for example, codon sequences from \emph{E.~coli} K-12).
+  \item Middle: it builds histogram and spectral representations, runs controlled convergence experiments, logs telemetry, and computes a contraction certificate.
+  \item Downstream: it provides commitments and a small set of public parameters to a ZK circuit (e.g., Groth16), and ensures that no private witness is leaked via audit logs.
+\end{itemize}
+
+\subsection{Three Central Tensions and Their Resolution}
+
+Over the thread of development, three central tensions were repeatedly encountered and resolved in FV-8.
+
+\paragraph{Single-Shot Immutability vs. Operational Yield.}
+The naive design assumes every data run converges flawlessly on the first random shuffle. In practice, labs may need to discard contaminated runs or rerun experiments. ACE resolves this via a \emph{governed retry} mechanism:
+
+\begin{itemize}[nosep]
+  \item A base parameter bundle $\Theta_{\text{Base}}$ includes a \texttt{retry\_nonce}.
+  \item The shuffling seed is derived as a hash of $(\Gamma_d \Vert \Theta_{\text{Base}})$.
+  \item Any change to \texttt{retry\_nonce} yields a new shuffle seed, but this is cryptographically visible and can burn an ACE budget.
+\end{itemize}
+
+\paragraph{Fiat--Shamir Security vs. DAG Circularity.}
+Randomness (e.g., shuffle seeds) must be derived from committed data to avoid adaptive bias, yet these same parameters must not be circularly dependent on downstream certificate results. ACE resolves this with a strictly sequenced DAG:
+
+\begin{enumerate}[nosep]
+  \item Commit CAS and base parameters: $\Gamma_d$ and $\Theta_{\text{Base}}$.
+  \item Derive \texttt{shuffle\_seed} from a hash of these.
+  \item Only then assemble $\Theta_{C6}$ and run the convergence protocol.
+\end{enumerate}
+
+\paragraph{Mathematical Precision vs. Algorithmic Fragility.}
+Contraction metrics can require division by small numbers (e.g., normalized mass ratios). ACE uses a floor $\max(\bar{m}^{(n)}, 10^{-12})$ in WAC calculations to avoid numerical issues, but keeps this out of the ZK constraint model so as not to distort the formal guarantees.
+
+\section{Mathematical Evolution: FV-4 to FV-8}
+
+\subsection{FV-4: Two-Phase $\varepsilon$-Attractor with Codon-Level Character Functions}
+
+FV-4 defined a two-phase protocol:
+
+\begin{itemize}[nosep]
+  \item Phase 1: track a spectral iterate $\hat{\sigma}^{(n)}$ under a substitution operator $T_{\text{cyc}}$ and declare an $\varepsilon$-attractor support $\operatorname{supp}_\varepsilon$ at the time when a spectral entropy $H_s^{(n)}$ stabilizes.
+  \item Phase 2: track off-attractor mass $m^{(n)}$ and define contraction constants $L_s^{\sup}$ (worst-case) and $L_s^{\text{geo}}$ (geometric mean).
+\end{itemize}
+
+The underlying spectral representation treated each codon as a character function
+\[
+f_\omega(x) = (-1)^{\langle \omega, x\rangle}, \qquad \hat{f}_\omega(\xi) = 64 \cdot \mathbf{1}[\xi = \omega].
+\]
+Aggregating these naively (by summing $\hat{\sigma}_n$) gives a scaled histogram $64h$, not the Walsh transform of a population histogram, which led to conceptual misalignment with epistasis literature.
+
+\subsection{FV-5: Integer Commitment Target and Per-Coefficient Predicates}
+
+FV-5 corrected several issues:
+
+\begin{enumerate}[nosep]
+  \item It replaced rational-valued $\Delta h$ with an integer-valued unnormalized target $\tilde{\Delta h} \in \mathbb{Z}^{64}$, avoiding field-encoding ambiguity in ZK circuits.
+  \item It identified the $L_1$ norm of the spectral sections as vacuous: for the character-function construction, $\|\hat{\sigma}_n\|_1 = 64$ for all $n$, making any threshold on $\|\Delta h\|_1 / 64$ trivial.
+  \item It introduced a per-coefficient predicate:
+  \[
+  \frac{\tilde{\Delta h}(\xi_{\text{trait}})}{N} \ge \theta_{\text{trait}},
+  \]
+  focusing on specific spectral modes with biological meaning (e.g., GC bias).
+\end{enumerate}
+
+\subsection{FV-6: Two-Step Histogram$\to$WHT Pipeline and LLN Dynamics}
+
+FV-6 performed a foundational correction: it recognized the need for a two-step pipeline:
+
+\begin{enumerate}[nosep]
+  \item Build a codon histogram:
+  \[
+  h[\xi] = \sum_{n=1}^N \mathbf{1}[\omega_n = \xi], \quad \xi \in \{0,1\}^6.
+  \]
+  \item Apply the FWHT:
+  \[
+  \hat{h}[\zeta] = \sum_{\xi} h[\xi] (-1)^{\langle \zeta, \xi\rangle}.
+  \]
+\end{enumerate}
+
+This aligns precisely with Walsh--Hadamard epistasis calculations: $\hat{h}(\zeta)/N$ corresponds to the order-$|S_\zeta|$ epistatic interaction.
+
+Convergence dynamics were reinterpreted under the Law of Large Numbers (LLN), using a running histogram $h^{(n)}$ and running WHT $\hat{h}^{(n)}$, leading to a normalized off-attractor mass
+\[
+\bar{m}^{(n)} = \sum_{\zeta \not\in \operatorname{supp}_\varepsilon}
+\left|
+\frac{\hat{h}^{(n)}(\zeta)}{n} - \frac{\hat{h}^{(N)}(\zeta)}{N}
+\right|,
+\]
+with asymptotic decay rate controlled by CLT-like scaling.
+
+While this made the dynamics mathematically grounded, it also revealed that if $L_s^{\sup}$ is defined purely through CLT decay, it becomes a near-universal constant (a function of window position alone)—a problem for both technical meaning and §101 patent utility. This led to FV-8.
+
+\subsection{FV-8: IFMD Alignment, $X_t$ Telemetry, and SNR-Gated Contraction}
+
+The IFMD v0.1 note introduces an ACE budget radius
+\[
+R_t = 1 - \varepsilon_t - X_t,
+\]
+where $X_t$ is a telemetry-derived, data-dependent contraction intensity (norm bound or variance measure). Aligning FV-8 with IFMD leads to:
+
+\begin{itemize}[nosep]
+  \item Redefining $X_n$ as the ratio of off-support spectral energy to total energy:
+  \[
+  X_n := \frac{\sum_{\zeta \not\in \operatorname{supp}_\varepsilon} |\hat{h}^{(n)}(\zeta)|}
+               {\sum_{\zeta} |\hat{h}^{(n)}(\zeta)|}.
+  \]
+  \item Recasting the C6 gate as $R_n = 1 - \varepsilon - X_n$, not as a CLT rate.
+  \item Introducing an SNR threshold $\tau_{\min}$ (analogous to $\delta_{\min}$ in the Moonshine Governor), committed via the CAS registration.
+\end{itemize}
+
+The final C6 condition reads:
+\[
+L_s^{\sup} := \sup_{n \in [N_0, N_0 + M)} (1 - \varepsilon - X_n) < 1,
+\]
+with additional gates:
+
+\begin{itemize}[nosep]
+  \item Sparsity: $\operatorname{support\_size}(\operatorname{supp}_\varepsilon) = K \ll 64$.
+  \item SNR: $\operatorname{SNR}(\hat{h}^{(N)}) \ge \tau_{\min}$.
+\end{itemize}
+
+\section{Parameter Bundles, CAS, and Retry Governance}
+
+\subsection{Base and C6 Parameter Bundles}
+
+FV-8 distinguishes two parameter bundles:
+
+\paragraph{Base bundle $\Theta_{\text{Base}}$:}
+\[
+\Theta_{\text{Base}} =
+(\varepsilon, \delta, K, M, \beta, \tau_{\min}, \alpha_M, \text{retry\_nonce}, \text{domain}).
+\]
+
+\paragraph{C6 bundle $\Theta_{C6}$:}
+\[
+\Theta_{C6} = (\varepsilon, \delta, N_0, K, M, \beta, \tau_{\min}, \alpha_M, \text{shuffle\_seed}, \text{domain}).
+\]
+
+\subsection{Two-Stage CAS Commitment and Retry Nonce}
+
+The Two-Stage CAS Commitment is:
+
+\begin{enumerate}[nosep]
+  \item Commit CAS and base parameters:
+
+  \[
+  C_{\Gamma} = \operatorname{Poseidon2}(\Gamma_d), \quad
+  C_{\text{Base}} = \operatorname{Poseidon2}(\Theta_{\text{Base}}).
+  \]
+
+  \item Derive shuffle seed:
+
+  \[
+  \text{shuffle\_seed} =
+  \operatorname{Hash}(\Gamma_d \Vert \Theta_{\text{Base}}).
+  \]
+
+  \item Assemble $\Theta_{C6}$ with this derived seed and proceed with the three-split protocol.
+\end{enumerate}
+
+Changing \texttt{retry\_nonce} changes the hash input and therefore the shuffle seed, but this change is recorded in $\Theta_{\text{Base}}$ and its commitment, turning retries into an explicit, quantifiable ACE budget burn, rather than a hidden search over seeds.
+
+\section{Three-Split Protocol and WAC Monitoring}
+
+\subsection{Splits}
+
+Given a dataset of size $N$ and a fraction $\beta \in (0,1)$:
+
+\begin{enumerate}[nosep]
+  \item \textbf{Estimation split:} first $n_{\text{est}} = \lfloor \beta N \rfloor$ items (post shuffle) used to estimate $\hat{\mu}_{\text{WHT}}$ and $\operatorname{supp}_\varepsilon$.
+  \item \textbf{Validation split:} remaining $n_{\text{val}} = N - n_{\text{est}}$ items used as an out-of-sample block to track $\bar{m}^{(n)}$ and compute WAC window products.
+  \item \textbf{Full population:} all $N$ items used to compute final $\hat{h}^{(N)}$ and feed the ZK predicate.
+\end{enumerate}
+
+\subsection{WAC Window Products}
+
+IFMD's windowed average contraction (WAC) condition requires that for a window length $m = M$,
+\[
+\|K_t \cdots K_{t+m-1}\| \le \rho < 1, \quad \forall t.
+\]
+In practice, ACE approximates this using the normalized off-attractor mass $\bar{m}^{(n)}$ and computes
+\[
+\text{WAC\_product}(t) = \frac{\bar{m}^{(t+m)}}{\max(\bar{m}^{(t)}, 10^{-12})}.
+\]
+The floor $10^{-12}$ prevents division by zero while keeping the theoretical ZK constraint model unaffected.
+
+\section{ZK Circuit Architecture and Budget}
+
+\subsection{Commitment Target and Predicate}
+
+The commitment target is the 64-dimensional integer vector $\hat{h}^{(N)} \in \mathbb{Z}^{64}$.
+
+Public inputs:
+
+\begin{itemize}[nosep]
+  \item $\mathcal{C}_{\hat{h}} = \operatorname{Poseidon2}(\hat{h}^{(N)})$
+  \item $\mathcal{C}_\Gamma = \operatorname{Poseidon2}(\Gamma_d \Vert \Theta_{C6})$
+  \item $N_{\min}$ (minimum population size)
+  \item $\zeta_{\text{trait}}$ (trait index)
+  \item $\theta_{\text{trait}}$ (trait threshold)
+\end{itemize}
+
+Private witness:
+
+\[
+(\hat{h}^{(N)}, N).
+\]
+
+The ZK relation enforces:
+
+\begin{itemize}[nosep]
+  \item Poseidon commitments match.
+  \item DC component equals $N$ and exceeds $N_{\min}$.
+  \item A trait predicate:
+    \[
+    \hat{h}^{(N)}(\zeta_{\text{trait}}) \ge \theta_{\text{trait}} \cdot N.
+    \]
+\end{itemize}
+
+\subsection{Constraint Budget}
+
+The approximate constraint budget (Groth16, BN254) is:
+
+\begin{center}
+\begin{tabular}{l r}
+\toprule
+Component & Constraints \\
+\midrule
+FWHT on $h$ (64 inputs) & $384$ \\
+Poseidon2 sponge for $\hat{h}$ (64 inputs, $t=9$) & $\sim 3200$ \\
+Poseidon2 for $\mathcal{C}_\Gamma$ & $\sim 1500$ \\
+Range check on DC wire $N \ge N_{\min}$ & $1$ \\
+Trait predicate: $1$ mul + $1$ inequality & $2$ \\
+\midrule
+Total & $\approx 5087$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+This is well under typical 25k-constraint budgets and suitable for low-latency proof generation.
+
+\section{AuditChain and Witness Whitelisting}
+
+\subsection{IFMD §6 Audit Schema}
+
+The IFMD defines a restricted set of audit fields per step: contraction margin $\gamma_t$, $\varepsilon_t$, KKT residual $r_t$, WAC products, governor telemetry $\Xi_t$, PETC ledger differences $\Delta \sigma$, $\Delta M$, projection flags, and residual norms.
+
+ACE implements an \emph{allowlist} model: only these fields (and simple scalars) may appear in audit events. Any field containing array-like or byte-like data that is not on the whitelist is considered a potential witness.
+
+\subsection{WitnessFieldRegistry}
+
+This is enforced programmatically using a registry that inspects step info objects and rejects fields that violate the schema.
+
+\section{Code Snippets}
+
+\subsection{ThetaC6 Dataclass}
+
+\begin{lstlisting}[style=code,language=Python,caption={ThetaC6 parameter bundle}]
+from dataclasses import dataclass
+
+@dataclass(frozen=True)
+class ThetaBase:
+    epsilon:      float
+    delta:        float
+    K:            int
+    M:            int
+    beta:         float
+    tau_min:      float
+    alpha_M:      float
+    retry_nonce:  int
+    domain:       str
+
+@dataclass(frozen=True)
+class ThetaC6:
+    epsilon:      float
+    delta:        float
+    N0:           int
+    K:            int
+    M:            int
+    beta:         float
+    tau_min:      float
+    alpha_M:      float
+    shuffle_seed: int
+    domain:       str
+\end{lstlisting}
+
+\subsection{Two-Stage CAS Commitment}
+
+\begin{lstlisting}[style=code,language=Python,caption={Two-stage CAS commitment and shuffle seed}]
+from poseidon2 import hash_poseidon2
+
+def derive_cas_registry(gamma_d: bytes, theta_base: ThetaBase) -> ThetaC6:
+    # Stage 1: base commitments (could also hash ThetaBase separately)
+    seed_input = gamma_d + serialize(theta_base)
+    shuffle_seed = int.from_bytes(hash_poseidon2(seed_input), "big")
+
+    # Stage 2: construct ThetaC6 using derived shuffle_seed
+    return ThetaC6(
+        epsilon=theta_base.epsilon,
+        delta=theta_base.delta,
+        N0=0,  # to be set after convergence detection
+        K=theta_base.K,
+        M=theta_base.M,
+        beta=theta_base.beta,
+        tau_min=theta_base.tau_min,
+        alpha_M=theta_base.alpha_M,
+        shuffle_seed=shuffle_seed,
+        domain=theta_base.domain,
+    )
+\end{lstlisting}
+
+\subsection{govern\_accumulator}
+
+\begin{lstlisting}[style=code,language=Python,caption={govern_accumulator for spectral trajectories}]
+import numpy as np
+from dataclasses import dataclass
+
+@dataclass
+class SpectralReport:
+    support_size:        int
+    snr:                 float
+    contraction_intensity: float  # X_n
+
+def govern_accumulator(h_hat_traj, supp_eps_indices):
+    """
+    h_hat_traj: list of 64-dim arrays (spectral snapshots)
+    supp_eps_indices: indices in support_eps
+    """
+    final = h_hat_traj[-1].astype(float)
+    total_energy = np.sum(np.abs(final))
+    on_support   = np.sum(np.abs(final[supp_eps_indices]))
+    off_support  = total_energy - on_support
+
+    # SNR and contraction intensity
+    snr = on_support / max(off_support, 1e-12)
+    X_n = off_support / max(total_energy, 1e-12)
+
+    report = SpectralReport(
+        support_size=len(supp_eps_indices),
+        snr=snr,
+        contraction_intensity=X_n,
+    )
+    return report
+\end{lstlisting}
+
+\subsection{WAC Window Product Computation}
+
+\begin{lstlisting}[style=code,language=Python,caption={WAC window product with stability floor}]
+def compute_wac_window(m_bar, t, m):
+    """
+    m_bar: list or array of normalized off-attractor mass values
+    t: start index
+    m: window length
+    """
+    num = m_bar[t + m]
+    den = max(m_bar[t], 1e-12)
+    return num / den
+\end{lstlisting}
+
+\section{Suggested Extensions}
+
+\subsection{Probabilistic Certificates}
+
+IFMD notes an open extension for probabilistic certificates when proposals are stochastic. FV-8 instantiates a deterministic certificate (fixed shuffle seed, fixed splits), but the same machinery could be extended to:
+
+\begin{itemize}[nosep]
+  \item Run multiple independent shuffles and track distributions over WAC products and $X_n$.
+  \item Derive high-confidence bounds of the form $\mathbb{P}(\gamma_t \ge \varepsilon_t) \ge 1 - \delta$.
+\end{itemize}
+
+This is more complex to specify in a legal claim but mathematically natural.
+
+\subsection{Non-genomic Applications}
+
+Because ACE's spectral logic is defined over $\mathbb{Z}_2^6$ (or, more generally, $\mathbb{Z}_2^d$), the same enforcement layer can be applied to:
+
+\begin{itemize}[nosep]
+  \item Sparse binary feature vectors in machine learning.
+  \item Error-correcting code syndromes.
+  \item Walsh-domain representations of Boolean circuits.
+\end{itemize}
+
+In each case, the system can be used to certify that a dataset's spectral representation has a stable low-dimensional structure before being used in sensitive downstream computations.
+
+\section{Conclusion}
+
+This report has consolidated the full evolution of the ACE enforcement layer from early, codon-specific constructions (FV-4) to a general, IFMD-aligned architecture (FV-8) that is mathematically rigorous, ZK-ready, and informally robust to practical laboratory and engineering variances.
+
+ACE is worthy of existence as a standalone unit: it provides a reusable governance module over stochastic dynamics, with clear interfaces:
+contraction metrics, variance bounds, and privacy guarantees are all made explicit and machine-checkable. As such, it can serve both as a foundational building block for Multiplicity Theory deployments and as a generic enforcement layer in other domains.
+
+\nocite{*}
+\bibliographystyle{plainnat}
+\bibliography{references} 
+\end{document}

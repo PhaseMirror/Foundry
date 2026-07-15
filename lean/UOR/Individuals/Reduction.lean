@@ -4,7 +4,7 @@
 
 import UOR.Structures
 
-open UOR.Primitives
+open Core.UOR
 
 namespace UOR.Kernel.Reduction
 

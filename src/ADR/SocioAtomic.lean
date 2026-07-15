@@ -1,5 +1,4 @@
 -- Heuristic implementation: Pedagogical, not formal-isomorphism.
-import Std.Data.Float
 
 namespace SocioAtomic
 
@@ -11,8 +10,8 @@ inductive CivicFactor where
 inductive SocioAtomicRole where
   | proton | neutron | electron | nucleus
 
-structure Multiplicity :=
-  (reciprocity : Float)
+structure Multiplicity where
+  reciprocity : Float
 
 /-- 
 Computes the Multiplicity value M(R) = 2R + 1. 

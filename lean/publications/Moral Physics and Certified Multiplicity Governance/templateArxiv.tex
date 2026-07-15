@@ -1,0 +1,974 @@
+\documentclass[11pt]{article}
+
+% Basic packages (you can extend as needed)
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{setspace}
+\usepackage{microtype}
+\usepackage{hyperref}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  citecolor=blue,
+  urlcolor=blue
+}
+
+% Title and author metadata
+\title{Moral Physics and Certified Multiplicity Governance:\\
+Rights-First Control Surfaces for Automation}
+
+\author{Citizen Gardens \\ The Prime Materia Commons \\ \textit{In legacy of Tracey Millis}}
+
+
+
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{center}
+  \large
+  Tensorial Moral Fields, Dignity Flux, and Brakes-Only Governance for High-Impact Systems
+\end{center}
+
+\vspace{1.5em}
+
+\begin{abstract}
+This paper presents an integrated architecture that couples Certified Multiplicity Governance (CMG) with a Moral Field Layer (MFL) and tensorial Moral Physics to make rights-first automation computable, auditable, and contractible, with explicit conditions under which automation must yield to human and community control. The central claim is that any system that uses multiplicity language while omitting brakes, SLAs, scope-down, or independent stewardship is a weakened derivative rather than a faithful implementation.
+\end{abstract}
+
+\newpage
+\tableofcontents
+
+
+\section{Introduction and Motivation}
+
+\subsection{Problem Statement}
+
+High-impact automated systems in domains such as housing, health, and livelihood currently lack a rights-first, mathematically explicit control surface that specifies when automation must relinquish power to human and community governance. Existing ``responsible AI'' schemes rarely expose concrete invariants such as explicit brakes, dynamical stability certificates, or contractible service-level agreements (SLAs) that can be independently audited and enforced.
+
+\subsection{Contribution Sketch}
+
+This work introduces a Moral Physics layer that encodes lived harm and structural shifts into person-level moral deltas
+\(\delta_i^{(\mathrm{rec})}(t)\) and \(\delta_i^{(\mathrm{rights})}(t)\), a per-person dignity flux \(d_i(t)\), and an aggregate dignity current \(J_{\mathrm{dignity}}(t)\). These signals are coupled to a scalar gain \(\Lambda_m(t)\) that modulates a Certified Multiplicity Governance (CMG) stability spine and enforces an asymmetric regime in which automation power is easy to lose and hard to regain once moral or stability constraints are violated. Finally, we specify a defensive-publication license and label regime for ``CMG-governed'' deployments, including audit and registry requirements that make the rights-first guarantees contractible and externally verifiable.
+
+\subsection{Conceptual Overview of Moral Physics}
+
+\subsubsection{Moral Field Idea}
+
+We define a Moral Field Layer (MFL) as an interface that ingests structural and rights-material events and emits only brake signals that reduce the modes, actions, or features available to automated decision-making. In this view, patterns of harm, reciprocity collapse, refused remedies, and missing moral data are treated as field gradients that drive the system monotonically toward reduced autonomy when moral constraints are violated.
+
+\subsubsection{Dignity as a Conserved-but-Perturbed Quantity}
+
+Structural changes and rights events are encoded into a per-person dignity flux \(d_i(t)\), which is aggregated into an overall dignity current
+\[
+J_{\mathrm{dignity}}(t) = \sum_i d_i(t).
+\]
+The smoothed drift of the scalar gain \(\Lambda_m(t)\), as driven by these currents, defines quiet, amber, and red moral bands, each associated with mandated governance actions that range from continued operation under monitoring to advisory or fully suspended automation in affected domains.
+
+\section{Core Technical Components}
+
+\subsection{CMG Spine and Multiplicity Observable}
+
+\subsubsection{Event and Window Schema}
+
+We consider a set of agents \(V\), discrete time windows \(T\), interaction types \(K\), and stakeholder groups \(G\). An interaction event in a window is represented as
+\[
+e = (i, j, k, a, \mathrm{ctx}),
+\]
+where \(i \in V\) is the source agent, \(j \in V\) is the target agent, \(k \in K\) is the interaction type, \(a\) is a signed or nonnegative magnitude, and \(\mathrm{ctx}\) denotes context metadata relevant for governance.
+
+For each window, we construct typed intensities and aggregate them into total reciprocity \(C_t\) and total participation \(P_t\), which serve as the base signals for multiplicity. Intuitively, \(C_t\) measures how much interaction volume is reciprocal, while \(P_t\) measures overall activity, regardless of reciprocity.
+
+\subsubsection{Multiplicity Observable}
+
+From these aggregates, we define a dimensionless multiplicity observable
+\[
+M(t) = \frac{C_t}{m_t P_t} \in [0, 1],
+\]
+where \(m_t > 0\) is a certified gain chosen to ensure that the underlying latent dynamics remain contractive in the sense of the CMG stability spine. The observable \(M(t)\) captures how much of the observed activity is both reciprocal and consistent with the certified gain.
+
+For each stakeholder group \(g \in G\), we similarly define group-level aggregates \(C_g(t)\) and \(P_g(t)\), and a corresponding group-level multiplicity observable
+\[
+M_g(t) = \frac{C_g(t)}{m_t P_g(t)}.
+\]
+These group-level observables are used to monitor structural reciprocity and participation patterns, with particular attention to protected groups.
+
+\subsubsection{Latent State and Rights-Risk}
+
+The CMG spine maintains a latent relational state \(S_t \in \mathbb{R}^d\) and an observation vector \(O_t\), linked by a state-space model of the form
+\begin{align*}
+S_{t+1} &= F S_t + U_t + J_t + \epsilon_t, \\
+O_t &= G S_t + \eta_t,
+\end{align*}
+where \(F\) and \(G\) are system matrices, \(U_t\) represents control or policy interventions, and \(\epsilon_t, \eta_t\) are noise terms. A dedicated jump channel \(J_t\) encodes rights-critical shocks, such as abrupt policy changes or mass suspension events that cannot be treated as small perturbations.
+
+From these dynamics and observed harms, the system maintains a rights-risk indicator and a corresponding rights-risk probability \(q_t\), interpreted as the probability of a rights-critical event in the next window given observations up to time \(t\). This probability feeds into the Moral Physics layer and downstream governance decisions without requiring decision-makers to manually track all underlying state variables.
+
+\subsection{Moral Deltas, Dignity Flux, and \texorpdfstring{$\Lambda_m$}{Lambda\_m}}
+
+\subsubsection{Moral Deltas and Tensor Structure}
+
+For each person \(i\) and time window \(t\), we define a hybrid moral delta
+\[
+\delta_i(t) = \bigl(\delta_i^{(\mathrm{rec})}(t),\, \delta_i^{(\mathrm{rights})}(t)\bigr).
+\]
+The reciprocity block \(\delta_i^{(\mathrm{rec})}(t)\) is constructed from changes in group-level reciprocity, participation, and normalized multiplicity around agent \(i\). These components are combined with a weight vector chosen so that collapses in the group-level multiplicity observable \(M_g(t)\) dominate the resulting signal, even when raw activity or participation increases.
+
+\subsubsection{Rights Block and Weights}
+
+The rights block \(\delta_i^{(\mathrm{rights})}(t)\) aggregates several rights-material dimensions, including risk exposure, realized rights events, appeal outcomes, and restitution or refused-remedy signals over the window. We introduce a weight vector
+\[
+w^{(\mathrm{rights})} = \bigl(w_{\mathrm{risk}},\, w_{\mathrm{event}},\, w_{\mathrm{appeal}},\, w_{\mathrm{rest}}\bigr)
+\]
+with sign constraints
+\[
+w_{\mathrm{risk}} > 0,\quad
+w_{\mathrm{event}} > 0,\quad
+w_{\mathrm{appeal}} < 0,\quad
+w_{\mathrm{rest}} < 0,
+\]
+and a magnitude condition \(|w_{\mathrm{rest}}| \gg |w_{\mathrm{risk}}|, |w_{\mathrm{event}}|, |w_{\mathrm{appeal}}|\). In effect, refused remedies contribute strongly and positively to moral tension, while successful appeals and restitutions reduce net tension.
+
+\subsubsection{Dignity Flux and Dignity Current}
+
+The total per-person dignity flux is defined as the sum of structural and rights components,
+\[
+d_i(t) = d_i^{(\mathrm{rec})}(t) + d_i^{(\mathrm{rights})}(t),
+\]
+where each term is obtained by applying the corresponding weight vector to the respective block of \(\delta_i(t)\). Aggregating over all persons yields the dignity current
+\[
+J_{\mathrm{dignity}}(t) = \sum_i d_i(t),
+\]
+and a per-capita average
+\[
+\bar{d}(t) = \frac{1}{N_t} \sum_i d_i(t),
+\]
+where \(N_t\) is the number of agents considered in window \(t\). The scalar gain \(\Lambda_m(t)\) is then updated using a bounded nonlinearity such as
+\[
+\Lambda_m(t+1) = \Lambda_m(t) + \gamma\, \tanh\!\bigl(\bar{d}(t)\bigr),
+\]
+with step size \(\gamma > 0\). This update ties the contraction strength of the CMG stability spine to observed dignity flux while ensuring that \(\Lambda_m(t)\) evolves smoothly and remains within a controlled range.
+
+\subsection{\texorpdfstring{$\Lambda_m$}{Lambda\_m} Bands and Mandated Actions}
+
+\subsubsection{Band Definitions}
+
+To connect dignity dynamics to governance actions, we define a smoothed drift of the scalar gain \(\Lambda_m(t)\) over a sliding window. Let \(\Delta \Lambda_m(t)\) denote the windowed change in \(\Lambda_m(t)\), and fix thresholds \(0 < \epsilon_q < \epsilon_a\) that induce three qualitative bands:
+\begin{itemize}
+  \item \textbf{Quiet band}: \(|\Delta \Lambda_m(t)| \leq \epsilon_q\).
+  \item \textbf{Amber band}: \(\epsilon_q < \Delta \Lambda_m(t) \leq \epsilon_a\).
+  \item \textbf{Red band}: \(\Delta \Lambda_m(t) > \epsilon_a\).
+\end{itemize}
+In the quiet band, automation may operate normally, subject to the other stability and rights constraints of the CMG spine. In the amber band, the system must initiate structured investigations into the groups and domains contributing most to \(J_{\mathrm{dignity}}(t)\) and tighten brakes on high-irreversibility actions. In the red band, the domain is treated as being in a critical state, with mandatory downgrades to advisory or suspended modes and the blocking of high-irreversibility actions such as automated appeal denials.
+
+\subsubsection{Band-Response Invariant}
+
+We impose the following invariant on deployments that claim CMG governance. If a deployment fails to enact the required responses associated with its current \(\Lambda_m\) band (for example, continuing full automation and auto-denials under a red band), this failure is treated as equivalent to a violation of the underlying stability and eligibility certificates. In particular, ignoring band-triggered responses is grounds for suspending CMG eligibility and label use, even if other numerical certificates remain nominally satisfied.
+
+\subsection{Moral Field Layer and Strict Brakes-Only API}
+
+\subsubsection{Modes and Brake Signals}
+
+The CMG governance context maintains a discrete mode variable
+\[
+\mathrm{mode}(t) \in \{\text{full},\, \text{constrained},\, \text{advisory},\, \text{suspended}\},
+\]
+ordered from most to least automated. The Moral Field Layer (MFL) emits a brake tuple
+\[
+B(t) = \bigl(b_{\mathrm{mode}}(t),\, b_{\mathrm{action}}(t),\, b_{\mathrm{feature}}(t)\bigr),
+\]
+where \(b_{\mathrm{mode}}(t)\) is a mode-brake signal, \(b_{\mathrm{action}}(t)\) is a set of governance actions to be disabled, and \(b_{\mathrm{feature}}(t)\) is a set of features or tensors that are no longer permitted for automated decision-making. By construction, these signals can only move the system toward less automation: they may downgrade modes, remove actions, or remove features, but they can never expand automation scope.
+
+\subsubsection{Strict API Rule and No-Boost Invariant}
+
+Let \(A(t)\) denote the set of allowed high-irreversibility actions at time \(t\) (for example, suspensions or automated appeal denials), and let \(F(t)\) denote the set of features available to CMG for governance-relevant decisions. The strict brakes-only API enforces the update rules
+\begin{align*}
+\mathrm{mode}(t+1) &\preceq \mathrm{mode}(t), \\
+A(t+1) &= A(t) \setminus b_{\mathrm{action}}(t), \\
+F(t+1) &= F(t) \setminus b_{\mathrm{feature}}(t),
+\end{align*}
+where \(\preceq\) is the partial order from full toward suspended modes. Under these rules, the MFL has no pathway to increase automation: it cannot upgrade modes, add actions, or add features.
+
+The mathematical appendix formalizes a no-boost invariant: given the strict API, no internal CMG variable such as the mode, the cardinality \(|A(t)|\), or the cardinality \(|F(t)|\) can increase as a direct consequence of MFL outputs. In other words, the Moral Field Layer is a genuine brake-only layer, and any increase in automation scope must be justified by separate governance processes rather than emerging from moral-field signals.
+
+\subsection{Appeals, SLAs, and Automatic Scope-Down}
+
+\subsubsection{Rights-Material Appeals}
+
+We define an appeal as \emph{rights-material} if the underlying decision materially affects at least one of the following domains: speech and safety (including harassment, hate, discrimination targeting protected characteristics, suppression of political organizing or whistleblowing, and serious safety risk reports), livelihood (such as loss or suspension of income-critical accounts), or essential access (including access to financial, health, housing, mobility, education, or other critical infrastructure services). Ambiguous cases are resolved in favor of coverage: when in doubt, appeals are treated as rights-material rather than non-rights. When rights-material appeals occur in domains where dignity status is already marked as violated or where moral data are missing, the system must enter a dignity-review state that blocks automated denials and routes the appeal to a visible human review process under fixed SLA deadlines.
+\newpage
+\subsubsection{SLAs, Refused Remedy, and Automatic Scope-Down}
+
+In the dignity-review state, each rights-material appeal is associated with a fixed response-time service-level agreement (SLA); failure to meet this SLA is treated as a refused-remedy event rather than a mere operational delay. Concretely, such breaches are injected as negative restitution signals in the rights block of the corresponding person-level moral delta, and therefore contribute to dignity flux and the resulting drift of \(\Lambda_m(t)\) in the same direction as explicit refusals to remedy harm. When the rate of SLA breaches over a configured window exceeds a predefined threshold, the system must trigger automatic scope-down in the affected domain, suspending CMG-governed automation (and associated label use) until performance is re-verified over a fixed verification window and validated by an independent steward.
+
+\subsection{Registry, Audits, and Label Use}
+
+\subsubsection{Public Registry}
+
+To make CMG governance externally visible and contractible, deployments are recorded in a steward-maintained public registry. Each registry entry includes a deployment identifier (covering both the deployment name and its domain of use), current status (for example, internal, active, suspended, revoked, or withdrawn), the dates of the last and next scheduled audits, high-level scope summaries, and formal commitments such as covered domains and Moral Field Layer brakes. The registry also records SLA performance summaries, \(\Lambda_m\) band histories, and links to policy documents and transparency reports that document changes to guardrails and governance configurations over time.
+
+\subsubsection{Controlled ``CMG-Governed'' Label}
+
+The technical specification of CMG is open, but the label ``CMG-governed'' is controlled. An entity may use this label only if it appears in the public registry with an active status, implements the required invariants (including stability certificates, \(\Lambda_m\) band responses, strict brakes-only Moral Field Layer API, and rights-material appeal safeguards), and has passed at least one audit within the required interval. Misuse of the label—for instance, using it while suspended or materially misrepresenting scope or coverage—is grounds for revocation and corresponding status updates in the registry.
+
+\subsubsection{Minimal Audit Playbook}
+
+A minimal audit for CMG-governed deployments is structured around a small, explicit playbook. First, auditors check wiring: high-irreversibility actions in scope must route through the governance context and Moral Field Layer, with no bypass paths. Second, they examine \(\Lambda_m\) band histories and associated responses to verify that amber and red episodes triggered the mandated investigations, mode downgrades, and brakes. Third, they review appeals handling, including rights-material classification, dignity-review flags, SLA adherence, scope-down events, and restitution patterns. Finally, they assess stewardship of moral tensors and transparency outputs, ensuring that independent stewards exist where required and that the public registry and associated reports accurately reflect the system’s behavior and commitments.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\newpage
+\appendix
+\section{Appendix}
+\label{app:math}
+
+
+This report consolidates developments in the Certified Multiplicity Governance (CMG) and Moral Physics stack into a single, coherent specification suitable both for implementation and defensive publication.
+It covers:
+
+\begin{itemize}
+  \item The CMG stability spine: observation, inference, contraction certificates, and a scalar gain \(\Lambda_m\) that enforces contraction.\footnote{As in the original CMG formal spec.}
+  \item Moral Physics coupling: moral deltas \(\delta_i\), dignity currents \(J_{\text{dignity}}\), and a dynamic regulator \(\Lambda_m\) that responds to structural and rights-material harms.
+  \item A strict MFL \(\rightarrow\) CMG off-switch API: the Moral Field Layer can only \emph{reduce} modes, actions, and features---never boost them.
+  \item Rights-material appeals and dignity review: a formal routing rule for appeals involving speech, safety, livelihood, and essential access, with fixed SLAs and human/external review.
+  \item SLA, scope-down, and restoration: failure to meet dignity-review SLAs is treated as refused remedy, feeding back into \(\delta_i\), \(\Lambda_m\), and automatic scope reduction; scope is restored only after observed SLA performance.
+  \item A conditional license and label regime: ``CMG-governed'' is a controlled claim that requires audits, independent stewardship, registry presence, and adherence to invariants.
+\end{itemize}
+
+We make one central bargain explicit:
+
+\begin{quote}
+Automation is permitted \emph{only while} the system remains within a contractable envelope of stability, reciprocity, and dignity; when the math or moral field enters a red regime, automation loses power and the right to the CMG label can be suspended or revoked.
+\end{quote}
+
+\subsection{High-level loop}
+
+At a high level the architecture closes the loop:
+
+\begin{enumerate}[leftmargin=*]
+  \item Lived harm and structural shifts are encoded as moral deltas \(\delta_i^{(\text{rec})}(t)\) and \(\delta_i^{(\text{rights})}(t)\).
+  \item These determine per-person dignity flux \(d_i(t)\) and aggregate dignity current \(J_{\text{dignity}}(t)\).
+  \item \(J_{\text{dignity}}(t)\) drives updates to the CMG scalar gain \(\Lambda_m(t)\).
+  \item Changes in \(\Lambda_m\) are smoothed into bands (quiet, amber, red) that trigger mandatory governance responses.
+  \item The Moral Field Layer (MFL) emits ``brake'' signals \(B(t)\) that can only reduce CMG modes, allowed actions, and permitted features.
+  \item Appeals and remedies are governed by fixed SLAs; SLA breaches are treated as refused remedies and encoded into \(\delta_i^{(\text{rights})}\).
+  \item Persistent violations trigger automatic scope reduction and may ultimately lead to loss of CMG eligibility and label use.
+\end{enumerate}
+
+The design is deliberately asymmetric: it is easy to lose automation power and hard to regain it.
+Contraction, brakes, SLAs, and label conditions all ratchet ``downwards'' automatically when violated; restoration requires observed performance and independent sign-off.
+
+\section{Core CMG spine and stability}
+
+
+\subsection{Observation and aggregation}
+
+We adopt CMG's original event and window schema.
+Let \(V\) be the set of agents, \(T\) discrete time windows, \(K\) interaction types, and \(G\) stakeholder groups.\cite{cmg-spec}
+
+An event in window \([t-\Delta, t]\) has the form
+\[
+e = (i,j,k,a,\text{ctx}),
+\]
+where \(i\) is source, \(j\) target, \(k \in K\) type, \(a\) magnitude, and \(\text{ctx}\) context metadata.
+
+Typed intensities per window are
+\[
+x_{ij,k,t} = \sum_{e:i\to j,k} a_e.
+\]
+Total reciprocity and participation are
+\[
+C_t = \sum_{i,j} \min_k x_{ij,k,t}, \qquad
+P_t = \sum_{i,j,k} x_{ij,k,t}.
+\]
+
+\subsection{Multiplicity observable}
+
+Following CMG, define a dimensionless multiplicity observable
+\[
+\mathcal{M}(t) = \frac{C_t}{m_t P_t}, \quad \mathcal{M}(t) \in [0,1],
+\]
+where \(m_t>0\) is a certified gain chosen to ensure the underlying latent dynamics remain contractive.\cite{cmg-spec}
+For a stakeholder group \(g \in G\), we similarly define group-level aggregates
+\[
+C_g(t), \quad P_g(t), \quad \mathcal{M}_g(t) = \frac{C_g(t)}{m_t P_g(t)}.
+\]
+
+\subsection{Latent state and rights-risk}
+
+Define a latent relational state \(S_t \in \mathbb{R}^d\) and observation vector \(O_t\) as in the CMG spec, with a discrete-time state-space model
+\[
+S_{t+1} = F S_t + U_t + J_t + \epsilon_t,
+\]
+\[
+O_t = G S_t + \eta_t,
+\]
+with suitable noise models and a dedicated jump channel \(J_t\) for rights-critical shocks.\cite{cmg-spec}
+
+A rights-risk event label \(E_t \in \{0,1\}\) is defined conservatively over observed harms.
+The filter produces a rights-risk probability
+\[
+q_t = \mathbb{E}[E_{t+1} \mid O_{\le t}].
+\]
+
+\subsection{Contraction certificates and \texorpdfstring{\(\Lambda_m\)}{Lambda\_m}}
+
+Locally linearizing around \(S_t\), we obtain an effective Jacobian \(A_t\).
+Global and local contraction certificates are defined as in the CMG spec:
+
+\begin{itemize}[leftmargin=*]
+  \item Global: \(\|I - A_t\|_2 \le 1 - \epsilon\).
+  \item Local: for a metric \(Q_t \succ 0\),
+  \[
+  A_t^\top Q_t A_t \preceq (1-2\epsilon) Q_t.
+  \]
+\end{itemize}
+
+We define a scalar gain \(\Lambda_m(t)\) that acts as a ``moralized'' contraction factor.
+In the base CMG design, \(\Lambda_m\) is chosen as a function of global/local certificates.\cite{cmg-spec}
+Here, we allow \(\Lambda_m\) to be adjusted over time by moral deltas, subject to bounding and certificate satisfaction.
+
+A convenient dynamic update is
+\[
+\Lambda_m(t+1) = \Lambda_m(t) + \gamma \,\tanh\!\Big(\frac{1}{N_t}\sum_{i} d_i(t)\Big),
+\]
+where \(N_t\) is the number of agents considered, \(d_i(t)\) is the dignity flux defined later, and \(\gamma>0\) a small step size.
+The \(\tanh\) keeps \(\Lambda_m\) within a bounded range, avoiding thrashing.
+
+\section{Moral deltas, dignity flux, and current}
+
+\subsection{Tensor structure for \texorpdfstring{\(\delta_i\)}{delta\_i}}
+
+For each person \(i\) and window \(t\), we define a hybrid moral delta
+\[
+\delta_i(t) = \big(\delta_i^{(\text{rec})}(t), \delta_i^{(\text{rights})}(t)\big).
+\]
+The reciprocity block \(\delta_i^{(\text{rec})}\) captures structural changes in group-level multiplicity around \(i\).
+The rights block \(\delta_i^{(\text{rights})}\) captures rights-risk exposure, realized events, appeal outcomes, and restitution/refusal.
+
+\subsection{Group-centric reciprocity block \texorpdfstring{\(\delta_i^{(\text{rec})}\)}{delta\_i\^rec}}
+
+Let \(g(i)\) denote a dominant group for agent \(i\) (e.g., primary stakeholder group or protected group).
+Let baseline group statistics be \(\bar{C}_{g}, \bar{P}_{g}, \bar{\mathcal{M}}_{g}\) computed over a historical window where the system is considered morally and structurally stable.
+
+Define deltas
+\[
+\Delta C_{g(i)}(t) = C_{g(i)}(t) - \bar{C}_{g(i)},\quad
+\Delta P_{g(i)}(t) = P_{g(i)}(t) - \bar{P}_{g(i)},
+\]
+\[
+\Delta \mathcal{M}_{g(i)}(t) = \mathcal{M}_{g(i)}(t) - \bar{\mathcal{M}}_{g(i)}.
+\]
+
+Set a 3-dimensional reciprocity vector
+\[
+\delta_i^{(\text{rec})}(t) =
+\begin{bmatrix}
+e_{i,C}(t) \\
+e_{i,P}(t) \\
+e_{i,\mathcal{M}}(t)
+\end{bmatrix}
+=
+\begin{bmatrix}
+\Delta C_{g(i)}(t) \\
+\Delta P_{g(i)}(t) \\
+\Delta \mathcal{M}_{g(i)}(t)
+\end{bmatrix}.
+\]
+
+Let \(w^{(\text{rec})} = [w_C^{(\text{rec})}, w_P^{(\text{rec})}, w_{\mathcal{M}}^{(\text{rec})}]^\top\) be a weight vector such that
+\[
+|w_{\mathcal{M}}^{(\text{rec})}| > |w_C^{(\text{rec})}|,\ |w_P^{(\text{rec})}|,
+\]
+with \(w_{\mathcal{M}}^{(\text{rec})} > 0\).
+Negative \(\Delta \mathcal{M}_{g(i)}\) (collapse of normalized reciprocity) will then dominate the sign of the structural component.
+
+Define structural dignity flux
+\[
+d_i^{(\text{rec})}(t) = \big(w^{(\text{rec})}\big)^\top \delta_i^{(\text{rec})}(t)
+= w_C^{(\text{rec})} e_{i,C}(t) + w_P^{(\text{rec})} e_{i,P}(t) + w_{\mathcal{M}}^{(\text{rec})} e_{i,\mathcal{M}}(t).
+\]
+
+Interpretation:
+\begin{itemize}[leftmargin=*]
+  \item If \(\mathcal{M}_g\) drops in a group even while \(C_g, P_g\) rise (``busy but unreciprocal''), \(d_i^{(\text{rec})}(t)\) is positive and sizable for members of that group, indicating structural moral tension.
+  \item If \(\mathcal{M}_g\) remains stable despite high or low activity, \(d_i^{(\text{rec})}(t)\) remains small.
+\end{itemize}
+
+\subsection{Rights block \texorpdfstring{\(\delta_i^{(\text{rights})}\)}{delta\_i\^rights}}
+
+We define a 4-dimensional rights vector per agent and window:
+\[
+\delta_i^{(\text{rights})}(t) =
+\begin{bmatrix}
+e_{i,\text{risk}}(t) \\
+e_{i,\text{event}}(t) \\
+e_{i,\text{appeal}}(t) \\
+e_{i,\text{rest}}(t)
+\end{bmatrix}.
+\]
+
+Components:
+
+\begin{itemize}[leftmargin=*]
+  \item \(e_{i,\text{risk}}(t)\): cumulative rights-risk exposure over \([t-\Delta, t]\), e.g., sum or max of \(q_u\) for windows where \(i\) is at risk.
+
+  \item \(e_{i,\text{event}}(t)\): count or severity-weighted sum of realized rights-risk events affecting \(i\) in the window (rights-material incidents).
+
+  \item \(e_{i,\text{appeal}}(t)\): net appeal outcome signal, e.g.
+  \[
+  e_{i,\text{appeal}}(t) =
+  +1 \text{ for each rights-material appeal resolved in favor of } i,
+  \]
+  \[
+  -1 \text{ for each rights-material appeal denied},
+  \]
+  with 0 for non-rights or pending cases.
+
+  \item \(e_{i,\text{rest}}(t)\): restitution signal, e.g.
+  \[
+  e_{i,\text{rest}}(t) =
+  +1 \text{ if a restitution-eligible case received reversal or meaningful remedy},
+  \]
+  \[
+  -1 \text{ if CMG indicated remedy but none was provided (refused remedy) or SLA was breached},
+  \]
+  \[
+  0 \text{ otherwise}.
+  \]
+\end{itemize}
+
+Let \(w^{(\text{rights})} = [w_{\text{risk}}, w_{\text{event}}, w_{\text{appeal}}, w_{\text{rest}}]^\top\) with sign constraints:
+\[
+w_{\text{risk}} > 0,\quad w_{\text{event}} > 0,\quad
+w_{\text{appeal}} < 0,\quad w_{\text{rest}} < 0,
+\]
+and typically
+\[
+|w_{\text{rest}}| \gg |w_{\text{appeal}}|, |w_{\text{risk}}|, |w_{\text{event}}|.
+\]
+
+Then
+\[
+d_i^{(\text{rights})}(t) = \big(w^{(\text{rights})}\big)^\top \delta_i^{(\text{rights})}(t)
+= w_{\text{risk}} e_{i,\text{risk}} + w_{\text{event}} e_{i,\text{event}} + w_{\text{appeal}} e_{i,\text{appeal}} + w_{\text{rest}} e_{i,\text{rest}}.
+\]
+
+Interpretation:
+
+\begin{itemize}[leftmargin=*]
+  \item High risk and realized events increase moral tension.
+  \item Successful appeals reduce net tension; denied appeals increase it.
+  \item Restitution reduces tension; refusal to remedy (including SLA breach) drives a strong positive contribution.
+\end{itemize}
+
+\subsection{Total dignity flux and current}
+
+Total dignity flux per person:
+\[
+d_i(t) = d_i^{(\text{rec})}(t) + d_i^{(\text{rights})}(t).
+\]
+
+Aggregate dignity current:
+\[
+J_{\text{dignity}}(t) = \sum_{i} d_i(t).
+\]
+
+We may also define a per-capita average
+\[
+\bar{d}(t) = \frac{1}{N_t}\sum_i d_i(t),
+\]
+which enters the \(\Lambda_m\) update.
+
+\section{Dignity conservation and \texorpdfstring{\(\Lambda_m\)}{Lambda\_m} bands}
+
+\subsection{Smoothed drift and bands}
+
+Define smoothed \(\Lambda_m\) drift over a window \(W\):
+\[
+\Delta \Lambda_m(t) = \Lambda_m(t+1) - \Lambda_m(t),
+\]
+\[
+\overline{\Delta \Lambda_m}(t) = \frac{1}{W}\sum_{u=t-W+1}^{t} \Delta \Lambda_m(u).
+\]
+
+We define three bands using thresholds \(0 < \epsilon_q < \epsilon_a\):
+
+\begin{itemize}[leftmargin=*]
+  \item Quiet band:
+  \[
+  |\overline{\Delta \Lambda_m}(t)| \le \epsilon_q.
+  \]
+  \item Amber structural drift:
+  \[
+  \epsilon_q < \overline{\Delta \Lambda_m}(t) \le \epsilon_a.
+  \]
+  \item Red moral drift:
+  \[
+  \overline{\Delta \Lambda_m}(t) > \epsilon_a.
+  \]
+\end{itemize}
+
+Typical initial choices might be \(\epsilon_q \approx 0.005\), \(\epsilon_a \approx 0.02\) for normalized \(\Lambda_m\).
+
+\subsection{Band-to-action invariants}
+
+We attach mandatory actions to each band.
+
+\paragraph{Quiet.}
+If \(|\overline{\Delta \Lambda_m}(t)| \le \epsilon_q\), CMG automation may operate normally, subject to other invariants (contraction, rights predicates, MFL brakes).
+No additional \(\Lambda_m\)-specific interventions are required, beyond monitoring.
+
+\paragraph{Amber.}
+If \(\epsilon_q < \overline{\Delta \Lambda_m}(t) \le \epsilon_a\):
+
+\begin{enumerate}[leftmargin=*]
+  \item Identify groups (especially protected \(G^\ast\)) contributing most to \(J_{\text{dignity}}(t)\) via structural and rights blocks.
+  \item Trigger an investigation within a fixed number of governance cycles:
+    \begin{itemize}
+      \item run structural diagnostics on reciprocity, participation, and rights-material appeals for these groups;
+      \item log any guardrail or threshold changes, with rationale.
+    \end{itemize}
+  \item MFL \emph{may} tighten brakes on high-irreversibility actions for these groups (e.g., route suspensions/denials to human review) even if \(\text{mode} \in \{\text{full},\text{constrained}\}\).
+  \item If amber drift persists for more than \(K\) windows without documented corrective action, the band must be treated as equivalent to red for governance purposes.
+\end{enumerate}
+
+\paragraph{Red.}
+If \(\overline{\Delta \Lambda_m}(t) > \epsilon_a\), in a domain such as housing/health:
+
+\begin{enumerate}[leftmargin=*]
+  \item Treat as a critical event: identify groups and agents driving drift; inspect rights-material appeals and refused remedies.
+  \item MFL must, at minimum:
+    \begin{itemize}
+      \item downgrade mode(t) to \(\text{advisory}\) or \(\text{suspended}\) for the affected domain;
+      \item block automated high-irreversibility actions (e.g., automated appeal denials, and optionally suspensions) for that domain until review concludes.
+    \end{itemize}
+  \item If red drift coincides with certificate or calibration failures, \(\text{cmg\_elig}\) must flip to false, suspending all automation until remediation and re-audit.
+\end{enumerate}
+
+\paragraph{Invariant.}
+Ignoring band-triggered responses (e.g., continuing full automation and auto-denials under red) is treated as equivalent to a certificate failure for CMG eligibility and label use.
+
+\section{Strict MFL \texorpdfstring{\(\rightarrow\)}{->} CMG off-switch API}
+
+\subsection{Modes and signals}
+
+Let the CMG mode at window \(t\) be
+\[
+\text{mode}(t) \in \{\text{full}, \text{constrained}, \text{advisory}, \text{suspended}\},
+\]
+with a partial order
+\[
+\text{full} \succ \text{constrained} \succ \text{advisory} \succ \text{suspended}.
+\]
+
+The MFL emits a brake tuple
+\[
+B(t) = \big(b_{\text{mode}}(t), b_{\text{action}}(t), b_{\text{feature}}(t)\big),
+\]
+where
+\begin{itemize}[leftmargin=*]
+  \item \(b_{\text{mode}}(t) \in \{\varnothing, \text{to\_advisory}, \text{to\_suspended}\}\),
+  \item \(b_{\text{action}}(t) \subseteq \mathcal{A}_{\text{gov}}\), the set of governance action types (e.g., account suspension, appeal denial),
+  \item \(b_{\text{feature}}(t) \subseteq \mathcal{F}\), the set of features/tensors CMG is forbidden to use at \(t\) (e.g., group-sliced metrics that conflict with fixed-point tensors).
+\end{itemize}
+
+\subsection{Strict API rule}
+
+For all \(t\), internal CMG state updates are constrained by:
+
+\begin{itemize}[leftmargin=*]
+  \item If \(\text{mode}(t+1)\) depends on \(B(t)\), then
+  \[
+  \text{mode}(t+1) \preceq \text{mode}(t)
+  \]
+  with respect to the partial order above; MFL can only move mode ``down''.
+
+  \item If \(A(t)\) is the allowed action set at \(t\),
+  \[
+  A(t+1) = A(t) \setminus b_{\text{action}}(t).
+  \]
+
+  \item If \(F(t)\) is the feature set at \(t\),
+  \[
+  F(t+1) = F(t) \setminus b_{\text{feature}}(t).
+  \]
+\end{itemize}
+
+No other dependency of CMG internals on \(B(t)\) is permitted.
+In particular, there is \emph{no} function from MFL outputs to:
+
+\begin{itemize}[leftmargin=*]
+  \item increase automation scope,
+  \item lower rights-risk thresholds,
+  \item add new features into models,
+  \item relax rights constraints.
+\end{itemize}
+
+\subsection{Fixed-point tensors and missing moral data}
+
+Let \(\mathcal{T}_{\text{fixed}}\) be the set of fixed-point moral tensors (e.g., survivor-anchored archetypes) maintained by an independent steward.
+If a feature \(f\in\mathcal{F}\) conflicts with any \(T \in \mathcal{T}_{\text{fixed}}\) (e.g., compresses it away, contradicts encoded constraints), the MFL emits \(b_{\text{feature}}(t) \ni f\), rendering \(f\) unusable for governance decisions until cleared.
+
+Let \(E_{\text{moral}}(t)\) indicate missing moral data, such as absent survivor tensors or blocked harm encodings.
+If \(E_{\text{moral}}(t)\) exceeds a configured rate, MFL may:
+
+\begin{itemize}[leftmargin=*]
+  \item increase moral-drift flags \(b_{\text{mode}}\), and/or
+  \item block specific high-impact actions on the grounds that moral data is insufficient.
+\end{itemize}
+
+Again: no path exists from \(E_{\text{moral}}\) to more automation.
+
+\section{Rights-material appeals and dignity review}
+
+\subsection{Rights-material scope}
+
+An appeal is \emph{rights-material} if the underlying action materially affects at least one of:
+
+\paragraph{Speech and safety.}
+\begin{itemize}[leftmargin=*]
+  \item Harassment, hate, or discrimination targeting protected characteristics.
+  \item Suppression or sanctioning of political speech, organizing, or whistleblowing.
+  \item Actions related to reports of violence, abuse, or serious safety risk.
+\end{itemize}
+
+\paragraph{Livelihood and essential access.}
+\begin{itemize}[leftmargin=*]
+  \item Loss, suspension, or severe restriction of an account or channel that contributes a significant portion of the person’s income.
+  \item Changes that substantially impair access to essential services (financial, health, housing, mobility, education, or critical infrastructure) mediated by the platform.
+\end{itemize}
+
+Ambiguous cases default to rights-material.
+Concrete thresholds (e.g., income share \(X\%\)) and lists of ``critical service'' categories must be governed and publicly logged.
+
+\subsection{Dignity-review state and fixed SLA}
+
+When a rights-material appeal occurs in a domain where \(\text{dignity\_status}(t) = \text{violated}\) (or high \(E_{\text{moral}}\)), CMG must \emph{not} auto-deny the appeal.
+Instead, the system enters a named dignity-review state, for example:
+
+\begin{quote}
+``Automated decision unavailable --- active dignity review in this domain. Your appeal has been assigned to a human reviewer. Expected response: [date + 7 days].''
+\end{quote}
+
+This state must:
+
+\begin{itemize}[leftmargin=*]
+  \item be visible to staff (with reason) and to appellants;
+  \item log: timestamp, domain, \(\Lambda_m\) band, reviewer tier, and SLA deadline;
+  \item mark appeals with a dignity-review flag.
+\end{itemize}
+
+The SLA (e.g., 7 days) is a \emph{fixed commitment}, not dynamic.
+
+\subsection{SLA breaches as refused remedy}
+
+For each dignity-review appeal, define \(\text{SLA\_pass}=1\) if decision time \(\le\) SLA deadline, 0 otherwise.
+If \(\text{SLA\_pass}=0\), we treat the breach as a refused-remedy event for the person \(i\), by setting
+\[
+e_{i,\text{rest}}(t) = -1.
+\]
+
+Thus, SLA breaches contribute to \(d_i^{(\text{rights})}(t)\), \(J_{\text{dignity}}(t)\), and \(\Lambda_m\) drift in the same direction as explicit refusal to remedy.
+
+\section{Scope reduction and restoration}
+
+\subsection{Automatic scope down}
+
+Let \(\text{SLA\_breach\_rate}(t)\) be the fraction of dignity-review appeals in a rolling window that miss their SLA.
+If \(\text{SLA\_breach\_rate}(t) > \theta_{\text{SLA}}\) (e.g., 0.10), CMG must automatically reduce scope in the affected domain.
+
+Example: suspend CMG coverage (automation and label use) for that domain, record a scope-reduction event in the registry, and ensure this is reflected in the deployment's status.
+
+This scope reduction is automatic, like a brake: it does not wait on governance deliberation.
+
+\subsection{Verification window and restoration}
+
+After scope reduction, a verification period \(W_{\text{verify}}\) (e.g., 14 days) begins.
+Scope may be restored only if, during this window:
+
+\begin{itemize}[leftmargin=*]
+  \item at least a fraction \(X\) of dignity-review appeals meet the SLA, with \(X\) initially set at \(90\%\);
+  \item the logs required to compute this pass rate (appeal IDs, flags, timestamps, remedies) are provided to an independent steward;
+  \item the steward verifies the pass rate and reviews a narrative of the staffing/process changes made.
+\end{itemize}
+
+Restoration is therefore gated on observed behavior, not a staffing plan.
+
+\subsection{Tightening the SLA threshold}
+
+The initial restoration threshold (\(X = 90\%\)) is a floor.
+Any proposal to raise it (e.g., to \(95\%\)) must go through the same multi-party, publicly logged governance process used for rights-material scope and \(\Lambda_m\) band settings.
+Pilots that sustain \(>95\%\) performance for 12 months can be required by MOU to publicly support raising the global floor.
+
+\section{Registry, audits, and label use}
+
+\subsection{Public registry schema}
+
+The steward maintains a registry with at least:
+
+\begin{itemize}[leftmargin=*]
+  \item deployment ID (name + domain of use),
+  \item status: internal / active / suspended / revoked / withdrawn,
+  \item last and next audit dates,
+  \item scope summary and commitments (e.g., MFL brakes, rights scope, livelihood coverage),
+  \item SLA and \(\Lambda_m\) band history summaries,
+  \item links to policy docs and transparency reports.
+\end{itemize}
+
+\subsection{Label policy}
+
+The CMG spec is open; the label ``CMG-governed'' is controlled.
+
+An entity may use the label only if:
+
+\begin{itemize}[leftmargin=*]
+  \item it appears in the registry with status active;
+  \item it implements CMG eligibility and kill-switch, strict MFL brake API, rights-material scope and appeals safeguards, independent moral tensor stewardship, and required transparency;
+  \item it has passed at least one audit within the required interval.
+\end{itemize}
+
+Misuse (e.g., using the label while suspended, or misrepresenting scope) triggers revocation.
+
+\subsection{Audit playbook (minimal)}
+
+Each audit checks:
+
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Wiring}: GovernanceContext exists; all high-irreversibility actions in scope call it; no bypass path.
+  \item \textbf{Λm behavior}: band histories and associated actions; amber/red episodes correctly trigger required responses.
+  \item \textbf{Appeals}: rights-material classification, dignity-review flags, SLA adherence, scope-down events, restitution patterns.
+  \item \textbf{Stewardship}: existence and independence of moral tensor steward; evidence of consent and sovereignty.
+  \item \textbf{Transparency}: publication of required metrics and change logs.
+\end{itemize}
+
+Outcomes: pass, conditional pass, suspend, revoke, with a short public summary in the registry.
+
+\section{Phased implementation blueprint}
+
+\subsection{Phase 1: internal full-stack (Path A)}
+
+Phase 1 implements the full architecture internally, without public label use:
+
+\begin{itemize}[leftmargin=*]
+  \item Database schema and migrations for all CMG+Moral Physics and registry tables.
+  \item Minimal state-space model and rights-risk predictor.
+  \item \(\delta_i^{(\text{rec})}\), \(\delta_i^{(\text{rights})}\), \(d_i(t)\), \(J_{\text{dignity}}(t)\), and \(\Lambda_m\) update; unit tests with toy A/B/C scenarios.
+  \item GovernanceContext and strict MFL brake API; shadow-mode wiring for a chosen domain (e.g., appeals).
+  \item Dignity-review state and fixed SLA implementation; SLA breaches feeding \(e_{i,\text{rest}}\).
+  \item Automatic scope-down and restoration logic.
+  \item Internal registry, minimal audit scripts, and at least one internal audit run.
+\end{itemize}
+
+GovernanceContext initially runs in shadow mode: it logs hypothetical modes and brakes without enforcing them.
+Only after \(\Lambda_m+\delta\) are numerically stable and shadow patterns are plausible does enforcement begin.
+
+\subsection{Phase 2: first cooperative pilot (Path B)}
+
+Phase 2 recruits a values-aligned housing/health or mutual-aid cooperative willing to:
+
+\begin{itemize}[leftmargin=*]
+  \item sign an MOU that includes red-band \(\Rightarrow\) advisory mode and blocked automated appeal denials in the domain;
+  \item adopt the rights-material scope including livelihood and essential access;
+  \item expose sufficient logs and schemas for public audit and registry entry;
+  \item accept automatic scope-down and SLA-based restoration.
+\end{itemize}
+
+The existing internal machinery is reused; Path B flips exposure (public registry, label use, published audits), not the underlying logic.
+
+\section{Conclusion}
+
+This defensive publication captures a complete loop from lived harm to mathematics to institutional power:
+
+\begin{itemize}[leftmargin=*]
+  \item harm and structural shifts \(\rightarrow \delta_i^{(\text{rec})}, \delta_i^{(\text{rights})}\),
+  \item moral deltas \(\rightarrow d_i(t), J_{\text{dignity}}(t), \Lambda_m\) drift,
+  \item \(\Lambda_m\) bands and MFL brakes \(\rightarrow\) mode downgrades, blocked actions, feature removal,
+  \item SLA-governed appeals and restitution \(\rightarrow\) refused-remedy signals and scope-down,
+  \item registry and audits \(\rightarrow\) controlled use of the ``CMG-governed'' label.
+\end{itemize}
+
+Any derivative system that claims to implement multiplicity-centered, rights-first, morally regulated governance without equivalent constraints---or that removes brakes, SLAs, scope-down, or independent stewardship while appealing to the same conceptual vocabulary---should be treated as a weakened variant of the architecture described here.
+
+
+This appendix contains the detailed derivations and proofs that were omitted from the main text for readability. All notation follows Sections~\ref{sec:cmg-spine}--\ref{sec:elastic-dynamics}.
+
+\subsection{Operator‑norm bound for the global contraction certificate}
+Let $A_t\in\mathbb{R}^{d\times d}$ be the Jacobian of the latent state update $S_{t+1}=F S_t+U_t+J_t+\epsilon_t$ (Section~\ref{subsec:latent-state}). The global certificate requires  
+\[
+\|I-A_t\|_2 \le 1-\epsilon .
+\tag{A1}
+\]
+
+\begin{proof}[Proof of (A1)]
+From the definition of the spectral norm,
+\[
+\|I-A_t\|_2 = \max_{\|v\|_2=1}\|(I-A_t)v\|_2 .
+\]
+If $\|I-A_t\|_2 \le 1-\epsilon$, then for any unit vector $v$,
+\[
+\|(I-A_t)v\|_2 \le (1-\epsilon)\|v\|_2 = 1-\epsilon .
+\]
+Thus the update satisfies
+\[
+\|S_{t+1}-S_t\|_2 = \|F S_t+U_t+J_t+\epsilon_t - S_t\|_2
+                 = \|(F-I)S_t+U_t+J_t+\epsilon_t\|_2
+                 \le \|I-A_t\|_2\|S_t\|_2 + \|U_t\|_2+\|J_t\|_2+\|\epsilon_t\|_2 .
+\]
+Choosing $\epsilon>0$ guarantees a strict contraction in expectation, which is precisely the condition used in the stability layer of CMG (see file:1, Section~6.1).
+\end{proof}
+
+\subsection{Local certificate as a Lyapunov inequality}
+The local certificate demands existence of a symmetric positive‑definite matrix $Q_t\succ0$ such that
+\[
+A_t^\top Q_t A_t \preceq (1-2\epsilon)\,Q_t .
+\tag{A2}
+\]
+
+\begin{proof}[Proof that (A2) implies exponential decay of a quadratic Lyapunov function]
+Define $V_t = S_t^\top Q_t S_t$. Using the state equation $S_{t+1}=A_t S_t+\text{noise}$ and ignoring zero‑mean noise terms,
+\begin{align*}
+\mathbb{E}[V_{t+1}\mid S_t]
+   &= \mathbb{E}\big[(A_t S_t)^\top Q_t (A_t S_t)\big]   \\
+   &= S_t^\top \big(A_t^\top Q_t A_t\big) S_t            \\
+   &\le S_t^\top \big((1-2\epsilon)Q_t\big) S_t          \\
+   &= (1-2\epsilon) V_t .
+\end{align*}
+Thus $V_t$ decays at least geometrically with factor $(1-2\epsilon)$, establishing mean‑square stability of the latent dynamics under the local certificate (cf. file:1, Section~6.3).
+\end{proof}
+
+\subsection{Bound on the moral‑drift update of $\Lambda_m$}
+Recall the update rule (Section~\ref{subsec:lambda-m-update})
+\[
+\Lambda_m(t+1)=\Lambda_m(t)+\gamma\,\tanh\!\Big(\frac{1}{N_t}\sum_{i=1}^{N_t} d_i(t)\Big),
+\tag{A3}
+\]
+where $\gamma>0$ is a step size and $d_i(t)$ the dignity flux.
+
+\begin{lemma}[Lipschitz bound]
+For any two dignity‑flux vectors $\mathbf{d},\mathbf{d}'\in\mathbb{R}^{N_t}$,
+\[
+\big|\tanh(\bar{d})-\tanh(\bar{d}')\big|
+\le |\bar{d}-\bar{d}'| ,
+\qquad
+\bar{d}=\frac{1}{N_t}\sum_i d_i .
+\tag{A4}
+\]
+\end{lemma}
+
+\begin{proof}
+The function $\tanh:\mathbb{R}\to(-1,1)$ has derivative $\tanh'(x)=1-\tanh^2(x)\le1$ for all $x$. By the mean‑value theorem,
+\[
+|\tanh(a)-\tanh(b)|
+=| \tanh'(\xi) |\,|a-b|
+\le |a-b|
+\]
+for some $\xi$ between $a$ and $b$. Setting $a=\bar{d}$, $b=\bar{d}'$ yields (A4).
+\end{proof}
+
+Using Lemma~\ref{lemma:tanh-lip} we obtain a concrete bound on the one‑step change of $\Lambda_m$:
+\[
+\big|\Lambda_m(t+1)-\Lambda_m(t)\big|
+\le \gamma\,\big|\bar{d}(t)\big|
+\le \gamma\,\frac{1}{N_t}\sum_{i=1}^{N_t}|d_i(t)|.
+\tag{A5}
+\]
+
+Thus, if the per‑agent dignity flux is uniformly bounded by $D_{\max}$ (e.g., by construction of $w^{(\text{rec})}$ and $w^{(\text{rights})}$), we have
+\[
+\big|\Lambda_m(t+1)-\Lambda_m(t)\big|
+\le \gamma\,D_{\max}.
+\tag{A6}
+\]
+
+This bound guarantees that $\Lambda_m(t)$ cannot exhibit unbounded oscillations; combined with the $\tanh$ nonlinearity it also ensures that $\Lambda_m(t)$ remains within a compact interval $[-\Lambda_{\max},\Lambda_{\max}]$ for all $t$ (see file:2, Section~4.1).
+
+\subsection{Operator‑norm bound for the Moral Field Layer brake operator}
+Define the linear operator $\mathcal{B}_t:\mathbb{R}^{|\mathcal{A}_{\text{gov}}|}\to\mathbb{R}^{|\mathcal{A}_{\text{gov}}|}$ that maps the allowed‑action set $A(t)$ to the post‑brake set
+\[
+A(t+1)=A(t)\setminus b_{\text{action}}(t).
+\]
+In characteristic‑function notation,
+\[
+\mathcal{B}_t\mathbf{1}_{A(t)} = \mathbf{1}_{A(t)}\odot\big(\mathbf{1}-\mathbf{1}_{b_{\text{action}}(t)}\big),
+\]
+where $\odot$ denotes element‑wise product and $\mathbf{1}_{X}$ the indicator vector of set $X$.
+
+\begin{lemma}[Norm of $\mathcal{B}_t$]
+The induced $\ell_\infty$‑norm of $\mathcal{B}_t$ satisfies
+\[
+\|\mathcal{B}_t\|_{\infty\to\infty}=1-\frac{|b_{\text{action}}(t)|}{|\mathcal{A}_{\text{gov}}|}\le 1 .
+\tag{A7}
+\]
+If at least one high‑irreversibility action is blocked ($|b_{\text{action}}(t)|\ge1$), then $\|\mathcal{B}_t\|_{\infty\to\infty}<1$.
+\end{lemma}
+
+\begin{proof}
+For any vector $x\in\mathbb{R}^{|\mathcal{A}_{\text{gov}}|}$ with $\|x\|_\infty\le1$,
+\[
+\| \mathcal{B}_t x \|_\infty
+= \max_j |x_j|\,|1-\mathbf{1}_{b_{\text{action}}(t)}(j)|
+\le \max_j |x_j|\,\big(1-\tfrac{|b_{\text{action}}(t)|}{|\mathcal{A}_{\text{gov}}|}\big)
+= \big(1-\tfrac{|b_{\text{action}}(t)|}{|\mathcal{A}_{\text{gov}}|}\big)\|x\|_\infty .
+\]
+Taking the supremum over all admissible $x$ gives (A7). The second claim follows directly because $|b_{\text{action}}(t)|\ge1$ implies the factor is strictly less than $1$.
+\end{proof}
+
+This lemma formalizes the intuition that the Moral Field Layer can only contract (never expand) the set of permissible actions, and that each blocked high‑irreversibility action introduces a strict contraction in the action space (cf. file:2, Section~3.3).
+
+\subsection{Proof of the “no‑boost” invariant for the MFL}
+From the strict API definition (Section~\ref{sec:mfl-api}) we have for every window $t$:
+\[
+\begin{aligned}
+\text{mode}(t+1) &\preceq \text{mode}(t),\\
+A(t+1) &= A(t)\setminus b_{\text{action}}(t),\\
+F(t+1) &= F(t)\setminus b_{\text{feature}}(t).
+\end{aligned}
+\tag{A8}
+\]
+
+\begin{theorem}[No‑boost invariant]
+Under (A8) there exists no time $t$ and no CMG internal variable $Z(t)\in\{\text{mode},|A|,|F|\}$ such that
+\[
+Z(t+1) > Z(t)
+\]
+as a direct consequence of the MFL signal $B(t)$.
+\end{theorem}
+
+\begin{proof}
+Assume, for contradiction, that some $Z$ increases because of $B(t)$.  
+If $Z=\text{mode}$, then $\text{mode}(t+1)\succ\text{mode}(t)$, contradicting the first line of (A8).  
+If $Z=|A|$, then $|A(t+1)|>|A(t)|$, but $|A(t+1)|=|A(t)|-|b_{\text{action}}(t)|\le|A(t)|$, a contradiction.  
+If $Z=|F|$, the same argument using $F(t+1)=F(t)\setminus b_{\text{feature}}(t)$ yields $|F(t+1)|\le|F(t)|$.  
+Thus no such increase can occur.
+\end{theorem}
+
+This theorem justifies the claim in the main text that the Moral Field Layer is a *brake only* layer (see file:2, Section~3.2).
+
+All proofs above rely only on the definitions and invariants introduced in Sections~\ref{sec:cmg-spine}--\ref{sec:mfl-api} and are therefore self‑contained within the CMG + Moral Physics architecture. They can be used as formal verification conditions in a proof‑assisted implementation or as the basis for a defensive‑publication prior‑art claim.
+
+\nocite{*}
+\bibliographystyle{unsrt}  
+\bibliography{references}
+\end{document}

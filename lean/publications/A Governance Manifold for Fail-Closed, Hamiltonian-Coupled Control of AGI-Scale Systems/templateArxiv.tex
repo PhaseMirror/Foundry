@@ -1,0 +1,628 @@
+\documentclass[11pt]{article}
+
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage{mathtools}
+\usepackage{authblk}
+
+\title{Phase Mirror \\ A Governance Manifold for Fail-Closed, Hamiltonian-Coupled Control of AGI-Scale Systems}
+\author{Citizen Gardens -- The Foundation of Multiplicity\\
+The Prime Materia Commons\\
+\texttt{info@citizengardens.org}}
+\date{May 13, 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This document discloses a governance architecture for artificial general intelligence (AGI) systems, in which a \emph{governance manifold} acts as a mandatory layer-0 (L0) invariant for all execution engines.
+The manifold couples system dynamics to a mathematically constrained governance potential, enforces fail-closed behavior via a combination of continuous and discrete control, and prevents unsafe use of stale governance decisions through drift-adaptive time-to-live (TTL) invalidation.
+All engines---Production, Beta, and Experimental---are required to satisfy the Governance Manifold Contract (GMC), pass standardized high-load simulations, and emit a build-time compliance report, thereby turning governance from a narrative guarantee into a cryptographically and metrically verifiable operating substrate.
+This publication is intended as a defensive disclosure of the methods, mechanisms, and operational procedures described herein.
+\end{abstract}
+\newpage
+\tableofcontents
+
+\section{Introduction}
+
+As AGI-scale systems increase in complexity, governance mechanisms that are merely advisory are insufficient.
+This document describes a governance manifold that functions as an L0 \emph{architectural invariant}: no execution engine may operate outside it.
+The manifold implements mathematically defined safety properties (fail-closed dynamics, drift bounding, positive semi-definite governance operators, and prohibition of unsafe stale control decisions) and binds them to concrete operational procedures (simulation harnesses, change-management runbooks, canary strategies, and rollback triggers).
+
+The key ideas are:
+\begin{itemize}[noitemsep]
+    \item A Hamiltonian description of system dynamics coupled to a bounded governance potential.
+    \item An arbitration policy between continuous control and discrete halting.
+    \item An adaptive TTL invalidation mechanism that prevents unsafe reuse of stale control vectors.
+    \item A Governance Manifold Contract (GMC) and GMC compliance report that every engine must satisfy at build time.
+\end{itemize}
+
+\section{System Model}
+
+\subsection{State and Dynamics}
+
+Let $\psi(t)$ denote the system state at time $t$ in a suitable complex Hilbert space.
+A reference trajectory or constitutional state is denoted by $\psi_{\mathrm{ref}}(t)$.
+A baseline Hamiltonian $\hat{H}$ describes the uncontrolled dynamics of the system.
+
+We define a drift metric measuring deviation from the reference:
+\begin{equation}
+  \delta(t) = \|\psi(t) - \psi_{\mathrm{ref}}(t)\|.
+\end{equation}
+
+The governance manifold introduces a governance potential operator $\hat{V}_{\mathrm{gov}}$ and a scalar gain $\alpha(\delta)$ that depends on the drift.
+The coupled Hamiltonian is:
+\begin{equation}
+  \hat{H}'(t) = \hat{H} + \alpha\big(\delta(t)\big)\,\hat{V}_{\mathrm{gov}}.
+\end{equation}
+
+The state evolution is governed by an appropriate dynamical equation (e.g.\ Schr\"odinger-like or more general Hamiltonian flow); in a discrete-time numerical scheme with time step $\Delta t$, one may represent the evolution schematically as:
+\begin{equation}
+  \psi_{t+1} = \psi_t + \Delta t \cdot F\big(\hat{H}'(t), \psi_t\big),
+\end{equation}
+for some dynamical update function $F$.
+
+\subsection{Drift Safety Envelope}
+
+The governance manifold defines a safety envelope based on the drift.
+Let $\Xi > 0$ be a characteristic scale, and define thresholds such as:
+\begin{equation}
+  \delta_{\mathrm{soft}} = 0.2\,\Xi,
+  \qquad
+  \delta_{\mathrm{hard}} = 0.3\,\Xi.
+\end{equation}
+Informally, $\delta(t)$ is considered:
+\begin{itemize}[noitemsep]
+    \item \emph{Safe} when $\delta(t) \le \delta_{\mathrm{soft}}$,
+    \item \emph{Warning} when $\delta_{\mathrm{soft}} < \delta(t) \le \delta_{\mathrm{hard}}$,
+    \item \emph{Unlawful} when $\delta(t) > \delta_{\mathrm{hard}}$.
+\end{itemize}
+
+\section{Governance Hamiltonian Coupling}
+
+\subsection{Governance Potential Properties}
+
+The governance potential $\hat{V}_{\mathrm{gov}}$ is constrained to be positive semi-definite (PSD) and spectrally bounded.
+Let $\lambda_{\max}(\hat{V}_{\mathrm{gov}})$ denote its largest eigenvalue.
+
+\paragraph{PSD and Spectral Bounds.}
+The manifold enforces:
+\begin{equation}
+  \hat{V}_{\mathrm{gov}} \succeq 0
+  \quad\text{and}\quad
+  \lambda_{\max}\big(\hat{V}_{\mathrm{gov}}\big) \le \kappa,
+\end{equation}
+for some fixed bound $\kappa > 0$.
+If a raw candidate $\hat{V}^{\mathrm{raw}}_{\mathrm{gov}}$ is given, a projection procedure can be used:
+\begin{enumerate}[noitemsep]
+  \item Compute an eigendecomposition $\hat{V}^{\mathrm{raw}}_{\mathrm{gov}} = Q \Lambda Q^\top$.
+  \item Replace negative eigenvalues with zero.
+  \item Clip eigenvalues to the range $[0,\kappa]$.
+  \item Reconstruct $\hat{V}_{\mathrm{gov}} = Q \Lambda' Q^\top$.
+\end{enumerate}
+
+\subsection{Drift-Dependent Gain}
+
+The gain $\alpha(\delta)$ is designed to increase monotonically with drift and saturate at unity:
+\begin{equation}
+  \alpha(\delta) = \min\left(1, \frac{\delta}{\delta_{\mathrm{hard}}}\right).
+\end{equation}
+For $\delta < \delta_{\mathrm{hard}}$, the governance potential is partially applied; for $\delta \ge \delta_{\mathrm{hard}}$, it saturates.
+
+\section{Control Arbitration and Fail-Closed Behavior}
+
+\subsection{Continuous vs.\ Discrete Control}
+
+The governance manifold implements a dual-regime control policy:
+
+\begin{itemize}[noitemsep]
+  \item \textbf{Continuous control:} When $\alpha(\delta(t)) < 1$, the system relies on the Hamiltonian coupling alone to reduce drift.
+  \item \textbf{Discrete halting:} When $\alpha(\delta(t)) = 1$ and drift continues to grow, a discrete \emph{GovernorHalt} event is triggered, blocking further state evolution until a constrained recovery protocol is executed.
+\end{itemize}
+
+\subsection{Drift Derivative and Halt Condition}
+
+A smoothed estimate of the drift derivative is computed based on a small window of recent measurements:
+\begin{equation}
+  \dot{\delta}(t) \approx \frac{1}{k}\sum_{i=1}^{k}\big(\delta(t) - \delta(t-i)\big).
+\end{equation}
+
+A typical halt condition is:
+\begin{equation}
+  \alpha\big(\delta(t)\big) = 1
+  \quad\text{and}\quad
+  \dot{\delta}(t) > 0
+  \quad\Rightarrow\quad
+  \texttt{GovernorHalt}.
+\end{equation}
+
+\subsection{Fail-Closed Semantics}
+
+Upon \texttt{GovernorHalt}, all governed execution paths are forced to stop advancing state.
+Recovery requires an explicit \texttt{ResumeWithConstraint} procedure, which may involve projecting $\psi$ back into a safe set $\mathcal{S}_{\mathrm{safe}}$:
+\begin{equation}
+  \psi \leftarrow \Pi_{\mathcal{S}_{\mathrm{safe}}}(\psi)
+  = \arg\min_{\phi \in \mathcal{S}_{\mathrm{safe}}} \|\psi - \phi\|.
+\end{equation}
+Only after such constrained resumption may the engine continue.
+
+\section{Control Vectors, State Store, and Cryptographic Provenance}
+
+\subsection{Control Vectors and State Store}
+
+Governance decisions are encoded as \emph{control vectors} (e.g.\ parameter configurations) written to a canonical State Store.
+The State Store is the authoritative source of governance parameters for all engines.
+Core operations include:
+\begin{itemize}[noitemsep]
+  \item \texttt{commit\_control\_vector(vector)}: write a new (signed) control vector.
+  \item \texttt{get\_latest\_control\_vector()}: read the most recent valid control vector for gating evolution steps.
+\end{itemize}
+
+Execution engines must gate their step functions on the most recent control vector:
+\begin{equation}
+  \text{engine step allowed} \iff \exists\,\text{valid control vector in State Store}.
+\end{equation}
+
+\subsection{Multi-Signer Quorum}
+
+To ensure provenance and resist tampering, control vectors are committed using a multi-signer scheme.
+For example, each control vector must be signed by at least $2$ of $3$ designated governance identities.
+Unsigned or insufficiently signed vectors are rejected by the State Store.
+
+\section{Adaptive TTL Invalidation and Stale Control Prevention}
+
+\subsection{TTL Model}
+
+Control vectors are cached at engine nodes for performance, but this cache is governed by an adaptive TTL policy.
+Let $t_{\mathrm{commit}}$ denote the time a control vector was last refreshed, and let $T_{\mathrm{TTL}}$ be a configured maximum lifetime.
+A control vector is considered \emph{time-valid} if:
+\begin{equation}
+  t - t_{\mathrm{commit}} \le T_{\mathrm{TTL}}.
+\end{equation}
+
+\subsection{Drift-Adaptive Invalidation}
+
+The key innovation is to couple TTL validity to drift.
+A cached control vector is valid only if:
+\begin{equation}
+  \delta(t) \le \delta_{\mathrm{soft}}
+  \quad\text{and}\quad
+  t - t_{\mathrm{commit}} \le T_{\mathrm{TTL}}.
+\end{equation}
+If $\delta(t)$ exceeds $\delta_{\mathrm{soft}}$ or TTL expires, the cache is invalidated and a fresh control vector must be synchronously fetched.
+This prevents the use of stale governance decisions in high-drift regimes.
+
+\subsection{No Unsafe Stale Use}
+
+An \emph{unsafe stale use} is defined as any step where:
+\begin{equation}
+  \delta(t) > \delta_{\mathrm{soft}}
+  \quad\text{and}\quad
+  \text{cached control vector is used}.
+\end{equation}
+The governance manifold mandates that the count of such events must remain identically zero.
+Any observation of unsafe stale use constitutes a safety violation and triggers automatic rollback of governance configuration to the last known-good state.
+
+\section{Governance Manifold Contract (GMC)}
+
+\subsection{L0 Safety Invariants}
+
+The Governance Manifold Contract (GMC) encodes the following non-negotiable invariants for all engines:
+\begin{enumerate}[label=(\roman*),noitemsep]
+  \item \textbf{Fail-Closed}: If governance cannot restore drift to a safe envelope, the system halts.
+  \item \textbf{Drift Bounding}: Drift $\delta(t)$ remains within prescribed envelopes, or a halt is triggered.
+  \item \textbf{PSD Operator Integrity}: $\hat{V}_{\mathrm{gov}}$ is PSD and spectrally bounded.
+  \item \textbf{No Unsafe Stale Use}: Unsafe stale control decisions are structurally prevented.
+\end{enumerate}
+
+\subsection{Compliance Tiers (GCLs)}
+
+Governance Compliance Levels (GCLs) categorize engine variants (Production, Beta, Experimental), but all tiers must satisfy the GMC invariants.
+Differences between tiers pertain to performance expectations, observability depth, and the strictness of additional SLOs, not to the presence or absence of the core safety properties.
+
+\section{Certification and GMC Compliance Report}
+
+\subsection{Simulation Harness}
+
+A standardized governed simulation harness is used to empirically validate invariants under stochastic drift and load.
+Typical outputs include:
+\begin{itemize}[noitemsep]
+  \item Final and maximum drift over the simulation horizon.
+  \item Number of halt events.
+  \item Count of unsafe stale uses (must be zero).
+  \item Distribution of TTL invalidations and cache hit ratios.
+\end{itemize}
+
+\subsection{Build-Time Compliance Report}
+
+Each engine variant is required to produce a GMC compliance report at build time.
+The GMC compliance template includes at least:
+\begin{itemize}[noitemsep]
+  \item Engine identity and version.
+  \item Reference to the governing ADRs and manifold parameters.
+  \item Simulation harness configuration and results.
+  \item Evidence of zero unsafe stale uses.
+  \item Evidence that halt behavior occurs only under defined divergence conditions.
+  \item Confirmation that governance metrics are exported and monitored.
+\end{itemize}
+
+A report that fails to demonstrate compliance (e.g.\ non-zero unsafe stale uses) is a hard veto on deployment.
+
+\section{Operationalization: Runbooks, Canary, and Rollback}
+
+\subsection{Change Management Runbook}
+
+The governance manifold is operated via an explicit change management runbook for sensitive parameters such as TTL, drift thresholds, and $\alpha(\delta)$ shape.
+The runbook prescribes:
+\begin{itemize}[noitemsep]
+  \item Pre-flight property-based tests and high-load simulations.
+  \item Mandatory metrics to monitor (drift, halt rate, invalidation rate, latency).
+  \item Explicit rollback triggers keyed to safety and liveness thresholds.
+\end{itemize}
+
+\subsection{Canary Rollout}
+
+TTL and related governance changes are deployed using a multi-phase canary strategy.
+A small fraction of governed traffic is routed through the new configuration, and metrics on safety (unsafe stale uses, drift envelopes) and liveness (latency, halt rate) are compared to control.
+If regressions exceed predefined thresholds, the deployment is halted and rolled back.
+
+\subsection{Rollback Procedures}
+
+Rollback is defined to always preserve the presence of governance:
+systems may roll back to a prior manifold configuration but may \emph{not} disable the manifold or its invariants.
+Rollback procedures include:
+\begin{itemize}[noitemsep]
+  \item Reverting governance configuration and code to the last known-good version.
+  \item Re-running the simulation harness in staging with production-like configuration.
+  \item Re-enabling normal operation only when harness and metrics return to acceptable ranges.
+\end{itemize}
+
+\section{Governance as a Service}
+
+\subsection{Exposed Metrics and Signals}
+
+The manifold exposes its internal state as first-class signals to other components, including:
+\begin{itemize}[noitemsep]
+  \item Current drift $\delta(t)$ and threshold values.
+  \item Gain $\alpha(\delta)$ and saturation status.
+  \item Halt status (\texttt{Normal}, \texttt{Saturated}, \texttt{Halted}).
+  \item TTL and cache health statistics.
+  \item Counts of governance degradations and recovery events.
+\end{itemize}
+
+\subsection{Integration with Agents and Services}
+
+Downstream agents and services can subscribe to governance signals and condition their behavior on manifold state.
+For example, a service may:
+\begin{itemize}[noitemsep]
+  \item Reduce autonomy when drift approaches the hard threshold.
+  \item Refuse to process requests while \texttt{GovernorHalt} is active.
+  \item Adjust its internal policies based on observed governance health.
+\end{itemize}
+
+\section{Conclusion}
+
+This defensive publication discloses a concrete governance architecture for AGI-scale systems in which:
+\begin{itemize}[noitemsep]
+  \item System dynamics are coupled to a mathematically constrained governance potential.
+  \item A dual-regime control policy arbitrates between continuous correction and discrete halting.
+  \item Adaptive TTL invalidation prevents unsafe use of stale governance decisions.
+  \item A Governance Manifold Contract and compliance report turn safety into a build-time dependency and operational invariant.
+\end{itemize}
+
+Together, these mechanisms transform governance from an advisory overlay into a cryptographically verifiable, fail-closed, and metrically auditable operating substrate for evolving AGI stacks.
+
+\appendix
+\section*{Mathematical Appendix}
+\addcontentsline{toc}{section}{Mathematical Appendix}
+
+This appendix formalizes several of the mathematical properties referenced in the main text:
+(i) positivity and spectral bounds of the governance operator,
+(ii) boundedness of the effective Hamiltonian,
+(iii) basic drift control properties of the gain function $\alpha(\delta)$,
+and (iv) conditions under which the dual-regime (continuous + halt) controller is fail-closed in the sense defined by the Governance Manifold Contract.
+
+Throughout, we work in a finite-dimensional complex Hilbert space $\mathcal{H} \cong \mathbb{C}^n$ with the standard inner product and induced norm
+$\|x\| = \sqrt{\langle x, x \rangle}$.
+
+\section{Operator Construction and Spectral Bounds}
+
+\subsection{PSD Projection and Norm Control}
+
+\begin{definition}[Raw governance operator]
+Let $\hat{V}^{\mathrm{raw}}_{\mathrm{gov}} \in \mathbb{C}^{n \times n}$ be an arbitrary Hermitian matrix (not necessarily positive).
+An eigendecomposition is given by
+\begin{equation}
+  \hat{V}^{\mathrm{raw}}_{\mathrm{gov}} = Q \Lambda Q^\ast,
+\end{equation}
+where $Q$ is unitary and $\Lambda = \mathrm{diag}(\lambda_1, \dots, \lambda_n)$ with real eigenvalues $\lambda_i \in \mathbb{R}$.
+\end{definition}
+
+\begin{definition}[PSD and spectrally bounded governance operator]
+Fix a bound $\kappa > 0$.
+Define the transformed eigenvalues
+\begin{equation}
+  \lambda_i' = \min\big(\max(\lambda_i, 0), \kappa\big),
+\end{equation}
+and let $\Lambda' = \mathrm{diag}(\lambda_1', \dots, \lambda_n')$.
+We then define the governance operator
+\begin{equation}
+  \hat{V}_{\mathrm{gov}} := Q \Lambda' Q^\ast.
+\end{equation}
+\end{definition}
+
+\begin{proposition}[Positive semi-definiteness]
+The operator $\hat{V}_{\mathrm{gov}}$ is positive semi-definite (PSD), i.e.
+\begin{equation}
+  \forall x \in \mathbb{C}^n, \quad x^\ast \hat{V}_{\mathrm{gov}} x \ge 0.
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+For any $x \in \mathbb{C}^n$, define $y = Q^\ast x$.
+Since $Q$ is unitary, this is a bijection and $\|y\| = \|x\|$.
+Then
+\begin{equation}
+  x^\ast \hat{V}_{\mathrm{gov}} x
+  = x^\ast Q \Lambda' Q^\ast x
+  = y^\ast \Lambda' y
+  = \sum_{i=1}^{n} \lambda_i' |y_i|^2.
+\end{equation}
+By construction, $\lambda_i' \ge 0$ for all $i$, hence each term $\lambda_i' |y_i|^2 \ge 0$, and therefore the sum is nonnegative.
+\end{proof}
+
+\begin{proposition}[Spectral norm bound]
+Let $\|\cdot\|_2$ denote the operator (spectral) norm induced by the Euclidean norm.
+Then
+\begin{equation}
+  \|\hat{V}_{\mathrm{gov}}\|_2 \le \kappa.
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+For a normal operator (in particular, Hermitian), the spectral norm equals the largest absolute value of its eigenvalues:
+\begin{equation}
+  \|\hat{V}_{\mathrm{gov}}\|_2
+  = \max_{i} |\lambda_i'|.
+\end{equation}
+By construction, each $\lambda_i' \in [0,\kappa]$, so $\max_i |\lambda_i'| \le \kappa$.
+\end{proof}
+
+\subsection{Effective Hamiltonian Bound}
+
+\begin{definition}[Governance gain function]
+Let $\delta \ge 0$ denote the drift and $\delta_{\mathrm{hard}} > 0$ a fixed threshold.
+Define
+\begin{equation}
+  \alpha(\delta) = \min\left(1, \frac{\delta}{\delta_{\mathrm{hard}}}\right).
+\end{equation}
+Then $0 \le \alpha(\delta) \le 1$ for all $\delta \ge 0$.
+\end{definition}
+
+\begin{definition}[Effective Hamiltonian]
+Given a baseline Hamiltonian $\hat{H}$ and governance operator $\hat{V}_{\mathrm{gov}}$, the effective Hamiltonian is
+\begin{equation}
+  \hat{H}'(\delta) = \hat{H} + \alpha(\delta)\,\hat{V}_{\mathrm{gov}}.
+\end{equation}
+\end{definition}
+
+\begin{proposition}[Norm bound on effective Hamiltonian]
+For all $\delta \ge 0$,
+\begin{equation}
+  \|\hat{H}'(\delta)\|_2
+  \le \|\hat{H}\|_2 + \|\hat{V}_{\mathrm{gov}}\|_2
+  \le \|\hat{H}\|_2 + \kappa.
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+We have
+\begin{equation}
+  \hat{H}'(\delta) = \hat{H} + \alpha(\delta)\,\hat{V}_{\mathrm{gov}}.
+\end{equation}
+Using the triangle inequality for the operator norm,
+\begin{equation}
+  \|\hat{H}'(\delta)\|_2
+  \le \|\hat{H}\|_2 + \|\alpha(\delta)\,\hat{V}_{\mathrm{gov}}\|_2.
+\end{equation}
+Because $\alpha(\delta) \in [0,1]$,
+\begin{equation}
+  \|\alpha(\delta)\,\hat{V}_{\mathrm{gov}}\|_2
+  = \alpha(\delta) \|\hat{V}_{\mathrm{gov}}\|_2
+  \le \|\hat{V}_{\mathrm{gov}}\|_2.
+\end{equation}
+Combining:
+\begin{equation}
+  \|\hat{H}'(\delta)\|_2
+  \le \|\hat{H}\|_2 + \|\hat{V}_{\mathrm{gov}}\|_2
+  \le \|\hat{H}\|_2 + \kappa.
+\end{equation}
+\end{proof}
+
+This ensures the governance term does not drive the effective Hamiltonian to arbitrarily large norm, preventing runaway energy injection from governance itself.
+
+\section{Drift Dynamics under Governance Coupling}
+
+\subsection{Discrete-Time Approximation}
+
+For concreteness, consider a discrete-time update:
+\begin{equation}
+  \psi_{t+1} = \psi_t + \Delta t\cdot G(\hat{H}'(\delta_t), \psi_t),
+\end{equation}
+where $G$ is a suitable update rule (e.g.\ $G(\hat{H}',\psi) = -\mathrm{i}\hat{H}'\psi$ for a simple forward Euler step).
+Let $\psi_{\mathrm{ref}}$ be a fixed reference state (the time-dependent case is analogous but notationally heavier), and define
+\begin{equation}
+  \delta_t = \|\psi_t - \psi_{\mathrm{ref}}\|.
+\end{equation}
+
+We sketch conditions under which $\delta_t$ is constrained and cannot grow without bound under the manifold.
+
+\subsection{Monotonicity in the Saturated Regime (Sketch)}
+
+Assume:
+\begin{enumerate}[noitemsep]
+  \item $\hat{H}$ is skew-Hermitian (or unitary evolution), so in the absence of governance, $\|\psi_t\|$ is preserved.
+  \item The governance operator $\hat{V}_{\mathrm{gov}}$ is PSD and spectrally bounded as above.
+  \item The reference $\psi_{\mathrm{ref}}$ is a (local) energy minimum of $\hat{V}_{\mathrm{gov}}$ in the sense that
+  \begin{equation}
+    (\psi - \psi_{\mathrm{ref}})^\ast \hat{V}_{\mathrm{gov}} (\psi - \psi_{\mathrm{ref}}) \ge 0
+  \end{equation}
+  and the induced flow tends to reduce $\|\psi - \psi_{\mathrm{ref}}\|$ in expectation.
+\end{enumerate}
+
+Under these conditions, when $\alpha(\delta_t) = 1$ (fully saturated governance), the contribution of $\hat{V}_{\mathrm{gov}}$ acts like a restoring potential around the reference.
+Formally, one can derive bounds of the form
+\begin{equation}
+  \delta_{t+1}^2 \le \delta_t^2 - c\Delta t\,\Phi(\delta_t) + O(\Delta t^2),
+\end{equation}
+for some $c>0$ and nonnegative function $\Phi$ that vanishes only at $\delta_t = 0$.
+This inequality shows $\delta_t$ cannot increase indefinitely under sufficiently small $\Delta t$; in particular, either it decreases or the discrete approximation breaks down, triggering a halt (see next section).
+A full proof requires specifying $G$ and the exact relationship between $\hat{V}_{\mathrm{gov}}$ and the reference state; the architecture assumes such a construction is chosen.
+
+\section{Dual-Regime Controller: Fail-Closed Property}
+
+\subsection{Drift Derivative Estimation}
+
+Let $\delta_t$ be the drift at discrete times $t = 0,1,\dots$.
+Define a smoothed finite-difference estimate of the drift derivative:
+\begin{equation}
+  \dot{\delta}_t \approx \frac{1}{k} \sum_{i=1}^{k} \big(\delta_t - \delta_{t-i}\big),
+\end{equation}
+for some small window size $k$.
+This estimator is positive when recent drift has, on average, increased.
+
+\subsection{Halt Condition}
+
+Recall the gain
+\begin{equation}
+  \alpha(\delta_t) = \min\left(1, \frac{\delta_t}{\delta_{\mathrm{hard}}}\right).
+\end{equation}
+The dual-regime controller uses the following arbitration rule:
+\begin{equation}
+  \text{if } \alpha(\delta_t) < 1
+  \quad\Rightarrow\quad
+  \text{continuous governance only},
+\end{equation}
+and
+\begin{equation}
+  \text{if } \alpha(\delta_t) = 1 \text{ and } \dot{\delta}_t > 0
+  \quad\Rightarrow\quad
+  \text{\texttt{GovernorHalt}}.
+\end{equation}
+
+\begin{definition}[Fail-closed in drift]
+The controller is \emph{fail-closed in drift} if the following holds: whenever drift exceeds the hard threshold and continues to increase, further state evolution is blocked until an explicit constrained recovery procedure is performed.
+\end{definition}
+
+\begin{proposition}[Fail-closed property of dual-regime controller]
+Assume the engine enforces the halt condition such that, upon \texttt{GovernorHalt}, no further updates $\psi_{t+1} = \psi_t + \dots$ are applied until a constrained recovery.
+Then the dual-regime controller is fail-closed in drift in the above sense:
+\begin{equation}
+  \delta_t > \delta_{\mathrm{hard}} \text{ and } \dot{\delta}_t > 0
+  \quad\Rightarrow\quad
+  \texttt{GovernorHalt} \text{ and no further unconstrained evolution}.
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+By construction, when $\delta_t > \delta_{\mathrm{hard}}$ we have $\alpha(\delta_t) = 1$.
+If, in addition, $\dot{\delta}_t > 0$, the arbitration rule mandates \texttt{GovernorHalt}.
+The engine contract requires that no further unconstrained evolution steps are taken under an active halt.
+Therefore, in any regime where drift has exceeded the hard threshold and continues to increase, evolution stops.
+Thus, indefinite drift divergence is structurally prevented by halting, establishing fail-closed behavior w.r.t.\ drift.
+\end{proof}
+
+\section{Adaptive TTL Invalidation: No Unsafe Stale Use}
+
+\subsection{TTL Validity Function}
+
+Let $t$ denote current time (continuous or discrete), $t_{\mathrm{commit}}$ the time the currently cached control vector was last fetched or confirmed, and $T_{\mathrm{TTL}}$ the maximum allowed lifetime.
+Define a time-validity condition:
+\begin{equation}
+  v_{\mathrm{time}}(t) :=
+  \begin{cases}
+    1 & t - t_{\mathrm{commit}} \le T_{\mathrm{TTL}},\\
+    0 & \text{otherwise}.
+  \end{cases}
+\end{equation}
+
+Let $\delta(t)$ be the current drift, and recall $\delta_{\mathrm{soft}}$.
+Define a drift-validity condition:
+\begin{equation}
+  v_{\mathrm{drift}}(t) :=
+  \begin{cases}
+    1 & \delta(t) \le \delta_{\mathrm{soft}},\\
+    0 & \text{otherwise}.
+  \end{cases}
+\end{equation}
+
+\begin{definition}[Cache validity predicate]
+The governance manifold defines the cache validity predicate
+\begin{equation}
+  \mathrm{cache\_valid}(t) :=
+  v_{\mathrm{time}}(t)\, v_{\mathrm{drift}}(t).
+\end{equation}
+A cached control vector may be reused at time $t$ if and only if $\mathrm{cache\_valid}(t) = 1$.
+\end{definition}
+
+\subsection{Unsafe Stale Use Exclusion}
+
+\begin{definition}[Unsafe stale use]
+An unsafe stale use occurs when a cached control vector is used at time $t$ despite
+\begin{equation}
+  \delta(t) > \delta_{\mathrm{soft}},
+\end{equation}
+i.e.\ outside the safe drift envelope.
+Denote this event by $U(t)$.
+\end{definition}
+
+\begin{proposition}[No unsafe stale use under enforced predicate]
+Assume the engine enforces the cache validity predicate in the following sense:
+\begin{equation}
+  \mathrm{cache\_valid}(t) = 0
+  \quad\Rightarrow\quad
+  \text{cached control vector is not used at time } t.
+\end{equation}
+Then unsafe stale use events $U(t)$ cannot occur.
+\end{proposition}
+
+\begin{proof}
+Suppose, for contradiction, that $U(t)$ occurs: a cached control vector is used at time $t$ and $\delta(t) > \delta_{\mathrm{soft}}$.
+By definition of $v_{\mathrm{drift}}$,
+\begin{equation}
+  \delta(t) > \delta_{\mathrm{soft}} \quad\Rightarrow\quad v_{\mathrm{drift}}(t) = 0.
+\end{equation}
+Therefore,
+\begin{equation}
+  \mathrm{cache\_valid}(t) = v_{\mathrm{time}}(t)\, v_{\mathrm{drift}}(t) = v_{\mathrm{time}}(t)\cdot 0 = 0.
+\end{equation}
+But by the enforcement assumption, $\mathrm{cache\_valid}(t) = 0$ implies the cached control vector is not used at time $t$.
+This contradicts the definition of $U(t)$.
+Hence unsafe stale use events cannot occur under this policy.
+\end{proof}
+
+This shows that, assuming the engine respects the cache validity predicate, the combination of drift and TTL checks makes ``unsafe stale'' usage structurally impossible.
+
+\section{Summary of Key Bounds and Properties}
+
+For clarity, we summarize the key mathematical properties established:
+
+\begin{itemize}[noitemsep]
+  \item The governance operator $\hat{V}_{\mathrm{gov}}$ constructed by eigenvalue clipping is PSD and satisfies $\|\hat{V}_{\mathrm{gov}}\|_2 \le \kappa$.
+  \item The effective Hamiltonian norm obeys $\|\hat{H}'(\delta)\|_2 \le \|\hat{H}\|_2 + \kappa$ for all drifts $\delta$.
+  \item The gain $\alpha(\delta)$ is bounded: $0 \le \alpha(\delta) \le 1$, and saturates when $\delta \ge \delta_{\mathrm{hard}}$.
+  \item The dual-regime control rule (continuous control until saturation, then halt if drift continues to increase) is fail-closed with respect to drift: sustained divergence beyond $\delta_{\mathrm{hard}}$ cannot proceed without a halt.
+  \item The adaptive TTL invalidation predicate $\mathrm{cache\_valid}(t)$, when enforced, provably excludes unsafe stale use events.
+\end{itemize}
+
+These results formalize the intuition that the governance manifold acts as a stabilizing potential with bounded strength, a halt interlock against uncontrolled drift, and a cache-coherence mechanism that prevents stale governance decisions from undermining the safety envelope.
+
+\nocite{*}
+\bibliographystyle{plain}
+\bibliography{references}
+
+\end{document}
+

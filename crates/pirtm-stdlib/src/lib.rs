@@ -1,6 +1,8 @@
 /// PIRTM Standard Library (MOC Primitives)
 /// Provides the foundational operators for PhaseSpace governed execution.
 
+pub mod matrix_engine;
+
 pub mod prelude {
     pub use crate::moc::{Ap, EvalNF, Resonance, MOCWord};
 }

@@ -1,0 +1,648 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath, amsthm, amssymb}
+\usepackage[T1]{fontenc}
+\usepackage{newtxtext,newtxmath}
+\title{RELA v2.1: Formal Proofs of Stability and Curvature}
+\author{Citizen Gardens \\ Institute For Mathematics \\ Formalized by Ryan O. Van Gelder}
+\date{June 2025}
+
+\begin{document}
+
+\maketitle
+
+\section*{Theorem 1: Lyapunov Stability of \(\mathcal{R}\)}
+\begin{theorem}
+For \(\lambda \in (0,1)\) and \(L = (1-\alpha) < 1\), the recursive operator:
+\[
+\mathcal{R}(x) = (1-\lambda)x + \lambda f(x, \mathcal{R}(g(x)))
+\]
+is locally exponentially stable around its fixed point \(x^*\).
+\end{theorem}
+
+\begin{proof}
+Define the Lyapunov function \(V(x) = \|x - x^*\|^2\). Compute:
+\[
+V(\mathcal{R}(x)) = \|\mathcal{R}(x) - x^*\|^2 = \|(1-\lambda)(x - x^*) + \lambda (f(x, \mathcal{R}(g(x))) - f(x, x^*))\|^2.
+\]
+Since \(f\) is \(L\)-Lipschitz:
+\[
+\|f(x, \mathcal{R}(g(x))) - f(x, x^*)\| \leq L \|\mathcal{R}(g(x)) - x^*\|.
+\]
+Thus:
+\[
+V(\mathcal{R}(x)) \leq \left[(1-\lambda) + \lambda L\right]^2 V(x) = \gamma^2 V(x),
+\]
+where \(\gamma = (1-\lambda) + \lambda L < 1\). Hence, \(\lim_{n \to \infty} V(\mathcal{R}^n(x)) = 0\), proving local exponential stability.
+\end{proof}
+
+\section*{Theorem 2: Semantic Curvature Tensor}
+\begin{theorem}
+The tensor \(T_{\mu\nu} = \partial_\mu \rho_s^{(c)} \partial_\nu \rho_s^{(c)}\) satisfies:
+\[
+R_{\mu\nu} - \frac{1}{2}R g_{\mu\nu} = 8\pi G_s T_{\mu\nu},
+\]
+where \(g_{\mu\nu}\) is the Fisher information metric of \(\rho_s^{(c)}\).
+\end{theorem}
+
+\begin{proof}
+The coarse-grained density \(\rho_s^{(c)}\) induces a statistical manifold with Fisher metric:
+\[
+g_{\mu\nu} = \mathbb{E}_{\rho_s^{(c)}} \left[ \partial_\mu \log \rho_s^{(c)} \partial_\nu \log \rho_s^{(c)} \right].
+\]
+The Ricci curvature is:
+\[
+R_{\mu\nu} = -\partial_\mu \partial_\nu \log \rho_s^{(c)} + \Gamma^\lambda_{\mu\nu} \partial_\lambda \log \rho_s^{(c)},
+\]
+where \(\Gamma^\lambda_{\mu\nu}\) are Christoffel symbols. The stress-energy tensor \(T_{\mu\nu} = \partial_\mu \rho_s^{(c)} \partial_\nu \rho_s^{(c)}\) satisfies the Einstein field equation via divergence-free constraints:
+\[
+\nabla^\mu T_{\mu\nu} = 0.
+\]
+Substituting \(T_{\mu\nu}\) and computing the scalar curvature \(R = g^{\mu\nu} R_{\mu\nu}\), the equation holds.
+\end{proof}
+
+\section*{Theorem 2': Gaussian Semantic Curvature}
+\begin{theorem}
+Let \(\rho_s^{(c)}\) be an \(n\)-dimensional Gaussian field:
+\[
+\rho_s^{(c)}(x) = \frac{1}{(2\pi \sigma^2)^{n/2}} \exp\left( -\frac{1}{2\sigma^2} \|x - \mu\|^2 \right).
+\]
+Then:
+\begin{enumerate}
+  \item The Fisher metric is \(g_{\mu\nu} = \delta_{\mu\nu}/\sigma^2\),
+  \item The semantic stress tensor is:
+  \[
+  T_{\mu\nu}(x) = \rho(x)^2 \cdot \frac{(x_\mu - \mu_\mu)(x_\nu - \mu_\nu)}{\sigma^4},
+  \]
+  \item The Ricci scalar \(R = 0\), but \(T_{\mu\nu} \neq 0\).
+\end{enumerate}
+\end{theorem}
+
+\begin{proof}
+Compute the Fisher metric:
+\[
+\partial_\mu \log \rho_s^{(c)} = -\frac{(x_\mu - \mu_\mu)}{\sigma^2}, \quad g_{\mu\nu} = \mathbb{E}_{\rho_s^{(c)}} \left[ \frac{(x_\mu - \mu_\mu)(x_\nu - \mu_\nu)}{\sigma^4} \right] = \frac{\delta_{\mu\nu}}{\sigma^2}.
+\]
+For the stress tensor:
+\[
+\partial_\mu \rho_s^{(c)} = \rho_s^{(c)} \cdot \left( -\frac{x_\mu - \mu_\mu}{\sigma^2} \right), \quad T_{\mu\nu} = \rho_s^{(c)2} \cdot \frac{(x_\mu - \mu_\mu)(x_\nu - \mu_\nu)}{\sigma^4}.
+\]
+On \(\mathbb{R}^n\), the Christoffel symbols vanish for constant \(g_{\mu\nu}\), so:
+\[
+R_{\mu\nu} = -\partial_\mu \partial_\nu \log \rho_s^{(c)} + \Gamma^\lambda_{\mu\nu} \partial_\lambda \log \rho_s^{(c)} = 0, \quad R = 0.
+\]
+Thus, the geometry is flat, but \(T_{\mu\nu} \neq 0\) due to nonzero semantic gradients.
+\end{proof}
+
+\section*{Theorem 3: Coherence Convergence Under Noise}
+\begin{theorem}
+Let \(A_{t+1} = A_t + \epsilon_t\) with \(\|\epsilon_t\|_2 \leq \delta\). Then spectral coherence obeys:
+\[
+|\text{coh}_{\text{spec}}(t+1) - \text{coh}_{\text{spec}}(t)| \leq C \cdot \delta,
+\]
+where \(C\) depends on the spectral gap and norm of \(A_t\).
+\end{theorem}
+
+\begin{proof}
+Define:
+\[
+\text{coh}_{\text{spec}}(t) = \frac{\lambda_{\max}(A_t)}{\sum_i |\lambda_i(A_t)|}.
+\]
+By eigenvalue perturbation theory:
+\[
+|\lambda_{\max}(A_t + \epsilon_t) - \lambda_{\max}(A_t)| \leq \|\epsilon_t\|_2 \leq \delta.
+\]
+The denominator \(\sum_i |\lambda_i(A_t)|\) perturbs as:
+\[
+\left| \sum_i |\lambda_i(A_t + \epsilon_t)| - \sum_i |\lambda_i(A_t)| \right| \leq n \delta.
+\]
+Thus, the coherence ratio change is bounded:
+\[
+\left| \frac{\lambda_{\max}(A_t + \epsilon_t)}{\sum_i |\lambda_i(A_t + \epsilon_t)|} - \frac{\lambda_{\max}(A_t)}{\sum_i |\lambda_i(A_t)|} \right| \leq C \cdot \delta,
+\]
+where \(C = \frac{n}{\sum_i |\lambda_i(A_t)|}\) for a graph with \(n\) nodes. Hence, coherence is Lipschitz-stable.
+\end{proof}
+
+\section*{Theorem 4': Approximate Quantization of Möbius Winding Number \(\Phi_L\)}
+\begin{theorem}
+Let \(G\) be a semantic graph with a closed loop \(L\) of \(n\) nodes, and let \(\phi(x) = \arg(\psi(x))\) where \(\psi(x)\) is the leading eigenvector of a non-unitary operator \(\mathcal{R}\) with spectral radius \(\rho(\mathcal{R}) \leq 1 + \epsilon\), \(\epsilon < 0.1\). If \(L\) is homologically nontrivial and \(\mathcal{R}\) is nearly unitary (\(\|\mathcal{R}^\dagger \mathcal{R} - I\| \leq \delta\)), then:
+\[
+\left| \Phi_L - 2\pi m \right| \leq C (\epsilon + \delta), \quad m \in \mathbb{Z},
+\]
+where \(C\) depends on loop length and graph connectivity.
+\end{theorem}
+
+\begin{proof}
+The phase angle is \(\phi(x) = \tan^{-1}\left(\frac{\text{Im}(\psi(x))}{\text{Re}(\psi(x))}\right)\), where \(\psi(x)\) is the eigenvector of \(\mathcal{R}|_x\). For non-unitary \(\mathcal{R}\), \(\mathcal{R}\psi(x_i) = \lambda(x_i) \psi(x_i) + \eta(x_i)\), with \(\|\eta(x_i)\| \leq \delta \|\psi(x_i)\|\). The phase difference is:
+\[
+\phi(x_{i+1}) - \phi(x_i) \approx \arg(\lambda(x_{i+1})) - \arg(\lambda(x_i)) + O(\delta).
+\]
+For a homologically nontrivial loop \(L\):
+\[
+\Phi_L = \sum_{i=1}^n [\phi(x_{i+1}) - \phi(x_i)] = 2\pi m + \sum_{i=1}^n O(\delta + \epsilon).
+\]
+The error is bounded by:
+\[
+\left| \Phi_L - 2\pi m \right| \leq n (\epsilon + \delta) \max_i \|x_{i+1} - x_i\|.
+\]
+In neural spike trains and logical entailment graphs, near-unitary dynamics ensure approximate quantization, with deviations proportional to \(\epsilon\) and \(\delta\).
+\end{proof}
+
+\section*{Theorem 5: Approximate Quantization of Möbius Winding Number \(\Phi_L\) in Continuous-Time}
+\begin{theorem}
+Let \(G\) be a semantic graph with a closed loop \(L\), and let \(\phi(x,t) = \arg(\psi(x,t))\) where \(\psi(x,t)\) evolves via \(\frac{d\psi}{dt} = \mathcal{R}_c \psi\) with spectral radius \(\rho(\mathcal{R}_c) \leq \epsilon\), \(\epsilon < 0.1\). If \(L\) is homologically nontrivial and \(\mathcal{R}_c\) is nearly unitary (\(\|\mathcal{R}_c^\dagger \mathcal{R}_c\| \leq \delta\)), then for a fixed time \(t\):
+\[
+\left| \Phi_L(t) - 2\pi m \right| \leq C (\epsilon + \delta), \quad m \in \mathbb{Z},
+\]
+where \(C\) depends on loop length and graph connectivity.
+\end{theorem}
+
+\begin{proof}
+The semantic field evolves as \(\psi(x,t) = e^{\mathcal{R}_c t} \psi(x,0)\). For nearly unitary \(\mathcal{R}_c = U + \eta\), with \(\|\eta\| \leq \delta\), the phase angle is \(\phi(x,t) = \tan^{-1}\left(\frac{\text{Im}(\psi(x,t))}{\text{Re}(\psi(x,t))}\right)\). The winding number is:
+\[
+\Phi_L(t) = \int_0^1 \frac{\partial \phi(x(s),t)}{\partial s} ds.
+\]
+For unitary \(U\), \(\Phi_L(t) = 2\pi m\). The perturbation \(\eta\) introduces an error:
+\[
+\frac{d\phi}{dt} = \text{Im}\left( \frac{\mathcal{R}_c \psi}{\psi} \right) \approx \theta(x) + O(\delta).
+\]
+For a nontrivial loop \(L\):
+\[
+\Phi_L(t) = \int_0^1 \left( \frac{\partial \phi(x,0)}{\partial s} + t \frac{\partial \theta(x)}{\partial s} \right) ds + O(\delta + \epsilon).
+\]
+The error is bounded by:
+\[
+\left| \Phi_L(t) - 2\pi m \right| \leq C (\epsilon + \delta) \cdot \text{length}(L).
+\]
+In neural and logical systems, near-unitary dynamics ensure approximate quantization.
+\end{proof}
+\section*{Theorem 6: Approximate Quantization of \(\Phi_L\) in Stochastic Dynamics}
+\begin{theorem}
+Let $G$ be a semantic graph with a closed loop $L$, and let $\phi(x,t) = \arg(\psi(x,t))$, where $\psi(x,t)$ evolves via $d\psi = \mathcal{R}_c \psi\, dt + \sigma_s \psi\, dW_t$ with $\rho(\mathcal{R}_c) \leq \epsilon$, $\epsilon < 0.1$, and $\sigma_s < 0.1$. If $L$ is homologically nontrivial and $\mathcal{R}_c$ is nearly unitary (i.e., $|\mathcal{R}_c^\dagger \mathcal{R}_c| \leq \delta$), then for a fixed time $t$:
+$$
+\left| \mathbb{E}[\Phi_L(t)] - 2\pi m \right| \leq C (\epsilon + \delta), \quad \text{Var}[\Phi_L(t)] \leq C' \sigma_s^2 t,
+$$
+where $m \in \mathbb{Z}$, and $C, C'$ depend on loop length and graph connectivity.
+\end{theorem}
+
+\begin{proof}
+
+\textbf{Phase Evolution:} The SDE for $\psi(x,t)$ induces a phase evolution via Itô’s formula. For $\psi = |\psi| e^{i\phi}$, the phase $\phi(x,t)$ evolves as:
+$$
+d\phi = \text{Im}\left( \frac{\mathcal{R}_c \psi}{\psi} \right) dt + \sigma_s \text{Im}(dW_t) + \frac{\sigma_s^2}{2} \text{Re}\left( \frac{\psi dW_t}{\psi} \right) dt.
+$$
+Assuming $\mathcal{R}_c = U + \eta$, with $U$ unitary and $|\eta| \leq \delta$, the drift term is:
+$$
+\text{Im}\left( \frac{\mathcal{R}_c \psi}{\psi} \right) \approx \theta(x) + O(\delta).
+$$
+
+\textbf{Winding Number:} The winding number is:
+$$
+\Phi_L(t) = \int_0^1 \frac{\partial \phi(x(s),t)}{\partial s} ds.
+$$
+Taking expectations:
+$$
+\mathbb{E}[\Phi_L(t)] = \int_0^1 \mathbb{E}\left[ \frac{\partial \phi(x(s),t)}{\partial s} \right] ds.
+$$
+Since $\mathbb{E}[dW_t] = 0$, the stochastic term vanishes in expectation, and:
+$$
+\mathbb{E}[\Phi_L(t)] \approx \int_0^1 \frac{\partial (\phi(x,0) + \theta(x)t)}{\partial s} ds + O(\delta + \epsilon) = 2\pi m + O(\delta + \epsilon),
+$$
+due to homological nontriviality.
+
+\textbf{Variance Bound:} The variance of $\Phi_L(t)$ arises from the stochastic term:
+$$
+\text{Var}[\Phi_L(t)] = \mathbb{E}\left[ \left( \int_0^1 \int_0^t \sigma_s \frac{\partial}{\partial s} \text{Im}(dW_u) ds \right)^2 \right].
+$$
+Using Itô isometry:
+$$
+\text{Var}[\Phi_L(t)] \leq \sigma_s^2 t \int_0^1 \left\| \frac{\partial}{\partial s} \psi(x(s),t) \right\|^2 ds \leq C' \sigma_s^2 t,
+$$
+where $C'$ depends on the loop’s geometry.
+
+\textbf{Neural and Logical Systems:} In neural systems, stochastic noise models synaptic variability. The phase $\phi(t)$ evolves with bounded variance, ensuring $\mathbb{E}[\Phi_L] \approx 2\pi m$. In logical systems, stochastic relaxation (e.g., noisy gradient descent) yields similar quantization in expectation for high-coherence graphs.
+
+\end{proof}
+\section*{Theorem 7: Approximate Quantization of Möbius Winding Number \(\Phi_L\) in Non-Markovian Dynamics}
+\begin{theorem}
+Let \(G\) be a semantic graph with a closed loop \(L\), and let \(\phi(x,t) = \arg(\psi(x,t))\) where \(\psi(x,t)\) evolves via \(D^\alpha \psi = \mathcal{R}_c \psi\) with spectral radius \(\rho(\mathcal{R}_c) \leq \epsilon\), \(\epsilon < 0.1\), and \(0 < \alpha \leq 1\). If \(L\) is homologically nontrivial and \(\mathcal{R}_c\) is nearly unitary (\(\|\mathcal{R}_c^\dagger \mathcal{R}_c\| \leq \delta\)), then for a fixed time \(t\):
+\[
+\left| \mathbb{E}[\Phi_L(t)] - 2\pi m \right| \leq C (\epsilon + \delta + |1 - \alpha|), \quad m \in \mathbb{Z},
+\]
+where \(C\) depends on loop length, graph connectivity, and \(t\).
+\end{theorem}
+
+\section*{Theorem 8: Approximate Quantization of Möbius Winding Number \(\Phi_L\) in Hybrid Quantum-Classical Dynamics}
+\begin{theorem}
+Let \(G\) be a semantic graph with a closed loop \(L\), and let \(\phi(x,t) = \arg(\text{Tr}(\psi(x,t)))\), where \(\psi(x,t) = \psi_c(x,t) \otimes |\psi_q(t)\rangle\) evolves via classical dynamics \(\frac{d\psi_c}{dt} = \mathcal{R}_c \psi_c\) with \(\rho(\mathcal{R}_c) \leq \epsilon\), \(\epsilon < 0.1\), and quantum dynamics \(i \hbar \frac{d|\psi_q\rangle}{dt} = H(t) |\psi_q\rangle\) with \(\|H(t)\| \leq \eta\). If \(L\) is homologically nontrivial and \(\mathcal{R}_c\) is nearly unitary (\(\|\mathcal{R}_c^\dagger \mathcal{R}_c\| \leq \delta\)), then for a fixed time \(t\):
+\[
+\left| \mathbb{E}[\Phi_L(t)] - 2\pi m \right| \leq C (\epsilon + \delta + \eta t), \quad m \in \mathbb{Z},
+\]
+where \(C\) depends on loop length, graph connectivity, and quantum-classical coupling strength.
+\end{theorem}
+\section*{Theorem 9: Approximate Quantization of Möbius Winding Number \(\Phi_L\) in Open Quantum Systems with Decoherence}
+\begin{theorem}
+Let \(G\) be a semantic graph with a closed loop \(L\), and let \(\phi(x,t) = \arg(\text{Tr}(\psi(x,t)))\), where \(\psi(x,t) = \psi_c(x,t) \otimes \rho_q(t)\) evolves via classical dynamics \(\frac{d\psi_c}{dt} = \mathcal{R}_c \psi_c\) with \(\rho(\mathcal{R}_c) \leq \epsilon\), \(\epsilon < 0.1\), and open quantum dynamics \(\frac{d\rho_q}{dt} = -\frac{i}{\hbar} [H, \rho_q] + \sum_k \gamma_k \left( L_k \rho_q L_k^\dagger - \frac{1}{2} \{ L_k^\dagger L_k, \rho_q \} \right)\) with \(\|H\| \leq \eta\) and \(\sum_k \gamma_k \leq \Gamma\). If \(L\) is homologically nontrivial and \(\mathcal{R}_c\) is nearly unitary (\(\|\mathcal{R}_c^\dagger \mathcal{R}_c\| \leq \delta\)), then for a fixed time \(t\):
+\[
+\left| \mathbb{E}[\Phi_L(t)] - 2\pi m \right| \leq C (\epsilon + \delta + \eta t + \Gamma t), \quad m \in \mathbb{Z},
+\]
+where \(C\) depends on loop length, graph connectivity, and coupling strength.
+\end{theorem}
+
+\begin{proof}
+The classical phase evolves as \(\phi_c(x,t) \approx \phi_c(x,0) + \theta(x)t + O(\delta)\). The quantum phase is \(\phi_q(t) \approx \arg(\text{Tr}(\rho_q(t))) + O(\eta t + \Gamma t)\). The winding number is:
+\[
+\Phi_L(t) = \int_0^1 \frac{\partial \phi(x(s),t)}{\partial s} ds.
+\]
+For a nontrivial loop:
+\[
+\mathbb{E}[\Phi_L(t)] \approx 2\pi m + O(\delta + \epsilon + \eta t + \Gamma t).
+\]
+The error is bounded by:
+\[
+\left| \mathbb{E}[\Phi_L(t)] - 2\pi m \right| \leq C (\epsilon + \delta + \eta t + \Gamma t) \cdot \text{length}(L).
+\]
+In neural and logical systems, decoherence ensures approximate quantization for low \(\Gamma\).
+\end{proof}
+
+\section*{Theorem 10: Approximate Quantization of Möbius Winding Number \(\Phi_L\) in Relativistic Quantum Systems}
+\begin{theorem}
+Let \(G\) be a semantic graph with a closed loop \(L\), and let \(\phi(x,t) = \arg(\text{Tr}(\psi(x,t)))\), where \(\psi(x,t) = \psi_c(x,t) \otimes \psi_q(t)\) evolves via classical dynamics \(\frac{d\psi_c}{dt} = \mathcal{R}_c \psi_c\) with \(\rho(\mathcal{R}_c) \leq \epsilon\), \(\epsilon < 0.1\), and relativistic quantum dynamics \(i \hbar \gamma^\mu (\partial_\mu - ie A_\mu) \psi_q = m c^2 \psi_q\) with \(\|A_\mu\| \leq \eta\). If \(L\) is homologically nontrivial and \(\mathcal{R}_c\) is nearly unitary (\(\|\mathcal{R}_c^\dagger \mathcal{R}_c\| \leq \delta\)), then for a fixed time \(t\):
+\[
+\left| \mathbb{E}[\Phi_L(t)] - 2\pi m \right| \leq C (\epsilon + \delta + \eta t + v/c), \quad m \in \mathbb{Z},
+\]
+where \(C\) depends on loop length, graph connectivity, coupling strength, and \(v\) is the characteristic velocity.
+\end{theorem}
+
+\begin{proof}
+The classical phase evolves as \(\phi_c(x,t) \approx \phi_c(x,0) + \theta(x)t + O(\delta)\). The quantum phase evolves via the Dirac equation, yielding \(\phi_q(t) \approx \phi_q(0) + \frac{e}{\hbar} \int A_0 dt + O(\eta t + v/c)\). The winding number is:
+\[
+\Phi_L(t) = \int_0^1 \frac{\partial \phi(x(s),t)}{\partial s} ds.
+\]
+For a nontrivial loop:
+\[
+\mathbb{E}[\Phi_L(t)] \approx 2\pi m + O(\delta + \epsilon + \eta t + v/c).
+\]
+The error is bounded by:
+\[
+\left| \mathbb{E}[\Phi_L(t)] - 2\pi m \right| \leq C (\epsilon + \delta + \eta t + v/c) \cdot \text{length}(L).
+\]
+In neural and logical systems, relativistic effects ensure approximate quantization for low \(v/c\).
+\end{proof}
+\section*{Theorem 11: Approximate Quantization of Möbius Winding Number \(\Phi_L\) in Quantum Field Theory Contexts}
+\begin{theorem}
+Let \(G\) be a semantic graph with a closed loop \(L\), and let \(\phi(x,t) = \arg(\langle \phi(x,t) \rangle)\), where \(\psi(x,t) = \psi_c(x,t) \otimes \phi(x,t)\) evolves via classical dynamics \(\frac{d\psi_c}{dt} = \mathcal{R}_c \psi_c\) with \(\rho(\mathcal{R}_c) \leq \epsilon\), \(\epsilon < 0.1\), and quantum field dynamics \(\left( \partial_t^2 - \partial_x^2 + m^2 \right) \phi = \lambda \phi^3\) with \(|\lambda| \leq \eta\). If \(L\) is homologically nontrivial and \(\mathcal{R}_c\) is nearly unitary (\(\|\mathcal{R}_c^\dagger \mathcal{R}_c\| \leq \delta\)), then for a fixed time \(t\):
+\[
+\left| \mathbb{E}[\Phi_L(t)] - 2\pi m \right| \leq C (\epsilon + \delta + \eta t), \quad m \in \mathbb{Z},
+\]
+where \(C\) depends on loop length, graph connectivity, and coupling strength.
+\end{theorem}
+
+\begin{proof}
+The classical phase evolves as \(\phi_c(x,t) \approx \phi_c(x,0) + \theta(x)t + O(\delta)\). The quantum field phase evolves perturbatively, yielding \(\phi_q(x,t) \approx \phi_q(x,0) + \omega t + O(\eta t)\), where \(\omega = \sqrt{k^2 + m^2}\). The winding number is:
+\[
+\Phi_L(t) = \int_0^1 \frac{\partial \phi(x(s),t)}{\partial s} ds.
+\]
+For a nontrivial loop:
+\[
+\mathbb{E}[\Phi_L(t)] \approx 2\pi m + O(\delta + \epsilon + \eta t).
+\]
+The error is bounded by:
+\[
+\left| \mathbb{E}[\Phi_L(t)] - 2\pi m \right| \leq C (\epsilon + \delta + \eta t) \cdot \text{length}(L).
+\]
+In neural and logical systems, field interactions ensure approximate quantization for weak \(\lambda\).
+\end{proof}
+\section*{Theorem 12: Approximate Quantization of Möbius Winding Number \(\Phi_L\) in Non-Commutative Geometry Contexts}
+\begin{theorem}
+Let \(G\) be a semantic graph with a closed loop \(L\), and let \(\phi(x,t) = \arg(\text{Tr}_{\mathcal{H}}(\psi(x,t)))\), where \(\psi(x,t) = \psi_c(x,t) \otimes \psi_q(t)\) evolves via classical dynamics \(\frac{d\psi_c}{dt} = \mathcal{R}_c \psi_c\) with \(\rho(\mathcal{R}_c) \leq \epsilon\), \(\epsilon < 0.1\), and non-commutative quantum dynamics \(i \frac{d}{dt} \psi_q = D \psi_q\) with \(\|D\| \leq \eta\). If \(L\) is homologically nontrivial and \(\mathcal{R}_c\) is nearly unitary (\(\|\mathcal{R}_c^\dagger \mathcal{R}_c\| \leq \delta\)), then for a fixed time \(t\):
+\[
+\left| \mathbb{E}[\Phi_L(t)] - 2\pi m \right| \leq C (\epsilon + \delta + \eta t), \quad m \in \mathbb{Z},
+\]
+where \(C\) depends on loop length, graph connectivity, and coupling strength.
+\end{theorem}
+
+\begin{proof}
+The classical phase evolves as \(\phi_c(x,t) \approx \phi_c(x,0) + \theta(x)t + O(\delta)\). The quantum phase evolves via \(\psi_q(t) = e^{-i D t} \psi_q(0)\), yielding \(\phi_q(t) \approx \phi_q(0) + \omega t + O(\eta t)\). The winding number is:
+\[
+\Phi_L(t) = \int_0^1 \frac{\partial \phi(x(s),t)}{\partial s} ds.
+\]
+For a nontrivial loop:
+\[
+\mathbb{E}[\Phi_L(t)] \approx 2\pi m + O(\delta + \epsilon + \eta t).
+\]
+The error is bounded by:
+\[
+\left| \mathbb{E}[\Phi_L(t)] - 2\pi m \right| \leq C (\epsilon + \delta + \eta t) \cdot \text{length}(L).
+\]
+In neural and logical systems, non-commutative effects ensure approximate quantization for small \(\eta\).
+\end{proof}
+
+\section*{Theorem 13: Approximate Quantization of Möbius Winding Number \(\Phi_L\) in Categorical Quantum Mechanics Contexts}
+
+\begin{theorem}
+Let \(G\) be a semantic graph with a closed loop \(L\), and let \(\phi(x,t) = \arg(\text{Tr}_{\mathcal{H}}(\psi(x,t)))\), where \(\psi(x,t) = \psi_c(x,t) \otimes \psi_q(t)\) evolves via classical dynamics \(\frac{d\psi_c}{dt} = \mathcal{R}_c \psi_c\) with spectral radius \(\rho(\mathcal{R}_c) \leq \epsilon\), \(\epsilon < 0.1\), and quantum dynamics in a dagger compact closed category \(\mathcal{C}\), with \(\psi_q(t): I \to H\) a morphism in \(\mathcal{C}\), evolving under a unitary functor \(F_t: \mathcal{C} \to \mathcal{C}\) with perturbation bound \(\|F_t - \text{id}\| \leq \eta\). If \(L\) is homologically nontrivial and \(\mathcal{R}_c\) is nearly unitary (\(\|\mathcal{R}_c^\dagger \mathcal{R}_c\| \leq \delta\)), then for a fixed time \(t\):
+\[
+\left| \mathbb{E}[\Phi_L(t)] - 2\pi m \right| \leq C (\epsilon + \delta + \eta t), \quad m \in \mathbb{Z},
+\]
+where \(C\) depends on loop length, graph connectivity, and coupling strength.
+\end{theorem}
+
+\begin{proof}
+
+1. \textbf{Hybrid Phase Evolution}:
+   The classical component evolves as:
+   \[
+   \psi_c(x,t) = e^{\mathcal{R}_c t} \psi_c(x,0).
+   \]
+   The quantum component \(\psi_q(t): I \to H\) in \(\mathcal{C}\) (e.g., the category of finite-dimensional Hilbert spaces \(\mathbf{FHilb}\)) evolves via a unitary functor \(F_t\), approximated as:
+   \[
+   \psi_q(t) = F_t(\psi_q(0)) \approx U_t \psi_q(0),
+   \]
+   where \(U_t\) is a unitary morphism and \(\|F_t - U_t\| \leq \eta\). The phase is extracted using the trace in \(\mathcal{C}\), defined via the dagger structure:
+   \[
+   \phi_q(t) = \arg(\text{Tr}_{\mathcal{H}}(\psi_q(t))) = \arg(\langle \psi_q(t) | \psi_q(t) \rangle).
+   \]
+   The hybrid field is \(\psi(x,t) = \psi_c(x,t) \otimes \psi_q(t)\), and the phase is:
+   \[
+   \phi(x,t) = \tan^{-1}\left( \frac{\text{Im}(\text{Tr}_{\mathcal{H}}(\psi(x,t)))}{\text{Re}(\text{Tr}_{\mathcal{H}}(\psi(x,t)))} \right).
+   \]
+
+2. \textbf{Winding Number}:
+   The Möbius winding number is:
+   \[
+   \Phi_L(t) = \int_0^1 \frac{\partial \phi(x(s),t)}{\partial s} \, ds.
+   \]
+   For nearly unitary \(\mathcal{R}_c = U_c + \eta_c\), with \(\|\eta_c\| \leq \delta\), the classical phase evolves as:
+   \[
+   \phi_c(x,t) \approx \phi_c(x,0) + \theta(x)t + O(\delta).
+   \]
+   The quantum phase evolves via the unitary functor:
+   \[
+   \phi_q(t) \approx \phi_q(0) + \omega t + O(\eta t),
+   \]
+   where \(\omega\) is determined by the spectrum of the unitary morphism \(U_t\). Combining:
+   \[
+   \phi(x,t) \approx \phi_c(x,0) + \theta(x)t + \phi_q(t) + O(\delta + \eta t).
+   \]
+
+3. \textbf{Homological Constraint}:
+   For a homologically nontrivial loop \(L\), the expected winding number is:
+   \[
+   \mathbb{E}[\Phi_L(t)] = \int_0^1 \frac{\partial}{\partial s} \left( \phi_c(x,0) + \theta(x)t + \phi_q(t) \right) \, ds \approx 2\pi m + O(\delta + \epsilon + \eta t).
+   \]
+   The error is bounded by:
+   \[
+   \left| \mathbb{E}[\Phi_L(t)] - 2\pi m \right| \leq C (\epsilon + \delta + \eta t) \cdot \text{length}(L).
+   \]
+
+4. \textbf{Neural and Logical Systems}:
+   In neural systems, the categorical structure models compositional quantum synaptic interactions, ensuring \(\Phi_L\) is near-quantized for small \(\eta\). In logical systems, the dagger compact closed category supports non-commutative logical superpositions, preserving approximate quantization.
+
+\textbf{Conclusion}: In categorical quantum mechanics contexts, \(\mathbb{E}[\Phi_L(t)]\) is approximately quantized, with deviations bounded by non-unitarity and categorical perturbations, applicable to compositional quantum neural and logical systems.
+
+\end{proof}
+
+\section*{Theorem 14: Approximate Quantization of Möbius Winding Number \(\Phi_L\) in Topos Theory Contexts}
+
+\begin{theorem}
+Let \(G\) be a semantic graph with a closed loop \(L\), and let \(\phi(x,t) = \arg(\Gamma(\psi(x,t)))\), where \(\psi(x,t) = \psi_c(x,t) \otimes \psi_q(t)\) is a section of a sheaf \(\mathcal{F}\) over a topos \(\mathcal{T}\), with \(\psi_c(x,t)\) evolving via classical dynamics \(\frac{d\psi_c}{dt} = \mathcal{R}_c \psi_c\) with spectral radius \(\rho(\mathcal{R}_c) \leq \epsilon\), \(\epsilon < 0.1\), and \(\psi_q(t)\) evolving via a quantum morphism in \(\mathcal{T}\) with perturbation bound \(\|\dot{\psi}_q - i H \psi_q\| \leq \eta\), where \(H\) is a Hermitian operator. If \(L\) is homologically nontrivial in the site of \(\mathcal{T}\) and \(\mathcal{R}_c\) is nearly unitary (\(\|\mathcal{R}_c^\dagger \mathcal{R}_c\| \leq \delta\)), then for a fixed time \(t\):
+\[
+\left| \mathbb{E}[\Phi_L(t)] - 2\pi m \right| \leq C (\epsilon + \delta + \eta t), \quad m \in \mathbb{Z},
+\]
+where \(C\) depends on loop length, graph connectivity, and sheaf cohomology.
+\end{theorem}
+
+\begin{proof}
+
+1. \textbf{Hybrid Sheaf Evolution}:
+   The classical component evolves as:
+   \[
+   \psi_c(x,t) = e^{\mathcal{R}_c t} \psi_c(x,0),
+   \]
+   where \(\psi_c(x,t) \in \Gamma(U, \mathcal{F})\) is a section of the sheaf \(\mathcal{F}\) over an open set \(U \subset G\). The quantum component \(\psi_q(t) \in \Gamma(V, \mathcal{F})\) evolves in the topos \(\mathcal{T}\) (e.g., the topos of sheaves on a site associated with \(G\)) via:
+   \[
+   \dot{\psi}_q(t) = i H \psi_q(t) + \eta_q(t),
+   \]
+   where \(H\) is a Hermitian operator and \(\|\eta_q(t)\| \leq \eta\). The phase is extracted via global sections:
+   \[
+   \phi_q(t) = \arg(\Gamma(\psi_q(t))).
+   \]
+   The hybrid field is \(\psi(x,t) = \psi_c(x,t) \otimes \psi_q(t) \in \Gamma(U \times V, \mathcal{F})\), and the phase is:
+   \[
+   \phi(x,t) = \tan^{-1}\left( \frac{\text{Im}(\Gamma(\psi(x,t)))}{\text{Re}(\Gamma(\psi(x,t)))} \right).
+   \]
+
+2. \textbf{Winding Number}:
+   The Möbius winding number is defined over the loop \(L\):
+   \[
+   \Phi_L(t) = \int_0^1 \frac{\partial \phi(x(s),t)}{\partial s} \, ds.
+   \]
+   For nearly unitary \(\mathcal{R}_c = U_c + \eta_c\), with \(\|\eta_c\| \leq \delta\), the classical phase evolves as:
+   \[
+   \phi_c(x,t) \approx \phi_c(x,0) + \theta(x)t + O(\delta).
+   \]
+   The quantum phase evolves via the quantum morphism:
+   \[
+   \phi_q(t) \approx \phi_q(0) + \omega t + O(\eta t),
+   \]
+   where \(\omega\) is determined by the spectrum of \(H\). Combining:
+   \[
+   \phi(x,t) \approx \phi_c(x,0) + \theta(x)t + \phi_q(t) + O(\delta + \eta t).
+   \]
+
+3. \textbf{Homological Constraint}:
+   For a homologically nontrivial loop \(L\) in the site of \(\mathcal{T}\), the expected winding number is:
+   \[
+   \mathbb{E}[\Phi_L(t)] = \int_0^1 \frac{\partial}{\partial s} \left( \phi_c(x,0) + \theta(x)t + \phi_q(t) \right) \, ds \approx 2\pi m + O(\delta + \epsilon + \eta t).
+   \]
+   The error is bounded by:
+   \[
+   \left| \mathbb{E}[\Phi_L(t)] - 2\pi m \right| \leq C (\epsilon + \delta + \eta t) \cdot \text{length}(L),
+   \]
+   where \(C\) accounts for sheaf cohomology groups \(H^1(\mathcal{T}, \mathcal{F})\).
+
+4. \textbf{Neural and Logical Systems}:
+   In neural systems, the sheaf \(\mathcal{F}\) models coherent synaptic interactions across the graph, ensuring \(\Phi_L\) is near-quantized for small \(\eta\). In logical systems, the topos \(\mathcal{T}\) supports sheaf-theoretic logical coherence, preserving approximate quantization via homological constraints.
+
+\textbf{Conclusion}: In topos theory contexts, \(\mathbb{E}[\Phi_L(t)]\) is approximately quantized, with deviations bounded by non-unitarity and quantum perturbations, applicable to sheaf-theoretic neural and logical systems.
+
+\end{proof}
+
+\section*{Theorem 15: Approximate Quantization of Möbius Winding Number \(\Phi_L\) in Homotopy Type Theory Contexts}
+
+\begin{theorem}
+Let \(G\) be a semantic graph with a closed loop \(L\), and let \(\phi(x,t) = \arg(\psi(x,t))\), where \(\psi(x,t) = \psi_c(x,t) \otimes \psi_q(t)\) is a term in a homotopy type \(\mathcal{T}\), with \(\psi_c(x,t): G \to \mathbb{C}\) evolving via classical dynamics \(\frac{d\psi_c}{dt} = \mathcal{R}_c \psi_c\) with spectral radius \(\rho(\mathcal{R}_c) \leq \epsilon\), \(\epsilon < 0.1\), and \(\psi_q(t): I \to \mathbb{C}\) evolving via a quantum path in \(\mathcal{T}\) with perturbation bound \(\|\dot{\psi}_q - i H \psi_q\| \leq \eta\), where \(H: \mathbb{C} \to \mathbb{C}\) is a Hermitian operator. If \(L\) is homotopically nontrivial in \(\pi_1(\mathcal{T}, G)\) and \(\mathcal{R}_c\) is nearly unitary (\(\|\mathcal{R}_c^\dagger \mathcal{R}_c\| \leq \delta\)), then for a fixed time \(t\):
+\[
+\left| \mathbb{E}[\Phi_L(t)] - 2\pi m \right| \leq C (\epsilon + \delta + \eta t), \quad m \in \mathbb{Z},
+\]
+where \(C\) depends on loop length, graph connectivity, and the fundamental group \(\pi_1(\mathcal{T}, G)\).
+\end{theorem}
+
+\begin{proof}
+
+1. \textbf{Hybrid Path Evolution}:
+   The classical component evolves as a term \(\psi_c(x,t): G \to \mathbb{C}\) in the homotopy type \(\mathcal{T}\):
+   \[
+   \psi_c(x,t) = e^{\mathcal{R}_c t} \psi_c(x,0).
+   \]
+   The quantum component \(\psi_q(t): I \to \mathbb{C}\) evolves as a path in \(\mathcal{T}\), satisfying:
+   \[
+   \dot{\psi}_q(t) = i H \psi_q(t) + \eta_q(t),
+   \]
+   where \(H\) is a Hermitian operator and \(\|\eta_q(t)\| \leq \eta\). The phase is extracted via the identity type:
+   \[
+   \phi_q(t) = \arg(\psi_q(t)) = \tan^{-1}\left( \frac{\text{Im}(\psi_q(t))}{\text{Re}(\psi_q(t))} \right).
+   \]
+   The hybrid field is \(\psi(x,t) = \psi_c(x,t) \otimes \psi_q(t): G \times I \to \mathbb{C}\), and the phase is:
+   \[
+   \phi(x,t) = \tan^{-1}\left( \frac{\text{Im}(\psi(x,t))}{\text{Re}(\psi(x,t))} \right).
+   \]
+
+2. \textbf{Winding Number}:
+   The Möbius winding number is defined over the loop \(L\):
+   \[
+   \Phi_L(t) = \int_0^1 \frac{\partial \phi(x(s),t)}{\partial s} \, ds.
+   \]
+   For nearly unitary \(\mathcal{R}_c = U_c + \eta_c\), with \(\|\eta_c\| \leq \delta\), the classical phase evolves as:
+   \[
+   \phi_c(x,t) \approx \phi_c(x,0) + \theta(x)t + O(\delta).
+   \]
+   The quantum phase evolves via the quantum path:
+   \[
+   \phi_q(t) \approx \phi_q(0) + \omega t + O(\eta t),
+   \]
+   where \(\omega\) is determined by the spectrum of \(H\). Combining:
+   \[
+   \phi(x,t) \approx \phi_c(x,0) + \theta(x)t + \phi_q(t) + O(\delta + \eta t).
+   \]
+
+3. \textbf{Homotopical Constraint}:
+   For a loop \(L\) nontrivial in the fundamental group \(\pi_1(\mathcal{T}, G)\), the expected winding number is:
+   \[
+   \mathbb{E}[\Phi_L(t)] = \int_0^1 \frac{\partial}{\partial s} \left( \phi_c(x,0) + \theta(x)t + \phi_q(t) \right) \, ds \approx 2\pi m + O(\delta + \epsilon + \eta t).
+   \]
+   The error is bounded by:
+   \[
+   \left| \mathbb{E}[\Phi_L(t)] - 2\pi m \right| \leq C (\epsilon + \delta + \eta t) \cdot \text{length}(L),
+   \]
+   where \(C\) accounts for the structure of \(\pi_1(\mathcal{T}, G)\).
+
+4. \textbf{Neural and Logical Systems}:
+   In neural systems, the homotopy type \(\mathcal{T}\) models higher-order synaptic coherence, ensuring \(\Phi_L\) is near-quantized for small \(\eta\). In logical systems, \(\mathcal{T}\) supports path-dependent logical coherence, preserving approximate quantization via homotopical constraints.
+
+\textbf{Conclusion}: In homotopy type theory contexts, \(\mathbb{E}[\Phi_L(t)]\) is approximately quantized, with deviations bounded by non-unitarity and quantum perturbations, applicable to homotopically coherent neural and logical systems.
+
+\end{proof}
+
+\section*{Theorem 16: Approximate Quantization of Möbius Winding Number \(\Phi_L\) in Synthetic Differential Geometry Contexts}
+
+\begin{theorem}
+Let \(G\) be a semantic graph with a closed loop \(L\), and let \(\phi(x,t) = \arg(\psi(x,t))\), where \(\psi(x,t) = \psi_c(x,t) \otimes \psi_q(t)\) is a smooth map in a smooth topos \(\mathcal{S}\) equipped with a ring of dual numbers \(R \oplus \epsilon R\), with \(\psi_c(x,t): G \to \mathbb{C}\) evolving via classical dynamics \(\frac{d\psi_c}{dt} = \mathcal{R}_c \psi_c\) with spectral radius \(\rho(\mathcal{R}_c) \leq \epsilon\), \(\epsilon < 0.1\), and \(\psi_q(t): R \to \mathbb{C}\) evolving via a quantum flow in \(\mathcal{S}\) with perturbation bound \(\|\dot{\psi}_q - i H \psi_q\| \leq \eta\), where \(H: \mathbb{C} \to \mathbb{C}\) is a Hermitian operator. If \(L\) is non-trivial in the synthetic homology of \(\mathcal{S}\) and \(\mathcal{R}_c\) is nearly unitary (\(\|\mathcal{R}_c^\dagger \mathcal{R}_c\| \leq \delta\)), then for a fixed time \(t\):
+\[
+\left| \mathbb{E}[\Phi_L(t)] - 2\pi m \right| \leq C (\epsilon + \delta + \eta t), \quad m \in \mathbb{Z},
+\]
+where \(C\) depends on loop length, graph connectivity, and synthetic homology groups.
+\end{theorem}
+
+\begin{proof}
+
+1. \textbf{Hybrid Smooth Evolution}:
+   In the smooth topos \(\mathcal{S}\), the classical component evolves as a smooth map \(\psi_c(x,t): G \to \mathbb{C}\):
+   \[
+   \psi_c(x,t) = e^{\mathcal{R}_c t} \psi_c(x,0).
+   \]
+   The quantum component \(\psi_q(t): R \to \mathbb{C}\) evolves as a smooth flow in \(\mathcal{S}\), satisfying:
+   \[
+   \dot{\psi}_q(t) = i H \psi_q(t) + \eta_q(t),
+   \]
+   where \(H\) is a Hermitian operator and \(\|\eta_q(t)\| \leq \eta\). The phase is extracted synthetically:
+   \[
+   \phi_q(t) = \arg(\psi_q(t)) = \tan^{-1}\left( \frac{\text{Im}(\psi_q(t))}{\text{Re}(\psi_q(t))} \right).
+   \]
+   The hybrid field is \(\psi(x,t) = \psi_c(x,t) \otimes \psi_q(t): G \times R \to \mathbb{C}\), and the phase is:
+   \[
+   \phi(x,t) = \tan^{-1}\left( \frac{\text{Im}(\psi(x,t))}{\text{Re}(\psi(x,t))} \right).
+   \]
+
+2. \textbf{Winding Number}:
+   The Möbius winding number is defined over the loop \(L\):
+   \[
+   \Phi_L(t) = \int_0^1 \frac{\partial \phi(x(s),t)}{\partial s} \, ds.
+   \]
+   For nearly unitary \(\mathcal{R}_c = U_c + \eta_c\), with \(\|\eta_c\| \leq \delta\), the classical phase evolves as:
+   \[
+   \phi_c(x,t) \approx \phi_c(x,0) + \theta(x)t + O(\delta).
+   \]
+   The quantum phase evolves via the smooth flow:
+   \[5555555555555555555555555555555555555555555555555555555555
+
+
+
+
+\section*{Summary Table}
+\begin{center}
+\begin{tabular}{llll}
+\toprule
+\textbf{Domain} & \textbf{Feature} & \textbf{Mathematical Type} & \textbf{Result} \\
+\midrule
+Chronotopology & \(\Phi_L\) Winding & Quantized integral & \(2\pi m\) \\
+Stability & Recursive Operator & Banach contraction & Exponential \\
+Learning & Phase Policy \(\Pi\) & Bellman recursion & Anticipatory \\
+Feedback & Emotional Gradient & Variational field & Damping \\
+Density & \(\rho_s^{(c)}, \rho_s^{(f)}\) & Dual density & Mixed resolution \\
+Neural & Spike Phase & Hilbert + M\"obius & Quantized \\
+Logic & Entailment Graph & Spectral Topology & Discrete Phase \\
+Bio-symbolics & DNA Recursion & \(\mathbb{Z}_{64}\) mapping & Symbolic Flow \\
+Continuum & \(\mathcal{R}_c\) Dynamics & Non-unitary error & \(\Phi_L \approx 2\pi m\) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+
+\section*{Quantization of M\"obius Winding Number \( \Phi_L \)}
+The M\"obius winding number is defined:
+\[
+\Phi_L = \oint_L \frac{d\phi}{ds} ds
+\]
+with \( \phi(x) = \arg(\psi(x)) \), \( \psi(x) \) being the leading eigenvector of unitary operator \( \mathcal{R} \) along closed loop \( L \). Under topological constraints:
+\[
+\Phi_L = 2\pi m, \quad m \in \mathbb{Z}
+\]
+\section*{Coherence Metrics}
+\begin{itemize}
+  \item \textbf{Spectral:} \( \frac{\lambda_{\max}(A)}{\sum_i |\lambda_i(A)|} \)
+  \item \textbf{Entropic:} \( -\sum \rho \log \rho \)
+  \item \textbf{Quantum Fidelity:} \( F = \text{Tr}(\sqrt{\sqrt{\rho_1} \rho_2 \sqrt{\rho_1}})^2 \)
+\end{itemize}
+
+\section*{Recursive Phase Policy \( \Pi(x, t) \)}
+\[
+\Pi_n(x) = \arg\max_p \mathbb{E}_p \left[ R_n(x) + \gamma \sum_{x'} T(x, x') \Pi_{n+1}(x') \right]
+\]
+Models recursive feedback with anticipatory semantic planning.
+
+\section{Emotional Resonance Gradient \( F(t) \)}
+\[
+F(t) = \epsilon \cdot \nabla_\Sigma C(\Sigma)
+\]
+Encodes coherence-driven volatility or semantic "emotional" response.
+
+\section{Semantic Density Bifurcation \( \rho_s^{(c)}, \rho_s^{(f)} \)}
+\begin{itemize}
+  \item Coarse: \( \rho_s^{(c)} \): smooth Fisher manifold.
+  \item Fine: \( \rho_s^{(f)} \): Dirac comb + Gaussian smoothing.
+\end{itemize}
+
+\section{DNA Codon Dynamics}
+Triplet mapping \( \text{codon} \rightarrow \mathbb{Z}_{64} \) and recursion tests semantic flow across symbolic sequences.
+
+\section{Neural Phase Quantization}
+Hilbert transform of spike train \( s(t) \):
+\[ \phi(t) = \arg(hilbert(s(t))) \Rightarrow \Phi_L = 2\pi m \]
+Reflects cortical circuit coherence.
+
+\section{Logic Graph Topology}
+Logical entailment graphs \( G \): coherence and cycle phase give quantized \( \Phi_L \) values. Tautology yields \( 2\pi \), contradiction near-zero.
+
+
+\end{document}

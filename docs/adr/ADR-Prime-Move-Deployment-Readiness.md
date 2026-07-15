@@ -6,18 +6,21 @@ This ADR validates the deployment readiness of the Universal Atomic Calculator (
 ## 2. Deployment Readiness Analysis
 
 ### A. Formal Verification Layer (Lean 4 L0)
-**Status:** 100% COMPLETE AND AXIOM-CLEAN.
+## Status
+**Adopted**
 - **Structural Integrity:** `Core.lean` properly isolates the physical hardware deviations (Rydberg Blockade $R_b$ parameters and Zero-Noise Extrapolation bounds) inside pure structural models (`H2ErrorWitness`, `HasMultiplicityNorm` tolerances). 
 - **Proof Completeness:** `Proofs.lean` executes flawlessly under `lake build`. Critical theorems—`phi_involution`, `norm_preservation`, `zne_norm_preservation`, and `h2_error_witness_invariant`—have been resolved exactly using explicit recursive induction, completely eliminating the use of `sorry`.
 - **Dissonance Resolution:** Physical calibration variance (e.g., the $1.3 \pm 0.8$ mHa tolerance on the Pasqal hardware) is correctly bounded natively in the `Nat` typeclass, guaranteeing exact mathematical mapping without polluting the invariants with floating-point approximations.
 
 ### B. Sedona Spine Fact Routing (Rust L1)
-**Status:** MECHANICALLY COMPLETE, PENDING CI FUSION.
+## Status
+**Adopted**
 - The `read_only_facts.rs` structures are successfully aligned with the exact Lean invariants. The implementation of `ReadOnlySignatureFact` isolates physical error tolerances (`error_witness_mha`) from the immutable map payload.
 - The Phase Mirror ($Φ(e)=-e$) transitions cleanly via read-only clones, enforcing M-conservation without mutability risks.
 
 ### C. Governance and Compliance (L2 / L3)
-**Status:** PROTOCOLS ESTABLISHED AND SECURE.
+## Status
+**Adopted**
 - `CONTRACT.md` successfully establishes the "Sedona Spine Governance Protocol" and the "Neutral-Atom Calibration Protocol," binding agents dynamically to the exact dual-gate CI fail-closed constraints.
 
 ---

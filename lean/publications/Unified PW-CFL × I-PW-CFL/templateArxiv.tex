@@ -1,0 +1,750 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{setspace}
+\usepackage{csquotes}
+\usepackage{tikz}
+\hypersetup{colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue}
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{PW-CFL Defensive Publication}
+\lhead{Multiplicity Logic Stack}
+\cfoot{\thepage}
+\setlength{\parskip}{0.6em}
+\setlength{\parindent}{0pt}
+\onehalfspacing
+
+\lstdefinestyle{pystyle}{
+  language=Python,
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{blue!70!black},
+  commentstyle=\color{green!40!black},
+  stringstyle=\color{red!60!black},
+  showstringspaces=false,
+  frame=single,
+  breaklines=true,
+  columns=fullflexible
+}
+
+\title{\textbf{Unified PW-CFL $\times$ I-PW-CFL:}\\
+An Open-Core Multiplicity Logic Stack, Extensions, and Defensive Publication Draft}
+\author{Citizen Gardens \\ The Foundation of Multiplicity}
+\date{April 27, 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This report consolidates the developments in this design thread into a single technical and defensive-publication style document. The central result is a unified formulation of Positionally-Weighted Compensatory Fuzzy Logic (PW-CFL) and its formerly separated inverse counterpart I-PW-CFL as one operator family built from a canonical prime-weighted conjunction and its De Morgan dual.
+
+The key architectural revision is forward-first implementation. PW-CFL is the canonical source operator. Its dual is not developed as an independent sibling; instead, the disjunction generated from the forward core is recognized as the exact mathematical content of I-PW-CFL. This eliminates interface drift, collapses redundant implementations, and clarifies that the dual is a consequence of the core rather than a separate invention.
+
+A second result is the formal resolution of the assignment tension. The prime weights determine a canonical magnitude gradient, while domain knowledge determines the permutation that maps predicates to positions. In this formulation, PW-CFL is zero-configuration in its weight magnitudes but not permutation-free in domains where predicate importance is known.
+
+A third result is the extension of the open-core stack into operational layers: probabilistic uncertainty handling and explainability/counterfactual analysis. These layers preserve the axiomatic core while making the framework deployable in real-world inference settings such as precision health, ranked recommendation systems, and tensorized digital twins.
+
+This document is suitable for use as (i) a comprehensive internal specification, (ii) a prior art defensive publication draft, and (iii) a basis for subsequent arXiv, ResearchGate, or institutional timestamp disclosure.
+\end{abstract}
+
+\newpage
+\tableofcontents
+
+\section{Scope and Purpose}
+The document serves four purposes:
+\begin{enumerate}[label=\arabic*.]
+  \item Consolidate the operator definitions, axioms, architecture, and extension layers discussed throughout the thread.
+  \item Formalize the revised open-core structure and implementation roadmap.
+  \item State the principal novelty claims in concise defensive-publication form.
+  \item Record immediate next steps for validation, implementation, and publication.
+\end{enumerate}
+
+\section{Core Operator Family}
+\subsection{Canonical Forward Conjunction}
+For arity $n \ge 1$, let $p_i$ denote the $i$-th prime number and define
+\[
+S_n = \sum_{j=1}^{n} p_j, \qquad w_i = \frac{p_i}{S_n}.
+\]
+The canonical PW-CFL conjunction is
+\[
+ c_p(\mathbf{x}) = \prod_{i=1}^{n} x_i^{w_i}, \qquad \mathbf{x} = (x_1,\dots,x_n) \in [0,1]^n.
+\]
+
+\subsection{Canonical Dual Disjunction}
+The dual operator is
+\[
+ d_p(\mathbf{x}) = 1 - \prod_{i=1}^{n} (1-x_i)^{w_i}.
+\]
+Under standard fuzzy negation $n(x)=1-x$, the De Morgan relation holds:
+\[
+ d_p(\mathbf{x}) = 1 - c_p(1-\mathbf{x}).
+\]
+
+\subsection{Reinterpretation of I-PW-CFL}
+The revised specification makes explicit that the prior object called \emph{I-PW-CFL conjunction} is exactly the dual operator:
+\[
+ c_p^{\mathrm{inv}}(\mathbf{x}) = 1 - c_p(1-\mathbf{x}) = d_p(\mathbf{x}).
+\]
+Thus I-PW-CFL is best treated as a semantic or application-facing view onto the forward disjunction, not as a separate implementation.
+
+\subsection{Blend Family}
+A one-parameter bridge between forward conjunctive and dual disjunctive behavior is defined by
+\[
+ c_{\alpha}(\mathbf{x}) = \alpha c_p(\mathbf{x}) + (1-\alpha)d_p(\mathbf{x}), \qquad \alpha \in [0,1].
+\]
+This family supports robustness studies, interpolation between strictness and resilience, and downstream application tuning.
+
+\section{Axiomatic Overview}
+\begin{longtable}{>{\raggedright\arraybackslash}p{2.2cm} >{\raggedright\arraybackslash}p{2.2cm} >{\raggedright\arraybackslash}p{4.1cm} >{\raggedright\arraybackslash}p{4.1cm}}
+\toprule
+Axiom & ID & Forward PW-CFL & Dual / I-PW-CFL \\
+\midrule
+Compensation & PW1 & Holds: output remains between min and max under standard conditions & Holds in dual form \\
+Equivariance & PW2 & Holds; replaces commutativity with permutation-equivariant sensitivity & Holds under De Morgan transformation \\
+Strict monotonicity & PW3 & Holds in each coordinate & Holds in each coordinate \\
+Veto / saturation & PW4 & Any zero annihilates the conjunction & Any one saturates the disjunction \\
+Reciprocity & PW5 & Preserved & Preserved \\
+Transitivity / order consistency & PW6 & Preserved & Preserved \\
+De Morgan duality & PW7 & Holds by definition with $d_p$ & Holds by construction \\
+\bottomrule
+\end{longtable}
+
+The critical shift is that equivariance, not commutativity, is treated as the structural organizing principle. In the prime-weighted setting, input order carries meaning, but that meaning transforms lawfully under permutation.
+
+\section{Mathematical Deepening}
+\subsection{Elasticity and Interpretability}
+The derivative of $c_p$ with respect to $x_i$ is
+\[
+\frac{\partial c_p}{\partial x_i} = \frac{w_i c_p(\mathbf{x})}{x_i}, \qquad x_i>0.
+\]
+The log-elasticity is therefore
+\[
+\frac{\partial \log c_p}{\partial \log x_i} = w_i.
+\]
+This is a central interpretive result: each position carries a canonical sensitivity equal to its prime-normalized weight. Position $n$ is always the most structurally sensitive coordinate.
+
+\subsection{Idempotency}
+For constant input vectors $x_1=\cdots=x_n=x$,
+\[
+ c_p(x,\dots,x) = \prod_{i=1}^{n} x^{w_i} = x^{\sum_i w_i} = x.
+\]
+Thus PW-CFL retains idempotency.
+
+\subsection{Continuity}
+Since each map $x \mapsto x^{w_i}$ is continuous on $[0,1]$ for $w_i>0$, and finite products of continuous functions are continuous, $c_p$ is continuous on $[0,1]^n$.
+
+\subsection{Orbit Structure}
+Let $S_n$ act on inputs by permutation. For generic vectors with distinct coordinates, the orbit of $c_p$ under permutation has size $n!$ because all prime weights are distinct and the stabilizer is trivial. This yields a family of positionally distinct operators with a unique ascending canonical representative.
+
+\subsection{Assignment Doctrine}
+The revised doctrine is:
+\begin{quote}
+Prime weights provide the magnitude gradient. Domain knowledge provides the permutation.
+\end{quote}
+Equivalently, the operator is canonical in weights but domain-aware in assignment.
+
+\section{Unified Open-Core Architecture}
+\begin{verbatim}
+packages/dnakey/src/
+├── shared/
+│   ├── types.py
+│   ├── constants.py
+│   └── exceptions.py
+├── core/
+│   ├── __init__.py
+│   ├── operators.py
+│   ├── weights.py
+│   ├── equivariance.py
+│   └── validators.py
+├── analysis/
+│   ├── divergence.py
+│   ├── blend.py
+│   └── adversarial.py
+├── pwcfl/
+│   └── __init__.py
+├── ipwcfl/
+│   └── __init__.py
+├── iacfl/
+└── acfl/
+\end{verbatim}
+
+The architectural principle is singular implementation of the algebraic core, with thin wrapper modules for compatibility and semantic presentation.
+
+\section{Probabilistic Layer Mini-Spec Summary}
+\subsection{Motivation}
+The probabilistic layer lifts crisp truth values to uncertain inputs represented as samplers, empirical draws, or intervals. This is directly useful in any setting where measurements carry uncertainty.
+
+\subsection{Monte Carlo Distributional Form}
+Let $X_i \sim F_i$ independently on $[0,1]$. Sampling $M$ realizations yields summary statistics for $c_p(\mathbf{X})$ or $d_p(\mathbf{X})$:
+\[
+\hat{\mu} = \frac{1}{M}\sum_{m=1}^{M} c_p(\mathbf{x}^{(m)}),
+\qquad
+\hat{\sigma}^2 = \frac{1}{M-1}\sum_{m=1}^{M}\bigl(c_p(\mathbf{x}^{(m)})-\hat{\mu}\bigr)^2.
+\]
+
+\subsection{Interval Form}
+For bounds $x_i \in [l_i,u_i]$, monotonicity implies
+\[
+ c_p^{\min} = c_p(\mathbf{l}), \qquad c_p^{\max} = c_p(\mathbf{u}).
+\]
+No search is required.
+
+\subsection{Representative API}
+\begin{lstlisting}[style=pystyle]
+def c_p_distribution(samplers, n=None, weights=None, M=10000, seed=None):
+    pass
+
+def c_p_from_samples(sample_matrix, n=None, weights=None):
+    pass
+
+def c_p_interval(lower_bounds, upper_bounds, n=None, weights=None):
+    pass
+
+def prob_ge_threshold(samplers, theta, n=None, weights=None, M=10000, seed=None):
+    pass
+\end{lstlisting}
+
+\section{Explainability and Counterfactuals Layer Summary}
+\subsection{Motivation}
+The explainability layer operationalizes the built-in interpretability of PW-CFL. It provides local gradients, elasticity profiles, minimal-change counterfactuals, adversarial threshold-flip analysis, and ordered contribution measures.
+
+\subsection{Counterfactual Objective}
+Given target $y_{\mathrm{target}} > c_p(\mathbf{x})$, solve
+\[
+\text{minimize } \|\mathbf{x}'-\mathbf{x}\| 
+\quad \text{subject to} \quad c_p(\mathbf{x}') \ge y_{\mathrm{target}},
+\]
+subject to admissible box constraints.
+
+Taking logs gives
+\[
+\sum_{i=1}^{n} w_i \log x_i' \ge \log y_{\mathrm{target}},
+\]
+which supports greedy and constrained numerical solvers.
+
+\subsection{Representative API}
+\begin{lstlisting}[style=pystyle]
+def local_gradient(x, n=None, weights=None):
+    pass
+
+def elasticity_profile(n=None, weights=None):
+    pass
+
+def local_attribution(x, n=None, weights=None, normalize=True):
+    pass
+
+def counterfactual(x, target, upper_bounds=None, cost_weights=None,
+                   norm="l1", n=None, weights=None, method="greedy"):
+    pass
+
+def adversarial_perturbation(x, threshold, direction="down",
+                             lower_bounds=None, upper_bounds=None,
+                             norm="linf", n=None, weights=None,
+                             method="gradient"):
+    pass
+\end{lstlisting}
+
+\section{Temporal and Streaming Outlook}
+A natural next layer is temporal extension. One proposed form is
+\[
+ c_p^{(\mathrm{temp})}(\mathbf{x}_1,\dots,\mathbf{x}_T) =
+ \prod_{t=1}^{T} \left(\prod_{i=1}^{n} x_{i,t}^{w_i}\right)^{\delta_t},
+\]
+where $\delta_t$ are temporal decay weights. In log form this becomes additive and streamable:
+\[
+ \log c_p^{(\mathrm{temp})} = \sum_{t=1}^{T} \delta_t \sum_{i=1}^{n} w_i \log x_{i,t}.
+\]
+This connects naturally to health trajectories, event streams, and change-point alerts.
+
+\section{DNA-STORE Style Integration Notes}
+The domain-facing interpretation developed in this thread is that multi-omic, biomarker, or recommendation features are fuzzified into $[0,1]$ and then assigned to positions according to relevance. The most important predicate is mapped to the largest prime weight. This yields an interpretable evaluation stack where no ad hoc learned weight tuning is required at the operator level.
+
+Within such a system, the open core provides scoring, uncertainty analysis, and explanation. A closed application layer can then attach proprietary fuzzification calibrations, intervention recommendation logic, temporal monitoring, and user-interface narration.
+
+\section{Implementation Roadmap}
+\begin{enumerate}[label=\arabic*.]
+  \item Implement \texttt{core/operators.py} with $c_p$ and $d_p$.
+  \item Verify De Morgan duality to machine precision.
+  \item Implement \texttt{core/weights.py} and \texttt{core/equivariance.py}.
+  \item Implement divergence and blend analysis.
+  \item Add the probabilistic wrapper module.
+  \item Add the explainability/counterfactual layer.
+  \item Add a temporal layer only after explanation and uncertainty are stable.
+\end{enumerate}
+
+\section{Illustrative Python Reference Snippet}
+\begin{lstlisting}[style=pystyle]
+from math import prod
+from sympy import primerange
+
+def prime_weights(n: int):
+    primes = list(primerange(1, 1000))[:n]
+    s = sum(primes)
+    return [p / s for p in primes]
+
+
+def c_p(x):
+    w = prime_weights(len(x))
+    return prod(v ** wi for v, wi in zip(x, w))
+
+
+def d_p(x):
+    w = prime_weights(len(x))
+    return 1.0 - prod((1.0 - v) ** wi for v, wi in zip(x, w))
+
+
+def local_gradient(x):
+    score = c_p(x)
+    w = prime_weights(len(x))
+    return [wi * score / xi for xi, wi in zip(x, w)]
+
+x = [0.82, 0.61, 0.73, 0.48]
+print(c_p(x), d_p(x), local_gradient(x))
+\end{lstlisting}
+
+\section{Defensive Publication Claims and Prior Art Positioning}
+\subsection{Core Disclosures}
+This document discloses the following technical content for defensive publication purposes:
+\begin{enumerate}[label=\alph*.]
+  \item A prime-canonical, positionally weighted compensatory conjunction on $[0,1]^n$.
+  \item Its De Morgan dual disjunction with identical prime-normalized weights.
+  \item The reinterpretation of I-PW-CFL as the forward dual rather than a separate implementation.
+  \item The replacement of commutativity with permutation equivariance as an axiomatically central property.
+  \item The assignment doctrine separating fixed prime magnitudes from domain-governed positional permutation.
+  \item Probabilistic, explainability, counterfactual, and temporal extension layers built on the same core algebra.
+\end{enumerate}
+
+\subsection{Distinguishing Features}
+The disclosed framework is positioned as distinct from:
+\begin{itemize}
+  \item commutative t-norm based fuzzy conjunctions,
+  \item ordinary weighted geometric means with arbitrary or learned weights,
+  \item OWA/WOWA-style aggregation where the ordering logic is not prime-canonical in this sense,
+  \item inverse or dual systems developed independently from the forward algebra.
+\end{itemize}
+
+\subsection{Publication Recommendation}
+For defensive publication, the following steps are recommended:
+\begin{enumerate}[label=\arabic*.]
+  \item Freeze notation and version this document.
+  \item Hash the source file and record the digest in at least two timestamped channels.
+  \item Publish the document to an archival platform such as arXiv, ResearchGate, Zenodo, or IP.com.
+  \item If desired, publish a second narrower note focused exclusively on the PEQFLA normalization problem and categorical functoriality requirements.
+\end{enumerate}
+
+\section{Suggested Additional Inclusions}
+Beyond the material already developed, the following additions would strengthen a formal publication package:
+\begin{itemize}
+  \item A short prior-art comparison table against ACFL, GMBCL, t-norms, OWA, WOWA, and I-ACFL.
+  \item One worked 4-input numerical example showing assignment sensitivity under permutation.
+  \item One Monte Carlo figure for the probabilistic layer.
+  \item One counterfactual example with explicit target attainment.
+  \item A one-page appendix on categorical framing and the normalization open problem.
+\end{itemize}
+
+\section{Concise Canonical Statement}
+\begin{quote}
+PW-CFL is the canonical prime-weighted, permutation-equivariant compensatory operator family. Its De Morgan dual constitutes I-PW-CFL in the revised architecture, preserving positional sensitivity while relaxing conjunctive veto. Together they form an open-core multiplicity logic stack whose public mathematical layer supports probabilistic, explanatory, and temporal inference, while enabling closed domain-specific deployment layers.
+\end{quote}
+
+\section{Closing Note}
+The unifying design principle of this thread is that structure should survive symmetry breaking. In this framework, order is not discarded as nuisance variation; it is encoded, disciplined by equivariance, and made interpretable by prime-indexed multiplicity.
+
+\appendix
+\section{Notation and Setup}
+For each arity $n \ge 1$, let $p_i$ denote the $i$-th prime number and define
+\[
+S_n = \sum_{j=1}^{n} p_j, \qquad w_i = \frac{p_i}{S_n}, \qquad \sum_{i=1}^n w_i = 1, \qquad w_i>0.
+\]
+For $\mathbf{x}=(x_1,\dots,x_n) \in [0,1]^n$, define the forward PW-CFL conjunction and its De Morgan dual by
+\[
+ c_p(\mathbf{x}) = \prod_{i=1}^n x_i^{w_i},
+ \qquad
+ d_p(\mathbf{x}) = 1 - \prod_{i=1}^n (1-x_i)^{w_i}.
+\]
+When useful, write
+\[
+\log c_p(\mathbf{x}) = \sum_{i=1}^n w_i \log x_i
+\]
+on $(0,1]^n$.
+
+\section{Elementary Structural Proofs}
+\begin{proposition}[Normalization of weights]
+For every $n \ge 1$, the prime-canonical weights satisfy $w_i>0$ and $\sum_{i=1}^n w_i=1$.
+\end{proposition}
+\begin{proof}
+Each prime $p_i$ is strictly positive, hence $w_i=p_i/S_n>0$. Summing gives
+\[
+\sum_{i=1}^n w_i = \frac{1}{S_n}\sum_{i=1}^n p_i = 1.
+\]
+\end{proof}
+
+\begin{proposition}[Idempotency]
+For every $x\in[0,1]$ and every $n\ge1$,
+\[
+ c_p(x,\dots,x)=x.
+\]
+Similarly, $d_p(x,\dots,x)=x$.
+\end{proposition}
+\begin{proof}
+Using $\sum_i w_i=1$,
+\[
+ c_p(x,\dots,x)=\prod_{i=1}^n x^{w_i}=x^{\sum_i w_i}=x.
+\]
+For the dual,
+\[
+ d_p(x,\dots,x)=1-\prod_{i=1}^n (1-x)^{w_i}=1-(1-x)^{\sum_i w_i}=x.
+\]
+\end{proof}
+
+\begin{proposition}[Boundary behavior and veto]
+If at least one coordinate of $\mathbf{x}\in[0,1]^n$ is zero, then $c_p(\mathbf{x})=0$. If all coordinates are one, then $c_p(\mathbf{1})=1$.
+\end{proposition}
+\begin{proof}
+If $x_k=0$ for some $k$, then $x_k^{w_k}=0$ because $w_k>0$, so the whole product vanishes. If every coordinate equals $1$, then every factor equals $1$ and the product is $1$.
+\end{proof}
+
+\begin{proposition}[Dual saturation]
+If at least one coordinate of $\mathbf{x}\in[0,1]^n$ is one, then $d_p(\mathbf{x})=1$. If all coordinates are zero, then $d_p(\mathbf{0})=0$.
+\end{proposition}
+\begin{proof}
+If $x_k=1$, then $(1-x_k)^{w_k}=0$, so the product in the dual formula is zero and $d_p(\mathbf{x})=1$. If all coordinates are zero, then each factor equals $1$ and $d_p(\mathbf{0})=0$.
+\end{proof}
+
+\begin{theorem}[De Morgan duality]
+For every $\mathbf{x}\in[0,1]^n$,
+\[
+ d_p(\mathbf{x}) = 1 - c_p(1-\mathbf{x}).
+\]
+Equivalently, the revised I-PW-CFL operator is exactly the dual disjunction.
+\end{theorem}
+\begin{proof}
+Substitute $1-\mathbf{x}=(1-x_1,\dots,1-x_n)$ into the definition of $c_p$:
+\[
+ c_p(1-\mathbf{x}) = \prod_{i=1}^n (1-x_i)^{w_i}.
+\]
+Hence
+\[
+ 1-c_p(1-\mathbf{x}) = 1-\prod_{i=1}^n (1-x_i)^{w_i} = d_p(\mathbf{x}).
+\]
+\end{proof}
+
+\section{Order, Compensation, and Monotonicity}
+\begin{theorem}[Compensation bounds]
+For every $\mathbf{x}\in[0,1]^n$,
+\[
+\min_i x_i \le c_p(\mathbf{x}) \le \max_i x_i.
+\]
+The same holds for $d_p$.
+\end{theorem}
+\begin{proof}
+Let $m=\min_i x_i$ and $M=\max_i x_i$. Then $m\le x_i\le M$ for all $i$. Since the map $t\mapsto t^{w_i}$ is increasing on $[0,1]$,
+\[
+ m^{w_i} \le x_i^{w_i} \le M^{w_i}.
+\]
+Multiplying over $i$ gives
+\[
+ m^{\sum_i w_i} \le \prod_i x_i^{w_i} \le M^{\sum_i w_i},
+\]
+that is,
+\[
+ m \le c_p(\mathbf{x}) \le M.
+\]
+For the dual, apply the same argument to $1-x_i$ and then complement.
+\end{proof}
+
+\begin{theorem}[Strict monotonicity]
+Fix $\mathbf{x},\mathbf{y}\in(0,1]^n$ such that $x_i\le y_i$ for all $i$ and $x_k<y_k$ for at least one index $k$. Then
+\[
+ c_p(\mathbf{x}) < c_p(\mathbf{y}).
+\]
+The same holds for $d_p$ on $[0,1)^n$.
+\end{theorem}
+\begin{proof}
+Because each exponent $w_i$ is positive, the map $t\mapsto t^{w_i}$ is strictly increasing on $(0,1]$. Hence $x_i^{w_i}\le y_i^{w_i}$ for all $i$, with strict inequality at $i=k$. Multiplying yields $c_p(\mathbf{x})<c_p(\mathbf{y})$. The dual case follows by applying the argument to $1-x_i$ and complementing.
+\end{proof}
+
+\section{Continuity and Differentiability}
+\begin{proposition}[Continuity]
+The map $c_p:[0,1]^n\to[0,1]$ is continuous. The same holds for $d_p$.
+\end{proposition}
+\begin{proof}
+For each $i$, the function $x_i\mapsto x_i^{w_i}$ is continuous on $[0,1]$ because $w_i>0$. Finite products of continuous functions are continuous, so $c_p$ is continuous. The same argument applies to $d_p$.
+\end{proof}
+
+\begin{proposition}[Partial derivatives]
+On $(0,1]^n$,
+\[
+\frac{\partial c_p}{\partial x_i}(\mathbf{x}) = \frac{w_i c_p(\mathbf{x})}{x_i}.
+\]
+On $[0,1)^n$,
+\[
+\frac{\partial d_p}{\partial x_i}(\mathbf{x}) = \frac{w_i(1-d_p(\mathbf{x}))}{1-x_i}.
+\]
+\end{proposition}
+\begin{proof}
+Differentiate
+\[
+ c_p(\mathbf{x}) = x_i^{w_i}\prod_{j\ne i} x_j^{w_j}
+\]
+with respect to $x_i$ to obtain
+\[
+\frac{\partial c_p}{\partial x_i} = w_i x_i^{w_i-1}\prod_{j\ne i}x_j^{w_j} = \frac{w_i c_p(\mathbf{x})}{x_i}.
+\]
+For the dual, write
+\[
+ d_p(\mathbf{x}) = 1 - (1-x_i)^{w_i}\prod_{j\ne i}(1-x_j)^{w_j}
+\]
+and differentiate.
+\end{proof}
+
+\begin{corollary}[Elasticity identity]
+For every $\mathbf{x}\in(0,1]^n$,
+\[
+\frac{\partial \log c_p}{\partial \log x_i}(\mathbf{x}) = w_i.
+\]
+\end{corollary}
+\begin{proof}
+By the chain rule,
+\[
+\frac{\partial \log c_p}{\partial \log x_i}
+= \frac{x_i}{c_p(\mathbf{x})}\frac{\partial c_p}{\partial x_i}(\mathbf{x})
+= \frac{x_i}{c_p(\mathbf{x})}\cdot \frac{w_i c_p(\mathbf{x})}{x_i}
+= w_i.
+\]
+\end{proof}
+
+\section{Equivariance and Orbit Structure}
+\begin{definition}[Permuted weight action]
+For a permutation $\sigma\in S_n$, define
+\[
+(c_{\sigma\cdot w})(\mathbf{x}) = \prod_{i=1}^n x_i^{w_{\sigma^{-1}(i)}}.
+\]
+\end{definition}
+
+\begin{theorem}[Permutation equivariance]
+For every permutation $\sigma\in S_n$ and every $\mathbf{x}\in[0,1]^n$,
+\[
+ c_p(\sigma \mathbf{x}) = (c_{\sigma^{-1}\cdot w})(\mathbf{x}).
+\]
+\end{theorem}
+\begin{proof}
+Let $(\sigma \mathbf{x})_i = x_{\sigma^{-1}(i)}$. Then
+\[
+ c_p(\sigma\mathbf{x}) = \prod_{i=1}^n (x_{\sigma^{-1}(i)})^{w_i}.
+\]
+Relabel with $j=\sigma^{-1}(i)$, so $i=\sigma(j)$, giving
+\[
+ c_p(\sigma\mathbf{x}) = \prod_{j=1}^n x_j^{w_{\sigma(j)}} = \prod_{j=1}^n x_j^{w_{\sigma^{-1}(j)}\,\circ\,\sigma^2}
+\]
+and by the standard weight-action convention this is exactly the operator with the inverse-permuted weight vector applied to $\mathbf{x}$. The result states precisely that permuting inputs is equivalent to acting on the weight labels.
+\end{proof}
+
+\begin{proposition}[Trivial stabilizer of the prime weight vector]
+The stabilizer of $(w_1,\dots,w_n)$ under permutation is trivial.
+\end{proposition}
+\begin{proof}
+If $\sigma$ fixes the weight vector, then $w_i = w_{\sigma(i)}$ for all $i$. Since the primes are distinct, the normalized weights are distinct, so $\sigma(i)=i$ for all $i$. Hence $\sigma$ is the identity.
+\end{proof}
+
+\begin{corollary}[Generic orbit size]
+For generic input vectors with pairwise distinct coordinates, the orbit of the PW-CFL operator under $S_n$ has size $n!$.
+\end{corollary}
+\begin{proof}
+Distinct weights imply a trivial stabilizer, so the orbit of the weight vector has size $|S_n|=n!$. For generic distinct coordinates, different permuted weight assignments produce different outputs, so the full orbit is realized.
+\end{proof}
+
+\section{Operator Norm Bounds}
+The following estimates are useful for stability, numerical analysis, and adversarial/counterfactual sensitivity.
+
+\subsection{Supremum bounds for the operator}
+\begin{proposition}[Range bound]
+For every $\mathbf{x}\in[0,1]^n$,
+\[
+0 \le c_p(\mathbf{x}) \le 1, \qquad 0 \le d_p(\mathbf{x}) \le 1.
+\]
+Hence
+\[
+\|c_p\|_{L^\infty([0,1]^n)} = \|d_p\|_{L^\infty([0,1]^n)} = 1.
+\]
+\end{proposition}
+\begin{proof}
+Each factor $x_i^{w_i}$ lies in $[0,1]$, so their product lies in $[0,1]$. Likewise, the dual is one minus a number in $[0,1]$.
+\end{proof}
+
+\subsection{Log-domain Lipschitz bound}
+\begin{proposition}[Exact Lipschitz bound in log coordinates]
+Define $u_i = \log x_i$ on $(0,1]^n$, and set
+\[
+\Phi(\mathbf{u}) = \log c_p(e^{u_1},\dots,e^{u_n}) = \sum_{i=1}^n w_i u_i.
+\]
+Then for every pair $\mathbf{u},\mathbf{v}\in(-\infty,0]^n$,
+\[
+|\Phi(\mathbf{u})-\Phi(\mathbf{v})| \le \|\mathbf{u}-\mathbf{v}\|_\infty.
+\]
+More generally,
+\[
+|\Phi(\mathbf{u})-\Phi(\mathbf{v})| \le \|w\|_q\,\|\mathbf{u}-\mathbf{v}\|_p,
+\qquad \frac1p+\frac1q=1.
+\]
+\end{proposition}
+\begin{proof}
+Since $\Phi(\mathbf{u})-\Phi(\mathbf{v}) = \sum_i w_i(u_i-v_i)$, Hölder's inequality gives
+\[
+|\Phi(\mathbf{u})-\Phi(\mathbf{v})| \le \|w\|_q\,\|\mathbf{u}-\mathbf{v}\|_p.
+\]
+For $p=\infty$, $q=1$, and $\|w\|_1=1$, the bound becomes
+\[
+|\Phi(\mathbf{u})-\Phi(\mathbf{v})| \le \|\mathbf{u}-\mathbf{v}\|_\infty.
+\]
+\end{proof}
+
+\subsection{Gradient norm bounds away from the boundary}
+\begin{proposition}[Gradient bound on $[\varepsilon,1]^n$]
+Fix $\varepsilon\in(0,1]$. Then for every $\mathbf{x}\in[\varepsilon,1]^n$,
+\[
+\left\|\nabla c_p(\mathbf{x})\right\|_\infty \le \frac{w_n}{\varepsilon},
+\qquad
+\left\|\nabla c_p(\mathbf{x})\right\|_1 \le \frac{1}{\varepsilon},
+\qquad
+\left\|\nabla c_p(\mathbf{x})\right\|_2 \le \frac{\|w\|_2}{\varepsilon}.
+\]
+\end{proposition}
+\begin{proof}
+By the derivative formula,
+\[
+\left|\frac{\partial c_p}{\partial x_i}(\mathbf{x})\right| = \frac{w_i c_p(\mathbf{x})}{x_i}.
+\]
+Since $0\le c_p(\mathbf{x})\le1$ and $x_i\ge\varepsilon$,
+\[
+\left|\frac{\partial c_p}{\partial x_i}(\mathbf{x})\right| \le \frac{w_i}{\varepsilon}.
+\]
+Taking the supremum over $i$ yields the $\ell_\infty$ bound, summing gives the $\ell_1$ bound because $\sum_i w_i=1$, and squaring then summing yields the $\ell_2$ bound.
+\end{proof}
+
+\begin{corollary}[Lipschitz continuity away from the boundary]
+On $[\varepsilon,1]^n$, the operator $c_p$ is Lipschitz with constants
+\[
+|c_p(\mathbf{x})-c_p(\mathbf{y})| \le \frac{1}{\varepsilon}\|\mathbf{x}-\mathbf{y}\|_\infty,
+\]
+\[
+|c_p(\mathbf{x})-c_p(\mathbf{y})| \le \frac{\|w\|_2}{\varepsilon}\|\mathbf{x}-\mathbf{y}\|_2,
+\]
+\[
+|c_p(\mathbf{x})-c_p(\mathbf{y})| \le \frac{w_n}{\varepsilon}\|\mathbf{x}-\mathbf{y}\|_1.
+\]
+\end{corollary}
+\begin{proof}
+Apply the mean value theorem in several variables together with the corresponding dual norm estimate for the gradient.
+\end{proof}
+
+\subsection{Dual gradient bounds}
+\begin{proposition}[Gradient bound for the dual on $[0,1-\varepsilon]^n$]
+Fix $\varepsilon\in(0,1]$. Then for every $\mathbf{x}\in[0,1-\varepsilon]^n$,
+\[
+\left\|\nabla d_p(\mathbf{x})\right\|_\infty \le \frac{w_n}{\varepsilon},
+\qquad
+\left\|\nabla d_p(\mathbf{x})\right\|_1 \le \frac{1}{\varepsilon},
+\qquad
+\left\|\nabla d_p(\mathbf{x})\right\|_2 \le \frac{\|w\|_2}{\varepsilon}.
+\]
+\end{proposition}
+\begin{proof}
+Use
+\[
+\frac{\partial d_p}{\partial x_i}(\mathbf{x}) = \frac{w_i(1-d_p(\mathbf{x}))}{1-x_i}
+\]
+and note that $1-d_p(\mathbf{x})\in[0,1]$ while $1-x_i\ge\varepsilon$.
+\end{proof}
+
+\subsection{Perturbation bounds in log space}
+\begin{theorem}[Multiplicative perturbation control]
+Let $\mathbf{x},\mathbf{y}\in(0,1]^n$. Then
+\[
+\left|\log \frac{c_p(\mathbf{x})}{c_p(\mathbf{y})}\right|
+\le \sum_{i=1}^n w_i\left|\log \frac{x_i}{y_i}\right|
+\le \max_i \left|\log \frac{x_i}{y_i}\right|.
+\]
+Consequently,
+\[
+ e^{-\delta} \le \frac{c_p(\mathbf{x})}{c_p(\mathbf{y})} \le e^{\delta}
+ \quad \text{whenever} \quad
+ \max_i \left|\log \frac{x_i}{y_i}\right| \le \delta.
+\]
+\end{theorem}
+\begin{proof}
+Compute
+\[
+\log \frac{c_p(\mathbf{x})}{c_p(\mathbf{y})}
+= \sum_{i=1}^n w_i \log\frac{x_i}{y_i}.
+\]
+Taking absolute values and using the triangle inequality gives the first inequality, while the second follows from convexity because the $w_i$ sum to $1$. Exponentiating yields the multiplicative bound.
+\end{proof}
+
+\section{Weight Spectrum Estimates}
+\begin{proposition}[Concentration ratio]
+For every $n\ge1$,
+\[
+\frac{w_n}{w_1} = \frac{p_n}{2}.
+\]
+\end{proposition}
+\begin{proof}
+Since $w_n=p_n/S_n$ and $w_1=2/S_n$, their ratio is $p_n/2$.
+\end{proof}
+
+\begin{remark}[Asymptotic growth]
+By the prime number theorem, $p_n \sim n\log n$, so the extreme-weight ratio scales as
+\[
+\frac{w_n}{w_1} \sim \frac{n\log n}{2}.
+\]
+Thus positional sensitivity becomes increasingly skewed as arity grows.
+\end{remark}
+
+\begin{definition}[Effective number of inputs]
+Let
+\[
+H(w) = -\sum_{i=1}^n w_i \log w_i,
+\qquad
+n_{\mathrm{eff}} = e^{H(w)}.
+\]
+\end{definition}
+
+\begin{remark}
+For uniform weights, $n_{\mathrm{eff}}=n$. For prime weights, $n_{\mathrm{eff}}<n$, quantifying the compression of effective dimensionality induced by positional weighting.
+\end{remark}
+
+\section{Failure of Absorption (structural note)}
+Classical lattice absorption identities such as $x \wedge (x \vee y)=x$ are not expected to persist in a non-commutative, position-sensitive geometric framework. In the present setting, even when using the dual pair $(c_p,d_p)$, the positional weighting can cause
+\[
+ c_p\bigl(x,d_p(x,y)\bigr) \ne x
+\]
+in generic assignments. This failure is not a defect; it is a separating structural property distinguishing PW-CFL from lattice-based fuzzy logics.
+
+\section{Implementation-Facing Consequences}
+The previous bounds imply:
+\begin{enumerate}[label=\arabic*.]
+  \item Numerical stability improves significantly when optimization and estimation are performed in log coordinates.
+  \item Gradient-based explanation and counterfactual methods should avoid coordinates too close to zero unless explicit boundary handling is used.
+  \item The same norm bounds transfer to the dual on the complementary compact set away from one.
+  \item Prime-weight concentration grows with arity, so assignment protocols become more consequential at larger $n$.
+\end{enumerate}
+
+\section{Concluding Statement}
+This appendix collects the explicit proofs and operator bounds most directly needed for a rigorous article draft: normalization, idempotency, boundary behavior, compensation, strict monotonicity, continuity, differentiability, elasticity, permutation equivariance, generic orbit size, and norm/Lipschitz bounds. Together these results formalize PW-CFL as a stable, interpretable, non-commutative compensatory operator family with a mathematically controlled dual and a clear path to implementation.
+\nocite{*}
+\bibliographystyle{unsrt}  
+\bibliography{references}  
+
+
+\end{document}

@@ -1,0 +1,844 @@
+\documentclass[11pt,a4paper]{article}
+
+% ---------- Packages ----------
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsfonts,amsthm}
+\usepackage{bm}
+\usepackage{physics}      % optional, for bra-ket etc.
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{boxedminipage}
+\usepackage{enumitem}
+\usepackage{microtype}
+\usepackage[most]{tcolorbox}
+\tcbset{
+  colback=gray!5,
+  colframe=black,
+  rounded corners,
+  boxrule=0.5pt
+}
+\usepackage{tabularx}
+\usepackage{array} % for >{\raggedright} etc.
+
+% ---------- Hyperref setup ----------
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue,
+    pdftitle={From Primes to Predictions: The Sommerfeld-MR Framework and the Gallows Protocol},
+    pdfauthor={Your Name},
+    pdfkeywords={meta-relativity, primes, hydrogen, fine structure, effective field theory}
+}
+
+% ---------- Custom macros ----------
+\newcommand{\MR}{\mathrm{MR}}
+\newcommand{\HM}{H_{\mathrm{MR}}}
+\newcommand{\DeltaHM}{\Delta H_{\mathrm{MR}}}
+\newcommand{\LambdaM}{\Lambda_{m}}
+\newcommand{\LambdaMuniv}{\Lambda_{m}^{\mathrm{univ}}}
+\newcommand{\Ostd}{O_{\mathrm{std}}}
+\newcommand{\Oexp}{O_{\mathrm{exp}}}
+\newcommand{\OMR}{O_{\mathrm{MR}}}
+\newcommand{\lamMR}{\lambda_{\mathrm{MR}}}
+
+% ---------- Title / authors ----------
+\title{
+  From Primes to Predictions:\\[0.3em]
+  \large The Sommerfeld--MR Framework and the Gallows Protocol
+}
+
+\author{
+  Ryan O. van Gelder\thanks{Citizen Gardens, email: \texttt{ryan@citizengardens.org}}
+}
+
+\date{\today}
+
+% ====================================================
+\begin{document}
+% ====================================================
+
+\maketitle
+
+\begin{abstract}
+The Meta-Relativity (MR) program aims to derive physical laws from number-theoretic structure, in particular from primes and the Riemann zeta function. Without a clear route to falsifiable predictions, however, such frameworks risk remaining mathematical metaphors. In this work we introduce the \emph{Gallows Protocol}, a step-by-step procedure that forces any MR-like construction to be expressed as an explicit operator, have its internal parameters fixed by MR principles, and be confronted with precision data.
+
+We apply the protocol to a concrete test case: a Sommerfeld--MR model of hydrogen fine structure. In its most natural implementation, the MR correction either overshoots experimental bounds by many orders of magnitude (Case~A of the protocol) or reduces to a reparameterization of the standard spin--orbit operator (Case~C). We then reframe the problem in terms of the multiplicity constant~$\LambdaM$, which provides a natural home for the small coupling required by hydrogen. In the current MR framework, however, $\LambdaM$ remains a system-dependent effective parameter, not a derived constant.
+
+To address this, we outline a program to obtain $\LambdaMuniv$ from a universal prime-graded dynamics and to propagate this value into the hydrogen sector without further tuning. This would elevate MR from an ontological reinterpretation of known physics to a framework that makes genuine, falsifiable predictions.
+\end{abstract}
+
+\tableofcontents
+
+\section{Introduction}
+
+The idea that number theory---and in particular the structure of the primes and the Riemann zeta function---might underpin fundamental physics has a long history~[\dots]. The Meta-Relativity  (MR) program is a recent incarnation of this idea. In MR, physical laws are supposed to emerge from lawfulness constraints, prime-graded Hilbert spaces, and multiplicity rules tied to zeta-like sums.
+
+Despite its mathematical appeal, MR faces a familiar problem: without a systematic path from its constructions to concrete, falsifiable predictions, it risks remaining an elaborate metaphor. In practice, MR-like models often introduce new operators whose overall scales are left undetermined, or they are flexible enough to be adjusted post hoc to match known data. This undermines their status as physical theories.
+
+The aim of this work is twofold. First, we introduce the \emph{MR Gallows Protocol}, a brutally simple procedure that any proposed MR effect must pass: write down an explicit operator on a concrete state space, fix all internal parameters from MR principles (not data), compute at least one observable, compare with the best available standard theory and experiment, and classify the outcome. The classification has three cases: (A) overshoot and falsification, (B) compatibility with a bound on the coupling, and (C) degeneracy with existing effective field theory (EFT) operators, in which case MR adds no new physics, only an ontological reinterpretation.
+
+Second, we apply this protocol to a specific case: a Sommerfeld--MR model of hydrogen fine structure. This provides a clean test bed because the relevant observables are measured and computed with extremely high precision. In our implementation, the natural MR scale overshoots the experimental residual window by roughly eight orders of magnitude, unless the coupling is tuned to be very small. Moreover, at the operator level, the MR correction appears proportional to the standard spin--orbit term. Within the Gallows classification, this places the model in Case~A at unit coupling, and in Case~C at the operator level.
+
+We then reframe the coupling in terms of the multiplicity constant~$\Lambda_m$, which in the MR/multiplicity formalism is the scalar that keeps prime-weighted recursions contractive. This makes $\Lambda_m$ the natural ``home'' for the small coupling demanded by hydrogen, but in the absence of a universal construction it remains a system-dependent Wilson coefficient. To address this, we outline a universal program: define a prime-graded operator $S_{\text{univ}}$, derive a universal $\Lambda_m^{\text{univ}}$ from its spectrum and multiplicities, and then embed the hydrogenic MR operator as a block of $S_{\text{univ}}$ without re-tuning.
+
+The rest of the paper is organized as follows. In Sec.~\ref{sec:gallows} we present the MR Gallows Protocol and its A/B/C classification. In Sec.~\ref{sec:sommerfeld} we construct the Sommerfeld--MR operator for hydrogen and apply the protocol, including the hydrogenic calculation and the operator-independence discussion. In Sec.~\ref{sec:lambda} we describe the $\Lambda_m$ framing and the resulting hydrogen constraint. In Sec.~\ref{sec:universal} we outline a universal program to derive $\Lambda_m$ from prime-graded dynamics. We conclude in Sec.~\ref{sec:conclusion} with a discussion of MR's current status as an ontological framework, and what would be required for it to become genuinely predictive.
+
+\begin{table}[h]
+\centering
+\begin{tabularx}{\textwidth}{c>{\centering\arraybackslash}p{0.22\textwidth}>{\raggedright\arraybackslash}X}
+\hline
+\textbf{Case} & \textbf{Condition} & \textbf{Interpretation} \\
+\hline
+\textbf{A} &
+$\bigl|\Delta O_{\mathrm{MR}}(\lambda_{\mathrm{MR}}\sim 1)\bigr| \gg |\delta O|$ &
+\emph{Overshoot}: this specific MR implementation is falsified at that stratum
+unless a structural suppression is derived. \\
+\textbf{B} &
+$\bigl|\Delta O_{\mathrm{MR}}(\lambda_{\mathrm{MR}}\sim 1)\bigr| \lesssim |\delta O|$ &
+\emph{Compatible}: the effect is viable and yields a quantitative bound
+on the MR coupling. \\
+\textbf{C} &
+$\Delta H_{\mathrm{MR}}$ linearly dependent on existing EFT operators &
+\emph{Degenerate}: MR adds no new operator, only an ontological
+reinterpretation. \\
+\hline
+\end{tabularx}
+\caption{MR Gallows Protocol: outcome classification.}
+\label{tab:gallows-cases}
+\end{table}
+
+
+
+\begin{tcolorbox}[title={Box X --- MR Gallows Protocol for Proposed Effects}, breakable]
+
+The Gallows Protocol provides a standardized test for any concrete MR
+effect or ``gate'' (Sommerfeld, ZM, Casimir, etc.). It mandates explicit
+operator specification, MR-internal parameter fixing, and direct
+confrontation with precision data.
+
+\medskip
+\noindent\textbf{1. Explicit operator on a concrete state space.}
+Work within a well-defined Hilbert space (e.g.\ hydrogenic
+$\lvert n\ell j m_j; p\rangle$, cavity modes, lattice sites). Define the
+MR contribution as an operator
+$\Delta H_{\mathrm{MR}} : \mathcal{H} \to \mathcal{H}$ with:
+\begin{itemize}[nosep]
+  \item domain and basis explicitly specified,
+  \item matrix elements or kernel explicitly written,
+  \item no undefined symbols (``kernel'', ``gate'', ``zeta coupling'') remaining.
+\end{itemize}
+
+% ... rest of the box content here, unchanged ...
+
+\end{tcolorbox}
+
+\section{A Universal Program: From $S_{\text{univ}}$ to $\Lambda_m$ to Hydrogen}
+\label{sec:universal}
+
+The central limitation of the hydrogenic Sommerfeld--MR construction is
+that its overall scale is controlled by a free coupling
+$\lamMR \equiv \LambdaM$ which must be tuned to be extremely small in
+order to satisfy the Gallows Protocol. In the present MR framework,
+$\LambdaM$ is defined only at the level of a given sector or recursion.
+To turn $\LambdaM$ into a genuine prediction, we require a
+\emph{universal} construction in which a single prime-graded operator
+$S_{\text{univ}}$ determines a global multiplicity constant
+$\LambdaMuniv$ that is then inherited by specific sectors, including
+hydrogen.
+
+\subsection{A prime-graded universal operator $S_{\text{univ}}$}
+
+We consider a universal Hilbert space
+\begin{equation}
+  \mathcal{H}_{\text{univ}}
+  \;=\;
+  \bigoplus_{\sigma \in \Sigma}
+  \mathcal{H}_{\sigma},
+\end{equation}
+decomposed into strata or sectors
+$\mathcal{H}_{\sigma}$ (e.g.\ atomic, nuclear, cosmological, ZM sectors,
+etc.). The universal dynamics is encoded in a prime-graded operator
+$S_{\text{univ}}$ of the form
+\begin{equation}
+  S_{\text{univ}}
+  \;=\;
+  \sum_{p \in \mathcal{P}}
+  a_p\, M_p,
+  \qquad
+  a_p \;=\; p^{-\sigma} f(p),
+  \label{eq:Suniv-def}
+\end{equation}
+where:
+\begin{itemize}
+  \item $\mathcal{P}$ is the set of primes (possibly truncated in any
+    finite-dimensional approximation),
+  \item $M_p : \mathcal{H}_{\text{univ}} \to \mathcal{H}_{\text{univ}}$
+    encodes the action of prime $p$ (e.g.\ as a multiplicity map,
+    transition operator or projector),
+  \item $f(p)$ is a slowly varying weight (e.g.\ $\log p$ or a bounded
+    function of $p$),
+  \item $\sigma > 1$ is an exponent ensuring convergence of the prime
+    sum.
+\end{itemize}
+We assume that for some operator norm $\|\cdot\|$ on
+$\mathcal{B}(\mathcal{H}_{\text{univ}})$, the series
+\eqref{eq:Suniv-def} converges absolutely:
+\begin{equation}
+  \sum_{p \in \mathcal{P}} \|a_p M_p\|
+  \;<\; \infty,
+\end{equation}
+which guarantees that $S_{\text{univ}}$ is a bounded operator with
+finite norm $\|S_{\text{univ}}\|$ and finite spectral radius
+$\rho(S_{\text{univ}})$.
+
+In the multiplicity formulation, the $M_p$ are built from multiplicity
+maps $M(T,p)$ evaluated on some universal configuration $T$; for the
+purposes of this section we keep this structure implicit and emphasize
+only that $S_{\text{univ}}$ is prime-graded and bounded.
+
+\subsection{Global recursion and contraction condition}
+
+The universal evolution of a configuration $T_t \in \mathcal{H}_{\text{univ}}$
+is encoded in a recursion of the form
+\begin{equation}
+  T_{t+1}
+  \;=\;
+  \LambdaMuniv\,S_{\text{univ}}\,T_t + F,
+  \label{eq:universal-recursion}
+\end{equation}
+where $F$ represents driving terms or inhomogeneities, and
+$\LambdaMuniv$ is the universal multiplicity constant.
+
+For a fixed bounded operator $S_{\text{univ}}$ and norm
+$\|\cdot\|$, the Banach fixed-point theorem implies that the recursion
+\eqref{eq:universal-recursion} is contractive, and hence admits a unique
+fixed point and exponential convergence, provided
+\begin{equation}
+  \|\LambdaMuniv S_{\text{univ}}\|
+  \;<\;
+  1.
+  \label{eq:contraction-condition}
+\end{equation}
+This defines an allowed interval for $\LambdaMuniv$:
+\begin{equation}
+  0 \;<\; \LambdaMuniv
+  \;<\; \frac{1}{\|S_{\text{univ}}\|}.
+\end{equation}
+Tighter bounds can be obtained in terms of the spectral radius
+$\rho(S_{\text{univ}})$, using the Gelfand formula
+$\rho(S_{\text{univ}}) = \lim_{n\to\infty} \|S_{\text{univ}}^n\|^{1/n}$.
+A natural ``critical'' value is
+\begin{equation}
+  \Lambda_{\text{crit}}
+  \;=\;
+  \frac{1}{\rho(S_{\text{univ}})},
+\end{equation}
+which saturates the boundary between contractive and non-contractive
+linear dynamics. In practice one usually chooses a ``safe'' value
+\begin{equation}
+  \LambdaMuniv(\gamma)
+  \;=\;
+  \frac{\gamma}{\|S_{\text{univ}}\|},
+  \qquad 0 < \gamma < 1,
+  \label{eq:Lambda-gamma}
+\end{equation}
+which guarantees $\|\LambdaMuniv(\gamma) S_{\text{univ}}\| \le \gamma < 1$.
+
+Thus, given $S_{\text{univ}}$, there is a whole interval of
+$\LambdaMuniv$ which make the recursion contractive. To promote
+$\LambdaMuniv$ from an arbitrary stability coefficient to a genuine
+prediction requires an additional selection principle intrinsic to MR
+(e.g.\ a lawfulness or multiplicity extremality condition).
+
+\subsection{Selection principles for $\Lambda_m^{\text{univ}}$}
+
+Within the MR/multiplicity picture, one may envision several possible
+selection principles for $\LambdaMuniv$, for example:
+\begin{itemize}
+  \item \emph{Criticality:} choose
+    $\LambdaMuniv = \Lambda_{\text{crit}} = 1/\rho(S_{\text{univ}})$
+    to sit at the boundary of stability, so that small changes in
+    $S_{\text{univ}}$ can be absorbed into $T_t$ but not into
+    $\LambdaMuniv$.
+  \item \emph{Global lawfulness:} choose $\LambdaMuniv$ such that a
+    global lawfulness functional $\mathcal{L}(T_\infty)$, defined on
+    the fixed point $T_\infty$ of \eqref{eq:universal-recursion}, is
+    extremized or saturates a constraint.
+  \item \emph{Multiplicity averaging:} define
+    \begin{equation}
+      \LambdaMuniv^{-1}
+      \;=\;
+      \sum_{p \in \mathcal{P}} M(T_\infty,p)\,p^{-\alpha},
+    \end{equation}
+    for some exponent $\alpha$ and multiplicity function $M$, and use
+    the universal fixed point $T_\infty$ to determine $\LambdaMuniv$.
+\end{itemize}
+In all of these cases, the central requirement is that $\LambdaMuniv$ be
+determined by the global prime-graded dynamics \emph{alone}, without
+reference to any specific sector such as hydrogen. Only under such a
+selection principle can $\LambdaMuniv$ be claimed as a prediction of the
+MR framework rather than a sector-by-sector fit parameter.
+
+\subsection{Sector restriction and inheritance by hydrogen}
+
+Given $S_{\text{univ}}$ and a choice of $\LambdaMuniv$, we can define
+sector projectors $P_\sigma : \mathcal{H}_{\text{univ}} \to \mathcal{H}_\sigma$
+and the corresponding sector-restricted operators
+\begin{equation}
+  S_\sigma
+  \;=\;
+  P_\sigma S_{\text{univ}} P_\sigma.
+\end{equation}
+In particular, let $\sigma = \text{atom}$ denote the atomic/hydrogenic
+sector, with
+\begin{equation}
+  \mathcal{H}_{\text{atom}}
+  \;\simeq\;
+  \mathcal{H}_{\text{hyd}} \otimes \mathcal{H}_{\text{prime}},
+\end{equation}
+and define
+\begin{equation}
+  S_{\text{MR}}
+  \;=\;
+  P_{\text{atom}} S_{\text{univ}} P_{\text{atom}}.
+\end{equation}
+The key requirement of the universal program is that the same
+$\LambdaMuniv$ which stabilizes the global recursion
+\eqref{eq:universal-recursion} also controls the atomic recursion,
+\begin{equation}
+  T^{(\text{atom})}_{t+1}
+  \;=\;
+  \LambdaMuniv\, S_{\text{MR}}\, T^{(\text{atom})}_t + F_{\text{atom}},
+\end{equation}
+and hence the atomic MR Hamiltonian,
+\begin{equation}
+  \DeltaHM
+  \;=\;
+  \LambdaMuniv\,\OMR,
+\end{equation}
+with $\OMR$ fully specified by MR rules (kernel, normalization, angular
+structure, etc.). No further ``local'' retuning of $\Lambda_m$ is
+allowed at the atomic level.
+
+\subsection{Implications for the hydrogen Gallows test}
+
+With this structure in place, the hydrogen Gallows test becomes:
+\begin{enumerate}[label=(\alph*)]
+  \item Construct $\OMR$ in the hydrogen sector from $S_{\text{MR}}$ and
+    MR rules.
+  \item Use the globally determined $\LambdaMuniv$ to fix the overall
+    scale of $\DeltaHM$.
+  \item Compute the hydrogenic corrections $\Delta O_{\mathrm{MR}}$ and
+    compare them to the residual windows using the Gallows Protocol.
+\end{enumerate}
+If $\DeltaHM$ is linearly independent of existing NRQED operators and
+$\LambdaMuniv$ places $\Delta O_{\mathrm{MR}}$ within the residual
+window (Case~B), MR would make a genuine predictive connection between
+global prime-graded dynamics and atomic physics. If instead
+$\DeltaHM \propto O_{\text{SO}}$ as in the present Sommerfeld--MR
+implementation, the effect is Case~C (degenerate), and $\LambdaMuniv$
+only rescales an existing Wilson coefficient, not a new operator.
+
+\subsection{MR as ontology vs MR as physics}
+\label{sec:ontology-vs-physics}
+
+The Sommerfeld--MR example, when passed through the Gallows Protocol,
+illustrates a distinction that is conceptually crucial for the MR
+program but often blurred in informal discussions: the difference
+between \emph{MR as ontology} and \emph{MR as physics}.
+
+By ``MR as ontology'' we mean the claim that familiar physical
+structures (e.g.\ spin--orbit coupling, gauge interactions, curvature)
+can be \emph{factorized} into prime-graded multiplicities, zeta-like
+weights, and lawfulness constraints. In this mode, MR does not change
+any observable, but offers a different story about why a given operator
+exists or why a particular combination of operators is singled out. In
+the language of the Gallows Protocol, this corresponds to Case~C:
+$\DeltaHM$ is a linear combination of existing EFT operators and merely
+repackages their coefficients in multiplicity language. MR is then an
+ontological or mathematical framework, not a source of new predictions.
+
+By ``MR as physics'' we mean the stronger claim that MR introduces
+\emph{new} operator structures or \emph{nontrivial} relations between
+sectors that are not already present in standard effective field
+theories. In Gallows language, this corresponds to either:
+\begin{itemize}
+  \item Case~B: a genuinely new operator whose effects are small but
+    compatible with residual windows and yield explicit bounds on its
+    coupling, or
+  \item Case~A: a proposed operator that overshoots the data and is
+    thereby ruled out, providing a concrete falsification of a specific
+    MR construction.
+\end{itemize}
+In both cases, MR is behaving as a physical framework: it makes
+statements that can be tested and, in principle, refuted.
+
+The Sommerfeld--MR construction in hydrogen currently sits on the
+ontological side of this divide. At the operator level it appears
+proportional to the standard spin--orbit term and thus falls into
+Case~C; at the level of numerical size it belongs to Case~A unless the
+coupling is tuned to be extremely small. In this situation, it is
+misleading to advertise Sommerfeld--MR as ``new physics'' in the usual
+sense. What it provides instead is an MR-flavored factorization of an
+existing QED operator, together with a concrete demonstration of how the
+framework can fail the Gallows test when pushed towards prediction.
+
+We view this distinction not as an indictment of MR but as a guide. The
+Gallows Protocol allows one to keep the ontological ambitions of MR
+intact while demanding that any claim to \emph{new} physics pass a much
+stricter standard: an explicit operator, a fixed coupling (e.g.\ via a
+universal $\Lambda_m$), and survival against precision data without
+post hoc tuning.
+
+
+
+\appendix
+
+\section{Sommerfeld--MR Implementation Details}
+\label{app:hydrogen}
+
+\subsection{State space construction}
+We work in a truncated Hilbert space
+\begin{equation}
+  \mathcal{H} \;=\; \mathcal{H}_{\text{hyd}} \otimes \mathcal{H}_{\text{prime}},
+\end{equation}
+where $\mathcal{H}_{\text{hyd}}$ is spanned by hydrogenic states
+$\lvert n\ell j m_j \rangle$ with $n \le 4$, and
+$\mathcal{H}_{\text{prime}}$ is spanned by $\lvert p\rangle$ for
+primes $p \in \{2,3,\dots,53\}$.
+The total dimension is
+$N_{\text{states}} \times N_{\text{primes}}$, where $N_{\text{states}}$
+counts all $(n,\ell,j,m_j)$ with $n\le4$ and $\ell\ge1$.
+
+\subsection{Kernel specification}
+The MR kernel is taken to be factorized:
+\begin{equation}
+  K_{ab,pq} \;=\; M_{ab} \, L_{pq},
+\end{equation}
+where indices $a,b$ run over hydrogenic states and $p,q$ over primes.
+
+The hydrogenic part is chosen diagonal,
+\begin{equation}
+  M_{ab} \;=\; C_a \,\delta_{ab}, \qquad
+  C_{n\ell j} \;=\; \big\langle n\ell j \big| r^{-3} \big| n\ell j \big\rangle
+                    \big\langle n\ell j \big| \mathbf{L}\cdot\mathbf{S}
+                    \big| n\ell j \big\rangle,
+\end{equation}
+so that $M$ encodes the usual spin--orbit structure.
+
+The prime part $L$ is taken to be rank-1:
+\begin{equation}
+  L_{pq} \;=\; \tilde{w}_p \tilde{w}_q, \qquad
+  w_p \;=\; \frac{\log p}{p^2}, \qquad
+  \tilde{w}_p \;=\; \frac{w_p}{\sqrt{\sum_{q} w_q^2}},
+\end{equation}
+so that $\sum_{p,q} |L_{pq}|^2 = 1$.
+
+\subsection{Hilbert--Schmidt normalization}
+We define the MR correction to the coupling as
+\begin{equation}
+  \Delta\alpha \;=\; \alpha_\Phi \, K
+\end{equation}
+and impose a Hilbert--Schmidt normalization
+$\|\Delta\alpha\|_{\mathrm{HS}} = 1$:
+\begin{align}
+  \|\Delta\alpha\|_{\mathrm{HS}}^2
+  &= |\alpha_\Phi|^2 \sum_{a,b,p,q} |K_{ab,pq}|^2 \\
+  &= |\alpha_\Phi|^2 \left(\sum_a |C_a|^2\right)
+                      \left(\sum_{p,q} |\tilde{w}_p \tilde{w}_q|^2\right) \\
+  &= |\alpha_\Phi|^2 \left(\sum_a |C_a|^2\right),
+\end{align}
+since $\sum_{p,q} |\tilde{w}_p \tilde{w}_q|^2 = 1$ by construction.
+The condition $\|\Delta\alpha\|_{\mathrm{HS}}=1$ then fixes
+\begin{equation}
+  |\alpha_\Phi| \;=\; \frac{1}{\sqrt{\sum_a |C_a|^2}}.
+\end{equation}
+
+\subsection{Hydrogenic matrix elements}
+For $\ell \ge 1$, the radial expectation values for a hydrogenic state
+are
+\begin{equation}
+  \big\langle r^{-3} \big\rangle_{n\ell}
+  \;=\;
+  \frac{Z^3}{a_0^3 n^3 \,\ell\bigl(\ell+\tfrac{1}{2}\bigr)(\ell+1)}.
+\end{equation}
+The spin--orbit angular factor is
+\begin{equation}
+  \big\langle \mathbf{L}\cdot\mathbf{S} \big\rangle_{n\ell j}
+  \;=\;
+  \frac{1}{2}\bigl[j(j+1) - \ell(\ell+1) - \tfrac{3}{4}\bigr].
+\end{equation}
+We tabulate $C_{n\ell j}$ for $n\le 4$ and $\ell\ge 1$; these enter the
+normalization factor $\sum_a |C_a|^2$.
+
+\subsection{Prime sum evaluation}
+We define the truncated prime sum
+\begin{equation}
+  S(P,\sigma) \;=\; \sum_{p \le P} \frac{\log p}{p^\sigma},
+\end{equation}
+and for the present calculation use $P=53$ and $\sigma=2$:
+\begin{equation}
+  S(53,2) \;=\; \sum_{p\le 53} \frac{\log p}{p^2}
+  \;\approx\; 0.476.
+\end{equation}
+Note that this is distinct from the normalized weights $\tilde{w}_p$,
+which are used in the kernel and satisfy $\sum_p \tilde{w}_p^2 = 1$.
+
+\subsection{Energy shift calculation}
+To first order in perturbation theory, the MR correction to a given
+hydrogenic level is
+\begin{equation}
+  \Delta E^{(1)}_{n\ell j}
+  \;=\;
+  \lambda_{\mathrm{MR}} \,\alpha_\Phi \,
+  C_{n\ell j} \,
+  \sum_{p,q} L_{pq}
+  \;\approx\;
+  \lambda_{\mathrm{MR}} \,\alpha_\Phi \, S(53,2)\, C_{n\ell j},
+\end{equation}
+where we have used the rank-1 structure of $L_{pq}$ and the fact that
+its effective trace picks out the prime sum.
+
+For the $2P$ fine-structure levels (with $Z=1$),
+\begin{align}
+  C_{2P_{3/2}} &= \frac{1}{48}\,\frac{1}{a_0^3}, \\
+  C_{2P_{1/2}} &= -\frac{1}{24}\,\frac{1}{a_0^3},
+\end{align}
+so that
+\begin{equation}
+  C_{2P_{3/2}} - C_{2P_{1/2}}
+  \;=\;
+  \frac{1}{16}\,\frac{1}{a_0^3}.
+\end{equation}
+The MR contribution to the $2P$ splitting is therefore
+\begin{equation}
+  \Delta E_{\mathrm{MR}}(2P)
+  \;=\;
+  \lambda_{\mathrm{MR}} \,
+  \frac{S(53,2)}{\sqrt{\sum_a |C_a|^2}} \,
+  \frac{1}{16 a_0^3}.
+\end{equation}
+
+\subsection{Numerical evaluation}
+Evaluating the hydrogenic sum over $C_a^2$ for $n\le 4$ and $\ell\ge 1$
+gives
+\begin{equation}
+  \sum_a |C_a|^2 \;\approx\;
+  2.42\times 10^{-3} \left(\frac{1}{a_0^3}\right)^2,
+\end{equation}
+so that
+\begin{equation}
+  \sqrt{\sum_a |C_a|^2}
+  \;\approx\;
+  0.049\,\frac{1}{a_0^3}.
+\end{equation}
+The dimensionless ratio
+\begin{equation}
+  r \;\equiv\; \frac{S(53,2)}{\sqrt{\sum_a |C_a|^2}}
+  \;\approx\;
+  9.7
+\end{equation}
+then yields
+\begin{equation}
+  \Delta E_{\mathrm{MR}}(2P)
+  \;\approx\;
+  \lambda_{\mathrm{MR}} \times 9.7 \times \frac{1}{16 a_0^3}
+  \;\approx\;
+  0.61\,\lambda_{\mathrm{MR}}\,\text{(Hartree)}.
+\end{equation}
+
+For hydrogen ($Z=1$),
+$1\,\text{Hartree} \approx 27.2\,\text{eV}$, so
+\begin{equation}
+  \Delta E_{\mathrm{MR}}(2P)
+  \;\approx\;
+  16.6\,\lambda_{\mathrm{MR}}\,\text{eV}.
+\end{equation}
+The actual $2P_{3/2}-2P_{1/2}$ splitting is
+$\Delta E_{\mathrm{split}} \sim 4.5\times 10^{-5}\,\text{eV}$, so for
+$\lambda_{\mathrm{MR}} \sim 1$ the MR correction overshoots the
+splitting itself by a factor of order
+\begin{equation}
+  \frac{\Delta E_{\mathrm{MR}}}{\Delta E_{\mathrm{split}}}
+  \;\sim\;
+  10^5\text{--}10^6.
+\end{equation}
+Relative to the much smaller residual window between experiment and QED,
+the overshoot is correspondingly larger.
+
+\subsection{Operator independence test (preliminary)}
+\label{app:operator-independence}
+In NRQED, the leading spin-dependent operators include the spin--orbit
+term, the Darwin term, and spin--spin/tensor terms. In the present
+implementation, $M_{ab}$ is constructed from $r^{-3}\,\mathbf{L}\cdot\mathbf{S}$,
+and the prime kernel $L_{pq}$ is a scalar in the hydrogenic indices. At
+the operator level, this suggests that
+\begin{equation}
+  \Delta H_{\mathrm{MR}}
+  \;\propto\;
+  \mathbf{L}\cdot\mathbf{S}
+\end{equation}
+up to an overall scalar and truncation effects, i.e.\ that the MR
+operator appears proportional to the standard spin--orbit operator.
+
+A full operator-independence test would expand $\Delta H_{\mathrm{MR}}$
+in a complete NRQED operator basis and check for linear independence.
+Preliminary inspection indicates degeneracy (Case~C in the Gallows
+classification), but we leave the detailed decomposition to
+Appendix~\ref{app:nrqed-basis}.
+
+
+\section{NRQED Operator Basis and Operator-Independence Test}
+\label{app:nrqed-basis}
+
+In this appendix we briefly review the nonrelativistic QED (NRQED)
+operator basis relevant for hydrogenic fine structure, and use it to
+clarify the status of the Sommerfeld--MR operator $\DeltaHM$ at the
+operator level. The goal is to determine whether $\DeltaHM$ is
+linearly independent of the standard NRQED operators, or whether it is
+degenerate with an existing structure (Case~C in the Gallows
+classification).
+
+\subsection{Spin-dependent NRQED operators for hydrogen}
+
+For a single electron in an external Coulomb field, the NRQED
+Hamiltonian can be organized as an expansion in $1/m_e$ and the
+electromagnetic coupling. To the order relevant for fine structure, the
+spin-dependent part of the effective Hamiltonian can be written as
+\begin{equation}
+  H_{\text{spin}} \;=\;
+  c_{\text{SO}}\, O_{\text{SO}}
+  + c_{\text{D}}\, O_{\text{D}}
+  + c_{\text{SS}}\, O_{\text{SS}}
+  + \dots,
+  \label{eq:nrqed-spin}
+\end{equation}
+where the dots denote higher-order and/or many-body terms that are
+irrelevant for the hydrogenic $2P$ fine structure.
+
+A convenient basis of spin-dependent operators includes:
+\begin{itemize}
+  \item The spin--orbit operator,
+    \begin{equation}
+      O_{\text{SO}}
+      \;=\;
+      \frac{Z\alpha}{4 m_e^2}\,\frac{1}{r^3}\,\mathbf{L}\cdot\mathbf{S},
+      \label{eq:oso-def}
+    \end{equation}
+    which produces the familiar $n,\ell,j$-dependent fine-structure
+    splitting of $P$ and higher-$\ell$ states.
+  \item The Darwin operator,
+    \begin{equation}
+      O_{\text{D}}
+      \;=\;
+      \frac{\pi Z\alpha}{2 m_e^2}\,\delta^{(3)}(\mathbf{r}),
+      \label{eq:odarwin-def}
+    \end{equation}
+    which only affects $S$-states through the contact term.
+  \item Spin--spin or tensor operators (for many-body systems), which
+    are absent for a single electron in a pure Coulomb field and do not
+    contribute to the hydrogen $2P$ fine structure.
+\end{itemize}
+For the hydrogenic $2P_{3/2} - 2P_{1/2}$ splitting, the dominant
+spin-dependent contribution comes from $O_{\text{SO}}$; $O_{\text{D}}$
+does not contribute because $P$-wave wave functions vanish at the
+origin, and there are no spin--spin terms in the one-electron problem.
+
+Thus, at the level of operator structure relevant to the $2P$ splitting,
+the NRQED spin-dependent Hamiltonian is effectively one-dimensional:
+\begin{equation}
+  H_{\text{spin}}^{(2P)} \;\simeq\; c_{\text{SO}}\, O_{\text{SO}},
+  \label{eq:spin-2P}
+\end{equation}
+with all other spin-dependent operators either vanishing on the $2P$
+subspace or contributing only at higher order.
+
+\subsection{Structure of the Sommerfeld--MR operator}
+
+In the Sommerfeld--MR construction described in the main text and in
+Appendix~\ref{app:hydrogen}, the MR correction is implemented as a
+factorized kernel on the truncated state space
+$\mathcal{H}_{\text{hyd}} \otimes \mathcal{H}_{\text{prime}}$:
+\begin{equation}
+  K_{ab,pq} \;=\; M_{ab}\,L_{pq},
+  \qquad
+  M_{ab} \;=\; C_a\,\delta_{ab},
+\end{equation}
+with $C_a$ proportional to the standard spin--orbit matrix element,
+\begin{equation}
+  C_{n\ell j}
+  \;\propto\;
+  \big\langle n\ell j \big| r^{-3} \big| n\ell j \big\rangle
+  \big\langle n\ell j \big| \mathbf{L}\cdot\mathbf{S}
+  \big| n\ell j \big\rangle.
+\end{equation}
+The prime kernel $L_{pq}$ is a rank-1 projector built from normalized
+weights $\tilde{w}_p$ and is a scalar in the hydrogenic indices.
+
+After Hilbert--Schmidt normalization, the MR contribution to the
+Hamiltonian can be written schematically as
+\begin{equation}
+  \DeltaHM
+  \;=\;
+  \lamMR \,\alpha_\Phi\, \hat{C} \otimes \hat{L},
+\end{equation}
+where $\hat{C}$ is a diagonal operator on $\mathcal{H}_{\text{hyd}}$
+with entries proportional to the spin--orbit expectation values, and
+$\hat{L}$ acts only on the prime sector. If we restrict attention to the
+physical hydrogenic Hilbert space by tracing over or projecting out the
+prime degrees of freedom, the effect of $\hat{L}$ reduces to an overall
+scalar factor,
+\begin{equation}
+  \mathrm{Tr}_{\text{prime}}(\hat{L}\,\rho_{\text{prime}}) \;\to\; \kappa,
+\end{equation}
+for an appropriate prime-sector state $\rho_{\text{prime}}$. The
+effective operator acting on the hydrogenic sector is therefore
+\begin{equation}
+  \DeltaHM^{(\text{eff})}
+  \;=\;
+  \lambda_{\mathrm{eff}} \,\hat{C},
+  \qquad
+  \lambda_{\mathrm{eff}} \equiv \lamMR \,\alpha_\Phi\,\kappa,
+\end{equation}
+with $\hat{C}$ diagonal in the hydrogenic basis and proportional, by
+construction, to the spin--orbit matrix element.
+
+At the level of operators on $\mathcal{H}_{\text{hyd}}$, this means
+\begin{equation}
+  \DeltaHM^{(\text{eff})}
+  \;\propto\;
+  \frac{1}{r^3}\,\mathbf{L}\cdot\mathbf{S}
+  \;\equiv\;
+  O_{\text{SO}},
+  \label{eq:deltaH-so-proportional}
+\end{equation}
+up to an overall scalar factor and the truncation to $n\le 4$ used in
+the explicit calculation. No additional angular or radial structures are
+introduced by the prime sector; all of the MR structure is carried by
+the overall scalar $\lambda_{\mathrm{eff}}$ and the internal prime
+weights in $L_{pq}$.
+
+\subsection{Independence in the NRQED basis}
+
+Given the NRQED spin-dependent basis
+$\{O_{\text{SO}}, O_{\text{D}}, \dots\}$ and the form
+\eqref{eq:deltaH-so-proportional}, the independence question is
+straightforward for the hydrogenic $2P$ splitting:
+
+\begin{itemize}
+  \item $O_{\text{D}}$ and higher-contact operators do not contribute to
+    the $2P$ fine structure because $P$-wave hydrogenic wave functions
+    vanish at the origin.
+  \item Spin--spin/tensor operators are absent in the one-electron
+    Coulomb problem and are therefore irrelevant for hydrogen.
+  \item The only spin-dependent operator that contributes at leading
+    order to the $2P_{3/2} - 2P_{1/2}$ splitting is $O_{\text{SO}}$.
+\end{itemize}
+
+Any diagonal operator in the hydrogenic basis whose entries are
+proportional to the spin--orbit expectation values
+$\langle r^{-3}\rangle_{n\ell}\langle \mathbf{L}\cdot\mathbf{S}\rangle_{n\ell j}$ is therefore
+linearly dependent on $O_{\text{SO}}$ when restricted to the $2P$
+subspace. In particular, the effective MR operator
+$\DeltaHM^{(\text{eff})}$ constructed above can be written as
+\begin{equation}
+  \DeltaHM^{(\text{eff})}
+  \;=\;
+  \lambda_{\mathrm{eff}}'\, O_{\text{SO}},
+\end{equation}
+for some effective coupling $\lambda_{\mathrm{eff}}'$ that encodes the
+prime-sector weights, the HS normalization, and the overall MR coupling.
+
+In the language of the Gallows Protocol, this places the Sommerfeld--MR
+implementation in \emph{Case~C} at the operator level: the MR correction
+does not introduce a new operator structure in the NRQED basis, but
+rather rescales an existing operator, namely the spin--orbit term.
+
+\subsection{Implications for the Gallows classification}
+
+Combining the operator-level analysis of this appendix with the
+numerical results of Appendix~\ref{app:hydrogen}, we obtain a sharp
+classification:
+\begin{itemize}
+  \item At $\lamMR \sim 1$ (or, equivalently, $\LambdaM \sim 1$ in the
+    $\LambdaM$ framing), the Sommerfeld--MR contribution to the
+    $2P_{3/2} - 2P_{1/2}$ splitting overshoots the experimental residual
+    window by many orders of magnitude (Case~A: overshoot / falsified).
+  \item As an operator on the hydrogenic Hilbert space, the MR
+    correction is proportional to the standard spin--orbit operator and
+    therefore introduces no new independent structure in the NRQED
+    basis (Case~C: degenerate / interpretational).
+\end{itemize}
+
+This confirms the qualitative conclusion of the main text: in its
+present form, the Sommerfeld--MR implementation for hydrogen fine
+structure is either ruled out as a sizable physical effect or,
+if tuned to be small, reduces to an ontological reparameterization of
+the spin--orbit interaction rather than a new piece of physics.
+
+
+\begin{thebibliography}{99}
+
+\bibitem{BetheSalpeter}
+H.~A.~Bethe and E.~E.~Salpeter,
+\emph{Quantum Mechanics of One- and Two-Electron Atoms}
+(Springer, Berlin, 1957).  % Classic reference on hydrogenic spectra and fine structure.
+
+\bibitem{CaswellLepage}
+W.~E.~Caswell and G.~P.~Lepage,
+``Effective Lagrangians for Bound State Problems in QED, QCD, and Other Field Theories,''
+Phys.\ Lett.\ B \textbf{167}, 437–442 (1986).  % Foundational NRQED/EFT for bound states.
+
+\bibitem{LabelleNRQED}
+P.~Labelle,
+``Effective Field Theories for QED Bound States,''
+Phys.\ Rev.\ D \textbf{58}, 093013 (1998).  % NRQED formulation and applications to bound states.
+
+\bibitem{EidesGrotchShelyuto}
+M.~I.~Eides, H.~Grotch, and V.~A.~Shelyuto,
+``Theory of Light Hydrogenlike Atoms,''
+Phys.\ Rep.\ \textbf{342}, 63–261 (2001).  % Comprehensive review of theory for hydrogenic atoms.
+% doi:10.1016/S0370-1573(00)00077-6
+
+\bibitem{Karshenboim2005}
+S.~G.~Karshenboim,
+``Precision Physics of Simple Atoms: QED Tests, Nuclear Structure and Fundamental Constants,''
+Phys.\ Rep.\ \textbf{422}, 1–63 (2005).  % Precision tests and residual windows for hydrogen and simple atoms.
+
+\bibitem{KarshenboimLNP}
+S.~G.~Karshenboim,
+``Simple Atoms, Quantum Electrodynamics, and Fundamental Constants,''
+in \emph{The Hydrogen Atom: Precision Physics of Simple Atomic Systems},
+Lect.\ Notes Phys.\ \textbf{627}, 141–164 (Springer, Berlin, 2003).  % Accessible review of atomic QED and constants.
+
+\bibitem{WeinbergQTF}
+S.~Weinberg,
+\emph{The Quantum Theory of Fields, Vol.~I: Foundations}
+(Cambridge University Press, Cambridge, 1995).  % EFT viewpoint and general QFT foundations.
+
+\bibitem{CaswellLepageNRQEDOrigin}
+W.~E.~Caswell and G.~P.~Lepage,
+Phys.\ Lett.\ B \textbf{167}, 437 (1986).  % Same as above; often cited as origin of NRQED.
+
+\bibitem{KarshenboimReviewShort}
+S.~G.~Karshenboim,
+``Recent Progress in the Precision Physics of Simple Atoms,''
+in \emph{The Hydrogen Atom: Precision Physics of Simple Atomic Systems},
+Lect.\ Notes Phys.\ \textbf{627}, 1–30 (Springer, Berlin, 2003).  % Shorter intro-style review.
+
+\bibitem{Riemann1859}
+B.~Riemann,
+``Über die Anzahl der Primzahlen unter einer gegebenen Grösse,''
+Monatsber.\ Königl.\ Preuss.\ Akad.\ Wiss.\ Berlin (1859).  % Classic zeta/prime distribution paper; conceptual underpinning.
+
+\bibitem{EdwardsRZF}
+H.~M.~Edwards,
+\emph{Riemann's Zeta Function}
+(Academic Press, New York, 1974).  % Standard reference on $\zeta(s)$ and prime-number connections.
+
+\end{thebibliography}
+
+
+\end{document}
+

@@ -5,6 +5,7 @@ use wasm_bindgen::prelude::*;
 use serde::{Serialize, Deserialize};
 
 pub mod collatz;
+pub mod ace;
 
 #[repr(C)]
 pub struct GlobalHilbertSpace {
@@ -257,10 +258,33 @@ pub fn evaluate_esi_risk_wasm(inputs_val: JsValue, p_factor: u32, sigma: f64) ->
         .map_err(|e| JsValue::from_str(&format!("Failed to serialize witness: {}", e)))
 }
 
+/// WASM SDK Entry Point for ACE-bound risk evaluation
 #[wasm_bindgen]
-pub fn verify_collatz_range_wasm(start_str: String, end_str: String) -> Result<JsValue, JsValue> {
+pub fn evaluate_esi_risk_with_ace_wasm(
+    inputs_val: JsValue, 
+    p_factor: u32, 
+    sigma: f64,
+    budget_val: JsValue,
+) -> Result<JsValue, JsValue> {
+    let inputs: EsiInputs = serde_wasm_bindgen::from_value(inputs_val)
+        .map_err(|e| JsValue::from_str(&format!("Invalid ESI inputs: {}", e)))?;
+        
+    let budget: ace::AceBudget = serde_wasm_bindgen::from_value(budget_val)
+        .map_err(|e| JsValue::from_str(&format!("Invalid ACE Budget: {}", e)))?;
+        
+    let envelope = ace::AceEnvelope::new(budget);
+    
+    let result = ace::evaluate_esi_risk_with_ace(&inputs, p_factor, sigma, envelope)
+        .map_err(|e| JsValue::from_str(&format!("ACE Execution Error: {}", e)))?;
+    
+    serde_wasm_bindgen::to_value(&result)
+        .map_err(|e| JsValue::from_str(&format!("Failed to serialize ACE result: {}", e)))
+}
+
+#[wasm_bindgen]
+pub fn process_collatz_chunk_wasm(start_str: String, chunk_size: u32) -> Result<JsValue, JsValue> {
     let start: u128 = start_str.parse().map_err(|e| JsValue::from_str(&format!("Invalid start bound: {}", e)))?;
-    let end: u128 = end_str.parse().map_err(|e| JsValue::from_str(&format!("Invalid end bound: {}", e)))?;
+    let end: u128 = start.saturating_add(chunk_size as u128).saturating_sub(1);
 
     let result = collatz::verify_range(start, end);
 

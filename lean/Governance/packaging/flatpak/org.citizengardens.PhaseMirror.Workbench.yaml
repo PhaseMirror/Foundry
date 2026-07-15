@@ -1,0 +1,47 @@
+app-id: org.citizengardens.PhaseMirror.Workbench
+runtime: org.freedesktop.Platform
+runtime-version: '24.08'
+sdk: org.freedesktop.Sdk
+command: phasemirror-workbench-shell
+finish-args:
+  - --share=ipc
+  - --share=network
+  - --socket=wayland
+  - --socket=x11
+  - --device=dri
+  - --filesystem=xdg-documents/PhaseMirror:create
+  - --talk-name=org.freedesktop.Notifications
+  # Optional: GPU acceleration for Fedora/NVIDIA users (refer to ADR-012)
+  # - --device=all 
+
+modules:
+  - name: node-env
+    buildsystem: simple
+    build-commands:
+      - echo "Node.js is provided by the SDK"
+
+  - name: legalese-scopist
+    buildsystem: simple
+    build-options:
+      env:
+        CARGO_HOME: /run/build/legalese-scopist/cargo
+    build-commands:
+      - cargo build --release
+      - install -D target/release/legalese-scopist /app/bin/legalese-scopist
+    sources:
+      - type: dir
+        path: ../../../Multi-Ensembles/legalese-scopist
+
+  - name: workbench
+    buildsystem: simple
+    build-commands:
+      # Build the Angular application
+      - npm install
+      - ./node_modules/.bin/ng build --configuration production
+      - mkdir -p /app/share/workbench
+      - cp -r dist/app/browser/* /app/share/workbench/
+      # Install the wrapper script
+      - install -D ../../../scripts/flatpak/phasemirror-workbench-shell.sh /app/bin/phasemirror-workbench-shell
+    sources:
+      - type: dir
+        path: ../../../workbench

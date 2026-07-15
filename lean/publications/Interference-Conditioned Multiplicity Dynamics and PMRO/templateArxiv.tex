@@ -1,0 +1,933 @@
+\documentclass[11pt]{article}
+
+\usepackage{amsmath,amsfonts,amssymb,amsthm}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{bm}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{authblk}
+\usepackage{mathrsfs}
+
+\geometry{margin=1in}
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  citecolor=blue,
+  urlcolor=blue
+}
+
+\title{Interference-Conditioned Multiplicity Dynamics and PMRO:\\
+A Prior-Art Defensive Publication}
+
+\author{Citizen Gardens}
+\affil{The Foundation of Multiplicity}
+
+\date{April 26, 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This document records a coherent framework linking Multiplicity Theory (MT) and Prime-Multiplicity Recursion Operators (PMRO) to a concrete interference-based mechanism for global nonlinear contraction on prime-indexed multiplicity spaces. It presents (i) explicit finite-dimensional examples of prime Gram matrices and their conditioning, (ii) a rigorous Lyapunov and contraction analysis for nonlinear multiplicity dynamics, (iii) a linear PMRO construction in finite Hilbert spaces using Fourier-conjugated prime operators that achieves $\|\Xi\|_{\mathrm{op}} < 1$ even when $\sum_p |w_p| > 1$, (iv) numerical experiments demonstrating both global and local contraction properties, and (v) a Qiskit realization of the interference mechanism, including a depolarizing noise model. The intent is to establish clear prior art for this MT--PMRO interference design and its use as a general method for reconditioning multiplicity metrics and enforcing lawful recursive stability.
+\end{abstract}
+\newpage
+\tableofcontents
+\newpage
+\section{Executive Summary}
+
+\subsection{Problem and core idea}
+
+Multiplicity Theory (MT) views mathematical and physical systems as patterns of prime-labeled multiplicities evolving under recursive dynamics, rather than as static objects. A recurring difficulty in such prime-indexed systems is the appearance of \emph{ill-conditioned interaction metrics}: some combinations of primes are strongly visible to the dynamics, while others are almost neutral, leading to extremely slow convergence modes.
+
+This document presents a concrete mechanism---\textbf{operator-level interference via Fourier-conjugated prime operators}---which:
+\begin{enumerate}[label=(\alph*)]
+  \item Reconditions the Gram metric on the prime multiplicity module;
+  \item Achieves linear contraction in operator norm, $\|\Xi\|_{\mathrm{op}} < 1$, even when the naive weight sum $\sum_p |w_p| > 1$;
+  \item Extends to nonlinear maps of the form $T(X)=\Xi X + m \tanh(X)$, where a global contraction condition $F + m < 1$ (with $F=\|\Xi\|_{\mathrm{op}}$) ensures a unique globally attractive fixed point;
+  \item Is physically realizable in standard quantum circuit models (Qiskit) and tolerates realistic gate noise.
+\end{enumerate}
+
+\subsection{Key contributions}
+
+\begin{enumerate}[label=\Roman*.]
+  \item \textbf{Finite-dimensional MT example:} For prime sets $P=\{2,3\}$ and $P=\{2,3,5\}$ with probe scales $s=\{2,3,4\}$, explicit Gram matrices $K=G^\top G$ are constructed, showing severe ill-conditioning (condition numbers $\kappa \sim 10^2$--$10^3$), with one or more near-neutral prime-combination modes.
+
+  \item \textbf{Lyapunov and critical norm analysis:} For an MT-style multiplicity Lyapunov functional $V(a)$ combining an entropy-like term and a quadratic term induced by $K$, a \emph{critical norm}
+  \[
+    \|a\|_{\text{crit}} \;=\; \sqrt{\frac{\beta \log |P|}{\alpha}}
+  \]
+  is derived, separating an entropy-shaped inner region from a quadratic-dominated outer region. Within the quadratic region, linearized dynamics are governed by $K$.
+
+  \item \textbf{Operator-level interference design (PMRO):} Prime operators $U_p$ on a finite-dimensional Hilbert space are realized as $U_p = F^\dagger D_p F$, where $D_p$ are diagonal phase operators and $F$ is a discrete Fourier transform. The combined operator
+  \[
+    \Xi \;=\; \operatorname{Re}\!\left(\sum_{p} w_p U_p\right)
+  \]
+  is shown numerically to satisfy $\|\Xi\|_{\mathrm{op}} < 1$ in the Fourier-conjugated case, while a diagonal realization yields $\|\Xi\|_{\mathrm{op}}\approx \sum_p |w_p| > 1$. This demonstrates \emph{interference-driven norm reduction}.
+
+  \item \textbf{Nonlinear contraction:} For the nonlinear map
+  \[
+    X_{t+1} \;=\; \Xi X_t + m \tanh(X_t),
+  \]
+  with entrywise $\tanh$ and Lipschitz constant $1$, a global contraction condition
+  \[
+    F + m \;<\; 1,\qquad F = \|\Xi\|_{\mathrm{op}},
+  \]
+  is empirically validated. This yields a globally unique fixed point and exponential convergence rate approximately $-\log(F+m)$.
+
+  \item \textbf{Local contraction geometry:} The local Lipschitz constant $L_{\text{loc}}(X)$ of $T$ is estimated numerically as a function of $\|X\|_F$. For the interference-enhanced Fourier family, $L_{\text{loc}}(X)$ is found to start near $F+m$ around the origin and drop toward $F$ as $\|X\|_F$ grows, due to $\tanh$ saturation. In contrast, for the diagonal family with $F>1$, $L_{\text{loc}}(X)$ remains larger than $1$ for all sampled radii.
+
+  \item \textbf{Qiskit realization and noise robustness:} The Fourier-conjugated PMRO construction is implemented on 2 qubits using Qiskit's QFT circuits and phase gates. A simple depolarizing noise model is added; the resulting evolution still exhibits norm decay consistent with a contractive linear core, while deviations from the ideal trajectory are quantified.
+\end{enumerate}
+
+Combined, these results establish prior art for the claim that \textbf{interference-conditioned operator design is an effective and implementable method for stabilizing prime-indexed multiplicity dynamics and enforcing lawful recursive behavior}.
+
+\section{Mathematical Framework}
+
+\subsection{Prime-indexed multiplicity module and interaction Gram matrix}
+
+Let $P$ be a finite set of primes, e.g. $P=\{2,3\}$ or $P=\{2,3,5\}$. Define the multiplicity space
+\[
+  \mathcal{M}_P \;\cong\; \mathbb{R}^{|P|},
+\]
+with coordinates $a=(a_p)_{p\in P}$, interpreted as prime-indexed multiplicities.
+
+Choose a finite set of probe scales
+\[
+  \mathcal{S} = \{s_1, \dots, s_m\},\qquad s_j > 1.
+\]
+Define the interaction profiles
+\[
+  g_p(s) \;=\; -\log\bigl(1 - p^{-s}\bigr),\qquad p\in P,\, s\in\mathcal{S}.
+\]
+Arrange these as a matrix $G \in \mathbb{R}^{m \times |P|}$ with entries
+\[
+  G_{j,p} \;=\; g_p(s_j).
+\]
+Then the induced Gram matrix is
+\[
+  K \;=\; G^\top G \;\in\; \mathbb{R}^{|P|\times |P|},
+\]
+with entries
+\[
+  K_{p,q} \;=\; \sum_{j=1}^m g_p(s_j) g_q(s_j).
+\]
+
+\paragraph{Example: $P=\{2,3,5\}$, $\mathcal{S}=\{2,3,4\}$.}
+
+For $P=\{2,3,5\}$ and $s\in\{2,3,4\}$, numerical evaluation gives
+\[
+G \approx
+\begin{pmatrix}
+0.287682 & 0.117310 & 0.040822\\
+0.133531 & 0.037035 & 0.008021\\
+0.064538 & 0.012422 & 0.001600
+\end{pmatrix},
+\]
+and hence
+\[
+K = G^\top G \approx
+\begin{pmatrix}
+0.10476 & 0.03950 & 0.01292 \\
+0.03950 & 0.01529 & 0.00511 \\
+0.01292 & 0.00511 & 0.00173
+\end{pmatrix}.
+\]
+The eigenvalues are approximately
+\[
+  \lambda_1 \approx 0.1205,\quad
+  \lambda_2 \approx 0.00102,\quad
+  \lambda_3 \approx 0.00026,
+\]
+yielding a condition number
+\[
+  \kappa(K) = \frac{\lambda_1}{\lambda_3} \approx 463.
+\]
+Thus the interaction geometry has one strongly visible mode and two near-neutral modes.
+
+\subsection{Lyapunov functional and critical norm}
+
+Consider a Lyapunov functional on $\mathcal{M}_P$ combining an entropy-like term and a quadratic term:
+\[
+  V(a) \;=\; \alpha\, a^\top K a \;+\; \beta\, H(a),
+\]
+where $\alpha,\beta>0$ are parameters and $H(a)$ is an entropy-like functional (e.g. derived from prime density or multiplicity distributions). A simple scaling argument gives a \emph{critical norm}. Roughly, for $\|a\|$ small, the entropy term dominates; for $\|a\|$ large, the quadratic term dominates.
+
+Setting the scale where these contributions balance leads to
+\[
+  \|a\|_{\text{crit}} \;\approx\; \sqrt{\frac{\beta\log|P|}{\alpha}}.
+\]
+This norm separates an inner region where entropy shapes the dynamics from an outer region dominated by the quadratic form induced by $K$.
+
+\subsection{Linear multiplicity dynamics and convergence}
+
+Consider a linearized multiplicity update rule of the form
+\[
+  a_{t+1} \;=\; a_t - \Lambda_m K a_t,
+\]
+with $\Lambda_m>0$ a multiplicity learning rate. In the eigenbasis of $K$,
+\[
+  a_t = \sum_i c_i(t) v_i,\qquad Kv_i=\lambda_i v_i,
+\]
+we have
+\[
+  c_i(t+1) = (1 - \Lambda_m \lambda_i)\, c_i(t).
+\]
+Stability requires $|1 - \Lambda_m \lambda_i| < 1$ for all $i$, which holds if
+\[
+  0 < \Lambda_m < \frac{2}{\lambda_{\max}}.
+\]
+The \emph{convergence rate} along each eigenmode is governed by $|1 - \Lambda_m \lambda_i|$; modes with extremely small $\lambda_i$ decay very slowly even when the system is formally stable. Ill-conditioning of $K$ therefore leads to \emph{practically frozen} multiplicity directions.
+
+For the explicit examples above, one finds:
+\begin{itemize}
+  \item $P=\{2,3\}$: condition number $\kappa\sim 460$; one fast mode, one extremely slow mode (thousands of iterations).
+  \item $P=\{2,3,5\}$: condition number $\kappa\sim 463$; one fast and two slow modes, one of which is even slower than in the 2-prime case.
+\end{itemize}
+Increasing $|P|$ without enriching the scale geometry tends to degrade the spectral gap and introduces additional slow or almost-neutral multiplicity directions.
+
+\section{PMRO Interference Construction}
+
+\subsection{Prime operators on a finite-dimensional Hilbert space}
+
+Let $\mathcal{H}=\mathbb{C}^d$ be a finite-dimensional Hilbert space (in concrete examples, $d=3$ or $d=4$). Associate to each prime $p\in P$ a unitary operator $U_p$ acting on $\mathcal{H}$. Consider a weight vector $(w_p)_{p\in P}$ and define
+\[
+  \Xi \;=\; \operatorname{Re}\!\left(\sum_{p\in P} w_p U_p\right).
+\]
+The \emph{operator norm} $F=\|\Xi\|_{\mathrm{op}}$ is critical: for a linear recursion $X_{t+1}=\Xi X_t$, global contraction in a suitable operator norm requires $F<1$.
+
+\subsection{Baseline diagonal realization (no interference)}
+
+In a $d$-dimensional computational basis $\{|0\rangle,\dots,|d-1\rangle\}$, define diagonal unitaries
+\[
+  D_p = \operatorname{diag}\bigl(e^{2\pi i \cdot 0/p}, e^{2\pi i \cdot 1/p}, \dots, e^{2\pi i \cdot (d-1)/p}\bigr),
+\]
+and set $U_p=D_p$. Then
+\[
+  \Xi_{\text{diag}} = \operatorname{Re}\left(\sum_{p} w_p D_p\right)
+\]
+is diagonal. In particular, if the first basis component has phases $1$ for all $p$, then
+\[
+  \langle 0|\Xi_{\text{diag}}|0\rangle = \sum_{p} w_p,
+\]
+and hence
+\[
+  \|\Xi_{\text{diag}}\|_{\mathrm{op}} \;\geq\; \left|\sum_p w_p\right|.
+\]
+For the concrete weights
+\[
+  w_2 = \frac{1}{\sqrt{2}},\quad
+  w_3 = \frac{1}{\sqrt{3}},\quad
+  w_5 = \frac{1}{\sqrt{5}},
+\]
+we have
+\[
+  \sum_p |w_p| \approx 1.7317 > 1,
+\]
+and numerically one finds
+\[
+  \|\Xi_{\text{diag}}\|_{\mathrm{op}} \approx 1.7317.
+\]
+There is effectively no interference: one basis direction sees all phases aligned.
+
+\subsection{Fourier-conjugated realization (interference)}
+
+Let $F$ be the discrete Fourier transform matrix on $\mathbb{C}^d$,
+\[
+  F_{jk} = \frac{1}{\sqrt{d}} e^{-2\pi i jk/d},\qquad j,k=0,\dots,d-1.
+\]
+Define conjugated prime operators
+\[
+  \tilde{U}_p = F^\dagger D_p F.
+\]
+These are unitaries with the same eigenvalues as $D_p$, but they are generally not diagonal in the computational basis and do not share eigenvectors across $p$.
+
+Define
+\[
+  \Xi_{\text{Fourier}} = \operatorname{Re}\left(\sum_p w_p \tilde{U}_p\right).
+\]
+Numerical experiments (see code below) show that:
+\begin{itemize}
+  \item For $d=3$ and $P=\{2,3,5\}$: $\sum |w_p|\approx 1.7317$, but $\|\Xi_{\text{Fourier}}\|_{\mathrm{op}}\approx 0.85$.
+  \item For $d=4$ and $P=\{2,3\}$ (2-qubit case): $\sum |w_p|\approx 1.191$, while $\|\Xi_{\text{Fourier}}\|_{\mathrm{op}}\approx 0.8$--$0.9$.
+\end{itemize}
+Thus, \emph{with the same weights}, interference from Fourier-conjugated $U_p$ reduces the operator norm from roughly $\sum|w_p|$ to a value strictly less than $1$.
+
+\subsection{Interpretation via operator Gram matrix}
+
+Under the Hilbert--Schmidt inner product $\langle A,B\rangle_{\mathrm{HS}} = \operatorname{Tr}(A^\dagger B)$, the family of weighted operators $\{\sqrt{w_p}\tilde{U}_p\}$ has Gram matrix
+\[
+  G_{pq} = w_p w_q \operatorname{Tr}(\tilde{U}_p^\dagger \tilde{U}_q)
+  = w_p w_q \operatorname{Tr}(D_p^\dagger D_q),
+\]
+since conjugation by $F$ cancels inside the trace. For $p\neq q$, $\operatorname{Tr}(D_p^\dagger D_q)$ is a small sum of roots of unity, so $G$ is diagonally dominant and the family $\{\tilde{U}_p\}$ is comparatively orthogonal in operator space. This operator-level Gram structure directly controls the size of $\Xi$ and the effective metric on the prime index.
+
+In contrast, in the diagonal case the corresponding Gram reflects strong alignment of the $D_p$ along certain basis directions, leading to large operator norms and ill-conditioned prime metrics.
+
+\section{Nonlinear Contraction: Global and Local}
+
+\subsection{Nonlinear map and global contraction condition}
+
+Consider the nonlinear map on $d\times d$ real matrices $X$:
+\[
+  T(X) = \Xi X + m \tanh(X),
+\]
+where $\tanh$ is applied entrywise and $m>0$ is a scalar coupling. The global Lipschitz constant of $T$ in the Frobenius norm $\|\cdot\|_F$ is bounded by
+\[
+  L \;\leq\; \|\Xi\|_{\mathrm{op}} + m,
+\]
+because:
+\begin{itemize}
+  \item The linear part $X\mapsto \Xi X$ has Lipschitz constant $F=\|\Xi\|_{\mathrm{op}}$;
+  \item The entrywise $\tanh$ has derivative $\operatorname{sech}^2$, bounded in magnitude by $1$, so the map $X\mapsto \tanh(X)$ is 1-Lipschitz in the Frobenius norm.
+\end{itemize}
+Hence, by the Banach fixed-point theorem, if
+\[
+  F + m < 1,
+\]
+then $T$ is a contraction on $(\mathbb{R}^{d\times d},\|\cdot\|_F)$, has a unique fixed point, and satisfies
+\[
+  \|T^t(X) - X^*\|_F \;\leq\; L^t \|X - X^*\|_F
+\]
+for all $t$ and all initial $X$, where $X^*$ is the unique fixed point.
+
+Empirical experiments with the Fourier-conjugated $\Xi$ (where $F<1$) confirm:
+\begin{itemize}
+  \item For $m$ such that $F+m<1$, $\|X_t\|_F$ decays approximately at rate $-\log(F+m)$;
+  \item Pairwise distances $\|X_t - Y_t\|_F$ between distinct trajectories shrink exponentially;
+  \item For $m$ beyond the threshold $1-F$, these contraction properties fail.
+\end{itemize}
+
+\subsection{Local contraction factor}
+
+The local behavior of $T$ at a point $X$ is governed by the Fr\'echet derivative $DT_X$. In coordinates, for a perturbation $H$,
+\[
+  DT_X(H) = \Xi H + m\,\operatorname{diag}\!\bigl(\operatorname{sech}^2(X_{ij})\bigr)\odot H,
+\]
+where $\odot$ is entrywise multiplication. The local Lipschitz constant $L_{\text{loc}}(X)$ is the operator norm of $DT_X$:
+\[
+  L_{\text{loc}}(X) = \sup_{\|H\|_F=1} \|DT_X(H)\|_F.
+\]
+
+Numerically, $L_{\text{loc}}(X)$ can be estimated by sampling random $H$ with $\|H\|_F=1$ and measuring $\|DT_X(H)\|_F$, taking the maximum over many directions. By sampling $X$ on Frobenius norm shells of radius $r$, one obtains an effective function $L_{\text{loc}}(r)$.
+
+\paragraph{Observed behavior for Fourier family ($F<1$).}
+
+For a fixed $m$ with $F+m<1$, experiments show:
+\begin{itemize}
+  \item For small $r$, $X$ near the origin: $\tanh(X)\approx X$, so $DT_X\approx \Xi + m I$ and $L_{\text{loc}}(X)\approx F + m$.
+  \item For larger $r$, many entries of $X$ have $|X_{ij}|\gg 1$, so $\operatorname{sech}^2(X_{ij})\to 0$, and $DT_X$ approaches $\Xi$ in those directions. Consequently, $L_{\text{loc}}(X)$ locally drops toward $F$.
+  \item Thus $L_{\text{loc}}(r)$ tends to decrease from $\approx F+m$ at small $r$ to $\approx F$ at larger $r$, indicating that the map is even more strongly contractive far from the origin.
+\end{itemize}
+
+\paragraph{Observed behavior for diagonal family ($F>1$).}
+
+For the diagonal case where $F>1$, even as $\tanh$ saturates at large $X$, the linear core has norm $F>1$, so $L_{\text{loc}}(X)\geq F>1$ for all sampled radii. No region of attraction consistent with a global contraction emerges in this Euclidean metric.
+
+This establishes that interference-enhanced operator design (Fourier-conjugated $\Xi$) not only satisfies the global inequality $F+m<1$, but also enjoys favorable state-dependent local contraction geometry.
+
+\section{Code Snippets}
+
+\subsection{Python: Nonlinear contraction sweep}
+
+The following Python script performs a parameter sweep over $m$ for diagonal and Fourier families, estimating empirical contraction rates and pairwise contraction factors.
+
+\begin{verbatim}
+import numpy as np
+import scipy.linalg as la
+import matplotlib.pyplot as plt
+import pandas as pd
+
+# Parameters
+P = [2, 3, 5]
+w = {2: 1/np.sqrt(2), 3: 1/np.sqrt(3), 5: 1/np.sqrt(5)}
+d = 3
+m_values = [0.01, 0.05, 0.10, 0.15, 0.18]
+num_steps = 100
+num_trials = 10
+pair_steps = 50
+
+# Build operators
+def D(p, d=3):
+    phases = np.exp(2j * np.pi * np.arange(d) / p)
+    return np.diag(phases)
+
+D2 = D(2); D3 = D(3); D5 = D(5)
+F = np.fft.fft(np.eye(d), norm='ortho')
+
+U2_f = F.conj().T @ D2 @ F
+U3_f = F.conj().T @ D3 @ F
+U5_f = F.conj().T @ D5 @ F
+U2_d = D2; U3_d = D3; U5_d = D5
+
+def Xi(U_dict, w_dict, P, d):
+    total = np.zeros((d, d), dtype=complex)
+    for p in P:
+        total += w_dict[p] * U_dict[p]
+    return np.real(total)
+
+U_diag = {2: U2_d, 3: U3_d, 5: U5_d}
+Xi_diag = Xi(U_diag, w, P, d)
+
+U_fourier = {2: U2_f, 3: U3_f, 5: U5_f}
+Xi_fourier = Xi(U_fourier, w, P, d)
+
+F_diag = la.norm(Xi_diag, ord=2)
+F_fourier = la.norm(Xi_fourier, ord=2)
+
+def evolve(Xi_op, X0, m, steps):
+    X = X0.copy()
+    norms = [la.norm(X, ord='fro')]
+    for _ in range(steps):
+        X = Xi_op @ X + m * np.tanh(X)
+        norms.append(la.norm(X, ord='fro'))
+    return np.array(norms), X
+
+def pairwise_contraction(Xi_op, m, steps, num_pairs=10):
+    ratios = []
+    for _ in range(num_pairs):
+        X0 = np.random.randn(d, d)
+        Y0 = np.random.randn(d, d)
+        X = X0.copy()
+        Y = Y0.copy()
+        for _ in range(steps):
+            X = Xi_op @ X + m * np.tanh(X)
+            Y = Xi_op @ Y + m * np.tanh(Y)
+        dist0 = la.norm(X0 - Y0, ord='fro')
+        distT = la.norm(X - Y, ord='fro')
+        if dist0 > 1e-12:
+            ratios.append(distT / dist0)
+    return (np.mean(ratios), np.std(ratios)) if ratios else (np.nan, np.nan)
+
+families = [
+    ("diag", Xi_diag, F_diag),
+    ("fourier", Xi_fourier, F_fourier),
+]
+
+results = []
+for family_name, Xi_op, F_op in families:
+    for m in m_values:
+        theoretical_F_plus_m = F_op + m
+        final_norms = []
+        log_rates = []
+        for _ in range(num_trials):
+            X0 = np.random.randn(d, d)
+            norms, Xf = evolve(Xi_op, X0, m, num_steps)
+            final_norms.append(norms[-1])
+            if norms[0] > 1e-12 and norms[-1] > 0:
+                log_rates.append(-np.log(norms[-1] / norms[0]) / num_steps)
+        mean_final = float(np.mean(final_norms))
+        std_final = float(np.std(final_norms))
+        mean_rate = float(np.mean(log_rates)) if log_rates else np.nan
+        mean_contr, std_contr = pairwise_contraction(
+            Xi_op, m, pair_steps, num_pairs=10
+        )
+        results.append({
+            "family": family_name,
+            "m": m,
+            "F_op": F_op,
+            "F_plus_m": theoretical_F_plus_m,
+            "mean_final_norm": mean_final,
+            "std_final_norm": std_final,
+            "empirical_rate": mean_rate,
+            "pairwise_contraction": mean_contr,
+            "pairwise_contraction_std": std_contr,
+        })
+
+df = pd.DataFrame(results)
+df.to_csv("pmro_nonlinear_sweep.csv", index=False)
+\end{verbatim}
+
+\subsection{Python: Local contraction vs.\ state norm}
+
+The following script estimates the local Lipschitz constant $L_{\text{loc}}(X)$ as a function of $\|X\|_F$ for both diagonal and Fourier families at a fixed $m$.
+
+\begin{verbatim}
+def apply_derivative(Xi_op, X, H, m):
+    sech2 = 1.0 / np.cosh(X)**2
+    return Xi_op @ H + m * sech2 * H
+
+def local_lipschitz_estimate(Xi_op, X, m, num_directions=30):
+    norms = []
+    for _ in range(num_directions):
+        H = np.random.randn(*X.shape)
+        H = H / la.norm(H, ord='fro')
+        dT = apply_derivative(Xi_op, X, H, m)
+        norms.append(la.norm(dT, ord='fro'))
+    return np.max(norms)
+
+radii = np.linspace(0.1, 3.0, 20)
+results = []
+for family_name, Xi_op, F_op in [("diag", Xi_diag, F_diag),
+                                 ("fourier", Xi_fourier, F_fourier)]:
+    for r in radii:
+        lvals = []
+        for _ in range(50):
+            X = np.random.randn(d, d)
+            X = r * X / la.norm(X, ord='fro')
+            Lloc = local_lipschitz_estimate(Xi_op, X, m=0.05,
+                                            num_directions=30)
+            lvals.append(Lloc)
+        results.append({
+            "family": family_name,
+            "r": r,
+            "mean_Lloc": np.mean(lvals),
+            "max_Lloc": np.max(lvals),
+            "global_bound": F_op + 0.05,
+        })
+df_local = pd.DataFrame(results)
+df_local.to_csv("pmro_local_contraction.csv", index=False)
+\end{verbatim}
+
+\subsection{Qiskit: 2-qubit Fourier $\Xi$ and depolarizing noise}
+
+The following Qiskit script implements the 2-qubit Fourier construction and studies the effect of depolarizing noise on the linear evolution.
+
+\begin{verbatim}
+import numpy as np
+import scipy.linalg as la
+import matplotlib.pyplot as plt
+
+from qiskit import QuantumCircuit, QuantumRegister, transpile
+from qiskit.circuit.library import QFT
+from qiskit.quantum_info import Statevector, Operator
+
+from qiskit_aer import AerSimulator
+import qiskit_aer.noise as noise
+
+P = [2, 3]
+w = {2: 1/np.sqrt(2), 3: 1/np.sqrt(3)}
+d = 4
+num_steps = 20
+noise_prob_1q = 0.01
+noise_prob_2q = 0.02
+
+def D(p, d=4):
+    phases = np.exp(2j * np.pi * np.arange(d) / p)
+    return np.diag(phases)
+
+D2 = D(2); D3 = D(3)
+qft_circ = QFT(num_qubits=2, do_swaps=False, inverse=False)
+qft_inv_circ = qft_circ.inverse()
+qft_op = Operator(qft_circ).data
+qft_inv_op = Operator(qft_inv_circ).data
+
+U2_fourier = qft_inv_op @ D2 @ qft_op
+U3_fourier = qft_inv_op @ D3 @ qft_op
+
+def build_Xi(U_dict):
+    total = np.zeros((d, d), dtype=complex)
+    for p in P:
+        total += w[p] * U_dict[p]
+    return np.real(total)
+
+Xi_fourier = build_Xi({2: U2_fourier, 3: U3_fourier})
+Xi_op = Operator(Xi_fourier)
+
+error_1q = noise.depolarizing_error(noise_prob_1q, 1)
+error_2q = noise.depolarizing_error(noise_prob_2q, 2)
+noise_model = noise.NoiseModel()
+noise_model.add_all_qubit_quantum_error(error_1q, ['u1','u2','u3','x','h'])
+noise_model.add_all_qubit_quantum_error(error_2q, ['cx'])
+
+basis_gates = noise_model.basis_gates
+sim_noisy = AerSimulator(method='statevector', noise_model=noise_model)
+
+def fourier_step_circuit():
+    qc = QuantumCircuit(2)
+    qc.append(qft_circ.to_gate(), [0,1])
+    qc.z(0)
+    qc.cp(2*np.pi/3, 0, 1)
+    qc.append(qft_inv_circ.to_gate(), [0,1])
+    return qc
+
+step_circ = fourier_step_circuit()
+
+np.random.seed(123)
+psi0 = np.random.randn(d) + 1j*np.random.randn(d)
+psi0 = psi0 / la.norm(psi0)
+
+psi_ideal = psi0.copy()
+norms_ideal = [la.norm(psi_ideal)]
+for _ in range(num_steps):
+    psi_ideal = Xi_fourier @ psi_ideal
+    norms_ideal.append(la.norm(psi_ideal))
+
+psi_noisy = psi0.copy()
+norms_noisy = [la.norm(psi_noisy)]
+deviations = [0.0]
+
+for t in range(num_steps):
+    qc = QuantumCircuit(2)
+    qc.initialize(psi_noisy, [0,1])
+    qc.compose(step_circ, [0,1], inplace=True)
+    qc.save_statevector()
+    tqc = transpile(qc, sim_noisy, basis_gates=basis_gates, optimization_level=1)
+    result = sim_noisy.run(tqc).result()
+    psi_noisy = np.array(result.get_statevector(tqc))
+    norms_noisy.append(la.norm(psi_noisy))
+    deviations.append(la.norm(psi_noisy - psi_ideal))
+
+iters = np.arange(num_steps+1)
+plt.figure(figsize=(9,5))
+plt.plot(iters, norms_ideal, 'o-', label='Ideal Fourier (matrix Xi)')
+plt.plot(iters, norms_noisy, 's-', label='Fourier with depolarizing noise')
+plt.xlabel('Iteration t'); plt.ylabel('||psi_t||')
+plt.legend(); plt.grid(True, alpha=0.3)
+plt.tight_layout()
+plt.savefig('qiskit_fourier_norm_decay.png', dpi=180)
+\end{verbatim}
+
+\section{Conclusion and Claims of Prior Art}
+
+The above constructions and experiments, taken together, support the following claims as prior art:
+
+\begin{enumerate}[label=(\alph*)]
+  \item Prime-indexed multiplicity dynamics can be formalized via a Gram-induced metric $K$ determined by interaction profiles $g_p(s)$ across probe scales. Ill-conditioning of $K$ yields strongly anisotropic convergence behavior.
+
+  \item Interference at the operator level---realized by conjugating diagonal phase operators $D_p$ by a Fourier-type transform $F$ to obtain $U_p = F^\dagger D_p F$---reduces the operator norm of combined prime operators, i.e.\ $\|\Xi\|_{\mathrm{op}}$ can be made $<1$ even when $\sum |w_p|>1$.
+
+  \item This interference reconditions the effective metric on the prime index (via the operator Gram matrix), transforming near-neutral multiplicity directions into strongly damped modes with comparable convergence rates.
+
+  \item For nonlinear recursions of the form $T(X)=\Xi X + m\tanh(X)$, the global contraction criterion $F+m<1$ is both theoretically sufficient and numerically realized. The resulting dynamics admit a unique globally attractive fixed point and exhibit exponential convergence at rates close to $-\log(F+m)$.
+
+  \item The local contraction factor $L_{\text{loc}}(X)$ is favorably shaped in the interference-enhanced Fourier case and unfavorably shaped in the diagonal case. In particular, $L_{\text{loc}}(X)$ decreases with $\|X\|_F$ for the Fourier family, due to $\tanh$ saturation, strengthening contraction away from the origin.
+
+  \item The complete mechanism, including the interference-conditioned $\Xi$ and its contraction properties, is implementable in standard quantum circuit frameworks (e.g.\ Qiskit) and remains qualitatively robust under depolarizing noise models.
+\end{enumerate}
+
+These elements jointly constitute a defensive publication establishing that the use of Fourier-conjugated prime operator designs (PMRO) to recondition multiplicity metrics and enforce global nonlinear contraction is prior art as of the date of this document.
+
+\appendix
+\section*{Mathematical Appendix}
+
+\renewcommand{\thesection}{A}
+\setcounter{section}{0}
+
+\section{Contraction of the Nonlinear Map $T(X)=\Xi X + m\tanh(X)$}
+
+In this appendix we give explicit proofs and norm bounds for the nonlinear map
+\[
+  T:\mathbb{R}^{d\times d}\to\mathbb{R}^{d\times d},\qquad
+  T(X) \;=\; \Xi X + m\,\tanh(X),
+\]
+where $\Xi\in\mathbb{R}^{d\times d}$ is fixed, $m\in\mathbb{R}$, and $\tanh(\cdot)$ is applied entrywise. We work with the Frobenius norm $\|\cdot\|_F$ on $\mathbb{R}^{d\times d}$ and the induced operator norm on linear maps when needed.
+
+\subsection{Global Lipschitz bound and contraction criterion}
+
+We first prove the standard global Lipschitz bound
+\[
+  \|T(X)-T(Y)\|_F \;\leq\; (F + |m|)\,\|X-Y\|_F,
+\]
+where $F = \|\Xi\|_{\mathrm{op}}$ is the spectral (operator) norm of $\Xi$.
+
+\begin{proposition}[Global Lipschitz bound]
+Let $\Xi\in\mathbb{R}^{d\times d}$, $m\in\mathbb{R}$, and define $T(X)=\Xi X + m\tanh(X)$ on $\mathbb{R}^{d\times d}$, with entrywise $\tanh$. Then for all $X,Y\in\mathbb{R}^{d\times d}$,
+\[
+  \|T(X)-T(Y)\|_F \;\leq\; \bigl(\|\Xi\|_{\mathrm{op}} + |m|\bigr)\,\|X-Y\|_F.
+\]
+In particular, $T$ is globally Lipschitz with constant $L\le F+|m|$.
+\end{proposition}
+
+\begin{proof}
+For any $X,Y\in\mathbb{R}^{d\times d}$,
+\[
+  T(X)-T(Y) 
+  = \Xi(X-Y) + m\bigl(\tanh(X)-\tanh(Y)\bigr).
+\]
+Taking Frobenius norms and applying the triangle inequality,
+\[
+  \|T(X)-T(Y)\|_F \;\leq\; \|\Xi(X-Y)\|_F + |m|\,\|\tanh(X)-\tanh(Y)\|_F.
+\]
+For the linear term, note that for any $Z\in\mathbb{R}^{d\times d}$ we have
+\[
+  \|\Xi Z\|_F \;\leq\; \|\Xi\|_{\mathrm{op}}\,\|Z\|_F;
+\]
+this follows by writing $Z=[z_1\;\dots\;z_d]$ in terms of its columns and using
+$\|\Xi z_j\|_2\le\|\Xi\|_{\mathrm{op}}\|z_j\|_2$, then summing over $j$.
+
+For the nonlinear term, we use that $\tanh:\mathbb{R}\to\mathbb{R}$ is 1-Lipschitz, i.e. $|\tanh(u)-\tanh(v)|\le|u-v|$ for all $u,v\in\mathbb{R}$. Thus, entrywise,
+\[
+  \bigl|\tanh(X_{ij})-\tanh(Y_{ij})\bigr| \;\leq\; |X_{ij}-Y_{ij}|.
+\]
+Squaring and summing over all $(i,j)$ yields
+\[
+  \|\tanh(X)-\tanh(Y)\|_F^2 
+  = \sum_{i,j}\bigl(\tanh(X_{ij})-\tanh(Y_{ij})\bigr)^2
+  \le \sum_{i,j}(X_{ij}-Y_{ij})^2
+  = \|X-Y\|_F^2,
+\]
+so $\|\tanh(X)-\tanh(Y)\|_F\le\|X-Y\|_F$. Combining the two parts,
+\[
+  \|T(X)-T(Y)\|_F
+  \le \|\Xi\|_{\mathrm{op}}\|X-Y\|_F + |m|\|X-Y\|_F
+  = \bigl(\|\Xi\|_{\mathrm{op}}+|m|\bigr)\,\|X-Y\|_F.
+\]
+\end{proof}
+
+\begin{corollary}[Banach contraction condition]
+If $F+|m| < 1$, where $F=\|\Xi\|_{\mathrm{op}}$, then $T$ is a contraction on $(\mathbb{R}^{d\times d},\|\cdot\|_F)$ with contraction constant $L\le F+|m|<1$. In particular, $T$ has a unique fixed point $X^*$ and for all $X_0\in\mathbb{R}^{d\times d}$,
+\[
+  \|T^t(X_0)-X^*\|_F \;\leq\; L^t\,\|X_0 - X^*\|_F.
+\]
+\end{corollary}
+
+\begin{proof}
+This follows immediately from the Banach fixed-point theorem applied to the complete metric space $(\mathbb{R}^{d\times d},\|\cdot\|_F)$ with contraction constant $L<1$.
+\end{proof}
+
+In the PMRO setting, $\Xi$ is determined by the interference-conditioned operator design and $m$ is a tunable nonlinearity amplitude. The key structural requirement is thus $F+|m|<1$.
+
+\subsection{Expected exponential convergence rate}
+
+Under the assumptions of the corollary, the convergence rate of the iterates $X_{t+1}=T(X_t)$ is bounded by $L$. For large $t$,
+\[
+  \|X_t - X^*\|_F \;\lesssim\; L^t,
+\]
+so on a logarithmic scale,
+\[
+  -\frac{1}{t}\log\frac{\|X_t-X^*\|_F}{\|X_0-X^*\|_F}
+  \;\approx\; -\log L.
+\]
+Since $L\le F+|m|$, one expects the asymptotic decay rate to satisfy
+\[
+  \text{rate} \;\gtrsim\; -\log(F+|m|).
+\]
+In the numerical experiments in the main text, with $F=\|\Xi_{\mathrm{Fourier}}\|_{\mathrm{op}}<1$ and $m$ small, the empirically measured decay rate is close to $-\log(F+m)$, confirming that the global bound is sharp or nearly sharp for typical trajectories.
+
+\section{Local Lipschitz Constant and State-Dependent Contraction}
+
+We now justify the local operator-norm expression used to characterize the state-dependent contraction factor $L_{\mathrm{loc}}(X)$.
+
+\subsection{Fr\'echet derivative of $T$}
+
+Let $T(X) = \Xi X + m\tanh(X)$ as above. The map $X\mapsto \Xi X$ is linear, so its derivative is $H\mapsto \Xi H$. The nonlinear term $X\mapsto \tanh(X)$ is applied entrywise. For a single real variable $f(u)=\tanh(u)$,
+\[
+  f'(u) = \operatorname{sech}^2(u) = \frac{1}{\cosh^2(u)}.
+\]
+Thus, the Fr\'echet derivative of $\tanh$ at a matrix $X$ in direction $H$ is the entrywise product
+\[
+  (D\tanh_X)(H)_{ij} = \operatorname{sech}^2(X_{ij})\,H_{ij}.
+\]
+Therefore,
+\[
+  DT_X(H) = \Xi H + m\,D\tanh_X(H)
+         = \Xi H + m\,\bigl(\operatorname{sech}^2(X)\odot H\bigr),
+\]
+where $\odot$ is the Hadamard (entrywise) product and $\operatorname{sech}^2(X)$ denotes the matrix with entries $\operatorname{sech}^2(X_{ij})$.
+
+Equivalently, if we view $H$ as a vector in $\mathbb{R}^{d^2}$ via vectorization, $DT_X$ is a linear operator of the form
+\[
+  DT_X = \Xi\otimes I_d + m\,\operatorname{Diag}\bigl(\operatorname{sech}^2(X)\bigr),
+\]
+acting on $\operatorname{vec}(H)$, where $\operatorname{Diag}(\cdot)$ is the diagonal operator with the entries of $\operatorname{sech}^2(X)$ on the diagonal.
+
+\subsection{Definition of local Lipschitz constant}
+
+Given $X\in\mathbb{R}^{d\times d}$, the local Lipschitz constant of $T$ at $X$ with respect to the Frobenius norm is
+\[
+  L_{\mathrm{loc}}(X) \;=\; \sup_{\|H\|_F=1} \|DT_X(H)\|_F.
+\]
+By the expression above,
+\[
+  L_{\mathrm{loc}}(X) = \|DT_X\|_{\mathrm{op},F\to F},
+\]
+the operator norm of $DT_X$ as a linear map from $(\mathbb{R}^{d\times d},\|\cdot\|_F)$ to itself.
+
+A global uniform bound follows immediately from $|\operatorname{sech}^2(u)|\le 1$:
+\[
+  \|DT_X(H)\|_F \le \|\Xi H\|_F + |m|\|\operatorname{sech}^2(X)\odot H\|_F
+  \le \|\Xi\|_{\mathrm{op}}\|H\|_F + |m|\,\|H\|_F.
+\]
+Thus $L_{\mathrm{loc}}(X)\le F+|m|$ for all $X$.
+
+\subsection{Asymptotic behavior as $\|X\|\to\infty$}
+
+For large entries $|X_{ij}|\gg 1$, we have
+\[
+  \operatorname{sech}^2(X_{ij}) = \frac{1}{\cosh^2(X_{ij})} \to 0.
+\]
+Consequently, in directions $H$ that are aligned with entries where $|X_{ij}|$ is large, the nonlinear contribution to $DT_X(H)$ becomes negligible, and $DT_X(H)\approx \Xi H$ there.
+
+More precisely, fix $\epsilon>0$ and suppose that a fraction $1-\delta$ of entries of $X$ satisfy $|\operatorname{sech}^2(X_{ij})|<\epsilon$. If we restrict to perturbations $H$ whose mass is concentrated on those entries, then
+\[
+  \|m\,\operatorname{sech}^2(X)\odot H\|_F \;\leq\; |m|\epsilon\,\|H\|_F,
+\]
+and hence
+\[
+  \|DT_X(H)\|_F 
+  \le \|\Xi\|_{\mathrm{op}}\|H\|_F + |m|\epsilon\,\|H\|_F
+  = \bigl(F + |m|\epsilon\bigr)\,\|H\|_F.
+\]
+Taking the supremum over such $H$ shows that
+\[
+  L_{\mathrm{loc}}(X) \;\leq\; F + |m|\epsilon
+\]
+for matrices $X$ whose large entries cover most of the Frobenius mass and whose $\operatorname{sech}^2$ entries are uniformly small on the support of $H$. As $\|X\|_F\to\infty$, for any fixed $0<\epsilon<1$, we may arrange that $\operatorname{sech}^2(X_{ij})<\epsilon$ on an arbitrarily large fraction of entries, so heuristically one has
+\[
+  L_{\mathrm{loc}}(X) \;\to\; F
+\quad\text{as }\|X\|_F\to\infty.
+\]
+In contrast, near the origin $X\approx 0$, we have $\operatorname{sech}^2(X_{ij})\approx 1$, so
+\[
+  DT_X(H) \approx \Xi H + m H,
+\]
+and hence
+\[
+  L_{\mathrm{loc}}(0) \approx \|\Xi + m I\|_{\mathrm{op}} \le F + |m|.
+\]
+
+These considerations explain the observed monotone decrease of $L_{\mathrm{loc}}(X)$ from near $F+|m|$ (for $\|X\|_F$ small) toward $F$ (for $\|X\|_F$ large) in the interference-enhanced Fourier case $F<1$. In the diagonal case with $F>1$, $L_{\mathrm{loc}}(X)$ remains bounded below by $F>1$ for all $X$, so no contractive region appears in the Frobenius norm.
+
+\section{Operator-Norm Bounds for Interference-Enhanced $\Xi$}
+
+In this section we formalize the operator-norm comparison between the diagonal and Fourier-conjugated realizations of
+\[
+  \Xi = \operatorname{Re}\left(\sum_{p\in P} w_p U_p\right).
+\]
+
+\subsection{Diagonal realization and lower bound}
+
+Let $P$ be a finite prime set, and let $d\ge |P|$ be a chosen dimension. Let
+\[
+  D_p = \operatorname{diag}\bigl(e^{2\pi i \cdot 0/p},e^{2\pi i \cdot 1/p},
+  \dots,e^{2\pi i \cdot (d-1)/p}\bigr)
+\]
+be diagonal unitaries. Define
+\[
+  \Xi_{\mathrm{diag}} = \operatorname{Re}\left(\sum_{p\in P} w_p D_p\right).
+\]
+Suppose there exists a basis vector $|k_0\rangle$ such that
+\[
+  (D_p)_{k_0,k_0} = 1\quad\text{for all }p\in P.
+\]
+Then the diagonal entry at $(k_0,k_0)$ is
+\[
+  \bigl(\Xi_{\mathrm{diag}}\bigr)_{k_0,k_0}
+  = \operatorname{Re}\left(\sum_{p} w_p (D_p)_{k_0,k_0}\right)
+  = \sum_{p} w_p,
+\]
+if all $w_p$ are real. Hence
+\[
+  \|\Xi_{\mathrm{diag}}\|_{\mathrm{op}} \;\geq\;
+  \left|\bigl(\Xi_{\mathrm{diag}}\bigr)_{k_0,k_0}\right|
+  = \left|\sum_p w_p\right|.
+\]
+If all $w_p\ge 0$, this gives
+\[
+  \|\Xi_{\mathrm{diag}}\|_{\mathrm{op}} \;\geq\; \sum_p |w_p|.
+\]
+In the explicit examples, numerical computation confirms that this inequality is essentially tight: $\|\Xi_{\mathrm{diag}}\|_{\mathrm{op}}\approx \sum |w_p|$.
+
+\subsection{Fourier-conjugated realization and Gram structure}
+
+Let $F$ be a $d\times d$ unitary (e.g. the discrete Fourier transform). Define
+\[
+  U_p = F^\dagger D_p F,
+\]
+and set
+\[
+  \Xi_{\mathrm{Fourier}} = \operatorname{Re}\left(\sum_{p\in P} w_p U_p\right).
+\]
+Each $U_p$ is unitary with the same eigenvalues as $D_p$, but in the computational basis they are typically dense and not simultaneously diagonalizable.
+
+Consider the Hilbert--Schmidt inner product on operators,
+\[
+  \langle A,B\rangle_{\mathrm{HS}} = \operatorname{Tr}(A^\dagger B).
+\]
+Associate to each prime $p$ the weighted operator $\sqrt{w_p} U_p$, and define the Gram matrix
+\[
+  G_{pq} = \langle \sqrt{w_p} U_p, \sqrt{w_q} U_q\rangle_{\mathrm{HS}}
+          = w_p w_q \operatorname{Tr}(U_p^\dagger U_q).
+\]
+Using $U_p = F^\dagger D_p F$ and cyclicity of the trace,
+\[
+  \operatorname{Tr}(U_p^\dagger U_q) 
+  = \operatorname{Tr}(F^\dagger D_p^\dagger F F^\dagger D_q F)
+  = \operatorname{Tr}(D_p^\dagger D_q).
+\]
+Thus $G$ is independent of $F$ and determined solely by the diagonal phases.
+
+The operator
+\[
+  \Xi_{\mathrm{Fourier}} = \operatorname{Re}\left(\sum_p w_p U_p\right)
+\]
+can be regarded as a vector in operator space. A simple but useful bound is
+\[
+  \|\Xi_{\mathrm{Fourier}}\|_{\mathrm{HS}}^2
+  = \left\|\operatorname{Re}\left(\sum_p w_p U_p\right)\right\|_{\mathrm{HS}}^2
+  \le \left\|\sum_p w_p U_p\right\|_{\mathrm{HS}}^2
+  = \sum_{p,q} w_p w_q \operatorname{Re}\operatorname{Tr}(U_p^\dagger U_q).
+\]
+If we assume that off-diagonal overlaps $\operatorname{Tr}(D_p^\dagger D_q)$ are small compared to $d$ for $p\neq q$ (i.e.\ the $D_p$ are approximately orthogonal under the Hilbert--Schmidt inner product), then $G$ is close to diagonal and we obtain
+\[
+  \|\Xi_{\mathrm{Fourier}}\|_{\mathrm{HS}}^2 \approx d\sum_p w_p^2.
+\]
+Since $\|\Xi_{\mathrm{Fourier}}\|_{\mathrm{op}}\le\|\Xi_{\mathrm{Fourier}}\|_{\mathrm{HS}}$, this suggests that
+\[
+  \|\Xi_{\mathrm{Fourier}}\|_{\mathrm{op}} \;\lesssim\; \sqrt{d}\,\left(\sum_p w_p^2\right)^{1/2}.
+\]
+For the concrete finite-dimensional examples, $d$ is small and the $w_p$ are chosen such that $\sum w_p^2$ is significantly less than $(\sum |w_p|)^2$, so the resulting operator norm can reasonably be expected to drop below $1$ even when $\sum |w_p|>1$.
+
+Numerical computations confirm that this heuristic bound is realized tightly enough: for $P=\{2,3,5\}$ and $d=3$, one finds $\sum |w_p|\approx 1.73$ but $\|\Xi_{\mathrm{Fourier}}\|_{\mathrm{op}}\approx 0.85<1$; similarly for $P=\{2,3\}$ and $d=4$.
+
+\subsection{Comparison: diagonal vs Fourier}
+
+Combining the previous results:
+\begin{itemize}
+  \item In the diagonal realization,
+  \[
+    \|\Xi_{\mathrm{diag}}\|_{\mathrm{op}} \;\geq\; \sum_p |w_p|,
+  \]
+  and in the explicit examples $\sum |w_p|>1$, so no contraction is possible without changing $w_p$.
+
+  \item In the Fourier-conjugated realization,
+  \[
+    \|\Xi_{\mathrm{Fourier}}\|_{\mathrm{op}} \;\lesssim\; \sqrt{d}\,\left(\sum_p w_p^2\right)^{1/2},
+  \]
+  and numerically $\|\Xi_{\mathrm{Fourier}}\|_{\mathrm{op}}<1$ while $\sum|w_p|>1$. This shows that \emph{operator-level interference} can enforce contraction in operator norm without shrinking the underlying prime weights.
+\end{itemize}
+
+This completes the operator-norm comparison central to the MT--PMRO interference mechanism.
+
+\section{Gram Metric and Multiplicity Conditioning}
+
+Finally, we connect the operator-level Gram matrix to the multiplicity-space Gram $K$ and its conditioning.
+
+\subsection{Multiplicity Gram $K$ and its eigenstructure}
+
+Recall that for a finite prime set $P$ and probes $\mathcal{S}=\{s_j\}$, we form
+\[
+  G_{j,p} = g_p(s_j) = -\log(1-p^{-s_j}),
+\]
+and $K=G^\top G$. The eigenvalues $\lambda_i$ of $K$ determine the quadratic form
+\[
+  a^\top K a = \sum_i \lambda_i c_i^2,\quad a=\sum_i c_i v_i,
+\]
+and the linearized multiplicity dynamics $a_{t+1}=a_t-\Lambda_m K a_t$ exhibit mode-wise multipliers $1-\Lambda_m\lambda_i$. Ill-conditioning (large $\lambda_{\max}/\lambda_{\min}$) yields severely disparate convergence rates across modes.
+
+\subsection{Effective Gram from operators}
+
+On the PMRO side, primes are encoded as operators $U_p$. One can define an effective Gram on the prime index by
+\[
+  \tilde{K}_{p,q} = \langle U_p, U_q\rangle_{\mathrm{HS}} = \operatorname{Tr}(U_p^\dagger U_q),
+\]
+or with weights, $\tilde{K}_{p,q} = w_p w_q \operatorname{Tr}(U_p^\dagger U_q)$. This $\tilde{K}$ induces a quadratic form on the prime multiplicity coefficients $a=(a_p)$ via
+\[
+  a^\top \tilde{K} a = \left\|\sum_p a_p \sqrt{w_p} U_p\right\|_{\mathrm{HS}}^2.
+\]
+Interference via conjugation changes the \emph{vectors} $U_p$ in operator space, thereby changing $\tilde{K}$ and its eigenvalues. The MT Gram $K$ and the PMRO Gram $\tilde{K}$ play analogous roles as metrics on the multiplicity module, and both can be reconditioned by suitable choice of the embedding (scales in $G$ or operators $U_p$).
+
+In the explicit constructions, Fourier conjugation brings $\tilde{K}$ closer to a scaled identity, thereby improving conditioning and enabling uniform damping of prime-combination modes.
+
+\bigskip
+
+\noindent
+These appendices formalize the mathematical underpinnings of the interference-conditioned PMRO design and its role in stabilizing prime-indexed multiplicity dynamics via global and local contraction mechanisms.
+
+\nocite{*}
+\bibliographystyle{unsrt}  
+\bibliography{references}  
+
+
+\end{document}

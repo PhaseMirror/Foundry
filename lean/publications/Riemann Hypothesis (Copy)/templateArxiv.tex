@@ -1,0 +1,636 @@
+\documentclass[11pt]{article}
+
+% ---------- Packages ----------
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=1in]{geometry}
+\usepackage{microtype}
+\usepackage{mathtools, amsmath, amssymb, amsthm}
+\usepackage{bbm}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage[nameinlink,capitalize]{cleveref}
+\usepackage{csquotes}
+
+% ---------- Theorem environments ----------
+\numberwithin{equation}{section}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{proposition}[theorem]{Proposition}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+% ---------- Macros ----------
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\eps}{\varepsilon}
+\newcommand{\bH}{\mathcal{H}}
+\newcommand{\Hs}{\mathcal{S}_2}
+\newcommand{\Tr}{\operatorname{Tr}}
+\newcommand{\Det}{\operatorname{det}}
+\newcommand{\Dettwo}{\operatorname{det}_2}
+\newcommand{\1}{\mathbbm{1}}
+\newcommand{\cM}{\mathcal{M}}
+\newcommand{\cS}{\mathcal{S}}
+\newcommand{\cO}{\mathcal{O}}
+\newcommand{\sgn}{\operatorname{sgn}}
+
+\begin{document}
+\title{\vspace{A Determinant Representation of the Riemann ξ-Function via a
+Theta–Mellin Operator}}
+\author{Ryan O. Van Gelder, Luis Morat´o de Dalmases, \& Tyler Van Osdol }
+\date{\vspace{1em}}
+\maketitle
+
+\begin{center}
+
+\LARGE{Citizen Gardens} 
+\vspace{0.5cm} \\
+\textit{Institute for Mathematical Discovery} \\
+\vspace{0.5cm}
+{\normalsize \today \par}
+\end{center}
+\vspace{3cm}    
+
+\begin{abstract}
+We construct a concrete, linear, Hilbert--Schmidt operator family \(X(s)\) on \(H=L^2((0,\infty),dx/x)\) whose Carleman--Fredholm regularized determinant recovers the completed Riemann \(\xi\)-function:
+\[
+\Dettwo\!\big(I-X(s)\big) \;=\; C(s)\,\xi(s),
+\]
+where \(C(s)\) is an entire, nowhere-vanishing factor satisfying \(C(1-s)=C(s)\) and \(C(\R)\subset\R\). The operator is built canonically from the Jacobi theta function; the functional equation follows from a unitary conjugation implementing \(s\mapsto 1-s\). We give a rigorous proof that isolates the \(k=1\) contribution (which equals \(\xi'(s)/\xi(s)\)) and shows that all remaining \(k\ge 2\) contributions integrate to an entire function of \(s\). We also outline a reproducible numerical appendix verifying the identity on the critical line and formulate precise, falsifiable milestones toward a Hilbert--Pólya operator.
+\end{abstract}
+\newpage
+\tableofcontents
+
+% ===============================
+\section{Introduction}
+% ===============================
+
+Let \(\zeta(s)\) denote the Riemann zeta function and \(\xi(s):=\tfrac12 s(s-1)\pi^{-s/2}\Gamma(\tfrac{s}{2})\zeta(s)\) its completed form, entire and satisfying \(\xi(s)=\xi(1-s)\). We present an operator-theoretic representation of \(\xi\) as a regularized spectral determinant of a \emph{concrete}, \emph{linear} operator derived from the Jacobi theta function
+\[
+\Theta(u):=\sum_{n\in\mathbb{Z}} e^{-\pi n^2 u}, \qquad u>0,
+\]
+whose modular identity \(\Theta(u)=u^{-1/2}\Theta(1/u)\) will implement the functional equation of \(\xi\) at the operator level.
+
+The main theorem asserts that \(\Dettwo(I-X(s))=C(s)\,\xi(s)\) for an explicitly defined Hilbert--Schmidt operator \(X(s)\) on \(H=L^2((0,\infty),dx/x)\) and some entire nonvanishing \(C\). Beyond its intrinsic interest, this places \(\xi\) into a spectral-determinant framework suitable for a Hilbert--Pólya program: if one can further identify a self-adjoint operator \(H\) for which \(X(s)\) serves (up to bounded invertible conjugation) as a resolvent-like transfer \((s(1-s)I+H)^{-1}\), then the nontrivial zeros of \(\xi\) would lie on the critical line.
+
+\medskip
+\noindent\textbf{Structure.} \Cref{sec:Preliminaries} fixes conventions and recalls the Mellin transform identity for \(\Theta-1\). \Cref{sec:Operator} defines \(X(s)\), proves \(X(s)\in\Hs\) and \(JX(s)J=X(1-s)\) for a unitary \(J\). \Cref{sec:DetIdentity} establishes the determinant identity with full rigor: corrected vertical-line bounds, \(\eps\)-regularization, explicit isolation of the \(k=1\) term yielding \(\xi'/\xi\), and entire-ness of the remaining \(k\ge 2\) terms; then \(\eps\to1^-\) via normal families. \Cref{sec:HP} states precise Hilbert--Pólya milestones. \Cref{sec:Numerics} provides a short, reproducible numerical check. Appendices gather minor technicalities.
+
+% ===============================
+\section{Preliminaries}\label{sec:Preliminaries}
+% ===============================
+
+\subsection{Hilbert space, Mellin transform, and theta}
+Let \(H:=L^2((0,\infty),\tfrac{dx}{x})\). The unitary Mellin transform \(\cM: H\to L^2(\R,dt)\) is
+\begin{equation}\label{eq:Mellin}
+(\cM f)(t) := \frac{1}{\sqrt{2\pi}}\int_0^\infty f(x)\, x^{-1/2-it}\,\frac{dx}{x} ,\qquad t\in\R.
+\end{equation}
+We use \(\Theta(u)=\sum_{n\in\Z} e^{-\pi n^2 u}\) and the modular identity \(\Theta(u)=u^{-1/2}\Theta(1/u)\).
+
+\subsection{The Mellin identity for \texorpdfstring{$\Theta-1$}{Theta-1}}
+A classical identity (see, e.g., Titchmarsh or Iwaniec--Kowalski) is
+\begin{equation}\label{eq:MellinTheta}
+\int_0^\infty \big(\Theta(u)-1\big)\, u^{z/2-1}\,du \;=\; \frac{2\,\xi(z)}{z(z-1)} \qquad \text{for all } z\in\C.
+\end{equation}
+We will differentiate \eqref{eq:MellinTheta} in \(z\) later to identify the \(k=1\) contribution in \S\ref{sec:DetIdentity}.
+
+% ===============================
+\section{The Theta--Mellin operator}\label{sec:Operator}
+% ===============================
+
+\subsection{Definition and basic properties}
+Define the integral operator \(X(s):H\to H\) for \(s\in\C\) by
+\begin{equation}\label{eq:Xkernel}
+(X(s)f)(x) := \int_0^\infty K_s(x,y) f(y)\,\frac{dy}{y},\qquad
+K_s(x,y):=\frac12\big(\Theta(xy)-1\big)\,(xy)^{\frac{s-1}{2}}.
+\end{equation}
+The kernel depends only on the product \(xy\), hence \(X(s)\) is a multiplicative convolution operator on \((0,\infty)\) with Haar measure \(du/u\). Under \(\cM\), multiplicative convolution becomes multiplication, so \(X(s)\) is unitarily equivalent to multiplication by a scalar symbol \(m_s(t)\) on \(L^2(\R,dt)\).
+
+\begin{lemma}[Mellin diagonalization]\label{lem:Diagonalization}
+Let \(w:=\tfrac{s}{2}+it\) and
+\begin{equation}\label{eq:symbol}
+r(w):=\frac{\xi(w)}{w(w-1)},\qquad m_s(t):=r\Big(\frac{s}{2}+it\Big).
+\end{equation}
+Then \(\cM X(s)\cM^{-1} = M_{m_s}\), multiplication by \(m_s\).
+\end{lemma}
+
+\begin{proof}[Sketch]
+Take the Mellin transform in the product variable \(u=xy\). Using \eqref{eq:MellinTheta} with \(z=s+2it\) shows that the Mellin transform of \(u\mapsto \frac12(\Theta(u)-1)u^{(s-1)/2}\) is precisely \(m_s(t)\).
+\end{proof}
+
+\subsection{Hilbert--Schmidt class and holomorphy}
+
+\begin{lemma}[Vertical-line bound and decay]\label{lem:HSBound}
+For any compact \(K\subset \{0<\Re s<1\}\) there exist \(C_K,A_K>0\) such that
+\begin{equation}\label{eq:decay}
+|m_s(t)| \;=\; \left| r\!\left(\tfrac{s}{2}+it\right)\right|
+\;\le\; C_K (1+|t|)^{A_K}\, e^{-\pi|t|/4},\qquad s\in K,\; t\in\R.
+\end{equation}
+In particular, \(m_s\in L^2(\R)\) for \(0<\Re s<1\).
+\end{lemma}
+
+\begin{proof}
+Write \(\xi(w)=\frac12 w(w-1)\pi^{-w/2}\Gamma(\tfrac{w}{2})\zeta(w)\). On vertical lines, Stirling gives \(|\Gamma(\tfrac{w}{2})|\asymp |t|^{\Re(w)/2-1/2} e^{-\pi|t|/4}\); \(|\zeta(w)|\ll (1+|t|)^A\). Combine.
+\end{proof}
+
+\begin{corollary}[Hilbert--Schmidt and holomorphy]\label{cor:HSHol}
+For each \(s\) with \(0<\Re s<1\), \(X(s)\in \Hs(H)\). Moreover, \(s\mapsto X(s)\) is holomorphic into \(\Hs(H)\) on the strip \(0<\Re s<1\).
+\end{corollary}
+
+\begin{proof}
+Since \(\cM X(s)\cM^{-1}=M_{m_s}\) and \(m_s\in L^2(\R)\), \(X(s)\in\Hs\). The bound \eqref{eq:decay} supplies an \(L^2\)-envelope on compact \(K\), implying holomorphy via dominated convergence.
+\end{proof}
+
+\subsection{Functional equation by conjugation}
+Define \(J:H\to H\) by
+\begin{equation}\label{eq:J}
+(Jf)(x):=x^{-1/2} f(1/x).
+\end{equation}
+Then \(J\) is unitary on \(H\), and using \(\Theta(u)=u^{-1/2}\Theta(1/u)\) one computes
+\begin{equation}\label{eq:Jconj}
+J X(s) J \;=\; X(1-s)\qquad \text{for all } s\in\C.
+\end{equation}
+
+\begin{lemma}\label{lem:Junitary}
+\(J\) is unitary and \eqref{eq:Jconj} holds.
+\end{lemma}
+
+\begin{proof}
+Unitarity follows by the change of variables \(x\mapsto 1/x\) in \(\int |f|^2 dx/x\). For \eqref{eq:Jconj}, compute kernels:
+\(
+K_{1-s}(x,y)
+=x^{-1/2}y^{-1/2} K_s(1/x,1/y)
+\)
+by the modular identity, which is precisely the conjugation relation.
+\end{proof}
+
+% ===============================
+\section{The determinant identity}\label{sec:DetIdentity}
+% ===============================
+
+We prove:
+\begin{theorem}[Main identity]\label{thm:Main}
+There exists an entire, nowhere-vanishing function \(C(s)\), real on \(\R\) and satisfying \(C(1-s)=C(s)\), such that
+\begin{equation}\label{eq:MainIdentity}
+\Dettwo\!\big(I-X(s)\big) \;=\; C(s)\,\xi(s)\qquad \text{for all } s\in\C.
+\end{equation}
+\end{theorem}
+
+\subsection{\texorpdfstring{$\eps$}{epsilon}-regularization and the derivative of \(\log\Dettwo\)}
+Fix a compact \(K\subset\C\). By \Cref{lem:HSBound}, there is \(\eps_K\in(0,1)\) with \(\|M_{\eps m_s}\|_{L^\infty}\le q<1\) for all \(s\in K\), \(\eps\in(0,\eps_K]\). Define \(X_\eps(s):=\eps X(s)\), \(m_{\eps,s}:=\eps m_s\). For such \(\eps\),
+\begin{equation}\label{eq:det2-deriv}
+\frac{d}{ds}\log \Dettwo\!\big(I-X_\eps(s)\big)
+=\Tr\Big(-(I-X_\eps)^{-1}X'_\eps + X'_\eps\Big)
+= -\int_{\R}\frac{m_{\eps,s}(t)\,m'_{\eps,s}(t)}{1-m_{\eps,s}(t)}\frac{dt}{2\pi}.
+\end{equation}
+Here prime denotes \(\partial_s\) at fixed \(t\). We used that \(\cM\) does not depend on \(s\).
+
+\subsection{Power-series separation and entire-ness for \texorpdfstring{$k\ge2$}{k>=2}}
+
+Since \(\|m_{\eps,s}\|_\infty<1\) on \(K\),
+\[
+\frac{m_{\eps,s}^2}{1-m_{\eps,s}}=\sum_{k\ge 2} m_{\eps,s}^k
+\]
+absolutely and uniformly. Hence
+\begin{equation}\label{eq:kge2sum}
+\frac{d}{ds}\log \Dettwo\!\big(I-X_\eps(s)\big)
+= -\sum_{k\ge 2}\int_{\R} m_{\eps,s}(t)^{k-1} m'_{\eps,s}(t)\,\frac{dt}{2\pi}.
+\end{equation}
+
+\begin{lemma}[No residual singularities for \(k\ge 2\)]\label{lem:EntireKge2}
+For each \(k\ge2\), the map \(s\mapsto \int_{\R} m_s^{k-1}(t) m'_s(t)\, \tfrac{dt}{2\pi}\) is entire.
+\end{lemma}
+
+\begin{proof}
+The integrand is holomorphic in \(s\), exponentially decaying in \(t\) by \eqref{eq:decay}, and for real \(t\) the points \(w=\tfrac{s}{2}+it\) never hit \(0\) or \(1\). Morera + dominated convergence.
+\end{proof}
+
+Thus there exists an entire \(G_\eps(s)\) with
+\begin{equation}\label{eq:GepsDef}
+\sum_{k\ge 2}\int_{\R} m_{\eps,s}(t)^{k-1} m'_{\eps,s}(t)\,\frac{dt}{2\pi}
+= \frac{d}{ds} G_\eps(s).
+\end{equation}
+
+\subsection{Explicit identification of the missing \texorpdfstring{$k=1$}{k=1} term}
+Set \(w=\tfrac{s}{2}+it\) and \(r(w)=\xi(w)/[w(w-1)]\), so \(m_s(t)=r(w)\). Then
+\[
+\frac{m'_s(t)}{m_s(t)}=\frac12\frac{\xi'(w)}{\xi(w)} - \frac12\Big(\frac{1}{w}+\frac{1}{w-1}\Big).
+\]
+Formally, the \(k=1\) contribution (which \(\Dettwo\) removes) equals
+\begin{equation}\label{eq:k1formal}
+\int_{\R} m_s(t)\,\frac{m'_s(t)}{m_s(t)}\,\frac{dt}{2\pi}
+=\frac12\int_{\R}\!\left(\frac{\xi'(w)}{\xi(w)}-\frac{1}{w}-\frac{1}{w-1}\right)\frac{dt}{2\pi}.
+\end{equation}
+Differentiating \eqref{eq:MellinTheta} in \(z\) and using Mellin--Plancherel with normalization \eqref{eq:Mellin}, one obtains the identity
+\begin{equation}\label{eq:dlogxi}
+\frac{d}{ds}\log \xi(s)
+=\frac12\int_{\R}\!\left(\frac{\xi'(w)}{\xi(w)}-\frac{1}{w}-\frac{1}{w-1}\right)\frac{dt}{2\pi}.
+\end{equation}
+Comparing \eqref{eq:k1formal} and \eqref{eq:dlogxi}, we see that the omitted \(k=1\) term is exactly \(\frac{d}{ds}\log\xi(s)\).
+
+\subsection{Conclusion on the strip and removal of \texorpdfstring{$\eps$}{epsilon}}
+Combining \eqref{eq:kge2sum}, \eqref{eq:GepsDef}, and \eqref{eq:dlogxi} gives
+\[
+\frac{d}{ds}\log \Dettwo\!\big(I-X_\eps(s)\big)=\frac{d}{ds}\log \xi(s)+\frac{d}{ds} G_\eps(s),
+\]
+whence
+\begin{equation}\label{eq:epsIdentity}
+\Dettwo\!\big(I-X_\eps(s)\big)= C_\eps(s)\,\xi(s),\qquad C_\eps(s):=e^{G_\eps(s)}\ \text{entire, nowhere zero}.
+\end{equation}
+
+\begin{lemma}[Normal families; \(\eps\to1^-\)]\label{lem:NormalFamilies}
+For each compact \(K\subset\C\), the family \(\{\log C_\eps(s)\}_{\eps\in(0,\eps_K]}\) is normal on \(K\). Fix \(s_0\) with \(\xi(s_0)\neq 0\) and normalize by \(\log C_\eps(s_0)=\log \Dettwo(I-X_\eps(s_0))-\log \xi(s_0)\). Then \(\log C_\eps\) converges locally uniformly as \(\eps\to1^-\) to an entire function \(\log C(s)\), and
+\begin{equation}\label{eq:MainAfterEps}
+\Dettwo\!\big(I-X(s)\big)=C(s)\,\xi(s)
+\end{equation}
+holds on \(\C\) with \(C\) entire and nowhere vanishing.
+\end{lemma}
+
+\begin{proof}
+Uniform small-norm control on \(M_{\eps m_s}\) across \(K\) bounds the series defining \(\log\Dettwo\) uniformly. Montel implies subsequential convergence; normalization gives uniqueness.
+\end{proof}
+
+\subsection{Functional equation and reality of \texorpdfstring{$C$}{C}}
+By \Cref{lem:Junitary}, \(\Dettwo(I-X(1-s))=\Dettwo(I-X(s))\), and since \(\xi(1-s)=\xi(s)\), we deduce
+\begin{equation}\label{eq:Cfunctional}
+C(1-s)=C(s).
+\end{equation}
+Because both \(\Dettwo(I-X(s))\) and \(\xi(s)\) are real for real \(s\), it follows that \(C(\R)\subset \R\). This completes the proof of \Cref{thm:Main}.
+
+\begin{remark}[Normalization]
+Choose any \(s_0\) with \(\xi(s_0)\neq0\) (e.g.\ \(s_0=\tfrac12\)) and set \(C(s_0)=1\); this pins the entire factor.
+\end{remark}
+
+\section{From Mellin Determinants to Hilbert–Pólya Transfer Models:\\
+Spectral Certification via Theta Operators and Fixed-Point Dynamics}
+\label{sec:mellin_to_hp}
+
+\noindent\textbf{Aim.}
+Provide a short, self-contained roadmap showing how a Theta–Mellin determinant identity supplies the
+``explicit-formula'' half of a Hilbert–Pólya program, and how to lift it to either
+(HP1) an isometric factorization on the critical line or (HP2) a resolvent/transfer (colligation) model.
+We also explain the conceptual alignment with dynamical fixed-point truth semantics.
+
+\subsection{Setup and Determinant Identity (Operator-Theoretic Core)}
+
+\paragraph{Hilbert space and Mellin transform.}
+Let \(H=L^2\!\big((0,\infty),\frac{dx}{x}\big)\).
+Denote by \(\mathcal{M}\) the Mellin transform
+\[
+(\mathcal{M}f)(s)=\int_0^\infty x^{s-1}f(x)\,dx,
+\]
+which becomes unitary from \(H\) onto \(L^2\!\big(\tfrac12+i\mathbb{R},\tfrac{dt}{2\pi}\big)\) upon restricting to the critical line \(s=\tfrac12+it\).
+
+\paragraph{Theta–Mellin family.}
+For \(s\in\mathbb{C}\), define Hilbert–Schmidt operators \(X(s):H\to H\) by
+\begin{equation}
+(X(s)f)(x)=\int_0^\infty K_s(x,y)\,f(y)\,\frac{dy}{y},\qquad
+K_s(x,y)=\tfrac12\big(\Theta(xy)-1\big)(xy)^{\frac{s-1}{2}},
+\end{equation}
+with \(\Theta\) the Jacobi theta function. Under \(\mathcal{M}\), \(X(s)\) diagonalizes:
+\begin{equation}
+\big(\mathcal{M}X(s)\mathcal{M}^{-1}g\big)\!\left(\tfrac12+it\right)=m_s(t)\,g\!\left(\tfrac12+it\right),\qquad
+m_s(t)=\frac{\xi\!\big(\frac{s}{2}+it\big)}{\big(\frac{s}{2}+it\big)\big(\frac{s}{2}+it-1\big)}.
+\end{equation}
+
+\paragraph{Functional equation by conjugation.}
+There exists a unitary \(J\) on \(H\) with \(JX(s)J=X(1-s)\), hence \(m_{1-s}(t)=m_s(t)\), mirroring \(\xi(1-s)=\xi(s)\).
+
+\paragraph{Carleman–Fredholm identity.}
+There is an entire, nowhere-vanishing, even function \(C(s)\), real on \(\mathbb{R}\), such that
+\begin{equation}
+\boxed{\ \ \det\nolimits_{2}\!\big(I-X(s)\big)=C(s)\,\xi(s)\ \ }
+\label{eq:det_identity}
+\end{equation}
+for all \(s\in\mathbb{C}\).
+Differentiating \eqref{eq:det_identity} yields
+\begin{equation}
+\frac{d}{ds}\log\det\nolimits_{2}(I-X(s))
+=\frac{\xi'(s)}{\xi(s)}+E(s),\qquad E(s)\ \text{entire},
+\end{equation}
+which matches the singularity pattern of the explicit formula (the prime-sensitive contribution sits in \(\xi'/\xi\); the remainder is entire).
+
+\begin{remark}
+On the critical line \(s=\tfrac12+iu\), the Mellin model reduces operator analysis to scalar function theory of the symbol \(m_s(t)\) on \(t\in\mathbb{R}\),
+with good decay enabling convergent quadrature for numerical checks of \eqref{eq:det_identity}.
+\end{remark}
+
+\subsection{Spectral Certification via Two Targets (HP1 and HP2)}
+
+We formulate two concrete milestones that turn the determinant identity into a Hilbert–Pólya mechanism.
+
+\paragraph{(HP1) Isometric square root on the line (inner–outer factorization).}
+Find a family \(Y(s):H\to H\) such that
+\begin{equation}
+X(s)=Y(s)^{*}Y(s),
+\qquad
+\|Y(\tfrac12+it)f\|=\|f\|\quad\text{for a.e. }t\in\mathbb{R}.
+\end{equation}
+Equivalently, in the Mellin picture, seek a factorization of the symbol
+\begin{equation}
+m_s(t)=\Phi_s(t)\,\overline{\Phi_{\,1-\overline{s}}(t)},
+\qquad
+|\Phi_{\frac12+iu}(t)|=1\ \ \text{for a.e. }t,
+\end{equation}
+which realizes a \emph{conservative scattering model} on the critical line. This enables a Birman–Kreĭn phase and a trace formula reflecting the explicit formula.
+
+\emph{Construction scaffold.}
+(i) Work on \(L^2(\mathbb{R},dt)\) via \(\mathcal{M}\); \(X(s)\) becomes \(M_{m_s}\), multiplication by \(m_s(t)\).
+(ii) Perform canonical inner–outer factorization of \(m_s\) in a Hardy/de~Branges-type function model adapted to vertical lines.
+(iii) Lift back via \(\mathcal{M}^{-1}\) to obtain \(Y(s)\) and impose \(JY(s)=Y(1-s)J\).
+
+\paragraph{(HP2) Resolvent/transfer (Birman–Schwinger) realization.}
+Find a self-adjoint \(H\) (possibly on an enlarged Hilbert space) and a bounded, invertible \(B\) such that on a common analytic domain
+\begin{equation}
+\boxed{\quad I-X(s)=I- B^{*}\big(s(1-s)I+H\big)^{-1}B.\quad}
+\end{equation}
+Zeros of \(\xi\) then correspond to spectral features of the resolvent of \(H\).
+
+\emph{Block-colligation blueprint.}
+If a direct scalar resolvent representation is too rigid, embed in a conservative (unitary) colligation on \(\mathcal{K}=H\oplus H\) with
+\[
+\mathcal{H}_0=\begin{pmatrix}0 & Y(\tfrac12)^{*}\\[2pt] Y(\tfrac12) & 0\end{pmatrix}=\mathcal{H}_0^{*},
+\qquad
+\text{transfer}(s)=I-X(s),
+\]
+so that perturbation determinants for \(\big(s(1-s)I+\mathcal{H}_0\big)\) recover \eqref{eq:det_identity}, and spectral shift functions encode the explicit-formula singularities.
+
+\subsection{Minimal Proof Skeleton: Self-Adjointness and Mean Counting}
+
+For orientation, recall the dilation generator \(D=\tfrac12(xp+px)=-i\big(x\tfrac{d}{dx}+\tfrac12\big)\) on \(L^2(\mathbb{R}_+,dx)\).
+Its deficiency indices are \((0,0)\), hence \(D\) is essentially self-adjoint; under logarithmic coordinates, finite-volume regularizations reproduce only the \emph{mean} Riemann–von~Mangoldt terms.
+The Theta–Mellin route above supplies the \emph{missing prime oscillations} through the determinant identity and thus passes the explicit-formula audit at the operator level.
+
+\subsection{Alignment with Fixed-Point (\texorpdfstring{$\Lambda$}{Λ}-Truth) Semantics}
+
+\paragraph{Externality and convergence.}
+Both frameworks are external and convergent:
+\emph{Analytical}: \(s\mapsto X(s)\) is holomorphic, with \(\det_2(I-X(s))\) encoding \(\xi(s)\); the functional equation is realized by a unitary conjugation.
+\emph{Dynamical}: \(\Lambda\)-truth iterates a contractive update operator \(T\) on truth valuations; prime-sieved variants incorporate arithmetic structure.
+
+\paragraph{Semantic dictionary.}
+Fixed points \(\leftrightarrow\) spectral fixed content (zeros/poles of resolvents and perturbation determinants);
+contractivity \(\leftrightarrow\) dissipativity/unitarity (ensuring \(|\Phi_{\frac12+iu}(t)|=1\));
+prime sieves \(\leftrightarrow\) prime orbits (explicit-formula spikes at \(k\log p\) arise as spectral shift/trace over periodic prime data).
+
+\paragraph{Takeaway.}
+The Theta–Mellin machinery gives an \emph{analytic certificate} (determinant identity + FE),
+while fixed-point semantics provide a \emph{dynamical certificate} (convergence to a stable truth valuation).
+Together they suggest a two-lens verification strategy: spectral trace/phase on the analytic side, and global convergence on the dynamical side.
+
+\subsection{Actionable Checklist (Research Sprint)}
+
+\begin{enumerate}
+  \item \textbf{Symbol analysis.} Prove an inner–outer factorization for \(m_{\frac12+iu}(t)\) in an appropriate function model; construct \(Y(s)\) (HP1).
+  \item \textbf{Colligation lift.} Build a unitary colligation realizing \(I-X(s)\) as a transfer function; extract \(H\) and a Birman–Kreĭn phase (HP2).
+  \item \textbf{Functional equation.} Impose \(JY(s)=Y(1-s)J\) at the model level to inherit \(\xi(1-s)=\xi(s)\).
+  \item \textbf{Explicit-formula audit.} Derive a trace/phase formula reproducing both archimedean terms and prime spikes \(\{k\log p\}\).
+  \item \textbf{Numerical validation.} Evaluate \(\log\det_{2}(I-X(\tfrac12+iu))\) via Mellin-side quadrature; confirm the ratio to \(\xi(\tfrac12+iu)\) is constant (fixes \(C(\tfrac12)\)).
+  \item \textbf{GUE statistics.} Discretize the model (finite sections in Mellin \(t\)); unfold eigenlevels and test pair correlation against GUE/Odlyzko data.
+\end{enumerate}
+
+\subsection{Appendix: Notational Conventions}
+
+\begin{itemize}
+  \item \(\displaystyle \xi(s)=\tfrac12 s(s-1)\,\pi^{-s/2}\Gamma\!\big(\tfrac{s}{2}\big)\zeta(s)\).
+  \item \(\det_{2}(I-T)=\det\!\big((I-T)\,e^{T}\big)\) for Hilbert–Schmidt \(T\).
+  \item \(\mathcal{M}:L^2\!\big((0,\infty),\tfrac{dx}{x}\big)\to L^2\!\big(\tfrac12+i\mathbb{R},\tfrac{dt}{2\pi}\big)\) is unitary by Plancherel.
+  \item ``Inner–outer'' refers to canonical factorizations in Hardy/de~Branges settings adapted to vertical lines.
+\end{itemize}
+
+
+% ===============================
+\section{Numerical verification (reproducible appendix)}\label{sec:Numerics}
+% ===============================
+
+We outline a short, reproducible check that
+\[
+R(t):=\frac{\Dettwo(I-X(\tfrac12+it))}{\xi(\tfrac12+it)}\approx C(\tfrac12)\quad\text{(constant in \(t\))}.
+\]
+
+\paragraph{Symbol on the line.}
+At \(s=\tfrac12\), write \(\tau\) for the Mellin frequency:
+\[
+m(\tau)=\frac{\xi\!\left(\tfrac14+i\,\frac{t+\tau}{2}\right)}
+{ \left(\tfrac14+i\,\frac{t+\tau}{2}\right)\left(-\tfrac34+i\,\frac{t+\tau}{2}\right)}.
+\]
+
+\paragraph{Regularized log-determinant.}
+Compute
+\[
+\log \Dettwo(I-X)=\int_{\R}\big(\log(1-m(\tau)) - m(\tau)\big)\,\frac{d\tau}{2\pi}.
+\]
+Use tanh–sinh quadrature on \([-\Lambda,\Lambda]\) with Kahan compensated summation. Control tails via both
+\(\int_{|\tau|>\Lambda}|m(\tau)|\,d\tau\) and \(\int_{|\tau|>\Lambda}|m(\tau)|^2\,d\tau\); with the decay \(e^{-\pi|\tau|/4}\), \(\Lambda=12,16,20\) should show clear saturation.
+
+\paragraph{Calibration of \(C(\tfrac12)\).}
+Set \(C(\tfrac12)\) by a constant fit of \(\Re \log R(t)\) over windows avoiding zeros (or by a robust median). Plot \(|e^{\log R(t)-\mathrm{const}}-1|\) for \(t\) in a moderate range (e.g.\ \(|t|\le 40\)).
+
+\paragraph{Notes.}
+Evaluate \(\xi\) and \(\zeta\) with 60–100 bit precision (e.g.\ Arb/mpmath). Near zeros, compute \(\log R(t)=\log\Dettwo - \log\xi\) to avoid cancellation.
+
+% ===============================
+\section*{Acknowledgments}
+We thank colleagues and referees for comments that led to the corrected vertical-line bounds and the explicit separation of the \(k=1\) term.
+
+% ===============================
+\appendix
+
+\section{Carleman--Fredholm determinant on \texorpdfstring{$I+\Hs$}{I+S2}}
+For \(A\in\Hs\), define
+\[
+\Dettwo(I-A):=\exp\Big(\Tr\big(\log(I-A)+A\big)\Big),
+\]
+where the logarithm is defined by the convergent power series on \(\|A\|<1\) and by analytic continuation on connected components of \(I+\Hs\); \(\Dettwo\) is holomorphic and never zero on \(I+\Hs\). The derivative formula used in \eqref{eq:det2-deriv} is standard:
+\[
+\frac{d}{ds}\log \Dettwo(I-A(s))=\Tr\!\big(-(I-A)^{-1}A'(s)+A'(s)\big)
+\]
+for holomorphic \(A:K\to\Hs\) with \(\|A(s)\|<1\) on compacts.
+
+\section{Proofs of auxiliary lemmas}
+
+\begin{proof}[Proof of \Cref{lem:Diagonalization}]
+Since \(K_s(x,y)\) depends on \(xy\), \(X(s)\) is multiplicative convolution:
+\((X(s)f)(x)=\int_0^\infty \kappa_s(xy) f(y)\,dy/y\) with \(\kappa_s(u)=\tfrac12(\Theta(u)-1)u^{(s-1)/2}\).
+Under \(\cM\), convolution becomes multiplication by the Mellin transform of \(\kappa_s\) at \(z=s+2it\), which is
+\(
+\frac12\int_0^\infty (\Theta(u)-1)u^{\frac{s+2it}{2}-1}du
+=\frac{\xi(\frac{s}{2}+it)}{\left(\frac{s}{2}+it\right)\left(\frac{s}{2}+it-1\right)}
+\)
+by \eqref{eq:MellinTheta}.
+\end{proof}
+
+\begin{proof}[Proof of \Cref{lem:HSBound}]
+As in the main text; the key is Stirling on \(\Gamma(w/2)\) along vertical lines and polynomial control of \(\zeta(w)\).
+\end{proof}
+
+\begin{proof}[Proof of \Cref{lem:NormalFamilies}]
+Uniform small-norm bounds on \(M_{\eps m_s}\) give uniform bounds on the power series for \(\log\Dettwo\). Montel’s theorem applies to \(\{\log C_\eps\}\) on any compact \(K\). Normalization at \(s_0\) yields uniqueness of the limit.
+\end{proof}
+
+\section{Vanishing of Sums at Special Imaginary Values}
+
+Within the Theta--Mellin framework, the central identity proved in the cited work is
+\begin{equation}
+\det\nolimits_{2}\big(I - X(s)\big) = C(s)\, \xi(s),
+\end{equation}
+where $C(s)$ is an entire, nowhere-vanishing function satisfying $C(1-s) = C(s)$. Thus the determinant vanishes if and only if $\xi(s)=0$.
+
+\subsection{Analytic Mechanism}
+The collapse of sums or integrals to zero occurs at those imaginary parts corresponding to nontrivial zeros of $\xi(s)$. Since $C(s)\neq 0$ everywhere, the only way for the determinant (or any equivalent regularized sum) to vanish is when $\xi(s)=0$.
+
+\subsection{Theta--Mellin Cancellation}
+The Mellin identity for the Jacobi theta tail,
+\begin{equation}
+\int_{0}^{\infty} (\Theta(u)-1) \, u^{z/2 - 1} \, du = \frac{2\, \xi(z)}{z(z-1)},
+\end{equation}
+implies that if $z$ is a zero of $\xi$, then the integral vanishes. At such frequencies, the oscillatory weight $u^{i\,\mathrm{Im}(z)/2}$ forces exact cancellation.
+
+\subsection{Spectral Interpretation}
+Under the Mellin transform, $X(s)$ diagonalizes with symbol
+\begin{equation}
+m_s(t) = \frac{\xi\left(\tfrac{s}{2}+it\right)}{\left(\tfrac{s}{2}+it\right)\left(\tfrac{s}{2}+it-1\right)}.
+\end{equation}
+The regularized log-determinant is
+\begin{equation}
+\log \det\nolimits_{2}(I - X(s)) = \int_{\mathbb{R}} \frac{\log(1-m_s(t)) - m_s(t)}{2\pi}\, dt.
+\end{equation}
+Near a simple zero $s=\rho$ of $\xi$, the integrand reproduces the singularity of $\log \xi(s)$, forcing $\det_2(I-X(s))=0$ precisely at $s=\rho$.
+
+\section{Uniform $\varepsilon$--Bounds Away from Zeros}
+
+Since $C(s)$ never vanishes, one can show that away from the set of zeros of $\xi$, the determinant remains bounded away from zero.
+
+\subsection{Global Compact Bound}
+Let $K\subset \mathbb{C}$ be compact and define the $\delta$--exclusion of the zero set
+\begin{equation}
+K_{\delta} := \{ s\in K : \operatorname{dist}(s, \mathcal{Z}(\xi)) \geq \delta \}.
+\end{equation}
+Then the continuous function $s \mapsto |C(s)\,\xi(s)|$ attains a positive minimum on $K_{\delta}$:
+\begin{equation}
+\varepsilon(K,\delta) := \inf_{s\in K_{\delta}} |\det_{2}(I - X(s))| > 0.
+\end{equation}
+Thus any deviation of at least $\delta$ from the zero set yields a uniform positive lower bound.
+
+\subsection{Local Bound Near a Zero}
+Suppose $\rho$ is a zero of multiplicity $m\geq 1$. Then locally,
+\begin{equation}
+\xi(s) = a_m (s-\rho)^m (1+o(1)), \qquad a_m\neq 0.
+\end{equation}
+For sufficiently small $r$, there exists $c_\rho>0$ such that
+\begin{equation}
+\min_{|s-\rho|=r} |\xi(s)| \geq c_\rho \, r^m.
+\end{equation}
+Since $C(s)$ is continuous and nonvanishing, $\min_{|s-\rho|=r}|C(s)|\geq c_C>0$. Hence,
+\begin{equation}
+\min_{|s-\rho|=r} |\det_{2}(I - X(s))| \geq (c_C c_\rho) r^m =: \varepsilon_\rho(r) > 0.
+\end{equation}
+Thus exact vanishing occurs only at $s=\rho$; for any fixed nonzero deviation $r$ from $\rho$, the determinant is bounded below by a positive power law.
+
+Specific imaginary parts collapse the theta--Mellin sum precisely when they correspond to ordinates of nontrivial zeros of $\xi$. Away from those points, one obtains explicit $\varepsilon$--bounds: globally uniform on compact sets excluding neighborhoods of zeros, and locally quantified in terms of the zero multiplicity.
+% ===============================
+\appendix
+\section*{Interpretive Appendix: A Prime–Graded Dirichlet Transform and its Relation to HP1/HP2}
+
+\subsection*{A. Prime–graded operator data and a Dirichlet transform}
+
+\begin{definition}[Prime–graded Hilbert datum]
+Let $\mathcal H$ be a separable Hilbert space and $\{\Pi_n\}_{n\ge1}\subset\mathcal B(\mathcal H)$ a family of mutually orthogonal projections with
+\[
+\Pi_n\Pi_m=\delta_{n,m}\Pi_n,\qquad \sum_{n\ge1}\Pi_n=I\quad\text{(strongly)}.
+\]
+We refer to $(\mathcal H;\{\Pi_n\})$ as a \emph{prime–graded datum} if the grading is indexed by the positive integers and (optionally) is \emph{multiplicative} in the sense that there exist partial isometries $V_{m,n}:\Pi_m\mathcal H\to \Pi_{mn}\mathcal H$ implementing the arithmetic structure when needed. We say a bounded operator $T\in\mathcal B(\mathcal H)$ is \emph{admissible} for $(\mathcal H;\{\Pi_n\})$ if $\Pi_nT\Pi_n$ is trace class for all $n\ge1$.
+\end{definition}
+
+\begin{definition}[Prime–graded Dirichlet transform]
+Given a prime–graded datum $(\mathcal H;\{\Pi_n\})$ and an admissible $T\in\mathcal B(\mathcal H)$, define
+\[
+F[T](s)\;:=\;\sum_{n=1}^{\infty}\frac{a(n)}{n^{s}},\qquad 
+a(n):=\Tr\bigl(\Pi_n T\bigr),
+\]
+whenever the series converges. Write
+\[
+\sigma_0(T)\;:=\;\inf\left\{\sigma\in\mathbb R:\ \sum_{n\ge1}\frac{|a(n)|}{n^\sigma}<\infty\right\}\in[-\infty,+\infty]
+\]
+for the \emph{abscissa of absolute convergence} of $F[T]$.
+\end{definition}
+
+\begin{proposition}[Basic properties]
+Let $T$ be admissible.
+\begin{enumerate}
+\item $F[T]$ defines a holomorphic function on the half–plane $\Re s>\sigma_0(T)$, with locally uniform convergence there.
+\item If $\sum_{n\ge1}\|\Pi_n T\Pi_n\|_1\,n^{-\sigma}<\infty$ for some $\sigma\in\mathbb R$, then $\sigma_0(T)\le\sigma$ and
+\[
+|F[T](s)|\ \le\ \sum_{n\ge1}\frac{\|\Pi_n T\Pi_n\|_1}{n^{\Re s}}\qquad(\Re s>\sigma).
+\]
+\item If $T$ is normal and $\sup_{n}\|\Pi_n T\Pi_n\|<\infty$ with only finitely many nonzero $a(n)$, then $F[T]$ is a Dirichlet polynomial obeying the standard Phragmén–Lindelöf bounds in strips.
+\end{enumerate}
+\end{proposition}
+
+\begin{remark}[Normalization and functional equation symmetry]
+In applications one often imposes a symmetry $J$ on $\mathcal H$ with $J^2=I$, $J^*=J$, $J\Pi_nJ=\Pi_n$, and a constraint $JTJ=T^*J$. At the level of $F[T]$ this produces a reflection symmetry $s\mapsto 1-s$ on the associated transfer quantities introduced below.
+\end{remark}
+
+\subsection*{B. Conditional bridge to HP1/HP2}
+
+For context we recall (schematically) the two milestones arising from the Theta–Mellin construction:
+\begin{itemize}
+\item[\textbf{HP1}] (\emph{Inner–outer factorization on vertical lines}). In Mellin variables one has a scalar symbol $m_s(t)$ so that the operator family $X(s)$ is unitarily equivalent to multiplication by $m_s(t)$. The HP1 target is to factor
+\[
+m_{1/2+iu}(t)\;=\;\Phi_{1/2+iu}(t)\,\overline{\Phi_{1/2+iu}(t)}\quad\text{with}\quad |\Phi_{1/2+iu}(t)|=1\ \text{a.e.\ in $t$},
+\]
+compatibly with the functional equation symmetry.
+\item[\textbf{HP2}] (\emph{Conservative colligation / resolvent model}). Realize
+\[
+I-X(s)\;=\;I-B^*\,(s(1-s)I+H)^{-1}B
+\]
+for some self–adjoint $H$ (possibly on an enlarged space), or embed into a unitary conservative colligation whose scalar transfer $W(s)$ coincides with the Fredholm determinant side.
+\end{itemize}
+
+The following lemma makes precise how a prime–graded transform can serve as a bookkeeping layer for the \emph{same} spectral information governed by $X(s)$.
+
+\begin{lemma}[Prime–graded transfer matching $\Rightarrow$ HP1 $\Leftrightarrow$ boundary unitarity]\label{lem:bridge}
+Assume HP2 holds and let $W(s)$ be the scalar transfer (or a canonical scalar minor) associated with the conservative model for $I-X(s)$ on the strip $0<\Re s<1$. Suppose moreover that there exist a prime–graded datum $(\mathcal H;\{\Pi_n\})$ and an admissible $T\in\mathcal B(\mathcal H)$ such that, for some holomorphic nowhere–zero $E(s)$ on $0<\Re s<1$, one has the identity
+\begin{equation}\label{eq:match}
+\log W(s)\;=\;E(s)\;+\;\sum_{n\ge1}\frac{a(n)}{n^{s}}\qquad\text{with }a(n)=\Tr(\Pi_n T),
+\end{equation}
+in the sense of locally uniform convergence in vertical strips where both sides are defined.\footnote{Any choice of branch for $\log W$ is allowed provided it is fixed throughout a given strip.}
+Then the following are equivalent:
+\begin{enumerate}
+\item[\emph{(i)}] \textup{HP1} holds, i.e. $m_{1/2+iu}(t)=\Phi_{1/2+iu}(t)\,\overline{\Phi_{1/2+iu}(t)}$ with $|\Phi_{1/2+iu}(t)|=1$ a.e.\ in $t$.
+\item[\emph{(ii)}] \emph{Boundary unitarity of the transfer:} for almost every $u\in\mathbb R$ one has $|W(1/2+iu)|=1$.
+\end{enumerate}
+Moreover, when \eqref{eq:match} holds, the Dirichlet series side $F[T](s)$ encodes exactly the same singular support (in the sense of vertical oscillations) as the explicit–formula spikes arising from the Birman–Kreĭn phase of the conservative model.
+\end{lemma}
+
+\begin{proof}[Sketch]
+Under HP2, $W(s)$ is the scalar transfer of a conservative (unitary) colligation, hence the boundary values $W(1/2+iu)$ exist almost everywhere and satisfy $|W(1/2+iu)|=1$ if and only if the associated scattering phase is unitary on the boundary. In the Mellin model, HP1 is precisely the statement that the multiplication symbol admits an inner–outer factorization whose boundary values have unimodular modulus; this is equivalent to boundary unitarity of the transfer by the standard function–model correspondence for conservative realizations. Thus (i)$\Leftrightarrow$(ii).
+
+The matching \eqref{eq:match} says that (up to an entire factor $E$) the logarithm of the transfer is represented by a Dirichlet transform of prime–graded coefficients $a(n)$. Differentiating in $s$ identifies the vertical oscillations of $\log W$ with those of $F[T]$, and the conservative model’s Birman–Kreĭn phase measure produces the same spike set (integer multiples of prime logarithms) as in the explicit formula. This establishes the final claim.
+\end{proof}
+
+\begin{remark}[Falsifiability and normalization]
+Equation \eqref{eq:match} is a falsifiable target: given any concrete $(\mathcal H;\{\Pi_n\},T)$ one may compare $\partial_s\log W(s)$ with $\sum_n (-\log n)\,a(n)\,n^{-s}$ on vertical lines. The entire factor $E$ absorbs normalization choices (and, in applications, the known entire factor that separates $\det_2(I-X(s))$ from $\xi(s)$).
+\end{remark}
+
+\subsection*{C. Categorical motivation (optional and informal)}
+Let $\mathsf{Coll}_{\mathrm{cons}}$ denote a category of conservative colligations (objects: unitary block–operators realizing $I-X(s)$ up to unitary equivalence; morphisms: intertwining partial isometries), and let $\mathsf{PGD}$ denote a category of prime–graded data (objects: pairs $(\mathcal H;\{\Pi_n\})$ with an admissible $T$; morphisms: partial isometries intertwining the gradings and pushing $T$ forward). The map
+\[
+(\mathcal H;\{\Pi_n\},T)\ \longmapsto\ F[T](s)
+\]
+is a functor to the category of Dirichlet series with Euler–type structure, and Lemma~\ref{lem:bridge} identifies when such data \emph{reflect} the same boundary unitary class as a given conservative realization. It is reasonable to expect, in favorable settings, a correspondence between a subcategory of $\mathsf{Coll}_{\mathrm{cons}}$ (those whose scalar transfers satisfy a functional equation) and a subcategory of $\mathsf{PGD}$ (those whose Dirichlet transforms match \eqref{eq:match}). We refrain from formulating an equivalence of categories; the intended use is pragmatic: $F[T]$ serves as a bookkeeping interface that can be verified independently while HP1/HP2 are pursued in the operator model.
+
+\medskip
+\noindent\textbf{Summary.} The prime–graded Dirichlet transform $F[T]$ provides a clean, verifiable way to encode the same spectral information that the conservative model for $I-X(s)$ carries. When $F[T]$ matches the transfer as in \eqref{eq:match}, boundary unitarity of the transfer (a checkable analytic property) is equivalent to the inner–outer factorization demanded by HP1, giving a concrete bridge between the “prime side” and the Mellin/operator side of the program.
+
+
+\nocite{*}
+\bibliographystyle{unsrt}
+\bibliography{references}
+\end{document}

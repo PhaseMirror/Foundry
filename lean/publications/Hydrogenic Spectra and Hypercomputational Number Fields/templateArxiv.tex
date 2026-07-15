@@ -1,0 +1,573 @@
+\documentclass[11pt]{article}
+
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{physics}
+\usepackage{bbm}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{mathrsfs}
+\usepackage{bm}
+
+\title{Unified Prime-Weighted Evolution Operator \texorpdfstring{$\Xi(t)$}{}\\
+for Hydrogenic Spectra and Hypercomputational Number Fields}
+\author{Tyler van Osdol, Martin Gibson \& Ryan O. van Gelder \\ \\ Citizen Gardens \\ \\ The Foundation of Multiplicity}
+\date{April 3, 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We present a unified prime-weighted, log-periodic evolution operator
+$\Xi(t)$ acting simultaneously on (i) hydrogenic states expressed in
+Hydrogen Universe Standard (H-US) units and (ii) number-theoretic
+structures arising in the $\Phi$-Quantum Natural Number Singularity
+($\Phi$-QNNS) framework. On the physical side, $\Xi(t)$ deforms
+hydrogen $s$-state wavefunctions through a non-commutative product of
+prime-indexed dilation operators, yielding log-radius ($\log\rho$)
+spectral signatures with enhanced power at frequencies $\omega_p =
+\log p$. On the arithmetic side, the same prime weights and
+frequencies drive a gauge-theoretic recursion whose fixed points
+realise the hierarchy $\mathbb{N} \subset \mathbb{Q} \subset
+\mathbb{R} \subset \mathbb{C}$ as a stratified sheaf in a
+$\Phi$-topos. We give a compact mathematical definition of the unified
+$\Xi(t)$, outline its numerical instantiation in a truncated hydrogen
+basis, and sketch a Lean~4 formalisation strategy treating $\Xi(t)$ as
+a sheaf morphism over the combined number/physics topos.
+\end{abstract}
+\newpage
+\tableofcontents
+\newpage
+\section{Executive Summary}
+
+This report consolidates three strands of work:
+\begin{enumerate}[label=\textbf{(\alph*)}]
+  \item The Hydrogen Universe Standard (H-US), which introduces
+  hydrogen-based units (Hydrogen Radius $H_R$, Hydrogen Tick $H_T$,
+  Hydrogen Quantum $H_Q$) and a prime-indexed recursive tensor
+  framework for physical quantities.
+
+  \item The Alpha-Hydrogen programme, which deforms standard hydrogen
+  wavefunctions by an ``alpha'' factor $\alpha_n(\rho)$ to encode
+  multiplicity effects, especially in the radial sector of the
+  Schr\"odinger solution.
+
+  \item The $\Phi$-Quantum Natural Number Singularity ($\Phi$-QNNS),
+  where $\mathbb{N}$, $\mathbb{Q}$, $\mathbb{R}$, and $\mathbb{C}$
+  emerge as gauge-invariant or attractor states of a prime-indexed,
+  zeta-modulated tensor evolution, realised as a stratified sheaf in a
+  $\Phi$-topos.
+\end{enumerate}
+
+The central advancement is a \emph{unified prime-weighted evolution
+operator} $\Xi(t)$ with the following features:
+\begin{itemize}
+  \item A shared prime frequency $\omega_p = \log p$ for each prime
+  $p$, appearing both in the hydrogenic and number-field dynamics.
+
+  \item A zeta-modulated multiplicity field
+  \[
+  \Lambda_m(p,t)
+    = \Lambda_m^{(0)}(p)\,\Phi\,p^{-\alpha}
+      \,\Re\bigl[\zeta\bigl(\tfrac12 + i\,\omega_p t\bigr)\bigr],
+  \]
+  which couples primes, time $t$, and the golden ratio $\Phi$.
+
+  \item A non-commutative ordered product
+  \[
+  U_{\Xi}(t)
+    = \prod_{p\le p_{\max}}
+        \exp\bigl(-i\,w_p(t)\,\Lambda_m(p,t)\,\mathcal{D}_p\bigr),
+  \]
+  where $\mathcal{D}_p$ is a prime-indexed operator acting on the
+  relevant fiber (hydrogenic Hilbert space or number sheaf), and where
+  $w_p(t)$ contains a log-periodic drive.
+\end{itemize}
+
+On the hydrogen side, $U_{\Xi}(t)$ acts in a truncated $s$-state
+basis to produce an evolved state $\psi(t)$ whose probability density
+in $\log\rho$ exhibits enhanced power in frequency bands near
+$\omega_p = \log p$. On the $\Phi$-QNNS side, the same prime weights
+enter a covariant derivative whose vanishing picks out natural numbers
+and drives the extension to $\mathbb{Q}$, $\mathbb{R}$, and
+$\mathbb{C}$.
+
+Finally, we propose a Lean~4 formalisation route: define a stratified
+sheaf of fibers (number objects and H-US Hilbert sector), attach a
+prime-indexed family of operators, and encode $U_{\Xi}(t)$ as an
+ordered fold/product. This provides a shared logical substrate for
+both the physical and number-theoretic realizations of $\Xi(t)$.
+
+\section{Conceptual Overview}
+
+\subsection{Hydrogen Universe Standard and Alpha-Hydrogen}
+
+The Hydrogen Universe Standard (H-US) takes hydrogen as a metrological
+foundation, defining:
+\begin{align*}
+  H_R &:= \text{Bohr radius} \approx 0.529\times10^{-10}\,\mathrm{m},\\
+  H_T &:= \text{Rydberg period} \approx 4.14\times10^{-16}\,\mathrm{s},\\
+  H_Q &:= \text{ground-state energy} \approx 13.6\,\mathrm{eV}.
+\end{align*}
+These units induce dimensionless hydrogenic coordinates, such as
+\(\rho = r / H_R\), and support Lorentz-covariant transformations
+$T_{H\to\mathrm{SI}}$ via scalar factors $\kappa_X$.
+
+The Alpha-Hydrogen programme introduces an extra factor
+$\alpha_n(\rho)$ into the standard hydrogen radial solutions. For
+$l=0$ states, one may write
+\[
+  R_{n0}(\rho)
+    \propto e^{-\rho/n}
+    L^{1}_{n-1}\!\left(\frac{2\rho}{n}\right),
+\]
+and consider deformations
+\[
+  \tilde R_{n0}(\rho,t)
+    = \alpha_n(\rho;t)\,R_{n0}(\rho),
+\]
+where $\alpha_n$ is intended to encode prime-indexed multiplicity and
+recursive structure.
+
+\subsection{The $\Phi$-Quantum Natural Number Singularity}
+
+The $\Phi$-QNNS framework treats natural numbers as ground states of a
+prime-indexed $U(1)$ gauge field. For each prime $p$, one defines a
+gauge mode with frequency $\omega_p = \log p$ and a zeta-modulated
+amplitude. A typical gauge field term is
+\[
+  A_p(t)
+    = \Lambda_m\,p^{-\alpha}\,e^{i\omega_p t},
+\]
+with $\alpha > 1$, and the tensor $T$ obeys a covariant derivative
+equation schematically of the form
+\[
+  D_t T = \frac{dT}{dt} - i \sum_p A_p(t)\,(\cdots)\,T.
+\]
+Zeros of $D_t T$ occur at integer $t \in \mathbb{N}$ for simple
+choices of $T(t)$, and the framework extends to rationals,
+reals, and complex numbers via $p$-adic completions, adelic flows, and
+modular/monodromy structures.
+
+The number hierarchy
+\[
+  \mathbb{N} \subset \mathbb{Q} \subset \mathbb{R} \subset \mathbb{C}
+\]
+is then viewed as a stratified sheaf in a $\Phi$-topos, with primes
+serving as ``neurons'' in a cosmic neural network, and $\zeta$-related
+weights setting coupling strengths.
+
+\subsection{Unified Vision}
+
+The key observation is that both H-US/Alpha-Hydrogen and $\Phi$-QNNS
+use:
+\begin{itemize}
+  \item Prime frequencies $\omega_p = \log p$,
+  \item A multiplicity constant or field $\Lambda_m$,
+  \item A recursive, time-dependent operator $\Xi(t)$ acting on
+  tensor-like objects,
+  \item Sheaf/topos language for gluing local structures into a global
+  object.
+\end{itemize}
+We therefore introduce a single evolution operator $\Xi(t)$ whose
+action has two principal specializations:
+\begin{enumerate}[label=\textbf{(\roman*)}]
+  \item On the H-US hydrogen Hilbert space, $\Xi(t)$ deforms the
+  hydrogen $s$-state basis via a non-commutative product of prime
+  dilation operators, giving log-radius spectra with prime-enhanced
+  band power.
+
+  \item On the number-sheaf fibers, $\Xi(t)$ induces a gauge-like
+  recursion whose fixed points and attractors realise the number
+  hierarchy and $\Phi$-QNNS dynamics.
+\end{enumerate}
+
+\section{Unified Prime-Weighted Evolution Operator \texorpdfstring{$\Xi(t)$}{}}
+
+\subsection{Shared Prime Field and Weights}
+
+Let $P$ be the set of primes. For each $p \in P$, define the prime
+frequency
+\[
+  \omega_p := \log p.
+\]
+We introduce a \emph{zeta-modulated multiplicity field}
+\[
+  \Lambda_m(p,t)
+    := \Lambda_m^{(0)}(p)\,\Phi\,p^{-\alpha}
+      \,\Re\bigl[\zeta\bigl(\tfrac12 + i\,\omega_p t\bigr)\bigr],
+\]
+where:
+\begin{itemize}
+  \item $\Phi = \frac{1+\sqrt{5}}{2}$ is the golden ratio;
+  \item $\alpha > 1$ is a decay exponent ensuring convergence of prime
+  sums;
+  \item $\Lambda_m^{(0)}(p)$ is a static prime weight, such as
+  $\log p / \log p_{\max}$ in H-US/PIRTM.
+\end{itemize}
+We also define a log-periodic drive amplitude
+\[
+  w_p(t) := \frac{\log p}{p}\,\sin(\omega_p t).
+\]
+
+\subsection{Abstract Operator Form}
+
+Let $\mathcal{S}$ be a sheaf (or sheaf-like structure) whose stalks
+are:
+\begin{itemize}
+  \item Number objects: $\mathbb{N}$, $\mathbb{Q}$, $\mathbb{R}$,
+  $\mathbb{C}$,
+  \item The H-US hydrogenic Hilbert spaces (e.g.\ radial $s$-state
+  Hilbert spaces in H-US units).
+\end{itemize}
+For each prime $p$, we posit a self-adjoint operator $\mathcal{D}_p$
+acting on the stalk at hand:
+\begin{itemize}
+  \item On number stalks: $\mathcal{D}_p^{\text{num}}$ is the prime
+  gauge/tensor generator entering the $\Phi$-QNNS covariant derivative.
+
+  \item On hydrogenic H-US stalks: $\mathcal{D}_p^{\text{phys}}$ is
+  the prime-specific dilation/log-periodic operator (matrix $D_p$ in a
+  truncated hydrogen basis).
+\end{itemize}
+We write $\mathcal{D}_p$ generically, with the understanding that it
+restricts appropriately to each fiber.
+
+The unified evolution operator is then defined for a finite prime
+cutoff $p_{\max}$ by the ordered product
+\begin{equation}
+  U_{\Xi}(t)
+    := \prod_{p\in P_{\le p_{\max}}}
+        \exp\bigl(-i\,w_p(t)\,\Lambda_m(p,t)\,\mathcal{D}_p\bigr).
+  \label{eq:U_Xi_def}
+\end{equation}
+Here:
+\begin{itemize}
+  \item The product order over primes is fixed (e.g.\ ascending $p$),
+  making $U_\Xi(t)$ a non-commutative product.
+  \item On a given stalk/fiber $F$, $U_\Xi(t)$ is a (formal) unitary
+  when each $\mathcal{D}_p$ is self-adjoint.
+\end{itemize}
+
+\subsection{Specializations}
+
+\subsubsection{Number-Field / $\Phi$-QNNS Specialization}
+
+On the number-sheaf stalks, $\Xi(t)$ induces a covariant derivative
+\[
+  D_t T
+    = \frac{dT}{dt} - i\sum_{p} A_p(t)\,T,
+\]
+where 
+\[
+  A_p(t)
+    \propto \Lambda_m(p,t)\,e^{i\omega_p t}.
+\]
+In the $\Phi$-QNNS setting, one finds that $D_t T = 0$ picks out
+integer times $t \in \mathbb{N}$ for certain simple test tensors (e.g.
+$T(t) = t^2$), and further constructions lift this to $\mathbb{Q}$,
+$\mathbb{R}$, and $\mathbb{C}$ via $p$-adic, adelic, and modular
+structures.
+
+\subsubsection{Hydrogenic / H-US Specialization}
+
+On the H-US hydrogenic Hilbert space (e.g.\ truncated $s$-state basis
+$n=1,\dots,N$), $\mathcal{D}_p$ is realised numerically as a matrix
+combining a dilation operator with a $\cos(\log_p \rho)$ potential:
+\[
+  \mathcal{D}_p^{\text{phys}}
+    = \hat D_{\text{dilate}} + \epsilon \cos(\log_p \rho),
+\]
+where $\hat D_{\text{dilate}}$ corresponds (up to factors) to
+$\rho\,\partial_\rho + \tfrac12$, and $\epsilon$ controls the strength
+of the log-periodic modulation. Then $U_\Xi(t)$ acts on an initial
+state $\psi(0)$ to yield $\psi(t) = U_\Xi(t)\psi(0)$. In particular,
+for $\psi(0)$ taken as the ground $1s$ state, one can study the
+probability density $|\psi(\rho,t)|^2$ in $\log\rho$ and its Fourier
+spectrum.
+
+Numerical experiments (not reported here in detail) indicate:
+\begin{itemize}
+  \item Overlaps $|\langle 1s | \psi(t)\rangle|^2$ in a high but
+  nontrivial range (e.g.\ $\sim 0.85$--$0.95$), confirming that
+  $U_\Xi(t)$ is a structured deformation rather than a randomizer.
+
+  \item Enhanced power in frequency bands around $\omega = \log p$
+  compared to nearby non-prime control frequencies, as measured by
+  band power ratios and permutation tests.
+\end{itemize}
+These hydrogenic spectral features are then interpreted as a physical
+manifestation of the same prime-harmonic structure governing the
+number-field recursion.
+
+\subsection{Sheaf-Morphism Perspective}
+
+Let $\mathcal{S}$ denote the stratified sheaf whose fibers are the
+number objects and the H-US hydrogenic Hilbert spaces. Then:
+\[
+  \Xi(t) : \mathcal{S} \longrightarrow \mathcal{S}
+\]
+is a sheaf morphism whose local action on each stalk is given by the
+restriction of $U_\Xi(t)$ in Eq.~\eqref{eq:U_Xi_def} to that fiber.
+The unification is thus conceptual as well as operational: there is a
+single prime-weighted engine $\Xi(t)$ which, when viewed on different
+fibers, realises both number and spectral dynamics.
+
+\section{Numerical Implementation for Hydrogenic States}
+
+\subsection{Truncated Hydrogen Basis}
+
+We consider hydrogen $s$-states ($l=0$) with principal quantum number
+$n=1,\dots,N$ and radial coordinate $r$ (with $H_R$ set to $1$ for
+numerical convenience). The standard normalized radial wavefunctions
+$R_{n0}(r)$ are given by
+\[
+  R_{n0}(r)
+    = \mathcal{N}_n\,e^{-\rho/2} L_{n-1}^{1}(\rho),
+  \quad \rho = \frac{2r}{n},
+\]
+with $L_{n-1}^{1}$ an associated Laguerre polynomial and
+$\mathcal{N}_n$ a normalization constant. For numerical quadrature,
+one works with
+\[
+  \Phi_n(r) := R_{n0}(r)\,r,
+\]
+so that the radial measure becomes $\mathrm{d}r$ (the $r^2$ factor is
+absorbed).
+
+A suitable radial grid $r_i$ (e.g.\ uniform from $10^{-6}$ to $r_{\max}$)
+and weights $w_i$ are chosen to approximate integrals via
+\[
+  \int_0^{r_{\max}} f(r)\,r^2\,\mathrm{d}r
+    \approx \sum_i w_i\,f(r_i).
+\]
+
+\subsection{Construction of \texorpdfstring{$\mathcal{D}^{\text{phys}}_p$}{}}
+
+The dilation operator is approximated numerically by:
+\begin{align*}
+  \left(\hat D_{\text{dilate}} \Phi_j\right)(r)
+    &:= -i\left(r\,\partial_r + \tfrac12\right)\Phi_j(r),\\
+  \left(\mathcal{D}^{\text{phys}}_p \Phi_j\right)(r)
+    &:= \hat D_{\text{dilate}}\Phi_j(r) + \epsilon \cos(\log_p r)\,\Phi_j(r),
+\end{align*}
+with $\epsilon$ a small parameter controlling log-periodic driving.
+Matrix elements in the basis $\{\Phi_n\}_{n=1}^N$ are computed via
+\[
+  (D_p)_{ij}
+    = \langle i | \mathcal{D}^{\text{phys}}_p | j \rangle
+    \approx \sum_k w_k\,\Phi_i(r_k)\,
+        \left(\mathcal{D}^{\text{phys}}_p\Phi_j\right)(r_k),
+\]
+yielding an $N\times N$ Hermitian matrix $D_p$.
+
+\subsection{Evolution and Diagnostics}
+
+Given a list of primes $p \in \{2,3,5,\dots,p_{\max}\}$ and the
+weights $w_p(t)\Lambda_m(p,t)$, the evolution operator restricted to
+hydrogenic $s$-states is
+\[
+  U_{\Xi}^{\text{phys}}(t)
+    = \prod_{p\le p_{\max}} \exp\bigl(-i\,w_p(t)\,\Lambda_m(p,t)\, D_p\bigr),
+\]
+with the product taken in ascending $p$. For the initial vector
+$\psi(0) = (1,0,\dots,0)$ corresponding to the $1s$ state, we define
+\[
+  \psi(t) := U_{\Xi}^{\text{phys}}(t)\,\psi(0).
+\]
+
+Reconstructing the radial wavefunction on the grid via
+\[
+  \psi(r_k,t) \approx \sum_{n=1}^{N} \psi_n(t)\,\Phi_n(r_k)/r_k,
+\]
+one can study:
+\begin{enumerate}[label=\textbf{(\alph*)}]
+  \item The overlap with the initial state,
+  \[
+    \text{overlap}(t)
+      := |\langle 1s | \psi(t)\rangle|^2
+      = |\psi_1(t)|^2.
+  \]
+  \item The probability density in $\log r$, obtained by interpolating
+  $|\psi(r,t)|^2$ onto a uniform $\log r$ grid and computing the FFT
+  spectrum.
+
+  \item Band powers around target frequencies $\omega_p = \log p$ and
+  near-by control frequencies, to test for enhanced prime-band power.
+\end{enumerate}
+
+Permutation tests can then be used to assess the statistical
+significance of observed prime vs.\ control band power differences.
+
+\section{Illustrative Python Snippet}
+
+The following is a schematic Python snippet (omitting some details)
+that captures the hydrogenic specialization of $U_\Xi(t)$ with
+zeta-modulated weights:
+\begin{verbatim}
+import numpy as np
+from scipy.linalg import expm
+from mpmath import zeta, re
+
+def Lambda_m(p, t, p_max, alpha=1.6):
+    phi = (1 + np.sqrt(5.0)) / 2.0
+    Lambda0 = np.log(p) / np.log(p_max)
+    zeta_val = float(re(zeta(0.5 + 1j * np.log(p) * t)))
+    return Lambda0 * phi * (p ** (-alpha)) * zeta_val
+
+def w_p_times_Lambda(p, t, p_max):
+    omega = np.log(p)
+    w = (np.log(p) / p) * np.sin(omega * t)
+    return w * Lambda_m(p, t, p_max)
+
+def evolve_state(psi0, primes, t, Dp_matrices, p_max):
+    psi = psi0.copy()
+    for p, Dp in zip(primes, Dp_matrices):
+        coeff = w_p_times_Lambda(p, t, p_max)
+        U = expm(-1j * coeff * Dp)
+        psi = U @ psi
+    return psi
+\end{verbatim}
+
+Here, \verb|Dp_matrices| is a list of $D_p$ matrices constructed as
+described earlier, \verb|psi0| is the initial state, and
+\verb|primes| is the finite prime set. The logarithmic frequency
+analysis and permutation tests are implemented on top of the
+reconstructed $\psi(r,t)$ data.
+
+\section{Lean 4 Formalisation Sketch}
+
+\subsection{Fibers and Sheaf Structure}
+
+We introduce an inductive type representing the different fibers:
+\[
+  \texttt{XiFiber} :=
+    \{\texttt{natF}, \texttt{ratF}, \texttt{realF}, \texttt{complexF},
+    \texttt{husHilbert}\}.
+\]
+
+In Lean-like pseudocode:
+\begin{verbatim}
+inductive XiFiber
+| natF | ratF | realF | complexF | husHilbert
+deriving DecidableEq, Repr
+
+structure XiSheaf where
+  Section : XiFiber → Type
+  restrict :
+    {a b : XiFiber} → a = b → Section a → Section b
+\end{verbatim}
+
+\subsection{Prime Operators and Weights}
+
+We encode prime-indexed operators and multiplicity weights:
+
+\begin{verbatim}
+structure PrimeOp (S : XiSheaf) where
+  op : Nat → {f : XiFiber} → S.Section f → S.Section f
+  prime_only : ∀ n, Nat.Prime n → True
+
+structure XiWeights where
+  Lambda : Nat → Real → Real
+\end{verbatim}
+
+The unified $\Xi$-data:
+\begin{verbatim}
+structure UnifiedXi (S : XiSheaf) where
+  D : PrimeOp S
+  W : XiWeights
+\end{verbatim}
+
+\subsection{Ordered Evolution}
+
+A finite prime list encodes the cutoff $p_{\max}$. We define an
+ordered action on any given fiber:
+
+\begin{verbatim}
+def orderedXi
+  (S : XiSheaf)
+  (U : UnifiedXi S)
+  (primes : List Nat)
+  (t : Real) :
+  {f : XiFiber} → S.Section f → S.Section f :=
+by
+  intro f x
+  exact
+    primes.foldl
+      (fun acc p => U.D.op p acc)
+      x
+\end{verbatim}
+
+This definition abstracts away analytic details (such as the
+exponentials and unitarity) and captures the key structural fact: a
+prime-ordered evolution built from prime-indexed operators. The
+hydrogenic and number-field specializations correspond to choosing
+concrete types for \verb|S.Section husHilbert| and \verb|S.Section natF|
+etc., together with interpretations of \verb|U.D.op p|.
+
+\subsection{Initial Theorem Targets}
+
+Natural early lemmas and theorems include:
+\begin{itemize}
+  \item \textbf{Identity at empty cutoff:} if \verb|primes = []|,
+  then \verb|orderedXi S U [] t| is the identity on each fiber.
+
+  \item \textbf{Fiber preservation:} \verb|orderedXi| maps each fiber
+  \verb|f| to itself (no cross-fiber mixing without additional
+  structure).
+
+  \item \textbf{Functoriality in prime lists:} extending the prime list
+  corresponds to composing the corresponding operators, preserving the
+  order.
+
+  \item \textbf{Existence of specializations:} there exist instances of
+  \verb|XiSheaf| and \verb|UnifiedXi| corresponding to (a) the H-US
+  hydrogenic Hilbert sector and (b) the $\Phi$-QNNS number sheaf.
+\end{itemize}
+These Lean-level statements give a formally checked backbone for the
+informal mathematics presented earlier.
+
+\section{Conclusion and Outlook}
+
+We have:
+\begin{itemize}
+  \item Defined a unified prime-weighted evolution operator $\Xi(t)$
+  that acts as a sheaf morphism across both hydrogenic and
+  number-theoretic fibers.
+
+  \item Shown how this operator specialises to a matrix evolution on a
+  truncated hydrogen basis, delivering observable log-radius spectral
+  features at prime frequencies.
+
+  \item Sketched how the same prime weights and frequencies govern the
+  $\Phi$-QNNS recursion on number-sheaf layers, yielding natural numbers
+  and higher number systems as fixed points and attractors.
+
+  \item Outlined a Lean~4 encoding of fibers, prime operators, weights,
+  and ordered prime evolution, paving the way for machine-checked
+  reasoning about $\Xi(t)$.
+\end{itemize}
+
+Next steps include:
+\begin{enumerate}
+  \item A full parameter scan and statistical analysis of the hydrogenic
+  spectral signatures under $\Xi(t)$, especially with zeta-modulated
+  weights.
+
+  \item A more detailed categorical formulation of the sheaf $\mathcal{S}$
+  and the precise conditions under which $\Xi(t)$ is a natural
+  transformation.
+
+  \item Comprehensive Lean~4 development, tying together H-US primed
+  tensors, $\Phi$-QNNS number sheaves, and the unified $\Xi(t)$
+  framework.
+\end{enumerate}
+
+Taken together, these components support the view that multiplicity,
+primes, and log-periodicity provide a common engine for both physical
+spectra and the emergence of number systems.
+
+\nocite{*}
+\bibliographystyle{plainnat}
+\bibliography{references} 
+\end{document}

@@ -1,0 +1,2490 @@
+\documentclass[11pt]{article}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{geometry}
+\geometry{a4paper, margin=1in}
+\usepackage{enumitem}
+\usepackage{multicol} % Multi-column figures/tables
+\usepackage{natbib}
+\usepackage{hyperref} % Hyperlinks
+\usepackage{listings} % Code listings\
+\usepackage[pagewise]{lineno}\linenumbers
+\usepackage{authblk} % For structured affiliations
+% Define theorem style (optional)
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}
+% Theorem environments
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{conjecture}[theorem]{Conjecture}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\nolinenumbers
+
+% Title page for "One-Loop Health-Education System — Build Blueprint"
+% Compile with pdfLaTeX (UTF-8). No external fonts required.
+
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{array}
+\usepackage{setspace}
+\usepackage{hyperref}
+\hypersetup{
+  colorlinks=true,
+  linkcolor=black,
+  urlcolor=black,
+  pdftitle={One-Loop Health-Education System — Build Blueprint},
+  pdfauthor={Your Team},
+  pdfsubject={Intrinsica, Superhuman (S2H), M-Education HEP, Hologram, Citizen Gardens Overlay},
+  pdfkeywords={FHIR, xAPI, ULMS, HIPAA, GDPR, XR, CSL, PER, TCI, MLEM}
+}
+
+\begin{document}
+\begin{titlepage}
+  \centering
+
+  % Optional: left/right logos
+  % \begin{minipage}{0.48\textwidth}\flushleft
+  %   \includegraphics[height=1.1cm]{logo_left.pdf}
+  % \end{minipage}
+  % \hfill
+  % \begin{minipage}{0.48\textwidth}\flushright
+  %   \includegraphics[height=1.1cm]{logo_right.pdf}
+  % \end{minipage}
+
+  {\Large\textbf{One-Loop Health-Education System}}\\[6pt]
+  {\large Build Blueprint}\\[10pt]
+  {\normalsize Intrinsica \(\times\) Superhuman (S2H) \(\times\) M-Education HEP \(\times\) Hologram \(\times\) Citizen Gardens}\\[20pt]
+
+  \rule{\textwidth}{0.4pt}\\[-4pt]
+  \rule{\textwidth}{1.2pt}
+
+  \vspace{1.2cm}
+
+  \begin{tabular}{>{\bfseries}p{3.2cm} p{10.5cm}}
+    Document ID: & OLHES-BB-001 \\
+    Version:     & v1.1 \\
+    Status:      & Build-ready \\
+    Date:        & October 15, 2025 \\
+    Scope:       & Intrinsica data/AI plane; S2H digital clinic; HEP ULMS/XR; CG overlay \\
+    Keywords:    & FHIR R4, HL7 v2, LTI 1.3, xAPI, ULMS, XR, CSL, PER, TCI, MLEM, Ledger, De-ID \\
+  \end{tabular}
+
+  \vfill
+
+  \begin{tabular}{>{\bfseries}p{3.2cm} p{10.5cm}}
+    Authors:     & \textit{Ryan O. Van Gelder \& Kara Olivarria} \\
+    Affiliation: & Citizen Gardens: M-Education Health Nexus \\
+    Contact:     & \texttt{info@citizengardens.org} \\ \\
+    Partners:   &    Jimmy Danella, Juan Carlos Rodriguez,  Evgenia Leonova, Gianluca R. Pisano, \& Tyler van Osdol \\
+  \end{tabular}
+
+  \vspace{1.2cm}
+
+  \begin{spacing}{1.05}\small
+  \textbf{Abstract} \\
+  This blueprint specifies an end-to-end, closed-loop architecture linking clinical care and learning. It defines a single data plane (Intrinsica), dual experience skins (patient education | student learning), and shared governance. Interfaces include FHIR/xAPI, ULMS webhooks, and a permissioned ledger with consent-bound provenance.
+  \end{spacing}
+
+  \vfill
+
+  \begin{spacing}{1.05}\footnotesize
+  \textbf{Notice} \\
+  This document contains confidential information belonging to the project partners. Do not distribute, copy, or disclose without prior written permission. All ethics and privacy commitments apply to any derived workproducts. Subject to HIPAA/GDPR and local sovereignty policies. © Citizen Gardens.
+  \end{spacing}
+
+\end{titlepage}
+
+
+
+
+\newpage
+\section*{0. System Synopsis}
+
+\subsection*{0.1 Cohesive One-Loop}
+A single, sovereign Data/AI plane powers a dual-skin experience: \emph{Clinical} (Superhuman Health, S2H Digital Clinic) and \emph{Education} (M-Education HEP/ULMS). S2H micro-brands and clinical protocols run as the primary applications on this plane, while a context-first record layer (Hologram Health) preserves narrative, consent, and safety at the point of care. The loop is continuous: \emph{context} $\rightarrow$ \emph{features \& risk} $\rightarrow$ \emph{actions in care/learning} $\rightarrow$ \emph{outcomes} $\rightarrow$ \emph{retrain} $\rightarrow$ \emph{equity \& performance dashboards}.
+
+\subsection*{0.2 Roles at a Glance}
+\textbf{Intrinsica (Data/AI).} Consented lakehouse, ingest$\rightarrow$feature$\rightarrow$risk$\rightarrow$digital-twin, FHIR/HL7 APIs, DID-bound access, permissioned ledger, online/batch inference.\\
+\textbf{S2H Digital Clinic (Clinical apps).} Protocolized care via micro-brands (\emph{Youth Fountain}, \emph{VaricardStar}, \emph{Neurotoxicity}, \emph{BodyArt}, \emph{Diet/Skin}); least-privilege re-ID enclave.\\
+\textbf{Hologram Health (Record).} \emph{HoloGraph} (patient) and \emph{Spectra} (provider); staged MVPs \emph{SafeCare}, \emph{BridgeCare}, \emph{PrecisionCare}; \emph{Visit Pack} for BYOC.\\
+\textbf{HEP/ULMS (Education).} Dual-skinned micromodules keyed to live risk; telemetry (attempts, latency\_ms, CSL, TCI); de-identified egress with DP aggregates.\\
+\textbf{ADEC--SCM (Computable physiology).} Latent coherence $R(t)$ ODE, number-theoretic SCM, fused signal $S(t)$, UKF/Bayesian estimation, MPC/RL control.\\
+\textbf{MQEM/PIRTM (Prime-indexed spectral).} $\zeta_p(s)$ features and prime-indexed tensor models; PNSM noise suppression; spectral drift probes; lawful recursion.
+
+\subsection*{0.3 Intrinsica Data/AI Plane}
+\textbf{Pipeline.} Multi-source ingest (wearables, EHR, surveys, omics) $\rightarrow$ feature store (batch/stream) $\rightarrow$ risk registry $\rightarrow$ digital twin \& simulation.\\
+\textbf{Interoperability.} FHIR R4/HL7 endpoints; event bus for \texttt{risk.update}, \texttt{session.attempted}, \texttt{privacy.audit}; de-ID data products for HEP/ULMS.\\
+\textbf{Trust fabric.} DIDs for identity, purpose-bound consent at field-level, immutable ledger provenance, sovereign offline bundles for edge sync.\\
+\textbf{Ops targets.} Online inference p50 $<80$\,ms; ingest$\rightarrow$feature p95 $<5$\,min; ledger commit p95 $<2$\,s; privacy pass-rate $\ge 0.98$; DLQ $<0.1\%$.
+
+\subsection*{0.4 Hologram Health Context Layer}
+\textbf{Agents.} \emph{HoloGraph} (patient) and \emph{Spectra} (provider) render explain-first, consent-scoped context with sub-30s time-to-context.\\
+\textbf{Products.} \emph{SafeCare} (safety \& portability), \emph{BridgeCare} (care coordination), \emph{PrecisionCare} (advanced precision workflows).\\
+\textbf{Visit Pack.} Verifiable, minimal context shared via QR/NFC; BYOC enables zero-friction uptake before deep integration.\\
+\textbf{Safety.} Explainable alerts, cross-medication and protocol checks, provenance receipts, multilingual views.
+
+\subsection*{0.5 S2H Clinical Applications}
+\textbf{Micro-brands.} \emph{Youth Fountain} (breath-hold longevity), \emph{VaricardStar} (HRV), \emph{Neurotoxicity} (exposure screening), \emph{BodyArt} (XR rehab), \emph{Diet/Skin} (gut–skin–brain).\\
+\textbf{Loop role.} Consume live risks and twin scenarios; emit outcomes and adherence signals; operate in a re-ID enclave with explain-first recommendations and CSL gates.
+
+\subsection*{0.6 HEP/ULMS Learning Layer}
+\textbf{Function.} Convert risk and context into micro-learning for patients and providers; support XR MaaS modules.\\
+\textbf{Schema.} \emph{PER}, \emph{MLEM}, \emph{TCI}, \emph{CSLState}, \emph{ReciprocityDelta}, \emph{PiLīlaMilestone}.\\
+\textbf{Interfaces.} LTI~1.3, xAPI, ULMS webhooks (\texttt{/attempted}, \texttt{/module-complete}, \texttt{/csl-change}).\\
+\textbf{Governance.} De-identified egress only, DP aggregates, equity dashboards with acceptance bands.
+
+\subsection*{0.7 Computable Physiology (ADEC--SCM)}
+\textbf{Dynamic coherence.} $R(t)\in[0,3]$ obeys
+\[
+\dot{R}(t)=\lambda\,(3-R(t))-\mu\,\big(I(t)-1\big)^{\alpha}+w_t,
+\]
+with shock input $I(t)\!\ge\!1$.\\
+\textbf{Static coherence.} $R_{\text{num}}(n)$ over primes in $[n+1,2n-2]$ and violation score $C(n)$.\\
+\textbf{Fused metric.} $S(t)=w_{\text{dyn}}R(t)+w_{\text{num}}R_{\text{num}}(n(t))-\eta_C C(n(t))$, with $n(t)\propto 1/\mathrm{TMB}(t)$.\\
+\textbf{Estimation/control.} UKF/EKF for state, hierarchical Bayes for $(\lambda,\mu,\alpha)$, and MPC/RL to maintain $R(t)$ above threshold; DP-protected aggregates to education and population views.
+
+\subsection*{0.8 Prime-Indexed Spectral Stack (MQEM/PIRTM)}
+\textbf{Spectral priors.} Prime-indexed zeta features $\zeta_p(s)$ and recursive operators shape lawful spectral evolution and interpretable embeddings; PIRTM encodes prime-indexed tensor provenance.\\
+\textbf{Noise suppression.} PNSM attenuates structured and multiplicative noise; guardrails trigger classical fallbacks if stability bounds are violated.\\
+\textbf{Diagnostics.} Prime-indexed drift probes for non-stationarity; spectral fingerprints for rollout safety; CSL-aware gating under uncertainty.
+
+\subsection*{0.9 One-Loop Flow}
+\emph{Hologram context} $\rightarrow$ \emph{Intrinsica features \& risk} $\rightarrow$ \emph{S2H clinical actions} $\&$ \emph{HEP/ULMS learning} $\rightarrow$ \emph{outcomes} $\rightarrow$ \emph{Intrinsica retrain} $\rightarrow$ \emph{DP-safe, de-ID analytics to equity dashboards}; ADEC--SCM governs preventive control; MQEM/PIRTM supplies prime-indexed spectral priors and suppression for robust modeling and explanations.
+
+\subsection*{0.10 Safety \& SLO Invariants}
+Privacy pass-rate $\ge 0.98$; zero PHI at HEP ingress; online inference p50 $<80$\,ms; ingest$\rightarrow$feature p95 $<5$\,min; ledger commit p95 $<2$\,s; sovereignty sync $<24$\,h; DLQ $<0.1\%$; explain-first safety acknowledged in Spectra; no Sev-1 incidents.
+
+
+% Section 1 — Architecture at a Glance (expanded)
+\section{Introduction}
+
+This introduction orients the reader to each core component in the one-loop Healthcare Nexus and names the curator responsible for its evolution, integrity, and cross-domain integration. Each subsection summarizes mission, inputs \& outputs, core interfaces, operating constraints, and success criteria.
+
+
+
+\subsection{Intrinsica: Features \& Risk on a Sovereign Data/AI Plane \,(Curator: Juan Carlos Rodriguez)}
+\textbf{Mission.} Transform multi-source signals into reliable features, risk vectors, and a privacy-preserving digital twin that powers both care and learning loops.\\
+\textbf{Pipeline.} \emph{Ingest} (wearables, surveys, EHR, omics) $\rightarrow$ \emph{Feature Store} (batch/stream) $\rightarrow$ \emph{Risk Registry} $\rightarrow$ \emph{Twin/Simulation}.\\
+\textbf{Trust fabric.} Decentralized Identifiers (DIDs), consent registry, permissioned ledger with hash-on-write provenance, purpose-bound policies at field level.\\
+\textbf{Interfaces.} FHIR/HL7, event bus topics (\texttt{risk.update}, \texttt{session.attempted}, \texttt{privacy.audit}), ULMS webhooks, de-ID export for HEP.\\
+\textbf{Ops targets.} Online inference p50 $<80$\,ms; ingest$\rightarrow$feature p95 $<5$\,min; ledger commit p95 $<2$\,s; privacy pass-rate $\ge 0.98$.\\
+\textbf{Success criteria.} Stable feature drift profiles, accurate risk deltas, reproducible twin trajectories, and zero PHI leakage to education zones.
+
+\subsection{S2H Digital Clinic: Clinical Protocols \& Micro-Brands \,(Curator: Evgenia Leonova)}
+\textbf{Mission.} Deliver longitudinal, protocolized care with sovereign user data and explainable AI assistance.\\
+\textbf{Micro-brands.} \emph{Youth Fountain} (breath-hold longevity training), \emph{VaricardStar} (HRV), \emph{Neurotoxicity} (exposure screening), \emph{BodyArt} (XR rehab), \emph{Diet/Skin} (gut–skin–brain models).\\
+\textbf{Inputs.} Risk vectors and twin scenarios from Intrinsica; patient context via Hologram; adherence and biometrics from devices.\\
+\textbf{Outputs.} Protocol actions, scheduling, tele-coaching notes, device adjustments, and outcome observations back to Intrinsica.\\
+\textbf{Safety.} Least-privilege re-identification enclave; explain-first recommendations; CSL gate checks before nudges or escalations.\\
+\textbf{Success criteria.} Adherence uplift, risk reduction (e.g., sleep or metabolic stress), and no-severity-1 safety incidents.
+
+\subsection{M-Education HEP/ULMS: Learning Actions \,(Curator: Kara Olivarria \& Ryan van Gelder)}
+\textbf{Mission.} Deliver dual-skinned micro-learning that turns risk into understanding and behavior change for both patients and providers.\\
+\textbf{Schema primitives.} \emph{PER}, \emph{MLEM}, \emph{TCI}, \emph{CSLState}, \emph{ReciprocityDelta}, \emph{PiLīlaMilestone}.\\
+\textbf{Inputs.} Live risk vectors, Hologram context, and S2H protocol states.\\
+\textbf{Outputs.} Personalized modules (web/XR), reflective prompts, and telemetry: attempts, latency\_ms, CSL compliance, TCI.\\
+\textbf{Interfaces.} LTI~1.3, xAPI, ULMS webhooks (\texttt{/attempted}, \texttt{/module-complete}, \texttt{/csl-change}).\\
+\textbf{Governance.} De-identified egress only, with purpose tags and DP-safe aggregates; equity dashboards with acceptance bands at S2 gates.\\
+\textbf{Success criteria.} Engagement $\ge 0.70$, measurable risk-delta after module completion, equity gap closure $\ge 0.15$.
+
+\subsection{Hologram Health: Context-First Portable Record \,(Curator: Jimmy Danella)}
+\textbf{Mission.} Preserve and transport clinical context with patient agency. Provide explain-first safety views at the point of care and a consent-scoped Visit Pack for rapid adoption.\\
+\textbf{Scope.} Two agents: \emph{HoloGraph} (patient-facing) and \emph{Spectra} (provider-facing). Three staged products: \emph{SafeCare} (safety \& portability), \emph{BridgeCare} (care coordination), \emph{PrecisionCare} (context-rich precision workflows).\\
+\textbf{Inputs.} De-identified analytics from Intrinsica; patient-generated data from S2H micro-brands; clinical artifacts (labs, meds, problems) via FHIR/HL7; consent and purpose bindings.\\
+\textbf{Outputs.} Context-preserving timelines, explainable \emph{why-now} flags, and Visit Pack payloads (QR/NFC) with verifiable provenance.\\
+\textbf{Interfaces.} FHIR R4 resources (\texttt{Observation, MedicationStatement, CarePlan, Provenance}); DID-bound OAuth2; signed envelope export to edge.\\
+\textbf{Operating constraints.} PII never exits patient-controlled scopes without purpose-aligned consent; sub-30s time-to-context for first render; ledgered audit receipts.\\
+\textbf{Success criteria.} Reduction in duplicate or contraindicated orders, increased reconciliation completeness, provider comprehension of rationale (explainability acknowledgement).
+
+\subsection{ADEC--SCM: Preventive Control via Computable Physiology \,(Curator: Gianluca R. Pisano)}
+\textbf{Mission.} Provide a mechanistic health state that forecasts coherence breakdowns and prescribes stabilizing actions.\\
+\textbf{State model.} Latent coherence $R(t)\in[0,3]$ with shock input $I(t)\ge 1$:
+\[
+\dot{R}(t)=\lambda\,(3-R(t))-\mu\,\big(I(t)-1\big)^{\alpha}+w_t.
+\]
+\textbf{Static coherence.} Number-theoretic metric $R_{\text{num}}(n)$ over primes in $[n+1,2n-2]$ and a coprimality violation score $C(n)$.\\
+\textbf{Fused signal.} $S(t)=w_{\text{dyn}}R(t)+w_{\text{num}}R_{\text{num}}(n(t))-\eta_C\,C(n(t))$, with $n(t)\propto 1/\mathrm{TMB}(t)$.\\
+\textbf{Estimation/control.} UKF/EKF for $R(t)$, hierarchical Bayes for $(\lambda,\mu,\alpha)$, and MPC/RL for policy $\pi_\phi$ that keeps $R(t)$ above threshold; DP aggregates for learning export.\\
+\textbf{Success criteria.} Predictive AUROC for impending coherence drops, constrained risk under policy, and interpretable attributions in Spectra.
+
+\subsection{MQEM/PIRTM: Prime-Indexed Spectral Priors \& Suppression \,(Curators: Tyler van Osdol \& Ryan van Gelder)}
+\textbf{Mission.} Increase robustness and explainability of learning with prime-indexed spectral structure, lawful recursion, and noise control.\\
+\textbf{Spectral formalism.} Prime-indexed zeta features $\zeta_p(s)$ and recursive operators align embeddings with lawful spectral evolution; auditability via prime-indexed tensor models (PIRTM).\\
+\textbf{Noise suppression.} Prime-indexed suppression (PNSM) attenuates structured and multiplicative noise in biosignals and feature streams; stability guardrails trigger classical fallbacks.\\
+\textbf{Fusion points.} Pre-feature denoising, drift probes for non-stationarity, spectral diagnostics for model rollouts, and CSL-aware gating of uncertain recommendations.\\
+\textbf{Success criteria.} Lower effective noise $S<1$, reduced feature drift, improved calibration and counterfactual stability, and prime-indexed provenance for audits.
+
+\section{Purpose and Operating Tenets}
+
+\subsection*{1.1 Purpose}
+Close the loop between clinical care and learning on a single sovereign Data/AI plane with dual experience skins (S2H Clinical, HEP/ULMS Education) and shared governance. The system converts context into features and risk, triggers actions in care and education, measures outcomes, and retrains models to improve equity and performance.
+
+\subsection*{1.2 Operating Tenets}
+
+\paragraph{Shared Governance}
+\begin{itemize}
+  \item Joint decision rights across Clinical (S2H), Education (HEP/ULMS), Data/AI (Intrinsica), and Record (Hologram) stewards.
+  \item Change control via RFCs mapped to policy, model, schema, and interface versions.
+  \item RACI matrix enforced for deployments, model promotions, and privacy exceptions.
+\end{itemize}
+
+\paragraph{Privacy-by-Design}
+\begin{itemize}
+  \item Purpose-bound, field-level policies with deny-by-default outside the declared purpose.
+  \item Data minimization at ingest; de-identification for all education egress.
+  \item PHI confined to the S2H re-identification enclave; zero PHI at HEP ingress.
+\end{itemize}
+
+\paragraph{DID-Bound Consent}
+\begin{itemize}
+  \item Decentralized Identifiers (DIDs) for subjects, devices, and services.
+  \item Consent objects are versioned, machine-verifiable, and enforced at read \& write.
+  \item Revocation and expiry propagate to caches, offline bundles, and subscribers.
+\end{itemize}
+
+\paragraph{Deterministic Traceability}
+\begin{itemize}
+  \item Hash-on-write provenance ledger linking data, model, policy, and action.
+  \item Reproducible pipelines: ingest $\rightarrow$ feature $\rightarrow$ risk $\rightarrow$ action $\rightarrow$ outcome.
+  \item Machine-checkable audits with signed envelopes and tamper-evident receipts.
+\end{itemize}
+
+\paragraph{BYOC Visit Pack (Zero-Friction Adoption)}
+\begin{itemize}
+  \item Verifiable, minimal context shared via QR/NFC from Hologram \emph{HoloGraph}.
+  \item Sub-30\,s time-to-context for providers in \emph{Spectra} without prior EHR integration.
+  \item Progressive enhancement from \emph{SafeCare} $\rightarrow$ \emph{BridgeCare} $\rightarrow$ \emph{PrecisionCare}.
+\end{itemize}
+
+\paragraph{Safety and Ethical Guardrails}
+\begin{itemize}
+  \item CSL checks (clarity, sovereignty, lawfulness) precede nudges and protocol changes.
+  \item Explain-first recommendations with rationales and confidence intervals.
+  \item Equity policies with acceptance bands; differentially private aggregates for learning.
+\end{itemize}
+
+\paragraph{Offline-First Sovereignty}
+\begin{itemize}
+  \item Signed \emph{firebook} bundles for edge operation; CRDT merges on reconnect.
+  \item Sovereign sync windows with conflict detection and operator prompts.
+\end{itemize}
+
+\paragraph{Interoperability Commitments}
+\begin{itemize}
+  \item FHIR R4/HL7 for clinical artifacts; LTI~1.3/xAPI for learning telemetry.
+  \item Event topics for risk, sessions, CSL, reciprocity, milestones, and privacy audit.
+\end{itemize}
+
+\paragraph{SLO Invariants}
+\begin{itemize}
+  \item Online inference p50 $<80$\,ms; ingest$\rightarrow$feature p95 $<5$\,min.
+  \item Ledger commit p95 $<2$\,s; sovereignty sync $<24$\,h; DLQ $<0.1\%$.
+  \item Privacy pass-rate $\ge 0.98$; zero PHI at HEP ingress; no Sev-1 incidents.
+\end{itemize}
+
+\section{Layered Architecture}
+
+\subsection{Experience}
+\paragraph{Dual-Skin XR ``MaaS''}
+\begin{itemize}
+  \item Micromodules render as \emph{Clinical} (S2H) or \emph{Education} (HEP/ULMS) skins with shared IDs and telemetry.
+  \item Instant browser access (WebXR/PWA); graceful degradation to 2D when device constraints are detected.
+  \item Immersive consults support multimodal prompts, bilingual captions, and accessibility overlays.
+  \item Telemetry: \texttt{attempts}, \texttt{latency\_ms}, \texttt{CSLState}, \texttt{TCI}, and error codes.
+\end{itemize}
+
+\paragraph{Hologram Experience (SafeCare \textrightarrow{} BridgeCare \textrightarrow{} PrecisionCare)}
+\begin{itemize}
+  \item \textbf{SafeCare:} Visit Pack (QR/NFC) with consent-scoped, explain-first summaries for <30s time-to-context.
+  \item \textbf{BridgeCare:} Care-coordination timelines, handoff checklists, medication and protocol safety lenses.
+  \item \textbf{PrecisionCare:} Context-rich views for twin simulations, risk explanations, and multilingual rationale.
+\end{itemize}
+
+\subsection{Services}
+\paragraph{Core Services}
+\begin{itemize}
+  \item \textbf{Personalization:} Ranks actions from live risk, twin scenarios, and learner state.
+  \item \textbf{CSL Gate:} Enforces clarity, sovereignty, and lawfulness before nudges or protocol changes.
+  \item \textbf{Reciprocity Balancer:} Limits cross-app pressure; resolves contention windows for interventions.
+  \item \(\boldsymbol{\pi}\)\textbf{Līla Progression:} Progress engine that schedules milestones and reflective loops.
+\end{itemize}
+
+\paragraph{ULMS Webhooks}
+\begin{itemize}
+  \item \texttt{POST /hooks/attempted} \(\rightarrow\) idempotent attempt receipts.
+  \item \texttt{POST /module-complete} \(\rightarrow\) outcomes, reflection tokens, and score payloads.
+  \item \texttt{POST /csl-change} \(\rightarrow\) gate transitions, rationale, and policy hashes.
+\end{itemize}
+
+\subsection{Data/AI}
+\paragraph{Pipelines}
+\begin{itemize}
+  \item Ingest (wearables/EHR/omics) \(\rightarrow\) feature store (batch/stream) \(\rightarrow\) \textbf{Risk API}.
+  \item Online inference with A/B routes and shadow deployment; drift probes for data, label, and concept drift.
+  \item Digital-twin outputs for what-if simulation and pathway selection; twin-economy artifacts (counterfactual reports).
+\end{itemize}
+
+\paragraph{Targets}
+\begin{itemize}
+  \item Online inference p50 $<80$\,ms; ingest\(\rightarrow\)feature p95 $<5$\,min.
+  \item Stable feature versions with reproducible lineage; automatic rollback on drift breach.
+\end{itemize}
+
+\subsection{Interop}
+\paragraph{Standards \& Contracts}
+\begin{itemize}
+  \item Clinical: FHIR R4 (Observation, CarePlan, MedicationStatement, QuestionnaireResponse), HL7 v2 for feeds.
+  \item Learning: LTI~1.3 + xAPI for launch and statement capture.
+  \item Identity/Security: DID-bound OAuth2, mTLS between zones, signed envelopes.
+\end{itemize}
+
+\paragraph{Event Bus \& Ledger Topics}
+\begin{itemize}
+  \item \texttt{intrinsica.risk.update.v1}, \texttt{ulms.session.attempted.v1}, \texttt{csl.state.change.v1},
+        \texttt{reciprocity.delta.v1}, \texttt{pilila.milestone.v1}, \texttt{privacy.audit.event.v1}.
+  \item Schema registry with versioned Avro/JSON; policy-hash attached via \texttt{Provenance}.
+\end{itemize}
+
+\subsection{Governance}
+\paragraph{Privacy \& Purpose Binding}
+\begin{itemize}
+  \item Consent objects bound to DIDs; field-level purpose tags; deny-by-default outside declared scopes.
+  \item PHI confined to the S2H re-identification enclave; zero PHI at HEP ingress.
+\end{itemize}
+
+\paragraph{Oversight \& Equity}
+\begin{itemize}
+  \item Continuous privacy audit stream with machine-checkable receipts; privacy pass-rate KPI defined and monitored.
+  \item Equity and neurodiversity policies embedded in gating and evaluation; acceptance bands at S2 release.
+\end{itemize}
+
+
+\section{Mathematical Engines}
+
+\subsection{ADEC--SCM (Computable Physiology)}
+
+\paragraph{State definition and dynamics}
+Let the latent \emph{structural coherence} be $R(t)\in[0,3]$. Its continuous-time evolution under exogenous shock $I(t)\ge 1$ is
+\begin{align}
+\dot{R}(t) &= \lambda\,(3-R(t)) - \mu\,\big(I(t)-1\big)^{\alpha} + w_t,
+\quad w_t \sim \mathcal{N}(0,\sigma_w^2),
+\label{eq:adec-ode}
+\end{align}
+with subject-specific parameters $\theta=\{\lambda,\mu,\alpha\}$ and bounded reflecting dynamics at the interval endpoints.
+
+\paragraph{Static number-theoretic coherence and fusion}
+Define a static \emph{Structural Coherence Metric} $R_{\mathrm{num}}(n)$ on the prime set $P_n \subset [n+1,2n-2]$ and a coprimality violation score $C(n)$. Link molecular burden to the index via
+\[
+n(t) = \max\{3,\ \lfloor \kappa_{\mathrm{TMB}}/\mathrm{TMB}(t)\rfloor\}.
+\]
+Fuse dynamic and static coherence into a single control signal
+\begin{align}
+S(t) &= w_{\mathrm{dyn}}\,R(t) + w_{\mathrm{num}}\,R_{\mathrm{num}}\!\big(n(t)\big) - \eta_C\,C\!\big(n(t)\big),
+\label{eq:fusedS}
+\end{align}
+with $w_{\mathrm{dyn}},w_{\mathrm{num}},\eta_C \ge 0$ learned from data.
+
+\paragraph{State-space model and estimation}
+Discretize \eqref{eq:adec-ode} with step $\Delta t$:
+\begin{align}
+R_{k+1} &= R_k + \Delta t\left[\lambda\,(3-R_k) - \mu\,\big(I_k-1\big)^{\alpha}\right] + \omega_k,\quad \omega_k\sim\mathcal{N}(0,Q), \\
+y_k &= h(R_k) + v_k,\quad v_k\sim\mathcal{N}(0,R),
+\end{align}
+where $y_k$ collects observables (e.g., gene-expression entropy, HRV summaries, symptom indices). Estimate $\{R_k\}$ with UKF/EKF; treat $\theta$ as slow-varying with random-walk prior or infer via hierarchical Bayes:
+\[
+\theta_i \sim \mathcal{N}(\bar{\theta},\Sigma_\theta), \quad \bar{\theta}\sim \Pi_0,\ \Sigma_\theta\sim \mathcal{W}^{-1}(\Psi,\nu).
+\]
+
+\paragraph{Prediction and control (MPC/RL)}
+Let $a_k\in\mathcal{A}$ denote an intervention (e.g., micro-lesson, dosage adjustment, XR session). Predict $R_{k+1}=\mathcal{F}(R_k,I_k,a_k;\theta)$ and solve over horizon $H$:
+\begin{align}
+\min_{\{a_{k:k+H-1}\}} \quad & \sum_{j=0}^{H-1}\Big[\underbrace{\max(0,r_{\min}-\hat{R}_{k+j+1})^2}_{\text{coherence shortfall}} + \lambda_a\,\|a_{k+j}\|_2^2\Big] \\
+\text{s.t.}\quad & \hat{R}_{k+j+1}=\mathcal{F}(\hat{R}_{k+j},I_{k+j},a_{k+j};\hat{\theta}),\quad a_{k+j}\in\mathcal{A},\ \forall j, \\
+& \mathbb{P}\{\hat{R}_{k+j+1} \ge r_{\min}\}\ge 1-\epsilon\quad\text{(chance constraint)}.
+\end{align}
+When model mismatch is high, switch to RL policy $\pi_\phi(y_k,\hat{R}_k)\to a_k$ with safety shields enforcing CSL gates.
+
+\paragraph{Privacy-preserving learning exports}
+Release cohort aggregates of $\{R_k,S_k\}$ under $(\varepsilon,\delta)$-DP (Gaussian mechanism) to education dashboards; never export PHI.
+
+\paragraph{APIs}
+\noindent\textbf{Estimation}
+\begin{verbatim}
+/adec/v1/estimate
+Request: {
+  "subject_did": "did:example:123",
+  "observations": [{ "t": 1732230012, "y": {...} }, ...],
+  "inputs": [{ "t": 1732230012, "I": {...}, "a": {...} }, ...]
+}
+Response: {
+  "t": 1732230012,
+  "R_hat": 2.37,
+  "Rdot_hat": -0.041,
+  "theta_hat": { "lambda": 0.62, "mu": 0.28, "alpha": 1.4 },
+  "S": 1.91,
+  "uncertainty": { "var_R": 0.022, "cov": [[...]] },
+  "provenance_hash": "0x..."
+}
+\end{verbatim}
+
+\noindent\textbf{Policy recommendation}
+\begin{verbatim}
+/policy/v1/recommend
+Request: {
+  "subject_did": "did:example:123",
+  "horizon": 7,
+  "constraints": { "r_min": 1.8, "epsilon": 0.05 },
+  "candidate_actions": ["xr_breath_session","diet_magnesium","tele_checkin"]
+}
+Response: {
+  "k": 1732230012,
+  "a_star": "xr_breath_session",
+  "schedule": [
+    {"t": 1732233612, "a": "xr_breath_session"},
+    {"t": 1732320012, "a": "diet_magnesium"}
+  ],
+  "expected_trajectory": [
+    {"t": 1732233612, "R_hat": 2.41, "S": 1.95},
+    {"t": 1732320012, "R_hat": 2.49, "S": 2.03}
+  ],
+  "rationales": ["improves resilience λ via respiratory training"]
+}
+\end{verbatim}
+
+\paragraph{SLOs and acceptance}
+\begin{itemize}
+  \item Estimation latency p50 $<80$\,ms; policy synthesis p95 $<300$\,ms for $H\le 14$.
+  \item Calibration error $\le 0.1$ RMSE for $R$ on holdout; well-calibrated uncertainty (PICP within $\pm 5\%$).
+  \item Safety: $\Pr(R_{k+1}<r_{\min})\le \epsilon$ under recommended policy on validation cohorts.
+  \item DP budget tracking: $\varepsilon_{\mathrm{monthly}}\le \varepsilon^\star$; no PHI in education exports.
+\end{itemize}
+
+\subsection{MQEM/PIRTM + Prime-Indexed Zeta}
+
+\paragraph{Spectral foundations}
+Let $G_p=(V_p,E_p)$ denote a prime-indexed graph partition (index $p$ a prime) constructed over signals or embeddings, and let $L_p$ be its positive semi-definite operator (e.g., normalized Laplacian or kernelized Gram). Define the \emph{prime-indexed spectral zeta} as
+\begin{equation}
+\zeta_p(s) \;=\; \sum_{i=1}^{d_p} \big(\lambda^{(p)}_i + \varepsilon\big)^{-s}, 
+\qquad s>0,\ \varepsilon>0,
+\label{eq:prime-zeta}
+\end{equation}
+which aggregates the spectrum $\{\lambda^{(p)}_i\}_{i=1}^{d_p}$ into scale-sensitive moments. The \textbf{AZL law} (empirical alignment) expresses a linear relation between zeta-slopes and log-spectrum statistics,
+\begin{equation}
+\frac{\partial}{\partial s}\log \zeta_p(s)\bigg|_{s=s^\star} \;\approx\; \alpha \,\overline{\log \lambda_p} \;+\; \beta, 
+\qquad \alpha\approx 0.50,\ \beta\approx 2.50,
+\label{eq:azl}
+\end{equation}
+providing a stable, low-dimensional diagnostic for drift and anomaly detection.
+
+\paragraph{Recursive evolution and lawful updates}
+Let $F(\cdot)$ be a contractive feature map (e.g., whitening or batch-normalized projection) and $G_p(t)$ a prime-indexed graph state built from the current batch/stream at time $t$. Define the lawful recursive operator
+\begin{equation}
+\Xi(t{+}1) \;=\; \zeta_p\!\big(s(t)\big)\cdot F\!\big(G_p(t)\big),
+\label{eq:lawful-recursion}
+\end{equation}
+where $s(t)$ is a temperature-like control inferred from calibration targets. Equation~\eqref{eq:lawful-recursion} constrains updates to lie in a zeta-aligned cone, improving reproducibility and auditability of spectral geometry in embeddings.
+
+\paragraph{Prime-indexed noise suppression (PNSM)}
+For a stream $x_t\in\mathbb{R}^d$ with structured and multiplicative noise, define a prime-indexed filter $R_p(\cdot)$ (e.g., graph-wavelet shrinkage on $G_p$). The PNSM recursion is
+\begin{equation}
+x_{t+1} \;=\; S\,x_t \;+\; (1{-}S)\,R_p(x_t), 
+\qquad 0<S<1,
+\label{eq:pns}
+\end{equation}
+with exponential decay factor $S$ ensuring contraction. Stability holds if $\|R_p(x)-R_p(y)\|\le \kappa\|x-y\|$ for some $\kappa<\frac{1}{1-S}$, yielding the bound
+\[
+\|x_{t+1}-x^\star\| \;\le\; \big(S+(1{-}S)\kappa\big)\,\|x_t-x^\star\|.
+\]
+PNSM is applied pre-feature and pre-inference to reduce effective noise and sharpen calibration.
+
+\paragraph{Selberg--MQEM multiplicative fits}
+Spectral ratio traces and higher-order moments are modeled with multiplicative fits of the form
+\begin{equation}
+\mathcal{M}_p(k) \;\propto\; k^{-\alpha}\,\exp\!\big(-\beta\,(\log k)^2\big),
+\qquad \alpha\approx 0.50,\ \beta\approx 2.50,
+\label{eq:selberg-mqem}
+\end{equation}
+which empirically separate nominal from anomalous regimes and support post-quantum-tolerant classification by emphasizing multiplicative structure over raw coordinates.
+
+\paragraph{PIRTM: prime-indexed tensor models for provenance}
+Represent feature evolutions as prime-indexed tensors $\mathcal{T}^{(p)}\in\mathbb{R}^{d_1\times\cdots\times d_m}$ with slice-level provenance. Each update attaches $(p,s(t),h)$ where $h$ is a hash-on-write to the ledger, enabling prime-granular replay, ablation, and audit. PIRTM provides:
+\begin{itemize}
+  \item \textbf{Decomposability}: CP/Tucker with prime-sliced regularization;
+  \item \textbf{Traceability}: deterministic re-computation from $(p,s(t),h)$;
+  \item \textbf{Policy checks}: CSL-aware masks on tensor modes before export.
+\end{itemize}
+
+\paragraph{Integration points}
+\begin{itemize}
+  \item \textbf{Denoising}: Apply PNSM~\eqref{eq:pns} to biosignals and embeddings before feature extraction and inference.
+  \item \textbf{Stability}: Enforce lawful recursion~\eqref{eq:lawful-recursion} in model updates; reject steps violating AZL bands~\eqref{eq:azl}.
+  \item \textbf{Monitoring}: Track $\zeta_p(s^\star)$ and its slope as drift probes; alert when deviations exceed control limits.
+  \item \textbf{Anomaly detection}: Use $\mathcal{M}_p(k)$~\eqref{eq:selberg-mqem} as a reference curve; flag multiplicative outliers.
+  \item \textbf{Provenance}: Store PIRTM slice hashes alongside model/version metadata on the permissioned ledger.
+\end{itemize}
+
+\paragraph{SLOs \& safeguards}
+\begin{itemize}
+  \item PNSM denoising latency p50 $<10$\,ms per $10^4$ dims; inference latency budget preserved ($<$80\,ms p50 end-to-end).
+  \item Stability gate: reject updates if $S\!\notin\!(0,1)$ or if AZL residual $>\tau_{\text{azl}}$.
+  \item Provenance completeness: $100\%$ of PIRTM updates bear valid ledger hashes; reproducibility checks nightly.
+\end{itemize}
+
+
+\section{One-Loop Reference Dataflow}
+
+\subsection{Actors and Zones}
+\begin{itemize}
+  \item \textbf{Edge/Patient}: wearables, mobile apps, XR micromodules.
+  \item \textbf{Intrinsica (Data/AI plane)}: ingest $\rightarrow$ features $\rightarrow$ risk registry $\rightarrow$ digital twin.
+  \item \textbf{HEP/ULMS (Education)}: personalization and telemetry capture for micro-learning/XR.
+  \item \textbf{S2H Digital Clinic (Clinical)}: protocol engine, tele-care, device orchestration (re-ID enclave).
+  \item \textbf{Hologram Health (Record)}: HoloGraph (patient) and Spectra (provider), Visit Pack.
+\end{itemize}
+
+\subsection{Event Sequence}
+\begin{enumerate}
+  \item \textbf{Signals} arrive from wearables/EHR/omics $\rightarrow$ \emph{Intrinsica.Ingest}.
+  \item \textbf{Featureization} (batch/stream) $\rightarrow$ \emph{Feature Store} with lineage.
+  \item \textbf{Risk update} via \emph{Risk API}; twin sim produces candidate pathways.
+  \item \textbf{Personalization} emits ULMS/XR actions; ULMS pushes micromodule launch.
+  \item \textbf{Clinical protocol} selection in S2H; orders, coaching, or device updates executed.
+  \item \textbf{Outcomes} and adherence written back as FHIR Observations/Events.
+  \item \textbf{Retrain loop} consumes labeled deltas; drift probes gate promotions.
+  \item \textbf{De-ID aggregates} published to HEP dashboards (DP-safe).
+  \item \textbf{Hologram render}: Visit Pack carries consent-scoped context; Spectra shows explain-first safety.
+\end{enumerate}
+
+\subsection{Minimal Message Contracts}
+\paragraph{Risk Update (event bus)}
+\begin{verbatim}
+topic: intrinsica.risk.update.v1
+payload: {
+  "subject_did": "did:example:123",
+  "risk_vector": {"sleep": 0.71, "metabolic": 0.64, "cardio": 0.52},
+  "twin_hint": {"pathways": ["sleep_hygiene_xr","diet_magnesium"]},
+  "provenance": {"feature_ver": "fs-2025.10", "model_ver": "risk-7.2.1", "hash": "0x..."}
+}
+\end{verbatim}
+
+\paragraph{ULMS Telemetry}
+\begin{verbatim}
+POST /hooks/attempted | /module-complete | /csl-change
+{
+  "subject_pseudonym": "ulms:abc123",
+  "module_id": "xr.sleep.101",
+  "attempt_id": "att-0099",
+  "metrics": {"latency_ms": 126, "TCI": 0.82, "CSLState": "clear"},
+  "outcome": {"score": 0.94, "reflection": "2-sentence summary"},
+  "policy_hash": "0x...", "ts": 1732230012
+}
+\end{verbatim}
+
+\paragraph{Clinical Outcome to Intrinsica (FHIR)}
+\begin{verbatim}
+Resource: Observation
+code: { "coding": [{"system": "loinc", "code": "hrv-7d-z"}] }
+subject: { "identifier": {"type": "did", "value": "did:example:123"} }
+valueQuantity: { "value": -1.2, "unit": "z" }
+provenance: { "policy": "purpose:care", "hash": "0x..." }
+\end{verbatim}
+
+\subsection{Flow SLOs \& Quality Gates}
+\begin{itemize}
+  \item Ingest$\rightarrow$feature p95 $<5$\,min; risk API p50 $<80$\,ms.
+  \item ULMS webhook p95 $<150$\,ms with idempotent receipts.
+  \item Twin sim batch p95 $<2$\,min; online what-if $<300$\,ms.
+  \item Drift guard: halt promotion if PSI$>$\(\tau\) or AUC/$\Delta$calibration degrades $>5\%$.
+\end{itemize}
+
+\subsection{Privacy, Sovereignty, Provenance}
+\begin{itemize}
+  \item PHI restricted to S2H enclave; education egress de-identified with DP aggregates only.
+  \item DID-bound consent enforced at read/write; revocations propagate to caches and offline bundles.
+  \item Hash-on-write ledger for data, model, and policy versions; machine-checkable receipts.
+\end{itemize}
+
+\subsection{Failure Modes \& Compensations}
+\begin{itemize}
+  \item \textbf{Webhook failure}: retry with backoff; store-and-forward queue; exactly-once via idempotency keys.
+  \item \textbf{Model drift}: automatic rollback to last green model; Spectra flags increased uncertainty.
+  \item \textbf{Offline client}: firebook bundles accumulate; CRDT merge on reconnect with conflict prompts.
+\end{itemize}
+
+\subsection{Visual Flow (Optional)}
+\noindent\textit{Requires} \verb|\usepackage{tikz}|, \verb|\usetikzlibrary{arrows.meta,positioning,shapes.geometric}|.\\[2pt]
+\begin{tikzpicture}[
+  node distance=10mm and 10mm,
+  box/.style={rectangle, rounded corners, draw, align=center, minimum width=32mm, minimum height=7mm},
+  >={Stealth[length=2mm]}
+]
+\node[box] (edge) {Wearables /\\ EHR / Omics};
+\node[box, right=of edge] (ingest) {Intrinsica\\ Ingest};
+\node[box, right=of ingest] (feat) {Feature Store};
+\node[box, right=of feat] (risk) {Risk API \&\\ Digital Twin};
+\node[box, above right=9mm and 14mm of risk] (ulms) {ULMS + XR\\ Personalization};
+\node[box, below right=9mm and 14mm of risk] (s2h) {S2H Protocols};
+\node[box, right=25mm of ulms] (out) {Outcomes \&\\ Telemetry};
+\node[box, right=25mm of s2h] (retrain) {Retrain \&\\ Drift Probes};
+\node[box, below=12mm of retrain] (deid) {De-ID Aggregates\\ HEP Dashboards};
+\node[box, above=12mm of ulms] (holo) {Hologram\\ Visit Pack / Spectra};
+
+\draw[->] (edge) -- (ingest);
+\draw[->] (ingest) -- (feat);
+\draw[->] (feat) -- (risk);
+\draw[->] (risk) -- (ulms);
+\draw[->] (risk) -- (s2h);
+\draw[->] (ulms) -- (out);
+\draw[->] (s2h) -- (out);
+\draw[->] (out) -- (retrain);
+\draw[->] (retrain) -- (deid);
+\draw[->] (holo) |- (ulms);
+\draw[->] (holo) |- (s2h);
+\draw[->] (risk) |- (holo);
+\end{tikzpicture}
+
+\section{S2H Micro-brands (XR ``MaaS'')}
+
+\subsection{Overview}
+Superhuman Health (S2H) micro-brands are delivered as XR \emph{Modules-as-a-Service} with dual skins (Clinical, Education). Each brand consumes live risk vectors and digital-twin hints from Intrinsica, renders explain-first flows through Hologram, and writes outcomes as FHIR events. Unified telemetry captures \texttt{attempts}, \texttt{latency\_ms}, \texttt{CSLState}, and \texttt{TCI}. Neurodiversity accommodations are provided via \emph{EchoBraid} pacing at S2 release.
+
+\subsection{Cross-Brand Telemetry \& Contracts}
+\paragraph{ULMS Webhooks}
+\begin{itemize}
+  \item \texttt{POST /hooks/attempted}: idempotent receipt for launches.
+  \item \texttt{POST /module-complete}: outcomes, reflection token, scores.
+  \item \texttt{POST /csl-change}: CSL gate transitions with rationale \& policy hash.
+\end{itemize}
+\paragraph{Minimal payload}
+\begin{verbatim}
+{
+  "module_id": "xr.yf.breathhold.v1",
+  "attempt_id": "att-2451",
+  "metrics": {"latency_ms": 132, "TCI": 0.81, "CSLState": "clear"},
+  "outcome": {"score": 0.93, "adherence": true},
+  "context": {"skin": "clinical", "locale": "en-US"},
+  "policy_hash": "0x...", "ts": 1732230012
+}
+\end{verbatim}
+
+\subsection{Youth Fountain (Breath-Hold Longevity)}
+\paragraph{Mission} Respiratory training and CO\textsubscript{2} tolerance to improve resilience and sleep quality.
+\paragraph{Inputs} HRV trend, sleep vector, breath-hold baselines; Hologram context.
+\paragraph{Outputs} Session schedule, technique adjustments, adherence markers; FHIR Observations (e.g., breath\_hold\_duration, SpO\textsubscript{2} nadir).
+\paragraph{Mechanistic link} In ADEC, sessions increase effective resilience $\lambda$; controller prefers $a=\texttt{xr\_breath\_session}$ when $\partial R/\partial a > 0$.
+\paragraph{Safety} CSL gate for dizziness, hypoxia flags; Spectra presents rationale and abort criteria.
+\paragraph{KPIs} $\uparrow$ adherence, $\downarrow$ sleep\_risk, $\uparrow R(t)$ trend toward band.
+
+\subsection{VaricardStar HRV}
+\paragraph{Mission} Autonomic assessment and vagal training guidance.
+\paragraph{Inputs} rMSSD, pNN50, circadian stability; device quality flags.
+\paragraph{Outputs} HRV\_7d\_z, recovery score; coaching prompts; FHIR Observations with provenance.
+\paragraph{Mechanistic link} HRV depressions drive shock input $I(t)$ in ADEC; MPC schedules restorative micro-actions.
+\paragraph{Safety} Artifact suppression via PNSM; uncertainty escalation in Spectra when low signal quality.
+
+\subsection{Neurotoxicity Scanner}
+\paragraph{Mission} Identify exposure risk; connect diet, environment, and behavior to actionable avoidance.
+\paragraph{Inputs} Barcode/label scans, location context, household inventory.
+\paragraph{Outputs} Exposure score, substitution recommendations, micro-lesson triggers.
+\paragraph{Mechanistic link} Exogenous shock $I_{\mathrm{exo}}(t)$ term in ADEC; $R(t)$ forecasts inform cadence of education.
+\paragraph{Safety} CSL lawfulness checks for recommendations; de-identified exports only.
+
+\subsection{BodyArt (XR Rehab)}
+\paragraph{Mission} Motor recovery and functional strength with form-aware coaching.
+\paragraph{Inputs} Pose streams, ROM metrics, pain scales.
+\paragraph{Outputs} Reps, tempo, form-corrections; adherence \& fatigue markers.
+\paragraph{Mechanistic link} Improves $R(t)$ via reduced inflammatory load; twin sim selects progression schemes.
+\paragraph{Safety} Joint-load thresholds; Spectra flags contraindications from meds/conditions.
+
+\subsection{Diet/Skin (Gut–Skin–Brain)}
+\paragraph{Mission} Anti-inflammatory nutrition and dermatologic balance with behavior supports.
+\paragraph{Inputs} Food logs, microbiome panels (optional), symptom diaries.
+\paragraph{Outputs} Menu swaps, timing guidance, topical routines; reflection prompts.
+\paragraph{Mechanistic link} Observational channel to $h(R)$ via gene-expression entropy and symptom indices; controller balances nudge load via Reciprocity.
+\paragraph{Safety} Allergy and interaction checks; CSL clarity requirement before habit shifts.
+
+\subsection{EchoBraid for Neurodiversity (S2 Exit)}
+\paragraph{Purpose} ASD-centered pacing with spectral ``envelopes,'' turn-taking, and predictable transitions.
+\paragraph{Controls}
+\begin{itemize}
+  \item \textbf{Pacing envelope} $E_k$: limits module length and stimulus density per attempt.
+  \item \textbf{Turn-taking} $\tau$: explicit call-and-response intervals to stabilize TCI.
+  \item \textbf{Stabilizers}: Fibonacci/prime-indexed timing micro-variations to avoid overload.
+\end{itemize}
+\paragraph{Activation} Enabled at S2 release for eligible cohorts; controlled via \texttt{/csl-change} and module config.
+\paragraph{Acceptance} No increase in aborts; $\uparrow$ completion rate for ASD-flagged users; TCI variance $\downarrow$.
+
+\subsection{Interfaces \& Data}
+\begin{itemize}
+  \item \textbf{FHIR}: \texttt{Observation}, \texttt{QuestionnaireResponse}, \texttt{CarePlan}, \texttt{Provenance}.
+  \item \textbf{Events}: \texttt{intrinsica.risk.update.v1}, \texttt{ulms.session.attempted.v1}, \texttt{privacy.audit.event.v1}.
+  \item \textbf{Security}: DID-bound OAuth2, mTLS, signed envelopes; PHI only in S2H enclave.
+\end{itemize}
+
+\subsection{SLOs \& Quality Gates}
+\begin{itemize}
+  \item Launch-to-first-frame $<$ 1.5\,s p50 (cached), 3.0\,s p95.
+  \item ULMS webhook p95 $<$ 150\,ms; idempotent receipts.
+  \item Privacy pass-rate $\ge 0.98$; zero PHI at HEP ingress.
+  \item Equity acceptance bands met; ASD EchoBraid enabled for S2 cohorts.
+\end{itemize}
+
+
+\section{Education Constructs}
+
+\subsection{Overview}
+The M-Education HEP/ULMS layer turns live risk and context into targeted learning. It stores outcomes in a privacy-preserving schema and exposes telemetry for control and audit. Core primitives: \textbf{PER}, \textbf{MLEM}, \textbf{TCI}, \textbf{CSLState}, \textbf{ReciprocityDelta}, \textbf{PiLīlaMilestone}. KPIs quantify engagement, risk-delta, adherence, equity gap, and privacy pass-rate.
+
+\subsection{Schema Primitives}
+\paragraph{PER — Personalized Education Record}
+\begin{itemize}
+  \item \textbf{Purpose}: Learner-centric ledger of assigned modules, attempts, outcomes, reflections.
+  \item \textbf{Core fields}: \texttt{per\_id}, \texttt{subject\_pseudonym}, \texttt{risk\_vector\_snapshot}, \texttt{assigned\_modules[]}, \texttt{attempts[]}, \texttt{privacy\_policy\_hash}.
+  \item \textbf{Constraints}: De-identified; PHI excluded; DID reference optional as blinded token.
+\end{itemize}
+
+\paragraph{MLEM — Module Learning Evidence Map}
+\begin{itemize}
+  \item \textbf{Purpose}: Links module objectives to evidentiary items and scoring rules.
+  \item \textbf{Core fields}: \texttt{module\_id}, \texttt{objectives[]}, \texttt{evidence\_items[]}, \texttt{rubric}, \texttt{scoring\_fn}.
+  \item \textbf{Outcome types}: quiz, reflection, behavioral telemetry, provider acknowledgment.
+\end{itemize}
+
+\paragraph{TCI — Topic Coherence Index}
+\begin{itemize}
+  \item \textbf{Definition}: Alignment of module content vector $c$ and learner need vector $\ell$:
+  \[
+  \mathrm{TCI}=\frac{c\cdot \ell}{\|c\|\,\|\ell\|}\in[0,1].
+  \]
+  \item \textbf{Usage}: Gate launches if $\mathrm{TCI}<\tau_{\mathrm{tci}}$; log as telemetry.
+\end{itemize}
+
+\paragraph{CSLState — Clarity, Sovereignty, Lawfulness}
+\begin{itemize}
+  \item \textbf{States}: \texttt{clear}, \texttt{clarity\_needed}, \texttt{sovereign\_hold}, \texttt{lawful\_block}.
+  \item \textbf{Transition fields}: \texttt{from}, \texttt{to}, \texttt{rationale}, \texttt{policy\_hash}, \texttt{ts}.
+\end{itemize}
+
+\paragraph{ReciprocityDelta}
+\begin{itemize}
+  \item \textbf{Definition}: Budget change vector controlling nudge load across apps:
+  \[
+  \Delta r = r_{t+1}-r_t,\quad r\in\mathbb{R}^m \ \text{(brand/channel budgets)}.
+  \]
+  \item \textbf{Usage}: Avoid over-notification; enforce cross-brand fairness.
+\end{itemize}
+
+\paragraph{PiLīlaMilestone}
+\begin{itemize}
+  \item \textbf{Purpose}: Progression checkpoints binding actions, reflection, and assessment.
+  \item \textbf{Core fields}: \texttt{milestone\_id}, \texttt{scheduled\_ts}, \texttt{due\_ts}, \texttt{criteria}, \texttt{reflection\_prompt}, \texttt{status}.
+\end{itemize}
+
+\subsection{Data Model (Minimal)}
+\begin{verbatim}
+PER {
+  per_id: "per-001",
+  subject_pseudonym: "ulms:abc123",
+  risk_vector_snapshot: {"sleep":0.71,"metabolic":0.64},
+  assigned_modules: ["xr.sleep.101","diet.magnesium.quickstart"],
+  attempts: [ Attempt {...} ],
+  privacy_policy_hash: "0x..."
+}
+
+Attempt {
+  attempt_id: "att-0099",
+  module_id: "xr.sleep.101",
+  t_start: 1732230001, t_end: 1732230121,
+  telemetry: {latency_ms:126, TCI:0.82, CSLState:"clear"},
+  outcome: {score:0.94, reflection:"..."},
+  reciprocity_delta: {"s2h.x":-0.2,"ulms.y":+0.1},
+  provenance: {policy_hash:"0x...", model_ver:"risk-7.2.1"}
+}
+
+MLEM {
+  module_id: "xr.sleep.101",
+  objectives: ["link sleep and longevity","apply 2 micro-habits"],
+  evidence_items: ["quiz.q1","reflection.r1"],
+  scoring_fn: "0.7*quiz + 0.3*reflection"
+}
+\end{verbatim}
+
+\subsection{Interfaces}
+\paragraph{Launch (LTI/xAPI)}
+\begin{itemize}
+  \item LTI~1.3 launch with \texttt{subject\_pseudonym}, \texttt{module\_id}, \texttt{policy\_hash}.
+  \item xAPI statements for \texttt{attempted}, \texttt{completed}, \texttt{answered}.
+\end{itemize}
+
+\paragraph{ULMS Webhooks}
+\begin{verbatim}
+POST /hooks/attempted
+POST /module-complete
+POST /csl-change
+\end{verbatim}
+
+\subsection{KPIs and Formulas}
+\paragraph{Engagement}
+Active share over eligible cohort:
+\[
+\mathrm{Engagement} = \frac{\#\{\text{subjects with }\ge 1\ \text{attempt}\}}{\#\{\text{eligible subjects}\}}.
+\]
+Optional time-weighted variant:
+\[
+\mathrm{Engagement}_T = \frac{\sum_i \min(t^{(i)}_{\mathrm{active}},T_{\max})}{N\,T_{\max}}.
+\]
+
+\paragraph{Risk-Delta}
+Change in targeted risk dimension $r$ pre/post completion windows:
+\[
+\Delta r = \overline{r}_{\mathrm{pre}} - \overline{r}_{\mathrm{post}},\quad
+\overline{r}_{\mathrm{pre}}=\frac{1}{W}\sum_{k=t-W}^{t-1} r_k,\ \
+\overline{r}_{\mathrm{post}}=\frac{1}{W}\sum_{k=t}^{t+W-1} r_k.
+\]
+Report with CI and stratify by CSLState.
+
+\paragraph{Adherence}
+\[
+\mathrm{Adherence} = \frac{\#\{\text{completed modules}\}}{\#\{\text{prescribed modules}\}}.
+\]
+
+\paragraph{Equity Gap}
+Disparity across sensitive groups $g\in\mathcal{G}$ on KPI $K$:
+\[
+\mathrm{EquityGap}(K)=\max_{g\in\mathcal{G}} \mathbb{E}[K|g]-\min_{g\in\mathcal{G}} \mathbb{E}[K|g].
+\]
+Target reduction $\ge 0.15$ absolute.
+
+\paragraph{Privacy Pass-Rate}
+\[
+\mathrm{PrivacyPass}=\frac{\#\{\text{events passing policy/consent checks}\}}
+{\#\{\text{total events}\}} \ge 0.98.
+\]
+
+\subsection{Governance and Privacy}
+\begin{itemize}
+  \item De-identified egress only; no PHI in ULMS. Purpose-bound tags at field level.
+  \item DP aggregates for cohort analytics; track monthly $\varepsilon$ budget.
+  \item Machine-checkable receipts: each webhook includes \texttt{policy\_hash} and signature.
+\end{itemize}
+
+\subsection{Quality Gates}
+\begin{itemize}
+  \item $\mathrm{Engagement}\ge 0.70$ on target cohorts.
+  \item Median $\Delta r>0$ for targeted risk; CI excludes 0 at $p<0.05$ on pilot.
+  \item $\mathrm{Adherence}\ge 0.80$ for assigned sequences with EchoBraid when flagged.
+  \item $\mathrm{EquityGap}(K)$ reduced by $\ge 0.15$ or within acceptance band.
+  \item $\mathrm{PrivacyPass}\ge 0.98$; zero PHI at HEP ingress.
+\end{itemize}
+
+
+\section{Clinical Context and Record}
+
+\subsection{Overview}
+Hologram Health provides a portable, context-preserving health record with consent-scoped views and offline capability. It bridges patient-held data and clinical systems without requiring prior EHR integration. Two agents deliver the experience: \emph{HoloGraph} for patients and \emph{Spectra} for providers. A \emph{Bring Your Own Context} (BYOC) \textbf{Visit Pack} enables sub-30\,s time-to-context at the point of care.
+
+\subsection{Agents and Views}
+\paragraph{HoloGraph (patient agent)}
+\begin{itemize}
+  \item Controls consent, purpose, and sharing scope; generates Visit Pack tokens (QR/NFC).
+  \item Renders timelines, medications, allergies, labs, device trends, and learning completions.
+  \item Multilingual, accessibility-ready; works online/offline with signed firebook bundles.
+\end{itemize}
+
+\paragraph{Spectra (provider agent)}
+\begin{itemize}
+  \item Explain-first safety: shows \emph{why-now} flags, interaction checks, and alternative suggestions.
+  \item Context lenses: current risks, recent actions (clinical \& learning), adherence, and uncertainty bands.
+  \item Launch-to-context SLO: $<$30\,s (p95) from Visit Pack scan; verifiable provenance receipts.
+\end{itemize}
+
+\subsection{Staged MVPs}
+\paragraph{SafeCare}
+\begin{itemize}
+  \item Zero-friction portability via Visit Pack; med/allergy reconciliation; critical safety alerts.
+  \item Minimal payload by default; deep links to fuller context on demand.
+\end{itemize}
+\paragraph{BridgeCare}
+\begin{itemize}
+  \item Care-transition support: handoffs, checklists, appointments, tasks, and messaging hooks.
+  \item Displays recent S2H protocol steps, outcomes, and pending actions.
+\end{itemize}
+\paragraph{PrecisionCare}
+\begin{itemize}
+  \item Twin overlays, risk vector rationales, and what-if previews for protocol choices.
+  \item Cohort situational awareness with de-identified comparators and equity indicators.
+\end{itemize}
+
+\subsection{BYOC Visit Pack}
+\paragraph{Purpose and Scope}
+\begin{itemize}
+  \item Share \emph{just-enough} context at encounter start; expand with patient consent.
+  \item Transport-agnostic (QR/NFC/deeplink); works offline with time-bounded validity.
+\end{itemize}
+
+\paragraph{Minimal Payload (illustrative)}
+\begin{verbatim}
+{
+  "vp_id": "vp-9f3a",
+  "holder_did": "did:example:123",
+  "issued_at": 1732230012,
+  "expires_at": 1732237212,
+  "consent": {"purpose": "care", "scopes": ["meds","allergies","alerts"]},
+  "context": {
+    "alerts": ["contraindication: NSAID x anticoagulant"],
+    "recent_risks": {"sleep": 0.71, "metabolic": 0.64},
+    "recent_actions": ["xr.sleep.101", "diet.magnesium.quickstart"]
+  },
+  "provenance": {"policy_hash": "0x...", "ledger_tx": "0x..."},
+  "sig": "0xholder_signature"
+}
+\end{verbatim}
+
+\subsection{Interoperability and Data Model}
+\paragraph{Clinical resources}
+\begin{itemize}
+  \item FHIR R4: \texttt{Patient} (pseudonymous), \texttt{Observation}, \texttt{MedicationStatement}, 
+        \texttt{AllergyIntolerance}, \texttt{CarePlan}, \texttt{QuestionnaireResponse}, \texttt{Provenance}.
+  \item HL7 v2 feeds supported for labs and ADT where applicable.
+\end{itemize}
+\paragraph{Security and Identity}
+\begin{itemize}
+  \item DID-bound OAuth2 for access control; mTLS between zones; signed envelopes on export.
+  \item Revocation and expiry propagate to caches and firebook bundles.
+\end{itemize}
+
+\subsection{Data Lifecycle and Boundaries}
+\begin{itemize}
+  \item PHI remains in the S2H re-identification enclave; education egress is de-identified with DP aggregates.
+  \item Visit Pack and Spectra views materialize from policy-filtered snapshots with hash-on-write provenance.
+  \item Intrinsica ingests consented artifacts for features/risk; writes back outcomes with \texttt{Provenance}.
+\end{itemize}
+
+\subsection{Safety, Explainability, and Audit}
+\begin{itemize}
+  \item CSL gates enforce clarity, sovereignty, and lawfulness before displaying nudges or protocol changes.
+  \item Spectra shows rationales, confidence intervals, and alternative options when conflicts exist.
+  \item Immutable audit: each render and disclosure logs policy hash, purpose, viewer, and content classes.
+\end{itemize}
+
+\subsection{Offline-First Operation}
+\begin{itemize}
+  \item Firebook bundles: signed, time-scoped subsets of record and Visit Pack, with CRDT merge on reconnect.
+  \item Conflict prompts when merges alter safety-critical fields (e.g., med changes).
+\end{itemize}
+
+\subsection{SLOs and Quality Gates}
+\begin{itemize}
+  \item Time-to-context $<$30\,s p95 from Visit Pack scan; first meaningful paint $<$1.5\,s p50.
+  \item Privacy pass-rate $\ge 0.98$; zero PHI at HEP ingress; $100\%$ provenance entries signed.
+  \item Explain-first acknowledgement recorded for medication and protocol decisions.
+\end{itemize}
+
+\section{Safety, Sovereignty, Ethics}
+
+\subsection{CSL Guardrails (Clarity, Sovereignty, Lawfulness)}
+\begin{itemize}
+  \item \textbf{Precondition checks} before any nudge, recommendation, or protocol change:
+  \[
+  \mathrm{CSLPass}=\mathbf{1}\{\mathrm{clarity}\wedge \mathrm{sovereignty}\wedge \mathrm{lawfulness}\}=1.
+  \]
+  \item \textbf{Clarity}: human-readable rationale, inputs, and expected effects are rendered; uncertainty bands shown.
+  \item \textbf{Sovereignty}: DID-bound consent covers purpose, scope, and retention; revocations take effect system-wide.
+  \item \textbf{Lawfulness}: purpose tags match policy; export paths de-identified unless in S2H enclave with active consent.
+\end{itemize}
+
+\subsection{Ledgered Provenance}
+\begin{itemize}
+  \item Hash-on-write, append-only ledger captures \emph{data $\rightarrow$ model $\rightarrow$ policy $\rightarrow$ action} lineage.
+  \item Each read/write attaches \texttt{provenance\_hash}, \texttt{policy\_hash}, model/version IDs, and verifier signatures.
+  \item Nightly reproducibility jobs re-materialize critical artifacts; diff must be empty for pass.
+\end{itemize}
+
+\subsection{Explain-First in Spectra}
+\begin{itemize}
+  \item Spectra renders \emph{why-now} flags, counterfactual alternatives, and interaction checks prior to action.
+  \item High-uncertainty or drifted models trigger \textbf{soft-block} with callouts and safer defaults.
+  \item Provider acknowledgement is logged; declines are routed to improvement loops (content or model).
+\end{itemize}
+
+\subsection{Privacy Metrics and KPIs}
+\begin{itemize}
+  \item Privacy pass-rate:
+  \[
+  \mathrm{PrivacyPass}=\frac{\#\{\text{events passing consent/policy checks}\}}{\#\{\text{total events}\}}\ \ge\ 0.98.
+  \]
+  \item Zero PHI at HEP ingress; education egress uses $(\varepsilon,\delta)$-DP aggregates only.
+  \item Sensitive cohort protections: minimum cell counts and noise infusion for small groups.
+\end{itemize}
+
+\subsection{Governance and Controls}
+\begin{itemize}
+  \item \textbf{Change control}: RFCs for policy, schema, interface, and model promotions; RACI enforced.
+  \item \textbf{Equity board}: reviews KPI stratifications; mandates mitigations when disparity exceeds bands.
+  \item \textbf{Data minimization}: collect least-needed; purpose-bound field tags; default deny outside scope.
+\end{itemize}
+
+\subsection{Incident Response (IR)}
+\begin{itemize}
+  \item \textbf{Sev-1}: PHI leakage, unsafe recommendation executed, or ledger tamper evidence.
+  \item \textbf{Playbooks}: isolate flow, revoke tokens, rotate keys, rollback to last green model/content, notify stakeholders.
+  \item \textbf{Audit package}: timeline, affected artifacts, hashes, policies, and fixes; submitted to governance board.
+\end{itemize}
+
+\subsection{Consent Revocation and Offline Propagation}
+\begin{itemize}
+  \item Revocation events invalidate tokens and edge firebooks; CRDT merges apply redaction on reconnect.
+  \item Subscribers receive tombstones and \texttt{policy\_hash} updates; stale caches are purged.
+\end{itemize}
+
+\subsection{Equity and Neurodiversity}
+\begin{itemize}
+  \item Acceptance bands on core KPIs; EchoBraid pacing for ASD cohorts enabled at S2.
+  \item Model fairness rotation in training; bias probes gate promotions.
+\end{itemize}
+
+\subsection{Acceptance and SLO Invariants}
+\begin{itemize}
+  \item $\mathrm{PrivacyPass}\ge 0.98$; zero PHI at HEP ingress; $100\%$ provenance signatures valid.
+  \item CSL soft-block rate reported; $100\%$ of Spectra recommendations carry rationale and confidence.
+  \item No Sev-1 incidents in pilot; equity gap reduced within target bands or mitigation plan active.
+\end{itemize}
+
+\subsection{Illustrative Audit Record (Minimal)}
+\begin{verbatim}
+{
+  "ts": 1732233612,
+  "subject_did": "did:example:123",
+  "purpose": "care",
+  "action": "recommendation",
+  "rationale": "sleep risk high; XR session advised",
+  "model_ver": "risk-7.2.1",
+  "policy_hash": "0x...",
+  "provenance_hash": "0x...",
+  "csl": {"clarity": true, "sovereignty": true, "lawfulness": true},
+  "spectra_ack": {"provider_id": "did:prov:999", "accepted": true}
+}
+\end{verbatim}
+
+\section{MQEM $\times$ ADEC Fusion Points}
+
+\subsection{Signal Conditioning (PNSM $\rightarrow$ Stable Features and Filters)}
+\paragraph{Objective}
+Reduce structured and multiplicative noise before feature extraction and ADEC filtering to stabilize risk vectors and state estimates.
+
+\paragraph{Prime-indexed denoising}
+For a stream $x_t\!\in\!\mathbb{R}^d$ and prime partition $p$ with graph/operator $G_p$:
+\[
+x_{t+1}\;=\;S\,x_t + (1{-}S)\,R_p(x_t),\qquad 0<S<1,
+\]
+where $R_p(\cdot)$ is a contractive prime-indexed smoother (e.g., graph-wavelet shrinkage on $G_p$).
+Stability holds if $\|R_p(x)-R_p(y)\|\le\kappa\|x-y\|$ with $\kappa<\frac{1}{1-S}$.
+
+\paragraph{Placement in pipeline}
+\[
+\underbrace{\text{Wearables/EHR/omics}}_{\text{raw}} \;\xrightarrow{\text{PNSM}}\; 
+\underbrace{\text{cleaned stream}}_{\text{low-variance}} \;\xrightarrow{\text{featureization}}\; 
+\text{Risk API} \;\xrightarrow{}\; \text{ADEC filter (UKF/EKF)}.
+\]
+
+\paragraph{Acceptance}
+\begin{itemize}
+  \item Post-PNSM SNR $\uparrow$ by $\ge 3$\,dB on validation streams.
+  \item Feature coefficient-of-variation $\downarrow$ by $\ge 20\%$ without degrading label AUC.
+  \item ADEC innovation variance matches design $Q$ within $\pm 10\%$.
+\end{itemize}
+
+\subsection{Mechanistic Overlay (Fused $S(t)$ in Spectra and ULMS)}
+\paragraph{Fused signal}
+\[
+S(t)=w_{\mathrm{dyn}}R(t)+w_{\mathrm{num}}R_{\mathrm{num}}(n(t))-\eta_C\,C(n(t)),
+\]
+with $R(t)$ from ADEC, $R_{\mathrm{num}}$ and $C$ from number-theoretic coherence, $n(t)\!\propto\!1/\mathrm{TMB}(t)$.
+
+\paragraph{Consumer mappings}
+\begin{itemize}
+  \item \textbf{Spectra} (provider): render $S(t)$ with uncertainty bands; show \emph{why-now} explanation and counterfactuals for $a^\star$ from policy.
+  \item \textbf{ULMS} (education): gate launches using $S(t)$ bands; if $S(t)\!<\!S_{\min}$, delay high-cognitive-load modules and prioritize stabilizers.
+\end{itemize}
+
+\paragraph{Gate policy}
+\[
+\text{Gate}(S)=
+\begin{cases}
+\textit{stable}, & S\ge S_{\mathrm{hi}},\\[2pt]
+\textit{caution}, & S_{\mathrm{lo}} \le S < S_{\mathrm{hi}},\\[2pt]
+\textit{conserve}, & S < S_{\mathrm{lo}}.
+\end{cases}
+\]
+Actions escalate from routine $\rightarrow$ supportive $\rightarrow$ restorative; CSL checks precede any escalation.
+
+\paragraph{Acceptance}
+\begin{itemize}
+  \item Provider acknowledgement rate for $S$-rationales $\ge 90\%$ in pilot.
+  \item Module abort rate does not increase in \textit{conserve} band; adherence $\uparrow$ in \textit{caution} band.
+\end{itemize}
+
+\subsection{Prime-Indexed Drift Probes ($\zeta_p(s)$ for Non-Stationarity)}
+\paragraph{Zeta metrics}
+Let $\{\lambda^{(p)}_i\}_{i=1}^{d_p}$ be spectrum of $G_p$ at batch $t$. Define
+\[
+\zeta_p(s;t) = \sum_{i=1}^{d_p}\big(\lambda^{(p)}_i+\varepsilon\big)^{-s},\qquad
+\gamma_p(t)=\left.\frac{\partial}{\partial s}\log\zeta_p(s;t)\right|_{s=s^\star}.
+\]
+Track $\gamma_p(t)$ and $\log\zeta_p(s^\star;t)$ as drift probes.
+
+\paragraph{Control limits and actions}
+\[
+Z_p(t) = \frac{\gamma_p(t)-\mu_{\gamma,p}}{\sigma_{\gamma,p}},\quad
+\text{alert if } |Z_p(t)|>\tau_z \ \text{ or } \ |\Delta\log\zeta_p|>\tau_\zeta.
+\]
+\begin{itemize}
+  \item \textbf{Yellow}: raise training priority, enable shadow inference.
+  \item \textbf{Red}: freeze promotions, trigger rollback to last green, schedule retraining.
+\end{itemize}
+
+\paragraph{Integration with ADEC}
+When Red alert coincides with elevated ADEC innovations, increase process noise $Q$ adaptively and widen MPC chance-constraints until retrain completes.
+
+\subsection{Minimal Contracts}
+\paragraph{Events}
+\begin{verbatim}
+topic: pnsn.filter.applied.v1
+{ "subject_did":"did:ex:123", "S":0.82, "p": 577, "hash":"0x..." }
+
+topic: adec.s.fused.update.v1
+{ "subject_did":"did:ex:123", "R_hat":2.41, "S":1.95, "ci":[1.86,2.02], "hash":"0x..." }
+
+topic: zeta.drift.alert.v1
+{ "p": 593, "Z": 3.2, "delta_log_zeta": 0.27, "state":"RED", "model_ver":"risk-7.2.1" }
+\end{verbatim}
+
+\paragraph{SLOs}
+\begin{itemize}
+  \item PNSM latency $<$10\,ms per $10^4$ dims (p50); end-to-end inference p50 $<$80\,ms.
+  \item Drift decision latency $<$5\,s from batch close; rollback $<$60\,s to effective.
+\end{itemize}
+
+\subsection{Pseudocode (Pipeline Integration)}
+\begin{verbatim}
+for batch B_t:
+  x_clean = PNSM_p(B_t.raw, S)
+  feats   = Featureize(x_clean)
+  risks   = RiskAPI(feats)
+  R_hat,S = ADEC.estimate(B_t.obs, risks)
+  emit("adec.s.fused.update.v1", {R_hat,S,...})
+
+  (zeta_slope, zeta_level) = ZetaProbe(G_p(x_clean))
+  if DriftExceeded(zeta_slope, zeta_level):
+      Alert("zeta.drift.alert.v1", state="RED")
+      FreezePromotions(); RollbackModel()
+      ADEC.widen_constraints()
+\end{verbatim}
+
+
+\section{Interfaces and Contracts}
+
+\subsection{Clinical Data APIs (FHIR + Provenance)}
+\paragraph{Observation with policy-tagged Provenance}
+\begin{verbatim}
+POST /fhir/Observation
+Authorization: Bearer <token>; PoP did:example:123
+Content-Type: application/fhir+json
+
+{
+  "resourceType": "Observation",
+  "meta": { "profile": ["http://example.org/fhir/StructureDefinition/risk-obs"] },
+  "code": { "coding": [{"system":"loinc","code":"hrv-7d-z"}] },
+  "status": "final",
+  "subject": { "identifier": { "type": {"text":"did"}, "value":"did:example:123" } },
+  "effectiveDateTime": "2025-10-22T14:40:12Z",
+  "valueQuantity": { "value": -1.2, "unit": "z" },
+  "extension": [{
+    "url": "http://example.org/fhir/StructureDefinition/purpose",
+    "valueCode": "care"   // deny-by-default outside declared purpose
+  }]
+}
+\end{verbatim}
+
+\paragraph{Provenance (policy-tag, ledger hash)}
+\begin{verbatim}
+POST /fhir/Provenance
+{
+  "resourceType":"Provenance",
+  "target":[{"reference":"Observation/obs-9f3a"}],
+  "recorded":"2025-10-22T14:40:13Z",
+  "reason":[{"coding":[{"code":"care"}]}],
+  "agent":[{"who":{"identifier":{"value":"did:svc:intrinsica"}}}],
+  "signature":[{"type":[{"code":"1.2.840.10065.1.12.1.5"}],"data":"MEUCIQ..."}],
+  "extension":[
+    {"url":"policy_hash","valueString":"0xabc..."},
+    {"url":"ledger_tx","valueString":"0xdef..."}
+  ]
+}
+\end{verbatim}
+
+\paragraph{Security}
+DID-bound OAuth2, mTLS between zones, signed envelopes. Zero PHI leaves S2H enclave; HEP receives de-identified aggregates only.
+
+\subsection{ULMS Webhooks}
+\paragraph{Endpoints}
+\begin{verbatim}
+POST /hooks/attempted
+POST /module-complete
+POST /csl-change
+\end{verbatim}
+
+\paragraph{Common headers}
+\begin{verbatim}
+Authorization: Bearer <token>
+Idempotency-Key: <uuid>
+X-Policy-Hash: 0x...
+Content-Type: application/json
+\end{verbatim}
+
+\paragraph{Payloads}
+\begin{verbatim}
+// /hooks/attempted
+{
+  "subject_pseudonym":"ulms:abc123",
+  "module_id":"xr.sleep.101",
+  "attempt_id":"att-0099",
+  "metrics":{"latency_ms":126,"TCI":0.82,"CSLState":"clear"},
+  "context":{"skin":"education","locale":"en-US"},
+  "ts":1732230012
+}
+
+// /module-complete
+{
+  "attempt_id":"att-0099",
+  "outcome":{"score":0.94,"reflection":"2-sentence summary"},
+  "provenance":{"model_ver":"risk-7.2.1","feature_ver":"fs-2025.10"}
+}
+
+// /csl-change
+{
+  "subject_pseudonym":"ulms:abc123",
+  "from":"clarity_needed","to":"clear",
+  "rationale":"simplified wording",
+  "policy_hash":"0x..."
+}
+\end{verbatim}
+
+\paragraph{Responses}
+\begin{verbatim}
+202 Accepted
+{ "receipt":"rcp-7c21", "status":"queued" }
+\end{verbatim}
+
+\subsection{Event Bus \& Ledger Topics}
+\paragraph{Topics (v1)}
+\begin{itemize}
+  \item \texttt{intrinsica.risk.update.v1}
+  \item \texttt{ulms.session.attempted.v1}
+  \item \texttt{csl.state.change.v1}
+  \item \texttt{reciprocity.delta.v1}
+  \item \texttt{pilila.milestone.v1}
+  \item \texttt{privacy.audit.event.v1}
+\end{itemize}
+
+\paragraph{Schemas (illustrative)}
+\begin{verbatim}
+// intrinsica.risk.update.v1
+{
+  "subject_did":"did:example:123",
+  "risk_vector":{"sleep":0.71,"metabolic":0.64,"cardio":0.52},
+  "twin_hint":{"pathways":["sleep_hygiene_xr","diet_magnesium"]},
+  "provenance":{"feature_ver":"fs-2025.10","model_ver":"risk-7.2.1","hash":"0x..."},
+  "ts":1732230100
+}
+
+// ulms.session.attempted.v1
+{
+  "subject_pseudonym":"ulms:abc123",
+  "module_id":"xr.sleep.101",
+  "attempt_id":"att-0099",
+  "metrics":{"latency_ms":126,"TCI":0.82,"CSLState":"clear"},
+  "ts":1732230012
+}
+
+// csl.state.change.v1
+{ "subject_pseudonym":"ulms:abc123","from":"clear","to":"sovereign_hold","ts":1732231112 }
+
+// reciprocity.delta.v1
+{ "subject_pseudonym":"ulms:abc123","delta":{"s2h.yf":-0.2,"ulms.xr":+0.1},"ts":1732231212 }
+
+// pilila.milestone.v1
+{ "subject_pseudonym":"ulms:abc123","milestone_id":"ms-004","status":"completed","ts":1732232212 }
+
+// privacy.audit.event.v1
+{
+  "entity":"ulms","event":"export","result":"pass",
+  "policy_hash":"0x...","provenance_hash":"0x...","ts":1732232312
+}
+\end{verbatim}
+
+\paragraph{Contracts}
+Event JSON is versioned (v1) and registered in the schema registry; each message includes \texttt{policy\_hash} or an inheritable context. Ledger writes store message digests.
+
+\subsection{ADEC Endpoints}
+\paragraph{/adec/v1/estimate}
+\begin{verbatim}
+Request:
+{
+  "subject_did":"did:example:123",
+  "observations":[{"t":1732230012,"y":{"hrv_7d_z":-1.2,"ge":2.1}}],
+  "inputs":[{"t":1732230012,"I":{"stress":0.7},"a":{"type":"none"}}]
+}
+Response:
+{
+  "t":1732230012,
+  "R_hat":2.37, "Rdot_hat":-0.041,
+  "theta_hat":{"lambda":0.62,"mu":0.28,"alpha":1.4},
+  "S":1.91,
+  "uncertainty":{"var_R":0.022},
+  "provenance_hash":"0x..."
+}
+\end{verbatim}
+
+\paragraph{/policy/v1/recommend}
+\begin{verbatim}
+Request:
+{
+  "subject_did":"did:example:123",
+  "horizon":7,
+  "constraints":{"r_min":1.8,"epsilon":0.05},
+  "candidate_actions":["xr_breath_session","diet_magnesium","tele_checkin"]
+}
+Response:
+{
+  "a_star":"xr_breath_session",
+  "schedule":[{"t":1732233612,"a":"xr_breath_session"}],
+  "expected_trajectory":[{"t":1732233612,"R_hat":2.41,"S":1.95}],
+  "rationales":["improves resilience lambda via respiratory training"]
+}
+\end{verbatim}
+
+\subsection{Error Model \& Versioning}
+\paragraph{Standard error}
+\begin{verbatim}
+HTTP 400/401/409/429/500
+{ "error":"invalid_request", "message":"...", "trace_id":"tr-91af" }
+\end{verbatim}
+\paragraph{Versioning}
+Version in path (\texttt{/v1}) and topic suffix (\texttt{.v1}); \(\ge\)180-day deprecation window; backward-compatible field additions only.
+
+\subsection{SLOs \& Non-Functionals}
+Webhook p95 $<150$\,ms; Risk update fan-out $<$2\,s; ADEC estimate p50 $<80$\,ms; policy synthesis p95 $<300$\,ms; exactly-once via \texttt{Idempotency-Key}; $100\%$ messages carry \texttt{policy\_hash} and are signed.
+
+\section{SLOs and Error Budgets}
+
+\subsection{Overview}
+Service Level Objectives (SLOs) bind performance to user impact across the one-loop. Service Level Indicators (SLIs) are measured continuously; error budgets quantify allowable misses within a window. Releases, rollbacks, and throttles are governed by budget burn.
+
+\subsection{Core SLOs (Latency \& Freshness)}
+\begin{center}
+\begin{tabular}{l l l l}
+\hline
+\textbf{Service/Flow} & \textbf{SLI Definition} & \textbf{Target (SLO)} & \textbf{Window} \\
+\hline
+Personalization API & p50 end-to-end latency & $<100$ ms & 28 days \\
+Online Inference & p50 model inference latency & $<80$ ms & 28 days \\
+Ingest$\rightarrow$Feature & p95 batch/stream freshness & $<5$ min & 28 days \\
+Bus$\rightarrow$Ledger Commit & p95 event commit time & $<2$ s & 28 days \\
+Sovereign Sync (Edge) & max sync age & $<24$ h & 28 days \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{Secondary SLOs (Complementary)}
+\begin{center}
+\begin{tabular}{l l l l}
+\hline
+\textbf{Service/Flow} & \textbf{SLI Definition} & \textbf{Target (SLO)} & \textbf{Window} \\
+\hline
+ULMS Webhooks & p95 handler latency & $<150$ ms & 28 days \\
+Privacy Pipeline & pass-rate over events & $\ge 0.98$ & 28 days \\
+DLQ Rate & fraction of events in DLQ & $<0.1\%$ & 28 days \\
+Provenance Completeness & msgs with policy/prov hash & $=100\%$ & 28 days \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{Error Budgets}
+Let $S$ be an SLI with SLO target $T$. Define budget as allowable fraction of time (or requests) violating $T$ in the window $W$.
+\[
+\text{ErrorBudget}(S,W)=\frac{\#\{\text{violations in }W\}}{\#\{\text{total in }W\}}\le B_S.
+\]
+Default budgets:
+\begin{itemize}
+  \item Latency p50 SLOs: $B_S=5\%$ of minutes may exceed $T$.
+  \item Latency p95 SLOs: $B_S=1\%$ of requests may exceed $T$.
+  \item Freshness (ingest$\rightarrow$feature): $B_S=1\%$ of batches may exceed $T$.
+  \item Sovereign sync: $B_S=0.5\%$ of devices may exceed $T$ per day.
+\end{itemize}
+
+\subsection{Burn-Rate Alerts (Multi-Window)}
+For each SLO, compute burn rate $\beta=\frac{\text{observed error fraction}}{B_S}$. Page when:
+\[
+\beta_{1h}\ge 14 \quad \text{or} \quad \beta_{6h}\ge 6 \quad \text{or} \quad \beta_{24h}\ge 2 \quad \text{or} \quad \beta_{3d}\ge 1.
+\]
+Actions:
+\begin{itemize}
+  \item \textbf{Yellow} ($\beta\ge 1$): freeze promotions for the affected service; enable shadow mode.
+  \item \textbf{Red} ($\beta\ge 2$): rollback to last green; rate-limit callers; widen ADEC process noise $Q$; raise Spectra uncertainty flags.
+\end{itemize}
+
+\subsection{Measurement \& Exclusions}
+\begin{itemize}
+  \item SLI aggregation by minute; p50/p95 computed per-minute then rolled up.
+  \item Exclude planned maintenance (declared) and third-party regional outages (documented) from budget.
+  \item Synthetic canaries run continuously and are included in measurement.
+\end{itemize}
+
+\subsection{Release Policy}
+\begin{itemize}
+  \item If any core SLO burns $>25\%$ of budget in the current 28-day window, new releases require SRE approval.
+  \item If any core SLO burns $>50\%$, auto-freeze promotions and require a remediation plan before unfreeze.
+\end{itemize}
+
+\subsection{Rollback \& Safeguards}
+\begin{itemize}
+  \item Automatic rollback on Red burn for Online Inference or Personalization.
+  \item Bus$\rightarrow$Ledger breach triggers write-shaping and batch compaction; idempotent replays.
+  \item Sovereign sync breach prompts firebook resend and user notification upon next connect.
+\end{itemize}
+
+\subsection{Reporting}
+Weekly SLO report includes: current burn, top regressions, drift correlations, and privacy pass-rate. Monthly review gates roadmap changes if any core SLO consumed $>50\%$ budget.
+
+
+\section{Observability and Compliance}
+
+\subsection{Overview}
+End-to-end observability and continuous compliance are built into the one-loop. Metrics, logs, traces, and model telemetry feed SLO dashboards and governance evidence. Compliance is enforced as code, with an append-only provenance ledger (hash-on-write) and formal mappings to HIPAA/GDPR/FERPA.
+
+\subsection{Observability Stack}
+\paragraph{Signals}
+\begin{itemize}
+  \item \textbf{Metrics}: latency, throughput, saturation; model AUC/calibration; drift scores (PSI/KS); privacy pass-rate.
+  \item \textbf{Logs}: structured JSON with request ID, subject pseudonym, policy hash, provenance hash.
+  \item \textbf{Traces}: distributed spans across ULMS$\rightarrow$Intrinsica$\rightarrow$S2H; exemplars link to metrics.
+  \item \textbf{Canaries}: synthetic journeys for \emph{attempted}$\rightarrow$\emph{module-complete}$\rightarrow$\emph{risk.update}.
+\end{itemize}
+
+\paragraph{Dashboards}
+\begin{itemize}
+  \item \textbf{SLO}: Personalization p50, inference p50, ingest$\rightarrow$feature p95, bus$\rightarrow$ledger p95, sovereign sync age.
+  \item \textbf{Privacy}: pass-rate, DP budget, PHI egress blocks, policy mismatch denials.
+  \item \textbf{Model}: drift probes, data quality (missingness, outliers), fairness slices, uncertainty bands.
+\end{itemize}
+
+\paragraph{Alerts (multi-window burn)}
+\begin{itemize}
+  \item Burn-rate paging for core SLOs; yellow/red policies tie to freeze/rollback.
+  \item High-uncertainty or drift breach triggers Spectra soft-block and rollback to last green.
+\end{itemize}
+
+\subsection{Model \& Data Observability}
+\paragraph{Registry \& lineage}
+\begin{itemize}
+  \item Model registry with versions, artifacts, training data hashes, SBOM, and signatures.
+  \item Feature store with schema versions, freshness, and lineage to raw sources.
+\end{itemize}
+
+\paragraph{Drift probes}
+\begin{itemize}
+  \item \textbf{Data drift}: PSI, population deltas; \textbf{Label drift}: $\Delta$prevalence; \textbf{Concept drift}: AUC drop, ECE rise.
+  \item \textbf{Calibration}: reliability diagrams; \textbf{Stability}: counterfactual and re-run variance.
+\end{itemize}
+
+\paragraph{Quality gates in CI/CD}
+\begin{itemize}
+  \item Shadow deploy $\rightarrow$ canary $\rightarrow$ region-wide, gated by drift and SLO guardrails.
+  \item Automatic rollback on red burn or calibration breach; provenance captured on promotion.
+\end{itemize}
+
+\subsection{Compliance by Design}
+\paragraph{Policy-as-code}
+\begin{itemize}
+  \item Purpose- and field-bound policies enforced at read/write; deny-by-default outside scope.
+  \item Consent objects (DID-bound) versioned and validated at request time.
+\end{itemize}
+
+\paragraph{Provenance ledger}
+\begin{itemize}
+  \item Append-only, hash-on-write entries for data/model/policy/action with verifier signatures.
+  \item Nightly reproducibility jobs re-materialize artifacts; diffs must be empty for pass.
+\end{itemize}
+
+\paragraph{Framework mappings (illustrative)}
+\begin{center}
+\begin{tabular}{l l}
+\hline
+\textbf{Control Objective} & \textbf{Mechanism} \\
+\hline
+HIPAA Security (164.312) & mTLS, encryption at rest, access logs, audit controls \\
+HIPAA Privacy (164.514) & De-identification for HEP egress; minimum necessary \\
+GDPR Art.~5 (Purpose/Minimization) & Purpose tags, deny-by-default, data-class filters \\
+GDPR Art.~15/17 (Access/Erasure) & RoPA, subject portals, redaction workflows \\
+FERPA (34 CFR Part 99) & Student PII isolated, parental rights workflows \\
+21 CFR Part 11 & eSignatures, time-stamped audit trail, record integrity \\
+SOC2/ISO 27001 & Change control, risk assessment, vendor management \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{Records of Processing \& DPIA}
+\paragraph{RoPA}
+\begin{itemize}
+  \item System-of-record inventory with purposes, lawful bases, retention, and recipients.
+  \item Automated updates from schema registry and data catalog.
+\end{itemize}
+\paragraph{DPIA triggers}
+\begin{itemize}
+  \item New sensitive sources, cross-border transfers, profiling changes, or ADEC policy shifts.
+  \item Mitigations: DP parameters, k-anonymity thresholds, EchoBraid accommodations.
+\end{itemize}
+
+\subsection{Access Control \& Secrets}
+\begin{itemize}
+  \item Least-privilege RBAC/ABAC; break-glass with time-bound approvals and audit.
+  \item HSM-backed key custody; periodic rotation; token revocation cascades to edge firebooks.
+\end{itemize}
+
+\subsection{Supply Chain Security}
+\begin{itemize}
+  \item SBOM for services and models; provenance attestations (SLSA); signature verification on deploy.
+  \item Dependency allowlists; container image scanning; base-image pinning.
+\end{itemize}
+
+\subsection*{Retention \& Destruction}
+\begin{itemize}
+  \item Policy-driven retention by data class; legal hold exceptions logged.
+  \item Cryptographic erasure and verifiable destruction receipts; revocation redaction on reconnect.
+\end{itemize}
+
+\subsection{Incident Response}
+\begin{itemize}
+  \item Severity matrix (Sev-1 PHI leakage/unsafe recs); 24/72h notification targets as applicable.
+  \item Playbooks: isolate flow, revoke credentials, rollback, contact affected parties, root-cause, lessons learned.
+\end{itemize}
+
+\subsection{Reporting \& Evidence}
+\begin{itemize}
+  \item Weekly SLO privacy and drift reports; monthly compliance pack (RoPA deltas, DPIA status, audit samples).
+  \item $100\%$ of ledgered actions carry policy/provenance hashes; sampling proofs included.
+\end{itemize}
+
+
+
+\section{Pilot Patterns and KPIs}
+
+\subsection{Overview}
+Two archetypal pilots exercise the one-loop in distinct contexts. Each pilot binds clinical/learning actions to measurable outcomes with predeclared acceptance tests per module. Core KPIs: \textbf{Equity}, \textbf{Adherence}, \textbf{Risk-Delta}, and \textbf{Privacy Pass-Rate}. Secondary: Engagement, Calibration, and Provider Acknowledgement of explain-first rationales.
+
+\subsection{Pilot A: Teen Brain-Health with EchoBraid}
+\paragraph{Cohort}
+Adolescents (13--18) with elevated sleep or stress risk; ASD-flagged subcohort receives EchoBraid pacing.
+\paragraph{Interventions}
+\begin{itemize}
+  \item XR micro-lessons: \emph{Sleep-101}, \emph{Breath-101}, \emph{Focus-101}.
+  \item S2H actions: Youth Fountain sessions, HRV-guided routines.
+  \item Hologram: Visit Pack for school nurse/clinic; Spectra safety checks.
+\end{itemize}
+\paragraph{Schedule}
+Baseline (week 0), ramp (weeks 1--2), steady state (weeks 3--8), follow-up (week 12).
+\paragraph{Acceptance Gates}
+\begin{itemize}
+  \item \textbf{Module-level}: \(\mathrm{Adherence}\ge 0.80\); \(\Delta r_{\mathrm{sleep}}>0\) with CI excluding 0.
+  \item \textbf{Safety}: no Sev-1; CSL soft-block rate \(\le 5\%\).
+  \item \textbf{Neurodiversity}: ASD completion rate non-inferior to non-ASD within 5 pp; TCI variance \(\downarrow\).
+\end{itemize}
+
+\subsection*{Pilot B: Teacher Wellness + Student Co-Learning}
+\paragraph{Cohort}
+Educators and matched student groups in participating schools/districts.
+\paragraph{Interventions}
+\begin{itemize}
+  \item XR modules: \emph{Systems-101} (stress systems), \emph{Posture-101}, \emph{Nutrition-Quickstart}.
+  \item S2H: BodyArt micro-routines, Diet/Skin swaps.
+  \item Hologram: BYOC Visit Pack for occupational health; Spectra rationale at clinic visits.
+\end{itemize}
+\paragraph{Design}
+Stepped-wedge or cluster-randomized by school; weekly cycles; cross-over at week 6.
+\paragraph{Acceptance Gates}
+\begin{itemize}
+  \item \(\Delta r_{\mathrm{stress}}>0\) teacher cohort; absenteeism proxy \(\downarrow\).
+  \item Engagement \(\ge 0.70\) across roles; equity gap reduction \(\ge 0.15\) or within bands.
+\end{itemize}
+
+\subsection{Module Acceptance Tests (Examples)}
+\paragraph{Sleep-101}
+\begin{itemize}
+  \item \textbf{Pre/Post}: sleep risk vector average over 7-day windows; target \(\Delta r_{\mathrm{sleep}}>0\).
+  \item \textbf{Telemetry}: TCI \(\ge 0.75\); CSLState=\texttt{clear} at completion.
+  \item \textbf{Outcome}: quiz \(\ge 80\%\) or reflection rubric \(\ge 3/4\); adherence \(\ge 0.85\).
+\end{itemize}
+\paragraph{Systems-101}
+\begin{itemize}
+  \item \textbf{Pre/Post}: stress or metabolic risk delta over 14 days; target positive.
+  \item \textbf{Telemetry}: latency\(_{p95}<\)150\,ms; no increase in aborts vs baseline.
+  \item \textbf{Outcome}: two behavioral commitments logged; follow-up adherence \(\ge 70\%\).
+\end{itemize}
+
+\subsection{KPI Definitions and Targets}
+\begin{center}
+\begin{tabular}{l l l l}
+\hline
+\textbf{KPI} & \textbf{Definition} & \textbf{Target} & \textbf{Stratification} \\
+\hline
+Engagement & active share of eligible & $\ge 0.70$ & role, cohort, locale \\
+Adherence & completed/prescribed modules & $\ge 0.80$ & module, ASD flag \\
+Risk-Delta & $\Delta r=\overline{r}_{\mathrm{pre}}-\overline{r}_{\mathrm{post}}$ & $>0$ (CI excludes 0) & domain (sleep, stress, etc.) \\
+Equity Gap & $\max_g \mathbb{E}[K|g]-\min_g \mathbb{E}[K|g]$ & $\downarrow \ge 0.15$ or within band & sensitive groups $g$ \\
+Privacy Pass-Rate & events passing policy/consent / total & $\ge 0.98$ & zone, service \\
+Provider Ack & Spectra rationale acknowledged & $\ge 0.90$ & site, specialty \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{Instrumentation \& Analysis}
+\begin{itemize}
+  \item ULMS webhooks for attempts/completions; FHIR Observations for outcomes; policy/provenance hashes on all writes.
+  \item A/B or stepped-wedge analysis with mixed models; pre-specified covariates (age, baseline risk, device quality).
+  \item Drift \& calibration monitored; rollback if AUC \(\downarrow >5\%\) or ECE \(\uparrow >0.03\).
+\end{itemize}
+
+\subsection{Ethics, Consent, and Privacy}
+\begin{itemize}
+  \item DID-bound consent; student data separated (FERPA); no PHI to education zone.
+  \item Differential privacy on cohort analytics; minimum cell counts enforced.
+\end{itemize}
+
+\subsection{Runbook and Timeline (90 Days)}
+\begin{itemize}
+  \item Weeks 0--2: onboarding, baseline capture, canary XR.
+  \item Weeks 3--8: steady-state loops; weekly KPI reviews; equity board check-in.
+  \item Weeks 9--12: follow-up, retrain, decision on scale-up.
+\end{itemize}
+
+\subsection{Exit Criteria}
+\begin{itemize}
+  \item Core KPIs meet targets; no Sev-1; privacy pass-rate \(\ge 0.98\).
+  \item Module acceptance tests passed for Sleep-101 and Systems-101.
+  \item Equity mitigation plan executed if gaps persist beyond bands.
+\end{itemize}
+
+
+\section{90-Day Build Plan (S0$\rightarrow$S2)}
+
+\subsection{Overview}
+Three staged increments deliver a safe, measurable loop in 90 days. Each stage has explicit artifacts, contract tests, and exit gates tied to privacy and equity objectives.
+
+\subsection{Timeline at a Glance}
+\begin{center}
+\begin{tabular}{l l l}
+\hline
+\textbf{Phase} & \textbf{Window} & \textbf{Primary Objective} \\
+\hline
+S0 Foundation & Weeks 0--4  & Trust fabric, de-ID, ledger, feature views, contracts validated \\
+S1 Experience + Telemetry & Weeks 5--8  & XR live, personalization online, CSL thresholds enforced \\
+S2 Inclusion + Pop Views & Weeks 9--12 & EchoBraid on, population dashboards live, equity movement \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{Workstreams (Epics)}
+E1 Data Plane; E2 Event Bus \& Ledger; E3 ULMS \& Services; E4 XR v1 \& EchoBraid; E5 Dashboards; E6 Offline-first.
+
+\subsection{S0 Foundation (Weeks 0--4)}
+\paragraph{Objectives}
+\begin{itemize}
+  \item Stand up consent + de-identification pipeline and permissioned ledger.
+  \item Expose feature views and minimal Risk API behind service contracts.
+  \item Validate interop via contract tests and schema registry.
+\end{itemize}
+\paragraph{Deliverables}
+\begin{itemize}
+  \item Consent objects (DID-bound), policy-as-code repo, de-ID transforms (unit-tested).
+  \item Ledger bootstrap with hash-on-write; provenance library for services.
+  \item Feature Store v0 (schemas, freshness monitors); Risk API stub.
+  \item Contract tests for FHIR Observations + Provenance; ULMS webhooks (\texttt{/hooks/attempted}, \texttt{/module-complete}, \texttt{/csl-change}).
+\end{itemize}
+\paragraph{QA \& Observability}
+\begin{itemize}
+  \item CI/CD gates for policy hash presence; synthetic canaries across ingest$\rightarrow$feature.
+  \item SLO dashboards online (latency, freshness, privacy pass-rate).
+\end{itemize}
+\paragraph{Exit Criteria (S0 Gate)}
+\begin{itemize}
+  \item De-ID verified on sample flows; \textbf{zero} PHI in HEP egress.
+  \item Ledger writes include valid hashes; nightly reproducibility check passes.
+  \item Contract tests green for FHIR + webhooks; Feature views queryable.
+\end{itemize}
+
+\subsection{S1 Experience + Telemetry (Weeks 5--8)}
+\paragraph{Objectives}
+\begin{itemize}
+  \item Ship XR micromodules; enable personalization and CSL gating in-path.
+  \item Turn on full telemetry and idempotent receipts.
+\end{itemize}
+\paragraph{Deliverables}
+\begin{itemize}
+  \item XR \emph{Sleep-101}, \emph{Breath-101} (dual skins); ULMS launch via LTI~1.3.
+  \item Personalization service p50 $<100$\,ms; CSL gate with rationale capture.
+  \item Telemetry: \texttt{attempts}, \texttt{latency\_ms}, \texttt{TCI}, \texttt{CSLState}; dashboards for SLOs.
+\end{itemize}
+\paragraph{QA \& Observability}
+\begin{itemize}
+  \item Shadow$\rightarrow$canary releases; drift probes enabled; rollback runbook tested.
+  \item Privacy pipeline pass-rate tracked on live traffic.
+\end{itemize}
+\paragraph{Exit Criteria (S1 Gate)}
+\begin{itemize}
+  \item Engagement $\mathbf{>0.70}$ in target cohort (7-day window).
+  \item Privacy pass-rate $\mathbf{\ge 0.98}$; no Sev-1 incidents.
+  \item Online inference p50 $\mathbf{<80}$\,ms; ULMS webhook p95 $<150$\,ms.
+\end{itemize}
+
+\subsection{S2 Inclusion + Population Views (Weeks 9--12)}
+\paragraph{Objectives}
+\begin{itemize}
+  \item Enable EchoBraid neurodiversity accommodations.
+  \item Launch population dashboards with de-identified, DP-safe aggregates.
+\end{itemize}
+\paragraph{Deliverables}
+\begin{itemize}
+  \item EchoBraid pacing configs and CSL-aware envelopes in XR.
+  \item Population dashboards: engagement, risk-delta, adherence, equity slices, privacy KPIs.
+  \item Equity board review workflow; DPIA update if scope expanded.
+\end{itemize}
+\paragraph{QA \& Observability}
+\begin{itemize}
+  \item Fairness and calibration reports by subgroup; drift-to-retrain automation.
+  \item Offline-first firebook sync test; conflict prompts verified.
+\end{itemize}
+\paragraph{Exit Criteria (S2 Gate)}
+\begin{itemize}
+  \item EchoBraid enabled for eligible cohorts; ASD completion non-inferior (within 5 pp).
+  \item Equity gap \textbf{reduction} $\mathbf{\ge 0.15}$ or within acceptance band.
+  \item Dashboards live; DP budgets within monthly limits; provenance completeness $=100\%$.
+\end{itemize}
+
+\subsection{Dependencies and RACI (Minimal)}
+\begin{itemize}
+  \item \textbf{Platform/Interop} (E1,E2): consent, de-ID, ledger, schema registry.
+  \item \textbf{Data/ML} (E1,E3): feature store, Risk API, drift probes, A/B infra.
+  \item \textbf{XR/Content} (E4): modules, EchoBraid configs, accessibility.
+  \item \textbf{Privacy/GRC} (E2,E5): policy-as-code, DPIA/RoPA, equity board cadence.
+  \item \textbf{PM/Ops} (E5,E6): dashboards, SLO runbooks, incident response.
+\end{itemize}
+
+\subsection{Risk \& Mitigation}
+\begin{itemize}
+  \item \textbf{Model drift}: canary + rollback; widen ADEC process noise $Q$; Spectra soft-block.
+  \item \textbf{Telemetry gaps}: idempotent retries; store-and-forward queues.
+  \item \textbf{Privacy regressions}: block egress on policy mismatch; auto-tests in CI.
+\end{itemize}
+
+\section{Backlog and Dependencies (E1--E6)}
+
+\subsection{Overview}
+Six epics deliver the one-loop stack with clear handoffs, contracts, and exit gates. Dependencies ensure data, security, and telemetry are in place before experience layers ship.
+
+\subsection{Epic Map}
+\begin{center}
+\begin{tabular}{l l l}
+\hline
+\textbf{Epic} & \textbf{Scope} & \textbf{Primary Dependencies} \\
+\hline
+E1 Data Plane & Ingest, Feature Store, Risk API, ADEC/MQEM hooks & --- \\
+E2 Event Bus \& Ledger & Topics, schema registry, idempotency, provenance & E1 (schemas) \\
+E3 ULMS \& Services & Personalization, CSL Gate, Reciprocity, webhooks & E1, E2 \\
+E4 XR v1 \& EchoBraid & XR micromodules, accessibility, neurodiversity & E3 \\
+E5 Dashboards & SLO, Privacy, Population \& Equity, Model Drift & E1, E2, E3 \\
+E6 Offline-first & Firebooks, CRDT merges, revocation propagation & E1, E2 (trust) \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{E1 Data Plane}
+\paragraph{Deliverables}
+\begin{itemize}
+  \item Ingest connectors (wearables, EHR, omics); de-ID pipeline with policy-as-code.
+  \item Feature Store v1 (batch/stream), lineage, freshness monitors.
+  \item Risk API v1; ADEC estimators (UKF/EKF) wired; MQEM PNSM pre-feature filter.
+  \item Schema registry (clinical/education), data catalog, DPIA/RoPA bootstrap.
+\end{itemize}
+\paragraph{Acceptance}
+\begin{itemize}
+  \item Ingest$\rightarrow$feature p95 $<5$\,min; lineage completeness $=100\%$.
+  \item Privacy pass-rate $\ge 0.98$ on sampled flows; zero PHI at HEP egress.
+  \item Risk API p50 $<80$\,ms; ADEC innovation variance within $\pm10\%$ design $Q$.
+\end{itemize}
+
+\subsection{E2 Event Bus \& Ledger}
+\paragraph{Deliverables}
+\begin{itemize}
+  \item Topics: \texttt{intrinsica.risk.update.v1}, \texttt{ulms.session.attempted.v1}, \texttt{csl.state.change.v1}, \texttt{reciprocity.delta.v1}, \texttt{pilila.milestone.v1}, \texttt{privacy.audit.event.v1}.
+  \item Idempotency keys, DLQ, replay; schema registry enforcement.
+  \item Permissioned ledger, hash-on-write libraries, provenance middleware.
+  \item mTLS between zones; DID-bound OAuth2.
+\end{itemize}
+\paragraph{Acceptance}
+\begin{itemize}
+  \item Bus$\rightarrow$ledger commit p95 $<2$\,s; DLQ $<0.1\%$.
+  \item $100\%$ messages carry \texttt{policy\_hash} and signature; replay integrity verified.
+\end{itemize}
+
+\subsection{E3 ULMS \& Services}
+\paragraph{Deliverables}
+\begin{itemize}
+  \item Personalization service; CSL Gate; Reciprocity Balancer; $\pi$Līla scheduler.
+  \item Webhooks: \texttt{/hooks/attempted}, \texttt{/module-complete}, \texttt{/csl-change}.
+  \item LTI~1.3 launch, xAPI statements; telemetry store.
+\end{itemize}
+\paragraph{Acceptance}
+\begin{itemize}
+  \item Personalization p50 $<100$\,ms; webhook p95 $<150$\,ms; idempotent receipts.
+  \item CSL transitions logged with rationale; Reciprocity caps enforced under contention.
+\end{itemize}
+
+\subsection{E4 XR v1 \& EchoBraid}
+\paragraph{Deliverables}
+\begin{itemize}
+  \item XR modules: \emph{Sleep-101}, \emph{Breath-101}, \emph{BodyArt-101} (dual skins).
+  \item Accessibility overlays, bilingual captions; PWA packaging.
+  \item EchoBraid configs: pacing envelopes, turn-taking, stabilizers.
+\end{itemize}
+\paragraph{Acceptance}
+\begin{itemize}
+  \item Launch-to-first-frame p50 $<1.5$\,s (cached), p95 $<3.0$\,s.
+  \item ASD completion non-inferior (within 5 pp); TCI median $\ge 0.75$.
+\end{itemize}
+
+\subsection{E5 Dashboards}
+\paragraph{Deliverables}
+\begin{itemize}
+  \item SLO dashboard (latency, freshness, sync age, burn rates).
+  \item Privacy \& compliance dashboard (pass-rate, DP budget, PHI blocks).
+  \item Population \& Equity dashboards (engagement, adherence, risk-delta, slices).
+  \item Model drift/calibration board; promotion gate panel.
+\end{itemize}
+\paragraph{Acceptance}
+\begin{itemize}
+  \item Metrics parity with backend counters $\pm1\%$; alert rules live.
+  \item Equity gap reporting; monthly compliance pack auto-generated.
+\end{itemize}
+
+\subsection{E6 Offline-first}
+\paragraph{Deliverables}
+\begin{itemize}
+  \item Firebook bundles (signed, time-scoped); CRDT merge engine; conflict prompts.
+  \item Revocation propagation to edge; cache invalidation; Visit Pack offline.
+\end{itemize}
+\paragraph{Acceptance}
+\begin{itemize}
+  \item Sovereignty sync age $<24$\,h; merge correctness tests pass.
+  \item Revoked consent reflected on edge upon reconnect; redaction applied.
+\end{itemize}
+
+\subsection{Cross-Epic Dependencies}
+\begin{itemize}
+  \item E1 $\rightarrow$ E2 (schemas, IDs); E1 $\rightarrow$ E3 (Risk API); E2 $\rightarrow$ E3 (topics, ledger).
+  \item E3 $\rightarrow$ E4 (webhooks, personalization); E1/E3 $\rightarrow$ E5 (metrics, KPIs).
+  \item E1/E2 $\rightarrow$ E6 (trust fabric, provenance).
+\end{itemize}
+
+\subsection{Change Control \& Versioning}
+\begin{itemize}
+  \item Versioned APIs (\texttt{/v1}); event schemas with backward-compatible additions only.
+  \item RFCs required for breaking changes; 180-day deprecation; canary \& rollback plans attached.
+\end{itemize}
+
+
+\section{Resource Map and RACI}
+
+\subsection{Pods \& Minimal Staffing}
+\begin{center}
+\begin{tabular}{l l l l}
+\hline
+\textbf{Pod} & \textbf{Headcount (min)} & \textbf{Key Skills} & \textbf{Primary Scope} \\
+\hline
+Platform/Interop & 1 TL + 2 Eng & FHIR/HL7, OAuth2/DID, IaC, mTLS & APIs, schema registry, bus, ledger \\
+Data/ML & 1 TL + 3 Eng & Feature store, MLOps, ADEC, drift & Ingest$\rightarrow$feature, Risk API, ADEC/MQEM \\
+XR/Content & 1 Lead + 2 Dev + 1 ID & WebXR/PWA, accessibility, pedagogy & XR modules, EchoBraid configs, LTI/xAPI \\
+Privacy/GRC & 1 Lead + 1 Analyst & HIPAA/GDPR/FERPA, DPIA/RoPA & Policy-as-code, de-ID, audits, DP budgets \\
+PM/Ops (SRE) & 1 PM + 1 SRE & SLOs, on-call, CI/CD, incident mgmt & Runbooks, dashboards, rollbacks \\
+\hline
+\end{tabular}
+\end{center}
+\textit{Total minimal team:} 15.
+
+\subsection{Role Summaries}
+\paragraph{Platform/Interop} Owns FHIR/HL7 endpoints, LTI/xAPI, event topics, schema registry, DID-bound auth, permissioned ledger.
+\paragraph{Data/ML} Owns feature store, Risk API, ADEC estimators (UKF/EKF), MPC policy, MQEM/PNSM filters, drift probes, model registry.
+\paragraph{XR/Content} Owns XR micromodules, accessibility overlays, EchoBraid pacing, learning objectives, rubric alignment.
+\paragraph{Privacy/GRC} Owns consent objects, purpose tags, de-ID transforms, DPIA/RoPA, privacy audits, equity board cadence.
+\paragraph{PM/Ops} Owns SLO dashboards, canary/cutover, incident response, change control, capacity planning, vendor mgmt.
+
+\subsection{RACI Matrix (Key Deliverables)}
+\begin{center}
+\small
+\begin{tabular}{l c c c c c}
+\hline
+\textbf{Deliverable / Decision} & \textbf{Plat} & \textbf{Data/ML} & \textbf{XR/Cont} & \textbf{Priv/GRC} & \textbf{PM/Ops} \\
+\hline
+Consent \& De-ID Pipeline (S0) & C & A/R & I & A/R & C \\
+Schema Registry \& Contracts (S0) & A/R & C & C & C & I \\
+Event Bus \& Idempotency (S0) & A/R & C & I & I & C \\
+Ledger \& Provenance (S0) & A/R & C & I & C & C \\
+Feature Store v1 (S0) & I & A/R & I & C & C \\
+Risk API v1 (S0) & C & A/R & I & I & C \\
+ADEC Estimator \& MPC (S1) & I & A/R & I & C & C \\
+MQEM/PNSM Filters (S1) & I & A/R & I & C & C \\
+ULMS Webhooks (S1) & A/R & C & C & C & I \\
+XR Modules v1 (S1) & I & C & A/R & C & C \\
+EchoBraid Enablement (S2) & I & C & A/R & C & C \\
+Population \& Equity Dashboards (S2) & C & C & I & A/R & A/R \\
+DP Aggregates to HEP (S2) & I & C & I & A/R & C \\
+SLO Dashboards \& Burn Rules (all) & C & C & I & C & A/R \\
+Incident Response \& Rollback (all) & C & C & I & C & A/R \\
+\hline
+\end{tabular}
+\end{center}
+\textit{Legend:} A=Accountable, R=Responsible, C=Consulted, I=Informed.
+
+\subsection{Capacity \& Phase Allocation}
+\begin{center}
+\begin{tabular}{l c c c}
+\hline
+\textbf{Pod} & \textbf{S0 (wks 0--4)} & \textbf{S1 (wks 5--8)} & \textbf{S2 (wks 9--12)} \\
+\hline
+Platform/Interop & 60\% (APIs, bus, ledger) & 30\% (hardening) & 20\% (ops) \\
+Data/ML & 50\% (features, Risk API) & 35\% (ADEC/MQEM) & 15\% (dashboards) \\
+XR/Content & 20\% (specs) & 60\% (XR v1) & 20\% (EchoBraid) \\
+Privacy/GRC & 50\% (consent, de-ID) & 30\% (audits) & 20\% (DP/equity) \\
+PM/Ops & 40\% (CI/CD, SLOs) & 40\% (canary, runbooks) & 20\% (reports) \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{On-Call, Rollbacks, Contingency}
+\paragraph{On-Call}
+Week-long rotation: 1 primary SRE (PM/Ops), 1 secondary (Platform). Pager for burn-rate and privacy alerts; 15-min acknowledge, 1-hr mitigation target.
+\paragraph{Rollbacks}
+\begin{itemize}
+  \item \textbf{Models}: automatic revert on red burn or calibration breach; freeze promotions; restore last green from registry.
+  \item \textbf{XR/Services}: blue/green with 1\% canary; traffic cut if p95 latency or error rate crosses SLO gates.
+  \item \textbf{Schema/Contracts}: feature flags with dual-write; roll-forward preferred, rollback with compat shim.
+\end{itemize}
+\paragraph{Contingency}
+\begin{itemize}
+  \item \textbf{Privacy regression}: block egress, force DP-only exports, convene GRC within 24h.
+  \item \textbf{Drift surge}: widen ADEC $Q$, enable PNSM high-suppression mode, schedule retrain.
+  \item \textbf{Bus/ledger issue}: switch to store-and-forward with signed buffers; reconcile on recovery.
+\end{itemize}
+
+\subsection{Vendor \& Tooling (Minimal)}
+IaC (Terraform), CI/CD (GitHub Actions), Observability (metrics/logs/traces), Feature Store, Model Registry, Schema Registry, DP library, Ledger service. All assets carry SBOM and signatures; promotion requires provenance checks.
+
+\subsection{Governance Cadence}
+Weekly standup per pod; cross-pod integration review biweekly; equity board monthly; SLO \& privacy report weekly; phase gate reviews at S0/S1/S2 exits.
+
+
+\section{Go-to-Market Bridges}
+
+\subsection{Overview}
+Commercialization aligns the one-loop stack with low-friction entry points and provable ROI. Intrinsica anchors data/AI feasibility; Hologram's BYOC Visit Pack is the adoption wedge; S2H micro-brands demonstrate immediate user value; FHIR/HL7 endpoints enable downstream analytics. A unified digital twin underpins B2C and B2B offerings.
+
+\subsection{Intrinsica: Feasibility \& Market Scope}
+\paragraph{Value Props}
+\begin{itemize}
+  \item \textbf{Unified Twin}: consented, privacy-preserving twin powering simulation and personalization.
+  \item \textbf{Smart-Ring Biomarkers}: passive HRV, temp, SpO\textsubscript{2} piping into risk vectors with drift-guard rails.
+  \item \textbf{FHIR/HL7 Exports}: plug-and-play feeds for payer/provider analytics and research.
+\end{itemize}
+\paragraph{ICP (Ideal Customer Profiles)}
+\begin{itemize}
+  \item Digital clinics and employer health programs seeking adherence and risk reduction.
+  \item IDNs and ACOs targeting readmission, length-of-stay, and equity KPIs.
+  \item Payers seeking DP-safe cohort insights and preventive program ROI.
+\end{itemize}
+
+\subsection{Hologram Health: BYOC Adoption Wedge}
+\paragraph{Visit Pack}
+\begin{itemize}
+  \item \textbf{Zero-integration start}: sub-30\,s time-to-context at point of care.
+  \item \textbf{Trust catalyst}: explain-first Spectra view reduces duplicate/contraindicated orders.
+  \item \textbf{Expansion path}: SafeCare $\rightarrow$ BridgeCare $\rightarrow$ PrecisionCare with optional EHR bridge.
+\end{itemize}
+
+\subsection{Packaging \& Offers}
+\begin{center}
+\begin{tabular}{l l l l}
+\hline
+\textbf{Tier} & \textbf{Who} & \textbf{Contents} & \textbf{Outcome} \\
+\hline
+Starter & Clinics/Employers & Hologram SafeCare + 2 XR modules & Safety, basic adherence uplift \\
+Growth & Health Systems & BYOC + S2H micro-brands + dashboards & Risk reduction, equity slices \\
+Precision & IDNs/ACOs/Payers & Unified twin, ADEC policy, FHIR feeds & Predictive control, ROI reporting \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{Integration Tracks}
+\paragraph{Data \& Analytics}
+\begin{itemize}
+  \item FHIR R4 push/pull, HL7 v2 ADT/ORU, nightly DP-safe aggregates.
+  \item Cohort APIs for program evaluation (risk-delta, adherence, equity).
+\end{itemize}
+\paragraph{Experience}
+\begin{itemize}
+  \item LTI~1.3 launch for ULMS; XR as PWA; white-label S2H micro-brands.
+  \item Visit Pack QR/NFC; optional smart-ring device bundle.
+\end{itemize}
+
+\subsection{Pricing Levers (Illustrative)}
+\begin{itemize}
+  \item \textbf{B2C}: per-user subscription; micro-brand bundles; device add-on.
+  \item \textbf{B2B}: PMPM or per-covered-life; outcome-based adders on risk-delta and adherence.
+  \item \textbf{Research/Evidence}: DP-safe data products under DUA with time-bounded keys.
+\end{itemize}
+
+\subsection{Adoption Funnel \& Collateral}
+\begin{itemize}
+  \item \textbf{Land}: BYOC SafeCare pilot, 60–90 days, 2–3 S2H modules.
+  \item \textbf{Expand}: add dashboards, more micro-brands, FHIR feeds.
+  \item \textbf{Standardize}: PrecisionCare + unified twin; site-wide rollout.
+\end{itemize}
+\textbf{Assets}: clinical safety one-pager, equity storyboard, integration runbook, DPIA/RoPA templates, sample FHIR bundles.
+
+\subsection{Success Metrics (GTM)}
+\begin{itemize}
+  \item Time-to-first-value $<$ 2 weeks; provider time-to-context $<$ 30\,s.
+  \item Adherence $\ge 0.80$ on target modules; risk-delta CI excludes 0 in 8 weeks.
+  \item Equity gap reduction $\ge 0.15$ or within acceptance bands.
+  \item Privacy pass-rate $\ge 0.98$; $100\%$ provenance signatures valid.
+\end{itemize}
+
+\subsection{Pilot-to-Scale Playbook}
+\begin{itemize}
+  \item Define 2–3 program KPIs with customer; align data contracts and evaluation windows.
+  \item Run stepped-wedge or A/B; weekly SLO \& privacy reports; mid-pilot tuning via personalization.
+  \item Exit with ROI pack: adherence uplift, risk-delta, avoided cost proxies, equity movement, privacy attestations.
+\end{itemize}
+
+\subsection{Risk \& Mitigation (Commercial)}
+\begin{itemize}
+  \item \textbf{Integration drag}: start with BYOC; offer FHIR-only analytics lane.
+  \item \textbf{Data trust}: explain-first Spectra, signed Visit Packs, DP aggregates.
+  \item \textbf{Change fatigue}: Reciprocity balancer to cap nudge load; EchoBraid for neurodiverse users.
+\end{itemize}
+
+
+\section{Example Clinical Pathways}
+
+\subsection{Overview}
+Each pathway binds live risk vectors from Intrinsica, mechanistic forecasts from ADEC ($R(t),S(t)$), explain-first views in Hologram (Spectra), and dual-skinned XR micromodules in ULMS. Contracts use FHIR (clinical) and event topics (operations). CSL gates precede any recommendation or protocol change.
+
+\subsection{Shared Primitives}
+\begin{itemize}
+  \item \textbf{Risk vector} $r=\{\text{domain}\mapsto[0,1]\}$ (e.g., \texttt{sepsis}, \texttt{fluid}, \texttt{neutropenia}).
+  \item \textbf{ADEC}: $\hat R,\hat S$ with uncertainty; MPC suggests stabilizing actions.
+  \item \textbf{XR modules}: provider-facing (\textit{Stewardship-Quickstart}, \textit{HF-Discharge-Checklist}) and patient-facing (\textit{Sepsis-Signs}, \textit{Sodium-Smart}, \textit{Neutropenia-101}).
+  \item \textbf{SLOs}: risk update p50 $<80$\,ms; ULMS webhook p95 $<150$\,ms; Visit Pack time-to-context $<30$\,s.
+\end{itemize}
+
+\subsection{ICU Sepsis Watch}
+\paragraph{Cohort \& Signals}
+Adult ICU; vitals (RR, HR, MAP), labs (WBC, lactate), cultures, vasopressor start, urine output (FHIR \texttt{Observation}, \texttt{MedicationAdministration}, \texttt{Device}). Streams denoised via PNSM before featureization.
+\paragraph{Loop}
+\begin{enumerate}
+  \item Features $\rightarrow$ \texttt{sepsis} risk spike; ADEC $\hat S$ falls to \textit{caution}.
+  \item Spectra shows \emph{why-now}: lactate up, MAP down; suggests \textit{Stewardship-Quickstart} (provider) and fluid protocol preview.
+  \item ULMS launches \textit{Sepsis-Signs} (bedside education) for family consented contexts.
+  \item Outcomes: time-stamped antibiotics, fluid bolus volumes; Observations write back with Provenance.
+\end{enumerate}
+\paragraph{Contracts}
+\begin{verbatim}
+// intrinsica.risk.update.v1
+{"subject_did":"did:ex:icu-77","risk_vector":{"sepsis":0.86},"ts":1732230100}
+
+// Observation (lactate)
+{ "resourceType":"Observation","code":{"coding":[{"code":"lactate"}]},
+  "valueQuantity":{"value":3.8,"unit":"mmol/L"}, "Provenance":{...} }
+\end{verbatim}
+\paragraph{Acceptance \& KPIs}
+Antibiotics time-to-first-dose $\downarrow \ge 20$ min; fluid bundle compliance $\uparrow$; ICU LOS $\downarrow$ (signal only); CSL soft-block $\le 5\%$; PrivacyPass $\ge 0.98$.
+
+\subsection{Heart-Failure (HF) Transitions}
+\paragraph{Cohort \& Signals}
+Discharge to home; weight, HRV, BP, diuretics, sodium intake, symptom survey (dyspnea/orthopnea). Hologram Visit Pack accompanies handoff (BridgeCare).
+\paragraph{Loop}
+\begin{enumerate}
+  \item Daily ingest $\rightarrow$ \texttt{fluid} risk rises; HRV depresses; ADEC $\hat S< S_{\mathrm{lo}}$.
+  \item MPC recommends low-cognitive-load day: \textit{Sodium-Smart} 2-min module; S2H tele-check-in; diuretic review prompt for clinician.
+  \item Spectra flags \emph{why-now} with counterfactual: “+20\,mg furosemide predicted to restore $R(t)$ band in 48\,h.”
+  \item Outcomes recorded; adherence and weight trend reduce risk; $\hat S$ returns to \textit{stable}.
+\end{enumerate}
+\paragraph{Contracts}
+\begin{verbatim}
+// ulms.session.attempted.v1
+{"subject_pseudonym":"ulms:hf-221","module_id":"xr.diet.sodium.smart",
+ "metrics":{"TCI":0.81,"CSLState":"clear"},"ts":1732231212}
+\end{verbatim}
+\paragraph{Acceptance \& KPIs}
+30-day readmission $\downarrow$ vs matched control; adherence $\ge 0.80$ to post-discharge set; median weight gain spikes caught within 24\,h; provider acknowledgement of Spectra rationale $\ge 90\%$.
+
+\subsection{Oncology Triage}
+\paragraph{Cohort \& Signals}
+Chemo cycles; ANC, temperature, symptom diary (nausea, mucositis), TMB (optional), barcode neurotoxins. Neutropenia risk and exogenous shocks $I_{\mathrm{exo}}(t)$ inform ADEC.
+\paragraph{Loop}
+\begin{enumerate}
+  \item Risk update flags \texttt{neutropenia} $>0.7$; $\hat S$ drops to \textit{caution}.
+  \item Spectra: explain-first \emph{why-now} (ANC trend, fever 38.1°C); prompts nurse line triage.
+  \item ULMS: \textit{Neutropenia-101} patient module + caregiver \textit{Fever-When-to-Call}.
+  \item S2H: same-day clinic slot; prophylaxis protocol considered; de-ID aggregates to equity dashboards.
+\end{enumerate}
+\paragraph{Contracts}
+\begin{verbatim}
+// privacy.audit.event.v1 (education export)
+{"entity":"ulms","event":"export","result":"pass","policy_hash":"0x...","ts":1732232312}
+\end{verbatim}
+\paragraph{Acceptance \& KPIs}
+ED visits for febrile neutropenia $\downarrow$; on-time chemo $\uparrow$; engagement $\ge 0.70$; EquityGap on adherence reduced $\ge 0.15$; PrivacyPass $\ge 0.98$.
+
+\subsection{Pathway SLOs \& Safeguards}
+\begin{itemize}
+  \item Risk p50 $<80$\,ms; ULMS p95 $<150$\,ms; Visit Pack $<30$\,s to context.
+  \item Drift $\rightarrow$ rollback; widen ADEC $Q$; Spectra soft-block with safer defaults.
+  \item PNSM active on low-SNR streams; CSL gates on every escalation.
+\end{itemize}
+
+
+\section{Neurodiversity and Accessibility}
+
+\subsection{Overview}
+Neurodiversity support is first-class in the one-loop. \textbf{EchoBraid} provides pacing, sensory envelopes, and predictable interaction patterns across XR and 2D. Accessibility follows WCAG~2.2~AA with multimodal accommodations. S2 acceptance requires EchoBraid enablement for eligible cohorts and non-inferior outcomes.
+
+\subsection{Design Principles}
+\begin{itemize}
+  \item \textbf{Predictability}: stable layouts, explicit goals, progress indicators, countdowns.
+  \item \textbf{Low cognitive load}: chunked steps, plain language, one action per screen.
+  \item \textbf{Sensory hygiene}: adjustable motion, contrast, audio levels; optional haptics.
+  \item \textbf{User control}: pause, rewind, replay; modality switch (text/captions/audio/ASL).
+\end{itemize}
+
+\subsection{EchoBraid Model}
+\paragraph{Pacing envelope}
+Per-attempt envelope $E_k=\{\text{dur}_{\max},\ \rho_{\text{stim}},\ \text{breaks},\ \text{preview}\}$ limits module duration, stimulus density, and inserts scheduled micro-breaks with preview bars.
+\paragraph{Turn-taking}
+A timing parameter $\tau$ enforces explicit call-and-response windows to stabilize TCI and reduce interruptions.
+\paragraph{Temporal micro-variation}
+Prime-indexed micro-variation avoids rhythmic overload while preserving predictability: small, bounded offsets on prompts and animations.
+\paragraph{Mechanistic tie-in}
+If ADEC fused $S(t)$ falls below $S_{\mathrm{lo}}$, EchoBraid auto-tightens $E_k$ (shorter segments, fewer stimuli) and defers high-load content; reciprocity caps limit cross-app nudges.
+
+\subsection{Runtime Integration}
+\paragraph{Activation \& policy}
+Eligible users are flagged via consented attributes or clinician tag; EchoBraid is toggled per-module or account-wide.
+\paragraph{Telemetry}
+TCI, \texttt{CSLState}, \texttt{stimuli\_count}, \texttt{abort\_reason}, \texttt{overload\_flag}, \texttt{latency\_ms}, envelope ID.
+\paragraph{Contracts}
+\begin{verbatim}
+// Enable/adjust pacing envelope
+POST /csl-change
+{
+  "subject_pseudonym":"ulms:abc123",
+  "from":"clear","to":"clear",
+  "rationale":"EchoBraid tighten on low S(t)",
+  "policy_hash":"0x...", "echoBraid": {
+    "enabled": true,
+    "envelope": {"dur_max_s": 120, "stim_density": "low",
+                 "breaks": [{"at_s":60,"dur_s":10}],
+                 "turn_taking_tau_s": 6}
+  }
+}
+\end{verbatim}
+
+\subsection{Accessibility Baselines (WCAG 2.2 AA)}
+\begin{itemize}
+  \item Captions and transcripts; ASR-backed live captions; screen-reader labels (ARIA).
+  \item Keyboard operability; pointer target $\ge 44\times44$\,px; focus order preserved.
+  \item Motion-reduced mode; no flashing $>3$\,Hz; adjustable audio mix and loudness.
+  \item High-contrast themes; color not sole carrier of meaning; alt text for all media.
+  \item Language level B1 default; glossaries; bilingual UI where configured.
+\end{itemize}
+
+\subsection{Content Authoring Rules}
+\begin{itemize}
+  \item Steps $\le 90$\,s; sentences $\le 20$ words; one new idea per panel.
+  \item Advance organizers, checklists, and end-caps with “what changed” recaps.
+  \item Visuals with minimal decoration; consistent iconography; static previews before 3D scenes.
+\end{itemize}
+
+\subsection{Audio \& Visual Signal Conditioning}
+\begin{itemize}
+  \item \textbf{Audio}: prime-indexed suppression (PNSM) on background noise; compressor/limiter for level stability.
+  \item \textbf{Visual}: reduce micro-jitter; cap animation velocity; avoid parallax for motion-sensitive users.
+\end{itemize}
+
+\subsection{Offline-First}
+Firebook bundles include EchoBraid configs and assets; CRDT merges preserve user preferences; conflicts prompt on reconnect.
+
+\subsection{Privacy \& Consent}
+Neurodiversity flags are user-controlled; stored as de-identified attributes for ULMS gating; PHI remains in S2H enclave; exports to education are de-identified.
+
+\subsection{QA \& Test Matrix}
+\begin{itemize}
+  \item Screen-reader, keyboard-only, reduced-motion, and high-contrast test suites.
+  \item ASD personas with scripted journeys; measure TCI variance and abort rates.
+  \item Load tests verify latency under envelope constraints and telemetry volume.
+\end{itemize}
+
+\subsection{SLOs}
+\begin{itemize}
+  \item Launch-to-first-frame $<$1.5\,s p50; caption latency $<$250\,ms p95.
+  \item Envelope switch apply $<$200\,ms p95; telemetry drop rate $<0.1\%$.
+\end{itemize}
+
+\subsection{Acceptance (S2 Gate)}
+\begin{itemize}
+  \item EchoBraid enabled for eligible users; configuration audited in logs.
+  \item ASD completion non-inferior to non-ASD within 5 pp; TCI variance $\downarrow$ vs baseline.
+  \item No increase in aborts; privacy pass-rate $\ge 0.98$; zero PHI at HEP ingress.
+\end{itemize}
+
+\section{Advanced Methods Catalog (MQEM/PIRTM)}
+
+\subsection{Overview}
+This catalog enumerates prime-indexed spectral tools that harden learning under drift and noise while preserving auditability. Components: \textbf{zeta features} $\zeta_p(s)$ with AZL law, \textbf{lawful recursion} $\Xi$, \textbf{PNSM} denoising, \textbf{PIRTM} prime-indexed tensor provenance, and \textbf{Selberg--MQEM} multiplicative classifiers.
+
+\subsection{Prime-Indexed Zeta Features \texorpdfstring{$\zeta_p(s)$}{zeta\_p(s)}}
+\paragraph{Definition}
+Let $G_p$ be a prime-indexed graph/operator with ordered spectrum $\{\lambda^{(p)}_i\}_{i=1}^{d_p}$. Define
+\[
+\zeta_p(s)=\sum_{i=1}^{d_p}\left(\lambda^{(p)}_i+\varepsilon\right)^{-s},\quad s>0,\ \varepsilon>0.
+\]
+The \emph{zeta slope} and \emph{level} are
+\[
+\gamma_p=\left.\frac{\partial}{\partial s}\log \zeta_p(s)\right|_{s=s^\star},
+\qquad
+\ell_p=\log \zeta_p(s^\star).
+\]
+Use $(\gamma_p,\ell_p)$ as drift probes and anomaly indicators.
+
+\paragraph{AZL Law (Lawful Spectral Evolution)}
+Empirical linearity of slope vs. log-spectrum statistic:
+\[
+\gamma_p\approx \alpha\,\overline{\log\lambda^{(p)}}+\beta,
+\qquad \alpha\approx 0.50,\ \beta\approx 2.50.
+\]
+Reject updates when $|\gamma_p-(\alpha\overline{\log\lambda^{(p)}}+\beta)|>\tau_{\text{azl}}$.
+
+\subsection{Recursive Operator Integration \texorpdfstring{$\Xi$}{Xi}}
+\paragraph{Lawful recursion in model ops}
+With contractive feature map $F$ and graph state $G_p(t)$,
+\[
+\Xi(t{+}1)=\zeta_p\!\big(s(t)\big)\cdot F\!\big(G_p(t)\big),
+\]
+where $s(t)$ is set by calibration targets. Enforce \emph{lawfulness} by bounding AZL residuals and rejecting non-contractive $F$.
+
+\paragraph{Placement}
+Apply $\Xi$ in: (i) pre-training whitening, (ii) embedding refresh, (iii) head-layer adaptation during canary.
+
+\subsection{PNSM Denoising Pipeline}
+\paragraph{Prime-indexed recursion}
+For stream $x_t\in\mathbb{R}^d$:
+\[
+x_{t+1}=S\,x_t+(1{-}S)\,R_p(x_t),\quad 0<S<1,
+\]
+where $R_p$ is a prime-indexed smoother (e.g., graph-wavelet shrinkage on $G_p$). Stability holds if $\|R_p(x)-R_p(y)\|\le\kappa\|x-y\|$ with $\kappa<\tfrac{1}{1-S}$.
+
+\paragraph{Dynamic prime selection}
+Choose $p$ to maximize local stationarity:
+\[
+p^\star=\arg\min_{p\in\mathcal{P}}\ \mathrm{Var}_\tau\big(\gamma_p\big)\quad \text{subject to } \mathrm{SNR}_p\ge \eta.
+\]
+Fall back to classical filters if no $p$ meets $\eta$.
+
+\paragraph{Multiplicative noise handling}
+Apply log-domain stabilization on strictly positive channels; for signed channels, split magnitude/phase or use variance-stabilizing transforms before PNSM.
+
+\paragraph{Decoherence control}
+Map covariance to a density matrix $\rho=\Sigma/\mathrm{Tr}(\Sigma)$ and apply trace-preserving contraction
+\[
+\rho_{t+1}=(1{-}\delta)\rho_t+\delta\,\Pi_p(\rho_t),
+\]
+where $\Pi_p$ is prime-indexed projector; ensure $\mathrm{Tr}(\rho)=1$.
+
+\subsection{PIRTM: Prime-Indexed Tensor Models}
+\paragraph{Definition}
+Represent feature states as $\mathcal{T}^{(p)}\in\mathbb{R}^{d_1\times\cdots\times d_m}$ with prime slice $p$; attach $(p,s,h)$ where $h$ is ledger hash. Provide:
+\begin{itemize}
+  \item \textbf{Decomposability}: CP/Tucker with prime-sliced penalties.
+  \item \textbf{Traceability}: deterministic replay from $(p,s,h)$.
+  \item \textbf{Policy checks}: CSL masks applied to tensor modes before export.
+\end{itemize}
+
+\subsection{Selberg--MQEM Multiplicative Fits}
+\paragraph{Classifier template}
+Use spectrum-derived statistic $k$ with multiplicative fit
+\[
+\mathcal{M}_p(k)\propto k^{-\alpha}\,\exp\!\left(-\beta(\log k)^2\right),
+\quad \alpha\approx 0.50,\ \beta\approx 2.50,
+\]
+as reference density; flag anomalies via likelihood ratio against nominal cohort.
+
+\paragraph{Post-quantum bias}
+Classifier relies on multiplicative structure, not raw coordinates; robust to linear subspace attacks.
+
+\subsection{Cross-Domain Validation}
+\paragraph{Holdout protocol}
+\begin{itemize}
+  \item Split by device/site/time to avoid leakage.
+  \item Evaluate drift probes $(\gamma_p,\ell_p)$ vs. downstream AUC and ECE.
+  \item Stress with adversarial noise (additive + multiplicative); verify PNSM preserves calibration.
+\end{itemize}
+\paragraph{Acceptance}
+\begin{itemize}
+  \item PNSM improves SNR $\ge 3$\,dB and reduces feature CV $\ge 20\%$ without AUC loss.
+  \item AZL gate reduces rollback count by $\ge 30\%$ at fixed error budget.
+  \item Selberg--MQEM detector AUROC $\ge 0.90$ on labeled anomaly sets.
+\end{itemize}
+
+\subsection{Integration Contracts}
+\paragraph{Events}
+\begin{verbatim}
+topic: pnsn.filter.applied.v1
+{ "subject_did":"did:ex:123", "S":0.82, "p": 577, "hash":"0x..." }
+
+topic: zeta.drift.alert.v1
+{ "p":593, "Z":3.2, "delta_log_zeta":0.27, "state":"RED", "model_ver":"risk-7.2.1" }
+
+topic: pirtm.slice.update.v1
+{ "tensor_id":"fs-abc", "p":601, "s":1.3, "hash":"0x...", "ts":1732230012 }
+\end{verbatim}
+
+\subsection{Pseudocode}
+\begin{verbatim}
+def mqem_pipeline(batch):
+    x = batch.raw
+    p = select_prime(x)                 # dynamic prime selection
+    x_clean = PNSM(x, p, S=0.8)         # denoise biosignals/embeddings
+    feats = featureize(x_clean)
+    (gamma, level) = zeta_probes(feats, p)
+    if azl_violation(gamma, feats):
+        reject_update(); rollback(); return
+    T_p = pirtm_update(feats, p)        # attach (p, s, hash) and ledger
+    yhat = model_infer(T_p)
+    return yhat
+\end{verbatim}
+
+\subsection{SLOs \& Safeguards}
+\begin{itemize}
+  \item PNSM latency p50 $<10$\,ms per $10^4$ dims; end-to-end inference p50 $<80$\,ms.
+  \item Lawful recursion enabled for all embedding refreshes; AZL residual $<\tau_{\text{azl}}$ or hard reject.
+  \item $100\%$ PIRTM updates include valid ledger hashes; nightly reproducibility pass.
+\end{itemize}
+
+\section{Acceptance and Exit}
+
+\subsection{Global Acceptance Gates}
+\begin{itemize}
+  \item \textbf{Privacy}: Privacy pass-rate $\ge 0.98$; zero PII at HEP ingress; $(\varepsilon,\delta)$-DP enforced on education aggregates.
+  \item \textbf{Reliability}: DLQ $<0.1\%$; bus$\rightarrow$ledger commit p95 $<2$\,s; exactly-once via \texttt{Idempotency-Key}.
+  \item \textbf{Provenance}: Zero unsigned bundles; $100\%$ policy/provenance hashes present; nightly reproducibility \emph{pass}.
+  \item \textbf{Performance}: Personalization p50 $<100$\,ms; online inference p50 $<80$\,ms; ingest$\rightarrow$feature p95 $<5$\,min; sovereign sync $<24$\,h.
+  \item \textbf{Safety}: CSL gate \emph{pass} on all recommendations; Spectra shows rationale \& confidence; no Sev-1 incidents.
+  \item \textbf{Equity}: Equity-gap within bands or mitigation plan active; EchoBraid enabled for eligible cohorts at S2.
+\end{itemize}
+
+\subsection{DoR/DoD per Epic (E1--E6)}
+\paragraph{Definition of Ready (DoR)}
+\begin{itemize}
+  \item RFC approved; schema IDs reserved; policy-as-code updated; DPIA/RoPA check recorded.
+  \item Test data available; SLOs defined; rollback plan attached; observability hooks specified.
+\end{itemize}
+\paragraph{Definition of Done (DoD)}
+\begin{itemize}
+  \item Contracts validated (schema registry); unit/integration tests green; canary $\rightarrow$ region rollout with no red burns.
+  \item Metrics/logs/traces on dashboards; provenance entries written; runbooks updated.
+\end{itemize}
+
+\subsection{Epic-Specific DoD}
+\paragraph{E1 Data Plane}
+Feature Store lineage $=100\%$; Risk API p50 $<80$\,ms; de-ID tests \emph{pass}; zero PHI at HEP egress.  
+\paragraph{E2 Event Bus \& Ledger}
+All topics live; DLQ $<0.1\%$; ledger hash-on-write verified; replay integrity \emph{pass}.  
+\paragraph{E3 ULMS \& Services}
+Webhooks p95 $<150$\,ms; CSL transitions logged with rationale; Reciprocity caps enforced.  
+\paragraph{E4 XR v1 \& EchoBraid}
+Launch-to-first-frame p50 $<1.5$\,s; accessibility checks \emph{pass}; EchoBraid configs load-time $<200$\,ms.  
+\paragraph{E5 Dashboards}
+SLO/privacy/drift boards match backend counters $\pm1\%$; alert rules active.  
+\paragraph{E6 Offline-first}
+Firebook signing verified; CRDT merge tests \emph{pass}; revocation propagates on reconnect.
+
+\subsection{Phase Exit Checklists}
+\paragraph{S0 Foundation}
+\begin{itemize}
+  \item Consent \& de-ID pipelines live; ledger bootstrap complete; contracts (FHIR + webhooks) validated.
+  \item \textbf{Exit proof}: sample flows show zero PHI at HEP ingress; provenance hashes present; reproducibility job \emph{pass}.
+\end{itemize}
+
+\paragraph{S1 Experience + Telemetry}
+\begin{itemize}
+  \item XR modules live; personalization \& CSL enforced; telemetry complete with idempotent receipts.
+  \item \textbf{Exit proof}: engagement $>0.70$ (target cohort, 7-day); privacy $\ge 0.98$; inference p50 $<80$\,ms.
+\end{itemize}
+
+\paragraph{S2 Inclusion + Population Views}
+\begin{itemize}
+  \item EchoBraid enabled; population/equity dashboards live; DP budgets tracked.
+  \item \textbf{Exit proof}: equity gap reduction $\ge 0.15$ or within bands; provenance completeness $=100\%$.
+\end{itemize}
+
+\subsection{Compliance Evidence Pack (per release)}
+\begin{itemize}
+  \item Schema diffs, test matrices, privacy audit samples, DPIA/RoPA deltas.
+  \item Model cards (AUC/ECE, drift, fairness slices), SBOM \& signatures, rollback validation logs.
+\end{itemize}
+
+\subsection{Failure Conditions \& Automatic Actions}
+\begin{itemize}
+  \item Red burn on core SLO $\Rightarrow$ auto-rollback to last green; freeze promotions.
+  \item Privacy breach or unsigned bundle $\Rightarrow$ block egress; convene GRC; rotate keys; issue audit package.
+  \item Drift surge $\Rightarrow$ widen ADEC $Q$; enable shadow inference; schedule retrain.
+\end{itemize}
+
+\subsection{Final Sign-Off}
+Governance board attests that Global Gates are met; S0/S1/S2 checklists complete; DoR/DoD artifacts archived; residual risks tracked with owners and due dates.
+
+\section{Glossary}
+
+\begin{description}
+  \item[PER] \textbf{Personalized Education Record}. De-identified learner ledger of assigned modules, attempts, outcomes, reflections, and policy hashes.
+  \item[MLEM] \textbf{Module Learning Evidence Map}. Links objectives to evidentiary items and scoring rules for transparent assessment.
+  \item[TCI] \textbf{Topic Coherence Index}. Cosine alignment between content vector and learner-need vector, $\,\mathrm{TCI}\in[0,1]$.
+  \item[CSL] \textbf{Clarity, Sovereignty, Lawfulness}. Runtime guardrail; actions execute only if all three pass.
+  \item[Reciprocity] Cross-app nudge budget vector controlling total intervention pressure and fairness across channels.
+  \item[$\pi$Līla] Progression scheduler that sequences milestones and reflection loops under load and safety constraints.
+  \item[ULMS] \textbf{Universal Learning Management Service}. Dual-skinned launch, telemetry, and webhook layer for micromodules.
+  \item[XR MaaS] \textbf{XR Modules-as-a-Service}. WebXR/PWA micromodules with clinical/education skins and shared IDs.
+  \item[Risk Vector] Normalized set of domain scores (e.g., sleep, metabolic) produced from features and model outputs.
+  \item[EchoBraid] Neurodiversity add-on providing pacing envelopes, turn-taking, and sensory controls.
+  \item[Firebook] Signed, time-scoped offline bundle; CRDT-merged on reconnect with provenance.
+  \item[ADEC] \textbf{Adaptive Dynamics of Environmental Control}. ODE for latent structural coherence $R(t)$ with shocks $I(t)$; UKF/Bayes estimation; MPC/RL policy.
+  \item[SCM] \textbf{Structural Coherence Metric}. Number-theoretic coherence from primes and coprimality, producing $R_{\mathrm{num}}(n)$.
+  \item[$S(t)$] \textbf{Fused Coherence}. $S=w_{\mathrm{dyn}}R(t)+w_{\mathrm{num}}R_{\mathrm{num}}(n(t))-\eta_C C(n(t))$ used for gating and explanations.
+  \item[$\zeta_p(s)$] \textbf{Prime-Indexed Spectral Zeta}. Spectral moment over eigenvalues for drift/anomaly probes and lawful updates.
+  \item[PNSM] \textbf{Prime-Indexed Noise Suppression Method}. Contractive recursion $x_{t+1}=Sx_t+(1-S)R_p(x_t)$ with $0<S<1$ for denoising signals/embeddings.
+  \item[MQEM] \textbf{Multiplicative (Prime-Indexed) Spectral Framework}. Zeta features, AZL law, and lawful recursion for stable, explainable model ops.
+  \item[PIRTM] \textbf{Prime-Indexed Recursive Tensor Models}. Prime-sliced tensors with ledgered provenance enabling replay, audits, and CSL policy checks.
+\end{description}
+
+\paragraph{Next} If you want a numbered requirement spec with IDs mapped to epics, interfaces, and acceptance tests, say ``convert to spec.''
+
+
+\end{document}

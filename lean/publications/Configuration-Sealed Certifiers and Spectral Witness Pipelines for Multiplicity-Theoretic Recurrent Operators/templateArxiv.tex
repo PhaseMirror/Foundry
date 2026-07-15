@@ -1,0 +1,1057 @@
+\documentclass[11pt]{article}
+
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{fullpage}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{mathtools}
+\usepackage[T1]{fontenc}
+
+\title{Configuration-Sealed Certifiers and Spectral Witness Pipelines \\
+for Multiplicity-Theoretic Recurrent Operators}
+
+\author{[Redacted for Defensive Publication]}
+
+\date{May 2026}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+We introduce the notion of a \emph{Configuration-Sealed Certifier} (CSC) for
+Multiplicity-Theoretic dynamical systems, and formalize an end-to-end
+spectral certification pipeline for a zeta-specialized recurrent operator
+(ZetaCell) coupled to a Pro-tier stability certifier and an oracle veto
+policy. The pipeline combines finite-dimensional MultiplicityCell and
+ZetaCell operators, a SpectralWitness object encoding zeta-zero spacing
+statistics, a Pro-tier contraction certificate, and a two-key UnifiedProWitness
+that binds mathematical and governance evidence. We further define a Tier~4
+density layer for Phase Mirror Pro based on GUE nearest-neighbor spacing
+tests, and sketch a language-agnostic library structure for implementing
+CSC-based certifiers in strongly typed languages. This article is intended as
+prior art and defensive publication.
+\end{abstract}
+\newpage
+\tableofcontents
+
+\section{Introduction}
+
+Multiplicity Theory models lawful dynamics on an ambient multiplicity
+Hilbert space with prime-labeled structure and universal spectral
+operators acting on prime and auxiliary sectors.
+Finite-dimensional surrogates, such as the MultiplicityCell and ZetaCell,
+realize these dynamics as spectrally constrained recurrent operators
+equipped with constitutional and ethical projectors.
+The present work extends this formalism in three directions:
+\begin{enumerate}[label=(\alph*)]
+  \item A formal definition of \emph{Configuration-Sealed Certifiers} (CSC)
+        which are parameterized but non-interchangeable certifiers whose
+        configuration is sealed at construction time;
+  \item A Pro-tier spectral pipeline for ZetaCell, including a
+        SpectralWitness object, a Pro-tier FormalStabilityCertificate,
+        and a UnifiedProWitness implementing a two-key veto protocol;
+  \item A Tier~4 density mechanism for Phase Mirror Pro based on GUE
+        nearest-neighbor spacing tests on zeta-zero distributions.
+\end{enumerate}
+
+\section{Recap: MultiplicityCell and ZetaCell}
+
+We briefly recall the MultiplicityCell and ZetaCell architectures as
+finite-dimensional surrogates of a universal multiplicity recursion.%
+\footnote{See the attached MultiplicityCell manuscript for full details.}[file:2]
+
+\subsection{MultiplicityCell}
+
+Let $n_p, n_f \in \mathbb{N}$ and define the finite-dimensional state space
+\[
+  \mathcal{H}_{n_p,n_f}
+  = \mathbb{R}^{n_p \times n_f},
+  \quad
+  \|\Psi\|_F^2 = \sum_{i=1}^{n_p} \sum_{j=1}^{n_f} \Psi_{i,j}^2.
+\]
+We interpret the $i$-th row as a feature vector attached to the $i$-th
+prime channel.%
+[file:2]
+
+The MultiplicityCell realizes an update of the form
+\[
+  \Psi_{t+1} = P_E P_{\mathrm{CSL}} T_m(\Psi_t, x_t),
+  \quad
+  T_m(\Psi, x) = \Psi + m \, U(\Psi, x),
+\]
+where $U$ decomposes into a prime block $A$, a time-sieve block $B$, and
+an internal block $E$, each with Lipschitz constants $L_A, L_B, L_E$.
+The constitutional projector $P_{\mathrm{CSL}}$ enforces a lawfulness
+budget via norm caps and sparsity, while the ethical projector $P_E$
+promotes channel-diversity through entropy-based reweighting.%
+[file:2]
+
+Under spectral-norm constraints and a multiplicity constant $m$ satisfying
+\[
+  1 + m \bigl(L_A + L_B + L_E\bigr) < 1,
+\]
+the composite map acts as a contraction on a suitable ball in
+$\mathcal{H}_{n_p,n_f}$, yielding a unique fixed point by the Banach
+fixed-point theorem and an empirical Absolute Contraction Energy (ACE)
+budget.%
+[file:2]
+
+\subsection{ZetaCell}
+
+ZetaCell extends the state space to a dual prime--zero sector%
+[file:1]
+\[
+  \mathcal{H}_{N,M}
+  = \mathcal{H}_p^{(N)} \times \mathcal{H}_z^{(M)},\quad
+  \mathcal{H}_p^{(N)} = \mathbb{R}^{n_p \times n_f},\quad
+  \mathcal{H}_z^{(M)} = \mathbb{R}^{n_z \times n_g},
+\]
+with rows in $\mathcal{H}_p^{(N)}$ indexed by truncated primes
+$p_1,\dots,p_{n_p}$ and rows in $\mathcal{H}_z^{(M)}$ indexed by the
+first $n_z$ nontrivial zeta zeros $\tfrac12 + i\gamma_k$.%
+[file:1]
+
+The ZetaCell recursion has the same constitutional form
+\[
+  (\Psi_{t+1}, \Chi_{t+1})
+  = P_E P_{\mathrm{CSL}} T_m\bigl((\Psi_t,\Chi_t), x_t\bigr),
+\]
+but with $U$ decomposed as
+\begin{align*}
+  U_p(\Psi,\Chi,x) &= A_p(\Psi) + C_{zp}(\Chi) + B_p(\Psi,\Chi) + E_{p}(\Psi,\Chi, x),\\
+  U_z(\Psi,\Chi,x) &= A_z(\Chi) + C_{pz}(\Psi) + B_z(\Psi,\Chi) + E_{z}(\Psi,\Chi, x),
+\end{align*}
+where $C_{pz}, C_{zp}$ are bridge operators built from an oscillatory
+kernel inspired by explicit formulas for prime-counting functions:%
+[file:1]
+\[
+  K_{ik} = a_{ik} \cos(\gamma_k \log p_i) + b_{ik} \sin(\gamma_k \log p_i),
+  \quad 1 \le i \le n_p,\; 1 \le k \le n_z.
+\]
+The bridge acts via learnable maps $R_{pz}$ and $R_{zp}$.
+
+Lipschitz bounds for each block yield an ACE-style contraction criterion
+similar to the prime-only case, with additional contributions from the
+bridge operators.%
+[file:1]
+
+\section{SpectralWitness and Zero-Spacing Metrics}
+
+To certify the spectral health of the prime--zero bridge, we define a
+SpectralWitness object associated to a fixed $n_0$-zero bridge kernel.
+
+Let $\gamma_1 < \gamma_2 < \cdots < \gamma_{n_0}$ denote the truncated
+zeta zero heights and $\{p_i\}_{i=1}^{n_p}$ the truncated primes used in
+the bridge. Consider the bridge kernel
+\[
+  K_{ik} = \cos(\gamma_k \log p_i),
+  \quad 1 \le i \le n_p,\; 1 \le k \le n_0.
+\]
+
+\begin{definition}[SpectralWitness]
+A SpectralWitness for a fixed bridge kernel $K$ is a tuple
+\[
+  W = (\delta_{pz}, \|R_{pz}\|_2, r_{\mathrm{bridge}}, n_0,
+       \{s_k\}_{k=1}^{n_0-1}, \tau_{\mathrm{gap}}),
+\]
+where:
+\begin{itemize}[leftmargin=*]
+  \item $\delta_{pz} = \min_{1 \le k < n_0} (\gamma_{k+1}-\gamma_k)$ is the
+        minimal zero-spacing;
+  \item $\|R_{pz}\|_2$ is the spectral norm of the effective bridge operator
+        derived from $K$;
+  \item $r_{\mathrm{bridge}}$ is the effective bridge rank as measured by
+        singular values above a fixed relative threshold;
+  \item $n_0$ is the number of zeta zeros used in the bridge;
+  \item $(s_k)$ is the vector of nearest-neighbor spacings,
+        $s_k = \gamma_{k+1}-\gamma_k$;
+  \item $\tau_{\mathrm{gap}}$ is an optional scalar summarising the trend
+        of the gap over time (e.g. a finite-difference estimate).
+\end{itemize}
+\end{definition}
+
+In implementation, singular values $\sigma_0 \ge \cdots \ge \sigma_{m-1}$
+of $K$ are computed via SVD of the cached kernel, and the bridge rank is
+\[
+  r_{\mathrm{bridge}} = \#\{j : \sigma_j > \varepsilon_{\mathrm{rel}}\,\sigma_0\}
+\]
+for some small relative threshold $\varepsilon_{\mathrm{rel}}$ (e.g.\ $10^{-6}$).
+
+\section{Configuration-Sealed Certifiers (CSC)}
+
+We now formalize the notion of a Configuration-Sealed Certifier (CSC),
+motivated by the multiplicity-theoretic CRMF construction in genomics%
+[file:10] and the Pro-tier Phase Mirror implementation.
+
+\begin{definition}[CRMF-style CSC Configuration]
+A CRMF-style configuration is a tuple
+\[
+  \mathcal{C} = (\mathrm{DomainTag}, P_N, n_0, \Theta),
+\]
+where:
+\begin{itemize}[leftmargin=*]
+  \item $\mathrm{DomainTag}$ is a domain identifier
+        (e.g.\ ``ecp-genomic'', ``phase-mirror-pro'');
+  \item $P_N$ is a finite prime index set;
+  \item $n_0$ is the number of modes/zeros;
+  \item $\Theta$ denotes auxiliary hyperparameters (gain bounds, density tiers, etc.).
+\end{itemize}
+\end{definition}
+
+\begin{definition}[Configuration-Sealed Certifier (CSC)]
+A Configuration-Sealed Certifier is a certifier object $\mathsf{C}$ equipped
+with a configuration $\mathcal{C}$ such that:
+\begin{enumerate}[label=(\roman*),leftmargin=*]
+  \item $\mathsf{C}$ is constructed only via a factory
+        $\mathsf{Factory} : \mathcal{C} \mapsto \mathsf{C}$ and cannot
+        be reconfigured post-construction;
+  \item compatibility between certifiers is defined structurally:
+        \[
+          \mathsf{Compatible}(\mathcal{C}_1,\mathcal{C}_2)
+          \iff
+          \mathrm{DomainTag}_1 = \mathrm{DomainTag}_2,\;
+          P_N^{(1)} = P_N^{(2)},\;
+          n_0^{(1)} = n_0^{(2)};
+        \]
+  \item certificates emitted by $\mathsf{C}$ carry the configuration
+        fingerprint, so that consumers can verify configuration equality
+        before accepting a certificate.
+\end{enumerate}
+\end{definition}
+
+The configuration fingerprint can be implemented as a \emph{seal key},
+e.g.
+\[
+  \mathrm{SealKey}(\mathcal{C})
+  = \bigl(\mathrm{DomainTag}, P_N, n_0\bigr),
+\]
+or its hash. Two CSCs with different seals are non-interchangeable, even
+if they share identical scalar input and output types.
+
+\subsection{CSC in Phase Mirror Pro}
+
+In the Phase Mirror Pro setting, the CSC configuration includes the
+spectral constants:
+\[
+  \mathrm{DomainTag} = \text{``phase-mirror-pro''},\quad
+  P_N = \{p_1,\dots,p_{n_p}\},\quad
+  n_0 = N_0,
+\]
+and the shared spectral law parameters
+\[
+  \varepsilon_{\mathrm{spectral}} = 0.1,\quad
+  N_0 = 64,
+\]
+which are used to define the Pro-tier gap floor
+\[
+  \Delta_{pz}^{\mathrm{floor}} = N_0^{-(1/2 + \varepsilon_{\mathrm{spectral}})}.
+\]
+
+\section{Pro-tier Certification and Two-Key Protocol}
+
+We now describe the Pro-tier certification pipeline built on top of
+SpectralWitness and CSC.
+
+\subsection{FormalStabilityCertificate}
+
+Let $\lambda_m$ denote the ACE-related contraction constant for the
+pipeline and $\rho_t$ a computed contraction bound. A Pro-tier certificate
+is:
+
+\begin{definition}[FormalStabilityCertificate]
+A FormalStabilityCertificate is a tuple
+\[
+  \mathcal{S}
+  = (\lambda_m, \rho_t, W_{\mathrm{spec}}, \mathrm{epoch}),
+\]
+where $W_{\mathrm{spec}}$ is a SpectralWitness.
+\end{definition}
+
+We define three predicates:
+\begin{align*}
+  \mathrm{L0Satisfied}(\mathcal{S})
+  &:= \rho_t < 1,\\
+  \mathrm{SpectralHealthy}(\mathcal{S})
+  &:= \delta_{pz} \;\ge\; n_0^{-(1/2+\varepsilon_{\mathrm{spectral}})},\\
+  \mathrm{ProCertified}(\mathcal{S})
+  &:= \mathrm{L0Satisfied}(\mathcal{S})
+      \wedge \mathrm{SpectralHealthy}(\mathcal{S}).
+\end{align*}
+
+\subsection{UnifiedProWitness and Veto Decision}
+
+A UnifiedProWitness binds mathematical and governance keys into a single
+object that drives the oracle veto.
+
+\begin{definition}[UnifiedProWitness]
+Let $\mathsf{Compliance}$ denote a governance/compliance report and
+$\mathcal{S}$ a FormalStabilityCertificate. A UnifiedProWitness is
+\[
+  \mathcal{W} = (\mathsf{Compliance}, \mathcal{S}),
+\]
+with predicates:
+\begin{align*}
+  \mathrm{GovernancePasses}(\mathcal{W})
+  &:= \mathsf{Compliance.verdict} = \text{COMPLIANT},\\
+  \mathrm{MathematicsPasses}(\mathcal{W})
+  &:= \mathrm{ProCertified}(\mathcal{S}),\\
+  \mathrm{BothKeysPass}(\mathcal{W})
+  &:= \mathrm{GovernancePasses}(\mathcal{W}) \wedge
+      \mathrm{MathematicsPasses}(\mathcal{W}).
+\end{align*}
+\end{definition}
+
+The oracle veto outputs a VetoDecision:
+\[
+  \mathrm{VetoDecision}(\mathcal{W}, t)
+  =
+  \begin{cases}
+    (\mathrm{vetoed} = 0,\ \mathrm{reason} = \varnothing,\ \mathrm{epoch} = t),
+      & \text{if BothKeysPass},\\
+    (\mathrm{vetoed} = 1,\ \mathrm{reason} = r,\ \mathrm{epoch} = t),
+      & \text{otherwise},
+  \end{cases}
+\]
+with reasons partitioned as
+\[
+  r \in \{\text{GOVERNANCE\_FAIL},\ \text{MATH\_L0\_FAIL},\ \text{SPECTRAL\_FAIL}\}.
+\]
+
+\subsection{Python-style Code Snippet}
+
+A simplified Python sketch of the Pro-tier certifier and unified witness:
+
+\begin{verbatim}
+@dataclass(frozen=True)
+class SpectralWitness:
+    delta_pz: float
+    norm_rpz: float
+    bridge_rank: int
+    n_zeros: int
+    zero_spacings: np.ndarray
+    gap_trend: Optional[float] = None
+
+@dataclass(frozen=True)
+class FormalStabilityCertificate:
+    lambda_m: float
+    rho_bound: float
+    spectral: Optional[SpectralWitness]
+    epoch: int = 0
+
+    def l0_satisfied(self) -> bool:
+        return self.rho_bound < 1.0
+
+    def spectral_healthy(self, eps: float = EPS_SPECTRAL) -> bool:
+        if self.spectral is None:
+            return False
+        floor = self.spectral.n_zeros ** -(0.5 + eps)
+        return self.spectral.delta_pz >= floor
+
+    def pro_certified(self) -> bool:
+        return self.l0_satisfied() and self.spectral_healthy()
+\end{verbatim}%
+[file:1][file:2]
+
+\begin{verbatim}
+@dataclass(frozen=True)
+class UnifiedProWitness:
+    compliance: ComplianceReport
+    stability: FormalStabilityCertificate
+
+    def governance_passes(self) -> bool:
+        return self.compliance.verdict == "COMPLIANT"
+
+    def mathematics_passes(self) -> bool:
+        return self.stability.pro_certified()
+
+    def both_keys_pass(self) -> bool:
+        return self.governance_passes() and self.mathematics_passes()
+
+    def veto_reason(self) -> Optional[str]:
+        if not self.governance_passes():
+            return f"GOVERNANCE_FAIL:{self.compliance.verdict}"
+        if not self.stability.l0_satisfied():
+            return "MATH_L0_FAIL"
+        if not self.stability.spectral_healthy():
+            return "SPECTRAL_FAIL"
+        return None
+\end{verbatim}
+
+\section{Tiered Density and Tier 4 Analog}
+
+CRMF introduces a tiered density scheme $(L_0,L_1,L_2,L_4)$ in which
+Tier~4 computes a hypergraph spectral radius over operator compositions
+when cheaper bounds fail.%
+[file:10]
+
+In Phase Mirror Pro, we define a homologous but distinct Tier~4 that
+operates on the zeta-zero spacing distribution rather than operator word
+norms.
+
+\subsection{Phase Mirror Pro Tier 4}
+
+Let $s_k = \gamma_{k+1}-\gamma_k$ denote normalized nearest-neighbor
+spacings for the truncated zero set. The GUE Wigner--Dyson distribution
+for normalized spacings is
+\[
+  P_{\mathrm{WD}}(s) = \frac{\pi}{2}s \exp\Bigl(-\frac{\pi s^2}{4}\Bigr).
+\]
+Define its CDF $F_{\mathrm{WD}}(s)$ and consider the empirical spacing
+distribution $F_{\mathrm{emp}}(s)$ built from $\{s_k\}$.
+
+\begin{definition}[Tier 4 GUE Recovery Check]
+Given a SpectralWitness $W$, define:
+\begin{align*}
+  \mathrm{KS}(W) &= \sup_{s}
+    \bigl| F_{\mathrm{emp}}(s) - F_{\mathrm{WD}}(s) \bigr|,\\
+  \mathrm{deficit}(W) &= \Delta_{pz}^{\mathrm{floor}} - \delta_{pz}.
+\end{align*}
+A Tier~4 GUE recovery check returns a conditional status:
+\[
+  \mathrm{status}(W)
+  =
+  \begin{cases}
+    \text{CONDITIONAL}, & \text{if }\mathrm{KS}(W) < \kappa,\;
+                           \mathrm{deficit}(W) < \alpha \Delta_{pz}^{\mathrm{floor}},\\
+    \text{HARD\_VETO}, & \text{otherwise},
+  \end{cases}
+\]
+for chosen thresholds $\kappa,\alpha \in (0,1)$.
+\end{definition}
+
+This Tier~4 mechanism provides a \emph{recovery} path when the primary
+gap test fails but the spacing distribution remains GUE-like and the
+gap deficit is modest, enabling conditional certificates instead of
+hard freezes.
+
+\section{CRMF-style CSCs and Cross-Domain Homology}
+
+In CRMF for genomic applications, a multiplicity field over a Banach
+space $X$ is indexed by primes and enriched with resonance-coupled
+scalars, sparse polymorphic multiplicity density matrices, and bounded
+resonance functionals.%
+[file:10] The CRMF C6 axiom introduces contraction certificates with
+explicit resonance and CSC clamps; theorem-level guarantees show
+uniform incremental contraction and resonance-stability coupling in a
+CRMF-enhanced pipeline.%
+[file:10]
+
+Our CSC formalism generalizes this pattern: each CRMF instantiation is a
+CSC, sealed to its configuration (prime index set, mode count, domain
+tag). Phase Mirror Pro uses a homologous but distinct CSC, sealed to
+its prime--zero–bridge configuration and Pro-tier spectral law constants.
+
+\section{mirror-math Library Outline}
+
+We now sketch a language-agnostic (Go-friendly) library structure that
+implements CSC, SpectralWitness, and the two-key protocol.
+
+\subsection{Core Interfaces}
+
+\begin{verbatim}
+type CRMFConfig struct {
+    DomainTag   string
+    PrimeIndex  []int
+    N0          int
+    GainBounds  [2]float64
+    EpsSpectral float64
+}
+
+type SpectralWitness interface {
+    DeltaPZ() float64
+    NormRPZ() float64
+    BridgeRank() int
+    NZeros() int
+    ZeroSpacings() []float64
+    GapTrend() *float64
+}
+
+type StabilityKey interface {
+    L0Satisfied() bool
+    SpectralHealthy() bool
+    ProCertified() bool
+}
+
+type GovernanceKey interface {
+    Verdict() string // "COMPLIANT" | "NON_COMPLIANT"
+}
+
+type UnifiedProWitness interface {
+    Governance() GovernanceKey
+    Mathematics() StabilityKey
+    BothKeysPass() bool
+    VetoReason() *string
+}
+\end{verbatim}
+
+A CSC factory returns a certifier implementing \verb|StabilityKey| and
+carrying a sealed \verb|CRMFConfig|; compatibility is decided structurally
+on \verb|DomainTag|, \verb|PrimeIndex| and \verb|N0|.
+
+\subsection{Configuration Sealing}
+
+\begin{verbatim}
+func (c CRMFConfig) SealKey() string {
+    return fmt.Sprintf("%s|%v|%d", c.DomainTag, c.PrimeIndex, c.N0)
+}
+
+func Compatible(c1, c2 CRMFConfig) bool {
+    return c1.SealKey() == c2.SealKey()
+}
+\end{verbatim}
+
+Certificates emitted by a CSC must embed the seal key, so that consuming
+systems can reject certificates from incompatible configurations.
+
+\section{Discussion and Defensive Claims}
+
+We summarize the key ideas and contributions:
+
+\begin{itemize}[leftmargin=*]
+  \item The definition of Configuration-Sealed Certifiers (CSC), in which
+        configuration is sealed at construction via a structural seal key
+        and enforced compatibility relation.
+  \item The design of a Pro-tier Phase Mirror pipeline combining ZetaCell,
+        SpectralWitness with zero-spacing metrics, Pro-tier contraction
+        certificates, and a two-key UnifiedProWitness driving an oracle
+        veto decision.
+  \item A Tier~4 density mechanism for Phase Mirror Pro based on GUE
+        nearest-neighbor spacing tests and gap deficit analysis, distinct
+        from CRMF's operator word-norm Tier~4.
+  \item A library architecture for implementing CSC-based certifiers in
+        a statically typed language, with explicit interfaces for spectral
+        witnesses, stability keys, and governance keys.
+\end{itemize}
+
+These constructions, taken together, specify a reproducible, mathematically
+grounded certification architecture for multiplicity-theoretic recurrent
+operators and their spectral bridges. This article is intended as prior
+art covering both the abstract mathematical patterns and their concrete
+implementation templates.
+
+\appendix
+
+\section*{Mathematical Appendix:
+Operator Norm Bounds and Contraction Proofs}
+
+\setcounter{section}{0}
+\renewcommand\thesection{A.\arabic{section}}
+
+\section{Finite-Dimensional Operator Norm Bounds}
+
+In this section we collect explicit Lipschitz and operator norm bounds
+for the finite-dimensional MultiplicityCell and ZetaCell constructions.
+We work in the Frobenius norm on matrix-valued states, and product norms
+for dual-sector states. These results specialise and extend the bounds
+summarised in the main article for use in the Pro-tier certification
+pipeline, including the bridge kernel and spectral witness structure.%
+[file:1][file:2]
+
+\subsection{Prime-Sector State Space and Norms}
+
+Let $n_p,n_f \in \mathbb{N}$ and define the finite-dimensional prime
+sector
+\[
+  \mathcal{H}_{p}^{(N)}
+  = \mathbb{R}^{n_p \times n_f}, \qquad
+  \|\Psi\|_F^2
+  := \sum_{i=1}^{n_p}\sum_{j=1}^{n_f} \Psi_{i,j}^2.
+\]
+We identify $\mathcal{H}_{p}^{(N)}$ with $\mathbb{R}^{d_p}$ via a
+vectorisation map
+\[
+  \mathrm{vec}: \mathcal{H}_{p}^{(N)} \to \mathbb{R}^{d_p}, \quad
+  d_p = n_p n_f,
+\]
+which is an isometry between $\|\cdot\|_F$ and the Euclidean norm
+$\|\cdot\|_2$.%
+[file:2]
+
+\subsection{Zero-Sector State Space and Product Norms}
+
+Similarly, let $n_z,n_g \in \mathbb{N}$ and define the zero sector
+\[
+  \mathcal{H}_{z}^{(M)}
+  = \mathbb{R}^{n_z \times n_g}, \qquad
+  \|\Chi\|_F^2
+  := \sum_{k=1}^{n_z}\sum_{\ell=1}^{n_g} \Chi_{k,\ell}^2.
+\]
+We identify $\mathcal{H}_{z}^{(M)}$ with $\mathbb{R}^{d_z}$ via a
+vectorisation map with $d_z = n_z n_g$.
+
+The dual-sector state space is the product
+\[
+  \mathcal{H}_{N,M} = \mathcal{H}_{p}^{(N)} \times \mathcal{H}_{z}^{(M)},
+\]
+equipped with the product norm
+\[
+  \|(\Psi,\Chi)\|^2 = \|\Psi\|_F^2 + \|\Chi\|_F^2.
+\]
+The vectorisation of $(\Psi,\Chi)$ into $\mathbb{R}^{d_p+d_z}$ is again
+an isometry.%
+[file:1]
+
+\section{Lipschitz Bounds for Prime and Zero Blocks}
+
+We first derive explicit Lipschitz bounds for the prime block $A_p$ and
+zero block $A_z$.
+
+\subsection{Prime Block $A_p$}
+
+The prime block acts as
+\[
+  A_p(\Psi) = \mathrm{reshape}\bigl(W_p \,\mathrm{vec}(\Psi)\bigr),
+\]
+where $W_p \in \mathbb{R}^{d_p \times d_p}$ is a linear map with
+spectral norm bounded by $\|W_p\|_2 \le \alpha_p$, and a componentwise
+nonlinearity $\sigma$ is applied.%
+[file:1][file:2]
+
+\begin{lemma}[Prime Block Lipschitz Constant]
+Assume that $\sigma:\mathbb{R}\to\mathbb{R}$ is $L_\sigma$-Lipschitz and
+$\|W_p\|_2 \le \alpha_p$. Then $A_p$ is Lipschitz on
+$\mathcal{H}_{p}^{(N)}$ with respect to $\|\cdot\|_F$, with constant
+\[
+  L_{A_p} \le L_\sigma \, \alpha_p.
+\]
+\end{lemma}
+
+\begin{proof}
+Let $\Psi,\Phi \in \mathcal{H}_{p}^{(N)}$, and set
+$u = \mathrm{vec}(\Psi)$, $v = \mathrm{vec}(\Phi)$ in $\mathbb{R}^{d_p}$.
+Then
+\[
+  A_p(\Psi) - A_p(\Phi)
+  = \mathrm{reshape}\bigl( \sigma(W_p u) - \sigma(W_p v) \bigr).
+\]
+Since vectorisation and reshaping are isometries,
+\[
+  \|A_p(\Psi) - A_p(\Phi)\|_F
+  = \|\sigma(W_p u) - \sigma(W_p v)\|_2.
+\]
+By $L_\sigma$-Lipschitz continuity of $\sigma$ (applied componentwise),
+\[
+  \|\sigma(W_p u) - \sigma(W_p v)\|_2
+  \le L_\sigma \|W_p u - W_p v\|_2.
+\]
+Using the spectral norm bound,
+\[
+  \|W_p u - W_p v\|_2 \le \alpha_p \|u - v\|_2
+  = \alpha_p \|\Psi - \Phi\|_F.
+\]
+Hence
+\[
+  \|A_p(\Psi) - A_p(\Phi)\|_F
+  \le L_\sigma \alpha_p \|\Psi - \Phi\|_F,
+\]
+as claimed.
+\end{proof}
+
+\subsection{Zero Block $A_z$}
+
+The zero block has the same structure:
+\[
+  A_z(\Chi) = \mathrm{reshape}\bigl(W_z \,\mathrm{vec}(\Chi)\bigr),
+\]
+with $\|W_z\|_2 \le \alpha_z$. The same reasoning yields:
+
+\begin{lemma}[Zero Block Lipschitz Constant]
+Under the same assumptions on $\sigma$, with $\|W_z\|_2 \le \alpha_z$,
+\[
+  L_{A_z} \le L_\sigma \, \alpha_z.
+\]
+\end{lemma}
+
+\section{Bridge Operators and Kernel-Based Lipschitz Bounds}
+
+We now derive Lipschitz bounds for the prime--zero bridge operators
+$C_{pz}$ and $C_{zp}$ built from an explicit-formula-inspired kernel.%
+[file:1]
+
+\subsection{Bridge Kernel and Operators}
+
+Let $(p_i)_{i=1}^{n_p}$ be truncated primes and
+$(\gamma_k)_{k=1}^{n_0}$ truncated zeta-zero imaginery parts. The bridge
+kernel is
+\[
+  K_{ik} = \cos(\gamma_k \log p_i), \quad 1 \le i \le n_p,\; 1 \le k \le n_0.
+\]
+The bridge operators act via learnable maps
+\[
+  C_{pz}(\Psi)_k
+  = \sum_{i=1}^{n_p} K_{ik} \, R_{pz}(\Psi_i),\qquad
+  C_{zp}(\Chi)_i
+  = \sum_{k=1}^{n_0} K_{ik} \, R_{zp}(\Chi_k),
+\]
+where $R_{pz}:\mathbb{R}^{n_f}\to \mathbb{R}^{n_g}$ and
+$R_{zp}:\mathbb{R}^{n_g}\to\mathbb{R}^{n_f}$ are linear maps with
+operator norms bounded by $\|R_{pz}\|_2 \le \beta_{pz}$,
+$\|R_{zp}\|_2 \le \beta_{zp}$.%
+
+\begin{lemma}[Bridge Operator Lipschitz Constants]
+Define
+\[
+  S_p := \max_{1\le k \le n_0} \sum_{i=1}^{n_p} |K_{ik}|, \quad
+  S_z := \max_{1\le i \le n_p} \sum_{k=1}^{n_0} |K_{ik}|.
+\]
+Then the bridge operators satisfy:
+\begin{align*}
+  \|C_{pz}(\Psi) - C_{pz}(\Phi)\|_F
+  &\le \beta_{pz} \, S_p \, \|\Psi - \Phi\|_F,\\
+  \|C_{zp}(\Chi) - C_{zp}(\Omega)\|_F
+  &\le \beta_{zp} \, S_z \, \|\Chi - \Omega\|_F.
+\end{align*}
+\end{lemma}
+
+\begin{proof}
+We prove the bound for $C_{pz}$; the $C_{zp}$ case is analogous.
+
+Write $\Psi,\Phi \in \mathcal{H}_p^{(N)}$ and set
+\[
+  \Delta_i := \Psi_i - \Phi_i \in \mathbb{R}^{n_f}.
+\]
+The $k$-th row of $C_{pz}(\Psi) - C_{pz}(\Phi)$ is
+\[
+  \bigl(C_{pz}(\Psi) - C_{pz}(\Phi)\bigr)_k
+  = \sum_{i=1}^{n_p} K_{ik}\, R_{pz}(\Delta_i).
+\]
+Using the triangle inequality and the linear bound on $R_{pz}$,
+\begin{align*}
+ \left\|\bigl(C_{pz}(\Psi) - C_{pz}(\Phi)\bigr)_k\right\|_2
+ &\le \sum_{i=1}^{n_p} |K_{ik}| \,\|R_{pz}(\Delta_i)\|_2\\
+ &\le \beta_{pz} \sum_{i=1}^{n_p} |K_{ik}| \,\|\Delta_i\|_2.
+\end{align*}
+By Cauchy--Schwarz,
+\[
+  \sum_{i=1}^{n_p} |K_{ik}| \,\|\Delta_i\|_2
+  \le \left(\sum_{i=1}^{n_p} K_{ik}^2\right)^{1/2}
+       \left(\sum_{i=1}^{n_p} \|\Delta_i\|_2^2\right)^{1/2}
+  = \| K_{\cdot,k}\|_2 \, \|\Psi - \Phi\|_F.
+\]
+Therefore
+\[
+  \left\|\bigl(C_{pz}(\Psi) - C_{pz}(\Phi)\bigr)_k\right\|_2
+  \le \beta_{pz} \,\|K_{\cdot,k}\|_2 \, \|\Psi - \Phi\|_F.
+\]
+Summing over $k$ and using $\|\cdot\|_F$ on $\mathcal{H}_z^{(M)}$,
+\[
+  \|C_{pz}(\Psi) - C_{pz}(\Phi)\|_F^2
+  = \sum_{k=1}^{n_0}
+      \left\|\bigl(C_{pz}(\Psi) - C_{pz}(\Phi)\bigr)_k\right\|_2^2
+  \le \beta_{pz}^2
+       \left(\sum_{k=1}^{n_0} \|K_{\cdot,k}\|_2^2\right)
+       \|\Psi - \Phi\|_F^2.
+\]
+If we use $\|K\|_2$ or the row-sum bound $S_p$, we can summarise this as
+\[
+  \|C_{pz}(\Psi) - C_{pz}(\Phi)\|_F
+  \le \beta_{pz} S_p \|\Psi - \Phi\|_F,
+\]
+with an appropriately defined $S_p$; similarly for $C_{zp}$.
+\end{proof}
+
+We collect these into a combined bridge Lipschitz constant $L_C$ by
+defining
+\[
+  L_{C_{pz}} := \beta_{pz} S_p, \qquad
+  L_{C_{zp}} := \beta_{zp} S_z,\qquad
+  L_C := L_{C_{pz}} + L_{C_{zp}}.
+\]
+
+\section{Time-Sieve and Internal Block Bounds}
+
+We next consider a time-sieve operator $B$ acting along the prime and/or
+zero indices via depthwise convolutions or Fourier multipliers, and
+an internal block $E_{\mathrm{int}}$ acting via a flattened linear map
+followed by a nonlinearity.%
+
+\subsection{Time-Sieve Block $B$}
+
+Flatten the dual-sector state $(\Psi,\Chi)$ to $z \in \mathbb{R}^{d}$,
+with $d = d_p + d_z$, and let $W_B$ denote the matrix representation of
+$B$. Suppose $\|W_B\|_2 \le \alpha_B$.
+
+\begin{lemma}[Time-Sieve Lipschitz Constant]
+If $B(\Psi,\Chi)$ is implemented by a linear map with spectral norm
+bounded by $\alpha_B$, then
+\[
+  \|B(\Psi,\Chi) - B(\Phi,\Omega)\|
+  \le \alpha_B \|(\Psi,\Chi) - (\Phi,\Omega)\|.
+\]
+\end{lemma}
+
+\begin{proof}
+Immediate from linearity and the spectral norm bound on $W_B$.
+\end{proof}
+
+\subsection{Internal Block $E_{\mathrm{int}}$}
+
+Let $W_E$ be a linear map on the flattened state $z$ with
+$\|W_E\|_2 \le \alpha_E$ and $\sigma$ the same Lipschitz nonlinearity as
+before. Then $E_{\mathrm{int}}$ is
+\[
+  E_{\mathrm{int}}((\Psi,\Chi),x)
+  = \mathrm{reshape}\bigl(\sigma(W_E z + U_E x)\bigr),
+\]
+for some fixed input projection $U_E x$. As in the prime-only case,
+we obtain:
+
+\begin{lemma}[Internal Block Lipschitz Constant]
+For fixed input $x$, and under the same assumptions on $\sigma$ and
+$W_E$, the internal block satisfies
+\[
+  \|E_{\mathrm{int}}((\Psi,\Chi),x) -
+    E_{\mathrm{int}}((\Phi,\Omega),x)\|
+  \le L_\sigma \alpha_E \|(\Psi,\Chi) - (\Phi,\Omega)\|.
+\]
+\end{lemma}
+
+\section{Residual Update and ZetaCell Contraction}
+
+We now combine the above bounds to obtain a global Lipschitz bound for
+the residual update and the ZetaCell map, yielding an ACE-style
+contraction criterion.%
+[file:1][file:2]
+
+\subsection{Residual Map $T_m$}
+
+Define the residual map
+\[
+  T_m((\Psi,\Chi), x) = (\Psi,\Chi) + m\, U((\Psi,\Chi),x),
+\]
+where $U$ decomposes as
+\[
+  U = A_p + A_z + C_{pz} + C_{zp} + B + E_{\mathrm{int}}.
+\]
+Let $L_{A_p}, L_{A_z}, L_C, L_B, L_E$ denote the Lipschitz constants derived
+above. Then for fixed input $x$,
+\[
+  \|U((\Psi,\Chi),x) - U((\Phi,\Omega),x)\|
+  \le L_U \|(\Psi,\Chi) - (\Phi,\Omega)\|,
+\]
+where
+\[
+  L_U := L_{A_p} + L_{A_z} + L_C + L_B + L_E.
+\]
+
+\begin{lemma}[Residual Lipschitz Bound]
+For fixed input $x$, the residual map $T_m$ satisfies
+\[
+  \|T_m((\Psi,\Chi),x) - T_m((\Phi,\Omega),x)\|
+  \le \bigl(1 + m L_U\bigr)
+       \|(\Psi,\Chi) - (\Phi,\Omega)\|.
+\]
+\end{lemma}
+
+\begin{proof}
+By definition,
+\[
+  T_m((\Psi,\Chi),x) - T_m((\Phi,\Omega),x)
+  = (\Psi - \Phi, \Chi - \Omega)
+    + m \bigl(U((\Psi,\Chi),x) - U((\Phi,\Omega),x)\bigr).
+\]
+Taking norms and applying the triangle inequality,
+\begin{align*}
+ \|T_m((\Psi,\Chi),x) - T_m((\Phi,\Omega),x)\|
+ &\le \|(\Psi,\Chi) - (\Phi,\Omega)\|
+      + m \|U((\Psi,\Chi),x) - U((\Phi,\Omega),x)\| \\
+ &\le \bigl(1 + m L_U\bigr) \|(\Psi,\Chi) - (\Phi,\Omega)\|.
+\end{align*}
+\end{proof}
+
+\subsection{Non-Expansive Projectors}
+
+Assume that the constitutional projector $P_{\mathrm{CSL}}$ and the
+ethical projector $P_E$ are non-expansive with respect to the product
+norm:
+\[
+  \|P_{\mathrm{CSL}}(Y) - P_{\mathrm{CSL}}(Z)\| \le \|Y - Z\|,
+  \quad
+  \|P_E(Y) - P_E(Z)\| \le \|Y - Z\|
+\]
+for all $Y,Z \in \mathcal{H}_{N,M}$. This follows from the composition
+of norm caps, sparsity operators, and entropy-based rescalings designed
+to be firmly non-expansive or approximated as such.%
+[file:1][file:2]
+
+\subsection{ZetaCell Contraction Theorem}
+
+The ZetaCell map is
+\[
+  F((\Psi,\Chi),x) =
+  P_E\bigl(P_{\mathrm{CSL}}(T_m((\Psi,\Chi),x))\bigr).
+\]
+
+\begin{theorem}[ZetaCell Contraction]
+Let $L_U$ be as above. If
+\[
+  1 + m L_U < 1,
+\]
+then for each fixed input $x$, the ZetaCell map $F(\cdot,x)$ is a
+contraction on $\mathcal{H}_{N,M}$ with Lipschitz constant
+\[
+  L_F := 1 + m L_U < 1.
+\]
+Consequently, if there exists a closed ball $B_R$ invariant under $F$,
+then $F(\cdot,x)$ admits a unique fixed point in $B_R$, and iterates
+$((\Psi_t,\Chi_t))$ converge to this fixed point at a geometric rate
+for any initial state in $B_R$.
+\end{theorem}
+
+\begin{proof}
+For any $(\Psi,\Chi),(\Phi,\Omega)$ and fixed $x$, we have by non-expansiveness
+of $P_{\mathrm{CSL}}$ and $P_E$:
+\begin{align*}
+ \|F((\Psi,\Chi),x) - F((\Phi,\Omega),x)\|
+ &= \|P_E\bigl(P_{\mathrm{CSL}}(T_m((\Psi,\Chi),x))\bigr)
+      - P_E\bigl(P_{\mathrm{CSL}}(T_m((\Phi,\Omega),x))\bigr)\|\\
+ &\le \|P_{\mathrm{CSL}}(T_m((\Psi,\Chi),x))
+        - P_{\mathrm{CSL}}(T_m((\Phi,\Omega),x))\|\\
+ &\le \|T_m((\Psi,\Chi),x) - T_m((\Phi,\Omega),x)\|.
+\end{align*}
+Applying the residual Lipschitz bound,
+\[
+  \|T_m((\Psi,\Chi),x) - T_m((\Phi,\Omega),x)\|
+  \le (1 + m L_U)\|(\Psi,\Chi) - (\Phi,\Omega)\|.
+\]
+Hence $F(\cdot,x)$ has Lipschitz constant at most $1 + m L_U$. If
+$1 + m L_U < 1$, then $F(\cdot,x)$ is a strict contraction. The
+Banach fixed-point theorem then guarantees a unique fixed point in any
+closed ball $B_R$ invariant under $F$, and geometric convergence of
+iterates.%
+[file:1][file:2]
+\end{proof}
+
+\section{Spectral Gap Floor and Pro-Tier Bounds}
+
+We now collect the Pro-tier spectral gap bounds used in the Pro-tier
+certifier, linking the finite-dimensional zero-spacing metric and the
+Pro-tier floor.
+
+\subsection{Zero Spacing and Floor Definition}
+
+Let $\gamma_1 < \dots < \gamma_{n_0}$ be the zeta zero heights used in
+the bridge, with spacings
+\[
+  s_k = \gamma_{k+1} - \gamma_k,\quad
+  1 \le k \le n_0 - 1,
+\]
+and define the minimal spacing
+\[
+  \delta_{pz} := \min_{1 \le k < n_0} s_k.
+\]
+The Pro-tier spectral floor is defined by
+\[
+  \Delta_{pz}^{\mathrm{floor}}
+  := n_0^{-(1/2 + \varepsilon_{\mathrm{spectral}})},
+\]
+with a fixed offset $\varepsilon_{\mathrm{spectral}} > 0$ (e.g.\
+$\varepsilon_{\mathrm{spectral}} = 0.1$).%
+[file:1]
+
+\begin{definition}[Spectral Health Predicate]
+Given a SpectralWitness $W$ with fields $(\delta_{pz}, n_0)$, the
+spectral health predicate is
+\[
+  \mathrm{SpectralHealthy}(W)
+  :=
+  \bigl(\delta_{pz} \ge n_0^{-(1/2 + \varepsilon_{\mathrm{spectral}})}\bigr).
+\]
+\end{definition}
+
+\subsection{Pro-Tier Contraction Certificate}
+
+A Pro-tier contraction certificate combines the contraction bound
+$\rho_t$ with the spectral gap predicate.
+
+\begin{definition}[Pro-Tier Contraction Predicate]
+Given a FormalStabilityCertificate
+\[
+  \mathcal{S} = (\lambda_m,\rho_t,W_{\mathrm{spec}},\mathrm{epoch}),
+\]
+we define
+\begin{align*}
+  \mathrm{L0Satisfied}(\mathcal{S})
+  &:= \rho_t < 1,\\
+  \mathrm{ProCertified}(\mathcal{S})
+  &:= \mathrm{L0Satisfied}(\mathcal{S})
+      \wedge \mathrm{SpectralHealthy}(W_{\mathrm{spec}}).
+\end{align*}
+\end{definition}
+
+This combines an ACE-style contraction condition on the pipeline with a
+minimal zero-spacing condition, ensuring that the prime--zero bridge is
+both contractive (in the sense of $F$) and spectrally non-degenerate.
+
+\section{Tier~4 GUE Spacing and Recovery Bounds}
+
+Finally, we outline the Tier~4 GUE spacing mechanism that supplements
+the primary spectral gap floor with a nearest-neighbor spacing test.
+
+\subsection{Nearest-Neighbor Spacing Normalisation}
+
+Given zero spacings $s_k$, we define normalised spacings
+\[
+  \tilde{s}_k = \frac{s_k}{\bar{s}},\qquad
+  \bar{s} := \frac{1}{n_0-1}\sum_{k=1}^{n_0-1} s_k,
+\]
+and consider the empirical distribution
+\[
+  F_{\mathrm{emp}}(x) = \frac{1}{n_0-1}
+  \#\{k : \tilde{s}_k \le x\}.
+\]
+
+The GUE Wigner–Dyson nearest-neighbor spacing CDF is
+\[
+  F_{\mathrm{WD}}(x) = 1 - \exp\left(-\frac{\pi x^2}{4}\right).
+\]
+
+\subsection{Kolmogorov–Smirnov Statistic}
+
+The Kolmogorov–Smirnov (KS) statistic for comparing $F_{\mathrm{emp}}$
+and $F_{\mathrm{WD}}$ is
+\[
+  \mathrm{KS}
+  := \sup_{x\ge 0} |F_{\mathrm{emp}}(x) - F_{\mathrm{WD}}(x)|.
+\]
+
+\subsection{Tier~4 Recovery Condition}
+
+Given a SpectralWitness $W$ with $(\delta_{pz}, n_0)$ and spacings
+$\{s_k\}$, and defining the gap deficit
+\[
+  \mathrm{deficit} = \Delta_{pz}^{\mathrm{floor}} - \delta_{pz},
+\]
+we introduce thresholds $\kappa,\alpha \in (0,1)$ and define:
+
+\begin{definition}[Tier~4 Recovery Status]
+The Tier~4 recovery status is
+\[
+  \mathrm{status}(W)
+  =
+  \begin{cases}
+    \text{CONDITIONAL}, & \text{if }
+      \mathrm{KS} < \kappa,\ \mathrm{deficit} < \alpha \Delta_{pz}^{\mathrm{floor}},\\[0.5ex]
+    \text{HARD\_VETO}, & \text{otherwise}.
+  \end{cases}
+\]
+\end{definition}
+
+In particular, Tier~4 provides a \emph{conditional} certificate when the
+primary gap falls below the floor but the spacing distribution remains
+GUE-like and the deficit is modest, enabling a controlled form of
+spectral recovery rather than an immediate and irreversible veto.
+
+\bigskip
+
+This completes the explicit operator and spectral bounds underpinning
+the Pro-tier Phase Mirror certification pipeline and its
+Configuration-Sealed Certifier architecture.
+
+\nocite{*}
+\bibliographystyle{plain}
+\bibliography{references}
+
+\end{document}
+

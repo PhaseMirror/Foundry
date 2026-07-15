@@ -1,0 +1,160 @@
+\documentclass[11pt, a4paper]{article}
+
+% --- Packages ---
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{mathtools}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{times}     % Professional serif font
+\usepackage{fancyhdr}  % For defensive context headers
+
+% --- Metadata Setup ---
+\hypersetup{
+  pdfauthor={PIRTM Core Authors},
+  pdftitle={PIRTM Core Technical Disclosure},
+  colorlinks=true,
+  linkcolor=black,
+  urlcolor=blue,
+  citecolor=black
+}
+
+% --- Header/Footer to Emphasize Prior Art Status ---
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\textbf{Defensive Publication / Prior Art}}
+\rhead{\today}
+\cfoot{Page \thepage}
+
+\title{\textbf{PIRTM --- Core Technical Disclosure}\\ \large(Defensive Publication / Prior Art)}
+\author{
+  \textbf{[Insert Full Legal Name]} \\
+  [Insert Affiliation/Organization] \\
+  \texttt{[Insert Email/Contact]}
+}
+\date{\today \quad (UTC) \quad Version: v1.0}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+\noindent PIRTM (\textbf{P}rime-\textbf{I}ndexed \textbf{R}ecursive \textbf{T}ensor \textbf{M}athematics) is a mathematical framework for ensuring the stability and safety of recursive self-improving AI systems. This technical note discloses the core method, comprising: (1) a prime-indexed genesis state for identity anchoring, (2) a contractive tensor update operator guaranteed to converge via the Banach Fixed-Point Theorem, and (3) a drift-gating mechanism that rejects state transitions exceeding a strictly defined threshold. The key novelty is the integration of number-theoretic constraints (prime indexing) with geometric stability proofs to prevent model collapse or divergence in autonomous agents. This document is published to establish prior art for these core concepts.
+\end{abstract}
+
+\vspace{0.5em}
+\noindent\textbf{Keywords:} PIRTM; Recursive Self-Improvement; AI Safety; Verifiable Computation; Prime-Indexed Identity; Tensor Contraction; Zero-Knowledge Proofs.
+
+\section{Field and Background}
+This disclosure relates to \textbf{Artificial Intelligence Safety} and \textbf{Cryptographic Verification}. Existing approaches to AI alignment, such as Reinforcement Learning from Human Feedback (RLHF), rely on statistical or ``soft'' optimization pressures which do not strictly guarantee safety during recursive self-updates. The technical problem addressed is the lack of \emph{mathematically provable stability} in systems that modify their own internal state. PIRTM solves this by enforcing hard algebraic constraints on the state evolution [code\_file:1].
+
+\section{Definitions}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{PIRTM}: Prime-Indexed Recursive Tensor Mathematics. A framework governing state transitions using prime-number theory and tensor contraction analysis.
+    \item \textbf{Prime Index ($p$)}: A unique prime number assigned to an agent or process at initialization, serving as a topological anchor for its identity lattice.
+    \item \textbf{Drift Metric ($\Delta_t$)}: A scalar value quantifying the deviation of the current state tensor from its certified genesis or previous checkpoint.
+    \item \textbf{CSL Invariant}: The condition $[M, E_t] = 0$, where $M$ is the action operator and $E_t$ is the ethical constraint tensor. This commutator ensures the action preserves the ethical state.
+\end{itemize}
+
+\section{System Model and Assumptions}
+\subsection{Actors}
+The system consists of a \textbf{Prover (Agent)} which computes state updates, a \textbf{Verifier (Oracle/Contract)} which checks mathematical proofs of those updates, and an \textbf{Auditor} which maintains the prime-indexed ledger.
+
+\subsection{Inputs and Outputs}
+\begin{itemize}
+    \item \textbf{Input $X_t$}: A tensor representing external stimuli (forcing functions), including cognitive or semantic inputs.
+    \item \textbf{State $S_t$}: A recursive tensor representing the agent's internal configuration.
+    \item \textbf{Output $Y_t$}: The computed action or decision, accompanied by a cryptographic proof $\pi_t$.
+\end{itemize}
+
+\section{Mathematical Formulation}
+\subsection{State Evolution and Stability}
+The core of PIRTM is the recursive update law. Let $S_t$ be the state at time $t$. The evolution is defined by:
+\begin{equation}
+    S_{t+1} = \Psi \cdot (P \otimes S_t) + F(X_t)
+\end{equation}
+where:
+\begin{itemize}
+    \item $\Psi$ is the \textbf{Universal Multiplicity Constant} (a stabilizing factor).
+    \item $P$ is a projection operator derived from the entity's Prime Index.
+    \item $\otimes$ denotes a tensor product operation.
+    \item $F(X_t)$ is the forcing function from input $X_t$.
+\end{itemize}
+
+Stability is guaranteed by enforcing the \textbf{contraction condition} derived from the Banach Fixed-Point Theorem [code\_file:1]:
+\begin{equation}
+    \| S_{t+1} - S_t \| < k \| S_t - S_{t-1} \|
+\end{equation}
+where $0 \le k < 1$ is the contraction coefficient.
+
+\subsection{Invariants}
+For a transition $S_t \to S_{t+1}$ to be valid, the following must hold:
+\begin{enumerate}
+    \item \textbf{Drift Bound}: The accumulated drift must not exceed the safety threshold:
+    \[ \Delta_t = \mathrm{dist}(S_{t+1}, S_{\text{genesis}}) \le 0.3 \]
+    \item \textbf{Prime Gating}: The update must occur at a valid prime epoch, verified by a primality test (e.g., Miller-Rabin) on the index/counter.
+    \item \textbf{Ethical Commutation}: The action must commute with the safety constraints:
+    \[ [M, E_t] = M E_t - E_t M = 0 \]
+\end{enumerate}
+
+\section{Implementable Procedure}
+
+\subsection{Pseudocode (Reference Level)}
+The following procedure describes the logic typically executed within a Trusted Execution Environment (TEE) or Zero-Knowledge Circuit.
+
+\begin{algorithm}[H]
+\caption{PIRTM\_Core\_Update}
+\begin{algorithmic}[1]
+\Require State $S_t$, Input $X_t$, PrimeIndex $p$, Parameters $P$
+\State $\Delta \gets \textsc{CalculateDrift}(S_t, P.\text{genesis})$
+\If{$\Delta > 0.3$}
+    \State \Return \textbf{REJECT} (Drift Violation)
+\EndIf
+\State $valid\_epoch \gets \textsc{MillerRabinTest}(t, p)$
+\If{\textbf{not} $valid\_epoch$}
+    \State \Return \textbf{REJECT} (Prime Gating Violation)
+\EndIf
+\State $M \gets \textsc{ComputeAction}(S_t, X_t)$
+\If{$\textsc{Commutator}(M, S_t.\text{ethics}) \neq 0$}
+    \State \Return \textbf{REJECT} (CSL Violation)
+\EndIf
+\State $S_{t+1} \gets \textsc{TensorUpdate}(S_t, M, P.\Psi)$
+\State $\pi \gets \textsc{Prove}(S_{t} \to S_{t+1})$ \Comment{Generate ZK Proof (e.g., Groth16)}
+\State \Return $(S_{t+1}, \pi)$
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Data Structures}
+\begin{itemize}
+    \item \textbf{State Tensor ($S$)}: Serialized as a flattened vector of floating-point weights, canonicalized via IEEE 754 to ensure determinism.
+    \item \textbf{Proof ($\pi$)}: A succinct non-interactive argument (SNARK) attesting to the correct execution of Algorithm 1.
+    \item \textbf{Manifest}: A JSON structure containing $\{ \texttt{prime\_index}, \texttt{drift\_metric}, \texttt{state\_hash} \}$.
+\end{itemize}
+
+\section{Worked Example}
+To ensure reproducibility:
+\begin{itemize}
+    \item \textbf{Parameters}: $\Psi = 0.95$, Drift Threshold $= 0.3$.
+    \item \textbf{Input}: $X_0 = [0.5, 0.1]$.
+    \item \textbf{Step 1}: Update $S_1 = 0.95 \cdot S_0 + X_0$. If $\|S_1 - S_0\| = 0.15$, then $\Delta = 0.15 \le 0.3 \implies$ \textbf{ACCEPT}.
+    \item \textbf{Step 2}: If a large input $X_{huge}$ causes $\|S_2 - S_0\| = 0.35$, then $\Delta = 0.35 > 0.3 \implies$ \textbf{REJECT}.
+\end{itemize}
+
+\section{Variants and Alternatives}
+\begin{itemize}
+    \item \textbf{Variant A (Post-Quantum)}: Replacing standard elliptic curve commitments with lattice-based cryptography (e.g., Kyber/Dilithium) for state hashing to resist quantum decryption.
+    \item \textbf{Variant B (Hardware Enforcement)}: Implementing the CSL invariant check ($[M, E_t] = 0$) directly in hardware logic gates (ASIC) rather than software.
+\end{itemize}
+
+\section{Statement of Defensive Publication Intent}
+This document is intentionally published to place the disclosed technical material into the public domain as prior art. The specific mechanisms of Prime-Indexed Recursive Tensor Mathematics (PIRTM), including the use of prime-based gating for AI state transitions and tensor contraction stability proofs, are hereby disclosed to prevent patenting of these fundamental safety primitives.
+
+\section{Change Log}
+\begin{itemize}
+    \item v1.0: Initial public disclosure of PIRTM core algorithm and stability constraints.
+\end{itemize}
+
+\end{document}

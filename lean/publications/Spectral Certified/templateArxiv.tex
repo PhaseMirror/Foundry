@@ -1,0 +1,186 @@
+% =========================
+% Sections 6–7 (LaTeX-ready)
+% =========================
+% Minimal preamble suggestions:
+% \usepackage{amsmath,amssymb,amsthm}
+% \usepackage{algorithm}
+% \usepackage{algpseudocode} % or algorithmicx
+% (Optional for nicer boxes: \usepackage[most]{tcolorbox}
+
+% ---------- Theorem environments ----------
+\newtheorem{theorem}{Theorem}
+\newtheorem{corollary}{Corollary}
+\newtheorem{lemma}{Lemma}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\newtheorem{assumption}{Assumption}
+
+% ---------- A simple "Assumptions box" (no extra packages) ----------
+\newcommand{\StandingAssumptions}{%
+\begin{center}
+\fbox{%
+\begin{minipage}{0.97\linewidth}
+\textbf{Standing Assumptions (A–D).}
+\begin{enumerate}
+\item[\textbf{A.}]\textbf{(Space + norm).} $(\mathcal X,\|\cdot\|)$ is a Banach space over $\mathbb K\in\{\mathbb R,\mathbb C\}$.
+Operator norms are induced: $\|A\|=\sup_{\|x\|=1}\|Ax\|$ for $A\in\mathcal B(\mathcal X)$.
+\item[\textbf{B.}]\textbf{(Forward invariance).} There exists a nonempty closed set $\Omega\subseteq\mathcal X$ such that for all $t$,
+\[
+x\in\Omega \implies \Phi_t(x)\in\Omega,\qquad \Phi_t(x)=\Xi(t)x+\Lambda_m(t)\,T(x).
+\]
+\item[\textbf{C.}]\textbf{(Bounded sector operator).} For each $t$,
+\[
+\Xi(t)=\sum_{p\in P_N} a_p(t)\,U_p(t)\in\mathcal B(\mathcal X)
+\]
+is well-defined and bounded, with the computable bound
+\[
+\|\Xi(t)\|\le \sum_{p\in P_N} |a_p(t)|\,\|U_p(t)\|.
+\]
+\item[\textbf{D.}]\textbf{(Nonlinearity regularity).} $T:\Omega\to\mathcal X$ is $L_T$-Lipschitz on $\Omega$
+(or admits a known upper bound $L_T$ on $\Omega$).
+\end{enumerate}
+\vspace{0.25em}
+\textbf{Note (Prime indexing).} Prime indexing is a deterministic sparse schedule; all correctness results hold for any finite index set.
+Primes are used only as an engineering choice for reproducible sparsity.
+\end{minipage}}
+\end{center}
+}
+
+% ============================================================
+\section{Stability Results: Uniform Incremental Contraction}
+% ============================================================
+
+\StandingAssumptions
+
+\begin{definition}[DRMM update map]
+For each time step $t$, define
+\[
+\Phi_t(x):=\Xi(t)x+\Lambda_m(t)\,T(x),\qquad x\in\Omega.
+\]
+Trajectories satisfy $X_{t+1}=\Phi_t(X_t)$.
+\end{definition}
+
+\begin{theorem}[Uniform incremental contraction]\label{thm:incremental_contraction}
+Assume Standing Assumptions (A--D). Suppose there exist $\varepsilon\in(0,1)$ and $c\in[0,\varepsilon)$ such that for all $t$,
+\[
+\|\Xi(t)\|\le 1-\varepsilon,\qquad \Lambda_m(t)\,L_T\le c.
+\]
+Then for all $x,y\in\Omega$,
+\[
+\|\Phi_t(x)-\Phi_t(y)\|\le \rho\,\|x-y\|,\qquad \rho:=1-\varepsilon+c\in(0,1),
+\]
+and for any two trajectories $(X_t)$ and $(Y_t)$ driven by the same time-varying maps,
+\[
+\|X_t-Y_t\|\le \rho^t\,\|X_0-Y_0\|,\qquad t\ge 0.
+\]
+\end{theorem}
+
+\begin{proof}
+For $x,y\in\Omega$,
+\[
+\|\Phi_t(x)-\Phi_t(y)\|
+=\|\Xi(t)(x-y)+\Lambda_m(t)(T(x)-T(y))\|
+\le \|\Xi(t)\|\,\|x-y\|+\Lambda_m(t)\,\|T(x)-T(y)\|.
+\]
+By Lipschitzness of $T$ on $\Omega$, $\|T(x)-T(y)\|\le L_T\|x-y\|$, hence
+\[
+\|\Phi_t(x)-\Phi_t(y)\|\le(\|\Xi(t)\|+\Lambda_m(t)L_T)\|x-y\|\le (1-\varepsilon+c)\|x-y\|=\rho\|x-y\|.
+\]
+Iterating yields $\|X_t-Y_t\|\le\rho^t\|X_0-Y_0\|$.
+\end{proof}
+
+\begin{corollary}[Time-invariant fixed point]\label{cor:fixed_point}
+Assume Standing Assumptions (A--D) and the hypotheses of Theorem~\ref{thm:incremental_contraction}.
+If additionally $\Xi(t)\equiv \Xi$ and $\Lambda_m(t)\equiv\Lambda_m$ are constant in $t$, then
+$\Phi(x):=\Xi x+\Lambda_m T(x)$ is a contraction on $\Omega$, hence has a unique fixed point $x^\star\in\Omega$,
+and every trajectory $X_{t+1}=\Phi(X_t)$ with $X_0\in\Omega$ converges to $x^\star$.
+\end{corollary}
+
+\begin{corollary}[Optional: convergent/slowly varying maps (tracking)]\label{cor:tracking}
+Assume the hypotheses of Theorem~\ref{thm:incremental_contraction}. If there exists a limit map $\Phi_\infty:\Omega\to\Omega$
+such that $\sup_{x\in\Omega}\|\Phi_t(x)-\Phi_\infty(x)\|\to 0$ as $t\to\infty$, and all $\Phi_t$ share the same contraction modulus
+$\rho<1$, then the DRMM trajectory $(X_t)$ tracks the unique fixed point of $\Phi_\infty$ (standard contracting time-varying system tracking).
+\end{corollary}
+
+% ------------------------------------------------------------
+\subsection{A referee-friendly forward-invariance sufficient condition}
+% ------------------------------------------------------------
+
+\begin{lemma}[Ball invariance via a growth bound]\label{lem:ball_invariance}
+Let $\Omega=B_R:=\{x\in\mathcal X:\|x\|\le R\}$. Suppose that for all $\|x\|\le R$ and all $t$,
+\[
+\|\Xi(t)x\|\le \|\Xi(t)\|\,R,\qquad \|T(x)\|\le \beta+L_T\|x\|
+\]
+for some $\beta\ge 0$ and $L_T\ge 0$. If
+\[
+\|\Xi(t)\|R+\Lambda_m(t)\big(\beta+L_T R\big)\le R\qquad\text{for all }t,
+\]
+then $B_R$ is forward-invariant: $x\in B_R\implies \Phi_t(x)\in B_R$ for all $t$.
+\end{lemma}
+
+\begin{proof}
+If $\|x\|\le R$, then
+\[
+\|\Phi_t(x)\|\le \|\Xi(t)x\|+\Lambda_m(t)\|T(x)\|
+\le \|\Xi(t)\|R+\Lambda_m(t)\big(\beta+L_T R\big)\le R.
+\]
+\end{proof}
+
+% ============================================================
+\section{Certified Spectral Control (CSC): Per-step Certificates and Gain Clamping}
+% ============================================================
+
+\begin{definition}[Structural vs.\ analytic $\Lambda$ (spec-level reconciliation)]
+Let $\widehat{\Lambda}(t)$ denote a \emph{structural} multiplicity/PGF functional (descriptive; not used as a gain).
+Let $\Lambda_m(t)\in\mathbb R_{\ge 0}$ denote the \emph{analytic certification gain} chosen (or clamped) by CSC to enforce contraction.
+\end{definition}
+
+\begin{definition}[Per-step certificate quantities]
+Given an upper bound $\widehat{\|\Xi(t)\|}$ and a Lipschitz bound $\widehat{L_T(t)}$ (global or local), define the
+\emph{certified upper bound} on the contraction modulus:
+\[
+\widehat{\rho}(t):=\widehat{\|\Xi(t)\|}+\Lambda_m(t)\,\widehat{L_T(t)}.
+\]
+Define also
+\[
+\widehat{\varepsilon}(t):=1-\widehat{\|\Xi(t)\|},\qquad \widehat{c}(t):=\Lambda_m(t)\,\widehat{L_T(t)}.
+\]
+A CSC report is $\mathrm{CSC}(t):=(\widehat{\varepsilon}(t),\widehat{c}(t),\widehat{\rho}(t))$ with pass/fail given by $\widehat{\rho}(t)<1$.
+\end{definition}
+
+\begin{algorithm}[t]
+\caption{CSC (per-step certificate + gain clamping; global/local/hybrid)}
+\label{alg:csc}
+\begin{algorithmic}[1]
+\Require Prime index set $P_N$; sector operators $U_p(t)$; weights $a_p(t)$; proposal $\widehat{\Lambda}(t)$; safety margin $\delta>0$;
+gain cap $\Lambda_{\max}>0$; global Lipschitz bound $L_T^{\mathrm{glob}}$ (optional); local estimator for $\widehat{L_T(t)}$ (optional).
+\Ensure Certified gain $\Lambda_m(t)$ and certificate tuple $(\widehat{\varepsilon}(t),\widehat{c}(t),\widehat{\rho}(t))$.
+\vspace{0.25em}
+
+\State \textbf{(Linear bound)} Compute an upper bound
+\[
+\widehat{\|\Xi(t)\|}\ \leftarrow\ \sum_{p\in P_N}|a_p(t)|\,\|U_p(t)\|
+\quad\text{(or any tighter computable bound).}
+\]
+\State Set $\widehat{\varepsilon}(t)\leftarrow 1-\widehat{\|\Xi(t)\|}$.
+\State \textbf{(Lipschitz bound)} If a reliable local estimate is available, set $\widehat{L_T(t)}\leftarrow$ local estimate; else set $\widehat{L_T(t)}\leftarrow L_T^{\mathrm{glob}}$.
+\State \textbf{(Clamp target)} Set
+\[
+\Lambda_{\mathrm{target}}(t)\leftarrow \max\left\{0,\ \frac{\widehat{\varepsilon}(t)-\delta}{\widehat{L_T(t)}}\right\}.
+\]
+\State \textbf{(Clamp)} Set
+\[
+\Lambda_m(t)\leftarrow \min\{\Lambda_{\max},\ \Lambda_{\mathrm{target}}(t),\ \widehat{\Lambda}(t)\}.
+\]
+\State \textbf{(Certificate)} Set $\widehat{c}(t)\leftarrow \Lambda_m(t)\widehat{L_T(t)}$ and $\widehat{\rho}(t)\leftarrow \widehat{\|\Xi(t)\|}+\widehat{c}(t)$.
+\State \textbf{(Audit log)} Record $\widehat{\|\Xi(t)\|}$ (and bound method), $\widehat{L_T(t)}$ (and method), $\widehat{\Lambda}(t)$, $\Lambda_m(t)$, $\widehat{\varepsilon}(t)$, $\widehat{c}(t)$, $\widehat{\rho}(t)$, and pass/fail $(\widehat{\rho}(t)<1)$.
+\State \Return $(\Lambda_m(t),\widehat{\varepsilon}(t),\widehat{c}(t),\widehat{\rho}(t))$.
+\end{algorithmic}
+\end{algorithm}
+
+\paragraph{Logging contract (auditable punchline).}
+For each step $t$, CSC must log:
+(i) the bound used for $\widehat{\|\Xi(t)\|}$ (e.g.\ $\sum_p |a_p(t)|\|U_p(t)\|$),
+(ii) the bound/estimate used for $\widehat{L_T(t)}$ (global vs local and method),
+(iii) the proposal $\widehat{\Lambda}(t)$ and the certified gain $\Lambda_m(t)$,
+(iv) the certificate tuple $(\widehat{\varepsilon}(t),\widehat{c}(t),\widehat{\rho}(t))$ and pass/fail.

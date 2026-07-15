@@ -12,6 +12,8 @@ pub struct RtaHealth {
     pub operator_id: String,
     pub arta_defect: f64,
     pub rta_dist_to_bindu: f64,
+    pub l_dist_to_bindu: f64,
+    pub langlands_trace: std::collections::HashMap<String, f64>,
     pub timestamp: u64,
 }
 
@@ -44,11 +46,13 @@ impl JubileeBridge {
         Ok(vec![])
     }
 
-    pub fn record_rta_health(&mut self, operator_id: &str, defect: f64, dist: f64, timestamp: u64) {
+    pub fn record_rta_health(&mut self, operator_id: &str, defect: f64, dist: f64, l_dist: f64, langlands_trace: std::collections::HashMap<String, f64>, timestamp: u64) {
         self.rta_snapshots.insert(operator_id.to_string(), RtaHealth {
             operator_id: operator_id.to_string(),
             arta_defect: defect,
             rta_dist_to_bindu: dist,
+            l_dist_to_bindu: l_dist,
+            langlands_trace,
             timestamp,
         });
     }
@@ -65,6 +69,8 @@ impl JubileeBridge {
                 operator_id: operator_id.to_string(),
                 arta_defect: w.arta_defect_after,
                 rta_dist_to_bindu: w.rta_dist_to_bindu,
+                l_dist_to_bindu: w.l_dist_to_bindu,
+                langlands_trace: w.langlands_trace.clone(),
                 timestamp: w.timestamp,
             })
             .collect()

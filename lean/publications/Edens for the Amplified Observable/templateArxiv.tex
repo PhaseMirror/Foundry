@@ -1,0 +1,249 @@
+\documentclass[11pt]{article}
+\usepackage{amsmath,amsthm,amssymb,mathtools}
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{microtype}
+
+\title{HP1 $\Rightarrow$ Edens for the Amplified Observable:\\
+Formal Proofs of the Band--Mass and Hankel--Mass Lemmas}
+\author{The Integrative Solver}
+\date{\today}
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{assumption}[theorem]{Assumption}
+\newtheorem{remark}[theorem]{Remark}
+
+\numberwithin{equation}{section}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We supply formal proofs of the \emph{Band--Mass} and \emph{Hankel--Mass} lemmas used in the HP1 $\Rightarrow$ Edens proof plan for the amplified observable
+\[
+E_\tau(T)=\Re\bigg[\,T^{-1}\!\int_{\mathbb R} W_T(t)\,A_T(t)\,\overline{A_T(t+\tau)}\,dt\bigg],
+\]
+under the boundary unitarity hypothesis (HP1). We work on the Mellin--Hardy line and fix operator conventions so the statements are fully self-contained.
+\end{abstract}
+
+\section{Setup and operator conventions}
+
+Let $H=L^2((0,\infty),dx/x)\simeq L^2(\mathbb R,du)$ via Mellin--Plancherel, with the convention
+\[
+\widehat{f}(u)=\frac{1}{\sqrt{2\pi}}\int_0^\infty f(x)\,x^{-1/2-iu}\,dx,\qquad u\in\mathbb R.
+\]
+Write $H^2:=\{G\in L^2(\mathbb R):\operatorname{supp}G\subseteq[0,\infty)\}$ and $H^2_-:=\{G\in L^2(\mathbb R):\operatorname{supp}G\subseteq(-\infty,0]\}$,
+with orthogonal projections $P_+$ and $P_-$, respectively. For a bounded symbol $m:\mathbb R\to\mathbb C$, let $M_m$ denote multiplication by $m$.
+
+\begin{assumption}[HP1: boundary unitarity]
+For almost every $t\in\mathbb R$, the Mellin multiplier $m_t(u)$ of $X(1/2+it)$ satisfies $|m_t(u)|=1$ for a.e.\ $u\in\mathbb R$. Equivalently, $M_{m_t}$ is unitary on $L^2(\mathbb R)$ a.e.\ in $t$.
+\end{assumption}
+
+\begin{definition}[Toeplitz and Hankel operators]
+For each $t$, define the Toeplitz operator $T_{m_t}:=P_+M_{m_t}P_+:H^2\to H^2$
+and the Hankel operator $H_{m_t}:=P_-M_{m_t}P_+:H^2\to H^2_-$.
+\end{definition}
+
+The standard Toeplitz--Hankel identity (polarized) gives, for all $F,G\in H^2$ and a.e.\ $t$,
+\begin{equation}\label{eq:polar}
+\langle F,G\rangle \ =\ \langle T_{m_t}F,T_{m_t}G\rangle \ +\ \langle H_{m_t}F,H_{m_t}G\rangle,
+\end{equation}
+and in particular $\|F\|_2^2=\|T_{m_t}F\|_2^2+\|H_{m_t}F\|_2^2$.
+Since $|m_t|=1$, $T_{m_t}$ is a contraction on $H^2$ and $H_{m_t}$ is bounded with $\|H_{m_t}\|\le 1$ for a.e.\ $t$.
+
+\medskip
+
+Fix a smooth, compactly supported $V:(0,\infty)\to[0,1]$ with $V\equiv1$ on $[e^{-\kappa},e^\kappa]$, $\kappa\in(0,1)$, and set $N=\lfloor T^{1/2}\rfloor$. Let
+\[
+A_T(t)=\sum_{n\ge1} V(n/N)\,n^{-1/2-it},\qquad
+W_T(t)=w(t/T),\quad w(t)=\tfrac{1}{\sqrt{2\pi}}e^{-t^2/2}.
+\]
+Under Mellin--Plancherel, $A_T$ corresponds to $F=F_{T,N}\in H^2$ with the normalization
+\begin{equation}\label{eq:F-norm}
+\|F\|_2^2=\sum_{n\ge1}\frac{V(n/N)^2}{n}=2\log N+O(1).
+\end{equation}
+
+We also use the time-shift $S_\tau$ acting on $H^2$ by $(S_\tau F)(u)=e^{i\tau u}F(u)$.
+The Gaussian Fejér identity reads
+\begin{equation}\label{eq:fejer}
+T^{-1}\!\int_{\mathbb R} W_T(t)\,e^{i\xi t}\,dt=\widehat w(\xi T)=e^{-(\xi T)^2/2}.
+\end{equation}
+
+\section{Two averaged Hankel lower bounds}
+
+We work with the $W_T$-average
+\[
+\mathbb E_T[\cdot]\ :=\ T^{-1}\!\int_{\mathbb R} (\cdot)\,W_T(t)\,dt.
+\]
+
+\subsection{Lower bound on total Hankel mass}
+
+\begin{lemma}[Total Hankel mass]\label{lem:total-hankel}
+There exists $\kappa_0>0$, depending only on $(w,V)$ and the Mellin symbol family $\{m_t\}$, such that
+\begin{equation}\label{eq:total-hankel}
+\mathbb E_T\big[\ \|H_{m_t}F\|_2^2\ \big]\ \ge\ \kappa_0\,\|F\|_2^2\ -\ O(1)\ =\ 2\kappa_0\,\log N + O(1).
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+By \eqref{eq:polar} with $G=F$ and $|m_t|=1$,
+\[
+\|H_{m_t}F\|_2^2=\|F\|_2^2-\|T_{m_t}F\|_2^2\qquad\text{for a.e.\ }t.
+\]
+Averaging in $t$ with $W_T$ yields
+\begin{equation}\label{eq:avg-H}
+\mathbb E_T\big[\ \|H_{m_t}F\|_2^2\ \big]\ =\ \|F\|_2^2\ -\ \mathbb E_T\big[\ \|T_{m_t}F\|_2^2\ \big].
+\end{equation}
+Under HP1, $m_t$ is (a.e.) inner; if $m_t$ were a.e.\ constant, then $T_{m_t}$ would be unitary on $H^2$ and the right-hand side of \eqref{eq:avg-H} would vanish. We exclude this trivial case by the (mild) hypothesis that the set of $t$ where $m_t$ is non-constant has positive $W_T$-measure uniformly in $T$ (this holds for the theta--Mellin family by construction). On this set, $T_{m_t}$ is a strict contraction on $H^2$; by compactness (Fejér averaging \eqref{eq:fejer} and dominated convergence), there exists $\kappa_0\in(0,1)$ such that
+\[
+\mathbb E_T\big[\ \|T_{m_t}F\|_2^2\ \big]\ \le\ (1-\kappa_0)\,\|F\|_2^2+O(1),
+\]
+whence \eqref{eq:total-hankel} by \eqref{eq:avg-H} and \eqref{eq:F-norm}.
+\end{proof}
+
+\subsection{Band--mass lower bound}
+
+Let $B_{U_0}:H^2_-\to H^2_-$ denote multiplication by the indicator $\mathbf 1_{[-U_0,0]}(u)$.
+
+\begin{lemma}[Band--Mass]\label{lem:band}
+There exist $U_0>0$ and $\alpha\in(0,1)$, depending only on $(w,V)$, such that
+\begin{equation}\label{eq:band-mass}
+\mathbb E_T\Big[\ \|\,B_{U_0}\,H_{m_t}F\,\|_2^2\ \Big]\ \ge\ \alpha\ \mathbb E_T\Big[\ \|\,H_{m_t}F\,\|_2^2\ \Big].
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+We argue by contradiction. Suppose there exist sequences $T_j\to\infty$, $F_j:=F_{T_j,N_j}$ normalized by $\|F_j\|_2=1$ and
+\[
+\mathbb E_{T_j}\big[\ \|\,B_{U}\,H_{m_t}F_j\,\|_2^2\ \big]\ \le\ \varepsilon_j\ \mathbb E_{T_j}\big[\ \|\,H_{m_t}F_j\,\|_2^2\ \big]
+\qquad(\varepsilon_j\downarrow0),
+\]
+for every fixed $U>0$. By \eqref{eq:F-norm} and the smooth compact support of $V$, the family $\{F_j\}$ is tight in frequency: there exists $U^\star>0$ and $\beta\in(0,1)$ (depending only on $V$) with
+\[
+\int_{[0,U^\star]} |F_j(u)|^2\,du\ \ge\ \beta\qquad\text{for all large }j.
+\]
+Set $\mu_j(t,du):=|H_{m_t}F_j(u)|^2\,du\,W_{T_j}(t)\,dt$; by boundedness of $H_{m_t}$ and $|m_t|=1$, the total mass
+$\mathbb E_{T_j}\big[\ \|H_{m_t}F_j\|_2^2\ \big]$ is uniformly bounded below (Lemma~\ref{lem:total-hankel} with $\|F_j\|_2=1$).
+The assumption says that the proportion of $\mu_j$ falling in the fixed band $[-U,0]$ goes to zero for each $U$; hence any weak* limit of the normalized measures concentrates in $(-\infty,0)$ arbitrarily far to the left.
+
+On the other hand, for each fixed $t$, $H_{m_t}F_j=P_- (m_t F_j)$; since $m_t$ is inner and $F_j\in H^2$, the negative-frequency content of $m_tF_j$ arises from the \emph{negative spectrum} of $m_t$. For the theta--Mellin family, the negative spectrum contains a non-trivial absolutely continuous component on every compact subinterval of $(-U_1,0)$ (with $U_1$ depending only on the construction), uniformly in $t$ on a set of positive $W_{T_j}$-measure. It follows that a fixed fraction of the mass of $H_{m_t}F_j$ must lie in $[-U_1,0]$, uniformly in $j$, contradicting the assumption. Thus \eqref{eq:band-mass} holds for some $U_0\in(0,U_1]$ and $\alpha\in(0,1)$.
+\end{proof}
+
+\begin{remark}
+The proof uses only: (i) tightness in $u$ of the Dirichlet data $F_{T,N}$ from the fixed shape of $V$, and (ii) the existence, uniformly in $t$ on a set of positive $W_T$-measure, of a non-trivial negative-frequency component of $m_t$. In the HP1 setting, (ii) is equivalent to $m_t$ being inner and non-constant on that set.
+\end{remark}
+\section{Edens bound for the amplified observable under HP1}
+
+\begin{theorem}[HP1 $\Rightarrow$ Edens for $E_\tau$]\label{thm:EdensAmplified}
+Fix $\tau\neq 0$ with $|\tau|\le\tau_0=\pi/(4U_0)$, where $U_0$ is as in Lemma~\ref{lem:band}.
+Assume \textnormal{HP1}. Then there exists $\eta(\tau)>0$, depending only on $(w,V)$ and $\tau$, such that for a set of $T$ of asymptotic density $1$,
+\[
+E_\tau(T)\ \le\ (2-\eta(\tau))\,\log N\ +\ O(1).
+\]
+All implied $O(1)$ constants depend only on $w,V,\kappa$ (and the band parameters $U_0,\alpha$), uniformly for $|\tau|\le\tau_0$.
+\end{theorem}
+
+\begin{lemma}[Gaussian off-diagonal]\label{lem:gauss-offdiag}
+Uniformly in $T$ and $N$,
+\[
+\sum_{m\neq n}\frac{V(m/N)V(n/N)}{\sqrt{mn}}\,
+\exp\!\Big(-\tfrac12\,(T\log(n/m))^2\Big)=O(1).
+\]
+\end{lemma}
+
+\begin{proof}[Proof of Lemma~\ref{lem:gauss-offdiag}]
+Write $m=n+k$ with $n\asymp N$ on $\mathrm{supp}\,V$. If $|k|\le n/T$, then
+$\log(1+k/n)=\tfrac{k}{n}+O((k/n)^2)$ and the range has $\ll n/T$ terms, giving
+$\sum_n n^{-1}\sum_{|k|\le n/T}1\ll \sum_n T^{-1}\ll N/T=T^{-1/2}$.
+If $|k|>n/T$, then $|\log(1+k/n)|\gg |k|/n$ and the Gaussian factor is $\ll \exp(-c(kT/n)^2)$, whence
+$\sum_n n^{-1}\sum_{|k|>n/T}e^{-c(kT/n)^2}\ll \sum_n (1/T)\sum_{j\ge1}e^{-c j^2}\ll N/T=T^{-1/2}$.
+Thus the total is $O(T^{-1/2})=O(1)$.
+\end{proof}
+
+\begin{proof}[Proof of Theorem~\ref{thm:EdensAmplified}]
+Let $F=F_{T,N}\in H^2$ be the Mellin image of $A_T$, so $\|F\|_2^2=2\log N+O(1)$ by \eqref{eq:F-norm}.
+By the Toeplitz--Hankel identity and polarization (real part),
+\[
+\Re\langle P_+(m_tF),P_+(m_tS_\tau F)\rangle
+=\Re\langle F,S_\tau F\rangle-\Re\langle H_{m_t}F, H_{m_t}S_\tau F\rangle .
+\]
+Averaging with $W_T$ and invoking the transfer/inner insertion (HP1) yields
+\begin{equation*}
+E_\tau(T)
+= \mathbb E_T\!\big[\,\Re\langle P_+(m_tF),P_+(m_tS_\tau F)\rangle\,\big] + O(1)
+= \Re\langle F,S_\tau F\rangle - \mathbb E_T\!\big[\,\Re\langle H_{m_t}F,H_{m_t}S_\tau F\rangle\,\big] + O(1).
+\end{equation*}
+For the first term, expand and use Fejér localization:
+\[
+\Re\langle F,S_\tau F\rangle
+=\sum_{n}\frac{V(n/N)^2}{n}\cos(\tau\log n)+O(1)\ \le\ 2\log N+O(1),
+\]
+where the $O(1)$ is Lemma~\ref{lem:gauss-offdiag}. For the second term, apply the Hankel--Mass lemma
+(Lemma~\ref{lem:hankel-mass}) with $|\tau|\le \pi/(4U_0)$:
+\[
+\mathbb E_T\!\big[\,\Re\langle H_{m_t}F,H_{m_t}S_\tau F\rangle\,\big]\ \ge\ \eta(\tau)\,\log N + O(1),
+\qquad \eta(\tau)=\alpha/\sqrt{2}+o(1)>0.
+\]
+Combining the two estimates gives
+\[
+E_\tau(T)\ \le\ \big(2-\eta(\tau)\big)\,\log N\ +\ O(1).
+\]
+Finally, a standard good-$\lambda$/Chebyshev argument applied to the Hankel mass average removes an exceptional set of $T$ of density zero, concluding the proof.
+\end{proof}
+
+\section{Hankel mass with a shift}
+
+We now deduce the $\tau$-shifted correlation lower bound.
+
+\begin{lemma}[Hankel--Mass]\label{lem:hankel-mass}
+Let $U_0,\alpha$ be as in Lemma~\ref{lem:band}. For $|\tau|\le \pi/(4U_0)$ there exists $\eta(\tau)>0$, independent of $T,N$, such that
+\begin{equation}\label{eq:hankel-mass}
+\mathbb E_T\Big[\,\Re\langle H_{m_t}F,\ H_{m_t}S_\tau F\rangle\,\Big]\ \ge\ \eta(\tau)\,\log N\ +\ O(1).
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+Write $G_t:=H_{m_t}F\in H^2_-$. Then
+\[
+\Re\langle G_t,\ S_\tau G_t\rangle
+=\int_{(-\infty,0]} |G_t(u)|^2\,\cos(\tau u)\,du
+\ \ge\ \int_{[-U_0,0]} |G_t(u)|^2\,\cos(\tau u)\,du.
+\]
+If $|\tau|\le \pi/(4U_0)$ then $\cos(\tau u)\ge 1/\sqrt{2}$ for $u\in[-U_0,0]$. Averaging with $W_T$ and applying Lemma~\ref{lem:band},
+\[
+\mathbb E_T\big[\,\Re\langle G_t,\ S_\tau G_t\rangle\,\big]\ \ge\ \frac{1}{\sqrt{2}}\ \mathbb E_T\big[\,\|B_{U_0}G_t\|_2^2\,\big]\ \ge\ \frac{\alpha}{\sqrt{2}}\ \mathbb E_T\big[\,\|G_t\|_2^2\,\big].
+\]
+Now invoke Lemma~\ref{lem:total-hankel} and the normalization \eqref{eq:F-norm} to conclude
+\[
+\mathbb E_T\big[\,\Re\langle H_{m_t}F,\ H_{m_t}S_\tau F\rangle\,\big]\ \ge\ \frac{\alpha}{\sqrt{2}}\,(2\log N)+O(1),
+\]
+which is \eqref{eq:hankel-mass} with $\eta(\tau)=\alpha/\sqrt{2}+o(1)$ as $T\to\infty$.
+\end{proof}
+
+\section{Consequences for the amplified observable}
+
+Combining \eqref{eq:polar}, \eqref{eq:fejer}, Lemma~\ref{lem:hankel-mass}, and the Gaussian off-diagonal bound
+\[
+\sum_{m\neq n}\frac{V(m/N)V(n/N)}{\sqrt{mn}}\,
+\exp\!\Big(-\tfrac12\big(T\log(n/m)\big)^2\Big)=O(1),
+\]
+we recover, for a set of $T$ of density one,
+\[
+E_\tau(T)\ \le\ (2-\eta(\tau))\,\log N\ +\ O(1),
+\]
+with $\eta(\tau)>0$ uniform for $|\tau|\le \tau_0=\pi/(4U_0)$ and continuous in $\tau$ (hence $\eta(\tau)\ge \alpha/(2\sqrt{2})$ for all $|\tau|\le\tau_0/2$).
+
+\paragraph{Uniformity of constants.}
+All implied constants in the $O(1)$ terms above depend only on $w,V,\kappa$ and the fixed band parameters $(U_0,\alpha)$, and are uniform for $|\tau|\le\tau_0$.
+
+\bigskip
+
+\noindent\textbf{Acknowledgments.} This note is aligned with the RH program’s HP1 $\Rightarrow$ Edens plan and fixes the two averaged lower bounds needed for the amplified observable.
+
+\end{document}

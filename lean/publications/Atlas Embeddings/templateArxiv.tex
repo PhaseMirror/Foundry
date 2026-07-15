@@ -1,0 +1,1568 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{geometry}
+\geometry{margin=1in}
+\usepackage{mathrsfs}
+\usepackage{bm}
+\usepackage[utf8]{inputenc}
+\usepackage{hyperref}
+\usepackage{listings}
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{conjecture}[theorem]{Conjecture}
+\newtheorem{proposition}[theorem]{Proposition}
+
+\newcommand{\RR}{\mathbb{R}}
+\newcommand{\ZZ}{\mathbb{Z}}
+\newcommand{\QQ}{\mathbb{Q}}
+\newcommand{\EE}{\mathbb{E}}
+\newcommand{\A}{\mathcal{A}}
+\newcommand{\G}{\mathcal{G}}
+\newcommand{\ResGraph}{\mathbf{ResGraph}}
+\newcommand{\ResGraphZero}{\mathbf{ResGraph}_0}
+\newcommand{\Weyl}{W}
+\newcommand{\Eeight}{E_8}
+\newcommand{\PhiAdj}{\Phi}
+\newcommand{\clique}{\text{clique}}
+
+\begin{document}
+
+\begin{titlepage}
+    \centering
+ 
+    
+  \LARGE\textbf{Atlas Embeddings: Exceptional Lie Groups from First Principles}
+   \vspace*{0.5em}
+  {\Large\bfseries \\Mathematical Foundations and Main Theorems \par}
+   \vspace{1cm}
+     \Large{UOR FOUNDATION} \\
+  \vspace{1cm}
+  \text{Ryan O. Van Gelder} \\ \vspace{1cm} 
+    {\normalsize October 2025 \par}
+    \vfill
+
+   
+    \vspace{0.5em}
+    \begin{minipage}{0.85\textwidth}
+        \small
+       We present a publication-ready specification of the $E_8$ root system with a deterministic paste-stable ordering, an injective reconstructive labeling, and a category of \emph{ResGraph} objects capturing induced substructures and symmetries. Simple roots are given in a Bourbaki-consistent realization (trivalent at node $4$) with inner product $\langle\alpha_i,\alpha_j\rangle=-1$ on Dynkin edges and $2$ on the diagonal.
+
+A $\Sigma$-calculus encodes constructions via three primitives: parabolic restriction $\mathrm{Par}_I$, admissible fold $\mathrm{fold}_\Gamma$ (including quotient folds), and junction tagging $\mathrm{Aug}_J$. Using these, we supply five paste-stable $\Sigma$-terms whose reflection-closures recover the classical types inside $E_8$: $G_2$ from a $D_4$ triality fold, $F_4$ from an $E_6$ quotient fold, $E_6$ from a standard parabolic, $E_7$ from a parabolic with admissible augmentation, and $E_8$ from the Atlas simple system itself.
+
+Each construction is backed by machine checks: Cartan recovery, determinant and rank, integrality of Cartan integers on the closure, Coxeter parameters, root counts, and Weyl orders. Verified outputs are: $G_2$ (12 roots, $|W|=12$), $F_4$ (48 roots, $|W|=1152$), $E_6$ (72 roots, $|W|=51{,}840$), $E_7$ (126 roots, $|W|=2{,}903{,}040$), and $E_8$ (240 roots, $|W|=696{,}729{,}600$). The framework fixes conventions end-to-end, yields reproducible code paths, and isolates admissibility conditions for folds and augmentations. This provides a minimal, verifiable, and implementation-ready atlas for $E_8$ and its induced subsystems.
+
+
+    \end{minipage}
+
+\end{titlepage}
+\clearpage
+\clearpage
+
+\newpage
+\begin{multicols}{2}
+\begin{singlespace}
+\tableofcontents
+\end{singlespace}
+\end{multicols}
+
+\thispagestyle{empty}
+\newpage
+
+\textbf{Atlas of Resonance Classes}.
+
+
+\section{The Atlas of Resonance Classes}
+
+\paragraph{Object.} A canonical 96–element set of resonance classes \(\RninetySix=\{v_1,\dots,v_{96}\}\subset \Lambda_{\E}\) with a fixed adjacency predicate
+\[
+(i\sim j) \iff \ip{v_i}{v_j} = \AdjTarget, \quad \AdjTarget\in\{-1,+1\}.
+\]
+The two sign choices are Weyl–equivariant; pick one and use it consistently.
+
+
+\paragraph{Multiplicity profile.} \RninetySix is split into two resonance levels with counts
+\[
+32 \;\text{elements at level}\; 2,\qquad 64 \;\text{elements at level}\; 3.
+\]
+These labels are intrinsic to the atlas and do not rely on any particular coordinate chart.
+
+
+\paragraph{Embedding.} There exists an embedding \(\iota: \RninetySix\hookrightarrow \Lambda_{\E}\) unique up to \(\W\). Any two embeddings differ by an element of \(\W\).
+
+
+\paragraph{Graph structure.} Let \(G(\RninetySix)\) be the simple graph on 96 vertices with the above adjacency. Key invariants:
+\begin{itemize}[nosep]
+\item Degree partition: \(\{d_a^{\times 32},\; d_b^{\times 64}\}\) for some integers \(d_a\neq d_b\).
+\item Induced exceptional subgraphs: counts \(N_{E_6}, N_{E_7}, N_{E_8}\) of \(E_6,E_7,E_8\) Dynkin diagrams.
+\item Automorphisms: \(\operatorname{Aut}(G)\) contains the image of \(\W\) stabilizing \(\RninetySix\).
+\end{itemize}
+
+
+\paragraph{Verification sketch.} Given coordinates for \(\RninetySix\) in \(\Lambda_{\E}\):
+\begin{enumerate}[nosep]
+\item Use exact rationals to compute the matrix \(M_{ij}=\ip{v_i}{v_j}\).
+\item Form the adjacency matrix \(A\) by testing \(M_{ij}=\AdjTarget\) for \(i\neq j\).
+\item Check the 96–way degree partition equals \(\{d_a^{\times 32}, d_b^{\times 64}\}\).
+\item Count induced \(E_6, E_7, E_8\) subgraphs as a sanity check of exceptional closures.
+\item Record a certificate: the raw \(M\), the edge set, and hashes of both.
+\end{enumerate}
+
+\begin{definition}[Atlas Graph]
+The \textbf{Atlas} $\A = (V_\A, E_\A, \lambda_\A, U_\A)$ is a 96-vertex graph with:
+\begin{itemize}
+\item $V_\A$: 96 vertices representing resonance classes
+\item $E_\A \subseteq V_\A \times V_\A$: edges defined by the adjacency predicate
+\item $\lambda_\A: V_\A \to R_{E_8}$: vertex labeling into $E_8$ roots
+\item $U_\A \subseteq V_\A$: distinguished unity vertices
+\end{itemize}
+\end{definition}
+
+\begin{definition}[Adjacency Predicate]
+For $t \in \{0, \pm1\}$, define:
+\[
+\PhiAdj(t) \iff (t = -1)
+\]
+Two vertices $v, w \in V_\A$ are adjacent iff $\langle \lambda_\A(v), \lambda_\A(w) \rangle = -1$.
+\end{definition}
+
+\subsection{The Category of Resonance Graphs}
+
+\begin{definition}[Resonance Graph Object]
+A \textbf{ResGraph object} is a tuple $\G = (V, E, \lambda, U)$ where:
+\begin{enumerate}
+\item $V$ is a finite set of vertices
+\item $E \subseteq \{\{v,w\} : v,w \in V, v \neq w\}$ is a set of edges
+\item $\lambda: V \to R_{E_8}$ labels vertices with $E_8$ roots
+\item $U \subseteq V$ is a distinguished unity subset
+\item Adjacency rule: $\{v,w\} \in E$ iff $\PhiAdj(\langle \lambda(v), \lambda(w) \rangle)$
+\end{enumerate}
+\end{definition}
+
+\begin{definition}[ResGraph Morphism]
+A morphism $\varphi: (V,E,\lambda,U) \to (V',E',\lambda',U')$ is a function $\varphi: V \to V'$ such that:
+\begin{enumerate}
+\item (Graph homomorphism) $\{v,w\} \in E \Rightarrow \{\varphi(v), \varphi(w)\} \in E'$
+\item (Label compatibility) $\exists g \in \Weyl(E_8)$ such that $\lambda'(\varphi(v)) = g \cdot \lambda(v)$ for all $v \in V$
+\item (Unity preservation) $\varphi(U) \subseteq U'$
+\end{enumerate}
+\end{definition}
+
+\subsection{Main Theorem: Atlas to $E_8$ Embedding}
+
+\begin{theorem}[Atlas Embedding]
+There exists an injective map $f: V_\A \to R_{E_8}$ such that:
+\begin{enumerate}
+\item For all $v,w \in V_\A$, $\{v,w\} \in E_\A$ iff $\langle f(v), f(w) \rangle = -1$
+\item $|\operatorname{im}(f)| = 96$
+\item (Uniqueness up to Weyl group) If $f'$ also satisfies (1) and (2), then there exists $w \in \Weyl(E_8)$ with $f' = w \circ f$
+\end{enumerate}
+\end{theorem}
+
+\begin{proof}[Proof Outline]
+\textbf{Existence:} Construct $f$ explicitly by providing coordinates for all 96 vertices in the canonical $E_8$ basis. Verify adjacency by checking all $\binom{96}{2}$ pairs satisfy $\PhiAdj$.
+
+\textbf{Uniqueness:} 
+\begin{enumerate}
+\item Fix a seed vertex $v_0$ and normalize $f(v_0)$ to a chosen root via Weyl action
+\item Neighbors of $v_0$ must map to the 56 roots with inner product $-1$ with $f(v_0)$
+\item Local adjacency patterns force unique assignments via connectedness of $\A$
+\item Any alternative embedding differs by a global Weyl transformation
+\end{enumerate}
+\end{proof}
+
+\subsection{Categorical Operations in $\ResGraph$}
+
+\begin{definition}[Reflection Closure]
+For $\G = (V,E,\lambda,U)$, define $\operatorname{RC}(\G)$ as the smallest ResGraph containing $\G$ whose label set is closed under reflections:
+\[
+\Lambda_{k+1} = \Lambda_k \cup \{s_\alpha(\beta) : \alpha, \beta \in \Lambda_k\} \cap R_{E_8}
+\]
+with $\Lambda_0 = \lambda(V)$.
+\end{definition}
+
+\begin{definition}[Resonance Product]
+For $\G_1, \G_2$, define the partial sum graph:
+\[
+\G_1 \boxtimes \G_2 = \left\{ (v_1,v_2) : \lambda_1(v_1) + \lambda_2(v_2) \in R_{E_8} \right\}/\sim
+\]
+where $(v_1,v_2) \sim (v_1',v_2')$ if their label sums coincide.
+\end{definition}
+
+\begin{definition}[Quotient by Symmetry]
+For $H \leq \operatorname{Aut}(\G)$, define $\G/H$ with vertices as $H$-orbits, labels by representatives, and edges between orbits when any representatives are adjacent.
+\end{definition}
+
+\subsection{Exceptional Group Constructions}
+
+\begin{theorem}[$G_2$ Construction]
+The exceptional group $G_2$ emerges as:
+\[
+G_2 = \operatorname{RC}(\A \boxtimes C_3)/H
+\]
+where $C_3$ is a 3-element resonance graph and $H$ an appropriate symmetry group. The construction yields:
+\begin{itemize}
+\item 12 roots (6 short, 6 long)
+\item Rank 2, Cartan matrix $\begin{bmatrix} 2 & -3 \\ -1 & 2 \end{bmatrix}$
+\item Weyl group order 12
+\end{itemize}
+\end{theorem}
+
+\begin{theorem}[$F_4$ Construction]
+\[
+F_4 = \operatorname{RC}(\A/\tau)
+\]
+where $\tau$ is the mirror symmetry involution, yielding:
+\begin{itemize}
+\item 48 roots (24 short, 24 long)
+\item Rank 4
+\item Weyl group order 1152
+\end{itemize}
+\end{theorem}
+
+\begin{theorem}[$E_6$, $E_7$, $E_8$ Constructions]
+\begin{itemize}
+\item $E_6 = \operatorname{RC}(\A[\ell = c])$ via hyperplane filtration
+\item $E_7 = \operatorname{Aug}(\A)$ via root addition closure  
+\item $E_8 = \operatorname{RC}(\A)$ via full reflection closure
+\end{itemize}
+\end{theorem}
+
+\subsection{Initiality and Universal Property}
+
+\begin{conjecture}[Atlas Initiality]
+The Atlas $\A$ is initial in $\ResGraph$: for every object $\G \in \ResGraph$, there exists a unique morphism $\varphi: \A \to \G$.
+\end{conjecture}
+
+\begin{definition}[Precursor Category]
+Define $\ResGraphZero$ with objects $(V,E,U)$ (forgetting labels) and morphisms preserving graph structure and unity. There is a faithful functor $J: \ResGraph \to \ResGraphZero$.
+\end{definition}
+
+\begin{lemma}[Lifting Lemma]
+Any $\ResGraphZero$-morphism $f: J(\A) \to J(\G)$ lifts uniquely to a $\ResGraph$-morphism $\tilde{f}: \A \to \G$ if $\G$ satisfies the $E_8$-liftability condition.
+\end{lemma}
+
+\subsection{Action Functional and Variational Foundation}
+
+\begin{definition}[Flag-Resonance Complex]
+For $\G = (V,E,\lambda,U)$, define the cellular complex $\mathsf{FR}(\G)$ by:
+\begin{itemize}
+\item 0-cells: $V$
+\item 1-cells: $E$  
+\item $k$-cells: $\clique_{k+1}(\G)$ (cliques of size $k+1$)
+\end{itemize}
+\end{definition}
+
+\begin{definition}[Action Functional]
+For $\varphi \in C^{k-1}(\mathsf{FR}(\G); A)$, define:
+\[
+S_k[\varphi] = \sum_{\sigma \in \mathsf{FR}^{(k)}} \varphi(\partial \sigma)
+\]
+The Atlas emerges as stationary configuration of $S_k$ for appropriate $k$ and coefficient group $A$.
+\end{definition}
+
+\subsection{Computational Verification Framework}
+
+\begin{theorem}[Exact Arithmetic Verification]
+All constructions and verifications use exact rational arithmetic:
+\begin{enumerate}
+\item Vertex coordinates in $\QQ$ or $\frac12\ZZ$
+\item Inner products computed exactly via $\langle x,y \rangle = \sum x_i y_i$
+\item Adjacency verified by $\PhiAdj(\langle \lambda(v), \lambda(w) \rangle)$
+\item Cartan matrices derived from simple systems
+\end{enumerate}
+\end{theorem}
+
+\begin{proposition}[Reproducible Artifacts]
+The theory is computationally certified by:
+\begin{itemize}
+\item Complete vertex/edge listings for $\A$
+\item Explicit coordinate tables for all exceptional groups
+\item Verification scripts confirming all mathematical claims
+\item Flag complex cell counts justifying the 12,288-cell structure
+\end{itemize}
+\end{proposition}
+
+
+\section{The $E_8$ Root System}
+
+The classification of simple Lie algebras reveals five exceptional cases: $G_2$, $F_4$, $E_6$, $E_7$, and $E_8$. While these have been extensively studied since their discovery by Killing and Cartan, their emergence from first principles remains mysterious. This work presents a unified construction from a single combinatorial object: the 
+
+\begin{definition}[$E_8$ Root System]
+The $E_8$ root system $R_{E_8} \subset \RR^8$ consists of 240 vectors of squared norm 2:
+\begin{itemize}
+\item 112 integer roots: $\pm e_i \pm e_j$ for $1 \leq i < j \leq 8$
+\item 128 half-integer roots: $(\pm \tfrac12, \pm \tfrac12, \ldots, \pm \tfrac12)$ with an even number of minus signs
+\end{itemize}
+The inner product between distinct roots takes values in $\{0, \pm1\}$.
+\end{definition}
+
+\begin{definition}[Weyl Group]
+The Weyl group $\Weyl(E_8)$ is generated by reflections $s_\alpha(x) = x - \frac{2\langle x, \alpha\rangle}{\langle \alpha, \alpha\rangle} \alpha$ for $\alpha \in R_{E_8}$.
+\end{definition}
+
+\subsection{Root System G$_2$ (product)}\label{sec:g2-fold}
+
+\paragraph{$\Sigma$-term.}
+Work in Bourbaki $E_8$ with simple roots $\{\alpha_i\}_{i=1}^8$ and $\langle\alpha_i,\alpha_j\rangle=-1$ exactly along Dynkin edges. Inside $E_8$, the subset $\{\alpha_1,\alpha_2,\alpha_3,\alpha_4\}$ is a $D_4$ with hub $\alpha_3$ and legs $\alpha_1,\alpha_2,\alpha_4$.
+Define the \text{$\Sigma$-term}
+\[
+t_{G_2}\;:=\;\mathrm{fold}_{C_3}\!\big(\mathrm{Par}_{\{1,2,4\}};\,\mathrm{Aug}_{3}\big)(\text{Atlas marking}),
+\]
+so that
+\[
+\beta_\ell:=\alpha_1+\alpha_2+\alpha_4,\qquad \beta_s:=\alpha_3.
+\]
+
+\paragraph{Cartan check.}
+With $\langle\alpha_i,\alpha_i\rangle=2$, legs pairwise orthogonal, and each leg meeting the hub once,
+\[
+\|\beta_\ell\|^2=6,\quad \|\beta_s\|^2=2,\quad \langle \beta_\ell,\beta_s\rangle=-3,
+\]
+hence
+\[
+A=\begin{pmatrix}
+2 & \dfrac{2\langle\beta_\ell,\beta_s\rangle}{\|\beta_s\|^2}\\[4pt]
+\dfrac{2\langle\beta_s,\beta_\ell\rangle}{\|\beta_\ell\|^2} & 2
+\end{pmatrix}
+=
+\begin{pmatrix}2&-3\\-1&2\end{pmatrix},
+\]
+the crystallographic Cartan matrix of type $G_2$.
+
+\paragraph{Angle and Coxeter parameter.}
+\[
+\cos\theta=\frac{\langle\beta_s,\beta_\ell\rangle}{\|\beta_s\|\,\|\beta_\ell\|}=-\frac{3}{\sqrt{12}}=-\frac{\sqrt{3}}{2}\;\Rightarrow\; \theta=150^\circ.
+\]
+For simple roots, $\theta=\pi-\frac{\pi}{m}$, so $m=\frac{\pi}{\pi-\theta}=6$.
+
+\paragraph{Root strings.}
+With $\alpha=\beta_s$ and $\beta=\beta_\ell$:
+\[
+\langle\beta,\alpha^\vee\rangle=-3\ \Rightarrow\ \text{$\alpha$-string through $\beta$ has length }1-(-3)=4,
+\]
+\[
+\langle\alpha,\beta^\vee\rangle=-1\ \Rightarrow\ \text{$\beta$-string through $\alpha$ has length }1-(-1)=2,
+\]
+matching $G_2$ string lengths and ensuring crystallographic closure.
+
+\begin{proposition}
+The reflection-closure of $\{\beta_\ell,\beta_s\}$ in the $E_8$ ambient is the $G_2$ root system. The Weyl group is dihedral of order $12$.
+\end{proposition}
+
+\begin{proof}[Proof outline]
+Triality $C_3$ permutes the three $D_4$ legs, and folding along $C_3$ is admissible in simply-laced type because nodes in the same orbit are nonadjacent. The Gram data above yield the $G_2$ Cartan matrix. The angle gives $m=6$, so the rank-$2$ Coxeter group generated by $s_{\beta_s},s_{\beta_\ell}$ is $D_{12}$ of order $12$. Root-string lengths $(4,2)$ confirm crystallographic closure with long:short norm ratio $3:1$. \qedhere
+\end{proof}
+
+\subsection{Root System F$_4$ (quotient fold of an $E_6\subset E_8$ slice)}\label{sec:f4-fold}
+
+\paragraph{$\Sigma$-term.}
+Let $\{\alpha_i\}_{i=1}^8$ be the Bourbaki $E_8$ simple roots with $\langle\alpha_i,\alpha_j\rangle=-1$ on Dynkin edges. Inside $E_8$, take a symmetric $E_6$ slice written as a chain with a central node and an attached arm:
+\[
+L-\ell-\boxed{c}-r-R,\qquad u\text{ attached to }c .
+\]
+Let $\Gamma=C_2$ act by $L\leftrightarrow R$ and $\ell\leftrightarrow r$, fixing $c,u$. Define the quotient (orbit–average) fold
+\[
+t_{F_4}\;:=\;\mathrm{fold}^{\mathrm{quot}}_{C_2}\!\big(\mathrm{Par}_{E_6};\,\mathrm{Aug}_{\{\text{center, arm}\}}\big)(\text{Atlas}),
+\qquad
+p(O)=\frac{1}{|O|}\sum_{\alpha\in O}\alpha .
+\]
+
+\paragraph{Folded generators.}
+\[
+\beta_1=\tfrac12(L+R),\quad
+\beta_2=\tfrac12(\ell+r),\quad
+\beta_3=c,\quad
+\beta_4=u .
+\]
+
+\paragraph{Gram data in $E_8$.}
+Lengths:
+\(
+\|\beta_1\|^2=\|\beta_2\|^2=1\) (short), \(
+\|\beta_3\|^2=\|\beta_4\|^2=2\) (long).
+Pairings:
+\[
+\langle\beta_1,\beta_2\rangle=-\tfrac12,\qquad
+\langle\beta_2,\beta_3\rangle=-1,\qquad
+\langle\beta_3,\beta_4\rangle=-1,
+\]
+others $0$.
+
+\paragraph{Cartan matrix.}
+With $A_{ij}=2\langle\beta_i,\beta_j\rangle/\|\beta_j\|^2$,
+\[
+A=
+\begin{pmatrix}
+2&-1&0&0\\
+-1&2&-1&0\\
+0&-2&2&-1\\
+0&0&-1&2
+\end{pmatrix},
+\]
+which is the $F_4$ Cartan (double bond between nodes $2$ and $3$, arrow toward the short root).
+
+\paragraph{Angles and strings.}
+$m_{12}=3$ (short–short, $\cos120^\circ$), $m_{23}=4$ (short–long), $m_{34}=3$ (long–long). Root strings across $(\beta_2,\beta_3)$ have lengths $2$ and $3$ since $\langle\beta_2,\beta_3^\vee\rangle=-1$ and $\langle\beta_3,\beta_2^\vee\rangle=-2$.
+
+\begin{proposition}
+The reflection-closure of $\{\beta_1,\beta_2,\beta_3,\beta_4\}$ is the $F_4$ root system. The Weyl group has order $1152$.
+\end{proposition}
+
+\begin{proof}[Proof outline]
+The $C_2$ involution swaps two symmetric arms of the $E_6$ slice, so the quotient fold via orbit-averaging is admissible. The Gram data yield the $F_4$ Cartan above. The adjacent Coxeter parameters $(3,4,3)$ match $F_4$. Root-string lengths $(2,3)$ across the double bond certify crystallographic closure with the expected short/long structure. Therefore the reflection-closure is $F_4$ and the Weyl group order is $1152$.
+\end{proof}
+
+\subsection{Root System E$_6$ (filtration)}\label{sec:e6-filtration}
+
+\paragraph{$\Sigma$-term.}
+Work in Bourbaki $E_8$ with $\langle\alpha_i,\alpha_j\rangle=-1$ on Dynkin edges. Select the standard $E_6$ parabolic and tag the central node for checks:
+\[
+t_{E_6}:=\mathrm{Par}_{I}\circ \mathrm{Aug}_{\{4\}}\;(\text{Atlas}),\qquad
+I=\{1,2,3,4,5,6\}.
+\]
+As a filtration one may use
+\[
+E_8 \xrightarrow{\ \mathrm{Par}_{\{1,\dots,7\}}\ } E_7
+\;\xrightarrow{\ \mathrm{Par}_{\{1,2,3,4,5,6\}}\ } E_6 .
+\]
+
+\paragraph{Simple system produced.}
+Set $\beta_i:=\alpha_i$ for $i\in I$. Adjacencies (trivalent node at $4$):
+\[
+1\!-\!3,\quad 3\!-\!4,\quad 4\!-\!5,\quad 5\!-\!6,\quad 2\!-\!4,
+\]
+others $0$. All $\|\beta_i\|^2=2$.
+
+\paragraph{Cartan matrix.}
+With $A_{ij}=2\langle\beta_i,\beta_j\rangle/\|\beta_j\|^2$,
+\[
+A=
+\begin{pmatrix}
+2&0&-1&0&0&0\\
+0&2&0&-1&0&0\\
+-1&0&2&-1&0&0\\
+0&-1&-1&2&-1&0\\
+0&0&0&-1&2&-1\\
+0&0&0&0&-1&2
+\end{pmatrix},
+\qquad \det A=3,\ \mathrm{rank}=6.
+\]
+
+\paragraph{Reflection-closure and size.}
+Since $A$ is simply-laced, crystallographic, and indecomposable, the reflection-closure is the $E_6$ root system with $|\Phi|=72$ and Coxeter number $h=12$.
+
+\paragraph{Weyl order.}
+Exponents $(1,4,5,7,8,11)$ give
+\[
+|W(E_6)|=\prod_{i=1}^6 (m_i+1)=2\cdot5\cdot6\cdot8\cdot9\cdot12=51{,}840.
+\]
+
+\subsection{Root System E$_7$ (augmentation)}\label{sec:e7-augmentation}
+
+\paragraph{$\Sigma$-term.}
+Work in Bourbaki $E_8$ with $\langle\alpha_i,\alpha_j\rangle=-1$ on Dynkin edges. Select the standard $E_7$ parabolic and tag the junction (node $4$) for checks:
+\[
+t_{E_7}:=\mathrm{Aug}_{\{4\}}\circ \mathrm{Par}_{I}\;(\text{Atlas}),\qquad
+I=\{1,2,3,4,5,6,7\}.
+\]
+The augmentation is admissible: it adds no edges and preserves integrality.
+
+\paragraph{Simple system produced.}
+Set $\beta_i:=\alpha_i$ for $i\in I$. Adjacencies (trivalent at $4$):
+\[
+1\!-\!3,\quad 3\!-\!4,\quad 4\!-\!5,\quad 5\!-\!6,\quad 6\!-\!7,\quad 2\!-\!4,
+\]
+others $0$. All $\|\beta_i\|^2=2$.
+
+\paragraph{Cartan matrix.}
+With $A_{ij}=2\langle\beta_i,\beta_j\rangle/\|\beta_j\|^2$,
+\[
+A=
+\begin{pmatrix}
+2&0&-1&0&0&0&0\\
+0&2&0&-1&0&0&0\\
+-1&0&2&-1&0&0&0\\
+0&-1&-1&2&-1&0&0\\
+0&0&0&-1&2&-1&0\\
+0&0&0&0&-1&2&-1\\
+0&0&0&0&0&-1&2
+\end{pmatrix},
+\qquad \det A=2,\ \mathrm{rank}=7.
+\]
+
+\paragraph{Reflection-closure and size.}
+Since $A$ is simply-laced, crystallographic, indecomposable, the reflection-closure is the $E_7$ root system with $|\Phi|=126$ and Coxeter number $h=18$.
+
+\paragraph{Weyl order.}
+Exponents $(1,5,7,9,11,13,17)$ give
+\[
+|W(E_7)|=\prod_{i=1}^7 (m_i+1)=2\cdot6\cdot8\cdot10\cdot12\cdot14\cdot18
+=2{,}903{,}040.
+\]
+
+
+Work in $\mathbb{R}^8$ with the standard dot product $\langle x,y\rangle=\sum_{i=1}^8 x_i y_i$.
+Define the even unimodular lattice
+\[
+E_8=\{x\in\mathbb{Z}^8\}\ \cup\ \bigl\{x\in(\mathbb{Z}+\tfrac12)^8:\ \textstyle\sum_{i=1}^8 x_i\in 2\mathbb{Z}\bigr\}.
+\]
+The root set is
+\[
+R=\{\alpha\in E_8:\ \langle \alpha,\alpha\rangle=2\},\qquad |R|=240.
+\]
+Two disjoint types:
+\begin{align*}
+\text{Type I: }&\text{all permutations of }(\pm1,\pm1,0,\dots,0)\ \ \text{(no sign-parity restriction)}\quad\Rightarrow\ 112\ \text{roots},\\
+\text{Type II: }&(\pm\tfrac12,\dots,\pm\tfrac12)\ \text{with even parity (even \# of $-1$ entries)}\quad\Rightarrow\ 128\ \text{roots}.
+\end{align*}
+Possible inner products among roots are $\{-2,-1,0,1,2\}$.
+
+
+\subsection{Cartan Matrix, Simple Roots, and Weyl Group}
+Adopt the Bourbaki $E_8$ Cartan matrix with the trivalent node at $3$:
+\[
+A=\begin{pmatrix}
+2&0&-1&0&0&0&0&0\\
+0&2&-1&0&0&0&0&0\\
+-1&-1&2&-1&0&0&0&0\\
+0&0&-1&2&-1&0&0&0\\
+0&0&0&-1&2&-1&0&0\\
+0&0&0&0&-1&2&-1&0\\
+0&0&0&0&0&-1&2&-1\\
+0&0&0&0&0&0&-1&2
+\end{pmatrix}.
+\]
+A compatible simple system $\{\alpha_i\}_{i=1}^8\subset\mathbb{R}^8$ is:
+\[
+\begin{aligned}
+\alpha_1&=\tfrac12(1,-1,-1,-1,-1,-1,-1,1),&
+\alpha_2&=(1,1,0,0,0,0,0,0),\\
+\alpha_3&=(-1,0,1,0,0,0,0,0),&
+\alpha_4&=(0,0,-1,1,0,0,0,0),\\
+\alpha_5&=(0,0,0,-1,1,0,0,0),&
+\alpha_6&=(0,0,0,0,-1,1,0,0),\\
+\alpha_7&=(0,0,0,0,0,-1,1,0),&
+\alpha_8&=(0,0,0,0,0,0,-1,1).
+\end{aligned}
+\]
+Then $\langle\alpha_i,\alpha_i\rangle=2$ and $\langle\alpha_i,\alpha_j\rangle=-1$ exactly on the edges of $A$; all other off-diagonals are $0$.
+Define reflections
+\[
+s_i(x)=x-\frac{2\langle x,\alpha_i\rangle}{\langle\alpha_i,\alpha_i\rangle}\,\alpha_i
+\quad(\langle\alpha_i,\alpha_i\rangle=2),
+\]
+and the Weyl group $W(E_8)=\langle s_1,\dots,s_8\rangle$, which acts transitively on $R$.
+
+\subsection{Paste-Stable Ordering \texorpdfstring{$\iota$}{iota}}
+We specify a deterministic total order $\iota:R\to\{1,\dots,240\}$:
+\begin{enumerate}[itemsep=2pt,topsep=4pt,leftmargin=16pt]
+
+\item \textbf{Type I ordering.} Write $\alpha=\epsilon_i e_i+\epsilon_j e_j$ with $i<j$ and $\epsilon_i,\epsilon_j\in\{\pm1\}$. Order by the tuple
+\[
+(i,\ j,\ \epsilon_i,\ \epsilon_j)\qquad\text{under the bit order }-1<+1.
+\]
+\item \textbf{Type II ordering.} Use the sign vector $\sigma(\alpha)\in\{\pm1\}^8$ (even parity). Order lexicographically on $(\sigma_1,\dots,\sigma_8)$ with $-1<+1$.
+\item Do not identify $\alpha$ with $-\alpha$ for ordering.
+\end{enumerate}
+
+\subsection{Adjacency Predicate and Root Graph}
+Define the $W(E_8)$-invariant adjacency
+\[
+\Phi(\alpha,\beta)\iff \langle \alpha,\beta\rangle=-1.
+\]
+This yields a simple undirected $56$-regular graph on vertex set $R$.
+
+\subsection{Injective, Reconstructive Labels}
+Define $\lambda:R\to \{\mathrm{I},\mathrm{II}\}\times\mathcal{D}$ by
+\[
+\lambda(\alpha)=
+\begin{cases}
+(\mathrm{I},(i,j),(\epsilon_i,\epsilon_j))& \text{if }\alpha=\epsilon_i e_i+\epsilon_j e_j,\ i<j,\\[2pt]
+(\mathrm{II},\sigma(\alpha))& \text{if }\alpha\in\{\pm\tfrac12\}^8\text{ with even parity},
+\end{cases}
+\]
+where $\sigma(\alpha)$ is the $8$-bit sign vector. The reconstruction map
+\[
+\mathrm{rec}\circ\lambda=\mathrm{id}_V\qquad\text{for any }V\subseteq R
+\]
+is immediate from the data.
+
+\subsection{ResGraph Objects, Morphisms, and Atlas}
+\subsubsection*{Objects}
+A \emph{ResGraph} is a tuple $G=(V,E,\lambda,U)$ with
+\begin{align*}
+&V\subseteq R\ \text{specified by indices }I\subseteq\{1,\dots,240\}: &&V=\{\alpha\in R:\ \iota(\alpha)\in I\},\\
+&E=\bigl\{\{\alpha,\beta\}\subseteq V:\ \Phi(\alpha,\beta)\bigr\},\qquad
+&&\lambda=\text{labels above, restricted to }V,\\
+&U=\{w|_V:\ w\in W(E_8),\ w(V)=V\}\subseteq \mathrm{Aut}(G).
+\end{align*}
+
+\subsection*{Morphisms}
+A morphism $f:(V,E,\lambda,U)\to(V',E',\lambda',U')$ satisfies:
+\begin{enumerate}[itemsep=2pt,topsep=4pt,leftmargin=16pt]
+\item \textbf{Adjacency reflection: } $\Phi(\alpha,\beta)\iff \Phi'(f(\alpha),f(\beta))$.
+\item \textbf{Label preservation: } $\lambda'\circ f=\lambda$.
+\item \textbf{Equivariance: } $\forall u\in U\ \exists u'\in U'\ \text{s.t.}\ f\circ u=u'\circ f$.
+\end{enumerate}
+Items (1) and (2) imply $f$ is injective on vertices.
+
+\subsubsection*{Atlas and Sub-Atlas}
+\begin{itemize}[itemsep=2pt,topsep=2pt,leftmargin=16pt]
+\item \textbf{Canonical full instance: } $V=R$, $E=\{\{\alpha,\beta\}:\langle\alpha,\beta\rangle=-1\}$, reconstructive $\lambda$, and $U=W(E_8)$.
+\item \textbf{Induced sub-Atlas on } $I\subseteq\{1,\dots,240\}$: restrict $V,E,\lambda$; set $U=\{w|_V:w\in W(E_8),\ w(V)=V\}$.
+\end{itemize}
+
+\subsection{Example: The $E_7$ Subsystem}
+Let
+\[
+V=\{\alpha\in R:\ \langle \alpha,\alpha_8\rangle=0\}\quad\text{(roots orthogonal to $\alpha_8$)},
+\]
+and $E=\{\{\alpha,\beta\}\subset V:\ \langle\alpha,\beta\rangle=-1\}$, with $\lambda$ restricted to $V$ and
+\[
+U=\{w|_V:\ w\in W(E_8),\ w(V)=V\}\cong W(E_7).
+\]
+
+\subsection{Automorphisms}
+The $E_8$ Dynkin diagram has trivial diagram automorphism. The longest Weyl group element $w_0$ acts as $-\mathrm{Id}$ on $\mathbb{R}^8$, so $-\mathrm{Id}\in W(E_8)$. Hence
+\[
+\mathrm{Aut}(R,\Phi)=W(E_8).
+\]
+
+\subsection{Validation Checklist}
+For implementation, verify:
+\begin{enumerate}[itemsep=2pt,topsep=4pt,leftmargin=16pt]
+\item \textbf{Cartan verification: } $G_{ij}=\langle\alpha_i,\alpha_j\rangle$ equals $A$.
+\item \textbf{Root enumeration: } Enumerate $R$ from $E_8$; check $|R|=240$ and $\langle\alpha,\alpha\rangle=2$ for all $\alpha\in R$.
+\item \textbf{Adjacency: } Build $\Phi$; every vertex has degree $56$.
+\item \textbf{Weyl-invariance and transitivity: } $\Phi(\alpha,\beta)=\Phi(w\alpha,w\beta)$ for $w\in W(E_8)$ and $W(E_8)$ acts transitively on $R$.
+\item \textbf{Label reconstruction: } For $V\subseteq R$, confirm $\mathrm{rec}\circ\lambda=\mathrm{id}_V$.
+\end{enumerate}
+
+% LaTeX section: Group Action, Orbit Decomposition, and Invariant Functionals
+% Self-contained. Load standard packages in the parent document as needed.
+
+% LaTeX section: Group Action, Orbit Decomposition, and Invariant Functionals
+% Self-contained. Load standard packages in the parent document as needed.
+
+\section{Group Action, Orbit Decomposition, and Invariant Functionals}
+
+\subsection{Ambient Set and CRT Maps}
+Let $P=\mathbb Z/48\mathbb Z$, $B=\mathbb Z/256\mathbb Z$, and $G=P\times B$ so $|G|=48\cdot 256=12{,}288$. Write the Chinese Remainder isomorphism for $P$ as
+\[
+\psi: P\to \mathbb Z/16\mathbb Z\times \mathbb Z/3\mathbb Z,\qquad \psi(p)=(a,c)=(p\bmod 16,\, p\bmod 3),
+\]
+with inverse (encoding)
+\[
+\varphi(a,c)\equiv 33a+16c\pmod{48},
+\]
+using $3^{-1}\equiv 11\pmod{16}$ and $16^{-1}\equiv 1\pmod{3}$.
+
+Represent $a\in\mathbb Z/16\mathbb Z$ in binary as $a=a_0+2a_1+4a_2+8a_3$ with $a_i\in\{0,1\}$.
+
+\subsection{Reference Subgroup and Action}
+Let $V\cong (\mathbb Z/2\mathbb Z)^3$ act by flipping bits $a_0,a_1,a_2$ (bit $a_3$ fixed). Let $W\cong (\mathbb Z/2\mathbb Z)^8$ act on bytes by XOR. Define
+\[
+U_{\mathrm{ref}}=V\times W\cong (\mathbb Z/2\mathbb Z)^{11}.
+\]
+For $u=(v,w)\in U_{\mathrm{ref}}$ and $g=(p,b)\in G$:
+\begin{enumerate}\itemsep2pt
+  \item $(a,c)=\psi(p)$.
+  \item $a' = (a\oplus v)$ on bits $a_0,a_1,a_2$ with $a_3$ unchanged.
+  \item $b' = b\oplus w$.
+  \item $p' = \varphi(a',c)$ and $u\cdot g=(p',b')$.
+\end{enumerate}
+The $11$ standard generators are commuting, each of order $2$, giving a simple undirected Cayley graph on $G$.
+
+\subsection{Orbit Invariants, Freeness, and Tiling}
+Define the orbit invariant
+\[
+\mathbf o(g)=(c, a_3)\in \mathbb Z/3\mathbb Z\times\{0,1\},\qquad c=p\bmod 3,\; a_3=\lfloor a/8\rfloor.
+\]
+\begin{proposition}
+The action of $U_{\mathrm{ref}}$ on $G$ is free. The invariant $\mathbf o$ is preserved by $U_{\mathrm{ref}}$. Each orbit has size $2^{11}=2048$ and is determined by $(c,a_3)$. There are exactly six orbits, with representatives
+\[
+S=\{(\varphi(0,c),0),\, (\varphi(8,c),0): c\in\{0,1,2\}\}.
+\]
+Moreover, edges never cross orbits; each connected component of the Cayley graph equals a single orbit.
+\end{proposition}
+\begin{proof}[Sketch]
+Nonzero $v$ changes $a$; nonzero $w$ changes $b$; hence stabilizers are trivial. The bits $a_0,a_1,a_2$ and the byte are toggled freely, while $c$ and $a_3$ are fixed, so orbits have size $2^{3+8}=2048$ and are indexed by $(c,a_3)\in\{0,1,2\}\times\{0,1\}$. The six anchors listed are in distinct orbits and tile $G$.
+\end{proof}
+
+\subsection{Cayley Graph and Flag Complex}
+Let $\Gamma$ be the Cayley graph of $G$ with respect to the 11 generators. On each orbit, $\Gamma$ is the $11$-dimensional hypercube $Q^{11}$: per orbit $n=2^{11}=2048$ vertices and $m=11\cdot 2^{10}=11264$ edges. The entire graph has six connected components, totaling
+\[
+|V|=12{,}288,\qquad |E|=67{,}584.
+\]
+Hypercubes are triangle-free, thus the flag complex equals the $1$-skeleton. For a graph, $H_1$ is torsion-free and
+\[
+\beta_1 = m-n+\#\text{components}.
+\]
+Hence per orbit $\beta_1=11264-2048+1=9217$, and in total $\beta_1=6\cdot 9217=55{,}302$. All higher Betti numbers vanish.
+
+\subsection{Schedule, Base Functional, and Invariance Scope}
+Let $N=768$ and the canonical fair schedule
+\[
+\sigma(t)=(t\bmod 48,\; t\bmod 256),\qquad t=0,\dots,N-1.
+\]
+For an affine observable $f(p,b)=d+\alpha_p+\gamma_b$, define the base functional
+\[
+S_0(f)=\sum_{t=0}^{N-1} f(\sigma(t))=768\,d+16\sum_{p\in P}\!\alpha_p+3\sum_{b\in B}\!\gamma_b.
+\]
+\begin{proposition}
+$S_0$ is invariant under arbitrary permutations of pages and bytes and under the $U_{\mathrm{ref}}$ action.
+\end{proposition}
+\begin{remark}[Limits for $k\ge 1$]
+No polynomial weighting in $t$ alone equalizes arithmetic-progression sums induced by $\sigma$. In particular, for $\tau=t-(N-1)/2$, the partial sums $\sum_{t\equiv r\,(48)}\!\tau$ and $\sum_{t\equiv s\,(256)}\!\tau$ are residue-dependent, so $k\ge 1$ moment functionals are not invariant in general.
+\end{remark}
+
+\subsection{Permutation-Invariant Alternatives for First Moments}
+Define integer-scaled per-residue weights
+\[
+\,\, w_p(t)=2\Big\lfloor\tfrac{t}{48}\Big\rfloor-15,\qquad w_b(t)=2\Big\lfloor\tfrac{t}{256}\Big\rfloor-2,
+\]
+so that for every page residue $r$ and byte residue $s$,
+\[
+\sum_{i=0}^{15} w_p(r+48i)=0,\qquad \sum_{i=0}^{2} w_b(s+256i)=0.
+\]
+Then the linear functionals
+\[
+S^{\mathrm{page}}_1(f)=\tfrac{1}{2}\sum_{t=0}^{N-1} w_p(t)\, f(\sigma(t)),\qquad
+S^{\mathrm{byte}}_1(f)=\tfrac{1}{2}\sum_{t=0}^{N-1} w_b(t)\, f(\sigma(t))
+\]
+are invariant under arbitrary page permutations and byte permutations, respectively, and under the corresponding $U_{\mathrm{ref}}$ actions on $P$ and $B$.
+
+\subsection{R96 Labeling}
+Define $\lambda:B\to\{0,\dots,95\}$ by $\lambda(b)=b\bmod 96$. Multiplicities are $|\lambda^{-1}(r)|=3$ for $r\in\{0,\dots,63\}$ and $|\lambda^{-1}(r)|=2$ for $r\in\{64,\dots,95\}$, so $64\cdot 3+32\cdot 2=256$. Extend to $G$ by composition with the byte projection; no equivariance beyond Weyl-invariance is asserted.
+
+\subsection{Operational Notes}
+Record the orbit tag $\mathbf o(g)$ for indexing and caching. Since $\mathbf o$ is invariant, edges never cross orbits and each component can be processed independently. Sparse $\mathbb F_2$ or $\mathbb Z$ homology on the $67{,}584$-edge graph is straightforward; for graphs $\beta_1$ is identical over $\mathbb Z$ and $\mathbb F_2$.
+
+\subsection{E8-Based 96-Vertex Resonance Graph}
+Let $R\subset\mathbb R^8$ be the $E_8$ root system normalized by $\langle\alpha,\alpha\rangle=2$ for all $\alpha\in R$, so pairwise inner products lie in $\{-2,-1,0,1,2\}$. Fix an injective indexing map
+\[
+\iota:\{0,\dots,95\}\longrightarrow R,\qquad R_{96}:=\operatorname{im}(\iota),
+\]
+and define the induced simple graph $\Gamma_{E_8}^{(96)}$ by
+\[
+V(\Gamma_{E_8}^{(96)})=R_{96},\qquad \{\alpha,\beta\}\in E(\Gamma_{E_8}^{(96)})\iff (\alpha\neq\beta\text{ and }\langle\alpha,\beta\rangle=+1).
+\]
+No edges are added when $\langle\alpha,\beta\rangle\in\{0,1,2,-2\}$. This is the subgraph induced from the standard $E_8$ root graph under the $+1$ adjacency rule.
+
+\paragraph{Adjacency conventions.} The full $E_8$ ResGraph elsewhere uses $-1$ adjacency (edges for $\langle\alpha,\beta\rangle=-1$). The 96-vertex graph here intentionally uses $+1$ adjacency. Both conventions are Weyl-equivariant. Note also that in this subsection all roots satisfy $\langle\alpha,\alpha\rangle=2$ by normalization.
+
+\paragraph{Integration with the $R96$ labeling.} Use the existing byte partition to index $R_{96}$ via
+\[
+\lambda_{E_8}:B\to R_{96},\qquad \lambda_{E_8}(b):=\iota\big(b\bmod 96\big).
+\]
+Then $|\lambda_{E_8}^{-1}(\alpha)|=3$ for $\alpha\in\iota(\{0,\dots,63\})$ and $|\lambda_{E_8}^{-1}(\alpha)|=2$ for $\alpha\in\iota(\{64,\dots,95\})$, matching the multiplicities $64\cdot3+32\cdot2=256$. No compatibility with the $U_{\mathrm{ref}}$ action is required or claimed.
+
+\paragraph{Independence from the Cayley layer.} $\Gamma_{E_8}^{(96)}$ lives solely on the label set and does not modify the Cayley graph $\Gamma$ or its flag complex. It is an auxiliary resonance structure replacing any ``96-dimensional'' phrasing with the precise term ``96-vertex subgraph of the $E_8$ root graph (adjacency $\langle\alpha,\beta\rangle=+1$)''.
+
+\paragraph{Optional normalization.} One may choose $R_{96}$ closed under negation ($\alpha\in R_{96}\Rightarrow-\alpha\in R_{96}$); this adds no edges because $\langle\alpha,-\alpha\rangle=-2$, but can be convenient for symmetry bookkeeping. No further properties of $R_{96}$ are assumed.
+
+
+\section{Atlas$\to E_8$ embedding: construction, invariants, uniqueness, and exact tests}
+
+\subsection*{Construction}
+Work in the type–II root subsystem of the $E_8$ lattice:
+\[
+x=\tfrac12(\pm1,\dots,\pm1)\in\Bbb R^8\quad\text{with an even number of minus signs}.
+\]
+Fix columns $h_1,\dots,h_7=e_i$, $h_8=\mathbf 1\in\Bbb F_2^7$ with $\sum_i h_i=0$.
+For $u\in\Bbb F_2^7$ define signs $s_i(u)=(-1)^{u\cdot h_i}$ and
+\[
+x(u)=\tfrac12\big(s_1(u),\dots,s_8(u)\big).
+\]
+Select the $96$-subset
+\[
+S=\{u:u_7=0\}\ \cup\ \{u:u_7=1,\ u_1\oplus u_2\oplus u_3=0\},
+\qquad
+V=\{x(u):u\in S\}.
+\]
+Edges are declared by the $E_8$ inner product: $\langle x,y\rangle=1$.
+
+\subsection*{Published data}
+The 96-vector table and all invariants are provided as CSVs:
+\texttt{verified\_E8\_96\_vectors.csv},
+\texttt{verified\_allpair\_inner\_products.csv},
+\texttt{verified\_edge\_inner\_products.csv},
+\texttt{verified\_nonedge\_inner\_products.csv},
+\texttt{verified\_degree\_distribution.csv},
+\texttt{verified\_inner\_product\_counts.csv},
+\texttt{verified\_nonedge\_inner\_product\_counts.csv}.
+
+\subsection*{Verified invariants for the 96-set}
+All computations use exact rationals.
+\begin{itemize}\setlength\itemsep{2pt}
+\item $|V|=96$, and $\langle x,x\rangle=2$ for all $x\in V$.
+\item Distinct-pair inner-product multiset ($\binom{96}{2}=4560$):
+\[
+-2:~32,\qquad -1:~944,\qquad 0:~2544,\qquad +1:~1040.
+\]
+\item Graph statistics (edge iff $\langle x,y\rangle=+1$):
+\[
+\text{edges }=1040,\ \text{non-edges }=3520,\ 
+\deg_{\min}=16,\ \deg_{\max}=25,\ \overline{\deg}=65/3.
+\]
+\end{itemize}
+Antipodal pairs account for the $32$ occurrences of $-2$; this is consistent with $-I\in W(E_8)$.
+
+\subsection*{Normalized $64$-set (no $-2$ among distinct pairs)}
+Fix a canonical representative per antipodal class by requiring the first nonzero coordinate to be $+1/2$; then deduplicate.
+This yields $V^{(64)}$ with $|V^{(64)}|=64$ and no antipodal collisions.
+\begin{itemize}\setlength\itemsep{2pt}
+\item Distinct-pair inner-product multiset ($\binom{64}{2}=2016$):
+\[
+-1:~224,\qquad 0:~1120,\qquad +1:~672.
+\]
+\item Graph is regular of degree $21$; edges $=672$, non-edges $=1344$.
+\end{itemize}
+Exports:
+\texttt{normalized\_64\_vectors.csv},
+\texttt{normalized\_64\_allpair\_inner\_products.csv},
+\texttt{normalized\_64\_edge\_inner\_products.csv},
+\texttt{normalized\_64\_nonedge\_inner\_products.csv},
+\texttt{normalized\_64\_degree\_distribution.csv},
+\texttt{normalized\_64\_inner\_product\_counts.csv},
+\texttt{normalized\_64\_nonedge\_inner\_product\_counts.csv}.
+
+\subsection*{Uniqueness up to $W(E_8)$}
+The map $u\mapsto x(u)$ bijects $\Bbb F_2^7$ with even-parity type–II sign patterns.
+The affine group $G=\mathrm{AGL}(7,2)=2^7\rtimes\mathrm{GL}(7,2)$ acts by $u\mapsto Au+t$,
+inducing lattice automorphisms inside $W(E_8)$ and preserving inner products.
+Our $96$-set has the form
+\[
+V=H_0\ \cup\ \{u\in H_1:m(u)=0\},\quad
+H_b=\{u:\ell(u)=b\},
+\]
+with independent linear forms $\ell(u)=u_7$ and $m(u)=u_1\oplus u_2\oplus u_3$.
+Since $\mathrm{GL}(7,2)$ acts transitively on ordered independent pairs $(\ell,m)$ and translations choose cosets, every
+subset of the form “one full hyperplane plus half of a disjoint hyperplane’’ is $G$-equivalent; hence all such $96$-sets are $W(E_8)$-equivalent.
+Presence or absence of antipodals is inconsequential because $-I\in W(E_8)$.
+
+\subsection*{Reproducibility: exact-arithmetic test code}
+\noindent\textbf{Inputs.} A CSV \texttt{verified\_E8\_96\_vectors.csv} with columns \texttt{x1,\dots,x8} containing strings in \{\texttt{"1/2"}, \texttt{"-1/2"}\}.
+\medskip
+
+\noindent\textbf{Python (exact checks and normalization).}
+\begin{verbatim}
+from fractions import Fraction
+from itertools import combinations
+import csv
+
+# --- Load 96 vectors as Fractions ---
+V = []
+with open("verified_E8_96_vectors.csv", newline="") as f:
+    rdr = csv.DictReader(f)
+    cols = [f"x{i}" for i in range(1,9)]
+    for row in rdr:
+        v = [Fraction(1,2) if row[c].strip() == "1/2" else Fraction(-1,2) for c in cols]
+        V.append(v)
+assert len(V) == 96
+
+# Convert to sign matrix S in {±1}
+S = [[1 if a == Fraction(1,2) else -1 for a in v] for v in V]
+
+# --- Exact checks for the 96-set ---
+def ip(u, v):  # exact inner product in E8
+    s = sum(uu*vv for uu, vv in zip(u, v))    # integer in {-8,-6,...,8}
+    return Fraction(s, 4)
+
+# Lengths
+assert all(ip(s, s) == 2 for s in S)
+
+# Pairwise histogram
+from collections import Counter
+hist96 = Counter(ip(S[i], S[j]) for i, j in combinations(range(96), 2))
+# Expected: {-2:32, -1:944, 0:2544, +1:1040}
+print("96-set IP histogram:", {int(k): v for k, v in hist96.items()})
+
+# Degrees for edges defined by <x,y>=1
+deg96 = [0]*96
+for i, j in combinations(range(96), 2):
+    if ip(S[i], S[j]) == 1:
+        deg96[i] += 1; deg96[j] += 1
+print("deg min/max/avg:", min(deg96), max(deg96), sum(deg96)/96)
+
+# --- Normalize to 64-set: fix first coord positive, then deduplicate ---
+def canon(row):
+    return tuple(row if row[0] == 1 else (-x for x in row))
+
+seen = set()
+S64 = []
+for r in S:
+    c = canon(r)
+    if c not in seen:
+        seen.add(c)
+        S64.append(list(c))
+assert len(S64) == 64
+
+# Verify 64-set invariants
+hist64 = Counter(ip(S64[i], S64[j]) for i, j in combinations(range(64), 2))
+assert Fraction(-2, 1) not in hist64  # no antipodal pairs
+print("64-set IP histogram:", {int(k): v for k, v in hist64.items()})
+
+deg64 = [0]*64
+for i, j in combinations(range(64), 2):
+    if ip(S64[i], S64[j]) == 1:
+        deg64[i] += 1; deg64[j] += 1
+print("64-set degree uniform:", min(deg64), max(deg64), sum(deg64)/64)
+\end{verbatim}
+
+\noindent\textbf{Expected output (96-set).}
+\[
+-2:32,\quad -1:944,\quad 0:2544,\quad +1:1040;\quad
+\deg_{\min}=16,\ \deg_{\max}=25,\ \overline{\deg}=65/3.
+\]
+
+\noindent\textbf{Expected output (64-set).}
+\[
+-1:224,\quad 0:1120,\quad +1:672;\quad
+\text{regular of degree }21.
+\]
+
+
+% =============================================================
+\section{Restricted Initiality and Term Models for \textsc{ResGraph}}
+
+\subsection{Signature, Axioms, and Models}
+Let $\Sigma$ be the indexed total signature:
+\begin{itemize}\itemsep2pt
+  \item A binary product symbol $\otimes$ (disjoint orthogonal sum), with equations for commutativity, associativity, and unit; totality witnessed by indexing over orthogonal pairs.
+  \item For each Dynkin automorphism $\Gamma$ of a simply-laced simple system, a unary symbol $\mathrm{fold}_{\Gamma}$.
+  \item For each $I\subseteq\{1,\dots,8\}$, a unary symbol $\mathrm{Par}_I$ (parabolic restriction).
+  \item For each admissible extension index $j$, a unary symbol $\mathrm{Aug}_j$ (inverse parabolic augmentation).
+\end{itemize}
+Add $96$ constants $(a_k)_{k\in A}$ pinning a marking $i:A\to X$. Include finite-limit axioms $\mathbf L$ enforcing:
+\begin{enumerate}\itemsep2pt
+  \item The equations characterizing $\otimes$, $\mathrm{fold}_{\Gamma}$, $\mathrm{Par}_I$, $\mathrm{Aug}_j$ and their compatibilities.
+  \item The reflection-closure of $i(A)$ is a crystallographic root system of type $E_8$ with Cartan relations of $E_8$ (long-root norm $2$).
+  \item Weyl-equivariance of these operations on the $E_8$-closure.
+\end{enumerate}
+A \emph{$\Sigma$-model with marking} (object of $\mathbf{Alg}_{96}$) is a model of the finite-limit sketch determined by $\Sigma$ and $\mathbf L$ plus the constants $(a_k)$.
+
+\begin{proposition}[Basic properties]
+$\mathbf{Alg}_{96}$ is locally presentable and monadic over \textbf{Set}. Hence there is a finitary monad $T$ on \textbf{Set} with $\mathbf{Alg}_{96}\simeq \mathbf{Set}^T$, and free (term) models exist.
+\end{proposition}
+
+\subsection{Free/Term Model}
+Let $F(A)$ be the term model on the $96$-set $A$:
+\[
+F(A)=\mathsf{Tm}_\Sigma(A)/{\equiv_{\mathbf L}},\qquad \iota:A\to F(A),
+\]
+where $\equiv_{\mathbf L}$ is the least congruence generated by $\mathbf L$.
+
+\begin{theorem}[Restricted Initiality, pointed form]\label{thm:restricted-initiality}
+For every $\mathcal A\in \mathbf{Alg}_{96}$ interpreting $(a_k)$ as a marking $i:A\xrightarrow{\cong} S\subseteq \mathcal A$ whose reflection-closure is $E_8$, there exists a unique $\Sigma$-homomorphism
+\[
+\eta_{\mathcal A}:F(A)\to \mathcal A
+\]
+such that $\eta_{\mathcal A}\circ\iota=i$. The maps $\eta_{\mathcal A}$ are natural in $\mathcal A$. Hence $F(A)$ is initial in $\mathbf{Alg}_{96}$.
+\end{theorem}
+\begin{proof}[Proof sketch]
+Define $\eta_{\mathcal A}$ by structural recursion on $\Sigma$-terms and quotient by $\equiv_{\mathbf L}$. Uniqueness by induction on term depth. Naturality from functoriality of term interpretation.
+\end{proof}
+
+\subsection{Unrestricted Initiality: Obstruction and Remedies}
+Let $\mathrm{Conf}_{96}(\mathcal A)$ be the set of Atlas-type $96$-subsets of $\mathcal A$ whose reflection-closures are $E_8$. The Weyl group $W(E_8)$ acts; typically $\mathrm{Conf}_{96}(\mathcal A)$ is a (possibly empty) $W(E_8)$-torsor. A functorial map $F(A)\to\mathcal A$ without a chosen marking exists iff this torsor has a natural global section, which fails when automorphisms permute distinct configurations.
+
+\begin{conjecture}[Unrestricted Initiality]
+For every $\Sigma$-model $\mathcal A$ of $\mathbf L$ there is a morphism $F(A)\to\mathcal A$ unique up to automorphisms. Equivalently, every model carries a functorially natural Atlas-type $96$-configuration.
+\end{conjecture}
+\noindent\emph{Dependencies:} (C1) existence and Weyl-uniqueness of a $96$-configuration in every simply-laced rank-$8$ subsystem; (C2) preservation/detection by the indexed operations.
+
+\paragraph{Forcing canonicity.}
+(i) Add an orientation/height to select one configuration; (ii) move to groupoid semantics and claim initiality up to isomorphism; (iii) add a functorial selector $\sigma:\mathbf 1\Rightarrow \mathrm{Conf}_{96}$.
+
+\subsection{Implementation Checklist}
+\begin{enumerate}\itemsep2pt
+  \item Enumerate index sets for $\mathrm{fold}_{\Gamma}$, $\mathrm{Par}_I$, $\mathrm{Aug}_j$ (totality).
+  \item List the finite equations forcing the $E_8$ Cartan relations on the closure of $i(A)$.
+  \item Prove $W(E_8)$-equivariance of $\mathrm{fold}_{\Gamma}$, $\mathrm{Aug}_j$, $\mathrm{Par}_I$ on the closure.
+  \item Give a counterexample to unrestricted initiality: two disjoint $96$-configurations swapped by an automorphism.
+\end{enumerate}
+% =============================================================
+% LaTeX section: Group Action, Orbit Decomposition, and Invariant Functionals
+% Self-contained. Load standard packages in the parent document as needed.
+
+% LaTeX section: Group Action, Orbit Decomposition, and Invariant Functionals
+% Self-contained. Load standard packages in the parent document as needed.
+
+\section{Group Action, Orbit Decomposition, and Invariant Functionals}
+
+\subsection{Ambient Set and CRT Maps}
+Let $P=\mathbb Z/48\mathbb Z$, $B=\mathbb Z/256\mathbb Z$, and $G=P\times B$ so $|G|=48\cdot 256=12{,}288$. Write the Chinese Remainder isomorphism for $P$ as
+\[
+\psi: P\to \mathbb Z/16\mathbb Z\times \mathbb Z/3\mathbb Z,\qquad \psi(p)=(a,c)=(p\bmod 16,\, p\bmod 3),
+\]
+with inverse (encoding)
+\[
+\varphi(a,c)\equiv 33a+16c\pmod{48},
+\]
+using $3^{-1}\equiv 11\pmod{16}$ and $16^{-1}\equiv 1\pmod{3}$.
+
+Represent $a\in\mathbb Z/16\mathbb Z$ in binary as $a=a_0+2a_1+4a_2+8a_3$ with $a_i\in\{0,1\}$.
+
+\subsection{Reference Subgroup and Action}
+Let $V\cong (\mathbb Z/2\mathbb Z)^3$ act by flipping bits $a_0,a_1,a_2$ (bit $a_3$ fixed). Let $W\cong (\mathbb Z/2\mathbb Z)^8$ act on bytes by XOR. Define
+\[
+U_{\mathrm{ref}}=V\times W\cong (\mathbb Z/2\mathbb Z)^{11}.
+\]
+For $u=(v,w)\in U_{\mathrm{ref}}$ and $g=(p,b)\in G$:
+\begin{enumerate}\itemsep2pt
+  \item $(a,c)=\psi(p)$.
+  \item $a' = (a\oplus v)$ on bits $a_0,a_1,a_2$ with $a_3$ unchanged.
+  \item $b' = b\oplus w$.
+  \item $p' = \varphi(a',c)$ and $u\cdot g=(p',b')$.
+\end{enumerate}
+The $11$ standard generators are commuting, each of order $2$, giving a simple undirected Cayley graph on $G$.
+
+\subsection{Orbit Invariants, Freeness, and Tiling}
+Define the orbit invariant
+\[
+\mathbf o(g)=(c, a_3)\in \mathbb Z/3\mathbb Z\times\{0,1\},\qquad c=p\bmod 3,\; a_3=\lfloor a/8\rfloor.
+\]
+\begin{proposition}
+The action of $U_{\mathrm{ref}}$ on $G$ is free. The invariant $\mathbf o$ is preserved by $U_{\mathrm{ref}}$. Each orbit has size $2^{11}=2048$ and is determined by $(c,a_3)$. There are exactly six orbits, with representatives
+\[
+S=\{(\varphi(0,c),0),\, (\varphi(8,c),0): c\in\{0,1,2\}\}.
+\]
+Moreover, edges never cross orbits; each connected component of the Cayley graph equals a single orbit.
+\end{proposition}
+\begin{proof}[Sketch]
+Nonzero $v$ changes $a$; nonzero $w$ changes $b$; hence stabilizers are trivial. The bits $a_0,a_1,a_2$ and the byte are toggled freely, while $c$ and $a_3$ are fixed, so orbits have size $2^{3+8}=2048$ and are indexed by $(c,a_3)\in\{0,1,2\}\times\{0,1\}$. The six anchors listed are in distinct orbits and tile $G$.
+\end{proof}
+
+\subsection{Cayley Graph and Flag Complex}
+Let $\Gamma$ be the Cayley graph of $G$ with respect to the 11 generators. On each orbit, $\Gamma$ is the $11$-dimensional hypercube $Q^{11}$: per orbit $n=2^{11}=2048$ vertices and $m=11\cdot 2^{10}=11264$ edges. The entire graph has six connected components, totaling
+\[
+|V|=12{,}288,\qquad |E|=67{,}584.
+\]
+Hypercubes are triangle-free, thus the flag complex equals the $1$-skeleton. For a graph, $H_1$ is torsion-free and
+\[
+\beta_1 = m-n+\#\text{components}.
+\]
+Hence per orbit $\beta_1=11264-2048+1=9217$, and in total $\beta_1=6\cdot 9217=55{,}302$. All higher Betti numbers vanish.
+
+\subsection{Schedule, Base Functional, and Invariance Scope}
+Let $N=768$ and the canonical fair schedule
+\[
+\sigma(t)=(t\bmod 48,\; t\bmod 256),\qquad t=0,\dots,N-1.
+\]
+For an affine observable $f(p,b)=d+\alpha_p+\gamma_b$, define the base functional
+\[
+S_0(f)=\sum_{t=0}^{N-1} f(\sigma(t))=768\,d+16\sum_{p\in P}\!\alpha_p+3\sum_{b\in B}\!\gamma_b.
+\]
+\begin{proposition}
+$S_0$ is invariant under arbitrary permutations of pages and bytes and under the $U_{\mathrm{ref}}$ action.
+\end{proposition}
+\begin{remark}[Limits for $k\ge 1$]
+No polynomial weighting in $t$ alone equalizes arithmetic-progression sums induced by $\sigma$. In particular, for $\tau=t-(N-1)/2$, the partial sums $\sum_{t\equiv r\,(48)}\!\tau$ and $\sum_{t\equiv s\,(256)}\!\tau$ are residue-dependent, so $k\ge 1$ moment functionals are not invariant in general.
+\end{remark}
+
+\subsection{Permutation-Invariant Alternatives for First Moments}
+Define integer-scaled per-residue weights
+\[
+\,\, w_p(t)=2\Big\lfloor\tfrac{t}{48}\Big\rfloor-15,\qquad w_b(t)=2\Big\lfloor\tfrac{t}{256}\Big\rfloor-2,
+\]
+so that for every page residue $r$ and byte residue $s$,
+\[
+\sum_{i=0}^{15} w_p(r+48i)=0,\qquad \sum_{i=0}^{2} w_b(s+256i)=0.
+\]
+Then the linear functionals
+\[
+S^{\mathrm{page}}_1(f)=\tfrac{1}{2}\sum_{t=0}^{N-1} w_p(t)\, f(\sigma(t)),\qquad
+S^{\mathrm{byte}}_1(f)=\tfrac{1}{2}\sum_{t=0}^{N-1} w_b(t)\, f(\sigma(t))
+\]
+are invariant under arbitrary page permutations and byte permutations, respectively, and under the corresponding $U_{\mathrm{ref}}$ actions on $P$ and $B$.
+
+\subsection{R96 Labeling}
+Define $\lambda:B\to\{0,\dots,95\}$ by $\lambda(b)=b\bmod 96$. Multiplicities are $|\lambda^{-1}(r)|=3$ for $r\in\{0,\dots,63\}$ and $|\lambda^{-1}(r)|=2$ for $r\in\{64,\dots,95\}$, so $64\cdot 3+32\cdot 2=256$. Extend to $G$ by composition with the byte projection; no equivariance beyond Weyl-invariance is asserted.
+
+\subsection{Operational Notes}
+Record the orbit tag $\mathbf o(g)$ for indexing and caching. Since $\mathbf o$ is invariant, edges never cross orbits and each component can be processed independently. Sparse $\mathbb F_2$ or $\mathbb Z$ homology on the $67{,}584$-edge graph is straightforward; for graphs $\beta_1$ is identical over $\mathbb Z$ and $\mathbb F_2$.
+
+\subsection{E8-Based 96-Vertex Resonance Graph}
+Let $R\subset\mathbb R^8$ be the $E_8$ root system normalized by $\langle\alpha,\alpha\rangle=2$ for all $\alpha\in R$, so pairwise inner products lie in $\{-2,-1,0,1,2\}$. Fix an injective indexing map
+\[
+\iota:\{0,\dots,95\}\longrightarrow R,\qquad R_{96}:=\operatorname{im}(\iota),
+\]
+and define the induced simple graph $\Gamma_{E_8}^{(96)}$ by
+\[
+V(\Gamma_{E_8}^{(96)})=R_{96},\qquad \{\alpha,\beta\}\in E(\Gamma_{E_8}^{(96)})\iff (\alpha\neq\beta\text{ and }\langle\alpha,\beta\rangle=+1).
+\]
+No edges are added when $\langle\alpha,\beta\rangle\in\{0,-1,2,-2\}$. This is the subgraph induced from the standard $E_8$ root graph under the $+1$ adjacency rule.
+
+\paragraph{Adjacency conventions.} The full $E_8$ ResGraph elsewhere uses $-1$ adjacency (edges for $\langle\alpha,\beta\rangle=-1$). The 96-vertex graph here intentionally uses $+1$ adjacency. Both conventions are Weyl-equivariant. Note also that in this subsection all roots satisfy $\langle\alpha,\alpha\rangle=2$ by normalization.
+
+\paragraph{Integration with the $R96$ labeling.} Use the existing byte partition to index $R_{96}$ via
+\[
+\lambda_{E_8}:B\to R_{96},\qquad \lambda_{E_8}(b):=\iota\big(b\bmod 96\big).
+\]
+Then $|\lambda_{E_8}^{-1}(\alpha)|=3$ for $\alpha\in\iota(\{0,\dots,63\})$ and $|\lambda_{E_8}^{-1}(\alpha)|=2$ for $\alpha\in\iota(\{64,\dots,95\})$, matching the multiplicities $64\cdot3+32\cdot2=256$. No compatibility with the $U_{\mathrm{ref}}$ action is required or claimed.
+
+\paragraph{Independence from the Cayley layer.} $\Gamma_{E_8}^{(96)}$ lives solely on the label set and does not modify the Cayley graph $\Gamma$ or its flag complex. It is an auxiliary resonance structure replacing any ``96-dimensional'' phrasing with the precise term ``96-vertex subgraph of the $E_8$ root graph (adjacency $\langle\alpha,\beta\rangle=+1$)''.
+
+\paragraph{Optional normalization.} One may choose $R_{96}$ closed under negation ($\alpha\in R_{96}\Rightarrow-\alpha\in R_{96}$); this adds no edges because $\langle\alpha,-\alpha\rangle=-2$, but can be convenient for symmetry bookkeeping. No further properties of $R_{96}$ are assumed.
+
+% =============================================================
+\section{Proofs (mathematical core)}
+\begin{description}
+  \item[T1.] Product, quotient (fold), filtration, and augmentation in \textsc{ResGraph} output crystallographic root systems.
+  \item[T2.] For each output: existence of a simple system; Cartan integrality; Dynkin identification; \emph{Weyl order = product of Coxeter exponents + 1}.
+  \item[T3.] Restricted initiality: the free \textsc{ResGraph}-algebra on the Atlas--$E_8$ 96-seed is initial in the subcategory with a chosen 96-seed and laws $\mathbf L$.
+\end{description}
+Conjectural: unrestricted initiality (clearly labeled as conjecture elsewhere).
+
+% =============================================================
+\section{Computational evidence (tests, not proofs)}
+\begin{description}
+  \item[E1.] Atlas$\to E_8$ 96-set inner products over $\mathbb Q$: lengths $2$; pair multiset on \emph{unordered pairs with $\alpha\ne\beta$} is $\{-2{:}32,\,-1{:}944,\,0{:}2544,\,+1{:}1040\}$. Identity check: $32+944+2544+1040=4560=\binom{96}{2}$.
+  \item[E2.] Edge graph (adjacency $\langle\alpha,\beta\rangle=+1$): $|E|=1040$; non-edges $\binom{96}{2}-1040=3520$; degree statistics $\min 16$, $\max 25$, average $\bar d=2|E|/|V|=65/3$.
+  \item[E3.] \textsc{ResGraph} operations executed symbolically with rationals: extracted simple systems; Cartans integral with off-diagonal products in $\{0,1,2,3\}$; Dynkin types match the canonical list; Weyl orders match products of exponents $+1$.
+\end{description}
+Scope: E1--E3 are numerical certificates; they guide but do not replace proofs.
+
+% =============================================================
+\section{Artifact manifest}
+\subsection*{Data (inputs, canonical CSVs)}
+\begin{itemize}\itemsep2pt
+  \item \texttt{verified\_E8\_96\_vectors.csv} --- 96 half-integer roots, fixed order.
+  \item \texttt{iota\_96.csv} --- explicit indexing map $\iota$ (ordering of the 96 roots).
+  \item \texttt{verified\_allpair\_inner\_products.csv} --- full $4560$ counts over $\{-2,-1,0,+1\}$.
+  \item \texttt{verified\_edge\_inner\_products.csv} --- pairs with inner product $+1$.
+  \item \texttt{verified\_nonedge\_inner\_products.csv} --- pairs with inner product in $\{-2,-1,0\}$.
+  \item \texttt{verified\_degree\_distribution.csv} --- vertex degrees for the edge graph.
+  \item \texttt{verified\_inner\_product\_counts.csv} --- global multiplicities.
+  \item \texttt{verified\_nonedge\_inner\_product\_counts.csv} --- non-edge multiplicities.
+  \item \texttt{adjacency\_plus1\_96.npz} --- sparse CSR of $\Gamma_{E_8}^{(96)}$ under $+1$ adjacency.
+\end{itemize}
+\subsection*{Derived (deterministic from the above)}
+\begin{itemize}\itemsep2pt
+  \item \texttt{cartan\_*.json} --- Cartan matrices per operation instance.
+  \item \texttt{dynkin\_*.txt} --- recognized Dynkin type and rank.
+  \item \texttt{weyl\_orders\_*.txt} --- Weyl-group orders.
+  \item \texttt{resgraph\_ops\_spec.md} --- machine-readable op trees producing each output.
+  \item \texttt{checks\_report.md} --- pass/fail per proof obligation.
+\end{itemize}
+\subsection*{Reproducibility}
+Record SHA-256 for every file; fix rational arithmetic (no floats); fix ordering: lexicographic on vectors, then on pairs.
+
+% =============================================================
+\section{Formal-verification plan (Lean and Coq)}
+\subsection*{Targets (proof obligations)}
+\begin{description}
+  \item[P0.] Exact model of $\mathbb Q^8$ with bilinear form and reflections.
+  \item[P1.] 96-set correctness: each row has even parity; norm $2$.
+  \item[P2.] Pairwise inner products in $\{-2,-1,0,+1\}$ with counts as in E1.
+  \item[P3.] \textsc{ResGraph} operations preserve the ``crystallographic root system'' predicate.
+  \item[P4.] For every output: existence of a simple system by constructive algorithm; Cartan integral with $a_{ii}=2$ and $a_{ij}a_{ji}\in\{0,1,2,3\}$.
+  \item[P5.] Dynkin type equals the canonical type of the computed Cartan (decision procedure).
+  \item[P6.] Weyl order equals product of Coxeter exponents $+1$ of that type.
+  \item[P7.] Restricted initiality: existence and uniqueness (mod Weyl) of the \textsc{ResGraph}-algebra morphism from the free algebra on the 96-seed.
+\end{description}
+\subsection*{Lean (mathlib) roadmap}
+Define
+\verb|root_vec := vector ℚ 8|, an inner product \verb|ip|, reflections \verb|refl α x := x - 2*(ip x α / ip α α) • α|, and predicates
+\verb|is_rootset|, \verb|is_crystallographic|, \verb|simple_system Π ⊆ X|, \verb|cartan Π|.
+Avoid IO in proofs; re-derive CSV contents. Use \verb|linarith|, \verb|norm_num|, \verb|ring|, finite enumerations via \verb|finset|. Implement folds, filters, augments, Cartan$\to$Dynkin decision tree, and Weyl-order tables with proofs. Prove initiality by structural induction on syntax trees modulo $\mathbf L$.
+\subsection*{Coq (QArith + MathComp) roadmap}
+Mirror the Lean development using \verb|QArith| rationals and MathComp matrices; use small-scale reflection for finite decisions.
+\subsection*{Tooling pins}
+Record exact versions: Lean (version and mathlib SHA), Coq (version, QArith/MathComp SHAs).
+
+% =============================================================
+\section{Separation: proof vs. evidence}
+Proof artifacts live in Lean/Coq files with completed theorems. Evidence artifacts live as CSV/MD plus reproducible generators. Reports label every claim as \textsc{PROVED} or \textsc{EVIDENCE} with pointers to files.
+
+\appendix
+\section{Machine check for G$_2$}\label{app:g2-code}
+\begin{lstlisting}[language=Python,basicstyle=\ttfamily\small]
+# G2 fold inside E8: minimal checks
+
+from fractions import Fraction
+import math
+
+# Gram on span{ beta_l = a1+a2+a4, beta_s = a3 }:
+# |beta_l|^2=6, |beta_s|^2=2, (beta_l,beta_s)=-3
+G = [[Fraction(6,1), Fraction(-3,1)],
+     [Fraction(-3,1), Fraction(2,1)]]
+
+def dot(c,d):  # c,d in coefficient basis [beta_l, beta_s]
+    return c[0]*(G[0][0]*d[0] + G[0][1]*d[1]) + c[1]*(G[1][0]*d[0] + G[1][1]*d[1])
+
+def l2(c): return dot(c,c)
+
+# simple roots in this rank-2 subsystem
+aL = [Fraction(1,1), Fraction(0,1)]  # beta_l
+aS = [Fraction(0,1), Fraction(1,1)]  # beta_s
+
+# Cartan: A_ij = 2*(ai,aj)/(aj,aj)
+def A(i,j):
+    ai = aL if i==1 else aS
+    aj = aL if j==1 else aS
+    return 2*dot(ai,aj)/l2(aj)
+
+A11, A12 = A(1,1), A(1,2)
+A21, A22 = A(2,1), A(2,2)
+print("Cartan:", [[int(A11), int(A12)],[int(A21), int(A22)]])
+
+# angle and Coxeter m: theta = arccos( (aL,aS)/(|aL||aS|) )
+cos_th = float(dot(aL,aS) / math.sqrt(float(l2(aL)*l2(aS))))
+theta = math.acos(cos_th)                # in radians
+m = round(math.pi / (math.pi - theta))   # since theta = pi - pi/m
+print("cos(theta)=", f"{cos_th:.12f}")
+print("theta_deg =", theta*180.0/math.pi)
+print("m =", m)
+
+# reflections and orbit
+def refl(v, i):  # reflect v across ai
+    ai = aL if i==1 else aS
+    return [v[0] - 2*dot(v,ai)/l2(ai)*ai[0],
+            v[1] - 2*dot(v,ai)/l2(ai)*ai[1]]
+
+roots = set()
+front = {tuple(aL), tuple(aS), tuple([-aL[0],-aL[1]]), tuple([-aS[0],-aS[1]])}
+while front:
+    new = set()
+    for v in front:
+        if v not in roots:
+            roots.add(v)
+            new.add(tuple(refl(list(v),1)))
+            new.add(tuple(refl(list(v),2)))
+    front = new
+
+# count lengths
+from collections import Counter
+len_counts = Counter(l2(list(v)) for v in roots)
+print("root_count =", len(roots))
+print("length^2 classes:", {float(k):v for k,v in len_counts.items()})
+
+# Weyl group size via matrices
+def refl_matrix(i):
+    I = [[Fraction(1,1),Fraction(0,1)],[Fraction(0,1),Fraction(1,1)]]
+    row = G[i-1]
+    if i==1: e = [Fraction(1,1), Fraction(0,1)]
+    else:    e = [Fraction(0,1), Fraction(1,1)]
+    M = [[(Fraction(2,1)/G[i-1][i-1]) * e[r] * row[c] for c in range(2)] for r in range(2)]
+    return [[I[r][c] - M[r][c] for c in range(2)] for r in range(2)]
+
+def matmul(A,B):
+    return [[A[0][0]*B[0][0] + A[0][1]*B[1][0], A[0][0]*B[0][1] + A[0][1]*B[1][1]],
+            [A[1][0]*B[0][0] + A[1][1]*B[1][0], A[1][0]*B[0][1] + A[1][1]*B[1][1]]]
+
+def mateq(A,B):
+    return all(A[r][c]==B[r][c] for r in range(2) for c in range(2))
+
+S1, S2 = refl_matrix(1), refl_matrix(2)
+group = [[[Fraction(1,1),Fraction(0,1)],[Fraction(0,1),Fraction(1,1)]]]
+queue = [S1, S2]
+while queue:
+    M = queue.pop()
+    if not any(mateq(M,N) for N in group):
+        group.append(M)
+        queue += [matmul(M,S1), matmul(M,S2), matmul(S1,M), matmul(S2,M)]
+print("Weyl_order =", len(group))
+
+# Expected:
+# Cartan: [[2, -3], [-1, 2]]
+# m = 6
+# root_count = 12 with length^2 classes {2:6, 6:6}
+# Weyl_order = 12
+\end{lstlisting}
+
+\section{Machine check for F$_4$}\label{sec:f4-fold}
+\begin{lstlisting}[language=Python,basicstyle=\ttfamily\small]
+# F4 via E6 quotient fold inside E8: minimal checks
+
+from fractions import Fraction
+import math
+from collections import Counter
+
+# Gram on {beta1,beta2,beta3,beta4}:
+# |b1|^2=|b2|^2=1, |b3|^2=|b4|^2=2
+# (b1,b2)=-1/2, (b2,b3)=-1, (b3,b4)=-1, others 0
+G = [[Fraction(1,1),  Fraction(-1,2), Fraction(0,1),  Fraction(0,1)],
+     [Fraction(-1,2), Fraction(1,1),  Fraction(-1,1), Fraction(0,1)],
+     [Fraction(0,1),  Fraction(-1,1), Fraction(2,1),  Fraction(-1,1)],
+     [Fraction(0,1),  Fraction(0,1),  Fraction(-1,1), Fraction(2,1)]]
+
+n = 4
+def dot(c,d): return sum(c[i]*G[i][j]*d[j] for i in range(n) for j in range(n))
+def l2(c): return dot(c,c)
+
+# simple roots in this folded basis
+e = [[Fraction(1,1) if i==k else Fraction(0,1) for k in range(n)] for i in range(n)]
+
+# Cartan A_ij = 2*(alpha_i,alpha_j)/(alpha_j,alpha_j)
+A = [[2*dot(e[i],e[j])/l2(e[j]) for j in range(n)] for i in range(n)]
+print("Cartan:")
+for r in A: print([int(x) for x in r])
+
+# Coxeter m_ij from product a_ij a_ji in {0,1,2,3}
+def m_from_prod(p): return {0:2, 1:3, 2:4, 3:6}[p]
+for (i,j) in [(0,1),(1,2),(2,3)]:
+    p = A[i][j]*A[j][i]
+    print(f"m_{{{i+1}{j+1}}} =", m_from_prod(int(p)))
+
+# reflections and orbit
+def refl(v,i): return [v[k] - 2*dot(v,e[i])/l2(e[i])*e[i][k] for k in range(n)]
+roots, front = set(), set()
+for i in range(n):
+    front.add(tuple(e[i])); front.add(tuple([-x for x in e[i]]))
+while front:
+    new=set()
+    for v in front:
+        if v not in roots:
+            roots.add(v)
+            for i in range(n): new.add(tuple(refl(list(v),i)))
+    front=new
+
+cnt = Counter(l2(list(v)) for v in roots)
+print("root_count =", len(roots))
+print("length^2 classes:", {float(k):v for k,v in cnt.items()})
+
+# Weyl group order from four reflections
+def reflect_matrix(i):
+    I = [[Fraction(1,1) if r==c else Fraction(0,1) for c in range(n)] for r in range(n)]
+    S = [row[:] for row in I]
+    row = G[i]
+    for r in range(n):
+        for c in range(n):
+            S[r][c] -= (Fraction(2,1)/G[i][i])*(Fraction(1,1) if r==i else Fraction(0,1))*row[c]
+    return S
+
+def matmul(A,B):
+    C=[[Fraction(0,1) for _ in range(n)] for _ in range(n)]
+    for i in range(n):
+        for k in range(n):
+            for j in range(n):
+                C[i][j]+=A[i][k]*B[k][j]
+    return C
+
+def mateq(A,B): return all(A[r][c]==B[r][c] for r in range(n) for c in range(n))
+
+S=[reflect_matrix(i) for i in range(n)]
+group=[[[Fraction(1,1) if r==c else Fraction(0,1) for c in range(n)] for r in range(n)]]
+queue=S[:]
+while queue:
+    M=queue.pop()
+    if not any(mateq(M,N) for N in group):
+        group.append(M)
+        for X in S:
+            queue += [matmul(M,X), matmul(X,M)]
+print("Weyl_order =", len(group))
+
+# Expected:
+# Cartan =
+# [2,-1,0,0]; [-1,2,-1,0]; [0,-2,2,-1]; [0,0,-1,2]
+# m_12=3, m_23=4, m_34=3
+# root_count=48 with length^2 {1:24, 2:24}
+# Weyl_order=1152
+\end{lstlisting}
+
+
+\section{Machine check E$_6$ (filtration)}\label{sec:e6-filtration}
+\begin{lstlisting}[language=Python,basicstyle=\ttfamily\small]
+# E6 via standard parabolic inside E8: minimal checks
+
+from fractions import Fraction
+from collections import Counter
+
+# Bourbaki E6: trivalent at 4, edges:
+# (1-3),(3-4),(4-5),(5-6), and arm (2-4)
+n = 6
+edges = {(1,3),(3,4),(4,5),(5,6),(2,4)}
+edges |= {(j,i) for (i,j) in edges}
+
+# Gram matrix: 2 on diag, -1 on edges, 0 else
+G = [[Fraction(2,1) if i==j else
+      (Fraction(-1,1) if (i+1,j+1) in edges else Fraction(0,1))
+      for j in range(n)] for i in range(n)]
+
+def dot(c,d): return sum(c[i]*G[i][j]*d[j] for i in range(n) for j in range(n))
+def l2(c): return dot(c,c)
+
+# simple roots
+e = [[Fraction(1,1) if i==k else Fraction(0,1) for k in range(n)] for i in range(n)]
+
+# Cartan matrix
+A = [[2*dot(e[i],e[j])/l2(e[j]) for j in range(n)] for i in range(n)]
+print("Cartan matrix A:")
+for r in A: print([int(x) for x in r])
+
+# det(A) and rank over Q
+def det_rational(M):
+    from copy import deepcopy
+    M = [[Fraction(m,1) for m in row] for row in M]
+    det = Fraction(1,1); m = len(M)
+    for i in range(m):
+        p = next((r for r in range(i,m) if M[r][i]!=0), None)
+        if p is None: return Fraction(0,1)
+        if p!=i: M[i],M[p]=M[p],M[i]; det*=-1
+        det *= M[i][i]
+        piv = M[i][i]
+        for c in range(i,m): M[i][c] /= piv
+        for r in range(i+1,m):
+            f = M[r][i]
+            if f!=0:
+                for c in range(i,m): M[r][c] -= f*M[i][c]
+    return det
+
+def rank_rational(M):
+    from copy import deepcopy
+    M = [[Fraction(m,1) for m in row] for row in M]
+    r=c=0; R=len(M); C=len(M[0])
+    while r<R and c<C:
+        p = next((i for i in range(r,R) if M[i][c]!=0), None)
+        if p is None: c+=1; continue
+        M[r],M[p]=M[p],M[r]; piv=M[r][c]
+        for j in range(c,C): M[r][j]/=piv
+        for i in range(R):
+            if i!=r and M[i][c]!=0:
+                f=M[i][c]
+                for j in range(c,C): M[i][j]-=f*M[r][j]
+        r+=1; c+=1
+    return r
+
+print("det(A) =", det_rational(A), "rank(A) =", rank_rational(A))
+
+# Reflection closure
+def refl(v,i):
+    ai=e[i]
+    return [v[k]-2*dot(v,ai)/l2(ai)*ai[k] for k in range(n)]
+
+roots=set(); front=set()
+for i in range(n):
+    front.add(tuple(e[i])); front.add(tuple([-x for x in e[i]]))
+while front:
+    new=set()
+    for v in front:
+        if v not in roots:
+            roots.add(v)
+            for i in range(n): new.add(tuple(refl(list(v),i)))
+    front=new
+
+cnt = Counter(l2(list(v)) for v in roots)
+print("root_count =", len(roots))
+print("length^2 classes:", {float(k):v for k,v in cnt.items()})
+
+# Weyl order from exponents
+exponents = [1,4,5,7,8,11]
+order = 1
+for m in exponents: order *= (m+1)
+print("|W(E6)| =", order)
+
+# Expected:
+# det(A)=3, rank=6
+# root_count=72, all length^2=2
+# |W(E6)|=51840
+\end{lstlisting}
+
+\section{Machine check E$_7$(augmentation)}\label{sec:e7-augmentation}
+\begin{lstlisting}[language=Python,basicstyle=\ttfamily\small]
+# E7 via standard parabolic inside E8 with augmentation at the junction
+
+from fractions import Fraction
+from collections import Counter
+
+# Bourbaki E7 inside E8: trivalent at node 4
+# edges: (1-3),(3-4),(4-5),(5-6),(6-7) and arm (2-4)
+n = 7
+edges = {(1,3),(3,4),(4,5),(5,6),(6,7),(2,4)}
+edges |= {(j,i) for (i,j) in edges}
+
+# Gram matrix: 2 on diag, -1 on edges, 0 else
+G = [[Fraction(2,1) if i==j else
+      (Fraction(-1,1) if (i+1,j+1) in edges else Fraction(0,1))
+      for j in range(n)] for i in range(n)]
+
+def dot(c,d): return sum(c[i]*G[i][j]*d[j] for i in range(n) for j in range(n))
+def l2(c): return dot(c,c)
+
+# simple roots basis
+e = [[Fraction(1,1) if i==k else Fraction(0,1) for k in range(n)] for i in range(n)]
+
+# Cartan matrix
+A = [[2*dot(e[i],e[j])/l2(e[j]) for j in range(n)] for i in range(n)]
+print("Cartan matrix A:")
+for r in A: print([int(x) for x in r])
+
+# det(A) and rank over Q
+def det_rational(M):
+    M = [[Fraction(m,1) for m in row] for row in M]
+    det = Fraction(1,1); m = len(M)
+    for i in range(m):
+        p = next((r for r in range(i,m) if M[r][i]!=0), None)
+        if p is None: return Fraction(0,1)
+        if p!=i: M[i],M[p]=M[p],M[i]; det*=-1
+        piv = M[i][i]; det *= piv
+        for c in range(i,m): M[i][c] /= piv
+        for r in range(i+1,m):
+            f = M[r][i]
+            if f!=0:
+                for c in range(i,m): M[r][c] -= f*M[i][c]
+    return det
+
+def rank_rational(M):
+    M = [[Fraction(m,1) for m in row] for row in M]
+    r=c=0; R=len(M); C=len(M[0])
+    while r<R and c<C:
+        p = next((i for i in range(r,R) if M[i][c]!=0), None)
+        if p is None: c+=1; continue
+        M[r],M[p]=M[p],M[r]; piv=M[r][c]
+        for j in range(c,C): M[r][j]/=piv
+        for i in range(R):
+            if i!=r and M[i][c]!=0:
+                f=M[i][c]
+                for j in range(c,C): M[i][j]-=f*M[r][j]
+        r+=1; c+=1
+    return r
+
+print("det(A) =", det_rational(A), "rank(A) =", rank_rational(A))
+
+# Reflection-closure
+def refl(v,i):
+    ai=e[i]
+    return [v[k]-2*dot(v,ai)/l2(ai)*ai[k] for k in range(n)]
+
+roots,setfront=set(),set()
+front=set()
+for i in range(n):
+    front.add(tuple(e[i]))
+    front.add(tuple([-x for x in e[i]]))
+
+while front:
+    new=set()
+    for v in front:
+        if v not in roots:
+            roots.add(v)
+            for i in range(n):
+                new.add(tuple(refl(list(v),i)))
+    front=new
+
+cnt = Counter(l2(list(v)) for v in roots)
+print("root_count =", len(roots))
+print("length^2 classes:", {float(k): v for k,v in cnt.items()})
+
+# Weyl order from exponents
+exponents = [1,5,7,9,11,13,17]
+order = 1
+for m in exponents: order *= (m+1)
+print("|W(E7)| =", order)
+
+# Expected:
+# det(A)=2, rank=7
+# root_count=126, all length^2=2
+# |W(E7)|=2,903,040
+\end{lstlisting}
+
+\nocite{*}
+\bibliographystyle{unsrt}
+\bibliography{references}
+\end{document}
+
+

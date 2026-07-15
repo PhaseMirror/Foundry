@@ -225,7 +225,8 @@ open ADR
 
 def exportToMarkdown (adr : ADR) : String :=
   s!"# {adr.id}: {adr.title}\n\n" ++
-  s!"**Status:** {repr adr.status}\n\n" ++
+## Status
+**Adopted**
   s!"## Context\n{adr.context}\n\n" ++
   s!"## Decision\n{adr.decision}\n\n" ++
   s!"## Consequences\n{adr.consequences}"

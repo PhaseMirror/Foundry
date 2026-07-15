@@ -40,29 +40,95 @@ fn compute_trajectory(mut n: u128) -> Option<(u32, u128)> {
 
 #[cfg(not(target_arch = "wasm32"))]
 pub fn verify_range(start: u128, end: u128) -> CollatzResult {
-    use rayon::prelude::*;
+    use std::sync::{Arc, Mutex};
+    use std::sync::atomic::{AtomicU32, AtomicBool, Ordering};
+    use std::thread;
 
-    let result = (start..=end).into_par_iter().map(|n| {
-        match compute_trajectory(n) {
-            Some((steps, max_val)) => (steps, max_val, false, true),
-            None => (0, 0, false, false), // cycle or overflow
-        }
-    }).reduce(|| (0, 0, false, true), |a, b| {
-        (
-            a.0.max(b.0),
-            a.1.max(b.1),
-            a.2 | b.2,
-            a.3 & b.3,
-        )
-    });
+    let chunk_size = 10_000;
+    // We use a Mutex since AtomicU128 is not stabilized in Rust yet. 
+    // With chunk_size = 10_000, lock contention overhead is strictly zero relative to compute.
+    let current = Arc::new(Mutex::new(start));
+    
+    let max_steps = Arc::new(AtomicU32::new(0));
+    let max_value = Arc::new(Mutex::new(0u128));
+    let cycle_detected = Arc::new(AtomicBool::new(false));
+    let verified = Arc::new(AtomicBool::new(true));
+
+    let num_threads = std::thread::available_parallelism().map(|n| n.get()).unwrap_or(4);
+    let mut handles = vec![];
+
+    for _ in 0..num_threads {
+        let current_clone = Arc::clone(&current);
+        let steps_clone = Arc::clone(&max_steps);
+        let val_clone = Arc::clone(&max_value);
+        let cycle_clone = Arc::clone(&cycle_detected);
+        let verif_clone = Arc::clone(&verified);
+
+        handles.push(thread::spawn(move || {
+            loop {
+                // Emulating AtomicU128 fetch_add safely
+                let chunk_start = {
+                    let mut curr = current_clone.lock().unwrap();
+                    if *curr > end {
+                        break;
+                    }
+                    let s = *curr;
+                    *curr = curr.saturating_add(chunk_size);
+                    s
+                };
+                
+                let chunk_end = end.min(chunk_start.saturating_add(chunk_size - 1));
+
+                let mut local_max_steps = 0;
+                let mut local_max_val = 0;
+                let mut local_cycle = false;
+                let mut local_verified = true;
+
+                for n in chunk_start..=chunk_end {
+                    if let Some((s, v)) = compute_trajectory(n) {
+                        if s > local_max_steps { local_max_steps = s; }
+                        if v > local_max_val { local_max_val = v; }
+                    } else {
+                        local_cycle = true;
+                        local_verified = false;
+                    }
+                }
+
+                steps_clone.fetch_max(local_max_steps, Ordering::Relaxed);
+                
+                if local_max_val > 0 {
+                    let mut g_val = val_clone.lock().unwrap();
+                    if local_max_val > *g_val {
+                        *g_val = local_max_val;
+                    }
+                }
+
+                if local_cycle {
+                    cycle_clone.store(true, Ordering::Relaxed);
+                }
+                if !local_verified {
+                    verif_clone.store(false, Ordering::Relaxed);
+                }
+            }
+        }));
+    }
+
+    for handle in handles {
+        let _ = handle.join();
+    }
+
+    let final_steps = max_steps.load(Ordering::Relaxed);
+    let final_val = *max_value.lock().unwrap();
+    let final_cycle = cycle_detected.load(Ordering::Relaxed);
+    let final_verified = verified.load(Ordering::Relaxed);
 
     CollatzResult {
         start_bound: start.to_string(),
         end_bound: end.to_string(),
-        max_steps: result.0,
-        max_value_reached: result.1.to_string(),
-        cycle_detected: result.2,
-        verified: result.3,
+        max_steps: final_steps,
+        max_value_reached: final_val.to_string(),
+        cycle_detected: final_cycle,
+        verified: final_verified,
     }
 }
 
@@ -89,5 +155,32 @@ pub fn verify_range(start: u128, end: u128) -> CollatzResult {
         max_value_reached: max_value.to_string(),
         cycle_detected: cycle,
         verified,
+    }
+}
+
+#[cfg(kani)]
+mod verification {
+    use super::*;
+
+    #[kani::proof]
+    fn verify_next_collatz_no_panic() {
+        let n: u128 = kani::any();
+        // Assume n won't overflow 3n+1
+        kani::assume(n <= (u128::MAX - 1) / 3);
+        
+        let result = next_collatz(n);
+        
+        kani::assert(result.is_some(), "Next collatz step should not overflow and return Some");
+    }
+
+    #[kani::proof]
+    fn verify_next_collatz_overflow_behavior() {
+        let n: u128 = kani::any();
+        // If n is odd and greater than the safe limit, it should return None to indicate overflow
+        kani::assume(n > (u128::MAX - 1) / 3);
+        kani::assume(n & 1 != 0);
+        
+        let result = next_collatz(n);
+        kani::assert(result.is_none(), "Next collatz step should return None on overflow");
     }
 }

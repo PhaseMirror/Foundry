@@ -1,7 +1,3 @@
-/-!
-# Core ADR definitions
--/
-import .CompactClosed
 namespace ADR
 
 structure ADRId where

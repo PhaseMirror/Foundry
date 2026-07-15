@@ -1,0 +1,788 @@
+\documentclass[11pt]{article}
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{physics}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue}
+
+\title{Prime-Gap Ordering, RH-Stability, \\ and the Zeta-Multiplicity Phase Operator:\\
+A Resource-Bounded Numerical Protocol and Defensive Publication}
+\author{Citizen Gardens \\ The Foundation of Multiplicity}
+\date{April 28, 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We present a mathematically explicit, computationally executable framework for testing \emph{RH-stability}---the claim that dynamical stability of a prime-encoded quantum system is uniquely associated with the Riemann Hypothesis. The central object is a \emph{Zeta-Multiplicity Phase Operator} acting on a finite prime-chain Hilbert space, driven by a time-dependent Hamiltonian whose modulation is built from the non-trivial zeros of the Riemann zeta function. We articulate two falsifiable experiments: (A) sensitivity to prime-gap ordering at fixed drive, and (B) sensitivity to an exponential envelope parameter $\beta$ associated with off-line perturbations of the zeros. We provide explicit Hamiltonians, observables (circular phase variance, inverse participation ratio, fidelity), ensemble-based statistical tests (Welch's $t$-test, Cohen's $d$), and a resource-bounded NumPy/SciPy implementation strategy that treats computational finitude as part of the ontological substrate. This document is intended both as a comprehensive technical description and as defensive prior art for future developments.
+\end{abstract}
+\newpage
+\tableofcontents
+
+\section{Executive Summary}
+
+\subsection{Core idea}
+
+We consider a quantum system whose configuration space is indexed by the first $N$ prime numbers. The Hilbert space is
+\[
+\mathcal{H}_N = \mathrm{span}\{ \ket{p_i} : p_i \text{ is the $i$-th prime},\ i=1,\dots,N\}.
+\]
+On this space we define a time-dependent Hamiltonian
+\[
+H(t;\beta) = H_{\mathrm{prime}} + \lambda(t;\beta)\,H_{\mathrm{gap}},
+\]
+where
+\begin{itemize}
+  \item $H_{\mathrm{prime}}$ encodes a prime-weighted diagonal spectrum,
+  \item $H_{\mathrm{gap}}$ encodes hopping along the chain weighted by normalized prime gaps,
+  \item $\lambda(t;\beta)$ is a scalar modulation constructed from the imaginary parts of the first $K$ non-trivial zeros of the Riemann zeta function.
+\end{itemize}
+The parameter $\beta$ enters in an exponential envelope $e^{\beta t}$ multiplying contributions from the zeta zeros. Conceptually, $\beta=0$ corresponds to all zeros lying on the critical line, whereas $\beta\neq 0$ mimics off-line deformations. 
+
+The central claim we make testable is:
+\begin{quote}
+  \textbf{RH-stability hypothesis:} For $\beta=0$, certain dynamical observables (e.g.\ circular phase variance) remain bounded or grow at most sub-exponentially, whereas for $\beta\neq 0$ these observables exhibit exponential divergence or decay. 
+\end{quote}
+In addition, we propose that the \emph{ordering} of prime gaps along the chain generates distinct dynamical signatures relative to a null model where the same gaps are randomly permuted.
+
+\subsection{Two experiments}
+
+We isolate two numerically accessible, falsifiable experiments:
+\begin{description}
+  \item[Experiment A: Prime-gap ordering sensitivity.] Fix $\beta$ (e.g.\ $\beta=0$). Define a ``true'' model with normalized gaps $\tilde g_i$ in their natural order and a null model where $\tilde g_i$ are randomly permuted along the prime index while keeping their marginal distribution fixed. Evolve ensembles of trajectories under the same zeta-driven modulation and compare time-averaged observables for true vs.\ null ensembles using Welch's $t$-test and Cohen's $d$. If the RH-stability picture is correct, the ordered-gap ensemble should exhibit systematically lower phase variance and higher coherence than the shuffled ensemble.
+  \item[Experiment B: Exponential-envelope RH sweep.] Fix $(N,K)$ and other parameters, and vary $\beta\in\{-\beta_0,0,+\beta_0\}$ with $\beta_0$ small (e.g.\ $0.05$). For each $\beta$ run an ensemble of trajectories, fit linear slopes of $\log V(t)$ and $-\log F(t)$ at late times, and compare slope distributions via Welch's $t$-test. Under RH-stability, the slopes for $\beta=0$ should concentrate near zero, while slopes for $\beta\neq 0$ should be significantly non-zero.
+\end{description}
+
+\subsection{Resource-bounded protocol}
+
+We adopt a resource-bounded view: numerical integration is performed with standard SciPy solvers (e.g.\ DOP853), and only those experiments that complete reliably on realistic local hardware are considered part of the test. In particular:
+\begin{itemize}
+  \item We work with small prime truncations (e.g.\ $N=15$--$40$) and relatively few zeros (e.g.\ $K=5$--$10$).
+  \item We use moderate time windows (e.g.\ $T=20$--$100$) and time steps ($\Delta t$) chosen to balance resolution with runtime.
+  \item Ensemble sizes (number of realizations per parameter) are kept to a few tens in the baseline tests.
+\end{itemize}
+This protocol explicitly acknowledges finite computational resources as part of the ``constitutional'' structure of the experiment.
+
+\subsection{Defensive publication purpose}
+
+This document:
+\begin{itemize}
+  \item Specifies the Hamiltonians, observables, and statistical comparisons in sufficient detail for independent replication.
+  \item Records the idea that RH-stability can be probed numerically via a finite-dimensional prime-chain Hamiltonian with zeta-zero modulation and exponential envelope.
+  \item Emphasizes the role of prime-gap ordering and ensembles as key discriminants between lawful (critical-line-like) and unstable (off-line-like) dynamics.
+\end{itemize}
+This serves as prior art for future theoretical refinements, implementation in alternative frameworks (e.g.\ QuTiP, tensor networks), and hardware realizations.
+
+\section{Comprehensive Mathematical Overview}
+
+\subsection{Prime-chain Hilbert space and Hamiltonian}
+
+Let $p_1=2,p_2=3,p_3=5,\dots,p_N$ denote the first $N$ prime numbers. Define basis states $\ket{p_i}$ orthonormal in $\mathcal{H}_N$, and a pure state
+\[
+\ket{\psi(t)} = \sum_{i=1}^N c_i(t)\ket{p_i},\qquad \sum_{i=1}^N |c_i(t)|^2=1.
+\]
+
+\subsubsection{Prime-diagonal term}
+
+We define a diagonal Hamiltonian
+\begin{equation}
+  H_{\mathrm{prime}} = \alpha\sum_{i=1}^N \frac{1}{p_i}\,\ket{p_i}\bra{p_i},
+\end{equation}
+where $\alpha$ is a real scaling parameter. This term encodes a simple prime-weighted spectrum.
+
+\subsubsection{Gap-hopping term}
+
+Let $g_i = p_{i+1}-p_i$ denote adjacent prime gaps for $i=1,\dots,N-1$. We define normalized gaps $\tilde g_i$ via either:
+\begin{equation}
+  \tilde g_i = \frac{g_i}{g_{\max}},\qquad g_{\max}=\max_j g_j,
+\end{equation}
+or
+\begin{equation}
+  \tilde g_i = \frac{\log(1+g_i)}{\log(1+g_{\max})},
+\end{equation}
+depending on numerical convenience. The gap-induced hopping Hamiltonian is
+\begin{equation}
+  H_{\mathrm{gap}} = \eta\sum_{i=1}^{N-1} \tilde g_i\left(\ket{p_i}\bra{p_{i+1}} + \ket{p_{i+1}}\bra{p_i}\right),
+\end{equation}
+with coupling strength $\eta$. This couples neighboring primes with amplitudes proportional to the normalized gaps.
+
+\subsection{Zeta-zero modulation and exponential envelope}
+
+Let $\rho_n = \frac12 + i t_n$ denote the first $K$ non-trivial zeros of the Riemann zeta function (ordered by increasing $t_n>0$). We use the imaginary parts $t_n$ as frequency-like parameters.
+
+\subsubsection{Envelope and drive}
+
+We define a scalar modulation
+\begin{equation}
+  \lambda(t;\beta) = 1 + \sum_{n=1}^K \gamma_n e^{\beta t}\cos(t_n t + \phi_n),
+\end{equation}
+where:
+\begin{itemize}
+  \item $\gamma_n = \gamma_0/\sqrt{n}$ is a decaying amplitude profile.
+  \item $\phi_n$ are random phases drawn independently from $\mathrm{Unif}[0,2\pi)$ for each realization.
+  \item $\beta\in\mathbb{R}$ is a control parameter: $\beta=0$ is taken as the ``critical-line'' case, and $\beta\neq 0$ as off-line deformations.
+\end{itemize}
+In numerical implementations one may also impose a lower bound $\lambda_{\min}>0$ via $\lambda(t)\gets\max(\lambda(t),\lambda_{\min})$ to avoid sign flips or collapse of the hopping term.
+
+\subsubsection{Total Hamiltonian and dynamics}
+
+The total Hamiltonian is
+\begin{equation}
+  H(t;\beta) = H_{\mathrm{prime}} + \lambda(t;\beta)\,H_{\mathrm{gap}}.
+\end{equation}
+We consider unitary evolution governed by
+\begin{equation}
+  i\frac{d}{dt}\ket{\psi(t)} = H(t;\beta)\ket{\psi(t)},
+\end{equation}
+with $\hbar=1$. For numerical integration we use vectorized form
+\[
+\dot{\psi}(t) = -i H(t;\beta)\psi(t),
+\]
+where $\psi(t)\in\mathbb{C}^N$ is the column vector of amplitudes $c_i(t)$.
+
+\subsection{Observables}
+
+Given state coefficients $c_i(t)$, we define several observables for each time $t$.
+
+\subsubsection{Circular phase variance}
+
+Let $\theta_i(t) = \arg c_i(t)\in(-\pi,\pi]$ denote phases of amplitudes. Define the mean resultant vector:
+\begin{equation}
+  R(t) = \frac{1}{N}\sum_{i=1}^N e^{i\theta_i(t)}.
+\end{equation}
+The circular mean angle is $\theta_{\mathrm{mean}}(t) = \arg R(t)$. We define wrapped deviations
+\begin{equation}
+  \delta_i(t) = \arg\left(e^{i(\theta_i(t)-\theta_{\mathrm{mean}}(t))}\right)\in(-\pi,\pi],
+\end{equation}
+and the circular phase variance
+\begin{equation}
+  V(t) = \frac{1}{N}\sum_{i=1}^N \delta_i(t)^2.
+\end{equation}
+This is invariant under global phase shifts and robust to phase wrapping.
+
+\subsubsection{Inverse participation ratio (IPR)}
+
+The IPR quantifies localization in the prime basis:
+\begin{equation}
+  L(t) = \sum_{i=1}^N |c_i(t)|^4.
+\end{equation}
+A large $L(t)$ indicates localization on a few basis states; a small $L(t)$ indicates delocalization.
+
+\subsubsection{Fidelity / Loschmidt echo}
+
+Given initial state $\ket{\psi_0}$, commonly chosen as the uniform superposition
+\[
+\ket{\psi_0} = \frac{1}{\sqrt{N}}\sum_{i=1}^N \ket{p_i},
+\]
+we define the time-dependent fidelity
+\begin{equation}
+  F(t) = |\braket{\psi_0|\psi(t)}|^2.
+\end{equation}
+This is a Loschmidt echo measuring global recurrence.
+
+\subsection{Ensemble definitions}
+
+Randomness enters through the phases $\{\phi_n\}$ in the drive. For fixed $(N,K,\alpha,\eta,\gamma_0,\beta)$, we define an ensemble of trajectories by sampling independent $\{\phi_n\}$ and integrating.
+
+For \textbf{Experiment A} (gap ordering), we define:
+
+\begin{itemize}
+  \item \textbf{True ensemble:} Use the normalized gaps $\tilde g_i$ derived from the actual prime sequence in ascending order.
+  \item \textbf{Null ensemble:} For each realization, draw a random permutation $\pi$ of $\{1,\dots,N-1\}$ and set $\tilde g_i^{(\text{null})} = \tilde g_{\pi(i)}$, while keeping the same sets of primes $\{p_i\}$ and zero frequencies $\{t_n\}$.
+\end{itemize}
+
+For \textbf{Experiment B} (envelope sweep), we fix gap ordering and vary $\beta$.
+
+\subsection{Time-averaged quantities and slope extraction}
+
+\subsubsection{Time-averaged observables (Experiment A)}
+
+To reduce transient effects we define time-averaged observables over a window $[T/2, T]$:
+\begin{equation}
+  \bar V = \frac{2}{T}\int_{T/2}^{T} V(t)\,dt,\qquad
+  \bar L = \frac{2}{T}\int_{T/2}^{T} L(t)\,dt,\qquad
+  \bar F = \frac{2}{T}\int_{T/2}^{T} F(t)\,dt.
+\end{equation}
+In numerical practice these are approximated by discrete averages over the sampled time points in the latter half of the evolution.
+
+\subsubsection{Slope fitting for exponential behavior (Experiment B)}
+
+To detect exponential growth or decay we fit linear slopes to $\log V(t)$ and $\log F(t)$ at late times. Given discrete times $t_k$ and observable values $Y_k\equiv Y(t_k)$, we select a fitting window $t\in[t_{\mathrm{start}},T]$ and perform least-squares regression:
+\[
+\log Y_k \approx s_Y t_k + c_Y.
+\]
+The slope $s_Y$ is the estimated exponential growth rate:
+\begin{equation}
+  Y(t) \approx e^{s_Y t + c_Y}.
+\end{equation}
+We denote by $s_V$ and $s_F$ the slopes for $V$ and $F$ (or for $-\log F$, depending on convention). 
+
+\section{Statistical Testing and Falsifiability}
+
+\subsection{Welch's $t$-test}
+
+For Experiment A, we obtain samples of time-averaged observables:
+\[
+\{\bar V^{(\mathrm{true})}_j\}_{j=1}^{n_{\mathrm{true}}},\quad
+\{\bar V^{(\mathrm{null})}_r\}_{r=1}^{n_{\mathrm{null}}}
+\]
+and similarly for $\bar L, \bar F$. To compare means we use Welch's two-sample $t$-test, which does not assume equal variances.
+
+Let $X$ denote any of these observables (e.g.\ $\bar V$). Define sample means $\bar X_1,\bar X_2$ and sample variances $s_1^2,s_2^2$ for true and null ensembles with sizes $n_1,n_2$. The Welch statistic is
+\[
+t = \frac{\bar X_1 - \bar X_2}{\sqrt{\frac{s_1^2}{n_1} + \frac{s_2^2}{n_2}}},
+\]
+with degrees of freedom
+\[
+\nu \approx \frac{\left(\frac{s_1^2}{n_1}+\frac{s_2^2}{n_2}\right)^2}{
+\frac{s_1^4}{n_1^2(n_1-1)} + \frac{s_2^4}{n_2^2(n_2-1)}}.
+\]
+We report the two-sided $p$-value associated with this statistic.
+
+\subsection{Effect size: Cohen's $d$}
+
+To quantify effect size we define Cohen's $d$:
+\[
+d = \frac{\bar X_1 - \bar X_2}{s_{\mathrm{pooled}}},
+\]
+with pooled standard deviation
+\[
+s_{\mathrm{pooled}} = \sqrt{\frac{(n_1-1)s_1^2 + (n_2-1)s_2^2}{n_1+n_2-2}}.
+\]
+Moderate to large effects correspond to $|d|\gtrsim 0.8$, though thresholds depend on context.
+
+\subsection{Falsifiability statements}
+
+\subsubsection{Experiment A: Gap-ordering stability}
+
+We say that the model exhibits \emph{gap-ordering stability} for a given parameter setting if there exists a choice of $(N,K,\alpha,\eta,\gamma_0)$ such that:
+\begin{itemize}
+  \item $\bar V^{(\mathrm{true})} < \bar V^{(\mathrm{null})}$ with $p<0.05$ and $|d_V|\gtrsim0.8$,
+  \item and the signs of $\Delta\bar L$ and $\Delta\bar F$ are consistent with increased localization and coherence under true ordering (e.g.\ $\bar L^{(\mathrm{true})}\ge\bar L^{(\mathrm{null})}$, $\bar F^{(\mathrm{true})}\ge\bar F^{(\mathrm{null})}$).
+\end{itemize}
+The hypothesis that prime-gap ordering matters dynamically is \emph{falsified} if, after scanning reasonable parameter grids, one finds no region where the true vs.\ null difference is statistically significant and effect sizes remain small across all observables.
+
+\subsubsection{Experiment B: RH-stability under envelope}
+
+We define RH-stability in this model as the condition that:
+\begin{itemize}
+  \item For $\beta=0$, the ensemble-averaged slopes satisfy $\mathbb{E}[s_V(0)]\approx 0$ and $\mathbb{E}[s_V(0)]$ is statistically distinguishable from $\mathbb{E}[s_V(\beta_0)]$ for $\beta_0\neq 0$ (e.g.\ $\beta_0=0.05$),
+  \item and similarly for $s_F$ (using either $\log F$ or $-\log F$).
+\end{itemize}
+The RH-stability hypothesis in this formulation is \emph{falsified} if the slope distributions for $\beta=0$ and $\beta\neq 0$ cannot be distinguished at a chosen significance level (e.g.\ $p<0.01$) for any reasonable parameter region.
+
+\section{NumPy/SciPy Implementation}
+
+\subsection{Design goals}
+
+The implementation is designed to:
+\begin{itemize}
+  \item Use only widely available numerical libraries (NumPy, SciPy).
+  \item Avoid specialized quantum packages to remain environment-agnostic.
+  \item Separate model definition, ensemble generation, slope fitting, and hypothesis testing.
+\end{itemize}
+
+\subsection{Core code snippet}
+
+Below is a consolidated Python code snippet illustrating the main components. For brevity, some comments are minimized; in practice you may want to add docstrings and logging.
+
+\begin{verbatim}
+import numpy as np
+from scipy.integrate import solve_ivp
+from scipy.stats import ttest_ind
+
+# ---------- basic utilities ----------
+def first_n_primes(N):
+    primes = []
+    x = 2
+    while len(primes) < N:
+        for p in primes:
+            if p * p > x:
+                break
+            if x % p == 0:
+                break
+        else:
+            primes.append(x)
+        x += 1
+    return np.array(primes, dtype=int)
+
+def prime_gaps(primes):
+    return np.diff(primes)
+
+def normalize_gaps(gaps, mode="log"):
+    gaps = np.array(gaps, dtype=float)
+    if mode == "max":
+        return gaps / gaps.max()
+    if mode == "log":
+        return np.log1p(gaps) / np.log1p(gaps.max())
+    raise ValueError("mode must be 'max' or 'log'")
+
+def first_zero_imag_parts(K):
+    t_vals = np.array([
+        14.134725, 21.022040, 25.010858, 30.424876, 32.935062,
+        37.586178, 40.918719, 43.327073, 48.005151, 49.773832,
+        52.970321, 56.446248, 59.347044, 60.831779, 65.112544,
+        67.079811, 69.546402, 72.067158, 75.704691, 77.144840
+    ])
+    return t_vals[:K]
+
+# ---------- Hamiltonian construction ----------
+def build_prime_matrix(primes, alpha):
+    return np.diag(alpha / primes.astype(float)).astype(complex)
+
+def build_gap_matrix(gnorm, eta):
+    N = len(gnorm) + 1
+    H = np.zeros((N, N), dtype=complex)
+    for i in range(N - 1):
+        c = eta * gnorm[i]
+        H[i, i + 1] = c
+        H[i + 1, i] = c
+    return H
+
+# ---------- time-dependent coefficient ----------
+def lambda_coeff(t, zero_freqs, gammas, phases, beta):
+    s = 1.0
+    for w, g, phi in zip(zero_freqs, gammas, phases):
+        s += g * np.exp(beta * t) * np.cos(w * t + phi)
+    return s
+
+def rhs(t, psi, H_prime, H_gap, zero_freqs, gammas, phases, beta):
+    lam = lambda_coeff(t, zero_freqs, gammas, phases, beta)
+    Ht = H_prime + lam * H_gap
+    return -1j * (Ht @ psi)
+
+def run_single_beta(primes, gnorm, zero_freqs, gamma_scale, beta,
+                    alpha=1.0, eta=0.3, T=20.0, dt=0.1):
+    N = len(primes)
+    H_prime = build_prime_matrix(primes, alpha)
+    H_gap = build_gap_matrix(gnorm, eta)
+    psi0 = np.ones(N, dtype=complex) / np.sqrt(N)
+    K = len(zero_freqs)
+    gammas = gamma_scale / np.sqrt(np.arange(1, K + 1))
+    phases = np.random.uniform(0, 2*np.pi, size=K)
+    t_eval = np.arange(0, T + dt, dt)
+    sol = solve_ivp(
+        fun=lambda t, y: rhs(t, y, H_prime, H_gap,
+                             zero_freqs, gammas, phases, beta),
+        t_span=(0.0, T),
+        y0=psi0,
+        t_eval=t_eval,
+        rtol=1e-7,
+        atol=1e-9,
+        method='DOP853'
+    )
+    states = sol.y.T
+    t = sol.t
+    # circular phase variance
+    angles = np.angle(states)
+    mean_vec = np.mean(np.exp(1j * angles), axis=1)
+    circ_mean_angle = np.angle(mean_vec)
+    dev = angles - circ_mean_angle[:, None]
+    dev = np.angle(np.exp(1j * dev))
+    V = np.mean(dev**2, axis=1)
+    # fidelity
+    F = np.abs(states @ np.conjugate(psi0))**2
+    return {"t": t, "V": V, "F": F, "beta": beta}
+
+def fit_log_slope(t, y, t_start=5.0, t_end=None):
+    mask = (t >= t_start)
+    if t_end is not None:
+        mask &= (t <= t_end)
+    t_masked = t[mask]
+    y_masked = y[mask]
+    y_masked = np.maximum(y_masked, 1e-12)
+    logy = np.log(y_masked)
+    A = np.vstack([t_masked, np.ones_like(t_masked)]).T
+    slope, const = np.linalg.lstsq(A, logy, rcond=None)[0]
+    return slope
+
+def run_ensemble(beta, num_realizations=5, N=15, K=5,
+                 alpha=1.0, eta=0.3, gamma_scale=0.1,
+                 T=20.0, dt=0.1, t_start_fit=5.0, seed=42):
+    np.random.seed(seed)
+    primes = first_n_primes(N)
+    gaps = prime_gaps(primes)
+    gnorm = normalize_gaps(gaps, mode="log")
+    zero_freqs = first_zero_imag_parts(K)
+    slopes_V, slopes_F = [], []
+    for _ in range(num_realizations):
+        traj = run_single_beta(primes, gnorm, zero_freqs,
+                               gamma_scale, beta,
+                               alpha, eta, T, dt)
+        sV = fit_log_slope(traj["t"], traj["V"], t_start_fit, T)
+        sF = fit_log_slope(traj["t"], traj["F"], t_start_fit, T)
+        slopes_V.append(sV)
+        slopes_F.append(sF)
+    slopes_V = np.array(slopes_V)
+    slopes_F = np.array(slopes_F)
+    return {
+        "beta": beta,
+        "slopes_V": slopes_V,
+        "slopes_F": slopes_F,
+        "mean_V": slopes_V.mean(),
+        "std_V": slopes_V.std(ddof=1),
+        "mean_F": slopes_F.mean(),
+        "std_F": slopes_F.std(ddof=1),
+    }
+
+def run_rh_stability_test():
+    betas = [-0.05, 0.0, 0.05]
+    results = {}
+    for beta in betas:
+        print(f"Running beta = {beta} ...")
+        res = run_ensemble(beta)
+        results[beta] = res
+        print(f" mean slope V = {res['mean_V']:.4f} ± {res['std_V']:.4f}")
+        print(f" mean slope F = {res['mean_F']:.4f} ± {res['std_F']:.4f}")
+    # example comparison: beta=0 vs beta=0.05
+    slopes_V_null = results[0.0]["slopes_V"]
+    slopes_V_pos  = results[0.05]["slopes_V"]
+    t_stat, p_val = ttest_ind(slopes_V_null, slopes_V_pos,
+                              equal_var=False)
+    print("\nWelch t-test (beta=0 vs beta=0.05): "
+          f"t = {t_stat:.3f}, p = {p_val:.3g}")
+    return results
+
+if __name__ == "__main__":
+    run_rh_stability_test()
+\end{verbatim}
+
+This script is an ultra-reduced baseline for Experiment B (envelope sweep). A similar pattern can be adopted for Experiment A (gap ordering) by introducing separate functions for true and permuted gap matrices and comparing time-averaged observables instead of slopes.
+
+\section{Prior Art and Defensive Claims}
+
+\subsection{Key claims of originality}
+
+The following points summarize what this document asserts as prior art:
+
+\begin{enumerate}
+  \item \textbf{Prime-chain RH-stability via exponential envelope.} The idea of encoding RH-stability as bounded vs.\ exponential behavior in phase variance and fidelity under a Hamiltonian of the form
+  \[
+  H(t;\beta)=H_{\mathrm{prime}}+\lambda(t;\beta)H_{\mathrm{gap}},\quad
+  \lambda(t;\beta)=1+\sum_n \gamma_n e^{\beta t}\cos(t_n t+\phi_n),
+  \]
+  with the $t_n$ drawn from the non-trivial zeta zeros, in a finite prime-chain Hilbert space.
+  \item \textbf{Gap-ordering ensemble test.} The construction of a true vs.\ null ensemble based on ordered vs.\ permuted normalized gaps $\tilde g_i$, preserving the marginal gap distribution while destroying ordering, and the use of Welch's $t$-test and Cohen's $d$ on time-averaged observables to quantify the dynamical effect of prime-gap ordering.
+  \item \textbf{Exponential-slope ensemble test for $\beta$.} The use of ensemble slope distributions of $\log V(t)$ (and/or $-\log F(t)$) across different $\beta$ values, compared via Welch's test, as a direct numerical probe linking RH-like conditions ($\beta=0$) to stability and off-line conditions ($\beta\neq 0$) to exponential divergence.
+  \item \textbf{Resource-bounded ontic protocol.} The explicit treatment of computational finitude (e.g.\ small $N,K$, short $T$, tractable ensemble sizes) as part of the ontological structure of the test, and the associated insistence that only locally executed, user-verifiable runs provide admissible numerical evidence.
+\end{enumerate}
+
+\subsection{Intended uses}
+
+This publication is designed to be:
+\begin{itemize}
+  \item A reference for future theoretical extensions (e.g.\ regularization of Euler products, inclusion of multiplicative projectors, tensor-network formulations).
+  \item A baseline for experimental proposals mapping $H_{\mathrm{prime}}$ and $H_{\mathrm{gap}}$ to controllable frequencies and couplings in physical platforms (e.g.\ superconducting qubits).
+  \item A template for ensemble-based numerical investigations of RH-related conjectures using finite-dimensional dynamical systems.
+\end{itemize}
+
+\section{Conclusion}
+
+We have specified a complete, finite-dimensional dynamical model that ties prime gaps, zeta zeros, and RH-stability into a single, executable framework. Two falsifiable experiments---gap-ordering sensitivity and exponential-envelope stability---are identified, with clear statistical tests and a numerically practical implementation. 
+
+The key methodological stance is that of \emph{resource-bounded lawfulness}: only what can be computed reliably on real hardware, using well-understood numerical methods, counts as evidence for or against RH-stability in this model. This aligns naturally with a Meta-Relativistic view in which lawfulness emerges from recursively structured multiplicity under finite constraints.
+
+\appendix
+\section*{Mathematical Appendix}
+
+\section{Operator Definitions and Basic Properties}
+
+\subsection{Prime-chain Hilbert space}
+
+Let $p_1<p_2<\dots<p_N$ denote the first $N$ prime numbers. We consider the finite-dimensional Hilbert space
+\[
+\mathcal{H}_N \cong \mathbb{C}^N,
+\]
+with orthonormal basis vectors $\{\ket{p_i}\}_{i=1}^N$ satisfying
+\[
+\braket{p_i|p_j} = \delta_{ij},\qquad \sum_{i=1}^N \ket{p_i}\bra{p_i} = I_{\mathcal{H}_N}.
+\]
+
+A generic state is
+\[
+\ket{\psi} = \sum_{i=1}^N c_i \ket{p_i},\qquad \sum_{i=1}^N |c_i|^2 = 1.
+\]
+
+\subsection{Prime-diagonal operator}
+
+For a fixed real parameter $\alpha>0$ we define
+\begin{equation}
+H_{\mathrm{prime}} := \alpha \sum_{i=1}^N \frac{1}{p_i}\,\ket{p_i}\bra{p_i}.
+\end{equation}
+This is a diagonal operator in the $\ket{p_i}$ basis, with eigenvalues
+\[
+\lambda_i^{(\mathrm{prime})} = \frac{\alpha}{p_i},\quad i=1,\dots,N.
+\]
+Thus
+\[
+H_{\mathrm{prime}}\ket{p_i} = \frac{\alpha}{p_i}\ket{p_i}.
+\]
+Since all eigenvalues are real, $H_{\mathrm{prime}}$ is self-adjoint. Its operator norm (spectral norm) is
+\begin{equation}
+\|H_{\mathrm{prime}}\| = \max_{1\leq i\leq N} \left|\frac{\alpha}{p_i}\right| = \frac{\alpha}{p_1} = \frac{\alpha}{2}.
+\end{equation}
+
+\subsection{Gap-hopping operator}
+
+Let $g_i = p_{i+1}-p_i$ denote the prime gaps for $i=1,\dots,N-1$ and define normalized gaps $\tilde g_i$ by one of:
+\begin{align}
+\tilde g_i^{(\max)} &= \frac{g_i}{\max_j g_j},\\
+\tilde g_i^{(\log)} &= \frac{\log(1+g_i)}{\log(1+g_{\max})},\qquad g_{\max} = \max_j g_j.
+\end{align}
+In either case, $0<\tilde g_i\leq 1$. We define the hopping operator
+\begin{equation}
+H_{\mathrm{gap}} := \eta\sum_{i=1}^{N-1}\tilde g_i\left(\ket{p_i}\bra{p_{i+1}} + \ket{p_{i+1}}\bra{p_i}\right),
+\end{equation}
+with $\eta\in\mathbb{R}$.
+
+\paragraph{Self-adjointness.}
+Each term
+\[
+\ket{p_i}\bra{p_{i+1}} + \ket{p_{i+1}}\bra{p_i}
+\]
+is self-adjoint, and the coefficients $\eta\tilde g_i$ are real, hence $H_{\mathrm{gap}}^\dagger = H_{\mathrm{gap}}$.
+
+\paragraph{Matrix form.}
+In the ordered basis $(\ket{p_1},\dots,\ket{p_N})$, $H_{\mathrm{gap}}$ has matrix elements
+\[
+\big(H_{\mathrm{gap}}\big)_{ij} =
+\begin{cases}
+\eta \tilde g_i & \text{if } j=i+1,\\
+\eta \tilde g_{j} & \text{if } i=j+1,\\
+0 & \text{otherwise}.
+\end{cases}
+\]
+It is a real symmetric tridiagonal matrix with zeros on the diagonal.
+
+\paragraph{Operator norm bounds.}
+For each $i$, define the rank-2 operator
+\[
+A_i := \ket{p_i}\bra{p_{i+1}} + \ket{p_{i+1}}\bra{p_i}.
+\]
+Restricted to the span of $\{\ket{p_i},\ket{p_{i+1}}\}$, $A_i$ has matrix representation
+\[
+A_i \leftrightarrow 
+\begin{pmatrix}
+0 & 1\\
+1 & 0
+\end{pmatrix},
+\]
+which has eigenvalues $\pm 1$. Hence $\|A_i\|=1$. Using subadditivity,
+\begin{align}
+\|H_{\mathrm{gap}}\|
+&= \left\|\eta\sum_{i=1}^{N-1} \tilde g_i A_i\right\|\nonumber\\
+&\leq |\eta|\sum_{i=1}^{N-1} |\tilde g_i| \|A_i\|
+\leq |\eta|\sum_{i=1}^{N-1} \tilde g_i
+\leq |\eta|(N-1).\label{eq:Hgap_sum_bound}
+\end{align}
+A slightly sharper bound uses row sums. For any tridiagonal real symmetric matrix $M$,
+\[
+\|M\| \leq \max_i \sum_j |M_{ij}|.
+\]
+Here,
+\[
+\sum_j |(H_{\mathrm{gap}})_{ij}| \leq
+\begin{cases}
+|\eta|\tilde g_{1} & i=1,\\
+|\eta|(\tilde g_{i-1}+\tilde g_i) & 2\le i\le N-1,\\
+|\eta|\tilde g_{N-1} & i=N,
+\end{cases}
+\]
+so
+\begin{equation}
+\|H_{\mathrm{gap}}\| \leq |\eta|\max\left\{\tilde g_1,\max_{2\leq i\leq N-1}(\tilde g_{i-1}+\tilde g_i),\tilde g_{N-1}\right\} \leq 2|\eta|.\label{eq:Hgap_row_bound}
+\end{equation}
+The bound \eqref{eq:Hgap_row_bound} is independent of $N$ and typically much tighter than \eqref{eq:Hgap_sum_bound}.
+
+\subsection{Time-dependent Hamiltonian and norm bounds}
+
+We define the full Hamiltonian by
+\begin{equation}
+H(t;\beta) := H_{\mathrm{prime}} + \lambda(t;\beta) H_{\mathrm{gap}},
+\end{equation}
+where
+\begin{equation}
+\lambda(t;\beta) = 1 + \sum_{n=1}^K \gamma_n e^{\beta t}\cos(t_n t + \phi_n),
+\qquad \gamma_n = \frac{\gamma_0}{\sqrt{n}},
+\end{equation}
+with $\gamma_0>0$, $t_n>0$ the imaginary parts of the first $K$ non-trivial zeros, and $\phi_n\in\mathbb{R}$ arbitrary phases.
+
+\subsubsection{Reality and self-adjointness}
+
+For each fixed $t$ and $\beta\in\mathbb{R}$, $\lambda(t;\beta)\in\mathbb{R}$ since it is a finite sum of real exponentials times cosines. As $H_{\mathrm{prime}}$ and $H_{\mathrm{gap}}$ are self-adjoint, we have
+\[
+H(t;\beta)^\dagger = H_{\mathrm{prime}}^\dagger + \lambda(t;\beta)H_{\mathrm{gap}}^\dagger = H_{\mathrm{prime}} + \lambda(t;\beta)H_{\mathrm{gap}} = H(t;\beta).
+\]
+Thus $H(t;\beta)$ is self-adjoint for all $(t,\beta)$.
+
+\subsubsection{Operator norm bound for $H(t;\beta)$}
+
+Using the triangle inequality and bounds above,
+\begin{align}
+\|H(t;\beta)\|
+&\le \|H_{\mathrm{prime}}\| + |\lambda(t;\beta)|\,\|H_{\mathrm{gap}}\|\nonumber\\
+&\le \frac{\alpha}{2} + |\lambda(t;\beta)| \cdot 2|\eta|.\label{eq:H_total_norm}
+\end{align}
+We bound $\lambda(t;\beta)$ on a finite time interval $[0,T]$. For any $t\in[0,T]$,
+\begin{align}
+|\lambda(t;\beta)|
+&\le 1 + \sum_{n=1}^K |\gamma_n| e^{|\beta| t} |\cos(t_nt + \phi_n)|\nonumber\\
+&\le 1 + e^{|\beta| T}\sum_{n=1}^K \frac{\gamma_0}{\sqrt{n}}.\label{eq:lambda_bound}
+\end{align}
+Let $C_K := \sum_{n=1}^K n^{-1/2}$, which satisfies $C_K\le 2\sqrt{K}$. Thus
+\begin{equation}
+|\lambda(t;\beta)| \le 1 + \gamma_0 e^{|\beta| T} C_K
+\le 1 + 2\gamma_0 e^{|\beta| T}\sqrt{K}.
+\end{equation}
+Combining with \eqref{eq:H_total_norm} and \eqref{eq:Hgap_row_bound} gives
+\begin{equation}
+\|H(t;\beta)\| \le \frac{\alpha}{2} + 2|\eta|\left(1 + 2\gamma_0 e^{|\beta| T}\sqrt{K}\right),\qquad t\in[0,T].
+\end{equation}
+In particular, for fixed $(\alpha,\eta,\gamma_0,K,T)$, the norm grows at most exponentially in $|\beta|T$.
+
+\section{Existence and Unitarity of the Time-Ordered Evolution}
+
+\subsection{General theorem for bounded self-adjoint $H(t)$}
+
+Consider a family of bounded self-adjoint operators $H(t)$ on a finite-dimensional Hilbert space $\mathcal{H}_N$ such that:
+\begin{itemize}
+  \item The map $t\mapsto H(t)$ is continuous on a compact interval $[0,T]$.
+  \item Each $H(t)$ is bounded, with $\|H(t)\|\le M$ for some $M>0$ and all $t\in[0,T]$.
+\end{itemize}
+Then the initial value problem
+\begin{equation}
+i\frac{d}{dt}\ket{\psi(t)} = H(t)\ket{\psi(t)},\qquad \ket{\psi(0)}=\ket{\psi_0}
+\end{equation}
+has a unique global solution $\ket{\psi(t)}$ for all $t\in[0,T]$, and the evolution is unitary, i.e.\ the solution can be written as
+\begin{equation}
+\ket{\psi(t)} = U(t,0)\ket{\psi_0},
+\end{equation}
+where $U(t,s)$ is a two-parameter family of unitary operators satisfying
+\begin{align}
+i\frac{d}{dt}U(t,s) &= H(t)U(t,s),\qquad U(s,s)=I,\\
+U(t,s)U(s,r) &= U(t,r).
+\end{align}
+Moreover, $U(t,s)$ can be represented as a time-ordered exponential
+\begin{equation}
+U(t,s) = \mathcal{T}\exp\left(-i\int_s^t H(\tau)\,d\tau\right).
+\end{equation}
+
+\subsection{Application to the Zeta-Multiplicity Hamiltonian}
+
+In our case, for fixed parameters $(\alpha,\eta,\gamma_0,K,\beta)$ and a finite time horizon $[0,T]$, we have shown:
+\begin{itemize}
+  \item $H(t;\beta)$ is self-adjoint for all $t$.
+  \item $t\mapsto H(t;\beta)$ is continuous (indeed smooth) because $\lambda(t;\beta)$ is a finite linear combination of smooth functions.
+  \item $\|H(t;\beta)\|$ is bounded uniformly on $[0,T]$ by the estimate above.
+\end{itemize}
+Thus, by the general theorem, the initial value problem
+\begin{equation}
+i\frac{d}{dt}\ket{\psi(t)} = H(t;\beta)\ket{\psi(t)},\qquad \ket{\psi(0)}=\ket{\psi_0}
+\end{equation}
+has a unique solution given by a unitary propagator $U_\beta(t,0)$:
+\[
+\ket{\psi(t)} = U_\beta(t,0)\ket{\psi_0},
+\]
+and $\norm{\psi(t)}=1$ for all $t\in[0,T]$.
+
+\section{Properties of Circular Phase Variance}
+
+\subsection{Basic invariances}
+
+Recall the definition:
+\begin{align}
+\theta_i(t) &= \arg c_i(t),\\
+R(t) &= \frac{1}{N}\sum_{i=1}^N e^{i\theta_i(t)},\\
+\theta_{\mathrm{mean}}(t) &= \arg R(t),\\
+\delta_i(t) &= \arg\left(e^{i(\theta_i(t)-\theta_{\mathrm{mean}}(t))}\right),\\
+V(t) &= \frac{1}{N}\sum_{i=1}^N \delta_i(t)^2.
+\end{align}
+
+\begin{lemma}[Global phase invariance]
+Let $\ket{\psi'(t)} = e^{i\varphi(t)}\ket{\psi(t)}$ for some real-valued function $\varphi(t)$. Then $\theta'_i(t) = \theta_i(t)+\varphi(t)$, but the circular phase variance satisfies $V' (t) = V(t)$ for all $t$ where $R(t)\neq 0$.
+\end{lemma}
+
+\begin{proof}
+Under a global phase shift,
+\[
+\theta'_i(t) = \theta_i(t) + \varphi(t).
+\]
+Then
+\[
+R'(t) = \frac{1}{N}\sum_i e^{i\theta'_i(t)} = \frac{1}{N}\sum_i e^{i(\theta_i(t)+\varphi(t))}
+= e^{i\varphi(t)}R(t).
+\]
+Thus $\theta'_{\mathrm{mean}}(t) = \arg R'(t) = \arg R(t) + \varphi(t) = \theta_{\mathrm{mean}}(t)+\varphi(t)$ (mod $2\pi$). Deviations transform as
+\begin{align*}
+\delta'_i(t) 
+&= \arg\left(e^{i(\theta'_i(t)-\theta'_{\mathrm{mean}}(t))}\right)\\
+&= \arg\left(e^{i[(\theta_i(t)+\varphi(t)) - (\theta_{\mathrm{mean}}(t)+\varphi(t))]}\right)\\
+&= \arg\left(e^{i(\theta_i(t)-\theta_{\mathrm{mean}}(t))}\right) = \delta_i(t).
+\end{align*}
+Hence $V'(t) = \frac{1}{N}\sum_i \delta'_i(t)^2 = \frac{1}{N}\sum_i \delta_i(t)^2 = V(t)$.
+\end{proof}
+
+\subsection{Boundedness}
+
+\begin{lemma}[Bounded variance]
+For any state $\ket{\psi(t)}$ with $R(t)\neq 0$,
+\[
+0 \le V(t) \le \pi^2.
+\]
+\end{lemma}
+
+\begin{proof}
+By construction, each deviation $\delta_i(t)\in(-\pi,\pi]$. Hence $\delta_i(t)^2\le \pi^2$ and $\delta_i(t)^2\ge 0$. Taking the average,
+\[
+0 \le V(t) = \frac{1}{N}\sum_i \delta_i(t)^2 \le \frac{1}{N}\sum_i \pi^2 = \pi^2.
+\]
+\end{proof}
+
+\section{Remarks on Asymptotic Behavior and RH-Stability}
+
+\subsection{Heuristic connection to \texorpdfstring{$\beta$}{beta}}
+
+The envelope
+\[
+\lambda(t;\beta) = 1 + \sum_{n=1}^K \gamma_n e^{\beta t}\cos(t_n t + \phi_n)
+\]
+has asymptotic behavior controlled by $\beta$ on any sufficiently long finite window. For $\beta=0$, the modulation is bounded,
+\[
+|\lambda(t;0)| \le 1 + \gamma_0\sum_{n=1}^K\frac{1}{\sqrt{n}},
+\]
+whereas for $\beta\neq 0$ one expects exponential growth or decay in magnitude (bounded only by the finite time horizon $T$ in numerical experiments). Through the bound on $\|H(t;\beta)\|$, this envelope translates into bounds on the generator of dynamics.
+
+While a rigorous proof connecting $\beta=0$ to bounded $V(t)$ in the limit $T\to\infty$ would require significantly deeper analysis (and likely number-theoretic input), the finite-time operator norm bounds and the controlled exponential envelope suggest that any exponential growth in $V(t)$ for $\beta\neq 0$ is, at minimum, consistent with the stronger drive induced by $e^{\beta t}$.
+
+\subsection{Finite-dimensional truncation and regularization}
+
+All proofs above are carried out in a finite-dimensional setting. Questions about convergence as $N\to\infty$ or $K\to\infty$ would require additional regularization (e.g.\ zeta-regularized sums in the exponent, or truncation schemes tuned to the explicit formula). The current exposition explicitly treats $N,K$ as finite and fixed, which is sufficient for the numerical protocol and for the defensive publication goals of this work.
+
+\section{Summary of Key Bounds}
+
+For convenience, we collect key inequalities:
+
+\begin{itemize}
+  \item $\|H_{\mathrm{prime}}\| = \alpha/2$.
+  \item $\|H_{\mathrm{gap}}\|\le 2|\eta|$.
+  \item For $t\in[0,T]$,
+  \[
+  |\lambda(t;\beta)|\le 1 + 2\gamma_0 e^{|\beta| T}\sqrt{K}.
+  \]
+  \item Hence, for $t\in[0,T]$,
+  \[
+  \|H(t;\beta)\|\le \frac{\alpha}{2} + 2|\eta|\left(1+2\gamma_0 e^{|\beta| T}\sqrt{K}\right).
+  \]
+  \item Circular variance satisfies $0\le V(t)\le \pi^2$ and is invariant under global phase shifts.
+\end{itemize}
+
+These bounds ensure well-posedness and unitarity of the finite-time evolution and provide an explicit quantitative handle on how the envelope parameter $\beta$ and the truncation parameters $(N,K,T)$ enter into the dynamical generator’s norm.
+
+\nocite{*}
+\bibliographystyle{unsrt}  
+\bibliography{references}  
+
+
+\end{document}

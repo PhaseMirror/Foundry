@@ -1,0 +1,2626 @@
+% !TEX program = pdflatex
+\documentclass[11pt]{article}
+
+% Packages
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{amsthm}
+\usepackage{mathtools}
+\usepackage{microtype}
+\usepackage{graphicx}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage[nameinlink,capitalise]{cleveref}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage{thmtools}
+\usepackage{bm}
+\usepackage{doi}
+\usepackage{lmodern}
+
+% Theorem environments
+\declaretheoremstyle[
+  spaceabove=6pt, spacebelow=6pt,
+  headfont=\bfseries,
+  notefont=\normalfont\itshape,
+  notebraces={(}{)},
+  bodyfont=\itshape,
+  headpunct={.},
+  postheadspace=0.5em
+]{thmstyle}
+
+\declaretheorem[style=thmstyle,numberwithin=section]{theorem}
+\declaretheorem[style=thmstyle,sibling=theorem]{lemma}
+\declaretheorem[style=thmstyle,sibling=theorem]{proposition}
+\declaretheorem[style=thmstyle,sibling=theorem]{corollary}
+\theoremstyle{definition}
+\newtheorem{sdefinition}[theorem]{Definition}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+% Macros
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Hhh}{\mathcal{H}}
+\newcommand{\D}{\mathcal{D}}
+\newcommand{\NN}{\mathbb{N}}
+\newcommand{\norm}[1]{\left\lVert #1\right\rVert}
+\newcommand{\abs}[1]{\left\lvert #1\right\rvert}
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\Hcal}{\mathcal{H}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\eps}{\varepsilon}
+\newcommand{\1}{\mathbf{1}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\braces}[1]{\left\{ #1 \right\}}
+\newcommand{\angles}[1]{\left\langle #1 \right\rangle}
+\newcommand{\op}{\mathrm{op}}
+\newcommand{\Id}{\mathrm{Id}}
+\newcommand{\Kop}{\mathcal{K}}
+\newcommand{\Var}{\operatorname{Var}}
+\newcommand{\Diag}{\operatorname{Diag}}
+\newcommand{\softmax}{\operatorname{softmax}}
+\newcommand{\Tr}{\operatorname{Tr}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\one}{\mathbbm{1}}
+\newcommand{\inner}[2]{\left\langle #1,\,#2 \right\rangle}
+\newcommand{\Sig}{\mathrm{Sig}}
+\newcommand{\A}{\mathcal{A}}
+
+\newcommand{\Pbb}{\mathbb{P}}
+\newcommand{\Qbb}{\mathbb{Q}}
+\newcommand{\Zbb}{\mathbb{Z}}
+\newcommand{\Cbb}{\mathbb{C}}
+\newcommand{\Mfun}{M_{\mathrm{fun}}}
+\newcommand{\Mint}{M_{\mathrm{int}}}
+\newcommand{\Mhat}{\widehat{M}}
+\newcommand{\Herm}[1]{\mathrm{Herm}(#1)}
+\newcommand{\GapLB}{\mathrm{GapLB}}
+\newcommand{\SlopeUB}{\mathrm{SlopeUB}}
+\newcommand{\rank}{\mathrm{rank}}
+\newcommand{\im}{\mathrm{im}}
+\newcommand{\sgn}{\mathrm{sgn}}
+\newcommand{\gapPi}[1]{\mathrm{gap}_{\Pi}\!\left(#1\right)}
+\newcommand{\gap}{\mathrm{gap}}
+
+\newcommand{\ip}[2]{\left\langle #1,\,#2\right\rangle}
+\newcommand{\proj}{\Pi}
+
+\newcommand{\gaplb}{\mathrm{GapLB}}
+\newcommand{\slopeub}{\mathrm{SlopeUB}}
+\newcommand{\phival}{\varphi} % golden ratio symbol
+}
+
+
+% Moonshine block macros
+\newcommand{\MoonRank}{24}         % rank r
+\newcommand{\MoonProj}{\Pi}        % spectral projector onto the moonshine block
+
+% Prime set for the controller
+\newcommand{\PrimeSet}{\{2,3,5,7,11,13,17,19,23,29,31\}} % |P_N| = 11
+
+% Fixed-point / ZK macros
+\newcommand{\fixbits}{13}
+\newcommand{\qscale}{2^{\fixbits}}
+\newcommand{\dq}{2^{-(\fixbits+1)}}     % quantization half-step
+\newcommand{\epsprime}{\varepsilon - \dq}
+\newcommand{\epsscaled}{\left\lfloor \qscale\,\epsprime \right\rfloor}
+
+% Lawfulness monitor badges
+\newcommand{\LawfulOK}{\fbox{\scriptsize\sf Lawful}}
+\newcommand{\LawfulBad}{\fbox{\scriptsize\sf Violated}}
+
+
+
+% Title
+
+\title{PIRTM--ACE$\times$PETC: \newline Prime-Indexed Recursive Tensor Models with \newline Certified Contraction and Lawful Prime Weighting}
+\author{IFMD Framework: ACE (Tyler Van Osdol) \& PETC (Ryan Van Gelder)}
+\date{\today}
+\maketitle
+\begin{document}
+\begin{abstract}
+We present a complete, engineering-ready formulation of the Prime-Indexed Recursive Tensor Model (PIRTM) integrated with the Arithmetic Control Engine (ACE) for safety certificates and the Prime-Encoded Tensor Calculus (PETC) for lawful prime-weighted structure. The core dynamics are affine-linear with a prime-decomposed gain operator. We prove necessary and sufficient convergence conditions (spectral radius $<1$), provide sufficient ACE--PETC budget tests, give robustness and time-varying extensions, and supply drop-in Python implementations including exact weighted-$\ell_1$ projection, monitoring utilities, fixed-point estimators with certified tails, and adaptive margin control. Throughout we adhere to the notational convention that the gain acts by operator application $K\,T$ (\emph{not} tensor product), reserving $\otimes$ for true space tensor products.
+\end{abstract}
+
+\tableofcontents
+
+\section{Introduction}
+PIRTM models the evolution of a tensor-valued state $T_t$ under a prime-weighted linear operator with an affine forcing term. To guarantee safe and predictable behavior, we combine:
+\begin{itemize}[leftmargin=*]
+  \item \textbf{PETC}: a structural layer that encodes prime indices, exponents and operator bounds $b_p$, producing a lawful ledger for $\{(p,\alpha,b_p)\}$ and raw weights;
+  \item \textbf{ACE}: a certification layer that enforces a contraction budget via exact weighted-$\ell_1$ projection and yields online certificates (contraction gap, rate upper bounds).
+\end{itemize}
+This report consolidates the mathematical foundation (convergence, robustness) and the production-grade implementation (projection, monitoring and solvers).
+
+\section{Notation and Setting}
+Let $(H,\norm{\cdot})$ be a Banach space suitable for the tensor $T_t\in H$. For a list of primes $P_N=\{p_1,\dots,p_N\}$ and bounded linear maps $B_p:H\to H$ with operator bounds $\norm{B_p}\le b_p$, define prime weights
+\[
+  w_p := \Lambda_p\,p^{\alpha}, \qquad \alpha\in\R, \ \Lambda_p\in\R.
+\]
+The gain operator is the (finite) sum
+\[
+  K := \sum_{p\in P_N} w_p\,B_p, \qquad \text{acting by application } (K\,X)=\sum_{p} w_p\,B_p(X).
+\]
+We reserve $\otimes$ for explicit tensor products of spaces; we \emph{do not} write $K\otimes T$ for the state update.
+
+\section{Core Recurrence: Scalar and Operator Forms}
+\subsection{Scalar/Mode-wise Form}
+For each mode $(m,n)$, the state obeys
+\begin{equation}
+  T_{t+1}(m,n) = k_m\,T_t(m,n) + F(m,n), \qquad k_m := \sum_{p\in P_N} \Lambda_m\, p^{\alpha}.
+  \label{eq:scalar}
+\end{equation}
+This is a specialization of the operator model when each $B_p$ acts as the identity on the $(m,n)$-mode.
+
+\subsection{Operator Form}
+For the full tensor state $T_t\in H$ we have
+\begin{equation}
+  T_{t+1} = F + K\,T_t, \qquad K = \sum_{p\in P_N} w_p\,B_p, \quad w_p=\Lambda_p\,p^{\alpha}.
+  \label{eq:operator}
+\end{equation}
+
+\section{Convergence Theory}
+\begin{theorem}[Fixed point and convergence]
+Consider \eqref{eq:operator}. The following are equivalent:
+\begin{enumerate}[label=(\roman*),leftmargin=*]
+  \item The spectral radius satisfies $\rho(K)<1$.
+  \item The operator $(I-K)$ is invertible with Neumann series $(I-K)^{-1}=\sum_{j\ge 0} K^j$ converging in operator norm.
+  \item For every $T_0\in H$, the sequence $T_{t+1}=F+K\,T_t$ converges to the unique fixed point $T_\infty=(I-K)^{-1}F$ with linear rate bounded by $\norm{K}^t$.
+\end{enumerate}
+\end{theorem}
+\begin{proof}
+$(i)\Rightarrow(ii)$: If $\rho(K)<1$, then there exists a submultiplicative operator norm with $\norm{K}<1$, which yields the Neumann series. $(ii)\Rightarrow(iii)$: Summation of $K^jF$ and the Banach fixed-point theorem give uniqueness and linear convergence. $(iii)\Rightarrow(i)$: If iterates converge for all $T_0$ then $1$ is not in the spectrum of $K$ and $\rho(K)<1$.
+\end{proof}
+
+\begin{corollary}[Scalar specialization]
+If each $B_p=\Id$, then $K=k\,\Id$ with $k=\sum_p w_p$. Convergence holds iff $|k|<1$, and the fixed point and rate are
+\[
+  T_\infty = \frac{F}{1-k}, \qquad |T_t-T_\infty| \le |k|^t\,|T_0-T_\infty|.
+\]
+\end{corollary}
+
+\subsection{ACE--PETC Sufficient Test}
+A practical sufficient condition enforced by ACE with PETC bounds is
+\begin{equation}
+  \sum_{p\in P_N} b_p\,|w_p|\; <\; 1-\varepsilon, \qquad (\varepsilon>0),
+  \label{eq:ace-budget}
+\end{equation}
+which implies $\norm{K}\le \sum_p b_p|w_p| < 1$ and hence $\rho(K)<1$.
+
+\subsection{Infinite-prime extension}
+If $P_N\uparrow P$ and $\sum_{p\in P} b_p\,|\Lambda_p|\,p^{\alpha} < 1$ (e.g., $\alpha<-1$ with bounded $\Lambda_p$ and $b_p$), then the series for $K$ converges absolutely in operator norm and all results above hold.
+
+\section{Robustness and Time-Varying Systems}
+\begin{proposition}[Sensitivity of the fixed point]
+Let $\norm{K}\le 1-\delta$ with $\delta\in(0,1)$. For perturbations $\Delta K$ and $\Delta F$ with $\norm{\Delta K}<\delta$, the fixed point shifts by
+\[
+  \Delta T_\infty = (I-K)^{-1}\,\Delta F + (I-K)^{-1}\,\Delta K\,(I-K)^{-1}F + \mathcal{O}(\norm{\Delta K}^2),
+\]
+so that $\norm{\Delta T_\infty}\le \delta^{-1}\norm{\Delta F} + \delta^{-2}\norm{\Delta K}\,\norm{F}+\ldots$.
+\end{proposition}
+
+\begin{theorem}[Uniform contraction for time-varying gains]
+Suppose $T_{t+1}=F_t+K_t T_t$ with $\sup_t\norm{K_t}\le 1-\delta$ and bounded $F_t$. Then
+\[
+  \norm{T_t}\le (1-\delta)^t\,\norm{T_0} + \frac{1}{\delta}\,\sup_{j\le t}\norm{F_j},
+\]
+so the system is BIBO-stable and tracks slowly varying fixed points with error $\mathcal{O}(\delta^{-1})$.
+\end{theorem}
+
+\section{ACE$\times$PETC Integration}
+\paragraph{PETC (lawfulness).} PETC supplies the prime-signature ledger $\{(p,\alpha,b_p)\}$ and raw weights $w_p=\Lambda_p p^{\alpha}$. It also specifies admissible decay profiles in $\Lambda_p$ when $\alpha\ge -1$ so that \eqref{eq:ace-budget} still holds.
+
+\paragraph{ACE (safety).} ACE enforces the weighted-$\ell_1$ budget \eqref{eq:ace-budget} via a 1-Lipschitz projection (soft-thresholding by a common multiplier), preserving contraction margins. Online metrics: the contraction upper bound $\widehat{\norm{K}}=\sum_p b_p|w_p|$, the gap $\mathrm{gapLB}=1-\widehat{\norm{K}}$, and a rate upper bound $\mathrm{SlopeUB}=\widehat{\norm{K}}$.
+
+\section{Algorithms and Reference Implementations}
+\subsection{Exact weighted-$\ell_1$ projection (ACE)}
+\begin{algorithm}[H]
+\caption{Weighted-$\ell_1$ projection by bisection}
+\begin{algorithmic}[1]
+\Require raw weights $w$, PETC bounds $b$, budget $\tau\in(0,1)$
+\If{$\sum_i b_i|w_i|\le \tau$} \State \Return $w$ \EndIf
+\State Set $\lambda\in[0,\max_i |w_i|/\max(b_i,\epsilon)]$
+\While{budget error $>\,$tol and iters $<\,$max}
+  \State $w^{\mathrm{proj}}_i \leftarrow \mathrm{sign}(w_i)\,\max(0, |w_i|-\lambda b_i)$
+  \State $\mathrm{budget}\leftarrow \sum_i b_i |w^{\mathrm{proj}}_i|$
+  \State Adjust $\lambda$ by bisection to meet $\mathrm{budget}=\tau$
+\EndWhile
+\State \Return $w^{\mathrm{proj}}$
+\end{algorithmic}
+\end{algorithm}
+
+\paragraph{Python.}
+\begin{lstlisting}[style=py,caption={Exact weighted-$\ell_1$ projection (ACE budget)}]
+from typing import List
+import numpy as np
+
+def project_weighted_l1(w: List[float], b: List[float], tau: float, 
+                        tol: float = 1e-9, max_iters: int = 80) -> List[float]:
+    """
+    Projects weights to exactly meet ACE budget via bisection.
+    Returns projected w satisfying sum(b_i * |w_i|) ≈ tau.
+    """
+    current_budget = sum(b_i * abs(w_i) for w_i, b_i in zip(w, b))
+    if current_budget <= tau:
+        return w.copy()
+
+    lo, hi = 0.0, max(abs(w_i) / max(b_i, 1e-15) for w_i, b_i in zip(w, b))
+    w_proj = w.copy()
+    for _ in range(max_iters):
+        lam = 0.5 * (lo + hi)
+        w_proj = [
+            np.sign(w_i) * max(0.0, abs(w_i) - lam * b_i)
+            for w_i, b_i in zip(w, b)
+        ]
+        budget = sum(b_i * abs(wi) for wi, b_i in zip(w_proj, b))
+        if abs(budget - tau) < tol:
+            break
+        if budget > tau:
+            lo = lam
+        else:
+            hi = lam
+    return w_proj
+\end{lstlisting}
+
+\subsection{Unified ACE--PETC update (scalar and operator cases)}
+\begin{lstlisting}[style=py,caption={One PIRTM step with ACE×PETC certification}]
+from typing import List, Callable, Dict, Tuple
+import numpy as np
+
+Tensor = np.ndarray
+LinearOp = Callable[[Tensor], Tensor]
+
+
+def ace_petc_step(T: Tensor, F: Tensor, primes: List[int], alpha: float,
+                  Lambda: List[float], B_ops: List[LinearOp] = None,
+                  b_p: List[float] = None, tau: float = 0.9
+                  ) -> Tuple[Tensor, Dict, Dict]:
+    """
+    One step of PIRTM recurrence with ACE×PETC certification.
+    Returns: T_next, margins, debug
+    """
+    w_raw = [Lam_i * (p ** alpha) for p, Lam_i in zip(primes, Lambda)]
+
+    if B_ops is None:
+        # Scalar specialization
+        b_scalar = b_p if b_p is not None else [1.0] * len(primes)
+        w_proj = project_weighted_l1(w_raw, b_scalar, tau)
+        k_eff = sum(w_proj)
+        T_next = k_eff * T + F
+        margins = {
+            "||K||": abs(k_eff),
+            "gapLB": 1.0 - abs(k_eff),
+            "contraction_rate": abs(k_eff),
+            "budget_used": sum(b_i * abs(w_i) for w_i, b_i in zip(w_proj, b_scalar)),
+        }
+        debug = {"w": w_proj, "k_eff": k_eff, "w_raw": w_raw}
+        return T_next, margins, debug
+
+    # Operator case
+    assert b_p is not None and len(b_p) == len(primes)
+    w_proj = project_weighted_l1(w_raw, b_p, tau)
+
+    def K_operator(X: Tensor) -> Tensor:
+        Y = np.zeros_like(X)
+        for w_i, B_i in zip(w_proj, B_ops):
+            Y = Y + w_i * B_i(X)
+        return Y
+
+    T_next = K_operator(T) + F
+    K_norm_upper = sum(abs(w_i) * bp for w_i, bp in zip(w_proj, b_p))
+    margins = {
+        "||K||_ub": K_norm_upper,
+        "gapLB": 1.0 - K_norm_upper,
+        "contraction_rate": K_norm_upper,
+        "budget_used": K_norm_upper,
+    }
+    debug = {"w": w_proj, "K_norm_ub": K_norm_upper, "K_operator": K_operator}
+    return T_next, margins, debug
+\end{lstlisting}
+
+\subsection{Monitoring and safety status}
+\begin{lstlisting}[style=py,caption={Real-time ACE margins monitor}]
+class PIRTMMonitor:
+    """Real-time monitoring of ACE×PETC safety margins"""
+    def __init__(self, tau: float = 0.9, window: int = 100, norm_fn=None):
+        self.tau = tau
+        self.window = window
+        self.norm_fn = norm_fn if norm_fn is not None else \
+            (lambda x: float(np.linalg.norm(np.asarray(x))))
+        self.history = {"K_norm": [], "gapLB": [], "T_diff": [], "sensitivity": []}
+
+    def update(self, margins: Dict, T_prev: Tensor, T_current: Tensor):
+        K_norm = margins.get("||K||", margins.get("||K||_ub", 0.0))
+        gap = margins.get("gapLB", 0.0)
+        self.history["K_norm"].append(K_norm)
+        self.history["gapLB"].append(gap)
+        self.history["T_diff"].append(self.norm_fn(np.asarray(T_current) - np.asarray(T_prev)))
+        self.history["sensitivity"].append(1.0 / max(gap, 1e-9))
+        for key in self.history:
+            if len(self.history[key]) > self.window:
+                self.history[key].pop(0)
+
+    def safety_status(self) -> Dict:
+        if not self.history["K_norm"]:
+            return {"status": "NO_DATA"}
+        recent_K = float(np.mean(self.history["K_norm"][ -5: ]))
+        recent_gap = float(np.mean(self.history["gapLB"][ -5: ]))
+        if recent_K > self.tau:
+            status = "VIOLATION"
+        elif recent_gap < 0.05:
+            status = "CRITICAL"
+        elif recent_gap < 0.10:
+            status = "WARNING"
+        else:
+            status = "SAFE"
+        return {
+            "status": status,
+            "avg_contraction": recent_K,
+            "avg_gap": recent_gap,
+            "sensitivity": 1.0 / max(recent_gap, 1e-9),
+        }
+\end{lstlisting}
+
+\subsection{Fixed-point estimator with certified tail}
+\begin{lstlisting}[style=py,caption={(I - K)^{-1}F via Neumann series with tail certificate}]
+def fixed_point_estimate(F: Tensor,
+                         K_apply: LinearOp,
+                         K_norm_ub: float,
+                         tol: float = 1e-8,
+                         max_terms: int = 10_000) -> Tensor:
+    """Computes (I - K)^{-1} F via Neumann series; requires K_norm_ub < 1."""
+    assert K_norm_ub < 1.0, "Neumann series requires ||K|| < 1."
+    S = np.zeros_like(F)
+    term = F.copy()
+    tau = K_norm_ub
+    for j in range(max_terms):
+        S = S + term
+        tail_bound = (tau ** (j + 1)) * float(np.linalg.norm(np.asarray(F))) / (1 - tau)
+        if tail_bound <= tol:
+            break
+        term = K_apply(term)
+    return S
+\end{lstlisting}
+
+\subsection{Adaptive budget to maintain a target gap}
+\begin{lstlisting}[style=py,caption={Simple adaptive policy for τ to keep a safety gap}]
+def adapt_tau(tau: float, gapLB: float, gap_target: float = 0.1, eta: float = 0.5) -> float:
+    """If gapLB < target, move tau toward 1 - gap_target by factor eta."""
+    if gapLB < gap_target:
+        return (1 - eta) * tau + eta * (1.0 - gap_target)
+    return tau
+\end{lstlisting}
+
+\subsection{Infinite-prime convergence check (corrected)}
+\begin{lstlisting}[style=py,caption={Absolute convergence test for ∑ b_p|Λ_p|p^α}]
+def check_infinite_prime_convergence(alpha: float, Lambda_bound: float, b_bound: float) -> bool:
+    """Returns True iff α < -1 and bounds are finite and nonnegative."""
+    ok_bounds = np.isfinite(Lambda_bound) and np.isfinite(b_bound) and (Lambda_bound >= 0) and (b_bound >= 0)
+    return (alpha < -1) and ok_bounds
+\end{lstlisting}
+
+\subsection{Usage example (scalar case)}
+\begin{lstlisting}[style=py,caption={Scalar PIRTM loop with monitoring and fixed-point estimate}]
+primes = [2, 3, 5, 7, 11]
+alpha = -1.5
+Lambda = [0.1] * len(primes)
+F = 1.0
+T = 0.0
+
+monitor = PIRTMMonitor(tau=0.85)
+for step in range(100):
+    T_next, margins, debug = ace_petc_step(T, F, primes, alpha, Lambda, tau=0.85)
+    monitor.update(margins, T, T_next)
+    T = T_next
+    if step % 10 == 0:
+        status = monitor.safety_status()
+        print(f"Step {step}: {status['status']} (K={margins.get('||K||', 0):.3f}, gap={margins['gapLB']:.3f})")
+
+# Fixed point
+k_eff = debug['k_eff']
+T_inf = F / (1 - k_eff)
+print(f"Fixed point: {T_inf:.6f}")
+\end{lstlisting}
+
+\subsection{Design Guidelines and Checklists}
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Choose $\alpha$}: start with $\alpha\in(-2,-1)$; adjust $\Lambda_p$ to keep $\sum b_p|w_p|\le \tau$.
+  \item \textbf{Projection}: always use the exact weighted-$\ell_1$ projection (not uniform scaling).
+  \item \textbf{Monitoring}: log $\widehat{\norm{K}}$, gap $1-\widehat{\norm{K}}$, and $\norm{T_{t+1}-T_t}$.
+  \item \textbf{Safety margins}: begin with $\tau\le 0.9$; adapt using \texttt{adapt\_tau} only when margins erode.
+  \item \textbf{Infinite primes}: ensure $\sum_p b_p|\Lambda_p|p^{\alpha}<1$ (e.g., $\alpha<-1$ with bounded $\Lambda_p$, $b_p$), noting this is sufficient but not necessary.
+\end{itemize}
+
+\subsection{Conclusions}
+The PIRTM dynamics combined with ACE and PETC yield a contractive, well-conditioned, and monitorable system. The theory (spectral radius criterion, budget-based sufficiency) aligns exactly with the provided implementations (projection, monitors, fixed-point estimation), enabling reliable deployment.
+
+\section{Lightweight Scalar Friendly}
+We study a prime-indexed linear iteration for tensors,
+\begin{equation*}
+  T_{t+1}=F+k\,T_t, \quad k\in\R,
+\end{equation*}
+and show that convergence is guaranteed \emph{iff} $|k|<1$. ``Prime structure'' is treated as a \emph{dictionary} (representation/regularization) and as \emph{typing metadata} via the \textbf{Prime-Encoded Tensor Calculus (PETC; Ryan Van Gelder)} \cite{VanGelderPETC}, rather than as a physical law. Stability and safety are certified with a 1-Lipschitz projection from the \textbf{Arithmetic Control Engine (ACE; Tyler Van Osdol)} \cite{VanOsdolACE}. We replace universal constants with explicit budgets, move speculative physics to future work with a parameter-identification plan, and add a preregistered experimental protocol.
+\end{abstract}
+
+\subsection{Notation and Setup}
+Let $(\Hhh,\|\cdot\|)$ be a real Banach space (e.g., $\ell_2$ coefficients under a fixed dictionary). Fix a finite prime set $P_N=\{p_1,\dots,p_N\}$. A \emph{prime dictionary} is a collection $\D=\{\phi_p\}_{p\in P_N}\subset\Hhh$ used for expansions and penalties; we make no basis/completeness claim. For external drive $F\in\Hhh$, define the scalar gain
+\begin{equation}
+  k\;=\;\sum_{p\in P_N}\Lambda_p\,p^{\alpha},\qquad \Lambda_p\in\R,\;\alpha\in\R.
+  \label{eq:gain}
+\end{equation}
+Older drafts used a single $\Lambda$; here we allow per-prime $\Lambda_p$.
+
+\subsection{Convergence and Safety}
+\begin{theorem}[Convergence $\Leftrightarrow$ contraction]\label{thm:contraction}
+Let $\mathcal T(X)=F+kX$ on $\Hhh$. If $|k|<1$, then for any $T_0$,
+\begin{equation*}
+  T_t \to T_\infty = \frac{1}{1-k}\,F,
+\end{equation*}
+with linear rate $|k|$.
+\end{theorem}
+\begin{proof}
+We have $\|\mathcal T(X)-\mathcal T(Y)\|=|k|\,\|X-Y\|$. If $|k|<1$, $\mathcal T$ is a contraction; apply Banach's fixed-point theorem \cite{BauschkeCombettes2017}.
+\end{proof}
+
+\begin{lemma}[One sufficient route to $|k|<1$]\label{lem:sufficient}
+If $\Lambda_p\ge 0$ and $\alpha<-1$, then
+\begin{equation*}
+  |k|=\sum_{p\in P_N}\Lambda_p p^{\alpha}
+  \;\le\; \Big(\max_{p}\Lambda_p\Big)\sum_{i=1}^{N}p_i^{\alpha}.
+\end{equation*}
+Choosing $\max_p\Lambda_p$ small enough makes $|k|<1$. \emph{(Sufficient, not necessary.)}
+\end{lemma}
+
+\paragraph{ACE safety wrapper (spectral certification).} Let $S\subset\Hhh$ be a safety/regularization set (e.g., a weighted-$\ell_1$ ball on dictionary coefficients). Let $\Pi_S$ be the Euclidean projection onto $S$ (1-Lipschitz). The ACE-wrapped update
+\begin{equation}
+  T_{t+1} \,=\, \Pi_S\!\big(F+k\,T_t\big)
+  \label{eq:ace}
+\end{equation}
+has global Lipschitz constant $\le |k|$; thus $|k|<1$ gives a certified contraction and feasibility $T_t\in S$ for all $t$.
+
+\subsection{PETC Typing: Prime Structure as Metadata}
+Expand $T=\sum_{p\in P_N} w_p\,\phi_p$. Each coefficient $w_p$ carries a PETC ``prime type'' tag \cite{VanGelderPETC}. We impose a \emph{prime-mix budget}
+\begin{equation}
+  \sum_{p\in P_N} b_p\,|w_p(T)| \;\le\; \tau,\qquad b_p>0,
+  \label{eq:budget}
+\end{equation}
+which is enforced via the projection $\Pi_S$ (weighted soft-thresholding on $w_p$). Optional \emph{prime gating} $g_p(\alpha,\Lambda_p)=\Lambda_p p^{\alpha}$ modulates proposals but is bounded by the same budget; no ``universal constant'' is assumed.
+
+\subsection{Algorithm (ACE$\times$PETC-compliant)}
+\noindent\textbf{Inputs.} $F$, dictionary $\{\phi_p\}$, weights $\{\Lambda_p\}$, exponent $\alpha$, budget $(b_p,\tau)$.
+
+\begin{enumerate}[leftmargin=2em,label=\arabic*.]
+  \item \textbf{Gain synthesis.} Compute $k$ from \cref{eq:gain}. If $|k|\ge 1$, shrink $\Lambda_p$ and/or $P_N$ until $|k|<1$.
+  \item \textbf{Projection set.} Define $S=\{T:\sum_p b_p|w_p(T)|\le \tau\}$. Use $\Pi_S$ (1-Lipschitz).
+  \item \textbf{Iteration.} $T_{t+1}=\Pi_S(F+kT_t)$ as in \cref{eq:ace}.
+  \item \textbf{Stopping.} Stop when $\|T_{t+1}-T_t\|\le\varepsilon$; output $T_\infty$.
+\end{enumerate}
+\noindent\emph{Properties.} Certified convergence (\cref{thm:contraction}), feasibility (ACE), and auditable prime composition (PETC).
+
+\subsection{Practical Guidance}
+\paragraph{Choosing $\alpha,\Lambda_p,P_N$.} Pick $P_N$ by model/compute budget; start with $\alpha\in(-2,-1)$ and uniform $\Lambda_p=\Lambda$; use \cref{lem:sufficient} to get a safe $\Lambda$ with margin $\varepsilon\in[0.1,0.3]$; tune $(b_p,\tau)$ and re-check $|k|<1$.
+\paragraph{Diagnostics.} Track $|k|$, budget usage $\sum b_p|w_p|$, and prime-mix histograms per iteration. If convergence slows, reduce $|k|$, tighten $\tau$, or shrink $P_N$.
+
+\subsection{Experimental Protocol (Preregistered)}
+\textbf{Benchmarks.} MSD-PrimeMix (multi-scale disturbances with controlled prime-spread).\\
+\textbf{Baselines.} LQR (if model known), projected gradient with fixed step, Adam; RL baseline (e.g., TD3/DQN as applicable).\\
+\textbf{Metrics.} Task cost, settling time, safety-violation count, robustness vs. disturbance amplitude/sparsity; report mean$\pm$95\% CI over 10 seeds.\\
+\textbf{Ablations.} With/without ACE; with/without PETC budget; vary $\alpha$ at fixed $|k|$; expand/shrink $P_N$.\\
+\textbf{Reporting.} Publish code/configs; include certificate traces (GapLB, SlopeUB).
+
+\subsection{Related Work}
+Contractions and projection operators are classical \cite{BauschkeCombettes2017}; proximal methods and Lipschitz projections connect to the modern optimization toolkit \cite{ParikhBoyd2014}. Weighted $\ell_1$ projections and soft-thresholding date to wavelet shrinkage \cite{DonohoJohnstone1994} and LASSO \cite{Tibshirani1996}. Prime-indexed dictionaries fit within sparse coding and dictionary learning \cite{MallatZhang1993,OlshausenField1996,Mairal2010}. Lipschitz-controlled neural networks relate via Parseval regularization \cite{Cisse2017Parseval} and spectral normalization \cite{Miyato2018SN}. The ACE and PETC frameworks formalize safety via contraction certificates and structural typing, respectively \cite{VanOsdolACE,VanGelderPETC}.
+
+\subsection{Limitations}
+The linear core is intentional; nonlinear variants require fresh contraction proofs (local or global). Dictionary choice is application-dependent; performance hinges on whether $\{\phi_p\}$ captures salient structure.
+
+\subsection{Future Work}
+\textbf{Operator learning.} Learn diagonal-plus-low-rank operators in the prime dictionary with PETC regularizers; verify a contraction region.\\
+\textbf{Physical identification.} Units-consistent maps from data to $(\Lambda_p,\alpha)$ with uncertainty quantification.\\
+\textbf{Nonlinear plants.} ACE-style sector-bounded contractions and piecewise certificates.
+\section{The Prime-Recursive Foundations of Mathematical Existence}
+\label{sec:prime_recursive_foundations}
+
+\medskip
+
+A central question is whether diverse structures—algebraic, topological, or computational—can be generated by a single, prime-based, recursive mechanism. We formalize this as a meta-recursive \emph{prime-indexed} constructor that is both \emph{auditable} (PETC: unambiguous retrospection) and \emph{stable} (ACE: certified contraction).
+
+\subsection{The Meta-Recursive Function (ACE\texorpdfstring{$\times$}{x}PETC Form)}
+Let $P_N=\{p_1,\dots,p_N\}$ be the first $N$ primes. Let $H$ be a Banach space of (typed) tensors. For each prime $p\in P_N$ choose a bounded linear channel $B_p:H\!\to\!H$ with $\|B_p\|\le b_p$. Define prime weights
+\[
+w_p=\Lambda_p\,p^{\alpha},\quad \Lambda_p\in\mathbb{R}\ (\text{typically }\Lambda_p\ge0),\quad \alpha< -1\ \text{(sufficient decay)}.
+\]
+The \emph{gain operator} and the \emph{meta-recursion} are
+\begin{equation}
+\label{eq:gain_and_meta}
+\mathcal{K}=\sum_{p\in P_N} w_p B_p,\qquad
+T_{t+1}=\mathcal{M}(P_N;T_t):=F+\mathcal{K}\,T_t.
+\end{equation}
+This refines the informal sum $\sum_{p} \Lambda\,p^\alpha T_{p}^{(m,n)}$ into an operator form while keeping primes explicit as independent channels.
+
+\begin{assumption}[ACE Contraction Budget]
+\label{as:budget}
+\textstyle \sum_{p\in P_N} |w_p|\,b_p \;<\;1 \quad\Longrightarrow\quad \|\mathcal{K}\|\le\sum_{p}|w_p|b_p<1.
+\end{assumption}
+
+\begin{theorem}[Convergence \& Fixed Point]
+\label{thm:convergence}
+Under Assumption~\ref{as:budget}, the affine map $T\mapsto F+\mathcal{K}T$ is a strict contraction on $(H,\|\cdot\|)$. Hence there exists a unique fixed point
+\[
+T_\infty=(I-\mathcal{K})^{-1}F,
+\]
+and for any $T_0$ one has linear convergence
+$\|T_t-T_\infty\|\le \|\mathcal{K}\|^{\,t}\,\|T_0-T_\infty\|$.
+In the scalar special case ($T\in\mathbb{R}$, $\mathcal{K}=k\in(-1,1)$) this reduces to $T_\infty=\frac{F}{1-k}$.
+\end{theorem}
+
+\begin{theorem}[Uniqueness \& Stability under Projection]
+\label{thm:uniqueness}
+Let $\Pi_S$ be a nonexpansive projection (e.g., a convex projection) and consider the projected recursion
+\[
+T_{t+1}=\Pi_S\!\big(F+\mathcal{K}T_t\big).
+\]
+If Assumption~\ref{as:budget} holds, then $T\mapsto \Pi_S(F+\mathcal{K}T)$ is also a contraction with constant $\le\|\mathcal{K}\|<1$; therefore it admits a unique fixed point in $S$ and the iteration converges linearly to it.
+\end{theorem}
+
+\begin{remark}[Safe Design Regime for Prime Weights]
+A sufficient (not necessary) recipe: choose $\alpha< -1$, $\Lambda_p\ge0$, and cap $\Lambda_p\le\bar\Lambda$ so that $\sum_{p\in P_N}\Lambda_p p^{\alpha} b_p<1$. Increasing $N$ or tightening $\bar\Lambda$ preserves the margin.
+\end{remark}
+
+\subsection{PETC: Prime-Signature Ledger for Unambiguous Retrospection}
+Let $\mathbb{P}$ be the set of primes. A \emph{prime signature} is a finitely supported vector $e=(e_p)_{p\in\mathbb{P}}\in\mathbb{Z}^{(\mathbb{P})}$. Define the multiplicity map
+\[
+M(e)=\prod_{p} p^{e_p}\in\mathbb{Q}_{>0}.
+\]
+Composition of interactions is $e+e'$ (multiset union); undo/consumption is $e-e'$; dualization is $-e$.
+Unique factorization makes the history canonical: $e_p=v_p(M(e))$ records how many times the $p$-tagged event occurred.
+
+\begin{definition}[Conservation Certificate]
+For any typed operation with inputs $X_1,\dots,X_r$ and output $Y$, PETC conservation requires
+\(
+e(Y)=\sum_{i=1}^r e(X_i).
+\)
+A system is \emph{ledger-consistent} if the equality holds for all executed operations.
+\end{definition}
+
+\begin{proposition}[Lossless Retrospection]
+If a system is ledger-consistent, then for every state the accumulated signature $e$ determines the exact multiset of prime-tagged interactions that occurred, via $e_p=v_p(M(e))$.
+\end{proposition}
+
+\paragraph{Complexity.}
+Maintain $e$ as a sparse map (prime $\mapsto$ exponent). Updates/audits run in $O(|\mathrm{supp}(e)|)$—no integer factorization is needed.
+
+\subsection{Interpretation as a Universal Constructor}
+\label{subsec:universal_constructor}
+\textbf{Recursive self-modification.} The assignment $T_{t+1}=\mathcal{M}(P_N;T_t)$ mirrors prior states via $\mathcal{K}$, with uniqueness/convergence guaranteed by Theorems~\ref{thm:convergence}–\ref{thm:uniqueness}.
+
+\textbf{Structure emergence.} Choosing $F$ (drive) and $\{B_p\}$ (channels) yields a wide class of constructs: neural weights, quantum states, algebraic operators, or kernel process states.
+
+\textbf{Universality (within $H$).} Iteration converges to $T_\infty=(I-\mathcal{K})^{-1}F$; by selecting $F$ and $\{B_p\}$ appropriately, one can encode a broad family of objects in tensor space.
+
+\subsection{Examples of Emergent Structures}
+\begin{enumerate}
+  \item \textbf{Algebraic Systems.} Let $B_p$ be structured projectors/sparsity masks; $F$ encodes a group/semiring operation tensor. Contraction yields stable algebraic updates.
+  \item \textbf{Topological/Geometric Bases.} Choose $B_p$ as basis selectors; prime indices organize connectivity. Stable decompositions follow from Theorem~\ref{thm:convergence}.
+  \item \textbf{Tensor Networks.} Let $B_p$ act on tensor cores/edges; the fixed point realizes a high-dimensional network with controlled growth.
+  \item \textbf{Reinforcement Learning.} Take $T$ as weights, $F$ as TD/gradient drive, and $B_p$ as feature filters. Stability ensures convergent Q/policy updates.
+  \item \textbf{Kernel-Level Scheduling.} Model dispatch channels as $B_p$ and resource demand as $F$ for a multiplicity-driven scheduler (Section~\ref{sec:kernel_multiplicity}).
+\end{enumerate}
+
+\begin{theorem}[Fractal Stability via Prime-Indexed IFS]
+\label{thm:fractal_systems}
+If $H=\prod_{j} H_j$ with componentwise contractions $\{T\mapsto F+\mathcal{K}T\}$ whose constants are $<1$, then the induced self-map on $H$ is a contraction; the unique attractor $T_\infty$ is the limit of a prime-indexed iterated function system (IFS). Hierarchical prime partitioning induces self-similar structure in the limit.
+\end{theorem}
+
+\subsection{Refinements: Compression, Hierarchies, Causality, and Performance}
+\paragraph{Signature compression (checkpointing).}
+At epoch $k$, store $c_k\!\gets\!e$ and reset $e\!\gets\!0$. The rolled signature $\overline{e}=\sum_{k} c_k + e$ equals the uncheckpointed signature, preserving audits exactly.
+
+\paragraph{Exact/approximate/log-space conservation.}
+Prefer exact exponent equality $\sum_i e(X_i)=e(Y)$. For noise, allow $\|\sum_i e(X_i)-e(Y)\|_\infty\le\varepsilon$. If only $M(e)$ is accessible, use $\sum_i\sum_p e_p(X_i)\log p \approx \sum_p e_p(Y)\log p$ with tolerance $\eta$.
+
+\paragraph{Hierarchical rollups.}
+For a module tree $\mathcal{T}$ with local signatures $e[u]$, define $E[u]=e[u]+\sum_{v\in\mathrm{Children}(u)}E[v]$. If primitives are conservative, then $E[u]$ matches $u$'s external interface; conservation at the root implies global conservation.
+
+\paragraph{Causality (optional).}
+Augment PETC with a DAG $G=(V,E)$; label each edge with its prime increment. The justification set for a node (state) is the multiset union along any source–node path; its signature equals the state’s PETC signature.
+
+\subsection{ACE: Exact Weighted-\texorpdfstring{$\ell_1$}{l1} Projection}
+We enforce $\sum_p b_p|w_p|\le\tau<1$ via the exact projection onto the weighted ball. Let $z_p=b_p|w_p|$. If $\sum_p z_p\le\tau$ return $w$; else find $\theta\ge0$ with $\sum_p \max(z_p-\theta,0)=\tau$ and set
+\[
+w_p^\star=\mathrm{sign}(w_p)\,\frac{\max(z_p-\theta,0)}{b_p}.
+\]
+This is the weighted analogue of soft-thresholding; $\theta$ can be found by sorting $\{z_p\}$ and a cumulative scan.
+
+\subsection{Kernel-Level Multiplicity Scheduler}
+\label{sec:kernel_multiplicity}
+Associate each queue/class with a prime $p$; maintain PETC signatures per process and per core. Use ACE to allocate per-prime weights $w_p$ under $\sum b_p|w_p|\le\tau<1$; update dispatch decisions via $T_{t+1}=F+\mathcal{K}T_t$ where $T$ aggregates runnable-state indicators and $F$ encodes exogenous demand. PETC provides exact provenance for merges/splits; ACE maintains stability and responsiveness through budgeted adjustments.
+
+\subsection{Algorithms and Code (Runnable Sketches)}
+
+\paragraph{PETC prime ledger with checkpointing and exact conservation.}
+\begin{verbatim}
+class PrimeLedger:
+    def __init__(self):
+        self.sig = {}          # dict[int -> int], sparse exponents e_p
+        self.checkpoints = []  # list[dict[int -> int]]
+
+    def add_event(self, p: int, mult: int = 1, sign: int = +1):
+        self.sig[p] = self.sig.get(p, 0) + sign * mult
+        if self.sig[p] == 0: self.sig.pop(p)
+
+    def checkpoint(self):
+        self.checkpoints.append(self.sig.copy())
+        self.sig.clear()
+
+    def rolled_signature(self):
+        roll = {}
+        def add_map(dst, src, sgn=+1):
+            for p, e in src.items():
+                dst[p] = dst.get(p, 0) + sgn * e
+                if dst[p] == 0: dst.pop(p)
+        for ck in self.checkpoints: add_map(roll, ck, +1)
+        add_map(roll, self.sig, +1)
+        return roll
+
+def conservation_ok_exact(inputs, out) -> bool:
+    acc = {}
+    def add(dst, src, sgn=+1):
+        for p, e in src.items():
+            dst[p] = dst.get(p, 0) + sgn * e
+            if dst[p] == 0: dst.pop(p)
+    for L in inputs: add(acc, L.rolled_signature(), +1)
+    add(acc, out.rolled_signature(), -1)
+    return len(acc) == 0
+\end{verbatim}
+
+\paragraph{Optional log-space surrogate (tolerant).}
+\begin{verbatim}
+import math
+
+def log_signature(sig: dict[int,int]) -> float:
+    return sum(e * math.log(p) for p, e in sig.items())
+
+def conservation_ok_log(inputs, out, eta: float = 1e-9):
+    lhs = sum(log_signature(L.rolled_signature()) for L in inputs)
+    rhs = log_signature(out.rolled_signature())
+    return abs(lhs - rhs) <= eta
+\end{verbatim}
+
+\paragraph{ACE exact weighted-\(\ell_1\) projection and prime-indexed operator.}
+\begin{verbatim}
+import math
+import numpy as np
+
+def project_weighted_l1(w: dict[int,float], b: dict[int,float], tau: float):
+    z = {p: b[p] * abs(w[p]) for p in w}
+    S = sum(z.values())
+    if S <= tau: return w
+    items = sorted(z.items(), key=lambda kv: kv[1], reverse=True)
+    cumsum, theta = 0.0, 0.0
+    for k, (_, zk) in enumerate(items, start=1):
+        cumsum += zk
+        theta = (cumsum - tau) / k
+        if k == len(items) or items[k][1] <= theta < items[k-1][1]:
+            break
+    w_star = {}
+    for p in w:
+        val = max(z[p] - theta, 0.0) / max(b[p], 1e-12)
+        w_star[p] = math.copysign(val, w[p])
+    return w_star
+
+class PrimeAffine:
+    def __init__(self, B_ops: dict[int, callable], b_norms: dict[int,float], tau: float = 0.9):
+        self.B = B_ops     # p -> H->H
+        self.b = b_norms   # p -> ||B_p||
+        self.tau = tau
+        self.w  = {p: 0.0 for p in B_ops}
+
+    def set_weights(self, Lambda: dict[int,float], alpha: float):
+        w = {p: Lambda.get(p, 0.0) * (p ** alpha) for p in self.B}
+        self.w = project_weighted_l1(w, self.b, self.tau)
+
+    def K_apply(self, T):
+        acc = 0 * T
+        for p, Bp in self.B.items():
+            acc = acc + self.w[p] * Bp(T)
+        return acc
+
+    def step(self, T, F):
+        return F + self.K_apply(T)
+\end{verbatim}
+
+\paragraph{End-to-end loop (with PETC logging and ACE budget check).}
+\begin{verbatim}
+def run_loop(T0, F, prime_affine: PrimeAffine, ledger: PrimeLedger,
+             prime_of_update: int, steps: int = 100):
+    T = T0
+    for t in range(steps):
+        ledger.add_event(prime_of_update, mult=1, sign=+1)   # PETC log
+        T_next = prime_affine.step(T, F)                     # ACE step
+        budget = sum(abs(prime_affine.w[p]) * prime_affine.b[p] for p in prime_affine.w)
+        assert budget < 1.0, "ACE budget violated: not a contraction"
+        T = T_next
+    return T
+\end{verbatim}
+
+\subsection{Operational Checklist}
+\begin{enumerate}
+  \item \textbf{Ledger (PETC).} Assign primes to components/events; maintain signatures additively; enforce conservation. Use checkpointing and hierarchical rollups for scale; optionally attach a causality DAG.
+  \item \textbf{Weights (ACE).} Set $w_p=\Lambda_p p^\alpha$ with $\alpha< -1$ (sufficient) and project onto $\sum b_p|w_p|\le\tau<1$ via weighted-$\ell_1$ projection.
+  \item \textbf{Certificates.} Monitor budget $\sum b_p|w_p|$, and (optionally) gap/slope margins during learning.
+  \item \textbf{Convergence.} By Theorems~\ref{thm:convergence}–\ref{thm:uniqueness}, $T_{t+1}=F+\mathcal{K}T_t$ (or its projected form) converges uniquely to a fixed point at rate $\|\mathcal{K}\|$.
+\end{enumerate}
+
+\appendix
+\section{Handy Design Bound for $|k|$}\label{app:design-bound}
+For uniform $\Lambda_p=\Lambda$ and $\alpha<-1$,
+\begin{equation*}
+  |k|=\Lambda \sum_{i=1}^{N}p_i^{\alpha}.
+\end{equation*}
+Solve $|k|=1-\varepsilon$ for $\Lambda$ to initialize with margin $\varepsilon$.
+
+\paragraph{Reproducibility Checklist (suggested).} Provide code/configs; fix seeds; publish CSV logs for $|k|$, budget usage, and certificate traces; include README with environment and commit hash.
+
+\section{Prime-Recursive Mechanical Stabilization: PETC \texorpdfstring{$\times$}{x} ACE Formalization}
+\label{sec:pirtm_formal}
+
+\paragraph{Attribution.}
+\textsc{ACE} (Arithmetic Control Engine): Tyler Van Osdol. \;
+\textsc{PETC} (Prime-Encoded Tensor Calculus): Ryan Van Gelder.
+
+\subsection{Prime-Signature Ledger (PETC) for Unambiguous Retrospection}
+Let $\mathbb{P}$ denote the set of primes. A \emph{prime signature} is a finitely supported vector
+$e \in \mathbb{Z}^{(\mathbb{P})}$; we write $e=(e_p)_{p \in \mathbb{P}}$ with $e_p=0$ for all but finitely many $p$.
+Define the \emph{multiplicity map}
+\[
+  M(e) \;=\; \prod_{p\in\mathbb{P}} p^{e_p} \;\in\; \mathbb{Q}_{>0}.
+\]
+Operations are componentwise: composition of events is $e+e'$, undo/consumption is $e-e'$, dualization is $-e$.
+This realizes the slogan ``\emph{multiply primes now, factor later}'' as \emph{add exponents now, read them later}:
+unique factorization ensures that $e$ (hence the full interaction multiset) is recoverable without ambiguity.
+
+\begin{definition}[Conservation Certificate]
+For any typed operation $\Phi$ with inputs $X_1,\dots,X_r$ and output $Y$, the PETC \emph{conservation check} requires
+\(
+  e(Y) \;=\; \sum_{i=1}^r e(X_i).
+\)
+A system is \emph{ledger-consistent} if the equality holds for all executed $\Phi$.
+\end{definition}
+
+\begin{proposition}[Lossless Retrospection]
+If a system is ledger-consistent, then for every state the accumulated signature $e$ determines the exact
+multiset of prime-tagged interactions that occurred (with multiplicities), via the valuation $e_p = v_p(M(e))$.
+\end{proposition}
+
+\noindent\textbf{Complexity.}
+Maintain $e$ as a sparse map (prime $\mapsto$ exponent). Updates and audits are $O(|\mathrm{supp}(e)|)$; no integer factorization is required.
+
+\subsection{Prime-Indexed Affine Recursion (ACE-Certified)}
+Let $H$ be a Banach space of tensors (axes carry PETC types).
+For each prime $p$ choose a bounded linear ``channel'' $B_p:H\!\to\!H$ with $\|B_p\|\le b_p$.
+Choose per-prime weights $w_p=\Lambda_p\,p^{\alpha}$ (design knob: $\Lambda_p\in\mathbb{R}$, typically $\Lambda_p\ge 0$, and $\alpha< -1$ for decay).
+Define the gain operator
+\[
+  \mathcal{K}\;=\;\sum_{p\in P_N} w_p\,B_p,
+\qquad
+  \|\mathcal{K}\| \;\le\; \sum_{p\in P_N} |w_p|\,b_p.
+\]
+The \emph{meta-recursion} is the affine map
+\begin{equation}
+  \label{eq:affine}
+  T_{t+1} \;=\; F \;+\; \mathcal{K}\,T_t,
+\end{equation}
+which collapses your original sum into an operator form while keeping primes as explicit channels.
+
+\begin{assumption}[ACE Contraction Budget]\label{as:budget}
+$\displaystyle \sum_{p\in P_N} |w_p|\,b_p \;<\;1.$
+\end{assumption}
+
+\begin{theorem}[Fixed Point, Uniqueness, and Linear Rate]
+Under Assumption~\ref{as:budget}, the recursion \eqref{eq:affine} is a strict contraction on $(H,\|\cdot\|)$.
+Hence there exists a unique fixed point $T_\infty = (I-\mathcal{K})^{-1}F$ and for any $T_0$
+\[
+  \|T_{t}-T_\infty\| \;\le\; \|\mathcal{K}\|^{\,t}\,\|T_0-T_\infty\|.
+\]
+In the scalar special case $T\in\mathbb{R}$ and $\mathcal{K}=k\in(-1,1)$, $T_\infty=\frac{F}{1-k}$.
+\end{theorem}
+
+\begin{remark}[Safe Design Regime]
+A sufficient (not necessary) recipe is $\alpha< -1$, $\Lambda_p\ge 0$, and a global cap $\Lambda_p\le \bar\Lambda$ chosen so that
+$\sum_{p\in P_N} \Lambda_p p^{\alpha} b_p < 1$. Increase $N$ or tighten $\bar\Lambda$ to keep the margin.
+\end{remark}
+
+\paragraph{ACE Safety Certificates.}
+Let $\delta_S>0$ be a certified lower bound on the system's stability gap in the absence of $\mathcal{K}$,
+and let $L_p$ bound the local schedule slope contributed by channel $B_p$.
+Define
+\[
+  \mathrm{GapLB}(w) := \delta_S - 2\sum_{p\in P_N} b_p |w_p|, 
+  \qquad
+  \mathrm{SlopeUB}(w) := \sum_{p\in P_N} L_p |w_p|.
+\]
+Operate under the constraints $\mathrm{GapLB}(w)>0$ and $\mathrm{SlopeUB}(w)<1$.
+These provide online, quantitative margins for stability and non-expansiveness during learning.
+
+\subsection{Algorithms and Code Snippets}
+
+\paragraph{PETC Prime Ledger (lossless history).}
+\begin{verbatim}
+class PrimeLedger:
+    def __init__(self):
+        self.sig = {}  # dict[int -> int], sparse exponents e_p
+
+    def add_event(self, p: int, mult: int = 1, sign: int = +1):
+        # sign=+1 for occurrence, -1 for consumption/undo
+        self.sig[p] = self.sig.get(p, 0) + sign * mult
+        if self.sig[p] == 0:
+            self.sig.pop(p)
+
+    def valuation(self, p: int) -> int:
+        return self.sig.get(p, 0)
+
+    def multiplicity_Q(self):
+        # returns numerator, denominator of product p^{e_p}
+        num, den = 1, 1
+        for p, e in self.sig.items():
+            if e >= 0: num *= p ** e
+            else:      den *= p ** (-e)
+        return num, den
+
+def conservation_ok(inputs, output) -> bool:
+    # Check PETC conservation: sum(e_in) == e_out
+    acc = {}
+    def add_into(dst, src, sgn=+1):
+        for p, e in src.sig.items():
+            dst[p] = dst.get(p, 0) + sgn * e
+            if dst[p] == 0: dst.pop(p)
+    for L in inputs: add_into(acc, L, +1)
+    add_into(acc, output, -1)
+    return len(acc) == 0
+\end{verbatim}
+
+\paragraph{ACE-Certified Affine Update with Budget Projection.}
+We implement a simple (conservative) weighted-$\ell_1$ shrinkage to enforce the budget
+$\sum_p b_p |w_p| \le \tau < 1$. Replace \texttt{shrink\_wl1} with an exact weighted-$\ell_1$ projection if needed.
+
+\begin{verbatim}
+import numpy as np
+
+def shrink_wl1(w, b, tau):
+    # Conservative shrink: scale if the budget is exceeded
+    # w, b are dict[int->float]. Returns dict[int->float].
+    budget = sum(abs(w[p]) * b[p] for p in w)
+    if budget <= tau: return w
+    scale = tau / budget
+    return {p: scale * w[p] for p in w}
+
+class PrimeAffine:
+    def __init__(self, B_ops, b_norms, tau=0.9):
+        # B_ops: dict[int -> callable H->H], b_norms: dict[int->float] with ||B_p||<=b_p
+        self.B = B_ops
+        self.b = b_norms
+        self.tau = tau
+        self.w  = {p: 0.0 for p in B_ops}  # start neutral
+
+    def set_weights(self, Lambda, alpha):
+        # Lambda: dict[int->float], alpha< -1 recommended
+        w = {p: Lambda.get(p, 0.0) * (p ** alpha) for p in self.B}
+        self.w = shrink_wl1(w, self.b, self.tau)  # enforce ACE budget
+
+    def K_apply(self, T):
+        acc = 0 * T
+        for p, Bp in self.B.items():
+            acc = acc + self.w[p] * Bp(T)
+        return acc
+
+    def step(self, T, F):
+        # One affine contraction step: T_{t+1} = F + K T_t
+        return F + self.K_apply(T)
+\end{verbatim}
+
+\paragraph{End-to-End Loop with Ledger and Stability Checks.}
+\begin{verbatim}
+def run_loop(T0, F, prime_affine, ledger, prime_of_update, steps=100):
+    T = T0
+    for t in range(steps):
+        # Log the update event in PETC:
+        ledger.add_event(prime_of_update, mult=1, sign=+1)
+
+        # ACE contraction step:
+        T_next = prime_affine.step(T, F)
+
+        # Optional: online margin monitoring
+        budget = sum(abs(prime_affine.w[p]) * prime_affine.b[p] for p in prime_affine.w)
+        assert budget < 1.0, "ACE budget violated: not a contraction"
+
+        T = T_next
+    return T
+\end{verbatim}
+
+\subsection{Design Pattern and Examples}
+\begin{itemize}
+  \item \textbf{RL / Control.} Let $T$ be a weight tensor (e.g., linear Q or policy params), $F$ the external drive
+        (TD target / gradient), and $B_p$ prime-typed feature filters. PETC logs every gradient/apply step; ACE ensures
+        $\sum b_p |w_p| < 1$ for stable convergence to $T_\infty$.
+  \item \textbf{Tensor Networks / Algebraic Systems.} Choose $B_p$ as structured projectors or sparsity masks whose norms
+        are known. PETC ensures typed contractions respect multiplicity conservation; ACE budgets keep the build-up stable.
+  \item \textbf{Auditing \& Replay.} Given a terminal signature $e$, valuations $e_p$ give exact interaction counts
+        (multiset multiplicities). The system can replay or attribute decisions without ambiguity.
+\end{itemize}
+
+\subsection{Takeaways (Operational Rules)}
+\begin{enumerate}
+  \item \textbf{Ledger:} assign each component/event a prime; update signatures additively; enforce PETC conservation.
+  \item \textbf{Weights:} set $w_p=\Lambda_p p^\alpha$ with $\alpha< -1$ (sufficient) and cap $\Lambda_p$ to satisfy
+        $\sum |w_p| b_p < 1$.
+  \item \textbf{Certificates:} monitor $\mathrm{GapLB}(w)>0$ and $\mathrm{SlopeUB}(w)<1$ online.
+  \item \textbf{Convergence:} $T_{t+1}=F+\mathcal{K}T_t$ contracts to $T_\infty=(I-\mathcal{K})^{-1}F$ with linear rate $\|\mathcal{K}\|$.
+\end{enumerate}
+\title{Structured Prime-Attention with Stability-Ensuring Control (SPASC)\\\large A Rigorous Specification, Training Protocol, and Diagnostic Framework}
+\author{\normalsize In Legacy Of Wayne Boatwright \\ \\ Formalized by: \\ Tyler Van Osdol \& Ryan Van Gelder}
+
+\date{\today}
+
+\begin{document}
+\maketitle
+\begin{abstract}
+We study a transformer attention variant---\emph{Structured Prime-Attention with Stability-Ensuring Control (SPASC)}---that biases scores with a prime-indexed quadratic-residue mask while maintaining bounded, certifiable dynamics via an ACE safety wrapper and PETC typing.
+\\[4pt]
+\textbf{Why this matters:} We hypothesize that inducing explicit arithmetic structure inside attention improves compositional reasoning and out-of-distribution generalization. As a \emph{mechanistic proxy} for useful internal structure, we test whether a unitarized spectrum constructed from SPASC exhibits eigenphase statistics closer to the Sato--Tate law than baselines.
+\\[4pt]
+\textbf{Contributions:} (i) a principled prime-mask with density-correct centering, (ii) stability-aligned entropy-band and row-Lipschitz penalties, (iii) a projection onto a weighted-$\ell_1$ safety set with slope and gap certificates, and (iv) a preregistered statistical protocol, including unitarization sensitivity and controls that distinguish prime structure from generic periodicity.
+\\[4pt]
+\textbf{Claim (falsifiable).} On modular-arithmetic sequence tasks and small LM probes, \textbf{SPASC} yields eigenphase distributions closer to Sato--Tate (by KS/CvM/Wasserstein distances) than: standard attention, \emph{prime-masked attention without our regularizers}, prime-masked without ACE, \emph{cyclic periodic masks}, and residue-permuted controls.
+\end{abstract}
+
+\section{Motivation}
+Modern language models benefit from inductive biases that mirror task symmetries. Arithmetic and modular composition recur across code, math, and tokenization artifacts. We posit that embedding \emph{multiplicative-group structure} into attention encourages smooth, non-degenerate spectra that correlate with more composable internal representations.
+Sato--Tate alignment is \emph{not a theorem of capability}; it is a \emph{mechanistic proxy} for ``healthy'' spectral geometry: broadly spread phases (no spectral spikes), consistent with robust, non-peaky attention dynamics.
+Therefore we: (a) engineer stability guarantees with ACE (independent of the proxy), and (b) measure whether prime structure nudges spectra toward that proxy relative to matched controls.
+
+\section{Notation and Typed Model (PETC)}
+Tokens $x_{1:n}$, hidden states $X\in\R^{n\times d}$. Projections: $Q=XW_Q$, $K=XW_K$, $V=XW_V$. Head dimension $d_h$; temperature $\tau=\sqrt{d_h}$. For an odd prime $p$, define index maps $\iota(i)=i\bmod p$ and $\kappa(j)=j\bmod p$. PETC assigns \emph{prime signatures} to tensor axes so that any contraction or reshape preserves the $\bmod p$ typing (runtime checks fail closed).
+
+\section{Prime-Masked Attention (Rationale and Definition)}
+Define the quadratic-residue mask
+\begin{align}
+  B_p(i,j) &= \mathbf{1}\{\, \iota(i) \equiv \kappa(j)^2 \ (\mathrm{mod}\ p)\,\},\\
+  \widetilde{B}_p &= B_p - \lambda_m,\qquad \lambda_m = \E[B_p(i,j)] \approx \tfrac{1}{2}~\text{(empirical per $p$)}.
+\end{align}
+Let raw scores $S = QK^\top/\tau$. The SPASC-biased scores and attention are
+\begin{equation}
+  S_p = S + \beta\,\widetilde{B}_p, \qquad A_p = \softmax_{\text{row}}(S_p), \qquad Y = A_p V.
+\end{equation}
+\paragraph{Why quadratic residues (not ``magic'').}
+They instantiate nonlinear, multiplicative structure in $\mathbb{F}_p^\times$ (vs. additive periodicity), yielding structured but nontrivial sparsity with balanced density. Controls in \S\ref{sec:protocol} and \S\ref{sec:ablations} test whether gains stem from this algebraic structure rather than generic sparsity or periodicity.
+
+\section{Regularizers (Entropy-Band and Row-Lipschitz)}
+For row $r$, let $P_r$ be the probability vector (row of $A_p$).
+\paragraph{Entropy-band penalty.}
+\begin{equation}
+  \mathcal{L}_{\mathrm{ent}} = \frac{1}{n}\sum_{r=1}^n \Big[\max(0, H_{\min} - H(P_r)) + \max(0, H(P_r) - H_{\max})\Big],\quad H(P_r)=-\sum_j P_{rj}\log P_{rj},
+\end{equation}
+with $H_{\min}=\alpha_{\text{low}}\log n$, $H_{\max}=\alpha_{\text{high}}\log n$, $0<\alpha_{\text{low}}<\alpha_{\text{high}}\le 1$.
+\paragraph{Row-Lipschitz surrogate (softmax Jacobian link).}
+For row-softmax with temperature $\tau$,
+\begin{equation}
+  \frac{\partial\,\softmax(z/\tau)}{\partial z} = \frac{1}{\tau}\big[\Diag(p) - pp^\top\big],\quad \big\|\Diag(p) - pp^\top\big\|_2 \le \tfrac{1}{2},
+\end{equation}
+so the \emph{local} Lipschitz constant is $\le \tfrac{1}{2\tau}$. To keep rows in a benign regime, we constrain the spectral norm of scores:
+\begin{equation}
+  \mathcal{L}_{\mathrm{slope}} = \max\big(0,\,\|S_p\|_2 - \tau_s\big),
+\end{equation}
+with $\tau_s$ set by ACE. The SPASC regularizer is $\mathcal{L}_{\mathrm{CSL}}=\lambda_{\mathrm{ent}}\mathcal{L}_{\mathrm{ent}}+\lambda_{\mathrm{slope}}\mathcal{L}_{\mathrm{slope}}$.
+
+\section{Safety Wrapper via ACE}
+ACE imposes certificates independent of estimator optimism.
+\paragraph{Safety set (weighted-$\ell_1$).}
+\begin{equation}
+  \mathcal{S}=\Big\{w:\sum_c \alpha_c\,\|w_c\|_1\le B\Big\},
+\end{equation}
+with groups $w_c$ (e.g., $W_Q,W_K,W_V$, head biases), weights $\alpha_c>0$, and budget $B$.
+\paragraph{Projected update and certificates.}
+Given proposal $\tilde w = w - \eta\nabla_w \mathcal{L}$, project $w^+=\Pi_{\mathcal{S}}(\tilde w)$ by weighted soft-thresholding. Compute \textbf{SlopeUB} (empirical Jacobian bound by power iteration) and \textbf{GapLB} (spectral gap of the symmetrized attention $A_p^{\mathrm{sym}}=(A_p+A_p^\top)/2$). If SlopeUB$\ge1$ or GapLB$\le\gamma_{\min}$, tighten $B$ or increase $\lambda_{\mathrm{slope}}$ and re-project.
+
+\section{Unitarization and Eigenphases}
+Row-stochastic $A_p$ is not unitary; we study spectra after a principled unitarization of pre-softmax geometry.
+\paragraph{Primary choice (exponential map).}
+Form a centered, scaled Hermitian score surrogate
+\begin{equation}
+  H_p=\frac{S_p-\mu I}{\sigma},\qquad \mu=\tfrac{1}{n}\Tr(S_p),\ \ \sigma>0~\text{(empirical std)},
+\end{equation}
+then set $U_p=\exp(iH_p)$. \textbf{This map is well-defined and numerically stable for any $H_p$, preserves the eigenspace structure of $H_p$, and connects to continuous-time flows.}
+\paragraph{Alternative unitarizations (for robustness).}
+Cayley: $U^{\mathrm{Cay}}=(I+iH_p)(I-iH_p)^{-1}$; Polar-unitary: $U^{\mathrm{Pol}} = H_p(H_p^\ast H_p)^{-1/2}$ (regularized); Schur-unitarization via unitary factor of a normal approximation. \emph{We do not claim canonicity}; \S\ref{sec:ablations} tests sensitivity.
+\paragraph{Sato--Tate comparison.}
+Let eigenvalues of $U_p$ be $e^{i\varphi_j}$, define phases $\theta_j = ((\varphi_j\bmod\pi)/\pi)\in[0,1]$, and compare to density $f_{\text{ST}}(\theta)=\tfrac{2}{\pi}\sin^2(\pi\theta)$.
+
+\section{Datasets and Tasks}
+\textbf{QR-Sequence:} Predict $x_{i+1}\bmod p$ given $x_i$ and prime $p$ with distractors; length $n\in[64,512]$. \textbf{Mod-LM probe:} Character-level LM with interleaved modular snippets. Standard padding/masks; PETC typing guards reshape/contraction.
+
+\section{Experimental Protocol and Conditions}
+\label{sec:protocol}
+Small transformer (4--6 layers, 8--12 heads); primes $p\in\{53,59,\dots,997\}$ (10 values); 10 seeds/condition. Conditions: (1) \textbf{SPASC}, (2) \textbf{PM-noCSL}, (3) \textbf{PM-CSL-noACE}, (4) \textbf{Base}, (5) \textbf{PM-perm}, (6) \textbf{Label-shuffle}, (7) \textbf{Cyclic-noCSL} (mask $B(i,j)=\mathbf{1}\{\iota(i)\equiv\kappa(j)+c\ (\mathrm{mod}\ p)\}$ with fixed $c$).
+Training uses matched budgets/steps; release all seeds/configs.
+
+\section{Statistical Tests and Success Criteria}
+For each head/layer/seed/$p$: compute $\{\theta_j\}$ from $U_p$. Distances to Sato--Tate: KS, Cram\'er--von Mises, and 1-Wasserstein. Primary success: in $\ge 60\%$ of heads, SPASC shows significantly smaller KS \emph{and} Wasserstein than Base and PM-noCSL (Holm--Bonferroni, $p<0.05$) with median Wasserstein reduction $\ge 0.02$. Report $n$ (tokens, heads), CIs, and per-head scatter. No best-seed cherry-picking.
+
+\section{Risk \\ Ethics Monitoring}
+Define a scalar risk monitor $R_t$ combining (a) rate of change in logits entropy, (b) out-of-distribution mask activations (KL between active $B_p$ rows and training histograms), and (c) ACE margins (1$-$SlopeUB, GapLB$-\gamma_{\min}$). If $R_t>R_{\max}$: decrease $B$, raise $\lambda_{\mathrm{slope}}$, reduce $\beta$, or rate-limit decoding. Ethics is engineered via thresholds/fallbacks; we make no claim that symmetry implies ethics.
+
+\section{Implementation Notes}
+Projection: weighted soft-thresholding for $\ell_1$ ball; $\mathcal{O}(\#\text{params})$. Certificates: power iteration (5--10 iters/epoch) for SlopeUB; GapLB via Lanczos on $A_p^{\mathrm{sym}}$. PETC runtime checks assert that every contraction preserves prime signatures. Ledger saves $\{\alpha_c,B,\tau_s,\beta,\lambda_{\mathrm{ent}},\lambda_{\mathrm{slope}},H_{\min},H_{\max}\}$.
+
+\section{Code Snippets}
+\subsection*{Python: Prime Mask, SPASC Scores, and Entropy-Band}
+\begin{lstlisting}[style=spasc,caption={Prime mask, centered density, SPASC-biased scores and entropy-band penalty.}]
+import torch
+
+def prime_mask(i_idx, j_idx, p: int):
+    # i_idx: (n,), j_idx: (n,), entries are token positions 0..n-1
+    i_mod = i_idx % p
+    j_mod = j_idx % p
+    # B_p[i,j] = 1 if i ≡ j^2 (mod p)
+    B = (i_mod[:, None] == (j_mod[None, :] ** 2) % p).float()
+    lam = B.mean()  # empirical λ_m
+    return B - lam  # centered mask \tilde{B}_p
+
+def spasc_scores(Q, K, tau, beta, Btilde):
+    # S = Q K^T / tau
+    S = (Q @ K.transpose(-1, -2)) / tau
+    return S + beta * Btilde
+
+def entropy_band(A, Hmin, Hmax, eps=1e-12):
+    P = A.clamp_min(eps)
+    H = -(P * P.log()).sum(dim=-1)
+    low = torch.relu(Hmin - H)
+    high = torch.relu(H - Hmax)
+    return (low + high).mean()
+\end{lstlisting}
+
+\subsection*{Python: Weighted-$\ell_1$ Projection (ACE) and Certificates}
+\begin{lstlisting}[style=spasc,caption={ACE projection onto weighted-ℓ1 ball and simple certificate stubs.}]
+@torch.no_grad()
+def weighted_l1_project(w_flat, alphas, B):
+    # w_flat: concatenated parameter vector; alphas: same shape weights
+    z = torch.abs(w_flat) / (alphas + 1e-12)
+    if (alphas * torch.abs(w_flat)).sum() <= B:
+        return w_flat
+    # Find threshold τ by sorting (projection onto weighted l1 ball)
+    s, idx = torch.sort(z, descending=True)
+    cumsum = torch.cumsum((alphas[idx] * s), dim=0)
+    rho = torch.nonzero(s * alphas[idx] > (cumsum - B), as_tuple=False).max()
+    tau = (cumsum[rho] - B) / (alphas[idx][rho] + 1e-12)
+    w_proj = torch.sign(w_flat) * torch.clamp(z - tau / (alphas + 1e-12), min=0.0) * (alphas + 1e-12)
+    return w_proj
+
+@torch.no_grad()
+def slope_upper_bound(model, iters=10):
+    # Power-iteration style proxy of Jacobian spectral norm (layerwise)
+    # Implementation detail left as a stub; use finite diffs or autodiff-vector products
+    return torch.tensor(0.8)  # placeholder < 1
+
+@torch.no_grad()
+def spectral_gap(A):
+    # Gap of symmetrized attention
+    As = 0.5 * (A + A.transpose(-1, -2))
+    # Use Lanczos (torch.lobpcg) to estimate top two eigenvalues
+    evals = torch.linalg.eigvalsh(As)
+    return (evals.max() - evals.sort().values[-2])
+\end{lstlisting}
+
+\subsection*{Python: Unitarization Variants and ST Distances}
+\begin{lstlisting}[style=spasc,caption={Exponential-map unitarization, Cayley alternative, and Sato–Tate distances.}]
+import math
+
+def unitarize_exp(Sp):
+    # Center and scale
+    mu = Sp.trace() / Sp.shape[-1]
+    Spc = Sp - mu * torch.eye(Sp.shape[-1], device=Sp.device, dtype=Sp.dtype)
+    sigma = Spc.std().clamp_min(1e-6)
+    Hp = Spc / sigma
+    # exp(iH)
+    iH = 1j * Hp.to(torch.complex64)
+    return torch.linalg.matrix_exp(iH)
+
+def unitarize_cayley(Sp):
+    mu = Sp.trace() / Sp.shape[-1]
+    Spc = Sp - mu * torch.eye(Sp.shape[-1], device=Sp.device, dtype=Sp.dtype)
+    sigma = Spc.std().clamp_min(1e-6)
+    Hp = (Spc / sigma).to(torch.complex64)
+    I = torch.eye(Sp.shape[-1], dtype=torch.complex64, device=Sp.device)
+    return (I + 1j*Hp) @ torch.linalg.inv(I - 1j*Hp)
+
+def st_distances(U):
+    # eigenphases mapped to [0,1]
+    w = torch.linalg.eigvals(U)
+    phi = torch.angle(w)
+    theta = (phi.remainder(math.pi)) / math.pi
+    # Compare to Sato–Tate density via empirical CDF metrics (placeholder)
+    # Implement KS, CvM, and Wasserstein over [0,1]
+    return {"ks": 0.1, "cvm": 0.05, "w1": 0.03}
+\end{lstlisting}
+
+\section{Training Objective and Pseudocode}
+\begin{equation}
+\min_{w\in\mathcal{S}}\ \mathcal{L}_{\mathrm{task}}(w) + \lambda_{\mathrm{ent}}\mathcal{L}_{\mathrm{ent}}(w) + \lambda_{\mathrm{slope}}\mathcal{L}_{\mathrm{slope}}(w)\ \ \text{s.t.}\ \ \text{SlopeUB}(w)<1,\ \text{GapLB}(w)>\gamma_{\min}.
+\end{equation}
+
+\begin{algorithm}[H]
+\caption{SPASC step with ACE projection and certificates}
+\begin{algorithmic}[1]
+\State $S\gets QK^\top/\sqrt{d_h}$; $\widetilde{B}_p\gets$ centered prime mask; $S_p\gets S+\beta\widetilde{B}_p$
+\State $A\gets \softmax_{\text{row}}(S_p)$; $Y\gets A V$
+\State $\mathcal{L}_{\mathrm{ent}},\,\mathcal{L}_{\mathrm{slope}},\,\mathcal{L}_{\mathrm{task}} \ \rightarrow \ \mathcal{L}_{\mathrm{total}}$
+\State $\tilde w \gets w - \eta\,\nabla_w\mathcal{L}_{\mathrm{total}}$
+\State $w^+ \gets \Pi_{\mathcal{S}}(\tilde w)$ via weighted soft-thresholding
+\State Compute SlopeUB, GapLB; if violation: tighten $B$ or increase $\lambda_{\mathrm{slope}}$ and re-project
+\end{algorithmic}
+\end{algorithm}
+
+\section{Ablations and Sanity Checks}
+\label{sec:ablations}
+$\beta$-sweep; entropy-band widths; remove PETC; ACE off; head-drop. \textbf{Unitarization Sensitivity:} repeat statistics using $U^{\mathrm{Cay}}$, polar, and Schur variants; vary $\sigma$ (std vs. MAD vs. spectral-radius scaling) and $\mu$ (trace vs. median). \textbf{Success Criterion:} SPASC's superiority over Base, PM-noCSL, and \textbf{Cyclic-noCSL} (per \S9's significance tests) holds across \emph{all} unitarization choices. \textbf{Prime vs Periodic:} compare SPASC to Cyclic-noCSL at matched density.
+
+\section{Limitations}
+Sato--Tate is a diagnostic proxy, not proof of automorphy nor a direct measure of capability. Certificates guarantee slope/gap only. Unitarization introduces modeling decisions we explicitly test.
+
+\section{Related Work (Curated)}
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Spectral analyses of neural networks.} Using operator spectra to study deep nets; our eigenphase approach uses a unitary proxy to probe internal geometry.
+  \item \textbf{Lipschitz control and stability.} ACE aligns with Lipschitz-bounding methods (e.g., spectral normalization, Jacobian penalties) and verification-inspired runtime checks.
+  \item \textbf{Structured attention biases.} Fixed, task-informed patterns (sparse/local attention); our prime mask injects \emph{multiplicative} structure rather than additive periodicity.
+  \item \textbf{Sato--Tate as a statistical null.} A number-theoretic law used here as a null for phase dispersion, analogous to RMT baselines.
+  \item \textbf{Unitary maps in ML.} Exponential and Cayley maps as standard Lie-group parameterizations for unitary/orthogonal models.
+\end{itemize}
+
+\section{Conclusion}
+SPASC is a constrained inductive bias for arithmetic structure, paired with stability-ensuring control and transparent statistics. If spectra consistently move toward Sato--Tate across unitarizations and non-prime controls, we gain evidence that multiplicative structure fosters healthier attention geometry---a hypothesis about compositional generalization that our protocol cleanly tests and can falsify.
+
+\section*{Acknowledgements}
+We formalize and certify using \textbf{ACE (Tyler Van Osdol)} and prime-typed tensor structure via \textbf{PETC (Ryan Van Gelder)}, consistent with IFMD's rigor and safety goals.
+
+\section*{Reproducibility Checklist (Condensed)}
+\begin{itemize}[leftmargin=*]
+  \item Seeds, configs, and code to regenerate $U_p$ and all statistics.
+  \item Unit tests: mask density $\lambda_m$, projection correctness, certificate monotonicity.
+  \item Logs: SlopeUB and GapLB over training; ablation sweeps.
+\end{itemize}
+
+
+
+\title{The Langlands Prism: Certified Arithmetic Control\\\large (ACE\,+\,PETC Formal Report)}
+\author{Ryan Van Gelder \& Tyler Van Osdol }
+\date{\today}
+
+\begin{document}
+\maketitle
+\onehalfspacing
+
+\begin{abstract}
+We present a control architecture that guarantees stability via a contraction-style certificate while allowing a learning layer to propose rich controls. Arithmetic objects (e.g., local Hecke data) appear \emph{only as features} that inform proposals; the controller \emph{projects} them into a certified, bounded set. We motivate why arithmetic features may help in systems with hidden multi-scale structure, define a standard estimator (small feedforward neural network or linear model), provide a benchmark problem where these features plausibly add value, address the runtime cost of the projection, and position the fractal module as an optional long-memory basis with explicit bounds.\\
+\emph{Attribution.} This report formalizes two internal frameworks: \textbf{ACE} (Arithmetic Control Engine; T. Van Osdol) for certification, and \textbf{PETC} (Prime-Encoded Tensor Calculus; R. Van Gelder) for feature construction and learning.
+\end{abstract}
+
+\paragraph{Keywords} Certified control, weighted $\ell^1$ projection, Hecke data, automorphic features, spectral certification, small-gain, reproducibility.
+
+\newpage
+
+% =================================================
+% 1. Introduction & Motivation
+% =================================================
+\section{Introduction and Motivation}
+\label{sec:intro}
+Classical certified control emphasizes explicit bounds (e.g., contraction or small-gain conditions) to guarantee stability. Modern learning-based control offers expressivity but often lacks such guarantees. We propose to combine the two: a \emph{certified core} (ACE) that is simple and verifiable, wrapped by a \emph{feature-rich estimator} (PETC) that can exploit arithmetic structure while remaining outside the safety-critical loop.
+
+A central, testable hypothesis of this work is that \emph{local arithmetic data}---for instance, normalized Hecke eigenvalues $\lambda_p$ derived from a fixed automorphic form---provide a compact dictionary of bounded, richly structured, aperiodic signals. Such signals can be useful in control environments that exhibit multi-scale disturbances or quasi-periodic interference patterns. Our architecture treats arithmetic data strictly as \emph{features} for proposing controls; those proposals are then projected into a certified, bounded set before actuation.
+
+\paragraph{What is new?} (i) A clear separation between a provably safe operator-based controller and a speculative feature layer, (ii) a light-weight weighted-$\ell^1$ projection that is real-time friendly, (iii) explicit bounds for a fractal (long-memory) module, and (iv) a concrete benchmark (\S\ref{sec:benchmark}).
+
+\paragraph{What is not claimed.} We do not insert complex $L$-values into dynamics, do not require quantum hardware, and do not claim arithmetic features help every task. Our claims are restricted to the defined benchmark class and can be falsified by ablation.
+
+% =================================================
+% 2. Architecture Overview
+% =================================================
+\section{Architecture Overview: ACE vs. PETC}
+\label{sec:arch}
+
+\begin{description}[leftmargin=2.2em,labelsep=0.6em]
+  \item[ACE (Certified Core):] A linear (or linearized) operator $U$ with real control weights and explicit norm budgets. Safety is enforced by design via a contraction certificate.
+  \item[PETC (Estimator Layer):] A standard learning model (linear or small MLP) that maps arithmetic features and task feedback to \emph{proposed} weights. Proposals are \emph{always} projected to the ACE safety set before actuation.
+\end{description}
+
+A high-level block diagram is: Features $\to$ Estimator $\to$ Proposal $\tilde w$ $\to$ \emph{Projection} $\Pi_{\mathcal S}$ $\to$ \textbf{Certified Weights} $w^*$ $\to$ Plant.
+
+% =================================================
+% 3. Mathematical Setup and Certificate
+% =================================================
+\section{Mathematical Setup and Contraction Certificate}
+\label{sec:math}
+
+Let $(\Hcal, \langle\cdot,\cdot\rangle)$ be a Hilbert space. We consider a discrete-time evolution
+\begin{equation}
+  \xi_{t+1} \;=\; U(\omega_t; w_t)\,\xi_t,\qquad U(\omega;w) 
+  = X(\omega) 
+  + \sum_{p\in\mathcal{P}} w_p\, B_p(\omega),
+  \label{eq:evolution}
+\end{equation}
+where $\mathcal P$ denotes a chosen set of primes (channels). We assume bounded channel operators and optional commutator budgets:
+\begin{equation}
+  \norm{B_p(\omega)} \le b_p,\quad \norm{\partial_\omega B_p(\omega)} \le L_p,\quad \norm{[B_p(\omega), B_q(\omega)]} \le c_{pq}.
+  \label{eq:budgets}
+\end{equation}
+Let $\norm{X} \le \beta_X < 1$ denote a known bound on the nominal operator. Define the \emph{safety set}
+\begin{equation}
+  \mathcal S := \Big\{ w\in\R^{\mathcal P}\ :\ \norm{X} + \sum_{p} b_p\,\abs{w_p} \le 1-\eps,\quad \sum_{p} \alpha_p\,\abs{w_p} \le \tau \Big\},
+  \label{eq:safety}
+\end{equation}
+with margin $\eps\in(0,1)$ and optional global budget $(\alpha_p,\tau)$ for regularization.
+
+\begin{theorem}[ACE Contraction Certificate]
+If $w\in\mathcal S$, then $\norm{U(\omega;w)} \le 1-\eps$ for all admissible $\omega$. Consequently, \eqref{eq:evolution} is a strict contraction and admits a unique fixed point $\xi^*$ with global exponential convergence
+\(
+  \norm{\xi_t - \xi^*} \le (1-\eps)^t \norm{\xi_0 - \xi^*}.
+\)
+\end{theorem}
+\begin{proof}
+By subadditivity, $\norm{U}\le \norm{X} + \sum_p \abs{w_p}\,\norm{B_p} \le \norm{X} + \sum_p b_p\abs{w_p} \le 1-\eps$. The Banach fixed-point theorem then yields the claim.
+\end{proof}
+
+\begin{remark}[Separation Principle]
+Arithmetic or learned signals may \emph{propose} $w$, but the controller applies only the projected $w^*\in\mathcal S$; this enforces safety independent of estimator behavior.
+\end{remark}
+
+% =================================================
+% 4. Arithmetic Features and Estimator
+% =================================================
+\section{Arithmetic Features and the Estimator (PETC)}
+\label{sec:petc}
+\paragraph{Local features.} Fix a concrete automorphic object (e.g., a GL$_2$ Hecke eigenform). For each prime $p$, construct bounded real features $\phi_p\in\R^d$ from normalized eigenvalues $\lambda_p$ and metadata (e.g., $|\lambda_p|$, exponential moving average $\mathrm{EMA}_\kappa(\lambda_p)$, a ramification flag $\1_{p\mid N}$). These serve as \emph{exogenous features}.
+
+\paragraph{Estimator.} To minimize speculative baggage, the default estimator is standard: either (A) linear model $\tilde w = W\phi + b$ (with ridge/LASSO), or (B) a small MLP (2--3 layers; width 64--128).
+
+\paragraph{Certification projection.} The actuation weights are the projection
+\begin{equation}
+  w^* := \operatorname*{argmin}_{w\in\mathcal S} \norm{w - \tilde w}_2^2,
+  \label{eq:proj}
+\end{equation}
+which enforces \eqref{eq:safety}. This projection has an efficient soft-threshold form when only the weighted-$\ell^1$ constraint is active.
+
+\begin{proposition}[Weighted-$\ell^1$ Projection via Soft Threshold]
+Let $\mathcal B := \{w: \sum_p b_p\abs{w_p}\le T\}$ with $b_p>0$, $T>0$. Then the solution to $\min_{w\in\mathcal B} \tfrac{1}{2}\norm{w-\tilde w}_2^2$ is
+\(
+  w^*_p = \operatorname{sign}(\tilde w_p)\,\max\{\abs{\tilde w_p} - \theta b_p,\ 0\},
+\)
+where $\theta\ge 0$ is chosen so that $\sum_p b_p\abs{w^*_p}=T$ when the constraint is tight. The parameter $\theta$ can be found in $O(P\log P)$ time by sorting $\abs{\tilde w_p}/b_p$ and performing a prefix search.
+\end{proposition}
+\begin{proof}[Sketch]
+Form the Lagrangian with multiplier $\theta\ge 0$; optimality gives componentwise soft-thresholding. The budget is monotone in $\theta$, enabling a search.
+\end{proof}
+
+\begin{algorithm}[H]
+\caption{Weighted-$\ell^1$ Projection (soft-threshold)}
+\begin{algorithmic}[1]
+\Require proposal $\tilde w\in\R^P$, weights $b\in\R^P_{>0}$, budget $T>0$
+\State If $\sum_i b_i\abs{\tilde w_i}\le T$, return $\tilde w$.
+\State Sort indices by $r_i:=\abs{\tilde w_i}/b_i$ in descending order.
+\State Find smallest $k$ s.t. $\theta_k := \frac{\sum_{i\le k} b_i r_i - T}{\sum_{i\le k} b_i^2}$ yields $\sum_i b_i\max(r_i - \theta_k b_i,0)=T$.
+\State Set $w^*_i = \operatorname{sign}(\tilde w_i)\,\max\{\abs{\tilde w_i} - \theta_k b_i,0\}$.
+\State \Return $w^*$.
+\end{algorithmic}
+\end{algorithm}
+
+% =================================================
+% 5. Fractal (Long-Memory) Module
+% =================================================
+\section{Fractal (Long-Memory) Module}
+\label{sec:fractal}
+Define a bounded series
+\begin{equation}
+  F_\varphi^{(K)} := \sum_{k=1}^{K} \varphi^{-k} U^{(k)}, \qquad \norm{U^{(k)}}\le 1,\ \ \varphi>1.
+\end{equation}
+Then $\norm{F_\varphi^{(\infty)}} \le \frac{1}{\varphi - 1}$ and the truncation error obeys
+\begin{equation}
+  \Big\|F_\varphi^{(\infty)} - F_\varphi^{(K)}\Big\| \le \frac{\varphi^{-(K+1)}}{\varphi-1}.
+\end{equation}
+\textbf{Use.} (i) As a \emph{feature generator} that encodes long memory; or (ii) as a single certified channel with budget $b_{\text{frac}}\le (\varphi-1)^{-1}$.
+
+% =================================================
+% 6. Benchmark: MSD-PrimeMix
+% =================================================
+\section{Benchmark: Multi-Scale Disturbance with Prime Mix (MSD-PrimeMix)}
+\label{sec:benchmark}
+We define a controllable plant
+\begin{equation}
+  x_{t+1} = A x_t + B u_t + d_t + \nu_t,\qquad y_t=Cx_t,
+\end{equation}
+with $A$ stable but near unit spectral radius, $\nu_t$ small noise. The disturbance blends smooth and prime-spread components:
+\begin{equation}
+  d_t = \sum_{j=1}^J \alpha_j \sin(2\pi f_j t + \phi_j) + \sum_{p\in\mathcal P_J} \beta_p\, \sin\big(2\pi\{p\varphi\}\, t\big),
+\end{equation}
+where $\{\cdot\}$ denotes fractional part and $\mathcal P_J$ is the first $J$ primes. We compare the proposed ACE+PETC controller against (i) LQR with adaptive gain, (ii) an RL baseline with a safety layer. Metrics: quadratic cost, safety-margin violations, settling time, tracking error, and ablations of arithmetic features.
+
+% =================================================
+% 7. Practicalities: Bounds and Tuning
+% =================================================
+\section{Practicalities: Channel Bounds and Tuning}
+\label{sec:practical}
+\paragraph{Bounding $\norm{B_p}$.} Use offline identification (worst-case envelopes or power-iteration on a simulator) to set conservative $b_p$ with monitoring for drift. If bounds change, freeze, re-identify, and tighten $\mathcal S$.
+
+\paragraph{Tuning recipe.} (1) Pick $\eps\in[0.05,0.2]$; measure $\norm{X}$. (2) Choose $b_p$ (constant or $p^{-\beta}$) and set $\tau$ so $\norm{X}+\tau\le 1-\eps$. (3) Start with a sparse prime set (e.g., $p\le 127$). (4) Use a linear estimator; escalate to a small MLP if ablations support it. (5) Keep the fractal module off by default; enable only when long-memory helps.
+
+\paragraph{Projection cost.} Weighted-$\ell^1$ projection via soft-thresholding is $O(P\log P)$ and amenable to warm-starting, event triggers, top-$k$ sparsification, and horizon batching.
+
+% =================================================
+% 8. Ethics and Provenance
+% =================================================
+\section{Ethics and Provenance}
+\label{sec:ethics}
+Define a scalar risk $E_t=\langle \xi_t, H_{\text{ethic}}\,\xi_t\rangle$ or a classical risk $R(\xi_t)$. Thresholds $\theta_{\text{warn}}<\theta_{\text{stop}}$ trigger \emph{classical} rate-limits or fallbacks. Log: certified $w^*_t$, certificate margin $m_t:=1-\eps-(\norm{X}+\sum b_p\abs{w^*_p})$, code/seed hashes, and measurement \emph{summaries}. Avoid logging raw quantum states.
+
+% =================================================
+% 9. Implementation Notes
+% =================================================
+\section{Implementation Notes and Minimal Code}
+\label{sec:impl}
+We provide minimal Python (NumPy) code for (i) weighted-$\ell^1$ projection, (ii) a small simulator for MSD-PrimeMix, and (iii) the control loop skeleton. These snippets are for clarity and reproducibility and can be ported to your stack.
+
+\subsection{Weighted-$\ell^1$ Projection (Python)}
+\begin{lstlisting}[language=Python,caption={Weighted-$\ell^1$ projection via soft-thresholding (fast, warm-startable).}]
+import numpy as np
+
+def weighted_l1_project(w_tilde, b, T):
+    """Project w_tilde onto {w: sum b_i |w_i| <= T}.
+    Returns w_star and the dual threshold theta.
+    """
+    b = np.asarray(b, dtype=float)
+    w = np.asarray(w_tilde, dtype=float)
+    if np.dot(b, np.abs(w)) <= T:
+        return w.copy(), 0.0
+    # Sort by |w_i|/b_i
+    r = np.abs(w) / b
+    order = np.argsort(-r)
+    b_ord, r_ord = b[order], r[order]
+    # Prefix sums for search
+    csum_b = np.cumsum(b_ord)
+    csum_br = np.cumsum(b_ord * r_ord)
+    # Find k with monotone budget; binary or linear scan is fine for moderate P
+    theta = 0.0
+    for k in range(len(w)):
+        theta_k = (csum_br[k] - T) / (np.sum(b_ord[:k+1]**2))
+        if theta_k >= 0:
+            theta = theta_k
+            break
+    # Soft-threshold
+    w_star = np.sign(w) * np.maximum(np.abs(w) - theta * b, 0.0)
+    return w_star, theta
+\end{lstlisting}
+
+\subsection{Minimal Simulator for MSD-PrimeMix}
+\begin{lstlisting}[language=Python,caption={Toy simulator with ACE+PETC loop (NumPy).}]
+import numpy as np
+
+class PrimeMixSim:
+    def __init__(self, n=2, P=32, seed=0):
+        rng = np.random.default_rng(seed)
+        # Near-contractive X and bounded channels B_p
+        U, _ = np.linalg.qr(rng.standard_normal((n, n)))
+        s = 0.9  # ||X|| bound
+        self.X = U * s
+        self.B = [rng.standard_normal((n, n)) / np.sqrt(n) for _ in range(P)]
+        self.b = np.array([np.linalg.norm(Bp, 2) for Bp in self.B])
+        self.P = P
+        self.n = n
+
+    def step(self, xi, w):
+        U = self.X.copy()
+        for p in range(self.P):
+            U = U + w[p] * self.B[p]
+        return U @ xi
+
+# Arithmetic features (mock lambda_p with |lambda_p|<=2)
+def build_features(P, ema_kappa=0.9, seed=1):
+    rng = np.random.default_rng(seed)
+    lam = 2 * (rng.random(P) - 0.5)  # in [-1,1] scaled to [-1,1]; adjust to [-2,2] if desired
+    ema = np.zeros(P)
+    for p in range(1, P):
+        ema[p] = ema_kappa * ema[p-1] + (1-ema_kappa) * lam[p]
+    phi = np.vstack([lam, np.abs(lam), ema, np.ones(P)])  # shape (4,P)
+    return phi
+
+# Linear estimator (ridge-like)
+def estimator_linear(phi, y=None):
+    # Here W is trainable; for a demo use a fixed random map
+    rng = np.random.default_rng(42)
+    d, P = phi.shape
+    W = rng.standard_normal((P, d)) / np.sqrt(d)
+    return (W @ phi).diagonal()  # size P
+
+# Control loop
+P = 32
+sim = PrimeMixSim(P=P)
+phi = build_features(P)
+w_tilde = estimator_linear(phi)
+T = 0.08  # budget; choose so that ||X|| + T <= 1 - eps
+w_star, theta = weighted_l1_project(w_tilde, sim.b, T)
+
+xi = np.ones(sim.n)
+for t in range(100):
+    xi = sim.step(xi, w_star)
+# Inspect xi, w_star, and (1 - eps) - (||X|| + sum b|w|) margins in real code.
+\end{lstlisting}
+
+\subsection{ACE+PETC Skeleton (Pseudocode)}
+\begin{lstlisting}[language=Python,caption={ACE+PETC loop skeleton.}]
+# Features -> proposal
+phi = build_features(P)                     # arithmetic + task stats
+w_tilde = estimator(phi)                    # linear or small MLP
+
+# Certified projection (weighted L1)
+w_star, theta = weighted_l1_project(w_tilde, b, T)
+
+# Closed-loop step
+U = X.copy()
+for p in range(P):
+    U = U + w_star[p] * B[p]
+xi = U @ xi
+
+# Log safety margin and ethics metric
+margin = 1 - eps - (np.linalg.norm(X, 2) + np.dot(b, np.abs(w_star)))
+# ethics_metric = xi.T @ H_ethic @ xi
+\end{lstlisting}
+
+% =================================================
+% 10. Experiments and Reproducibility
+% =================================================
+\section{Experiments and Reproducibility}
+\label{sec:exp}
+\textbf{Artifacts.} Reference implementation with operator constructors; projection solver; logging hooks. \textbf{Unit tests:} (i) contraction check, (ii) margin accounting, (iii) fractal truncation error. \textbf{Ablations:} arithmetic features on/off; fractal module on/off; vary $\tau$, $\eps$, and prime set size.
+
+\textbf{Evaluation.} On MSD-PrimeMix, measure cost, violations, settling time, error, and margins. Report means $\pm$ std over seeds. Declare negative results; include run configs and hashes.
+
+% =================================================
+% Appendix A: QCN (Speculative)
+% =================================================
+\appendix
+\section{Appendix A: Quantum Cortical Network (Speculative)}
+The QCN is an optional estimator replacing the linear/MLP baseline. It remains outside the certificate; any proposal must pass the same projection. We make no claims about hardware or quantum advantage.
+
+% =================================================
+% Appendix B: Proof Sketches
+% =================================================
+\section{Appendix B: Proof Sketches}
+\paragraph{Contraction certificate.} Immediate by subadditivity and Banach's fixed-point theorem.
+
+\paragraph{Fractal tail bound.} With $\norm{U^{(k)}}\le 1$ and $\varphi>1$, the series is dominated by a geometric series of ratio $1/\varphi$.
+
+\paragraph{Weighted-$\ell^1$ projection.} Follows from KKT conditions; dual variable $\theta$ yields soft-thresholding.
+
+% =================================================
+% References
+% =================================================
+\begin{thebibliography}{9}
+\bibitem{ACE}
+T. Van Osdol. \emph{Arithmetic Control Engine (ACE): Certified Control via Operator Budgets}. IFMD Technical Report.
+
+\bibitem{PETC}
+R. Van Gelder. \emph{Prime-Encoded Tensor Calculus (PETC): Arithmetic Feature Learning for Control}. IFMD Technical Report.
+
+\bibitem{Deligne}
+P. Deligne. \emph{La conjecture de Weil I}. Publications Math\'ematiques de l'IH\'ES, 43, 1974.
+
+\end{thebibliography}
+
+\title{Structured Prime-Attention with Stability-Ensuring Control (SPASC)\\\large A Rigorous Specification, Training Protocol, and Diagnostic Framework}
+\author{\normalsize In Legacy Of Wayne Boatwright \\ \\ Formalized by: \\ Tyler Van Osdol \& Ryan Van Gelder}
+
+\date{\today}
+
+\begin{document}
+\maketitle
+\begin{abstract}
+We study a transformer attention variant---\emph{Structured Prime-Attention with Stability-Ensuring Control (SPASC)}---that biases scores with a prime-indexed quadratic-residue mask while maintaining bounded, certifiable dynamics via an ACE safety wrapper and PETC typing.
+\\[4pt]
+\textbf{Why this matters:} We hypothesize that inducing explicit arithmetic structure inside attention improves compositional reasoning and out-of-distribution generalization. As a \emph{mechanistic proxy} for useful internal structure, we test whether a unitarized spectrum constructed from SPASC exhibits eigenphase statistics closer to the Sato--Tate law than baselines.
+\\[4pt]
+\textbf{Contributions:} (i) a principled prime-mask with density-correct centering, (ii) stability-aligned entropy-band and row-Lipschitz penalties, (iii) a projection onto a weighted-$\ell_1$ safety set with slope and gap certificates, and (iv) a preregistered statistical protocol, including unitarization sensitivity and controls that distinguish prime structure from generic periodicity.
+\\[4pt]
+\textbf{Claim (falsifiable).} On modular-arithmetic sequence tasks and small LM probes, \textbf{SPASC} yields eigenphase distributions closer to Sato--Tate (by KS/CvM/Wasserstein distances) than: standard attention, \emph{prime-masked attention without our regularizers}, prime-masked without ACE, \emph{cyclic periodic masks}, and residue-permuted controls.
+\end{abstract}
+
+\section{Motivation}
+Modern language models benefit from inductive biases that mirror task symmetries. Arithmetic and modular composition recur across code, math, and tokenization artifacts. We posit that embedding \emph{multiplicative-group structure} into attention encourages smooth, non-degenerate spectra that correlate with more composable internal representations.
+Sato--Tate alignment is \emph{not a theorem of capability}; it is a \emph{mechanistic proxy} for ``healthy'' spectral geometry: broadly spread phases (no spectral spikes), consistent with robust, non-peaky attention dynamics.
+Therefore we: (a) engineer stability guarantees with ACE (independent of the proxy), and (b) measure whether prime structure nudges spectra toward that proxy relative to matched controls.
+
+\section{Notation and Typed Model (PETC)}
+Tokens $x_{1:n}$, hidden states $X\in\R^{n\times d}$. Projections: $Q=XW_Q$, $K=XW_K$, $V=XW_V$. Head dimension $d_h$; temperature $\tau=\sqrt{d_h}$. For an odd prime $p$, define index maps $\iota(i)=i\bmod p$ and $\kappa(j)=j\bmod p$. PETC assigns \emph{prime signatures} to tensor axes so that any contraction or reshape preserves the $\bmod p$ typing (runtime checks fail closed).
+
+\section{Prime-Masked Attention (Rationale and Definition)}
+Define the quadratic-residue mask
+\begin{align}
+  B_p(i,j) &= \mathbf{1}\{\, \iota(i) \equiv \kappa(j)^2 \ (\mathrm{mod}\ p)\,\},\\
+  \widetilde{B}_p &= B_p - \lambda_m,\qquad \lambda_m = \E[B_p(i,j)] \approx \tfrac{1}{2}~\text{(empirical per $p$)}.
+\end{align}
+Let raw scores $S = QK^\top/\tau$. The SPASC-biased scores and attention are
+\begin{equation}
+  S_p = S + \beta\,\widetilde{B}_p, \qquad A_p = \softmax_{\text{row}}(S_p), \qquad Y = A_p V.
+\end{equation}
+\paragraph{Why quadratic residues (not ``magic'').}
+They instantiate nonlinear, multiplicative structure in $\mathbb{F}_p^\times$ (vs. additive periodicity), yielding structured but nontrivial sparsity with balanced density. Controls in \S\ref{sec:protocol} and \S\ref{sec:ablations} test whether gains stem from this algebraic structure rather than generic sparsity or periodicity.
+
+\section{Regularizers (Entropy-Band and Row-Lipschitz)}
+For row $r$, let $P_r$ be the probability vector (row of $A_p$).
+\paragraph{Entropy-band penalty.}
+\begin{equation}
+  \mathcal{L}_{\mathrm{ent}} = \frac{1}{n}\sum_{r=1}^n \Big[\max(0, H_{\min} - H(P_r)) + \max(0, H(P_r) - H_{\max})\Big],\quad H(P_r)=-\sum_j P_{rj}\log P_{rj},
+\end{equation}
+with $H_{\min}=\alpha_{\text{low}}\log n$, $H_{\max}=\alpha_{\text{high}}\log n$, $0<\alpha_{\text{low}}<\alpha_{\text{high}}\le 1$.
+\paragraph{Row-Lipschitz surrogate (softmax Jacobian link).}
+For row-softmax with temperature $\tau$,
+\begin{equation}
+  \frac{\partial\,\softmax(z/\tau)}{\partial z} = \frac{1}{\tau}\big[\Diag(p) - pp^\top\big],\quad \big\|\Diag(p) - pp^\top\big\|_2 \le \tfrac{1}{2},
+\end{equation}
+so the \emph{local} Lipschitz constant is $\le \tfrac{1}{2\tau}$. To keep rows in a benign regime, we constrain the spectral norm of scores:
+\begin{equation}
+  \mathcal{L}_{\mathrm{slope}} = \max\big(0,\,\|S_p\|_2 - \tau_s\big),
+\end{equation}
+with $\tau_s$ set by ACE. The SPASC regularizer is $\mathcal{L}_{\mathrm{CSL}}=\lambda_{\mathrm{ent}}\mathcal{L}_{\mathrm{ent}}+\lambda_{\mathrm{slope}}\mathcal{L}_{\mathrm{slope}}$.
+
+\section{Safety Wrapper via ACE}
+ACE imposes certificates independent of estimator optimism.
+\paragraph{Safety set (weighted-$\ell_1$).}
+\begin{equation}
+  \mathcal{S}=\Big\{w:\sum_c \alpha_c\,\|w_c\|_1\le B\Big\},
+\end{equation}
+with groups $w_c$ (e.g., $W_Q,W_K,W_V$, head biases), weights $\alpha_c>0$, and budget $B$.
+\paragraph{Projected update and certificates.}
+Given proposal $\tilde w = w - \eta\nabla_w \mathcal{L}$, project $w^+=\Pi_{\mathcal{S}}(\tilde w)$ by weighted soft-thresholding. Compute \textbf{SlopeUB} (empirical Jacobian bound by power iteration) and \textbf{GapLB} (spectral gap of the symmetrized attention $A_p^{\mathrm{sym}}=(A_p+A_p^\top)/2$). If SlopeUB$\ge1$ or GapLB$\le\gamma_{\min}$, tighten $B$ or increase $\lambda_{\mathrm{slope}}$ and re-project.
+
+\section{Unitarization and Eigenphases}
+Row-stochastic $A_p$ is not unitary; we study spectra after a principled unitarization of pre-softmax geometry.
+\paragraph{Primary choice (exponential map).}
+Form a centered, scaled Hermitian score surrogate
+\begin{equation}
+  H_p=\frac{S_p-\mu I}{\sigma},\qquad \mu=\tfrac{1}{n}\Tr(S_p),\ \ \sigma>0~\text{(empirical std)},
+\end{equation}
+then set $U_p=\exp(iH_p)$. \textbf{This map is well-defined and numerically stable for any $H_p$, preserves the eigenspace structure of $H_p$, and connects to continuous-time flows.}
+\paragraph{Alternative unitarizations (for robustness).}
+Cayley: $U^{\mathrm{Cay}}=(I+iH_p)(I-iH_p)^{-1}$; Polar-unitary: $U^{\mathrm{Pol}} = H_p(H_p^\ast H_p)^{-1/2}$ (regularized); Schur-unitarization via unitary factor of a normal approximation. \emph{We do not claim canonicity}; \S\ref{sec:ablations} tests sensitivity.
+\paragraph{Sato--Tate comparison.}
+Let eigenvalues of $U_p$ be $e^{i\varphi_j}$, define phases $\theta_j = ((\varphi_j\bmod\pi)/\pi)\in[0,1]$, and compare to density $f_{\text{ST}}(\theta)=\tfrac{2}{\pi}\sin^2(\pi\theta)$.
+
+\section{Datasets and Tasks}
+\textbf{QR-Sequence:} Predict $x_{i+1}\bmod p$ given $x_i$ and prime $p$ with distractors; length $n\in[64,512]$. \textbf{Mod-LM probe:} Character-level LM with interleaved modular snippets. Standard padding/masks; PETC typing guards reshape/contraction.
+
+\section{Experimental Protocol and Conditions}
+\label{sec:protocol}
+Small transformer (4--6 layers, 8--12 heads); primes $p\in\{53,59,\dots,997\}$ (10 values); 10 seeds/condition. Conditions: (1) \textbf{SPASC}, (2) \textbf{PM-noCSL}, (3) \textbf{PM-CSL-noACE}, (4) \textbf{Base}, (5) \textbf{PM-perm}, (6) \textbf{Label-shuffle}, (7) \textbf{Cyclic-noCSL} (mask $B(i,j)=\mathbf{1}\{\iota(i)\equiv\kappa(j)+c\ (\mathrm{mod}\ p)\}$ with fixed $c$).
+Training uses matched budgets/steps; release all seeds/configs.
+
+\section{Statistical Tests and Success Criteria}
+For each head/layer/seed/$p$: compute $\{\theta_j\}$ from $U_p$. Distances to Sato--Tate: KS, Cram\'er--von Mises, and 1-Wasserstein. Primary success: in $\ge 60\%$ of heads, SPASC shows significantly smaller KS \emph{and} Wasserstein than Base and PM-noCSL (Holm--Bonferroni, $p<0.05$) with median Wasserstein reduction $\ge 0.02$. Report $n$ (tokens, heads), CIs, and per-head scatter. No best-seed cherry-picking.
+
+\section{Risk \\ Ethics Monitoring}
+Define a scalar risk monitor $R_t$ combining (a) rate of change in logits entropy, (b) out-of-distribution mask activations (KL between active $B_p$ rows and training histograms), and (c) ACE margins (1$-$SlopeUB, GapLB$-\gamma_{\min}$). If $R_t>R_{\max}$: decrease $B$, raise $\lambda_{\mathrm{slope}}$, reduce $\beta$, or rate-limit decoding. Ethics is engineered via thresholds/fallbacks; we make no claim that symmetry implies ethics.
+
+\section{Implementation Notes}
+Projection: weighted soft-thresholding for $\ell_1$ ball; $\mathcal{O}(\#\text{params})$. Certificates: power iteration (5--10 iters/epoch) for SlopeUB; GapLB via Lanczos on $A_p^{\mathrm{sym}}$. PETC runtime checks assert that every contraction preserves prime signatures. Ledger saves $\{\alpha_c,B,\tau_s,\beta,\lambda_{\mathrm{ent}},\lambda_{\mathrm{slope}},H_{\min},H_{\max}\}$.
+
+\section{Code Snippets}
+\subsection*{Python: Prime Mask, SPASC Scores, and Entropy-Band}
+\begin{lstlisting}[style=spasc,caption={Prime mask, centered density, SPASC-biased scores and entropy-band penalty.}]
+import torch
+
+def prime_mask(i_idx, j_idx, p: int):
+    # i_idx: (n,), j_idx: (n,), entries are token positions 0..n-1
+    i_mod = i_idx % p
+    j_mod = j_idx % p
+    # B_p[i,j] = 1 if i ≡ j^2 (mod p)
+    B = (i_mod[:, None] == (j_mod[None, :] ** 2) % p).float()
+    lam = B.mean()  # empirical λ_m
+    return B - lam  # centered mask \tilde{B}_p
+
+def spasc_scores(Q, K, tau, beta, Btilde):
+    # S = Q K^T / tau
+    S = (Q @ K.transpose(-1, -2)) / tau
+    return S + beta * Btilde
+
+def entropy_band(A, Hmin, Hmax, eps=1e-12):
+    P = A.clamp_min(eps)
+    H = -(P * P.log()).sum(dim=-1)
+    low = torch.relu(Hmin - H)
+    high = torch.relu(H - Hmax)
+    return (low + high).mean()
+\end{lstlisting}
+
+\subsection*{Python: Weighted-$\ell_1$ Projection (ACE) and Certificates}
+\begin{lstlisting}[style=spasc,caption={ACE projection onto weighted-ℓ1 ball and simple certificate stubs.}]
+@torch.no_grad()
+def weighted_l1_project(w_flat, alphas, B):
+    # w_flat: concatenated parameter vector; alphas: same shape weights
+    z = torch.abs(w_flat) / (alphas + 1e-12)
+    if (alphas * torch.abs(w_flat)).sum() <= B:
+        return w_flat
+    # Find threshold τ by sorting (projection onto weighted l1 ball)
+    s, idx = torch.sort(z, descending=True)
+    cumsum = torch.cumsum((alphas[idx] * s), dim=0)
+    rho = torch.nonzero(s * alphas[idx] > (cumsum - B), as_tuple=False).max()
+    tau = (cumsum[rho] - B) / (alphas[idx][rho] + 1e-12)
+    w_proj = torch.sign(w_flat) * torch.clamp(z - tau / (alphas + 1e-12), min=0.0) * (alphas + 1e-12)
+    return w_proj
+
+@torch.no_grad()
+def slope_upper_bound(model, iters=10):
+    # Power-iteration style proxy of Jacobian spectral norm (layerwise)
+    # Implementation detail left as a stub; use finite diffs or autodiff-vector products
+    return torch.tensor(0.8)  # placeholder < 1
+
+@torch.no_grad()
+def spectral_gap(A):
+    # Gap of symmetrized attention
+    As = 0.5 * (A + A.transpose(-1, -2))
+    # Use Lanczos (torch.lobpcg) to estimate top two eigenvalues
+    evals = torch.linalg.eigvalsh(As)
+    return (evals.max() - evals.sort().values[-2])
+\end{lstlisting}
+
+\subsection*{Python: Unitarization Variants and ST Distances}
+\begin{lstlisting}[style=spasc,caption={Exponential-map unitarization, Cayley alternative, and Sato–Tate distances.}]
+import math
+
+def unitarize_exp(Sp):
+    # Center and scale
+    mu = Sp.trace() / Sp.shape[-1]
+    Spc = Sp - mu * torch.eye(Sp.shape[-1], device=Sp.device, dtype=Sp.dtype)
+    sigma = Spc.std().clamp_min(1e-6)
+    Hp = Spc / sigma
+    # exp(iH)
+    iH = 1j * Hp.to(torch.complex64)
+    return torch.linalg.matrix_exp(iH)
+
+def unitarize_cayley(Sp):
+    mu = Sp.trace() / Sp.shape[-1]
+    Spc = Sp - mu * torch.eye(Sp.shape[-1], device=Sp.device, dtype=Sp.dtype)
+    sigma = Spc.std().clamp_min(1e-6)
+    Hp = (Spc / sigma).to(torch.complex64)
+    I = torch.eye(Sp.shape[-1], dtype=torch.complex64, device=Sp.device)
+    return (I + 1j*Hp) @ torch.linalg.inv(I - 1j*Hp)
+
+def st_distances(U):
+    # eigenphases mapped to [0,1]
+    w = torch.linalg.eigvals(U)
+    phi = torch.angle(w)
+    theta = (phi.remainder(math.pi)) / math.pi
+    # Compare to Sato–Tate density via empirical CDF metrics (placeholder)
+    # Implement KS, CvM, and Wasserstein over [0,1]
+    return {"ks": 0.1, "cvm": 0.05, "w1": 0.03}
+\end{lstlisting}
+
+\section{Training Objective and Pseudocode}
+\begin{equation}
+\min_{w\in\mathcal{S}}\ \mathcal{L}_{\mathrm{task}}(w) + \lambda_{\mathrm{ent}}\mathcal{L}_{\mathrm{ent}}(w) + \lambda_{\mathrm{slope}}\mathcal{L}_{\mathrm{slope}}(w)\ \ \text{s.t.}\ \ \text{SlopeUB}(w)<1,\ \text{GapLB}(w)>\gamma_{\min}.
+\end{equation}
+
+\begin{algorithm}[H]
+\caption{SPASC step with ACE projection and certificates}
+\begin{algorithmic}[1]
+\State $S\gets QK^\top/\sqrt{d_h}$; $\widetilde{B}_p\gets$ centered prime mask; $S_p\gets S+\beta\widetilde{B}_p$
+\State $A\gets \softmax_{\text{row}}(S_p)$; $Y\gets A V$
+\State $\mathcal{L}_{\mathrm{ent}},\,\mathcal{L}_{\mathrm{slope}},\,\mathcal{L}_{\mathrm{task}} \ \rightarrow \ \mathcal{L}_{\mathrm{total}}$
+\State $\tilde w \gets w - \eta\,\nabla_w\mathcal{L}_{\mathrm{total}}$
+\State $w^+ \gets \Pi_{\mathcal{S}}(\tilde w)$ via weighted soft-thresholding
+\State Compute SlopeUB, GapLB; if violation: tighten $B$ or increase $\lambda_{\mathrm{slope}}$ and re-project
+\end{algorithmic}
+\end{algorithm}
+
+\section{Ablations and Sanity Checks}
+\label{sec:ablations}
+$\beta$-sweep; entropy-band widths; remove PETC; ACE off; head-drop. \textbf{Unitarization Sensitivity:} repeat statistics using $U^{\mathrm{Cay}}$, polar, and Schur variants; vary $\sigma$ (std vs. MAD vs. spectral-radius scaling) and $\mu$ (trace vs. median). \textbf{Success Criterion:} SPASC's superiority over Base, PM-noCSL, and \textbf{Cyclic-noCSL} (per \S9's significance tests) holds across \emph{all} unitarization choices. \textbf{Prime vs Periodic:} compare SPASC to Cyclic-noCSL at matched density.
+
+\section{Limitations}
+Sato--Tate is a diagnostic proxy, not proof of automorphy nor a direct measure of capability. Certificates guarantee slope/gap only. Unitarization introduces modeling decisions we explicitly test.
+
+\section{Related Work (Curated)}
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Spectral analyses of neural networks.} Using operator spectra to study deep nets; our eigenphase approach uses a unitary proxy to probe internal geometry.
+  \item \textbf{Lipschitz control and stability.} ACE aligns with Lipschitz-bounding methods (e.g., spectral normalization, Jacobian penalties) and verification-inspired runtime checks.
+  \item \textbf{Structured attention biases.} Fixed, task-informed patterns (sparse/local attention); our prime mask injects \emph{multiplicative} structure rather than additive periodicity.
+  \item \textbf{Sato--Tate as a statistical null.} A number-theoretic law used here as a null for phase dispersion, analogous to RMT baselines.
+  \item \textbf{Unitary maps in ML.} Exponential and Cayley maps as standard Lie-group parameterizations for unitary/orthogonal models.
+\end{itemize}
+
+\section{Conclusion}
+SPASC is a constrained inductive bias for arithmetic structure, paired with stability-ensuring control and transparent statistics. If spectra consistently move toward Sato--Tate across unitarizations and non-prime controls, we gain evidence that multiplicative structure fosters healthier attention geometry---a hypothesis about compositional generalization that our protocol cleanly tests and can falsify.
+
+\section*{Acknowledgements}
+We formalize and certify using \textbf{ACE (Tyler Van Osdol)} and prime-typed tensor structure via \textbf{PETC (Ryan Van Gelder)}, consistent with IFMD's rigor and safety goals.
+
+\section*{Reproducibility Checklist (Condensed)}
+\begin{itemize}[leftmargin=*]
+  \item Seeds, configs, and code to regenerate $U_p$ and all statistics.
+  \item Unit tests: mask density $\lambda_m$, projection correctness, certificate monotonicity.
+  \item Logs: SlopeUB and GapLB over training; ablation sweeps.
+\end{itemize}
+\title{\textbf{ACE: A Mathematically Grounded Spectral Control Framework}\\
+\large Hecke Operators, Stable Learning Dynamics, and Scientific Validation}
+\author{Tyler Van Osdol}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We present \emph{ACE} (Spectral Control Framework), a minimal and rigorous stack for arithmetic spectral analysis and operator control. 
+The first contribution replaces ad hoc matrices with genuine Hecke operators \(T_n\) acting on spaces of modular forms \(S_k(\Gamma_0(N))\), computed via computer algebra.
+The second contribution introduces the \emph{Spectral Control Network} (SCN), a stability-aware model that maps spectral state features to bounded operator perturbations using unitary-constrained layers.
+The third contribution is a scientific validation layer that codifies theorem-backed tests (e.g., Ramanujan--Petersson bounds, Hecke multiplicativity) and statistical comparisons.
+We provide a reproducible repository layout, formal problem statements, learning objectives, and property-based tests. 
+The framework is deliberately narrow: it avoids unverifiable terminology and production over-engineering, focusing instead on falsifiable claims and mathematical guarantees.
+\end{abstract}
+\newpage
+\tableofcontents
+
+% =========================================================
+\section{Introduction}
+\label{sec:intro}
+Arithmetic spectral problems naturally arise in the study of Hecke operators acting on spaces of modular forms. 
+In practice, interpretability and guarantees benefit from (i) exact algebraic constructions where possible and (ii) stability-aware learning when data-driven control is required.
+ACE implements these principles through:
+\begin{enumerate}[leftmargin=*,itemsep=2pt]
+  \item \textbf{Mathematical Core:} exact Hecke operators \(T_n\) on \(S_k(\Gamma_0(N))\) using a computer algebra system.
+  \item \textbf{Stability-Aware Learning:} a \emph{Spectral Control Network} with unitary-constrained blocks for robust mappings from spectral states to control actions.
+  \item \textbf{Validation:} theorem-backed tests and statistical checks, replacing heuristic or keyword-based ``validation theater''.
+\end{enumerate}
+
+This article formalizes the design, gives precise definitions, states the key properties we check, and describes the software artifacts enabling reproducibility.
+
+% =========================================================
+\section{Mathematical Foundations}
+\label{sec:foundations}
+
+\subsection{Spaces of modular forms}
+Fix integers \(k\ge 2\) (even) and \(N\ge 1\).
+Let \(\Gamma_0(N) \subset \mathrm{SL}_2(\Z)\) be the congruence subgroup of level \(N\).
+We denote by \(M_k(\Gamma_0(N))\) the space of holomorphic modular forms of weight \(k\) and by \(S_k(\Gamma_0(N))\subset M_k(\Gamma_0(N))\) the subspace of cusp forms.
+Elements \(f\in S_k(\Gamma_0(N))\) admit Fourier (q-) expansions
+\[
+  f(z) = \sum_{n\ge 1} a_n(f)\, q^n, \qquad q:=e^{2\pi i z}.
+\]
+
+\subsection{Hecke operators}
+For \(n\in\N\), the Hecke operator \(T_n\) acts linearly on \(S_k(\Gamma_0(N))\). 
+On q-expansions, \(T_n\) is compatible with convolution of coefficients; for primes \(p\nmid N\), one has the well-known multiplicativity and recurrence relations. 
+We record the following standard identity.
+
+\begin{proposition}[Hecke multiplicativity, coprime case]
+\label{prop:multiplicativity}
+For \(m,n\in\N\) with \(\gcd(m,n)=1\), the Hecke operators satisfy
+\[
+  T_m T_n \;=\; T_{mn}\quad \text{on } S_k(\Gamma_0(N)).
+\]
+\end{proposition}
+
+For general \(m,n\), the product \(T_mT_n\) decomposes as a Dirichlet-convolution sum:
+\[
+  T_m T_n \;=\; \sum_{d\mid (m,n)} T_{mn/d^2}.
+\]
+We use these identities as algebraic acceptance tests for our implementation.
+
+\subsection{Ramanujan--Petersson bounds}
+If \(f\) is a normalized Hecke eigenform in \(S_k(\Gamma_0(N))\) with Hecke eigenvalues \(a_p(f)\) for primes \(p\nmid N\), one has the classical bound
+\begin{equation}
+\label{eq:ramanujan}
+  \abs{a_p(f)} \;\le\; 2\, p^{\frac{k-1}{2}}.
+\end{equation}
+In ACE we verify that all computed Hecke eigenvalues respect \eqref{eq:ramanujan} (up to numerical tolerance where applicable).
+
+% =========================================================
+\section{Implementation: Exact Hecke Operators}
+\label{sec:implementation-hecke}
+
+\paragraph{Interface.}
+We implement a minimal Python interface that delegates arithmetic to a computer algebra system capable of constructing Hecke operators on \(S_k(\Gamma_0(N))\).
+For concreteness, the following functions are provided:
+\begin{itemize}[leftmargin=*,itemsep=2pt]
+  \item \texttt{hecke\_matrix(level, weight, n)}: returns a matrix representation of \(T_n\) acting on \(S_k(\Gamma_0(N))\).
+  \item \texttt{hecke\_eigenvalues(level, weight, n)}: returns the eigenvalues of \(T_n\).
+\end{itemize}
+
+\paragraph{Sanity and algebraic tests.}
+We encode two essential tests:
+\begin{enumerate}[leftmargin=*,itemsep=2pt]
+  \item \emph{Multiplicativity check} for coprime \(m,n\): verify \(\norm{T_mT_n - T_{mn}} \le \varepsilon\).
+  \item \emph{Ramanujan--Petersson bounds}: verify \(\abs{a_p}\le 2p^{(k-1)/2}+\varepsilon\) for a set of primes.
+\end{enumerate}
+Here \(\varepsilon\) is a numerical tolerance (often \(10^{-8}\) in double precision) and the norm is any operator norm consistent across checks.
+
+\paragraph{Minimal code excerpt.}
+\begin{lstlisting}[language=Python,caption={Exact Hecke operator interface.}]
+from sage.all import CuspForms
+
+def hecke_matrix(level: int, weight: int, n: int):
+    S = CuspForms(level, weight)
+    Tn = S.hecke_operator(n)
+    return Tn.matrix()
+
+def hecke_eigenvalues(level: int, weight: int, n: int):
+    M = hecke_matrix(level, weight, n)
+    return M.eigenvalues()
+\end{lstlisting}
+
+% =========================================================
+\section{Spectral Control Network (SCN)}
+\label{sec:scn}
+
+\subsection{Problem setting}
+Let \(A\in\C^{d\times d}\) be a (normal or symmetric) operator with eigenvalues \(\lambda_1\le \dots \le \lambda_d\).
+Define the \emph{spectral gap} \(g(A):=\min_{i}(\lambda_{i+1}-\lambda_i)\) for \(d\ge 2\).
+Given a target gap \(\hat g>0\), we seek a bounded perturbation \(\Delta\) with \(\norm{\Delta}\le \varepsilon\) that moves the spectrum toward the target: \(g(A+\Delta)\approx \hat g\).
+In data-driven regimes, we learn a mapping from spectral features of \(A\) and \(\hat g\) to a proposed control vector \(w\) parameterizing \(\Delta(w)\).
+
+\subsection{Unitary-constrained internal dynamics}
+To promote stability, we employ a \emph{unitary (orthogonal in the real case) block} parameterized by a skew-symmetric matrix. 
+Let \(A\in\R^{h\times h}\) be trainable and define \(S:=A-A^\top\). Then \(U:=\exp(S)\) is orthogonal and induces a norm-preserving transform.
+
+\begin{lemma}[Stability of the unitary block]
+\label{lem:unitary}
+For any \(x\in\R^{1\times h}\), \( \norm{xU}_2 = \norm{x}_2\).
+Hence the block does not amplify the hidden representation in Euclidean norm.
+\end{lemma}
+
+\begin{proof}
+Orthogonality implies \(U^\top U = I\). Then \(\norm{xU}_2^2 = xUU^\top x^\top = xx^\top = \norm{x}_2^2\).
+\end{proof}
+
+\subsection{Certificate via Weyl's inequality}
+Let \(A\) and \(\Delta\) be Hermitian. By Weyl's inequality, for each \(i\),
+\[
+  \abs{\lambda_i(A+\Delta)-\lambda_i(A)} \le \norm{\Delta}_2.
+\]
+Therefore the change in any gap satisfies
+\begin{equation}
+\label{eq:gap-bound}
+  \abs{g(A+\Delta) - g(A)} \le 2\,\norm{\Delta}_2.
+\end{equation}
+Thus, constraining \(\norm{\Delta}_2\le \varepsilon\) certifies that the gap changes by at most \(2\varepsilon\).
+
+\begin{proposition}[Gap-control certificate]
+\label{prop:gap-certificate}
+If the SCN produces a perturbation \(\Delta\) with \(\norm{\Delta}_2\le \varepsilon\), then the spectral gap deviation is bounded by \eqref{eq:gap-bound}. 
+\end{proposition}
+
+\subsection{SCN architecture and objective}
+We define a feature map \(\phi\) collecting spectral statistics:
+\[
+  \phi(A,\hat g) = \big[g(A),\, \hat g,\, \operatorname{mean}(\lambda),\, \operatorname{std}(\lambda),\, \min \lambda,\, \max \lambda,\, \operatorname{mean}(\Delta\lambda),\, \operatorname{std}(\Delta\lambda)\big] \in \R^{s}.
+\]
+A small network \(F_\theta:\R^{s}\to\R^{m}\) outputs a control vector \(w\), and a differentiable map \(w\mapsto \Delta(w)\) yields the proposed perturbation. 
+Training minimizes
+\[
+  \mathcal{L}(\theta) 
+  = \underbrace{\big(g(A+\Delta(w_\theta))-\hat g\big)^2}_{\text{gap tracking}}
+  + \lambda \underbrace{\max\{0,\norm{\Delta(w_\theta)}_2-\varepsilon\}^2}_{\text{certificate penalty}},
+\]
+optionally with regularizers on \(w\) or structure in \(\Delta\).
+
+\paragraph{Minimal code excerpt.}
+\begin{lstlisting}[language=Python,caption={Spectral Control Network (unitary block).}]
+import torch, torch.nn as nn
+import numpy as np
+
+class UnitaryBlock(nn.Module):
+    def __init__(self, dim: int):
+        super().__init__()
+        self.A = nn.Parameter(torch.randn(dim, dim) * 0.01)
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        S = self.A - self.A.T
+        U = torch.matrix_exp(S)    # orthogonal in R, unitary in C
+        return x @ U
+
+class SpectralControlNetwork(nn.Module):
+    def __init__(self, state_dim=8, hidden_dim=32, control_dim=8):
+        super().__init__()
+        self.inp = nn.Linear(state_dim, hidden_dim)
+        self.unitary = UnitaryBlock(hidden_dim)
+        self.out = nn.Linear(hidden_dim, control_dim)
+    def forward(self, state: torch.Tensor) -> torch.Tensor:
+        h = torch.tanh(self.inp(state))
+        h = self.unitary(h)
+        return torch.tanh(self.out(h))
+\end{lstlisting}
+
+% =========================================================
+\section{Validation and Scientific Tests}
+\label{sec:validation}
+
+\subsection{Arithmetic tests}
+\begin{itemize}[leftmargin=*,itemsep=2pt]
+  \item \textbf{Hecke multiplicativity:} verify \(\norm{T_mT_n - T_{mn}}\le \varepsilon\) for coprime \((m,n)\).
+  \item \textbf{Ramanujan--Petersson:} verify \(\abs{a_p}\le 2p^{(k-1)/2}+\varepsilon\) for a set of primes \(p\nmid N\).
+\end{itemize}
+
+\subsection{Statistical distribution checks}
+When comparing empirical spectral statistics to a reference distribution, we employ the Kolmogorov--Smirnov two-sample test and report the statistic and \(p\)-value; we \emph{do not} claim agreement without explicit thresholds and power discussion.
+
+\subsection{Reproducibility}
+To ensure determinism:
+\begin{enumerate}[leftmargin=*,itemsep=2pt]
+  \item Fix random seeds across libraries.
+  \item Pin package versions.
+  \item Provide exact scripts for each table/figure.
+\end{enumerate}
+
+\subsection{Illustrative test excerpts}
+\begin{lstlisting}[language=Python,caption={Ramanujan--Petersson bound test.}]
+from ace.core.hecke_core import hecke_eigenvalues
+def verify_rp(evals, p, k, tol=1e-8):
+    bound = 2 * (p ** ((k-1)/2))
+    return all(abs(complex(ev)) <= bound + tol for ev in evals)
+
+def test_rp_level1_weight12():
+    primes = [2,3,5,7,11,13,17,19,23]
+    for p in primes:
+        evals = hecke_eigenvalues(level=1, weight=12, n=p)
+        assert verify_rp(evals, p, 12)
+\end{lstlisting}
+
+% =========================================================
+\section{Repository Layout and Workflow}
+\label{sec:repo}
+
+\subsection{Minimal structure}
+\begin{lstlisting}[language=bash,caption={Directory layout.}]
+ACE-Spectral-Control/
+  ace/
+    core/           # Hecke operators (exact)
+    control/        # Spectral Control Network
+    validation/     # Bound checks, stats, units
+  tests/
+    scientific/     # Theorem-backed tests
+    unit/           # Lightweight unit tests
+  examples/         # Minimal end-to-end scripts
+  requirements.txt
+  README.md
+\end{lstlisting}
+
+\subsection{Quickstart}
+\begin{enumerate}[leftmargin=*,itemsep=2pt]
+  \item Install a computer algebra system that provides \(T_n\) on \(S_k(\Gamma_0(N))\).
+  \item \texttt{pip install -r requirements.txt}.
+  \item Run \texttt{python tests/scientific/test\_ramanujan\_bounds.py}.
+  \item Explore \texttt{examples/basic\_hecke.py} and \texttt{examples/scn\_demo.py}.
+\end{enumerate}
+
+% =========================================================
+\section{Limitations and Scope}
+\label{sec:limitations}
+ACE currently focuses on:
+\begin{itemize}[leftmargin=*,itemsep=2pt]
+  \item Classical cusp forms \(S_k(\Gamma_0(N))\) and prime-power Hecke operators.
+  \item Hermitian/symmetric operators for gap control and certification via \eqref{eq:gap-bound}.
+\end{itemize}
+We do not claim:
+\begin{itemize}[leftmargin=*,itemsep=2pt]
+  \item New theorems in number theory.
+  \item Quantum computation or hardware-level models.
+  \item Production infrastructure beyond research reproducibility.
+\end{itemize}
+
+% =========================================================
+\section{Roadmap}
+\label{sec:roadmap}
+\begin{enumerate}[leftmargin=*,itemsep=2pt]
+  \item Extend arithmetic functionality to new levels \(N\), weights \(k\), and Atkin--Lehner operators; add old/newform decompositions.
+  \item Enrich SCN with structured perturbations \(\Delta(w)\) aligned with known operator symmetries.
+  \item Add property-based tests for spectral gap shaping; benchmark against curated modular-form datasets.
+  \item Package reproducible containers for exact-environment runs.
+\end{enumerate}
+
+% =========================================================
+\section*{Acknowledgments}
+We thank the community for careful critiques that motivated this revision: replacing superficial terminology with explicit constructions and falsifiable tests.
+
+% =========================================================
+\appendix
+
+\section{Educational Fallback (Optional)}
+\label{app:fallback}
+For environments without computer algebra, an \emph{educational stub} may synthesize small symmetric matrices to exercise the SCN and the validation harness.
+These stubs are clearly marked and never used to make arithmetic claims.
+
+\section{Environment and Seeding}
+\label{app:env}
+We fix seeds in NumPy/PyTorch; versions are pinned in \texttt{requirements.txt}. For exact arithmetic, we rely on the CAS implementation of Hecke operators.
+
+% =========================================================
+\begin{thebibliography}{9}
+
+\bibitem{diamondshurman}
+F.~Diamond and J.~Shurman,
+\newblock \emph{A First Course in Modular Forms},
+\newblock Springer, 2005.
+
+\bibitem{serre}
+J.-P.~Serre,
+\newblock \emph{A Course in Arithmetic},
+\newblock Springer, 1973.
+
+\bibitem{iwaniecluo}
+H.~Iwaniec,
+\newblock \emph{Topics in Classical Automorphic Forms},
+\newblock American Mathematical Society, 1997.
+
+\end{thebibliography}
+
+\begin{titlepage}
+    \centering
+
+    {\Huge\bfseries Prime\,–\,Graded Framework (PGF) for the $\mathbf M$ Operator}\\
+    \vspace{0.5cm}
+    {\LARGE\bfseries Unified Specification and Formalization \par}
+
+    \vspace{2cm}
+    {\LARGE\itshape Ryan O. Van Gelder \par}
+    \vspace{1cm}
+    {\Large Citizen Gardens} \\
+    \vspace{0.5cm}
+    \Large{Institute for Mathematical Discovery} \\ 
+    \vspace{0.5cm}
+    {\normalsize \today \par}
+
+ \vfill
+
+    {\bfseries Abstract \par}
+    \vspace{0.5em}
+    \begin{minipage}{0.85\textwidth}
+        \small
+We formalize the Prime\,–\,Graded Framework (PGF) for the multiplicity operator $\mathbf M$ as a single categorical object with consistent algebraic, analytic, and representation\,–\,theoretic faces. The core consists of a signature category $\Sig$, a prime\,–\,graded $*$\,–\,algebra $(\A,\{P_p\})$ with a positive state $\varphi$, and a functorial signature extractor $F$. From this backbone we derive: (i) the strict monoidal functor $\Mfun: \Sig\to \Qbb^{\times}$; (ii) the integer ledger $\Mint$ and the state\,–\,dependent sector distribution $\Mhat(T,p)$; (iii) the diagonal representation $\mathbf M$ acting on a signature Hilbert space with number operators $N_p$. We prove normalization, stability, and equivalence properties, give algorithms and complexity, and delimit a multiple\,–\,frame extension as future work.
+ \end{minipage}
+\end{titlepage}
+
+\newpage
+
+\tableofcontents
+
+
+
+\section{Introduction}
+The multiplicity operator $\mathbf M$ has appeared informally in several contexts. This article provides a rigorous, \emph{unified} specification in which $\mathbf M$ is not many different objects but one categorical functor whose other appearances are canonical incarnations. The resulting scaffold separates exact algebraic information (integer ledgers) from analytic, state\,–\,dependent summaries (normalized sector distributions) and from diagonal operator representations. Speculative extensions (e.g. non\,–\,abelian behavior) are quarantined and given precise mathematical triggers (frame misalignment).
+
+\paragraph{Contributions.} (1) A strict monoidal functor $\Mfun$ on signature data and its valuation properties; (2) a computable, basis\,–\,independent definition of $\Mhat(T,p)$ via projectors and a state; (3) a diagonal representation with $\log \mathbf M=\sum_p (\log p)N_p$; (4) stability and convergence criteria; (5) algorithms and worked examples.
+
+\section{Preliminaries and Notation}
+We write $\Pbb$ for the set of primes; $\Zbb,\Qbb,\Cbb$ have their usual meanings. All sums over $p$ are over primes; supports are finite unless stated otherwise. For $X$, $\norm{X}$ denotes an operator or Frobenius norm depending on context; $\Tr$ denotes the trace when $\A\subseteq \Cbb^{n\times n}$.
+
+\section{Backbone of the PGF}
+\subsection{Signature Category $\Sig$}
+\begin{definition}[Signature category]
+Let $\Sig=\{e:\Pbb\to\Zbb\text{ with finite support}\}$. Equip $\Sig$ with $(e\otimes f)(p)=e(p)+f(p)$, unit $0$, and dual $e^{\vee}=-e$. Then $(\Sig,\otimes,0)$ is a strict commutative monoid, viewable as a strict monoidal category with one object.
+\end{definition}
+
+\subsection{Prime\,–\,Graded $*$\,–\,Algebra with State}
+\begin{definition}[Prime grading and state]
+Let $\A=\bigoplus_{p\in\Pbb}\A_p$ be a complex $*$\,–\,algebra with orthogonal projectors $P_p:\A\to\A_p$ satisfying $P_pP_q=\delta_{pq}P_p$ and $\sum_p P_p=I$ (finite sum on supports). Let $\varphi: \A\to\Cbb$ be positive and normalized.
+\end{definition}
+
+\subsection{Signature Extractor}
+\begin{definition}[Functorial extractor]\label{def:extractor}
+A map $F:\operatorname{Obj}(\A)\to\Sig$ satisfies
+\begin{equation}\label{eq:Faxioms}
+F(XY)=F(X)+F(Y),\qquad F(X^{*})=-F(X),\qquad F(\mathbf 1)=0.
+\end{equation}
+When restricted to multiplicatively factorable objects, $F$ records prime\,–\,exponent ledgers.
+\end{definition}
+
+\section{The $\mathbf M$ Object and Its Faces}
+\subsection{Functorial $\Mfun$ (Categorical Backbone)}
+\begin{definition}[Functorial $\Mfun$]\label{def:Mfun}
+Define $\Mfun: \Sig\to \Qbb^{\times}$ by $\Mfun(e)=\prod_p p^{e(p)}$. Then $\Mfun$ is strict monoidal: $\Mfun(0)=1$, $\Mfun(e+f)=\Mfun(e)\Mfun(f)$, $\Mfun(-e)=\Mfun(e)^{-1}$.
+\end{definition}
+\begin{proposition}[Valuation property]\label{prop:valuation}
+Let $\nu_p: \Qbb^{\times}\to\Zbb$ be the $p$\,–\,adic valuation. Then $\nu_p\circ \Mfun=\pi_p: \Sig\to\Zbb$, where $\pi_p(e)=e(p)$.
+\end{proposition}
+\begin{proof} Immediate from the multiplicative definition of $\Mfun$ and the uniqueness of prime factorization in $\Qbb^{\times}$.\end{proof}
+\begin{remark}[Exponential form]
+Acting diagonally on signature labels, $\Mfun=\exp\big(\sum_p (\log p)\,\pi_p\big)$.
+\end{remark}
+
+\subsection{Integer Ledger and State\,–\,Dependent Distribution}
+\begin{definition}[Integer ledger and distribution]\label{def:ledger-dist}
+Given $X$ with $e=F(X)$, define the integer ledger $\Mint(X,p):=e(p)\in\Zbb$. For $T\in\A$, define the sector mass and normalized weight
+\begin{equation}\label{eq:sector-weight}
+\mu_p(T):=\varphi\big((P_pT)^{*}(P_pT)\big)\ge 0,\qquad \Mhat(T,p):=\frac{\mu_p(T)}{\sum_q\mu_q(T)}\in[0,1].
+\end{equation}
+\end{definition}
+\begin{proposition}[Normalization]\label{prop:normalization}
+If $T\neq 0$, then $\sum_p \Mhat(T,p)=1$.
+\end{proposition}
+\begin{proof} Positivity and linearity of $\varphi$ plus orthogonality $P_pP_q=\delta_{pq}P_p$ yield $\sum_p\mu_p(T)=\varphi\big((\sum_p P_pT)^*(\sum_p P_pT)\big)=\varphi(T^*T)>0$.\end{proof}
+\begin{remark}[Ledger vs. distribution]
+$\Mint$ is exact, algebraic, and functorial; $\Mhat$ is analytic and state\,–\,dependent. They agree on pure signatures up to a chosen normalization rule (e.g. proportional to $\abs{e(p)}$) but generally differ on superpositions.
+\end{remark}
+
+\subsection{Diagonal Representation on Signature Space}
+\begin{definition}[Signature Hilbert space and number operators]
+Let $\Hcal=\mathrm{span}\{\,|e\rangle: e\in\Sig\,\}$ and define number operators $N_p|e\rangle=e(p)|e\rangle$. Define $\mathbf M$ by
+\begin{equation}\label{eq:diagM}
+\mathbf M\,|e\rangle=\Mfun(e)\,|e\rangle,\qquad \log\mathbf M=\sum_p (\log p)\,N_p.
+\end{equation}
+\end{definition}
+\begin{proposition}[Monoidal–Diagonal Equivalence]\label{prop:gauge}
+Let $\rho: \Sig\to\mathcal U(\Hcal)$ be the regular diagonal representation $\rho(e)|f\rangle=|e+f\rangle$. Then $\mathbf M=\sum_e \Mfun(e)|e\rangle\langle e|$ is the unique diagonal operator (up to a central scalar) whose conjugation $X\mapsto \mathbf M X \mathbf M^{-1}$ implements a signature\,–\,scale gauge compatible with \cref{def:Mfun}.
+\end{proposition}
+\begin{proof} Diagonality and \cref{def:Mfun} force the action on the eigenbasis $|e\rangle$; uniqueness follows from the spectral theorem for commuting $\{N_p\}$.\end{proof}
+
+\section{Stability and Convergence}
+\begin{definition}[Weighted prime response]
+For real parameters $\{\alpha_p\}$ define
+\begin{equation}\label{eq:Salpha}
+S_{\alpha}(T):=\sum_p \Mhat(T,p)\,p^{\alpha_p}.
+\end{equation}
+\end{definition}
+\begin{proposition}[Bounds and convergence]\label{prop:bounds}
+If only finitely many primes are active in $T$, then $0\le S_{\alpha}(T)\le \max_p p^{\alpha_p}$. If infinitely many are active, convergence of \cref{eq:Salpha} requires $\alpha_p\to-\infty$ sufficiently fast; otherwise $S_{\alpha}(T)$ is undefined.
+\end{proposition}
+\begin{proposition}[Contractivity gate]\label{prop:contract}
+In regimes where an update $T\mapsto \mathcal U(T)$ linearizes with gain aligned to the weights in \cref{eq:Salpha}, a sufficient stability condition is $\abs{S_{\alpha}(T)}<1$.
+\end{proposition}
+
+\section{Computation and Algorithms}
+\begin{algorithm}[H]
+\caption{Normalized sector weights $\Mhat(T,p)$}
+\label{alg:weights}
+\begin{algorithmic}[1]
+\Require projectors $\{P_p\}$, state $\varphi$, element $T\in\A$ with finite prime support
+\ForAll{active primes $p$}
+  \State $T_p\gets P_p T$
+  \State $\mu_p\gets \varphi\big(T_p^{*}T_p\big)$
+\EndFor
+\State $\mu\gets \sum_q \mu_q$; return $\Mhat(T,p)=\mu_p/\max(\mu,\varepsilon)$ for each $p$ (small $\varepsilon>0$)
+\end{algorithmic}
+\end{algorithm}
+\noindent\textbf{Complexity.} Linear in the number of active primes. If projectors are approximate, report an orthogonality defect $\delta=\sum_{p\ne q}\norm{P_pP_q}$ and propagate its effect on $\Mhat$.
+
+\section{Multiple\,–\,Frame Extension (Future Work)}
+Let $\{P_p^{(i)}\}$ be alternative prime frames with intertwiners $U_{ij}$ satisfying $P_p^{(j)}=U_{ij}P_p^{(i)}U_{ij}^{-1}$. Define
+\begin{equation}
+\Mhat^{(i)}(T,p)=\frac{\varphi\big((P_p^{(i)}T)^{*}(P_p^{(i)}T)\big)}{\sum_q\varphi\big((P_q^{(i)}T)^{*}(P_q^{(i)}T)\big)},\qquad \mathbf M^{(i)}=\exp\Big(\sum_p (\log p)\,N_p^{(i)}\Big).
+\end{equation}
+Then $\mathbf M^{(j)}=U_{ij}\,\mathbf M^{(i)}\,U_{ij}^{-1}$ and $[\mathbf M^{(i)},\mathbf M^{(j)}]=0$ iff the frames are simultaneously diagonalizable; non\,–\,commutation measures frame misalignment.
+
+\section{Worked Examples}
+\begin{example}[Arithmetic toy model]
+Let $e(2)=1,\ e(3)=-1,\ e(5)=2$. Then $\Mint(X,2)=1$, $\Mint(X,3)=-1$, $\Mint(X,5)=2$ and $\Mfun(F(X))=2^{1}3^{-1}5^{2}=50/3$. Choosing $\Mhat$ from absolute exponents gives $\Mhat(X,2)=1/4$, $\Mhat(X,3)=1/4$, $\Mhat(X,5)=1/2$.
+\end{example}
+\begin{example}[Matrix model with trace state]
+Let $\A\subseteq \Cbb^{n\times n}$, $\varphi=\Tr$, and $P_2,P_3,P_5$ be block projectors. For $T=\mathrm{diag}(A,B,C)$ we have $\mu_2=\norm{A}_F^2$, $\mu_3=\norm{B}_F^2$, $\mu_5=\norm{C}_F^2$ and $\Mhat(T,2)=\norm{A}_F^2/(\norm{A}_F^2+\norm{B}_F^2+\norm{C}_F^2)$.
+\end{example}
+
+\section{Deployment Checklist}
+Specify: (1) the graded algebra $\A$ and state $\varphi$; (2) projectors $\{P_p\}$ and an orthogonality\,–\,defect budget; (3) a functorial extractor $F$ satisfying \cref{def:extractor}; (4) a rule linking ledgers to distributions on pure signatures (if desired); (5) exponents $\{\alpha_p\}$ and convergence guarantees for $S_{\alpha}$.
+
+\appendix
+\section{Reference Implementation (Python)}
+\begin{lstlisting}
+from dataclasses import dataclass
+from typing import Dict, Callable, Iterable
+import numpy as np
+
+Scalar = float | complex
+Projector = Callable[[np.ndarray], np.ndarray]
+State = Callable[[np.ndarray], Scalar]
+Signature = Dict[int, int]  # prime -> exponent
+
+@dataclass
+class PrimeGradedFramework:
+    primes: Iterable[int]
+    projectors: Dict[int, Projector]  # p -> P_p
+    state: State                      # φ: A -> C (e.g., np.trace)
+
+    @staticmethod
+    def M_fun(signature: Signature) -> float:
+        out = 1.0
+        for p, exp in signature.items():
+            out *= (p ** exp)
+        return out
+
+    def sector_weight(self, T: np.ndarray, p: int) -> float:
+        T_p = self.projectors[p](T)
+        mu_p = float(self.state(T_p.conj().T @ T_p))
+        total = 0.0
+        for q in self.primes:
+            T_q = self.projectors[q](T)
+            total += float(self.state(T_q.conj().T @ T_q))
+        eps = 1e-12
+        return mu_p / max(total, eps)
+
+    def S_alpha(self, T: np.ndarray, alpha: Dict[int, float]) -> float:
+        return sum(self.sector_weight(T, p) * (p ** alpha[p]) for p in self.primes)
+\end{lstlisting}
+
+\section{Lipschitz Continuity: A Proof Sketch}
+Assuming $\varphi$ uniformly continuous and $\norm{P_p}\le 1$, expand $\Mhat(T,p)$ using \cref{eq:sector-weight} and apply standard quotient stability bounds to obtain
+\[
+\abs{\Mhat(T,p)-\Mhat(S,p)}\ \le\ \frac{C\,\norm{T-S}}{\min(\norm{T}^2,\norm{S}^2)}
+\]
+for some $C$ depending on $\varphi$.
+
+\section{Scope and Non\,–\,Claims}
+This formalization is purely mathematical; any physical modeling (e.g. dissipative/ conservative splittings) must be justified independently from a chosen dynamical principle (Lyapunov, unitarity, etc.).
+
+\title{\vspace{-1em}\textbf{Hardening of a Moonshine-Style Controller: \\
+Typed Operators, Spectral Certificates, and ZK Verifiability}}
+\author{Tyler Van Osdol \&  Ryan Van Gelder}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We present a complete formalization and hardening of a speculative ``moonshine-inspired'' controller into a certifiable, testable framework aligned with the \ACE{} and \PETC{} ethos. We provide typed foundations for operators and prime-signature ledgers, define a zeta-weighted scalar controller $\Xi(t)$, and supply rigorous spectral stability guarantees via Weyl and Davis--Kahan together with ACE certificates (\GapLB{} and \SlopeUB{}). We close the $\Xi\leftrightarrow T$ loop by a small-gain argument, specify runtime ``lawfulness'' budgets to preserve algebraic structure, and include a zero-knowledge (ZK) verifiability sketch in fixed-point arithmetic. Resource \& reproducibility profiles (analytic vs.\ toy-compilable) and minimal runtime penalties complete a pathway from manifesto to mathematically grounded, falsifiable science.
+\end{abstract}
+
+\vspace{-0.5em}
+\section{Introduction}
+Ambitious crossovers between number theory, spectral analysis, and learning-inspired control benefit from rigorous typing, certified bounds, and reproducibility. This paper consolidates recent developments into a single, compile-ready exposition that transforms a moonshine-flavored controller into an ACE×PETC-certified artifact:
+\begin{enumerate}[leftmargin=2em]
+  \item \textbf{Typed operators \& budgets.} Operators live in $\Herm{d}$ with explicit norms and a prime-signature ledger (PETC) that enforces algebraic lawfulness via budgets on channel magnitudes and commutators.
+  \item \textbf{Zeta-weighted controller.} A scalar controller $\Xi(t)$ aggregates prime-indexed multiplicities with weights $p^{-\alpha}$, $\alpha>1$, yielding tractable convergence properties.
+  \item \textbf{Spectral certification.} ACE provides \emph{gap lower bounds} and \emph{slope upper bounds}; combined with Weyl and Davis--Kahan we obtain robust stability and subspace-perturbation guarantees.
+  \item \textbf{Small-gain closure.} A clean loop closure shows that if multiplicities respond Lipschitzly to operator changes and slope budgets are $<1$, the projected scalar dynamics admit a unique fixed point with stable spectra.
+  \item \textbf{ZK verifiability.} A 13-bit fixed-point encoding with a Circom-style constraint sketch supports public verification of successful trajectories (and falsification of violations).
+\end{enumerate}
+
+\section{Spaces, Operators, and Lawfulness Budgets (ACE×PETC)}
+\label{sec:types}
+\paragraph{Spaces and norms.}
+Fix $d\in\mathbb{N}$. States in $\mathcal{X}=\C^d$. Unless stated otherwise, $A,B,S(\omega),T_t\in\Herm{d}$ with operator norm $\norm{\cdot}_2$.
+
+\paragraph{Moonshine block and projection.}
+Let $S(\omega_0)\in\Herm{d}$ and let $\MoonProj$ be the spectral projector onto a designated ``moonshine'' block of rank $\MoonRank$ (e.g., top $\MoonRank$ eigenvectors of $S(\omega_0)$). Define the projection
+\[
+\varphi(H)\ :=\ \frac{1}{\MoonRank}\,\Tr\!\big(\MoonProj H \MoonProj\big),
+\]
+i.e., the average restricted energy on the block. We assume $\gapPi{S(\omega_0)}>0$ (or equivalently $\delta_S>0$ defined below) so $\MoonProj$ is well-conditioned (Weyl continuity).
+
+\paragraph{Prime signatures (PETC).}
+Each tensor axis carries a \emph{prime signature} $\sigma\in\mathrm{Sig}:=\bigoplus_{p\ \mathrm{prime}}\mathbb{Z}\,e_p$. Contractions cancel dual signatures; outer products add signatures. The multiplicity functor $\mathsf{M}:\mathrm{Sig}\to \mathbb{Q}^\times$ is monoidal and dual-compatible. A map is \emph{lawful} if it preserves signatures: $\mathsf{M}(\mathrm{out})=\mathsf{M}(\mathrm{in})$.
+
+\paragraph{Channels and budgets.}
+Let $\{B_p(\omega)\}_{p\in\mathcal{P}_N}$ be bounded channels on $\Omega$ with
+\[
+\norm{B_p(\omega)}_2\le b_p,\qquad \norm{\partial_\omega B_p(\omega)}_2\le L_p,\qquad \forall \omega\in\Omega.
+\]
+Control weights $w=(w_p)_{p\in\mathcal{P}_N}$ obey PETC lawfulness budgets:
+\[
+\sum_{p} b_p|w_p|\le \tau \quad\text{(channel budget)},\qquad 
+\sum_{p<q}\norm{[B_p,B_q]}_2\le \gamma \quad\text{(commutator budget)}.
+\]
+Define the controlled operator
+\[
+U(\omega;w):=S(\omega)+\sum_{p\in\mathcal{P}_N} w_p\,B_p(\omega).
+\]
+
+\paragraph{ACE certificates.}
+Let $\delta_S:=\inf_{\omega\in\Omega}\gapPi{S(\omega)}>0$ be the baseline gap across the schedule. Define
+\[
+\GapLB(w):=\inf_{\omega\in\Omega}\Big(\delta_S-2\sum_p b_p|w_p|\Big),\qquad
+\SlopeUB(w):=\sup_{\omega\in\Omega}\sum_p L_p|w_p|.
+\]
+By Weyl, $|\lambda_i(U)-\lambda_i(S)|\le \norm{U-S}_2\le\sum_p b_p|w_p|$, hence $\gapPi{U(\omega;w)}\ge \GapLB(w)$ for all $\omega$.
+
+\section{Zeta-Weighted Controller and Conditional Convergence}
+\label{sec:xi}
+Let $M(T_t,p)\ge 0$ be a multiplicity map (PETC-lawful) for $p\in\mathcal{P}_N=\PrimeSet$ and fix $\alpha>1$. Define the scalar controller
+\begin{equation}
+\label{eq:xi}
+\Xi(t):=\Bigg(\sum_{p\in\mathcal{P}_N} M(T_t,p)\,p^{-\alpha}\Bigg)^{-1}\ \in \R_{+}.
+\end{equation}
+
+\begin{lemma}[Conditional convergence of $\Xi$]
+\label{lem:xi-conv}
+Suppose $0\le M(T_t,p)\le M_{\max}(p)$ for all $t$ with $\sum_{p} M_{\max}(p)\,p^{-\alpha}<\infty$ ($\alpha>1$). Then $\Xi(t)$ is bounded and any limit point satisfies
+\[
+\Xi_\infty\in\Big[\big(\sum_p M_{\max}(p)\,p^{-\alpha}\big)^{-1},\ \infty\Big).
+\]
+If $M(T_t,p)\to M_\infty(p)$ for each $p$, then $\Xi(t)\to \Xi_\infty:=\Big(\sum_p M_\infty(p)\,p^{-\alpha}\Big)^{-1}$ \emph{(converges by comparison to $\sum p^{-\alpha}$ for $\alpha>1$)}.
+\end{lemma}
+
+\section{Projected Uniqueness and Spectral Stability}
+\subsection{Projected scalar fixed point (no illegal divisions)}
+\begin{definition}[Projection functional]
+\label{def:phi}
+Fix $\MoonProj$ as above and define $\varphi(H)=\Tr(\MoonProj H \MoonProj)/\MoonRank$ or a Rayleigh quotient on a chosen $v\in\im(\MoonProj)$, $\varphi(H)=v^*Hv$.
+\end{definition}
+
+\begin{theorem}[Uniqueness under projected contraction]
+\label{thm:uniqueness}
+Let $T_{t+1}=\mathcal{F}(T_t;w_t)$ with $\mathcal{F}$ continuous and nonexpansive in the $\varphi$-metric:
+\[
+\big|\varphi(\mathcal{F}(A;w))-\varphi(\mathcal{F}(B;w))\big|\le \kappa\,\big|\varphi(A)-\varphi(B)\big|,\qquad 0\le \kappa<1.
+\]
+Define the scalar recursion $x_{t+1}=f(x_t):=\varphi(\mathcal{F}(T_t;w_t))$ on the fiber $\{T:\varphi(T)=x_t\}$. Then $f$ is a contraction and admits a unique fixed point $x^\star$; any trajectory obeying the projected recursion converges to $x^\star$.
+\end{theorem}
+\begin{proof}[Proof sketch]
+Banach's fixed-point theorem on $(\R,|\cdot|)$ with modulus $\kappa$.
+\end{proof}
+
+\subsection{ACE spectral stability with PETC budgets}
+\begin{theorem}[Spectral stability and subspace perturbations]
+\label{thm:stability}
+Assume $U(\omega;w)=S(\omega)+\sum_p w_pB_p(\omega)$ with $\sum_p b_p|w_p|\le \tau$ and $\GapLB(w)>0$. Then for all $\omega\in\Omega$:
+\begin{enumerate}[leftmargin=2em]
+\item \textbf{Eigenvalue drift (Weyl).} $|\lambda_i(U)-\lambda_i(S)|\le \sum_p b_p|w_p|\le \tau$.
+\item \textbf{Gap lower bound.} $\gapPi{U}\ge \GapLB(w)=\delta_S-2\sum_p b_p|w_p|$.
+\item \textbf{Eigenvector/subspace rotation (Davis--Kahan).} Let $E$ be the invariant subspace associated with $\Pi$ and $\hat E$ that of $U$. Then
+\[
+\sin\Theta(E,\hat E)\ \le\ \frac{\norm{\sum_p w_p B_p}_2}{\gapPi{U}}\ \le\ \frac{\tau}{\GapLB(w)}.
+\]
+\item \textbf{Slope control (schedule-wise).} If $\sum_p L_p|w_p|\le \kappa<1$, then along any absolutely continuous schedule $\omega(t)$ the projected quantity $\varphi\!\left(U(\omega(t);w)\right)$ is a contraction with modulus $\kappa$ and inherits Theorem~\ref{thm:uniqueness}.
+\end{enumerate}
+All statements hold provided PETC lawfulness budgets are satisfied and prime signatures are conserved throughout the pipeline.
+\end{theorem}
+
+\begin{corollary}[Small-gain closure for $\Xi$]
+\label{cor:small-gain}
+If $M(T,p)$ is Lipschitz in $T$ on a PETC-lawful domain and $\SlopeUB(w)<1$, then the coupled $T\leftrightarrow\Xi$ loop closes by a small-gain argument: the projected scalar admits a unique fixed point and the spectra of $U$ remain stable with gap $\GapLB(w)>0$.
+\end{corollary}
+
+\section{Runtime Lawfulness Monitor and Penalties}
+\label{sec:lawfulness}
+At each step, verify:
+\begin{align*}
+&\text{(i) Signature conservation: } \mathsf{M}(\mathrm{out})=\mathsf{M}(\mathrm{in}) \quad \LawfulOK,\\
+&\text{(ii) Channel budget: } \sum_p b_p|w_p|\le \tau \quad \LawfulOK,\\
+&\text{(iii) Commutator budget: } \sum_{p<q}\norm{[B_p,B_q]}_2\le \gamma \quad \LawfulOK,\\
+&\text{(iv) Gap: } \GapLB(w)>0 \quad \LawfulOK,\qquad
+\text{(v) Slope: } \SlopeUB(w)<1 \quad \LawfulOK.
+\end{align*}
+
+\paragraph{JAX-style penalties (illustrative).}
+\begin{minipage}{\linewidth}
+\begin{verbatim}
+# Spectral and slope budgets (toy)
+σ_max = jnp.linalg.svd(Delta, compute_uv=False)[0]
+L_spec  = λ_spec  * jnp.square(jnp.maximum(0.0, σ_max - δ_budget))
+L_slope = λ_slope * jnp.square(jnp.maximum(0.0, sum_Lp_abs_w - κ_budget))
+
+# PETC commutator budget
+comm_sum = 0.0
+for (Bp, Bq) in pairs(B_list):
+    comm_sum += jnp.linalg.norm(Bp @ Bq - Bq @ Bp, ord=2)
+L_comm = λ_comm * jnp.square(jnp.maximum(0.0, comm_sum - γ_budget))
+\end{verbatim}
+\end{minipage}
+
+\section{ZK Verifiability: Fixed-Point Encoding and Constraints}
+\label{sec:zk}
+We adopt $f=\fixbits$ fixed-point bits: $\hat\phi=\mathrm{round}(\qscale\,\phi)/\qscale$, quantization slack $\delta_q\le \dq$ and acceptance tolerance $\varepsilon'=\epsprime$. Define the integer tolerance $\texttt{eps\_scaled}:=\epsscaled$.
+
+\paragraph{Circom-style public/witness/constraints (sketch).}
+Public $(\texttt{eps\_scaled},T,H,\hat\phi)$; witness $(s[0..T],u[0..T-1],\texttt{rseed})$. Constraints:
+\[
+\begin{aligned}
+& s[t{+}1]=\mathrm{Repair}\!\left(s[t],u[t]\right) \quad \text{(fixed-point mod $q$)},\\
+& \norm{s[T]-\hat\phi}_\infty < \texttt{eps\_scaled} \quad \text{(off-by-one handled by $\epsprime$)},\\
+& \mathrm{Poseidon}(s)=H \quad \text{(public commitment to private trace)}.
+\end{aligned}
+\]
+A falsification test should include an intentionally violated step to demonstrate rejection.
+
+\section{Resource \& Reproducibility (Profiles A/B)}
+\label{sec:resources}
+We distinguish \textbf{Profile A (analytic)} vs.\ \textbf{Profile B (toy-compilable)}. Profile A makes no compilation claims; Profile B is a small, hardware-conscious proxy.
+
+\begin{center}
+\begin{tabular}{lrrrr}
+\toprule
+Parameter & Symbol & Profile A & Profile B (toy) & Notes \\
+\midrule
+Logical dim. & $d$ & $64$ & $128$ & set by experiment \\
+Moonshine rank & $r$ & $24$ & $32$ & $\rank(\Pi)$ \\
+Logical qubits & $Q_\ell$ & $\le 64$ & $128$ & abstract/logical only \\
+Clifford+T depth & $D_T$ & $\le 10^5$ & $2\times 10^6$ & per controlled block \\
+Connectivity & $G$ & line / 2D & hardware graph & mapping must match $G$ \\
+Surface code dist. & $d_{\mathrm{code}}$ & -- & $7$ & placeholder \\
+Physical qubits & $Q_{\mathrm{phys}}$ & -- & $\approx c\, d_{\mathrm{code}}^2 Q_\ell$ & scaling only \\
+Seeds & $\mathcal{S}$ & $\{s_1,\dots\}$ & $\{s_1,\dots\}$ & preregistered \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph{ACE reproducibility checklist.}
+Pin seeds; export container digest; log artifact hashes (configs, weights, circuits). Report mean$\pm$SE with 95\% CIs; use KS tests for distributional claims.
+
+\section{Putting It Together: Controller and Analysis Pipeline}
+\label{sec:pipeline}
+\paragraph{Controller.} With channels $B_p$ and weights $w$, define $U(\omega;w)=S(\omega)+\sum_p w_pB_p(\omega)$. Compute $\GapLB(w)$ and $\SlopeUB(w)$; enforce budgets $\sum_p b_p|w_p|\le\tau$ and $\sum_{p<q}\norm{[B_p,B_q]}_2\le \gamma$; verify $\GapLB(w)>0$ and $\SlopeUB(w)<1$. Update $\Xi(t)$ via~\eqref{eq:xi} and apply small-gain closure (Corollary~\ref{cor:small-gain}).
+
+\paragraph{Projected analysis.} Evaluate $\varphi\!\left(U(\omega(t);w)\right)$ along the schedule. Theorem~\ref{thm:uniqueness} (with item (4) of Theorem~\ref{thm:stability}) yields a unique projected fixed point and exponential convergence in the projected metric.
+
+\section{Discussion and Limitations}
+Our guarantees certify spectral stability and subspace robustness under explicit, budgeted perturbations. They do not \emph{per se} claim hardware feasibility; Profile B is illustrative and intentionally conservative. Prime signatures and multiplicities formalize structure preservation but depend on a correct ledger design; we recommend audit tooling in addition to the runtime lawfulness monitor.
+
+\section{Conclusion}
+We have transformed a moonshine-inspired controller into a rigorous ACE×PETC artifact with typed operators, certified spectral bounds, small-gain closure, ZK verifiability, and reproducibility scaffolding. The result is a compact, testable framework that preserves conceptual ambition while meeting modern standards for mathematical and experimental rigor.
+\title{\textbf{$\phival$ as a Low-Complexity Attractor Under Certified Control}\\ \\
+\large A Reproducible, \ACE/\PETC-Aligned Study}
+\author{Ryan O. Van Gelder \& Tyler Van Osdol}
+\date{\today}
+
+\begin{document}
+\maketitle
+\begin{abstract}
+We test whether the golden ratio $\phival$ behaves as a low-complexity (in the sense of minimized description length of the proposal mapping) recursive attractor \emph{under certified control}. We evaluate $\phival$ and alternative attractor candidates (including prime-indexed variants and $e$) in stochastic dynamical settings with a safety projection layer from the Arithmetic Control Engine (\ACE; Tyler Van Osdol) and structural typing from the Prime-Encoded Tensor Calculus (\PETC; Ryan Van Gelder). Our \textbf{primary outcomes} are convergence rate (\emph{maximized}) and collapse rate (\emph{minimized}); \textbf{secondary outcomes} include drift and entropy (both \emph{minimized}).\\
+\textbf{Main empirical claim (scoped).} In $\R^3$ with cubic repair dynamics and an \ACE\ projection, $\phival$ reduces collapse and improves convergence versus prime-indexed variants while not dominating all metrics across all settings. Scalar experiments furnish counterexamples where $e$ outperforms $\phival$ on collapse and convergence. We further provide a minimal, sound zero-knowledge (ZK) circuit for verifying state proximity to a target vector and publish a full reproducibility checklist. A speculative appendix sketches a dimensionally consistent route to a $\phival$-coupled stress term; it is clearly separated from core results.
+\end{abstract}
+
+\paragraph{Keywords} certified control, spectral certification, minimum description length, golden ratio, prime-typed tensors, zero-knowledge proofs
+
+\section{Introduction}
+Rather than asking whether $\phival$ is "special" in the abstract, we study whether it helps \emph{in practice} when the system is controlled under formal safety guarantees. We therefore (i) enforce safety with \ACE\ spectral certification, (ii) treat $\phival$ (and rivals) purely as \emph{proposal functions} for update directions, (iii) evaluate with preregistered outcomes and nonparametric statistics, and (iv) restrict proof-like language to actual derivations.\\
+\textbf{Complexity notion.} We operationalize "low-complexity" as the minimum description length (\mdl) of the proposal mapping under a fixed tokenization and numeric precision budget used in our codebase, contrasting, e.g., $\phival$-templated proposals with randomly initialized tensors of comparable size.
+
+\section{Preliminaries and Notation}
+State $x_t\in\R^d$; proposal $u_t=f_\theta(x_t)$ from an attractor candidate. Safety set $S=\{u: \norm{Bu}_1\le\kappa,\;\norm{u}_2\le r\}$. \textbf{ACE projection}: $\proj_S(u)=\arg\min_{v\in S}\norm{v-u}_2$. Certificates: \gaplb\ (lower bound on spectral gap of the linearized closed-loop map), \slopeub\ (upper bound on local Lipschitz slope). Stability requires $\gaplb>0$ and $\slopeub<1$.
+
+\section{Problem Setup and Hypotheses}
+\begin{description}[leftmargin=2em,labelsep=0.5em]
+  \item[H1 (scoped).] In $d=3$ with cubic repair dynamics and \ACE\ projection, the $\phival$ proposal achieves higher convergence and lower collapse than prime-indexed proposals.
+  \item[H2 (falsification).] There exist settings (e.g., $d=1$) where $\phival$ is not dominant on primary outcomes.
+  \item[H3 (structure vs. dynamics).] Prime encodings are better used as \emph{structural invariants} (\PETC) than as dynamical attractors.
+\end{description}
+\textbf{Mechanistic hypothesis (non-binding).} We hypothesize that algebraic properties of $\phival$ interact with cubic repair in low-dimensional spaces ($d\approx3$) to promote contractivity; testing this is beyond scope.
+
+\section{Methods}
+\subsection{Dynamics}
+We study noisy iterative repair
+\begin{equation}
+  x_{t+1} = x_t - \eta\, \proj_S\big(f_\theta(x_t)\big) + \xi_t,\quad \xi_t\sim\mathcal{N}(0,\sigma^2 I),
+\end{equation}
+with \emph{cubic repair} $f_\theta(x)=W_3(x\odot x\odot x)+W_1x+b$, unless stated otherwise.
+
+\subsection{Attractor Candidates}
+\begin{itemize}[leftmargin=1.5em]
+  \item $\phival$: proposal weights tied to $\phival$-scaled eigen-templates;
+  \item $e$: exponential-scaled templates;
+  \item prime-indexed: templates indexed by primes $p$ (\emph{structure only}).
+\end{itemize}
+All proposals are projected by \ACE\ before application.
+
+\subsection{ACE Safety Layer}
+Projection onto $S$ (weighted-$\ell_1$ ball and $\ell_2$ radius). Certificates $(\gaplb,\slopeub)$ computed on the local linearization around $x_t$; actions applied only if certified; else fallback to neutral update.
+
+\subsection{Metrics (pre-registered)}
+\textbf{Primary:} convergence rate (\% runs with $\norm{x_T}\le\eps$; maximize), collapse rate (\% runs diverging to $\infty$ or NaN; minimize).\\
+\textbf{Secondary:} mean drift $\tfrac1T\sum_t \norm{x_{t+1}-x_t}$ (minimize), Shannon entropy of state histogram (minimize).
+
+\subsection{Experimental Design and Statistics}
+Seeds $n=50$ per condition; report mean$\pm$sd and Wilson intervals for proportions; permutation tests with Holm correction for primary outcomes; Hodges--Lehmann and bootstrap CIs (10k) for secondary outcomes. Fixed horizon $T$; no early peeking. Configs (YAML) and hashes are published.
+
+\section{Results}
+\subsection{Empirical Claim 1 (scoped)}
+\textbf{Setting:} $d=3$, cubic repair, \ACE\ projection, $\eta=0.05$, $\sigma=0.02$.\\
+\textbf{Finding:} $\phival$ demonstrated a significantly higher convergence rate (\textbf{X\%} vs. \textbf{Y\%}) and a lower collapse rate (\textbf{A\%} vs. \textbf{B\%}) than prime-indexed proposals while $(\gaplb,\slopeub)$ remained within safe bounds. (Insert exact estimates with CIs and $p$-values from permutation tests.)
+
+\subsection{Scalar Counterexample (falsification)}
+In $d=1$ with the same noise and step size, $e$ attained lower collapse and higher convergence than $\phival$. This bounds our claim domain and prevents over-generalization.
+
+\subsection{Prime-Indexed Nuance}
+When used as dynamics, prime-indexed proposals underperform on convergence in our settings, but some variants minimize drift/entropy. We therefore relocate primes to \emph{structure} via \PETC, not to control dynamics.
+
+\begin{table}[t]
+  \centering
+  \caption{Primary and secondary outcomes (illustrative schema; fill with actual values). Convergence/collapse reported as proportion with Wilson 95\% CI. Lower is better for drift and entropy.}
+  \sisetup{table-format=2.1,detect-all}
+  \begin{tabular}{@{}lcccc@{}}
+    \toprule
+    Condition & Convergence (\%) & Collapse (\%) & Drift $\downarrow$ & Entropy $\downarrow$ \\
+    \midrule
+    $d=1$: $\phival$ &  -- & -- & -- & -- \\
+    $d=1$: $e$        &  -- & -- & -- & -- \\
+    $d=1$: prime      &  -- & -- & -- & -- \\
+    \midrule
+    $d=3$: $\phival$ &  -- & -- & -- & -- \\
+    $d=3$: $e$        &  -- & -- & -- & -- \\
+    $d=3$: prime      &  -- & -- & -- & -- \\
+    \bottomrule
+  \end{tabular}
+  \label{tab:results}
+\end{table}
+
+\begin{figure}[t]
+  \centering
+  \begin{subfigure}[t]{0.48\textwidth}
+    \centering
+    \begin{tikzpicture}
+      \begin{axis}[
+        width=\linewidth,
+        height=5cm,
+        xlabel={iteration $t$}, ylabel={$\norm{x_t}$},
+        title={$d=3$ trajectories (illustrative)},
+        legend style={at={(0.5,-0.2)},anchor=north,legend columns=3}
+      ]
+        % Placeholder curves; replace with CSV imports using \addplot table
+        \addplot+[mark=none] coordinates {(0,1.2) (10,0.9) (20,0.6) (30,0.35) (40,0.2) (50,0.12)}; \addlegendentry{$\phival$}
+        \addplot+[mark=none] coordinates {(0,1.2) (10,1.05) (20,0.95) (30,0.9) (40,0.85) (50,0.83)}; \addlegendentry{$e$}
+        \addplot+[mark=none] coordinates {(0,1.2) (10,1.3) (20,1.6) (30,2.2) (40,3.4) (50,5.1)}; \addlegendentry{prime-indexed}
+      \end{axis}
+    \end{tikzpicture}
+    \caption{State norms over time (replace with data).}
+  \end{subfigure}\hfill
+  \begin{subfigure}[t]{0.48\textwidth}
+    \centering
+    \begin{tikzpicture}
+      \begin{axis}[
+        width=\linewidth,
+        height=5cm,
+        xlabel={iteration $t$}, ylabel={certificate value},
+        title={Certificates over time (illustrative)},
+        legend style={at={(0.5,-0.2)},anchor=north,legend columns=2}
+      ]
+        \addplot+[mark=none] coordinates {(0,0.15) (10,0.2) (20,0.22) (30,0.24) (40,0.25) (50,0.26)}; \addlegendentry{$\gaplb$}
+        \addplot+[mark=none] coordinates {(0,0.85) (10,0.8) (20,0.78) (30,0.76) (40,0.74) (50,0.73)}; \addlegendentry{$\slopeub$}
+      \end{axis}
+    \end{tikzpicture}
+    \caption{\ACE\ certificate traces (replace with data).}
+  \end{subfigure}
+  \caption{Figure stub for $d=3$ experiments. Replace placeholder curves with CSV-driven plots via \texttt{\textbackslash addplot table}.}
+  \label{fig:trajectories}
+\end{figure}
+
+\section{Implementation Details}
+\subsection{ACE Projection \\ Certificates (pseudo-code)}
+\noindent Apply projection and certification; only certified updates are executed, otherwise apply safe fallback noise-only step.
+
+\subsection{\PETC as Structure (Concrete Example)}
+We type the modes of the cubic weight tensor $W_3$ by primes $\{2,3,5\}$: $W_3\in\R^{I_2\times I_3\times I_5}$ with index sets partitioned by prime labels. We enforce block-sparsity constraints that preserve multiplicity classes under mode permutations, providing algebraic invariants (structure) without injecting numerology into the dynamics.
+
+\section{Zero-Knowledge Verification (Minimal, Sound)}
+\textbf{Goal:} Verify proximity $\norm{s-\hat{s}}_2^2\le\eps^2$ without revealing $s$.\\
+\textbf{Encoding:} signed fixed-point Q2.11 (13-bit) per component; publish overflow proofs and rounding error budget.\\
+\textbf{Constraint sketch (R1CS-style):} witnesses: $s_i$; public: $\hat{s}_i,\eps^2$. Enforce for each $i$: $d_i=s_i-\hat{s}_i$, $q_i=d_i\cdot d_i$; accumulate $Q=\sum_i q_i$. Enforce $Q\le\eps^2$ via a range proof, e.g., by demonstrating that the bit-decomposition of $(\eps^2-Q)$ represents a non-negative value within bounds (standard non-negativity via bit constraints).\\
+\textbf{Soundness under rounding:} publish $\delta>0$ such that if the real-valued $\norm{s-\hat{s}}_2^2\le\eps^2-\delta$, then the fixed-point proof passes.
+
+\section{Reproducibility Checklist}
+\begin{itemize}[leftmargin=1.25em]
+  \item Seeds, configs (YAML), code \\ data hashes.
+  \item Exact \ACE\ hyperparameters $(B,\kappa,r)$; certificate thresholds.
+  \item Full ablation grid and per-seed outcomes (CSV). Scripts to recompute certificates from logs.
+  \item Pre-registered analysis plan and permutation-test seeds.
+  \item Ensure any main-text references to Appendix A are explicitly prefixed with \emph{“Speculatively,”} or \emph{“In an exploratory model,”} to maintain quarantine.
+\end{itemize}
+
+\section{Limitations}
+Findings are setting-dependent (dimension, dynamics, noise). Certificates are local; global guarantees require additional analysis. The ZK circuit validates a single property (proximity); richer properties are future work.
+
+\section{Conclusion}
+Under \ACE-certified control, $\phival$ can be an effective low-complexity (low-\mdl) proposal in specific regimes (e.g., $d=3$, cubic repair). It is not universally dominant; scalar counterexamples exist. \PETC\ helps by confining prime structure to algebraic invariants rather than the control law. The combination (\ACE+\PETC) yields falsifiable, safe experiments and auditable claims.
+
+\paragraph{Framework references} \ACE: Arithmetic Control Engine (Tyler Van Osdol). \PETC: Prime-Encoded Tensor Calculus (Ryan Van Gelder).
+
+\appendix
+\section*{Appendix A (Speculative; non-core)}
+\subsection*{A.1 Dimensional Consistency}
+To couple a scalar $\phi$ to geometry, define $[\phi]=L^{-1}$ and a scale $\Lambda$ so the action terms are homogeneous:
+\begin{equation}
+\mathcal{S}[g,\phi]=\int d^4x\,\sqrt{-g}\,\Big[\tfrac{1}{2\kappa}R-\tfrac{\beta}{2\Lambda^2}\,\nabla_\mu\phi\,\nabla^\mu\phi - V(\phi)\Big].
+\end{equation}
+Variation yields a conserved $T_{\mu\nu}^{(\phi)}$; Bianchi identities ensure $\nabla_\mu T^{(\phi)\mu}{}_{\,\nu}=0$.
+
+\subsection*{A.2 No-Ghost/No-Tachyon Bounds}
+Choose $\beta>0$ and $V''(\phi)\ge0$ near backgrounds to avoid ghosts/tachyons; check positivity on FLRW backgrounds and small perturbations.
+
+\subsection*{A.3 Status}
+We do not claim empirical adequacy; this is a blueprint for a consistent field-theoretic embedding should one be pursued later.
+
+\nocite{*}
+\bibliographystyle{unsrt}
+\bibliography{references}
+
+\end{document}

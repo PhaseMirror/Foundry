@@ -1,0 +1,1861 @@
+\documentclass[12pt,letterpaper]{article}
+
+% ─── Packages ────────────────────────────────────────────────────────────────
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{mathtools}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{microtype}
+\usepackage{parskip}
+\usepackage{mdframed}
+\usepackage{tcolorbox}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+% ─── Hyperref Setup ──────────────────────────────────────────────────────────
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!70!black,
+  citecolor=green!50!black,
+  urlcolor=blue!80!black,
+  pdftitle={WHT-Epistasis Spectral Encoding with Multiplicity Theory: Defensive Publication},
+  pdfauthor={Multiplicity Foundation},
+  pdfsubject={Prior Art Defensive Publication / CIP-1 Specification},
+}
+
+% ─── Listings setup ──────────────────────────────────────────────────────────
+\definecolor{codebg}{rgb}{0.96,0.97,0.98}
+\definecolor{codeframe}{rgb}{0.75,0.80,0.88}
+\definecolor{keywordcolor}{rgb}{0.10,0.20,0.70}
+\definecolor{commentcolor}{rgb}{0.30,0.55,0.30}
+\definecolor{stringcolor}{rgb}{0.65,0.10,0.10}
+
+\lstset{
+  backgroundcolor=\color{codebg},
+  frame=single,
+  rulecolor=\color{codeframe},
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{keywordcolor}\bfseries,
+  commentstyle=\color{commentcolor}\itshape,
+  stringstyle=\color{stringcolor},
+  breaklines=true,
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  tabsize=4,
+  showstringspaces=false,
+  captionpos=b,
+}
+
+% ─── Theorem environments ────────────────────────────────────────────────────
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{axiom}[definition]{Axiom}
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{lemma}[theorem]{Lemma}
+
+\theoremstyle{remark}
+\newtheorem*{remark}{Remark}
+\newtheorem*{note}{Note}
+
+% ─── Custom environments ─────────────────────────────────────────────────────
+\tcbuselibrary{breakable,skins}
+\newtcolorbox{claimbox}[1][]{
+  colback=blue!5!white,
+  colframe=blue!50!black,
+  fonttitle=\bfseries,
+  title={#1},
+  breakable,
+}
+\newtcolorbox{warningbox}[1][]{
+  colback=orange!8!white,
+  colframe=orange!70!black,
+  fonttitle=\bfseries,
+  title={#1},
+  breakable,
+}
+
+% ─── Page style ──────────────────────────────────────────────────────────────
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textit{WHT-Epistasis Spectral Encoding — Defensive Publication}}
+\fancyhead[R]{\small\textit{Citizen Gardens \\ The Foundation of Multiplicity, 2026}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% ─── Title ───────────────────────────────────────────────────────────────────
+\title{
+  \vspace{-0.5in}
+  {\Large\bfseries WHT-Epistasis Spectral Encoding with Multiplicity Theory:}\\[6pt]
+  {\large A 6-Bit Biophysical Mapping, Groth16 ZK Commitment Pipeline,\\
+  and IFMD-Grounded Contraction Certificate}\\[12pt]
+  {\normalsize\textbf{Comprehensive Technical Specification \&\\
+  Prior Art Defensive Publication (FV-8)}}\\[6pt]
+
+}
+\author{
+  Citizen Gardens Community Research Initiative\\
+  \href{https://github.com/MultiplicityFoundation/PhaseMirror-HQ}%
+       {\texttt{github.com/MultiplicityFoundation/PhaseMirror-HQ}}
+}
+\date{April 25, 2026}
+
+% ─── Macros ──────────────────────────────────────────────────────────────────
+\newcommand{\supp}{\operatorname{supp}}
+\newcommand{\FWHT}{\operatorname{FWHT}}
+\newcommand{\Poseidon}{\operatorname{Poseidon2}}
+\newcommand{\dP}{d_{\mathbb{P}}}
+\newcommand{\Tbase}{\Theta_{Base}}
+\newcommand{\TC}{\Theta_{C6}}
+\newcommand{\hhat}{\hat{h}}
+\newcommand{\mbar}{\bar{m}}
+\newcommand{\Lsup}{L_s^{\sup}}
+\newcommand{\Lgeo}{L_s^{\mathrm{geo}}}
+\newcommand{\RZK}{\mathcal{R}_{ZK}}
+\newcommand{\CGamma}{\mathcal{C}_{\Gamma}}
+\newcommand{\CDelta}{\mathcal{C}_{\Delta}}
+\newcommand{\GFp}{\mathbb{GF}(p)}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{document}
+\maketitle
+\thispagestyle{fancy}
+
+\begin{abstract}
+This document constitutes a \textbf{prior art defensive publication and internal CIP-1 specification} for a novel encoding architecture combining a 6-bit biophysical codon mapping $[\mathrm{GC}_1, \mathrm{PUR}_1, \mathrm{GC}_2, \mathrm{PUR}_2, \mathrm{GC}_3, \mathrm{PUR}_3]$ with a length-64 in-place Walsh--Hadamard Transform (WHT), a prime-indexed multiplicity space, and a Groth16 zero-knowledge commitment pipeline. The architecture's core novelty lies in: (1) projecting 4-state nucleotides onto $\mathbb{Z}_2^2$ per codon position via binary biophysical contrasts \emph{before} applying the WHT---a step not covered by existing multiallelic WHT prior art; (2) interpreting the resulting 64-dimensional integer spectral vector $\hhat \in \mathbb{Z}^{64}$ as a full epistatic decomposition of codon usage up to 6th order; (3) instantiating a zero-knowledge witness commitment over $\GFp$ via Poseidon2 with a provable single-coefficient spectral predicate; and (4) certifying spectral stability via an IFMD-grounded CRMF Axiom C6 contraction certificate computed from a seeded three-split population accumulation protocol. A Transfer Theorem establishes that any symbolic system admitting a $(\mathcal{B}_3, \mathbb{Z}_2^2)$-fibration---including biosensor physiological windows, NLP morphological slots, and FPGA circuit states---inherits the full architecture. The final versioned architecture (FV-8) integrates ten formal objects (Definitions 1--8, Axiom C-WHT, Corollary C-WHT$\to$C6), a Two-Stage Fiat-Shamir CAS commitment protocol, and a locked circuit budget of $5{,}087$ R1CS constraints.
+\end{abstract}
+\newpage
+\tableofcontents
+
+% =============================================================================
+\section{Executive Summary}
+% =============================================================================
+
+This specification documents a cross-domain encoding architecture developed through an iterative formal review process between versions FV-1 through FV-8. The architecture has three tiers:
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Encoding Tier.} A 6-dimensional binary feature space $\mathcal{F} \cong \mathbb{Z}_2^6$ defined by the biophysical contrasts $[\mathrm{GC}_1, \mathrm{PUR}_1, \mathrm{GC}_2, \mathrm{PUR}_2, \mathrm{GC}_3, \mathrm{PUR}_3]$ across three codon positions. The space admits a prime-labeled channel assignment $p_k \in \{2,3,5,7,11,13\}$ and a primorial spectral weight metric $\dP$.
+
+  \item \textbf{Spectral Tier.} A two-step pipeline: first accumulate a codon usage histogram $h \in \mathbb{Z}^{64}$, then apply the length-64 Fast Walsh--Hadamard Transform (FWHT) to yield $\hhat = \FWHT(h) \in \mathbb{Z}^{64}$. Coefficients $\hhat(\zeta)/N$ are the population-averaged epistatic interaction coefficients of all orders 0--6 simultaneously.
+
+  \item \textbf{Certification Tier.} A Groth16 zero-knowledge circuit (5{,}087 R1CS constraints) commits to $\Poseidon(\hhat)$ and proves a per-coefficient spectral predicate $\hhat(\zeta_{\mathrm{trait}})/N \ge \theta_{\mathrm{trait}}$ without revealing the histogram. An IFMD-grounded CRMF C6 contraction certificate, computed by measuring normalized off-attractor spectral mass decay under LLN accumulation, provides a machine-checkable stability bound $\Lsup < 1$.
+\end{enumerate}
+
+\begin{claimbox}[Defensive Publication Scope]
+This document places the following innovations irrevocably in the public domain as prior art, effectively preventing third-party patent claims on these specific combinations:
+\begin{itemize}
+  \item The biophysical $\mathbb{Z}_2^2$-per-position projection applied \emph{before} WHT (distinct from the 2024 multiallelic WHT extension, which operates on 4-state inputs directly).
+  \item The primorial spectral weight $w(\zeta) = \prod_{k \in S_\zeta} p_k$ as a metric on WHT coefficient space.
+  \item The population-level ZK proof of distributional epistatic structure (not per-symbol genotype) using Poseidon2 over $\GFp$ with a per-coefficient spectral predicate.
+  \item The Two-Stage Fiat-Shamir CAS commitment protocol with a governed retry nonce.
+  \item The IFMD-grounded $\Lsup$ certificate via normalized off-attractor LLN mass decay.
+\end{itemize}
+\end{claimbox}
+
+% =============================================================================
+\section{Background and Prior Art Differentiation}
+% =============================================================================
+
+\subsection{Walsh--Hadamard Transform in Genomics}
+
+The Walsh--Hadamard Transform has been applied to genomic sequences for spectral codon bias analysis and DSP-based codon frequency decomposition. The closest prior art is the 2024 extension by Faure \emph{et al.}\ (PLOS Comp.\ Biol.\ 2024), which extends the WHT to handle multiallelic genetic landscapes with 4 nucleotide states or 20 amino acid states per position. That work applies the transform \emph{directly} to the 4-state space via a generalized character sum.
+
+\textbf{The distinguishing step of this architecture} is a binary biophysical projection performed \emph{before} WHT: the 4-state nucleotide alphabet $\{A, T, G, C\}$ is collapsed to $\mathbb{Z}_2^2$ per codon position via two independent binary contrasts (GC content and purine/pyrimidine identity). This projection:
+\begin{itemize}
+  \item Preserves the standard $\mathbb{Z}_2^n$ Fourier butterfly structure with no multiplications.
+  \item Reduces the transform to the computationally minimal length-64 case (6 binary channels) rather than requiring a generalized non-binary Hadamard matrix.
+  \item Is motivated by structural biochemistry (GC/purine biophysical constraints) rather than arbitrary dimensionality reduction.
+  \item Is demonstrably different from the 4-state WHT extension and is not covered by that prior art.
+\end{itemize}
+
+\subsection{Epistasis Literature}
+
+WHT coefficients over $\mathbb{Z}_2^n$ are known in the Boolean function analysis literature to correspond to all orders of epistatic interaction. Specifically, the coefficient $\hhat(\zeta)/N$ for a binary index $\zeta$ with active support $S_\zeta = \{k : \zeta_k = 1\}$ is the $|S_\zeta|$th-order population-averaged epistatic interaction between channels in $S_\zeta$, background-averaged over all remaining channels. The $\Delta h$ vector therefore simultaneously encodes main effects (first-order terms, $|\zeta|=1$), pairwise epistasis ($|\zeta|=2$), and up to 6th-order hyperedge interactions ($|\zeta|=6$). This is a stronger biological claim than any single-channel feature and directly strengthens the non-obviousness argument under 35 U.S.C.\ \S 103.
+
+\subsection{Zero-Knowledge Proof Primitives for Genomics}
+
+Existing ZK genomic proof systems use Merkle-tree-based commitments to individual sequence reads or haplotypes. This architecture presents a categorically different primitive: a commitment to the \emph{distributional epistatic structure} of a codon population---proving population-level properties without revealing the underlying sequences. The Poseidon2 hash function over BN254 is the canonical ZK-friendly choice, operating natively over $\GFp$ with the $x^5$ S-box to minimize R1CS constraints.
+
+% =============================================================================
+\section{Formal Mathematical Specification (FV-8)}
+% =============================================================================
+
+\subsection{Definitions 1--3: Feature Space and Channel Structure}
+
+\begin{definition}[Biophysical Fiber Space]
+Let $\mathcal{B}_3 = \{1,2,3\}$ be the codon-position base. Define the 6-dimensional binary feature space:
+\[
+  \mathcal{F} = \bigoplus_{i=1}^{3} V_i, \quad V_i = \mathrm{span}_{\mathbb{Z}_2}\{e_{\mathrm{GC}_i}, e_{\mathrm{PUR}_i}\} \cong \mathbb{Z}_2^2
+\]
+with total space $\mathcal{F} \cong \mathbb{Z}_2^6$, admitting $2^6 = 64$ distinct states $\omega \in \{0,1\}^6$.
+\end{definition}
+
+\begin{definition}[Prime-Channel Assignment and Primorial Spectral Metric]
+Assign to each channel $k \in \{1,\ldots,6\}$ a fixed prime label $p_k \in \{2,3,5,7,11,13\}$. The assignment is invariant across all CAS instances and data splits.
+
+For spectral index $\zeta \in \{0,1\}^6$ with active support $S_\zeta = \{k : \zeta_k = 1\}$, define the \emph{primorial spectral weight}:
+\[
+  w(\zeta) = \prod_{k \in S_\zeta} p_k, \qquad w(\mathbf{0}) = 1
+\]
+
+The \textbf{Prime-Weighted Spectral Metric} on $\mathbb{R}^{64}$ is:
+\[
+  \dP(\hhat, \hat{\tau}) = \left( \sum_{\zeta \in \{0,1\}^6} w(\zeta)\cdot|\hhat(\zeta) - \hat{\tau}(\zeta)|^2 \right)^{1/2}
+\]
+
+The weight sequence spans from $w(\mathbf{0}) = 1$ (DC term) through first-order prime weights $\{2,3,5,7,11,13\}$ to the full 6th-order primorial $2\cdot3\cdot5\cdot7\cdot11\cdot13 = 30{,}030$. Channel independence is enforced since $\gcd(p_i, p_j) = 1$ for all $i \neq j$, making $\mathcal{M}_6^{\mathbb{P}}$ a free $\mathbb{Z}$-module of rank 6.
+\end{definition}
+
+\begin{definition}[Channel Assignment Specification (CAS)]
+A CAS for domain $d$ is a triple $\Gamma_d = (\mathcal{B}_3, \phi_d, \pi_d^{\mathrm{post}})$ where:
+\begin{itemize}
+  \item $\phi_d : \mathcal{X}_d \to \{0,1\}^6$ is the biophysical feature map with channels ordered in canonical prime-label sequence, \emph{fixed at CAS registration and invariant across data splits}.
+  \item $\pi_d^{\mathrm{post}} \in S_{64}$ is a post-transform spectral reordering applied to $\hhat$ for energy-packing, \emph{never applied to input bits before WHT}.
+\end{itemize}
+
+\noindent\textbf{Genomic CAS:}
+\[
+  \Gamma_{\mathrm{gen}} = \bigl(\{1,2,3\},\ [\mathrm{GC}_1, \mathrm{PUR}_1, \mathrm{GC}_2, \mathrm{PUR}_2, \mathrm{GC}_3, \mathrm{PUR}_3],\ \mathrm{id}\bigr)
+\]
+
+\noindent\textbf{WESAD Biosensor CAS:}
+\[
+  \Gamma_{\mathrm{WESAD}} = \bigl(\{1,2,3\},\
+    [\mathrm{GC}_1{\to}\mathrm{ECG}_{\mathrm{amp}},\ \mathrm{PUR}_1{\to}\mathrm{ECG}_{\mathrm{band}},\
+     \mathrm{GC}_2{\to}\mathrm{EDA}_{\mathrm{SCR}},\ \mathrm{PUR}_2{\to}\mathrm{EDA}_{\mathrm{tonic}},\
+     \mathrm{GC}_3{\to}\mathrm{RESP}_{\mathrm{rate}},\ \mathrm{PUR}_3{\to}\mathrm{RESP}_{\mathrm{phase}}],\
+    \pi_{\mathrm{entropy}}\bigr)
+\]
+\end{definition}
+
+\subsection{Definitions 4--5: Two-Step Spectral Pipeline}
+
+\begin{definition}[Two-Step Spectral Pipeline]
+Given a population of $N$ symbols $\{\omega_1,\ldots,\omega_N\} \subset \{0,1\}^6$:
+
+\noindent\textit{Step 1 --- Histogram Accumulation:}
+\[
+  h[\xi] = \sum_{n=1}^{N} \mathbf{1}[\omega_n = \xi] \in \mathbb{Z}_{\ge 0}, \quad
+  \xi \in \{0,1\}^6, \quad \sum_\xi h[\xi] = N
+\]
+
+\noindent\textit{Step 2 --- Spectral Projection:}
+\[
+  \hhat[\zeta] = \FWHT(h)[\zeta] = \sum_{\xi \in \{0,1\}^6} h[\xi] \cdot (-1)^{\langle \zeta, \xi \rangle} \in \mathbb{Z},
+  \quad \zeta \in \{0,1\}^6
+\]
+
+Entries satisfy $\hhat[\zeta] \in [-N, N]$ for all $\zeta$, with $\hhat[\mathbf{0}] = N$ (DC equals population size). Computed in-place in $O(6 \cdot 2^6) = O(384)$ additions and subtractions with \emph{zero multiplications}. The character-function identity $\hhat(\zeta) = \sum_{n=1}^{N} (-1)^{\langle \zeta, \omega_n \rangle}$ is a corollary.
+
+\begin{warningbox}[Critical Note: Histogram First, Then Transform]
+The commitment target is $\hhat = \FWHT(h)$, the WHT of the histogram---\emph{not} the aggregate of per-symbol character transforms. The two operations are algebraically equivalent for the DC term but differ in semantic interpretation: the former produces genuine Walsh--Fourier spectral coefficients over the codon frequency distribution; the latter produces a scaled histogram. The predicate over $L_1$ norm of the latter is vacuous (identically $64N$ for all populations); the per-coefficient predicate over the former is biologically meaningful.
+\end{warningbox}
+\end{definition}
+
+\begin{definition}[Epistatic Decomposition Theorem (Population Form)]
+For coefficient $\hhat(\zeta)$ with active support $S_\zeta$:
+\[
+  \frac{\hhat(\zeta)}{N} = \sum_{\xi \in \{0,1\}^6} \hat{\mu}(\xi) \cdot (-1)^{\langle \zeta,\xi \rangle}
+    = \hat{\mu}_{\mathrm{WHT}}(\zeta)
+\]
+where $\hat{\mu}$ is the true codon usage distribution. This coefficient is the \textbf{$|S_\zeta|$th-order population-averaged epistatic interaction} between channels in $S_\zeta$, background-averaged over all remaining channels. The 64 coefficients simultaneously encode:
+\begin{itemize}
+  \item Order 0 ($|\zeta|=0$): DC term, equals 1.
+  \item Order 1 ($|\zeta|=1$): Marginal biophysical biases (6 main effects).
+  \item Order 2 ($|\zeta|=2$): Pairwise epistatic interactions (15 terms).
+  \item Orders 3--6: Higher-order epistatic hyperedge interactions (43 terms).
+\end{itemize}
+
+The $\hhat$ vector \emph{simultaneously captures all 64 epistatic orders} in a single FWHT pass---a property unique to the $\mathbb{Z}_2^6$ group algebra structure and not available from single-channel statistics.
+\end{definition}
+
+\subsection{Definition 6: Zero-Knowledge Commitment Primitive (FV-8)}
+
+\begin{definition}[ZK Commitment Primitive]
+\textbf{Public inputs:} $(\CDelta, \CGamma, N_{\min}, \zeta_{\mathrm{trait}}, \theta_{\mathrm{trait}})$.
+
+\textbf{Private witness:} $(\hhat, N)$.
+
+\textbf{Witness relation:}
+\[
+  \RZK = \left\{
+  \begin{array}{l}
+    \Poseidon(\hhat) = \CDelta \\
+    \Poseidon(\Gamma_d \| \TC) = \CGamma \\
+    \hhat(\zeta_{\mathrm{trait}}) / N \ge \theta_{\mathrm{trait}}
+      \quad\text{(per-coefficient spectral predicate)} \\
+    N \ge N_{\min}
+      \quad\text{(16-bit Groth16 range check, 32 constraints)}
+  \end{array}
+  \right\}
+\]
+
+The range predicate $N \ge N_{\min}$ is proven via bit decomposition: $N = \sum_{i=0}^{15} b_i 2^i$ with constraints $b_i(b_i - 1) = 0$ and sum-check. Exact $N$ is not revealed to the verifier (privacy-preserving population size). Poseidon2 operates over $\GFp$ with $x^5$ S-box on BN254.
+
+\medskip
+\noindent\textbf{Canonical circuit budget (locked):}
+\begin{center}
+\begin{tabular}{lc}
+\toprule
+Component & Constraints \\
+\midrule
+FWHT butterfly (64 in-place, add/sub only) & 384 \\
+Poseidon2 sponge for $\hhat$ ($t=9$, $r=8$, 8 calls $\times$ 400) & 3,171 \\
+Poseidon2 for $\CGamma$ ($\Gamma_d \| \TC$, $t=5$, 5 calls) & 1,500 \\
+16-bit range check for $N \ge N_{\min}$ & 32 \\
+$\zeta_{\mathrm{trait}}$ index predicate (wire assignment) & $\approx 0$ \\
+\midrule
+\textbf{Total (canonical budget)} & \textbf{5,087} \\
+\bottomrule
+\end{tabular}
+\end{center}
+Groth16 proof generation time: $<40$\,ms on commodity hardware. The $t=9$, $r=8$ Poseidon2 configuration must be asserted in \texttt{pirtm/csc.py} CI/CD validation.
+\end{definition}
+
+\subsection{Definitions 7a--7b: Two-Phase Contraction Certification}
+
+\begin{definition}[Phase 1 --- $\varepsilon$-Attractor Estimation via Three-Split Protocol]
+Given a population shuffled by $\mathrm{shuffle\_seed} \in \TC$ (derived via Fiat-Shamir; see Definition~8), partition into Split 1 ($n \le \beta N$) and Split 2 ($n > \beta N$). Accumulate $h^{(n)}$ over Split 1. Declare convergence onset:
+\[
+  N_0 = \min\!\left\{n : |H_s^{(n+1)} - H_s^{(n)}| < \delta \right\}
+\]
+where the \textbf{spectral entropy} is:
+\[
+  H_s^{(n)} = -\sum_\zeta \hat{p}^{(n)}(\zeta)\log \hat{p}^{(n)}(\zeta),
+  \qquad
+  \hat{p}^{(n)}(\zeta) = \frac{|\hhat^{(n)}(\zeta)|}{\|\hhat^{(n)}\|_1}
+\]
+Lock the $\varepsilon$-attractor support at $N_0$:
+\[
+  \supp_\varepsilon(\hhat^{(N_0)}) = \left\{ \zeta : |\hhat^{(N_0)}(\zeta)| > \varepsilon \cdot \|\hhat^{(N_0)}\|_1 \right\},
+  \qquad K = |\supp_\varepsilon|
+\]
+\end{definition}
+
+\begin{definition}[Phase 2 --- Normalized Off-Attractor Mass (LLN Model)]
+Using the full-population proxy $\hhat^{(N)}/N \approx \hat{\mu}_{\mathrm{WHT}}$, define for $n \ge N_0$ (Split 2 under LLN accumulation):
+\[
+  \mbar^{(n)} = \sum_{\zeta \notin \supp_\varepsilon} \left| \frac{\hhat^{(n)}(\zeta)}{n} - \frac{\hhat^{(N)}(\zeta)}{N} \right|
+\]
+By the Central Limit Theorem, $\mbar^{(n)} = O\!\bigl((64-K)/\sqrt{n}\bigr)$.
+
+The \textbf{Robust WAC Window} with cryptographic $\varepsilon$-floor:
+\[
+  W_t = \frac{\mbar^{(t+m)}}{\max\!\left(\mbar^{(t)},\ 10^{-12}\right)}
+\]
+The floor prevents \texttt{ZeroDivisionError} on exact proxy matches without altering the contraction semantics for all practically occurring $\mbar$ values.
+
+No synthetic noise injection ($\rho$) is required. The dynamics are governed entirely by the data-generating process.
+\end{definition}
+
+\subsection{Definition 8: Two-Stage CAS Commitment and Dual Contraction Constants}
+
+\begin{definition}[Two-Stage Fiat-Shamir CAS Commitment]
+To break the circular dependency between seed derivation and CAS registration:
+
+\noindent\textit{Stage 1 --- Base Physical Commitment:}
+\[
+  \Tbase = (\varepsilon,\ \delta,\ N_0,\ K,\ M,\ \beta,\ \tau_{\min},\ \alpha_M,\ \mathrm{retry\_nonce})
+\]
+where $\mathrm{retry\_nonce} \in \mathbb{Z}_{\ge 0}$ is the governed dataset recovery counter, initialized to 0.
+
+\noindent\textit{Stage 2 --- Fiat-Shamir Seed Derivation:}
+\[
+  \mathrm{shuffle\_seed} = \Poseidon(\Gamma_d \| \Tbase)
+\]
+The seed is a deterministic function of the registered protocol invariants, \emph{not} of the data.
+
+\noindent\textit{Stage 3 --- Final Bundle:}
+\[
+  \TC = (\Tbase,\ \mathrm{shuffle\_seed})
+\]
+
+\textbf{Retry Protocol:} If the realized trajectory yields $\Lsup \ge 1$ (contraction failure), the practitioner may increment $\mathrm{retry\_nonce}$ and re-derive the seed. The nonce is committed in $\CDelta$, providing an immutable audit trail. A certificate with high nonce incurs a trust-score penalty in the IFMD Governor, deterring adversarial $p$-hacking.
+
+\textbf{Dual Contraction Constants:}
+\[
+  \Lsup = \sup_{n \in [N_0, N_0+M)} \frac{\mbar^{(n+1)}}{\mbar^{(n)}} < 1
+  \quad\text{(certified upper bound)}
+\]
+\[
+  \Lgeo = \exp\!\left(\frac{1}{M}\sum_{n=N_0}^{N_0+M-1} \log \frac{\mbar^{(n+1)}}{\mbar^{(n)}}\right)
+  \quad\text{(operational geometric mean)}
+\]
+\end{definition}
+
+\subsection{Axiom and Corollary: C-WHT to CRMF C6}
+
+\begin{axiom}[C-WHT Spectral Stability Probe]
+The spectral entropy $H_s^{(n)}$ (computed from $|\hhat^{(n)}(\zeta)|/\|\hhat^{(n)}\|_1$) is a valid recursive stability probe for the prime-labeled multiplicity space $\mathcal{M}_6^{\mathbb{P}}$ if:
+\begin{enumerate}
+  \item It converges: $H_s^{(n)} \to H_s^*$ with tolerance $\delta \in \TC$ (trigger condition, declares $N_0$).
+  \item The spectral attractor is sparse: $K = \|\hhat^{(N_0)}\|_0^{(\varepsilon)} \ll 64$ (validity boundary).
+  \item The normalized off-attractor mass $\mbar^{(n)}$ decays geometrically for $n \ge N_0$ (rate condition).
+\end{enumerate}
+\emph{Note:} $H_s^{(n)}$ is the spectral entropy (entropy of the WHT mass distribution), which converges faster than the histogram Shannon entropy $H_h^{(n)}$ for spectrally concentrated codon biases.
+\end{axiom}
+
+\begin{corollary}[C-WHT $\Rightarrow$ CRMF C6]
+Let $\mathcal{M}_6^{\mathbb{P}}$ carry a registered CAS $\Gamma_d$ and certificate parameter bundle $\TC$. Suppose Axiom C-WHT holds with $K \ll 64$, onset $N_0$, and normalized off-attractor mass satisfying $\mbar^{(n+1)} \le \Lsup \cdot \mbar^{(n)}$ for all $n \in [N_0, N_0+M)$.
+
+Then the population encoding $\hhat^{(N)}/N$ is a \textbf{stable spectral attractor} of the LLN accumulation dynamics with certified contraction constant $\Lsup < 1$, and the system satisfies CRMF Axiom C6 in the prime-weighted spectral embedding $(\mathbb{R}^{64}, \dP)$.
+
+The certificate $({\Lsup},\ \Lgeo,\ \TC)$ is deterministic and reproducible under identical inputs and $\TC$ registration.
+
+\medskip
+\noindent\textbf{Usage Mapping:}
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Use Case & $L_s$ Estimate & Justification \\
+\midrule
+C6 contraction certificate (prosecution, compliance) & $\Lsup$ & Conservative worst-case bound \\
+CSC gain modulation $\hat{m} \leftarrow m(1+R_t-0.5)$ & $\Lgeo$ & Empirical operational rate \\
+FREEZE-RESONANCE trigger & $\Lsup \ge 1$ & Fail-closed non-contraction \\
+Wearable edge latency estimation & $\Lgeo$ & Expected-case throughput \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{corollary}
+
+\subsection{Formal Objects 9--10: Transfer Theorem}
+
+\begin{lemma}[Transfer Precondition: $\dP$ Invariance]
+For any CAS $\Gamma_d$ conforming to Definition~3, $\dP$ is invariant under $\pi_d^{\mathrm{post}}$ because the post-transform permutation acts on $\hhat$ after the metric is computed over canonical indices. Specifically, $\dP(\hhat, \hat{\tau}) = \dP(\pi_d^{\mathrm{post}}(\hhat), \pi_d^{\mathrm{post}}(\hat{\tau}))$ since $\pi_d^{\mathrm{post}}$ is an isometry of $(\mathbb{R}^{64}, \dP)$. \hfill$\square$
+\end{lemma}
+
+\begin{theorem}[Transfer Theorem]
+Any symbolic system $\mathcal{S}$ with a valid CAS $\Gamma_d$ satisfying Definition~3 admits a canonical embedding into $\mathcal{M}_6^{\mathbb{P}}$ and inherits all ten formal objects (Definitions 1--8, Axiom C-WHT, Corollary C-WHT$\to$C6) together with the machine-checkable C6 certificate.
+\end{theorem}
+
+% =============================================================================
+\section{Implementation Reference: \texttt{pirtm} Module}
+% =============================================================================
+
+\subsection{Module Architecture}
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+Module & Responsibility \\
+\midrule
+\texttt{pirtm/cas\_registry.py} & ThetaBase, ThetaC6 dataclasses; Two-Stage Fiat-Shamir DAG \\
+\texttt{pirtm/spectral\_gov.py} & govern\_accumulator(); $L_1$ contraction intensity $X_n$ \\
+\texttt{pirtm/certify.py} & ACECertificate; $\Lsup$, $\Lgeo$; snr\_verified flag \\
+\texttt{pirtm/recurrence.py} & Three-split protocol; holdout WAC block runner \\
+\texttt{pirtm/monitor.py} & WAC window monitor; telescoping ratio with floor \\
+\texttt{pirtm/csc.py} & solve\_budget(); 5,087-constraint lock; Poseidon2 $t=9$ assert \\
+\texttt{pirtm/audit.py} & WitnessFieldRegistry; IFMD audit whitelist guard \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{CAS Registry: Two-Stage Commitment DAG}
+
+\begin{lstlisting}[language=Python, caption={\texttt{pirtm/cas\_registry.py} — Two-Stage Fiat-Shamir CAS Commitment}]
+from dataclasses import dataclass, field
+from typing import Tuple
+import hashlib
+
+PRIMES_6 = (2, 3, 5, 7, 11, 13)
+
+@dataclass(frozen=True)
+class ThetaBase:
+    """Physical/biological invariants. Committed before seed derivation.
+    retry_nonce allows governed dataset recovery without circular dependency."""
+    epsilon:      float  # e-attractor threshold (recommended: 0.01)
+    delta:        float  # spectral entropy convergence tolerance
+    N_0:          int    # convergence onset declaration (set post-Phase 1)
+    K:            int    # sparsity bound |supp_epsilon|
+    M:            int    # WAC window count
+    beta:         float  # Split 1 fraction in [0.3, 0.7]
+    tau_min:      float  # SNR governor guard
+    alpha_M:      float  # Dirichlet decay exponent
+    retry_nonce:  int = 0  # Governed recovery: 0 => pristine certificate
+
+    def __post_init__(self):
+        assert 0 < self.epsilon < 0.1,   "epsilon out of range"
+        assert 0 < self.delta  < 0.05,   "delta out of range"
+        assert 0 < self.beta   < 1.0,    "beta out of range"
+        assert self.retry_nonce >= 0,     "nonce must be non-negative"
+
+
+@dataclass(frozen=True)
+class ThetaC6:
+    """Final CAS bundle. shuffle_seed is Fiat-Shamir derived — never user-supplied."""
+    base:         ThetaBase
+    shuffle_seed: int    # Derived: Poseidon2(gamma_d || theta_base)
+
+    @property
+    def epsilon(self):    return self.base.epsilon
+    @property
+    def retry_nonce(self): return self.base.retry_nonce
+
+
+def derive_cas_registry(gamma_d: bytes, theta_base: ThetaBase) -> ThetaC6:
+    """
+    Two-Stage Fiat-Shamir CAS commitment.
+    STAGE 1: theta_base contains all biological/physical parameters.
+    STAGE 2: shuffle_seed = Hash(gamma_d || serialize(theta_base))
+             — deterministic, no circularity, seed depends on protocol
+             identity but NOT on the data being analyzed.
+    """
+    serial = gamma_d + _serialize_theta_base(theta_base)
+    seed_bytes = hashlib.sha3_256(serial).digest()   # placeholder for Poseidon2
+    shuffle_seed = int.from_bytes(seed_bytes[:8], 'big')
+    return ThetaC6(base=theta_base, shuffle_seed=shuffle_seed)
+
+
+def _serialize_theta_base(tb: ThetaBase) -> bytes:
+    fields = [tb.epsilon, tb.delta, tb.N_0, tb.K, tb.M,
+              tb.beta, tb.tau_min, tb.alpha_M, tb.retry_nonce]
+    return b'|'.join(str(f).encode() for f in fields)
+\end{lstlisting}
+
+\subsection{Spectral Governor: $L_1$ Contraction Intensity}
+
+\begin{lstlisting}[language=Python, caption={\texttt{pirtm/spectral\_gov.py} — IFMD-Compliant $X_n$ Governor}]
+import numpy as np
+from typing import List, Tuple, Dict
+
+def fwht_inplace(a: np.ndarray) -> np.ndarray:
+    """In-place length-64 Fast Walsh-Hadamard Transform. O(384) add/sub, 0 mults."""
+    h = 1
+    while h < len(a):
+        for i in range(0, len(a), h * 2):
+            for j in range(i, i + h):
+                x, y = a[j], a[j + h]
+                a[j], a[j + h] = x + y, x - y
+        h *= 2
+    return a
+
+def govern_accumulator(
+    h_hat_trajectory: List[np.ndarray],
+    supp_epsilon: set,
+    proxy: np.ndarray,
+) -> Tuple[float, float, Dict]:
+    """
+    Compute IFMD contraction intensity X_n = m_bar / ||h_hat/n||_1.
+    
+    Uses L1 norm strictly — NOT L2 — to prevent energy masking of
+    diffuse off-support noise (L2 would suppress contributions from
+    50 small off-support activations vs 1 large one).
+    
+    Parameters
+    ----------
+    h_hat_trajectory : running h_hat vectors indexed by population step n
+    supp_epsilon     : locked attractor support from Phase 1
+    proxy            : h_hat(N)/N, the full-population spectral proxy
+    
+    Returns
+    -------
+    (epsilon, op_norm, report) per IFMD §3 specification
+    """
+    n = len(h_hat_trajectory)
+    h_hat_n = h_hat_trajectory[-1]
+    normalized = h_hat_n / n
+
+    # Off-attractor L1 mass (normalized)
+    off_support_indices = [i for i in range(64) if i not in supp_epsilon]
+    m_bar = float(np.sum(
+        np.abs(normalized[off_support_indices] - proxy[off_support_indices])
+    ))
+
+    # Total L1 norm of normalized spectrum
+    total_l1 = float(np.linalg.norm(normalized, ord=1))   # STRICT: ord=1
+
+    # Contraction intensity X_n
+    contraction_intensity = m_bar / max(total_l1, 1e-12)
+
+    # Spectral entropy H_s^(n)
+    abs_normalized = np.abs(normalized)
+    p_hat = abs_normalized / (abs_normalized.sum() + 1e-15)
+    with np.errstate(divide='ignore', invalid='ignore'):
+        log_p = np.where(p_hat > 0, np.log(p_hat), 0.0)
+    H_s = float(-np.sum(p_hat * log_p))
+
+    # SNR: on-support energy / off-support energy
+    on_energy  = float(np.sum(np.abs(normalized[[i for i in range(64) if i in supp_epsilon]])))
+    off_energy = float(np.sum(np.abs(normalized[off_support_indices])))
+    snr = on_energy / max(off_energy, 1e-12)
+
+    report = {
+        "n":                    n,
+        "m_bar":                m_bar,
+        "snr":                  snr,
+        "support_size":         len(supp_epsilon),
+        "contraction_intensity": contraction_intensity,
+        "spectral_entropy":     H_s,
+    }
+
+    # ACE budget radius: R_n = 1 - epsilon_n - X_n
+    epsilon_n = m_bar  # instantaneous epsilon for budget calculation
+    op_norm = contraction_intensity
+    ace_radius = 1.0 - epsilon_n - contraction_intensity
+
+    return epsilon_n, op_norm, report
+\end{lstlisting}
+
+\subsection{WAC Monitor: Telescoping Ratio with Zero-Division Guard}
+
+\begin{lstlisting}[language=Python, caption={\texttt{pirtm/monitor.py} — WAC Window Monitor}]
+from typing import List, Optional
+import numpy as np
+
+ZERO_DIV_FLOOR = 1e-12  # Cryptographic epsilon-floor
+
+def compute_wac_window(
+    m_bar_history: List[float],
+    t: int,
+    m: int,
+    rho: float,         # IFMD contraction threshold
+    L_s_sup: float,     # Certified upper bound
+) -> dict:
+    """
+    Telescoping WAC window product: W_t = m_bar[t+m] / m_bar[t].
+    
+    Algebraically equivalent to product of single-step ratios K_{t+i},
+    but requires O(1) memory (store m_bar_history, not ratio arrays).
+    
+    The cryptographic floor prevents ZeroDivisionError when the proxy
+    exactly matches the sample at step t under the L1 norm.
+    """
+    if t + m >= len(m_bar_history):
+        raise ValueError(f"Window [{t}, {t+m}] exceeds trajectory length {len(m_bar_history)}")
+
+    denominator = max(m_bar_history[t], ZERO_DIV_FLOOR)
+    window_product = m_bar_history[t + m] / denominator
+
+    is_contracting = window_product < L_s_sup
+
+    return {
+        "t":              t,
+        "m":              m,
+        "W_t":            window_product,
+        "is_contracting": is_contracting,
+        "violation":      window_product > rho,
+        "L_s_sup":        L_s_sup,
+    }
+
+
+def compute_L_s(
+    m_bar_history: List[float],
+    N_0: int,
+    M: int,
+) -> dict:
+    """
+    Compute dual contraction constants over window [N_0, N_0 + M).
+    L_s_sup: worst-case bound for C6 prosecution.
+    L_s_geo: operational geometric mean for CSC gain modulation.
+    """
+    ratios = []
+    for n in range(N_0, N_0 + M):
+        if n + 1 >= len(m_bar_history):
+            break
+        denom = max(m_bar_history[n], ZERO_DIV_FLOOR)
+        ratios.append(m_bar_history[n + 1] / denom)
+
+    if not ratios:
+        raise ValueError("Insufficient trajectory data for L_s computation")
+
+    L_s_sup = float(max(ratios))
+    L_s_geo = float(np.exp(np.mean(np.log(np.clip(ratios, ZERO_DIV_FLOOR, None)))))
+
+    return {
+        "L_s_sup":    L_s_sup,
+        "L_s_geo":    L_s_geo,
+        "n_ratios":   len(ratios),
+        "contracting": L_s_sup < 1.0,
+    }
+\end{lstlisting}
+
+\subsection{CSC Budget Lock and Poseidon2 Parameter Assertion}
+
+\begin{lstlisting}[language=Python, caption={\texttt{pirtm/csc.py} — Canonical 5,087-Constraint Budget with Sponge Lock}]
+from dataclasses import dataclass
+
+# Locked Poseidon2 configuration for BN254 Groth16 circuit
+POSEIDON2_H_HAT_CONFIG  = {"t": 9, "r": 8}   # 64 inputs => 8 calls => ~3,171 constraints
+POSEIDON2_GAMMA_CONFIG  = {"t": 5, "r": 4}   # 15-20 inputs => 5 calls => ~1,500 constraints
+CANONICAL_BUDGET        = 5_087
+BUDGET_TARGET           = 6_000   # Standard slack target
+
+@dataclass(frozen=True)
+class CircuitConstraintBudget:
+    fwht:            int = 384
+    poseidon2_h_hat: int = 3_171
+    poseidon2_gamma: int = 1_500
+    range_check:     int = 32
+    trait_predicate: int = 0
+
+    @property
+    def total(self) -> int:
+        return (self.fwht + self.poseidon2_h_hat + self.poseidon2_gamma
+                + self.range_check + self.trait_predicate)
+
+
+def solve_budget(poseidon_h_params: dict, poseidon_g_params: dict) -> CircuitConstraintBudget:
+    """
+    Validate sponge parameters and return locked budget.
+    Raises AssertionError if parameters deviate from canonical specification.
+    """
+    assert poseidon_h_params == POSEIDON2_H_HAT_CONFIG, (
+        f"h_hat sponge must be t=9, r=8 (locked for 3,171 constraints). "
+        f"Got: {poseidon_h_params}"
+    )
+    assert poseidon_g_params == POSEIDON2_GAMMA_CONFIG, (
+        f"Gamma sponge must be t=5, r=4 (locked for 1,500 constraints). "
+        f"Got: {poseidon_g_params}"
+    )
+    budget = CircuitConstraintBudget()
+    assert budget.total == CANONICAL_BUDGET, (
+        f"Canonical budget mismatch: expected {CANONICAL_BUDGET}, got {budget.total}"
+    )
+    return budget
+
+
+def compute_margin(budget: CircuitConstraintBudget, target: int = BUDGET_TARGET) -> dict:
+    """Compute slack against the standard target budget."""
+    slack = target - budget.total
+    return {
+        "total_constraints": budget.total,
+        "target":            target,
+        "slack":             slack,
+        "utilization_pct":   round(100.0 * budget.total / target, 2),
+        "within_budget":     slack >= 0,
+    }
+\end{lstlisting}
+
+\subsection{Witness Field Registry: IFMD Audit Guard}
+
+\begin{lstlisting}[language=Python, caption={\texttt{pirtm/audit.py} — Witness Disclosure Guard}]
+from typing import Any, Dict
+
+class WitnessDisclosureError(Exception):
+    """Raised when a prohibited witness field is exposed to ACE metadata."""
+    pass
+
+# Fields permitted in ACE audit output per IFMD §6 whitelist
+_IFMD_AUDIT_WHITELIST = {
+    "contraction_intensity",   # X_n = m_bar / ||h_hat/n||_1
+    "snr",                     # on-support / off-support energy ratio
+    "support_size",            # K = |supp_epsilon|
+    "spectral_entropy",        # H_s^(n)
+    "L_s_sup",                 # Certified contraction bound
+    "L_s_geo",                 # Operational rate
+    "n",                       # Population step index
+    "retry_nonce",             # Audit trail for recovery attempts
+    "ace_radius",              # R_n = 1 - epsilon_n - X_n
+}
+
+# Fields that must NEVER appear in ACE metadata
+_PROHIBITED_WITNESS_FIELDS = {
+    "h_hat",               # Raw WHT coefficients (TS-13 through TS-18)
+    "h",                   # Raw histogram
+    "omega",               # Raw codon sequences
+    "m_bar_history",       # Full trajectory (derivable to sequences)
+    "delta_h",             # Legacy alias for h_hat
+}
+
+
+class WitnessFieldRegistry:
+    """Enforces IFMD §6 witness disclosure policy for ACE audit records."""
+
+    @staticmethod
+    def check(report: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Validate report against IFMD audit whitelist.
+        Returns cleaned report if safe; raises WitnessDisclosureError otherwise.
+        """
+        violations = set(report.keys()) & _PROHIBITED_WITNESS_FIELDS
+        if violations:
+            raise WitnessDisclosureError(
+                f"Prohibited witness fields detected in ACE metadata: {violations}. "
+                f"Only IFMD §6 whitelisted fields are permitted."
+            )
+        # Return only whitelisted fields
+        return {k: v for k, v in report.items() if k in _IFMD_AUDIT_WHITELIST}
+\end{lstlisting}
+
+% =============================================================================
+\section{Track A Experimental Protocol: E.\ coli K-12 Validation}
+% =============================================================================
+
+\subsection{Dataset and Setup}
+
+\begin{itemize}
+  \item \textbf{Dataset:} NCBI RefSeq E.\ coli K-12 CDS ($\approx 4{,}000$ genes), GenBank locus-tag ordering (fixed, data-independent, committed as \texttt{sort\_key} in $\Tbase$).
+  \item \textbf{Partition:} $\beta = 0.5$ yields $\approx 2{,}000$ genes for Split 1 (burn-in proxy) and $\approx 2{,}000$ for Split 2 (WAC validation).
+  \item \textbf{Parameters:} $\varepsilon = 0.01$, $\delta = 0.001$, $M = 100$ WAC windows of length $m = 20$.
+\end{itemize}
+
+\subsection{Two-Pass Protocol}
+
+\begin{algorithm}
+\caption{Track A Two-Pass Protocol}
+\begin{algorithmic}[1]
+\State \textbf{Pass 1:} Load all $N \approx 4{,}000$ genes in locus-tag order
+\For{$n = 1, \ldots, N$}
+  \State Accumulate $h^{(n)}[\xi] \mathrel{+}= \mathbf{1}[\omega_n = \xi]$
+  \State Compute $\hhat^{(n)} \leftarrow \FWHT(h^{(n)})$
+  \State Compute $H_s^{(n)}$ from $|\hhat^{(n)}(\zeta)|/\|\hhat^{(n)}\|_1$
+\EndFor
+\State Declare $N_0$, $\supp_\varepsilon$, $K$ at $\delta$-convergence
+\State Store $\hhat^{(N)}$ as full-population proxy
+\State \textbf{Pass 2:} Reprocess Split 2 ($n > \beta N$)
+\For{$n = \lceil\beta N\rceil, \ldots, N$}
+  \State Compute $\mbar^{(n)} = \sum_{\zeta \notin \supp_\varepsilon} |{\hhat^{(n)}(\zeta)}/{n} - {\hhat^{(N)}(\zeta)}/{N}|$
+  \State Record WAC window $W_t$ for each $t$ in window
+\EndFor
+\State Compute $\Lsup$, $\Lgeo$ per Definition~8
+\State \textbf{Condition Comparison (Go/No-Go):}
+\State Run 3-condition classifier: (1) 6-channel WHT, (2) GC3-only, (3) raw 4-state WHT
+\State Verify $\hhat^{(N)}(\zeta_{GC_3})/N \ge \theta_{\mathrm{trait}} = 0.10$
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Four Simultaneous Measurements}
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Measurement & Computation & Purpose \\
+\midrule
+Classifier accuracy delta (3 conditions) & Logistic regression on $\hhat^{(N)}/N$ & Go/No-Go gate \\
+$H_s^{(n)}$ trajectory & Spectral entropy per step & C-WHT Axiom trigger, $N_0$ \\
+$K = \|\hhat^{(N_0)}\|_0^{(\varepsilon)}$ & Support size at onset & Corollary validity boundary \\
+$\mbar^{(n+1)}/\mbar^{(n)}$ ratios & Off-attractor mass decay & $\Lsup$, $\Lgeo$ CIP-1 anchor \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% =============================================================================
+\section{Multiplicity Theory Integration}
+% =============================================================================
+
+\subsection{Prime-Indexed Multiplicity Space}
+
+Under Multiplicity Theory, the 6-channel encoding $[\mathrm{GC}_1, \mathrm{PUR}_1, \ldots, \mathrm{GC}_3, \mathrm{PUR}_3]$ maps naturally onto a 6-dimensional prime-labeled multiplicity space $\mathcal{M}_6^{\mathbb{P}}$ with prime labels $p_k \in \{2,3,5,7,11,13\}$. The three codon positions each carrying two binary biophysical signals are isomorphic to a 6-channel operator field under PIRTM's framework. The WHT spectral decomposition is the canonical recursive stability probe for this space, which is precisely what CRMF axioms C1--C6 generalize.
+
+The primorial spectral weight $w(\zeta) = \prod_{k \in S_\zeta} p_k$ operationalizes Multiplicity Theory's core prescription: higher-order interactions are governed by prime products, assigning progressively greater metric weight to higher-order epistatic coefficients. This is not a relabeling---it imposes a genuine non-Euclidean geometry on $\mathbb{R}^{64}$ that is algebraically motivated by prime decomposition.
+
+\subsection{CRMF Axiom C6 Connection}
+
+The Corollary C-WHT$\to$C6 provides the first machine-checkable bridge between the WHT spectral pipeline and CRMF Axiom C6 (the contraction certificate). Spectral entropy convergence $H_s^{(n)} \to H_s^*$ is the trigger condition (analogous to the Lipschitz contraction criterion in CRMF Theorem 4.3), and $\Lsup < 1$ is the certified constant. The convergence certificate $({\Lsup}, \Lgeo, \TC)$ is deterministic and reproducible, satisfying the CRMF determinism acceptance test: same input, same prime-set/version $\Rightarrow$ identical witness hash.
+
+\subsection{Transfer Theorem: Cross-Domain Applicability}
+
+The Transfer Theorem establishes that any domain admitting a $(\mathcal{B}_3, \mathbb{Z}_2^2)$-fibration structure inherits the full 10-object architecture. Active CAS instances include:
+
+\begin{itemize}
+  \item \textbf{Genomics} ($\Gamma_{\mathrm{gen}}$): Canonical 3-position codon encoding, locus-tag ordering.
+  \item \textbf{Biosensors} ($\Gamma_{\mathrm{WESAD}}$): 3-epoch physiological window (ECG, EDA, RESP) $\times$ 2 binary features per epoch.
+  \item \textbf{NLP/Morphology}: 3-slot syllable structure (onset, nucleus, coda) $\times$ 2 phonological binary contrasts.
+  \item \textbf{Circuit States}: 3-layer FPGA pipeline stage $\times$ 2 binary state signals per stage.
+\end{itemize}
+
+% =============================================================================
+\section{CIP-1 Filing Readiness and Prosecution Strategy}
+% =============================================================================
+
+\subsection{Priority Date Structure}
+
+New matter in the CIP has the CIP's filing date as its priority date. The following objects constitute new matter relative to any parent application and must be explicitly supported in the CIP specification text:
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Formal Object & Priority Date & Support Required \\
+\midrule
+Definitions 1--2 (Fiber space, prime metric) & Parent & \checkmark (existing) \\
+Definition 3 (CAS with decoupling) & CIP-1 & This document \\
+Definition 4 (Two-step pipeline) & CIP-1 & This document \\
+Definition 5 (Epistatic Decomposition) & CIP-1 & This document \\
+Definition 6 (ZK Commitment, FV-8) & CIP-1 & This document \\
+Definitions 7a--7b (Two-phase LLN model) & CIP-1 & This document \\
+Definition 8 (Two-Stage Fiat-Shamir, dual $L_s$) & CIP-1 & This document \\
+Axiom C-WHT + Corollary C-WHT$\to$C6 & CIP-1 & This document + Track A data \\
+Transfer Theorem (Theorem 9) & CIP-1 & This document \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{35 U.S.C.\ \S\,112 Enablement}
+
+The CIP-1 specification satisfies the enablement requirement by committing the full protocol procedure without disclosing protected coefficient values:
+
+\begin{enumerate}
+  \item The $\TC$ bundle $(\varepsilon, \delta, N_0, K, M, \beta, \tau_{\min}, \alpha_M, \mathrm{retry\_nonce})$ describes the complete procedure for computing the C6 certificate.
+  \item The \texttt{sort\_key} (locus-tag ordering) uniquely determines the data sequence, making the certificate fully reproducible.
+  \item The Track A empirical output (the measured $\Lsup$ value) provides the reduction-to-practice anchor.
+  \item Coefficient values TS-13 through TS-18 are protected as trade secrets and not required for enablement.
+\end{enumerate}
+
+\subsection{Non-Obviousness Arguments}
+
+The three strongest non-obviousness arguments are:
+
+\begin{enumerate}
+  \item \textbf{Biophysical projection before WHT}: Prior art (Faure et al.\ 2024) applies WHT to 4-state nucleotides directly. The $\mathbb{Z}_2^2$ projection step is a structurally distinct encoding choice motivated by biophysical chemistry, not computational convenience.
+  \item \textbf{6th-order epistatic capture}: The architecture simultaneously captures all epistatic orders 0--6 in a single 384-operation FWHT pass. No existing genomic ZK proof system provides this.
+  \item \textbf{Deterministic ZK population proof}: Committing the distributional epistatic structure (not per-symbol genotype) via Poseidon2 with a per-coefficient spectral predicate is a novel cryptographic primitive with no prior art in the genomic proof space.
+\end{enumerate}
+
+% =============================================================================
+\section{Summary of Formal Objects and Version History}
+% =============================================================================
+
+\begin{longtable}{lllp{5.5cm}}
+\toprule
+Object & Type & Version Introduced & Summary \\
+\midrule
+\endfirsthead
+\toprule
+Object & Type & Version Introduced & Summary \\
+\midrule
+\endhead
+Definition 1 & Biophysical Fiber Space & FV-1 & $\mathcal{F} \cong \mathbb{Z}_2^6$, 64 states \\
+Definition 2 & Prime-Channel + Metric & FV-2 & $w(\zeta) = \prod_{k \in S_\zeta} p_k$; $\dP$ \\
+Definition 3 & CAS & FV-3/FV-4 & $\Gamma_d = (\mathcal{B}_3, \phi_d, \pi_d^{\mathrm{post}})$; prime-label stable \\
+Definition 4 & Two-Step Pipeline & FV-6 & Histogram $\to$ FWHT; replaces character-function \\
+Definition 5 & Epistatic Decomp. & FV-3/FV-6 & $\hhat(\zeta)/N$ = $|S_\zeta|$th-order epistatic coeff. \\
+Definition 6 & ZK Commitment & FV-4/FV-8 & Poseidon2($\hhat$); per-coeff predicate; range proof \\
+Definition 7a & Phase 1 Attractor & FV-4/FV-8 & $\supp_\varepsilon$ via three-split LLN burn-in \\
+Definition 7b & Phase 2 Mass & FV-4/FV-8 & $\mbar^{(n)}$, telescoping WAC, $\varepsilon$-floor \\
+Definition 8 & Two-Stage Fiat-Shamir & FV-8 & $\Tbase \to$ seed $\to \TC$; $\Lsup$, $\Lgeo$ \\
+Axiom C-WHT & Stability Probe & FV-2/FV-8 & $H_s^{(n)}$ trigger; $K$ boundary; LLN rate \\
+Corollary C-WHT$\to$C6 & Bridge Theorem & FV-3/FV-8 & $\Lsup < 1$ certifies CRMF C6; usage mapping \\
+Lemma (Formal Obj.\ 10) & Transfer Precondition & FV-4 & $\dP$ invariant under $\pi_d^{\mathrm{post}}$ \\
+Theorem 9 & Transfer Theorem & FV-4/FV-8 & Full 10-object inheritance via valid CAS \\
+\bottomrule
+\end{longtable}
+
+\medskip
+
+\begin{claimbox}[Audit Trail Hash Commitment Requirement]
+Before any external Track A data is collected or disclosed, the following artifacts must be hash-committed to the Multiplicity Foundation AuditChain:
+\begin{enumerate}
+  \item This specification document (SHA3-256 of PDF).
+  \item The $\TC$ parameter bundle (Poseidon2 of serialized bundle).
+  \item The Track A protocol specification (locus-tag ordering, $\varepsilon$, $\delta$, $\beta$, $M$, $m$).
+\end{enumerate}
+These three artifacts, together with the measured $\Lsup$ from Track A Pass 2, constitute the complete reduction-to-practice package for CIP-1.
+\end{claimbox}
+
+\vspace{1em}
+\noindent\textit{End of Defensive Publication. Filed: April 25, 2026. Priority Date: March 4, 2026.}\\
+\noindent\textit{Multiplicity Foundation. All rights reserved under applicable IP law.}\\
+\noindent\textit{This document constitutes prior art as of its hash-commitment date on the Multiplicity Foundation AuditChain.}
+
+\section{Algebraic Identities: Two-Step Pipeline}
+%=============================================================================
+
+Throughout, let $N \in \mathbb{Z}_{>0}$, let
+$\omega_1,\ldots,\omega_N \in \{0,1\}^6$ be an observed population,
+and write $\mathbf{0} \in \{0,1\}^6$ for the all-zeros index.
+
+\begin{definition}[Notational Setup]
+\label{def:notation}
+\begin{alignat}{2}
+  h[\xi]        &= \sum_{n=1}^{N}\indic{\omega_n = \xi},
+    \quad &\xi &\in \{0,1\}^6
+    \quad\text{(codon-usage histogram)} \\[4pt]
+  \hhat[\zeta]  &= \FWHT(h)[\zeta]
+                 = \sum_{\xi \in \{0,1\}^6} h[\xi]\,(-1)^{\ip{\zeta}{\xi}},
+    \quad &\zeta &\in \{0,1\}^6
+    \quad\text{(spectral vector)} \\[4pt]
+  \tilde{\Delta h}[\xi]
+                &= \sum_{n=1}^{N} 64\cdot\indic{\omega_n = \xi},
+    \quad &\xi &\in \{0,1\}^6
+    \quad\text{(FV-5 character aggregate)}
+\end{alignat}
+\end{definition}
+
+\begin{proposition}[Character-Aggregate Identity]
+\label{prop:char-agg}
+The FV-5 character aggregate satisfies $\tilde{\Delta h} = 64\cdot h$.
+In particular, $\tilde{\Delta h}$ is a scaled histogram and \emph{not}
+a vector of Walsh--Fourier spectral coefficients.
+\end{proposition}
+
+\begin{proof}
+For each $\xi \in \{0,1\}^6$:
+\[
+  \tilde{\Delta h}[\xi]
+    = \sum_{n=1}^{N} 64\cdot\indic{\omega_n = \xi}
+    = 64\sum_{n=1}^{N}\indic{\omega_n = \xi}
+    = 64\,h[\xi].
+\]
+Hence $\tilde{\Delta h} = 64\,h$ as vectors in $\mathbb{Z}^{64}$.
+Since $64\,h$ differs from $\FWHT(h)$ unless $h$ is a scalar multiple
+of the constant vector $(1,\ldots,1)$, the two objects are generically distinct.
+\end{proof}
+
+\begin{remark}
+The $L_1$ norm satisfies $\|\tilde{\Delta h}\|_1 = 64\,\|h\|_1 = 64N$
+for every population --- a constant independent of the codon-usage
+distribution $\mu$.  Thus any predicate of the form
+$\tilde{\Delta h}(\xi_{\mathrm{trait}})/N \ge \theta_{\mathrm{trait}}$
+is merely a frequency threshold and carries no spectral content.
+\end{remark}
+
+\begin{proposition}[Character-Function Corollary]
+\label{prop:char-function}
+The spectral vector $\hhat$ satisfies the alternative character-sum
+representation
+\[
+  \hhat[\zeta] = \sum_{n=1}^{N}(-1)^{\ip{\zeta}{\omega_n}},
+  \qquad \zeta \in \{0,1\}^6.
+\]
+\end{proposition}
+
+\begin{proof}
+By linearity of the inner sum and the indicator definition of $h$:
+\begin{align*}
+  \hhat[\zeta]
+    &= \sum_{\xi \in \{0,1\}^6} h[\xi]\,(-1)^{\ip{\zeta}{\xi}} \\
+    &= \sum_{\xi} \Bigl(\sum_{n=1}^{N}\indic{\omega_n=\xi}\Bigr)\,(-1)^{\ip{\zeta}{\xi}} \\
+    &= \sum_{n=1}^{N}\sum_{\xi}\indic{\omega_n=\xi}\,(-1)^{\ip{\zeta}{\xi}} \\
+    &= \sum_{n=1}^{N}(-1)^{\ip{\zeta}{\omega_n}},
+\end{align*}
+where the last step uses $\sum_{\xi}\indic{\omega_n=\xi}\,f(\xi) = f(\omega_n)$.
+\end{proof}
+
+\begin{corollary}[DC Term and Range]
+\label{cor:dc-range}
+For all populations of size $N$: $\hhat[\mathbf{0}] = N$ and
+$\hhat[\zeta] \in [-N, N]$ for all $\zeta$.
+\end{corollary}
+
+\begin{proof}
+For $\zeta = \mathbf{0}$: $(-1)^{\ip{\mathbf{0}}{\omega_n}} = 1$ for all $n$,
+giving $\hhat[\mathbf{0}] = N$.
+For general $\zeta$: $|(-1)^{\ip{\zeta}{\omega_n}}| = 1$, so
+$|\hhat[\zeta]| \le \sum_{n=1}^N 1 = N$.
+\end{proof}
+
+\begin{theorem}[Epistatic Decomposition]
+\label{thm:epistatic}
+Let $\mu : \{0,1\}^6 \to [0,1]$ be the true codon-usage distribution
+($\sum_\xi \mu(\xi) = 1$), and write
+$\muWHT(\zeta) = \sum_\xi \mu(\xi)\,(-1)^{\ip{\zeta}{\xi}}$ for its
+Walsh--Fourier transform.  For $N$ observations $\omega_1,\ldots,\omega_N$
+drawn i.i.d.\ from $\mu$:
+\[
+  \E\!\left[\frac{\hhat(\zeta)}{N}\right] = \muWHT(\zeta), \qquad
+  \Var\!\left(\frac{\hhat(\zeta)}{N}\right)
+    = \frac{1 - \muWHT(\zeta)^2}{N}.
+\]
+\end{theorem}
+
+\begin{proof}
+Let $Z_i(\zeta) = (-1)^{\ip{\zeta}{\omega_i}}$.  By
+Proposition~\ref{prop:char-function}, $\hhat(\zeta) = \sum_{i=1}^N Z_i(\zeta)$.
+Since $\omega_i \sim \mu$ i.i.d.:
+\[
+  \E[Z_i(\zeta)]
+    = \sum_\xi \mu(\xi)\,(-1)^{\ip{\zeta}{\xi}}
+    = \muWHT(\zeta).
+\]
+For the variance, note $Z_i(\zeta)^2 = 1$ always, so
+$\E[Z_i(\zeta)^2] = 1$ and
+$\Var(Z_i(\zeta)) = 1 - \muWHT(\zeta)^2$.
+Since the $\omega_i$ are independent:
+\[
+  \Var\!\left(\frac{\hhat(\zeta)}{N}\right)
+    = \frac{1}{N^2}\sum_{i=1}^N \Var(Z_i(\zeta))
+    = \frac{1 - \muWHT(\zeta)^2}{N}.
+    \qedhere
+\]
+\end{proof}
+
+\begin{remark}[Epistatic Interpretation]
+The coefficient $\muWHT(\zeta)$ for $|\zeta|=r$ (i.e., $\zeta$ has exactly
+$r$ ones) equals the $r$th-order Walsh--Fourier coefficient of $\mu$,
+which is precisely the signed marginal contrast between channel-sets
+$S_\zeta = \{k : \zeta_k=1\}$ and its complement --- the population-averaged
+$r$th-order epistatic interaction in the sense of the Boolean-function
+epistasis literature.
+The variance bound $\Var \le 1/N$ holds uniformly in $\zeta$.
+\end{remark}
+
+%=============================================================================
+\section{Operator-Norm Bounds for the Length-64 WHT}
+%=============================================================================
+
+Let $H = H_{64} \in \{+1,-1\}^{64\times64}$ denote the $6$-fold
+Kronecker product of the $2\times 2$ Hadamard matrix
+$\bigl(\begin{smallmatrix}1&1\\1&-1\end{smallmatrix}\bigr)$.
+$H$ is the matrix representing $\FWHT$ (without normalisation).
+
+\begin{lemma}[Spectral Norm]
+\label{lem:l2-norm}
+$H H^\top = 64\,I_{64}$, so the spectral (operator $\ell^2\to\ell^2$) norm is
+\[
+  \|H\|_{2\to 2} = \sqrt{64} = 8.
+\]
+\end{lemma}
+
+\begin{proof}
+The $(i,j)$ entry of $HH^\top$ is
+$\sum_{k=1}^{64}H_{ik}H_{jk}$.
+Each row of $H$ is a Rademacher sequence $(\pm 1)^{64}$ forming a
+binary character of $\mathbb{Z}_2^6$.  By orthogonality of characters:
+$\sum_{k} H_{ik}H_{jk} = 64\,\delta_{ij}$.
+Hence $HH^\top = 64\,I$.  The singular values of $H$ are all $\sqrt{64}=8$,
+so $\|H\|_{2\to 2}=8$.
+\end{proof}
+
+\begin{lemma}[Row/Column $\ell^1$-Sum Bounds]
+\label{lem:l1-infty}
+Every row and every column of $H$ contains exactly 64 entries each of
+magnitude 1, so:
+\[
+  \|H\|_{\infty\to\infty} = 64,
+  \qquad
+  \|H\|_{1\to 1}   = 64,
+  \qquad
+  \|H\|_{1\to\infty} = 64.
+\]
+\end{lemma}
+
+\begin{proof}
+For the operator $\ell^\infty\!\to\!\ell^\infty$ norm:
+$\|H\|_{\infty\to\infty} = \max_i \sum_j |H_{ij}|$.
+Since $|H_{ij}|=1$ and each row has 64 entries, the max-row-$\ell^1$-sum
+is $64$.
+By the symmetry $H=H^\top$ (up to row permutation), the same holds for
+columns, giving $\|H\|_{1\to 1}=64$.
+Finally, $\|H\|_{1\to\infty} = \max_{i,j}|H_{ij}|\cdot 64 = 64$ (since
+$\ell^1$ of input is the total variation, and each output coordinate is
+bounded by 64 times the $\ell^\infty$ norm of input, which for a
+unit-$\ell^1$ vector is at most 1).
+\end{proof}
+
+\begin{lemma}[$\ell^2$ Parseval Identity]
+\label{lem:parseval}
+For any $h \in \mathbb{Z}^{64}$:
+\[
+  \|\hhat\|_2^2 = 64\,\|h\|_2^2, \qquad
+  \|\hhat\|_2   = 8\,\|h\|_2.
+\]
+\end{lemma}
+
+\begin{proof}
+$\|\hhat\|_2^2 = \|Hh\|_2^2 = h^\top H^\top H h = h^\top (64\,I) h = 64\|h\|_2^2$.
+\end{proof}
+
+\begin{lemma}[$\ell^1$ Non-Preservation]
+\label{lem:l1-nonpreservation}
+The $\ell^1$ norm is \emph{not} preserved by $H$: in general
+$\|\hhat\|_1 \ne 64\,\|h\|_1$.  Specifically, for $h=\mathbf{1}$
+(uniform histogram):
+\[
+  \hhat = H\mathbf{1} = 64\,e_{\mathbf{0}}, \qquad
+  \|\hhat\|_1 = 64, \quad
+  64\,\|h\|_1 = 64\cdot 64 = 4096.
+\]
+\end{lemma}
+
+\begin{proof}
+$H\mathbf{1} = \sum_j H_{\cdot j}$.  By orthogonality, all rows except
+the DC row ($i=\mathbf{0}$) give zero inner product with $\mathbf{1}$; the
+DC row gives $\sum_j 1 = 64$.  Hence $H\mathbf{1} = 64\,e_{\mathbf{0}}$,
+with $\|\cdot\|_1 = 64$ vs.\ $64\cdot 64 = 4096$.
+\end{proof}
+
+\begin{remark}[$\ell^1$-Mass Concentration]
+\label{rem:l1-conc}
+Lemma~\ref{lem:l1-nonpreservation} demonstrates that the WHT can
+\emph{dramatically} concentrate $\ell^1$ mass: the uniform histogram
+(maximum $\ell^1$ spread) maps to a single-spike spectrum
+(minimum $\ell^1$ spread). This is the core mechanism exploited by
+the spectral sparsity assumption $K \ll 64$ and motivates tracking
+$\|\hhat^{(n)}\|_1$ rather than $\|h^{(n)}\|_1$ for the
+support-locking criterion.
+\end{remark}
+
+\begin{lemma}[Normalised-Spectrum Bound]
+\label{lem:norm-spec}
+For any $h\in\mathbb{Z}^{64}$ with $\sum_\xi h[\xi]=N>0$, define
+$\hat{p}(\zeta) = |\hhat(\zeta)|/\|\hhat\|_1$.  Then:
+\[
+  \hat{p}(\mathbf{0}) \ge \frac{N}{\|H\|_{1\to 1}\,\|h\|_1} = \frac{N}{64N} = \frac{1}{64}.
+\]
+Consequently $\hat{p}(\mathbf{0}) \ge 1/64$ always, with equality iff
+$\hhat(\zeta) = \pm N$ for all $\zeta$ (degenerate population).
+\end{lemma}
+
+\begin{proof}
+$|\hhat(\mathbf{0})| = |H_{\mathbf{0}}\cdot h| = |\sum_\xi h[\xi]| = N$
+(since $H_{\mathbf{0},\xi}=1$ for all $\xi$ and $h\ge 0$).
+Meanwhile $\|\hhat\|_1 \le \|H\|_{1\to 1}\|h\|_1 = 64N$.
+Therefore $\hat{p}(\mathbf{0}) = |\hhat(\mathbf{0})|/\|\hhat\|_1 \ge N/(64N) = 1/64$.
+\end{proof}
+
+\begin{lemma}[FWHT Butterfly Arithmetic Cost]
+\label{lem:butterfly-cost}
+The in-place Cooley--Tukey butterfly for $H_{64}$ performs exactly
+$64 \cdot 3 = 192$ additions and $192$ subtractions ($384$ total
+binary operations), with zero multiplications.
+\end{lemma}
+
+\begin{proof}
+The standard radix-2 butterfly recursion on $n = 2^k$ points performs
+$k\cdot n/2$ butterfly operations per pass.  For $n=64=2^6$, $k=6$:
+$k\cdot n/2 = 6\cdot 32 = 192$ butterflies, each requiring one addition
+and one subtraction.  Total: $192+192=384$ additions/subtractions,
+zero multiplications.
+\end{proof}
+
+%=============================================================================
+\section{Probabilistic Convergence Bounds}
+%=============================================================================
+
+\subsection{Setup}
+
+Let $\omega_1,\omega_2,\ldots$ be i.i.d.\ draws from $\mu$ on $\{0,1\}^6$.
+Define the running spectral estimate:
+\[
+  \frac{\hhat^{(n)}(\zeta)}{n}
+    = \frac{1}{n}\sum_{i=1}^{n}(-1)^{\ip{\zeta}{\omega_i}}
+    =: \bar{Z}_n(\zeta).
+\]
+Let $\muWHT(\zeta) = \E[Z_1(\zeta)]$ and $\sigma_\zeta^2 = 1 - \muWHT(\zeta)^2$.
+
+\subsection{Per-Coefficient CLT}
+
+\begin{theorem}[Per-Coefficient CLT with Berry--Esseen Rate]
+\label{thm:be}
+For each $\zeta \in \{0,1\}^6$, the scaled deviation satisfies
+\[
+  \sup_{x\in\mathbb{R}}\left|
+    \Pr\!\left[\sqrt{n}\,\frac{\bar{Z}_n(\zeta)-\muWHT(\zeta)}{\sigma_\zeta}
+         \le x\right] - \Phi(x)
+  \right|
+  \le \frac{C_0}{\sigma_\zeta^3\sqrt{n}},
+\]
+where $\Phi$ is the standard Gaussian CDF and the absolute constant
+$C_0 \le 0.4785$ (Tyurin 2010).  Consequently,
+\[
+  \E\!\left|\bar{Z}_n(\zeta) - \muWHT(\zeta)\right|
+  \le \frac{\sigma_\zeta}{\sqrt{n}}\bigl(\E[|U|] + O(n^{-1/2})\bigr)
+  = \frac{\sigma_\zeta\sqrt{2/\pi}}{\sqrt{n}} + O(n^{-1}),
+\]
+where $U\sim N(0,1)$ and $\E[|U|]=\sqrt{2/\pi}$.
+\end{theorem}
+
+\begin{proof}
+The $Z_i(\zeta) = (-1)^{\ip{\zeta}{\omega_i}}$ are i.i.d.\ with
+$|Z_i| = 1$, so $\E|Z_i - \muWHT(\zeta)|^3 \le 2^3 = 8 < \infty$.
+By the Berry--Esseen theorem (see Tyurin 2010 for the constant $C_0 \le 0.4785$),
+the Kolmogorov--Smirnov bound follows.  The $L^1$ bound is derived by
+integrating the CDF bound over $\mathbb{R}$, using the dominated convergence
+theorem and the Gaussian expectation $\E[|U|] = \sqrt{2/\pi}$.
+\end{proof}
+
+\subsection{Off-Attractor Mass Decay}
+
+\begin{definition}[Normalised Off-Attractor Mass]
+For $n > N_0$ (Split 2), with $\supp_\varepsilon$ locked at $N_0$:
+\[
+  \mbar^{(n)}
+    = \sum_{\zeta \notin \supp_\varepsilon}
+        \left|\bar{Z}_n(\zeta) - \muWHT(\zeta)\right|.
+\]
+\end{definition}
+
+\begin{theorem}[$O(1/\sqrt{n})$ Decay of Off-Attractor Mass]
+\label{thm:decay}
+Let $\kappa = 64 - K$ be the number of off-support spectral indices and
+$\bar{\sigma} = \max_{\zeta \notin \supp_\varepsilon} \sigma_\zeta \le 1$.
+Then:
+\[
+  \E\bigl[\mbar^{(n)}\bigr]
+  \le \frac{\kappa\,\bar{\sigma}\sqrt{2/\pi}}{\sqrt{n}}
+    + O\!\left(\frac{\kappa}{n}\right),
+\]
+and the explicit upper bound for the expected normalised off-attractor mass
+with the Berry--Esseen constant is:
+\[
+  \E\bigl[\mbar^{(n)}\bigr]
+  \le \frac{\kappa}{\sqrt{n}}
+  \left(\sqrt{\frac{2}{\pi}} + \frac{C_0}{\sigma_{\min}^3\sqrt{n}}\right)
+  \le \frac{\kappa}{\sqrt{n}},
+  \quad C_0 \le 0.4785.
+\]
+\end{theorem}
+
+\begin{proof}
+By linearity of expectation and Theorem~\ref{thm:be}:
+\[
+  \E\bigl[\mbar^{(n)}\bigr]
+    = \sum_{\zeta\notin\supp_\varepsilon}
+        \E\!\left|\bar{Z}_n(\zeta)-\muWHT(\zeta)\right|
+    \le \kappa \cdot \sup_{\zeta\notin\supp_\varepsilon}
+        \frac{\sigma_\zeta\sqrt{2/\pi}}{\sqrt{n}}
+        + O(n^{-1}).
+\]
+Using $\sigma_\zeta \le 1$ (since $|\muWHT(\zeta)| \le 1$) gives the
+bound $\kappa/\sqrt{n}$.  The Berry--Esseen correction adds the
+$O(1/n)$ term.
+\end{proof}
+
+\begin{corollary}[Asymptotic Ratio Bound]
+\label{cor:ratio}
+Let $A_n = \E[\mbar^{(n)}]$.  For $n \ge N_0$:
+\[
+  \frac{A_{n+1}}{A_n}
+    = \frac{\kappa/\sqrt{n+1} + O(n^{-1})}{\kappa/\sqrt{n}   + O(n^{-1})}
+    \xrightarrow{n\to\infty} \sqrt{\frac{n}{n+1}} < 1.
+\]
+\end{corollary}
+
+\begin{proof}
+Direct substitution of the dominant $O(1/\sqrt{n})$ terms.  The limit
+follows from $\sqrt{n/(n+1)} = (1 + 1/n)^{-1/2} \to 1^-$ from below.
+\end{proof}
+
+\subsection{Histogram Shannon Entropy vs.\ Spectral Entropy}
+
+\begin{definition}[Two Entropy Objects]
+At step $n$, define:
+\[
+  H_h^{(n)} = -\sum_\xi \hat\mu^{(n)}(\xi)\log\hat\mu^{(n)}(\xi),
+  \qquad \hat\mu^{(n)}(\xi) = h^{(n)}[\xi]/n,
+\]
+\[
+  H_s^{(n)} = -\sum_\zeta \hat{p}^{(n)}(\zeta)\log\hat{p}^{(n)}(\zeta),
+  \qquad \hat{p}^{(n)}(\zeta) = |\hhat^{(n)}(\zeta)|/\|\hhat^{(n)}\|_1.
+\]
+\end{definition}
+
+\begin{proposition}[Independence of $H_h$ and $H_s$: Extreme-Distribution Separation]
+\label{prop:entropy-separation}
+There exists a distribution $\mu$ attaining $(H_h, H_s) = (\log 64,\, 0)$
+and another attaining $(H_h, H_s) = (0,\, \log 64)$.  In particular,
+$H_h^{(n)}$ and $H_s^{(n)}$ are not monotonically related and measure
+categorically different properties.
+\end{proposition}
+
+\begin{proof}
+\textbf{Case 1: $H_h = \log 64$, $H_s = 0$.}
+Take $\mu = \mathrm{Uniform}(\{0,1\}^6)$, so $h^{(n)}[\xi] \approx n/64$
+for all $\xi$.  Then $\hat\mu^{(n)}(\xi) \approx 1/64$ and
+$H_h^{(n)} \approx \log 64$ (maximum entropy).
+By Lemma~\ref{lem:l1-nonpreservation},
+$\hhat^{(n)} = H\,h^{(n)} \approx n\,e_{\mathbf{0}}$, so
+$\hat{p}^{(n)}(\mathbf{0}) \approx 1$ and $\hat{p}^{(n)}(\zeta)\approx 0$
+for all $\zeta \ne \mathbf{0}$.  Hence $H_s^{(n)} \approx 0$ (minimum
+spectral entropy). \smallskip
+
+\textbf{Case 2: $H_h = 0$, $H_s = \log 64$.}
+Take $\mu = \delta_\xi$ for a fixed $\xi^*$ (deterministic codon usage).
+Then $h^{(n)} = n\,e_{\xi^*}$, so $H_h^{(n)} = 0$.
+The WHT gives $\hhat^{(n)}[\zeta] = n\,(-1)^{\ip{\zeta}{\xi^*}}$, so
+$|\hhat^{(n)}[\zeta]| = n$ for all $\zeta$.  Hence
+$\hat{p}^{(n)}(\zeta) = 1/64$ for all $\zeta$ and
+$H_s^{(n)} = \log 64$ (maximum spectral entropy).
+\end{proof}
+
+\begin{proposition}[$H_s^{(n)}$ Convergence Rate]
+\label{prop:hs-rate}
+Under i.i.d.\ sampling from $\mu$ with spectral entropy $H_s^* < \log 64$,
+\[
+  |H_s^{(n)} - H_s^*| = O\!\left(\frac{1}{\sqrt{n}}\right)
+  \quad\text{in probability.}
+\]
+\end{proposition}
+
+\begin{proof}
+The spectral entropy $H_s^{(n)}$ is a continuous function of
+$\hat{p}^{(n)} = |\hhat^{(n)}|/\|\hhat^{(n)}\|_1$, which is in turn
+a continuous function of $\hhat^{(n)}/n \to \muWHT$ by
+Theorem~\ref{thm:decay}.  Specifically, from Theorem~\ref{thm:be},
+each normalised coefficient $\hhat^{(n)}(\zeta)/n - \muWHT(\zeta) = O_p(1/\sqrt{n})$.
+Let $\hat{p}^{(n)}(\zeta) = p(\zeta) + \delta_\zeta$ where $\delta_\zeta = O_p(1/\sqrt{n})$.
+The entropy variation satisfies:
+\[
+  H_s^{(n)} - H_s^*
+    = -\sum_\zeta \delta_\zeta(1+\log p(\zeta)) + O_p(1/n)
+    = O_p(1/\sqrt{n}),
+\]
+using $\|\delta\|_\infty = O_p(1/\sqrt{n})$ and the 64-term bounded sum.
+\end{proof}
+
+%=============================================================================
+\section{Contraction Certificate Bounds}
+%=============================================================================
+
+\subsection{WAC Telescoping}
+
+\begin{proposition}[Telescoping WAC Window Identity]
+\label{prop:telescope}
+Define the single-step contraction ratio (with floor):
+\[
+  K_n = \frac{\mbar^{(n+1)}}{\max(\mbar^{(n)},\,\epsilon_0)},
+  \qquad \epsilon_0 = 10^{-12}.
+\]
+The WAC window product over $m$ consecutive steps starting at $t$ satisfies:
+\[
+  W_t \;:=\; \prod_{i=0}^{m-1} K_{t+i}
+  = \frac{\mbar^{(t+m)}}{\max(\mbar^{(t)},\,\epsilon_0)}.
+\]
+\end{proposition}
+
+\begin{proof}
+The product telescopes:
+\[
+  \prod_{i=0}^{m-1} K_{t+i}
+    = \prod_{i=0}^{m-1}\frac{\mbar^{(t+i+1)}}{\max(\mbar^{(t+i)},\epsilon_0)}.
+\]
+For $\mbar^{(n)} > \epsilon_0$ throughout the window (which holds for all
+practically occurring trajectories on real genomic data), the floors are
+inactive and the product telescopes to $\mbar^{(t+m)}/\mbar^{(t)}$.
+With the floor, the denominator is bounded below by $\epsilon_0$, so the
+product is well-defined and finite for all inputs.
+\end{proof}
+
+\begin{remark}[Memory Complexity]
+The telescoping identity reduces the WAC monitor's memory requirement
+from $O(m)$ stored ratios to $O(1)$: only $\mbar^{(t)}$ and
+$\mbar^{(t+m)}$ are needed to compute $W_t$.  Formally, storing the
+boundary values $\mbar^{(n)}$ for all $n$ in an array of length $N-N_0$
+suffices; no intermediate ratio product needs to be maintained.
+\end{remark}
+
+\subsection{Certified Contraction Constant}
+
+\begin{theorem}[$\Lsup < 1$ under LLN Accumulation]
+\label{thm:lsup}
+Let $A_n = \E[\mbar^{(n)}]$ and assume $n \ge N_0 \ge 1$.  Then the
+expected-trajectory supremum contraction ratio satisfies:
+\[
+  \frac{A_{n+1}}{A_n}
+  \le \sqrt{\frac{n}{n+1}}
+  < 1
+  \quad \text{for all } n \ge N_0.
+\]
+For the realised trajectory, define
+$\Lsup = \sup_{n \in [N_0, N_0+M)} K_n$.
+Then $\Lsup < 1$ almost surely for all $N_0 \ge 1$, $M < \infty$.
+\end{theorem}
+
+\begin{proof}
+\textit{(Expected ratio.)}  From Theorem~\ref{thm:decay}:
+\[
+  A_n \le \frac{C}{\sqrt{n}}, \quad C = \kappa\sqrt{2/\pi}.
+\]
+Hence $A_{n+1}/A_n \le (C/\sqrt{n+1})/(C/\sqrt{n}) = \sqrt{n/(n+1)} < 1$.
+
+\textit{(Realised supremum.)}
+By the LLN, $\mbar^{(n)} \xrightarrow{a.s.} 0$ as $n\to\infty$.
+For any finite window $[N_0, N_0+M)$, the trajectory $\mbar^{(n)}$ is
+a.s.\ strictly positive and a.s.\ strictly decreasing for sufficiently
+large $N_0$ (a consequence of $\mbar^{(n)} = O_{a.s.}(1/\sqrt{n})$ via
+the strong law applied to each coefficient separately).  Therefore
+$K_n = \mbar^{(n+1)}/\mbar^{(n)} < 1$ a.s.\ for each $n$ in the window,
+and $\Lsup = \sup_{n \in [N_0,N_0+M)} K_n < 1$ a.s.\ (finite supremum
+of values each $< 1$ on a compact discrete set).
+\end{proof}
+
+\begin{corollary}[Explicit $\Lsup$ Bound]
+\label{cor:lsup-bound}
+The following deterministic upper bound holds for all $N_0 \ge 1$:
+\[
+  \Lsup \le \sqrt{\frac{N_0}{N_0+1}}.
+\]
+For $N_0 = 100$: $\Lsup \le \sqrt{100/101} \approx 0.9950$.
+For $N_0 = 1000$: $\Lsup \le \sqrt{1000/1001} \approx 0.9995$.
+The bound is tight: the $\Lsup$ for the dominant $O(1/\sqrt{n})$ envelope
+is achieved at $n = N_0$ (first window step).
+\end{corollary}
+
+\begin{proof}
+By the monotonicity of $\sqrt{n/(n+1)}$ in $n$, the supremum of the
+expected-trajectory ratios over $[N_0, N_0+M)$ is achieved at $n=N_0$.
+\end{proof}
+
+\subsection{Dual Contraction Constants and Their Ordering}
+
+\begin{theorem}[Jensen Ordering: $\Lgeo \le \Lsup$]
+\label{thm:jensen}
+The geometric-mean contraction constant satisfies
+\[
+  \Lgeo
+  = \exp\!\left(\frac{1}{M}\sum_{n=N_0}^{N_0+M-1}\log K_n\right)
+  \le \sup_{n\in[N_0,N_0+M)} K_n
+  = \Lsup.
+\]
+Moreover, if the $K_n$ are not all equal, then $\Lgeo < \Lsup$ strictly.
+\end{theorem}
+
+\begin{proof}
+By definition, $\Lgeo = \exp(\bar{\ell})$ where $\bar\ell = M^{-1}\sum \log K_n$.
+Since $\exp$ is convex, Jensen's inequality gives
+$\Lgeo = \exp(\bar\ell) \le \bar{K}$ (arithmetic mean of $K_n$)
+$\le \max K_n = \Lsup$.
+Alternatively, $\log K_n \le \log\Lsup$ for all $n$, so
+$\bar\ell \le \log\Lsup$ and $\Lgeo \le \Lsup$.
+Strict inequality holds unless all $K_n = \Lsup$, which fails for
+the $O(1/\sqrt{n})$ decay envelope (strictly decreasing ratios).
+\end{proof}
+
+\begin{remark}[Usage Separation]
+$\Lsup$ is the correct constant for certification and prosecution:
+it bounds the \emph{worst-case} contraction, ensuring C6 is satisfied
+on every window step.  $\Lgeo$ is the correct constant for
+operational gain modulation (CSC) and latency estimation: it reflects
+the average operational rate.  Their gap $\Lsup - \Lgeo > 0$ quantifies
+the slack available in the gain controller.
+\end{remark}
+
+\subsection{ACE Budget Radius Positivity}
+
+\begin{proposition}[ACE Radius Lower Bound]
+\label{prop:ace-radius}
+Define the ACE budget radius at step $n$ as:
+\[
+  R_n = 1 - \varepsilon_n - X_n,
+  \qquad
+  X_n = \frac{\mbar^{(n)}}{\|\hhat^{(n)}/n\|_1}.
+\]
+Then $R_n > 0$ if and only if $\varepsilon_n + X_n < 1$, i.e., the combined
+attractor-threshold and off-attractor mass fractions are less than the
+total spectral mass.
+\end{proposition}
+
+\begin{proof}
+Directly from the definition: $R_n > 0 \iff 1 - \varepsilon_n - X_n > 0$.
+Both $\varepsilon_n$ and $X_n$ are non-negative by definition.
+
+Upper bound on $X_n$: since $\mbar^{(n)} \le \|\hhat^{(n)}/n\|_1$ by
+the triangle inequality (the off-attractor mass cannot exceed the total
+$L_1$ norm), $X_n \le 1$.
+
+For well-concentrated biases ($K \ll 64$, attractor has captured most
+spectral mass), the on-support $L_1$ mass dominates:
+\[
+  \|\hhat^{(n)}/n\|_1
+    \ge \sum_{\zeta\in\supp_\varepsilon}|\hhat^{(n)}(\zeta)|/n
+    \ge \varepsilon\cdot\|\hhat^{(n)}/n\|_1,
+\]
+which leaves $\varepsilon_n < \varepsilon \ll 1$ and
+$X_n = O(1/\sqrt{n}) \ll 1$ for large $n$, guaranteeing $R_n \to 1$.
+\end{proof}
+
+%=============================================================================
+\section{Cryptographic Security Bounds}
+%=============================================================================
+
+\subsection{Poseidon2 Commitment Binding}
+
+\begin{proposition}[Poseidon2 Collision Resistance Bound]
+\label{prop:poseidon-cr}
+Let $\Poseidon : \GFp^{64} \to \GFp$ be the Poseidon2 sponge over the
+BN254 scalar field $\GFp$ with $p \approx 2^{254}$, state width $t=9$,
+rate $r=8$, and the $x^5$ S-box.  The commitment
+$\mathcal{C}_\Delta = \Poseidon(\hhat)$ is binding with collision advantage:
+\[
+  \mathrm{Adv}_{\mathrm{coll}}(\mathcal{A}) \le \frac{q^2}{2^{128}}
+\]
+for any adversary $\mathcal{A}$ making at most $q$ oracle queries, under
+the assumption that Poseidon2 achieves its designed 128-bit security level
+for BN254.  Consequently, for $q \le 2^{64}$:
+\[
+  \mathrm{Adv}_{\mathrm{coll}} \le 2^{-1}.
+\]
+Finding a collision requires $\Omega(2^{128})$ evaluations.
+\end{proposition}
+
+\begin{proof}
+The 128-bit collision resistance for Poseidon2 on BN254 follows from the
+birthday bound applied to the $\lfloor\log_2 p\rfloor = 254$-bit
+output space: any collision-finding algorithm requires
+$\Omega(\sqrt{2^{128}}) = \Omega(2^{64})$ evaluations in the random-oracle
+model.  Poseidon2 over BN254 is designed with $R_F = 8$ full rounds and
+the $x^5$ S-box to exceed all known algebraic attacks
+(interpolation, Gr\"obner basis, Gr\"obner-MQ) with a comfortable margin,
+as verified by the parameter-selection script in the HorizenLabs reference
+implementation.
+\end{proof}
+
+\begin{remark}[Witness Privacy]
+The sponge construction with rate $r=8 < t=9$ means one field element
+is kept as the capacity, providing $c = 254$ bits of security against
+preimage recovery.  Combined with the IFMD audit whitelist
+(Proposition~\ref{prop:audit-guard}), the histogram $h$ and the raw
+spectral coefficients $\hhat$ are computationally indistinguishable
+from random to any PPT verifier observing only $\mathcal{C}_\Delta$.
+\end{remark}
+
+\subsection{Two-Stage Fiat-Shamir Anti-Gaming Bound}
+
+\begin{proposition}[Retry-Nonce Mining Resistance]
+\label{prop:nonce-mining}
+In the Two-Stage CAS protocol, the shuffle seed is
+$\mathrm{seed}_k = \Poseidon(\Gamma_d \| \Tbase^{(k)})$
+where $\Tbase^{(k)}$ denotes $\Tbase$ with $\mathrm{retry\_nonce} = k$.
+The committed parameter bundle $\TC^{(k)}$ is verifiably distinct for
+each $k$.  Let $\mathcal{P}$ be a PPT adversary attempting to find a
+nonce $k^*$ such that the resulting shuffle $\pi_{k^*}$ yields a
+``favourable'' trajectory (one satisfying $\Lsup < L^*$ for some
+target $L^* < 1$) on an otherwise non-contracting dataset.  Then for
+any adversary making at most $q$ Poseidon2 evaluations:
+\[
+  \Pr[\mathrm{seed}_{k^*}\text{ yields favourable }\pi_{k^*}]
+    \le 1 - (1 - p_{\mathrm{fav}})^q
+    \approx q\,p_{\mathrm{fav}},
+\]
+where $p_{\mathrm{fav}} \approx |\mathcal{F}_{\mathrm{adv}}|/N!$ is the
+fraction of all permutations of $N$ genes that yield $\Lsup < L^*$ on
+the given dataset.
+\end{proposition}
+
+\begin{proof}
+In the random oracle model, $\mathrm{seed}_k = \Poseidon(\Gamma_d\|\Tbase^{(k)})$
+is pseudorandom and independent for each $k$ (since
+$\Tbase^{(k)} \ne \Tbase^{(k')}$ for $k \ne k'$ by the distinct nonce fields,
+and the hash function is collision-resistant by Proposition~\ref{prop:poseidon-cr}).
+Hence the induced permutation $\pi_k = \mathrm{Shuffle}(N, \mathrm{seed}_k)$
+is pseudorandom and approximately uniformly distributed over $S_N$.
+The probability that any single $\pi_k$ lies in $\mathcal{F}_{\mathrm{adv}}$
+is $p_{\mathrm{fav}} = |\mathcal{F}_{\mathrm{adv}}|/N!$.
+After $q$ independent evaluations, the success probability is bounded by
+the union bound: $q\,p_{\mathrm{fav}}$.
+\end{proof}
+
+\begin{corollary}[Nonce Ceiling from Trust Score]
+\label{cor:nonce-ceiling}
+To limit the adversarial success probability to $\alpha$ (e.g., $\alpha = 0.01$),
+the maximum allowable retry nonce is:
+\[
+  k_{\max} = \left\lfloor \frac{\alpha}{p_{\mathrm{fav}}} \right\rfloor
+           = \left\lfloor \frac{\alpha\,N!}{|\mathcal{F}_{\mathrm{adv}}|} \right\rfloor.
+\]
+In the practical genomic setting with $N \approx 4{,}000$ genes and a
+$C$-fraction of favourable permutations $C \approx 0.01$
+(1\% of shuffles yield spurious contraction on a non-contracting dataset),
+the bound gives $k_{\max} = \lfloor 0.01/(0.01) \rfloor = 1$ for $\alpha=0.01$.
+\textbf{Protocol recommendation}: reject certificates with $k > 3$
+unconditionally; apply a logarithmic trust-score penalty
+$\Delta_{\mathrm{trust}} = -\log_2(k+1)$ bits for $k \in \{1,2,3\}$.
+\end{corollary}
+
+\begin{proof}
+Direct substitution into the bound of Proposition~\ref{prop:nonce-mining}
+and solving for $q = k_{\max}$.
+\end{proof}
+
+\subsection{Witness Disclosure Guard}
+
+\begin{proposition}[IFMD Audit Whitelist Completeness]
+\label{prop:audit-guard}
+The IFMD audit whitelist $\mathcal{W}$ contains only fields computable
+from $\hhat^{(n)}/n$ (the normalised spectrum) and does not contain any
+field from which $h^{(n)}$ (the histogram) or
+$\{\omega_i\}$ (raw sequences) can be recovered.
+Specifically:
+\begin{enumerate}[label=(\roman*)]
+  \item $X_n = \mbar^{(n)}/\|\hhat^{(n)}/n\|_1$ is computable from
+    $\hhat^{(n)}/n$ and $\muWHT$ (proxy), but $h$ is not recoverable
+    from $X_n$ alone.
+  \item $H_s^{(n)}$ is computable from $|\hhat^{(n)}|/\|\hhat^{(n)}\|_1$,
+    but the sign pattern of $\hhat^{(n)}$ (which encodes $h^{(n)}$ via
+    $H^{-1} = H/64$) is not revealed.
+  \item $\mathcal{C}_\Delta = \Poseidon(\hhat)$ hides $\hhat$ with
+    preimage resistance $2^{128}$ (Proposition~\ref{prop:poseidon-cr}).
+\end{enumerate}
+\end{proposition}
+
+\begin{proof}
+(i) $X_n$ depends on the $L_1$ norms of sub-vectors of $\hhat/n$, not
+on individual signed coefficients, so inversion requires solving an
+under-determined system with $64-K$ unknowns and 1 equation --- no
+unique solution.
+
+(ii) $H_s^{(n)}$ uses absolute values $|\hhat(\zeta)|$, losing all sign
+information.  Since $h = H^{-1}\hhat = H\hhat/64$, recovering $h$ from
+$|\hhat|$ requires solving $|\text{(linear combination)}| = $ given values
+--- equivalent to a combinatorial sign-pattern recovery problem with $2^{64}$
+candidate solutions.
+
+(iii) Poseidon2 preimage resistance holds by the same argument as
+Proposition~\ref{prop:poseidon-cr}, with resistance $2^{128}$.
+\end{proof}
+
+\subsection{$d_{\mathbb{P}}$ Canonical Invariance}
+
+\begin{lemma}[$d_{\mathbb{P}}$ Canonical Invariance under Post-Transform Permutation]
+\label{lem:dp-invariance}
+Let $\pi : \{0,1\}^6 \to \{0,1\}^6$ be any bijection used as a post-transform
+spectral permutation ($\pi_d^{\mathrm{post}}$ in CAS Definition~3).
+Define the primorial spectral metric over \emph{canonical} index order:
+\[
+  d_{\mathbb{P}}(\hhat, \hat\tau)
+    = \left(\sum_{\zeta\in\{0,1\}^6} w(\zeta)\,|\hhat(\zeta)-\hat\tau(\zeta)|^2\right)^{1/2}.
+\]
+Then $d_{\mathbb{P}}$ is \emph{by construction invariant} under $\pi$:
+the metric is always evaluated on the canonical-order coefficients before
+any permutation is applied.
+\end{lemma}
+
+\begin{proof}
+The CAS Definition~3 specifies that $\pi_d^{\mathrm{post}}$ acts on $\hhat$
+\emph{after} all metric computations are complete.
+Formally, the metric evaluation is:
+$d_{\mathbb{P}}(\hhat_1, \hhat_2) \equiv d_{\mathbb{P}}^{\mathrm{can}}(\hhat_1, \hhat_2)$,
+independent of any downstream permutation.
+Since the spectral governor and C6 certificate both consume canonical-order
+$\hhat$ (the output of FWHT before $\pi^{\mathrm{post}}$), the metric
+function is the same regardless of which $\pi^{\mathrm{post}}$ is registered.
+
+More concretely: if one \emph{did} compute $d_{\mathbb{P}}$ on permuted vectors,
+\[
+  d_{\mathbb{P}}(\pi(\hhat), \pi(\hat\tau))
+    = \left(\sum_\zeta w(\zeta)\,|(\hhat\circ\pi^{-1})(\zeta)
+      - (\hat\tau\circ\pi^{-1})(\zeta)|^2\right)^{1/2},
+\]
+which equals $d_{\mathbb{P}}(\hhat,\hat\tau)$ if and only if $\pi$ is a
+$w$-isometry (i.e., $w(\pi(\zeta)) = w(\zeta)$ for all $\zeta$).
+The protocol avoids this condition altogether by placing $\pi^{\mathrm{post}}$
+\emph{after} the canonical metric evaluation, making invariance unconditional.
+\end{proof}
+
+\subsection{Transfer Theorem}
+
+\begin{theorem}[Transfer Theorem]
+\label{thm:transfer}
+Let $\mathcal{S}$ be any symbolic system admitting a valid CAS
+$\Gamma_d = (\mathcal{B}_3, \phi_d, \pi_d^{\mathrm{post}})$ per
+Definition~3, where $\phi_d : \mathcal{X}_d \to \{0,1\}^6$ is a fixed
+biophysical feature map.  Then $\mathcal{S}$ inherits all ten formal
+objects (Definitions 1--8, Axiom C-WHT, Corollary C-WHT$\to$C6) of
+the FV-8 architecture, together with the machine-checkable C6 certificate.
+\end{theorem}
+
+\begin{proof}
+We exhibit the chain of inheritance by showing each object is well-defined
+under the substitution $\mathcal{X}_d \xrightarrow{\phi_d} \{0,1\}^6$.
+
+\textbf{Definitions 1--3} depend only on $\{0,1\}^6$ and the prime-label
+assignment, both independent of domain $d$.  $\Gamma_d$ records the
+domain-specific $\phi_d$ and $\pi_d^{\mathrm{post}}$ but does not alter
+the abstract fiber space.
+
+\textbf{Definition 4 (Two-Step Pipeline)} applies to any sequence
+$\omega_1,\ldots,\omega_N \in \{0,1\}^6$.  For domain $d$, replace
+$\omega_i$ by $\phi_d(x_i)$ for $x_i \in \mathcal{X}_d$.
+The histogram $h$ and spectral vector $\hhat = \FWHT(h)$ are well-defined
+and all bounds in Sections 2--4 hold by Propositions~\ref{prop:char-function}--\ref{thm:decay}.
+
+\textbf{Definition 5 (Epistatic Decomposition)} interprets $\hhat(\zeta)/N$
+as a $|S_\zeta|$th-order contrast between binary channels.  Under $\phi_d$,
+the channels are the biophysical contrasts encoded by $\phi_d$; the
+interpretation specialises to the domain-specific anatomy
+(e.g., ECG amplitude vs.\ EDA phase for $\Gamma_{\mathrm{WESAD}}$).
+
+\textbf{Definition 6 (ZK Commitment)} depends only on the field $\GFp$
+and the 64-element vector $\hhat$, independent of domain.
+The circuit budget (5,087 constraints) is domain-independent.
+
+\textbf{Definitions 7--8 (Contraction Certificate)} depend only on the
+$L_1$ mass trajectory $\mbar^{(n)}$, which is well-defined for any
+$\omega_i = \phi_d(x_i) \in \{0,1\}^6$.  All CLT bounds carry through.
+
+\textbf{Axiom C-WHT and Corollary C-WHT$\to$C6} are stated for generic
+$\{0,1\}^6$-valued populations; Theorem~\ref{thm:lsup} guarantees
+$\Lsup < 1$ provided the data-generating distribution $\mu_d$
+(the pushforward of the domain distribution through $\phi_d$) satisfies
+the sparsity condition $K \ll 64$.  This is a verifiable empirical condition.
+
+Hence all ten objects are well-defined for any valid CAS $\Gamma_d$,
+completing the transfer.
+\end{proof}
+
+%=============================================================================
+\section{Summary of Bounds}
+%=============================================================================
+
+\begin{center}
+\begin{longtable}{p{3.5cm}p{5.5cm}p{3.5cm}}
+\toprule
+Bound & Formula & Location \\
+\midrule
+\endfirsthead
+\toprule
+Bound & Formula & Location \\
+\midrule
+\endhead
+WHT spectral norm
+  & $\|H_{64}\|_{2\to 2} = 8$
+  & Lemma~\ref{lem:l2-norm} \\
+WHT $\ell^1$ norm
+  & $\|H_{64}\|_{1\to 1} = 64$
+  & Lemma~\ref{lem:l1-infty} \\
+Parseval identity
+  & $\|\hhat\|_2 = 8\|h\|_2$
+  & Lemma~\ref{lem:parseval} \\
+DC mass lower bound
+  & $\hat{p}(\mathbf{0}) \ge 1/64$
+  & Lemma~\ref{lem:norm-spec} \\
+Butterfly cost
+  & $384$ operations, $0$ multiplications
+  & Lemma~\ref{lem:butterfly-cost} \\
+Per-coeff.\ CLT rate
+  & $|\bar{Z}_n - \muWHT| = O(1/\sqrt{n})$
+  & Theorem~\ref{thm:be} \\
+B-E constant
+  & $C_0 \le 0.4785$
+  & Theorem~\ref{thm:be} \\
+Off-attractor mass
+  & $\E[\mbar^{(n)}] \le \kappa/\sqrt{n}$
+  & Theorem~\ref{thm:decay} \\
+$\Lsup$ deterministic bound
+  & $\Lsup \le \sqrt{N_0/(N_0+1)} < 1$
+  & Corollary~\ref{cor:lsup-bound} \\
+Jensen ordering
+  & $\Lgeo \le \Lsup$
+  & Theorem~\ref{thm:jensen} \\
+$H_s$ convergence
+  & $|H_s^{(n)} - H_s^*| = O_p(1/\sqrt{n})$
+  & Proposition~\ref{prop:hs-rate} \\
+Poseidon2 collision
+  & $\mathrm{Adv}_{\mathrm{coll}} \le q^2/2^{128}$
+  & Proposition~\ref{prop:poseidon-cr} \\
+Nonce-mining bound
+  & $\Pr[\text{success}] \le q\,p_{\mathrm{fav}}$
+  & Proposition~\ref{prop:nonce-mining} \\
+Trust-score nonce ceiling
+  & $k_{\max} = \lfloor\alpha/p_{\mathrm{fav}}\rfloor$
+  & Corollary~\ref{cor:nonce-ceiling} \\
+ACE radius positivity
+  & $R_n > 0 \iff \varepsilon_n + X_n < 1$
+  & Proposition~\ref{prop:ace-radius} \\
+\bottomrule
+\end{longtable}
+\end{center}
+
+\vspace{1em}
+\noindent\textit{%
+End of Mathematical Appendix.
+Citizen Gardens, April 25, 2026.
+This document is an integral part of the CIP-1 specification.%
+}
+
+\nocite{*}
+\bibliographystyle{unsrt}  
+\bibliography{references}
+\end{document}

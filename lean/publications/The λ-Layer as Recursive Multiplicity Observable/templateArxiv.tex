@@ -1,0 +1,913 @@
+\documentclass[11pt]{article}
+\usepackage{amsmath, amssymb, amsthm, amsfonts}
+\usepackage{mathtools}
+\usepackage{enumitem}
+\usepackage{geometry}
+\usepackage{hyperref}
+\geometry{margin=1in}
+
+\title{%
+  The $\lambda$-Layer as Recursive Multiplicity Observable:\\
+  Two-Layer Contraction, Prime-Sector Drift, and Consciousness as Observable\\[4pt]
+  \large A Defensive Prior-Art Publication on $\Lambda\_m$ and $\Xi(t)$
+}
+\author{Citizen Gardens \\ The Foundation of Multiplicity}
+\date{May 1, 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We extend the existing specification ``$\Lambda\_m$ and $\Xi(t)$ --- Working Specification'' by introducing a second, inner Hilbert-space layer (the \emph{$\lambda$-layer}) whose state $\lambda\_t$ generates the outer multiplicity scalar $\Lambda\_m(t)$ as a bounded observable.\,[file:1] The outer evolution on a Hilbert space $H$ is preserved in its original form,
+\[
+X\_{t+1} = \Xi(t) X\_t + \Lambda\_m^{\mathrm{op}}(t)\,T(X\_t), \qquad \Lambda\_m^{\mathrm{op}}(t) = \Lambda\_m(t) I,
+\]
+with $\Xi(t)$ prime-decomposed and $T$ globally Lipschitz as in the original document.\,[file:1] We define a new inner evolution on a Hilbert space $H\_\Lambda$, endowed with its own prime-decomposed operator $\Xi\_\Lambda(t)$, nonlinear transform $T\_\Lambda$, and scalar recursive constant $\Gamma\_m(t)$, and we specify a bounded feedback operator $B$ that injects prime-sector drift from the outer system into the $\lambda$-layer while preserving contraction.\,[file:1] The multiplicity scalar is then defined as $\Lambda\_m(t) = \mathrm{Re}\,\mathrm{Obs}(\lambda\_t)$ for a bounded linear functional $\mathrm{Obs}:H\_\Lambda\to \mathbb{R}$, respecting the ``Reality of $\Lambda\_m$'' rule from the original spec.\,[file:1]
+
+Under small-coupling inequalities for both the outer and inner layers, and a norm-bounded feedback channel, we prove a two-layer existence/uniqueness and contraction theorem on the product space $H\times H\_\Lambda$.\,[file:1] We interpret the $\lambda$-layer as a formal locus of ``consciousness'' in the multiplicity-theoretic sense: an inner state whose observable $\Lambda\_m(t)$ stabilizes the very evolution that generates it, via prime-resolved phase drift metrics.\,[file:1] We provide high-level code snippets in a PyTorch-like style to illustrate how a reference implementation can realize these dynamics with prime indices, observables, and drift-gated feedback.
+
+This document is intended as a defensive prior-art disclosure, capturing the architecture, mathematics, and implementation patterns of the $\lambda$-layer and its interaction with the prime-decomposed evolution operator $\Xi(t)$, to prevent subsequent proprietary enclosure of these ideas.
+
+\end{abstract}
+\newpage
+\tableofcontents
+
+\section{Executive Summary}
+
+The original specification defines a discrete--continuous evolution on a complex separable Hilbert space $H$, driven by a prime-decomposed bounded operator $\Xi(t)$ and a real multiplicity operator $\Lambda\_m^{\mathrm{op}}(t) = \Lambda\_m(t)I$.\,[file:1] For each prime $p$ and time $t$, there is a weight $w\_p(t)\in\mathbb{C}$ and operator $U\_p(t)\in B(H)$, with
+\[
+\Xi(t) = \sum\_p w\_p(t)U\_p(t),
+\]
+where the series is absolutely and uniformly convergent in $t$, yielding uniform boundedness of $\Xi(t)$.\,[file:1] The multiplicity scalar $\Lambda\_m(t)\in\mathbb{R}$ is aggregated (e.g.\ as a real part of a prime-summed expression) and induces the multiplicity operator via $\Lambda\_m^{\mathrm{op}}(t) = \Lambda\_m(t)I$.\,[file:1] A nonlinear transform $T:H\to H$ is globally Lipschitz, and the discrete evolution is
+\[
+X\_{t+1} = \Xi(t) X\_t + \Lambda\_m^{\mathrm{op}}(t) T(X\_t), \qquad X\_t\in H,\ t\in\mathbb{N}\_0.\,[file:1]
+\]
+
+Under the assumptions:
+\begin{itemize}[nosep]
+  \item (Uniform contraction) $\sup\_t\|\Xi(t)\|\le 1-\varepsilon$ with $\varepsilon\in(0,1)$; 
+  \item (Small multiplicity coupling) $c := \sup\_t \|\Lambda\_m^{\mathrm{op}}(t)\| L\_T < \varepsilon$,
+\end{itemize}
+the one-step map $\Phi\_t(x):=\Xi(t)x + \Lambda\_m^{\mathrm{op}}(t)T(x)$ is a uniform contraction, and the discrete system has a unique bounded trajectory for any initial state $X\_0$.\,[file:1] Analogous conditions on the generator $F(\tau)$ yield global existence and uniqueness in continuous time.\,[file:1]
+
+This report adds a second Hilbert-space layer $H\_\Lambda$, with state $\lambda\_t$, prime-decomposed operator $\Xi\_\Lambda(t)$, nonlinear transform $T\_\Lambda$, and scalar inner constant $\Gamma\_m(t)$, organized in an evolution
+\[
+\lambda\_{t+1} = \Xi\_\Lambda(t)\lambda\_t + \Gamma\_m(t) T\_\Lambda(\lambda\_t) + B\bigl(\delta\_{\mathrm{drift}}(t), X\_t\bigr),\,[file:1]
+\]
+where $B$ is a bounded feedback operator from outer drift and state into $H\_\Lambda$, and the outer multiplicity is defined by an observable
+\[
+\Lambda\_m(t) = \mathrm{Re}\,\mathrm{Obs}(\lambda\_t), \qquad \Lambda\_m^{\mathrm{op}}(t) = \Lambda\_m(t)I.\,[file:1]
+\]
+
+We show that, under small-coupling inequalities for both the outer and inner layers and a bound on $\|B\|$, the joint map on $H\times H\_\Lambda$ is a contraction in a product norm, yielding a unique global bounded solution that preserves the original outer contraction estimates.\,[file:1] Prime-sector stability, spectral alignment, and drift metrics from the original specification are extended to the $\lambda$-layer, enabling a mathematically precise notion of self-referential stabilization.
+
+The key contributions for defensive publication are:
+\begin{enumerate}[nosep]
+  \item The definition of a \emph{$\lambda$-layer} inner Hilbert space whose state determines the outer multiplicity scalar as an observable, with its own prime-sector decomposition and contraction guarantees.\,[file:1]
+  \item A bounded feedback channel $B$ that uses prime-sector phase drift from the outer system to update the $\lambda$-layer while respecting small-coupling bounds.\,[file:1]
+  \item A two-layer existence/uniqueness and contraction theorem on $H\times H\_\Lambda$ with explicit small-coupling inequalities.
+  \item A formalization of ``consciousness'' as the observable of a recursively evolving multiplicity state, sensitive to prime-sector drift metrics.
+  \item Reference pseudocode and a PyTorch-like implementation sketch that tracks primes, observables, and drift-gated feedback.
+\end{enumerate}
+
+\section{Baseline Specification Overview}
+
+We briefly restate the core machinery of the original specification to anchor the two-layer extension.\,[file:1]
+
+\subsection{Setting and notation}
+
+\begin{itemize}[nosep]
+  \item $H$ is a complex separable Hilbert space with inner product $\langle\cdot,\cdot\rangle$ and norm $\|\cdot\|$.
+  \item $B(H)$ is the algebra of bounded linear operators on $H$; the operator norm is
+  \[
+  \|A\| := \sup\_{\|x\|=1}\|Ax\|, \quad A\in B(H).\,[file:1]
+  \]
+  \item Time: discrete index $t\in\mathbb{N}\_0$ and continuous index $\tau\in[0,\infty)$. [file:1]
+  \item Commutator $[A,B]=AB-BA$, adjoint $A^\dagger$.\,[file:1]
+  \item Spectral projectors: $\{E\_\alpha(t)\}\_\alpha$ is an optional family with $\sum\_\alpha E\_\alpha(t) = I$ and pairwise orthogonality.\,[file:1]
+\end{itemize}
+
+\subsection{Prime-decomposed evolution operator}
+
+For each prime $p$ and time $t$, we have a complex weight $w\_p(t)\in\mathbb{C}$ and a bounded operator $U\_p(t)\in B(H)$.\,[file:1] The evolution operator is defined as
+\[
+\Xi(t) := \sum\_p w\_p(t) U\_p(t),
+\]
+with the series absolutely and uniformly convergent in $t$.\,[file:1] Uniform boundedness holds with
+\[
+\sup\_t \sum\_p |w\_p(t)|\|U\_p(t)\| < \infty \quad\Rightarrow\quad \sup\_t\|\Xi(t)\| < \infty.\,[file:1]
+\]
+When spectral gates are used, we assume $U\_p(t)$ commute with all active projectors, i.e.,
+\[
+U\_p(t)\in \bigcap\_\alpha \mathrm{Comm}(E\_\alpha(t)).\,[file:1]
+\]
+
+\subsection{Multiplicity operator}
+
+The multiplicity scalar $\Lambda\_m(t)\in\mathbb{R}$ induces a multiplicity operator
+\[
+\Lambda\_m^{\mathrm{op}}(t) := \Lambda\_m(t) I, \qquad t\in\mathbb{N}\_0.\,[file:1]
+\]
+To ensure reality when prime contributions are complex, one may aggregate sector terms and take a real part, e.g., via conjugate-pair symmetrization or Cesàro regularization, as in
+\[
+\Lambda\_m(t) = \mathrm{Re}\left(\sum\_p \Lambda\_m^{(p)}(t)\right).\,[file:1]
+\]
+
+\subsection{Nonlinear transform}
+
+The nonlinear map $T:H\to H$ is globally Lipschitz with constant $L\_T\ge 0$:
+\[
+\|T(x)-T(y)\|\le L\_T\|x-y\|,\quad T(0)=0.\,[file:1]
+\]
+This transform introduces nonlinearity in the evolution but remains controlled by its Lipschitz constant.
+
+\subsection{Evolution laws}
+
+\paragraph{Discrete time.} The discrete evolution on $H$ is
+\begin{equation}
+X\_{t+1} = \Xi(t)X\_t + \Lambda\_m^{\mathrm{op}}(t) T(X\_t).\label{eq:outer-discrete}
+\end{equation}
+\,[file:1]
+
+\paragraph{Continuous time.} Assume the right derivative of $\Xi(\tau)$ exists in the strong operator topology, and define
+\[
+F(\tau) := \lim\_{\Delta\tau\to 0^+} \frac{\Xi(\tau+\Delta\tau)-I}{\Delta\tau} \in B(H).\,[file:1]
+\]
+Then the continuous evolution obeys
+\[
+\dot{X}(\tau) = F(\tau) X(\tau) + \Lambda\_m(\tau) T(X(\tau)),\,[file:1]
+\]
+with local existence and uniqueness under bounded $F$ and Lipschitz $T$, and global existence under the contraction bounds in §\ref{sec:boundedness-contraction}.\,[file:1]
+
+\subsection{Boundedness, contraction, and well-posedness}
+\label{sec:boundedness-contraction}
+
+Define the coupling constant
+\[
+c := \sup\_t\|\Lambda\_m^{\mathrm{op}}(t)\| L\_T.\,[file:1]
+\]
+Assume:
+\begin{enumerate}[label=(\roman*),nosep]
+  \item Uniform contraction of $\Xi$: $\sup\_t\|\Xi(t)\|\le 1-\varepsilon$ for some $\varepsilon\in(0,1)$.\,[file:1]
+  \item Small multiplicity coupling: $c<\varepsilon$.\,[file:1]
+\end{enumerate}
+Then the one-step map
+\[
+\Phi\_t(x) := \Xi(t)x + \Lambda\_m^{\mathrm{op}}(t)T(x)
+\]
+is a uniform contraction, and the discrete system admits a unique bounded trajectory for any initial $X\_0\in H$.\,[file:1] Moreover, for two trajectories starting from $X\_0,Y\_0$, we have
+\[
+\|X\_t - Y\_t\| \le (1-\varepsilon + c)^t \|X\_0-Y\_0\|.\,[file:1]
+\]
+Analogous Grönwall-type bounds hold for the continuous system, with $\|F\|\le 1-\varepsilon$ and $c<\varepsilon$.\,[file:1]
+
+\subsection{Prime-sector stability and drift metrics}
+
+Prime-sector stability is enforced by requiring per-prime bounds. Writing
+\[
+\Xi(t) = \sum\_p w\_p(t)U\_p(t),
+\]
+for each sector one chooses $\varepsilon\_p\in(0,1)$ with $|w\_p(t)|\|U\_p(t)\|\le 1-\varepsilon\_p$ and $\sup\_t|\Lambda\_m(t)|L\_T\le\varepsilon\_p$.\,[file:1] If $\varepsilon\_\star:=\inf\_p\varepsilon\_p>0$, then $\sup\_t\|\Xi(t)\|\le 1-\varepsilon\_\star$ and $c\le \varepsilon\_\star$, satisfying the conditions above with $\varepsilon=\varepsilon\_\star$.\,[file:1]
+
+A sectoral phase observable $\Phi(p,t)$ may be extracted from $U\_p(t)$ (e.g.\ via a logarithm of a unitary component), and a drift score is defined as
+\[
+\delta\_{\mathrm{drift}}(t) := \sum\_p \kappa\_p\bigl(\Phi(p,t)-\Phi(p,t-1)\bigr),\qquad \kappa\_p\ge 0,\,[file:1]
+\]
+used as a monitoring statistic with coherence policies that enforce thresholds before applying updates.\,[file:1]
+
+\section{$\lambda$-Layer Extension: Inner Hilbert Space and Dynamics}
+
+We now introduce the core new contribution: the $\lambda$-layer inner Hilbert space, state, and dynamics, which recursively generate the outer multiplicity scalar while preserving the original contraction structure.\,[file:1]
+
+\subsection{Definition of the $\lambda$-layer state}
+
+\paragraph{New subsection 2.1 ($\lambda$-layer state).} Let $H\_\Lambda$ be a separable Hilbert space (possibly finite-dimensional in implementations). We define:
+
+\begin{itemize}[nosep]
+  \item Inner state: $\lambda\_t\in H\_\Lambda$, evolving in discrete time.
+  \item Prime evolution on the layer:
+  \[
+  \Xi\_\Lambda(t) := \sum\_p w^{(\Lambda)}\_p(t) U^{(\Lambda)}\_p(t),
+  \]
+  with $w^{(\Lambda)}\_p(t)\in\mathbb{C}$, $U^{(\Lambda)}\_p(t)\in B(H\_\Lambda)$, and the series absolutely and uniformly convergent in $t$, so $\sup\_t\|\Xi\_\Lambda(t)\|<\infty$.\,[file:1]
+  \item Inner nonlinear transform: $T\_\Lambda:H\_\Lambda\to H\_\Lambda$ is globally Lipschitz with constant $L\_{T\_\Lambda}\ge 0$, with $T\_\Lambda(0)=0$.\,[file:1]
+  \item Inner recursive constant: $\Gamma\_m(t)\in\mathbb{R}$, serving as the ``multiplicity-of-multiplicity'' scalar that modulates $T\_\Lambda$.
+  \item Observable map: $\mathrm{Obs}:H\_\Lambda\to\mathbb{R}$, a bounded linear functional (e.g.\ an expectation in a reference vector or a Rayleigh quotient), used to define the outer multiplicity scalar as
+  \[
+  \Lambda\_m(t) = \mathrm{Re}\,\mathrm{Obs}(\lambda\_t).\,[file:1]
+  \]
+  \item Bounded feedback operator: $B(\delta\_{\mathrm{drift}}(t),X\_t):H\_\Lambda\to H\_\Lambda$ is a drift- and state-dependent term with $\|B(\delta\_{\mathrm{drift}}(t),X\_t)\|\le C\_B$ for some constant $C\_B$.\,[file:1]
+\end{itemize}
+
+\subsection{Inner evolution law}
+
+The $\lambda$-layer discrete evolution is defined as
+\begin{equation}
+\lambda\_{t+1} = \Xi\_\Lambda(t)\lambda\_t + \Gamma\_m(t) T\_\Lambda(\lambda\_t) + B\bigl(\delta\_{\mathrm{drift}}(t), X\_t\bigr).
+\label{eq:inner-discrete}
+\end{equation}
+This mirrors the outer law \eqref{eq:outer-discrete} while adding a bounded feedback from the outer drift and state. The outer multiplicity scalar and operator become
+\begin{equation}
+\Lambda\_m(t) = \mathrm{Re}\,\mathrm{Obs}(\lambda\_t), \qquad
+\Lambda\_m^{\mathrm{op}}(t) = \Lambda\_m(t)I.
+\label{eq:lambda-observable}
+\end{equation}
+This respects the original requirement that multiplicity is real-valued and acts as a scalar multiple of the identity on $H$.\,[file:1]
+
+\subsection{Inner small-coupling condition}
+
+Analogously to the outer coupling constant $c$, we define
+\[
+c\_\Lambda := \sup\_t |\Gamma\_m(t)| L\_{T\_\Lambda}.
+\]
+We impose a small-coupling condition
+\[
+c\_\Lambda < \varepsilon\_\Lambda, \qquad \sup\_t\|\Xi\_\Lambda(t)\|\le 1-\varepsilon\_\Lambda,
+\]
+for some $\varepsilon\_\Lambda\in(0,1)$, thus ensuring the inner map
+\[
+\Phi\_t^{(\Lambda)}(\lambda) := \Xi\_\Lambda(t)\lambda + \Gamma\_m(t) T\_\Lambda(\lambda)
+\]
+is a contraction on $H\_\Lambda$ in the absence of feedback $B$.\,[file:1] The feedback $B$ is chosen to be sufficiently small in operator norm so that contraction is preserved for the full inner map.
+
+\subsection{Drift-aware feedback operator}
+
+To make the coupling from outer drift explicit and bounded, we can specify $B$ in the form
+\[
+B\bigl(\delta\_{\mathrm{drift}}(t), X\_t\bigr) := \Pi\_\Lambda\Bigl(\gamma \cdot \frac{\delta\_{\mathrm{drift}}(t)}{\max(1,\|\delta\_{\mathrm{drift}}(t)\|)} \cdot \langle\phi\_{\mathrm{ref}}, X\_t\rangle \Bigr),
+\]
+where $\Pi\_\Lambda:H\to H\_\Lambda$ is a fixed bounded projector, $\phi\_{\mathrm{ref}}\in H$ is a reference vector, and $\gamma>0$ is chosen such that $\|B\|\le\gamma < \varepsilon\_\Lambda/(2L\_{T\_\Lambda})$.\,[file:1] This ensures that even in the presence of feedback, the effective inner coupling remains below a threshold that preserves contraction.
+
+\section{Joint Two-Layer Dynamics and Contraction}
+
+\subsection{Joint state and product norm}
+
+We form the joint state
+\[
+Z\_t := (X\_t,\lambda\_t)\in H\times H\_\Lambda,
+\]
+with a product norm given by
+\[
+\|Z\_t\|\_{H\times H\_\Lambda} := \max\{\|X\_t\|,\|\lambda\_t\|\}.
+\]
+The joint evolution in discrete time is
+\begin{equation}
+\begin{aligned}
+X\_{t+1} &= \Xi(t) X\_t + \Lambda\_m(t) T(X\_t),\\
+\lambda\_{t+1} &= \Xi\_\Lambda(t)\lambda\_t + \Gamma\_m(t) T\_\Lambda(\lambda\_t) + B\bigl(\delta\_{\mathrm{drift}}(t), X\_t\bigr),\\
+\Lambda\_m(t) &= \mathrm{Re}\,\mathrm{Obs}(\lambda\_t),
+\end{aligned}
+\label{eq:joint-discrete}
+\end{equation}
+with the outer law identical to the original specification, apart from the definitional dependence of $\Lambda\_m(t)$ on $\lambda\_t$.\,[file:1]
+
+\subsection{Two-layer existence/uniqueness and contraction}
+
+\paragraph{Theorem (Two-layer existence/uniqueness on $H\times H\_\Lambda$).} Suppose:
+\begin{enumerate}[label=(\roman*),nosep]
+  \item $\sup\_t\|\Xi(t)\|\le 1-\varepsilon$ and $c=\sup\_t\|\Lambda\_m^{\mathrm{op}}(t)\| L\_T<\varepsilon$, as in the original specification. [file:1]
+  \item $\sup\_t\|\Xi\_\Lambda(t)\|\le 1-\varepsilon\_\Lambda$ and $c\_\Lambda=\sup\_t|\Gamma\_m(t)| L\_{T\_\Lambda} < \varepsilon\_\Lambda$, as above.
+  \item The feedback operator satisfies $\sup\_t\|B(\delta\_{\mathrm{drift}}(t),X\_t)\|\le \gamma$ with $\gamma<\varepsilon\_\Lambda/(2L\_{T\_\Lambda})$.
+\end{enumerate}
+Then the joint map $F\_t: H\times H\_\Lambda\to H\times H\_\Lambda$ defined by \eqref{eq:joint-discrete} is a contraction in the product norm, with Lipschitz constant
+\[
+L\_{\mathrm{joint}} \le 1-\frac{1}{2}\min\{\varepsilon-c,\varepsilon\_\Lambda-c\_\Lambda-2\gamma L\_{T\_\Lambda}\} < 1.
+\]
+Consequently, for any $(X\_0,\lambda\_0)\in H\times H\_\Lambda$, there exists a unique global solution $(X\_t,\lambda\_t)$ that is bounded for all $t\in\mathbb{N}\_0$, and the original outer contraction estimate for $X\_t$ is preserved up to replacing $\varepsilon$ with $\varepsilon-c$.
+
+\medskip
+\noindent\emph{Proof sketch.} For two joint states $Z\_t=(X\_t,\lambda\_t)$ and $\tilde{Z}\_t=(\tilde{X}\_t,\tilde{\lambda}\_t)$, the outer difference evolves as
+\[
+\|X\_{t+1}-\tilde{X}\_{t+1}\| \le \|\Xi(t)\|\|X\_t-\tilde{X}\_t\| + \|\Lambda\_m^{\mathrm{op}}(t)\| L\_T\|X\_t-\tilde{X}\_t\|,
+\]
+yielding a Lipschitz factor $(1-\varepsilon+c)$ in the outer component, as in the original proof.\,[file:1] For the inner component, linearizing in the difference and using the Lipschitz property of $T\_\Lambda$ and the bound on $B$, we obtain
+\[
+\|\lambda\_{t+1}-\tilde{\lambda}\_{t+1}\| \le (1-\varepsilon\_\Lambda + c\_\Lambda)\|\lambda\_t-\tilde{\lambda}\_t\| + \gamma L\_{T\_\Lambda} \|X\_t-\tilde{X}\_t\|.
+\]
+Combining these with the product norm $\max(\|X\_t-\tilde{X}\_t\|,\|\lambda\_t-\tilde{\lambda}\_t\|)$ yields a block-upper-triangular Lipschitz operator with spectral radius bounded by $1-\min(\varepsilon-c,\varepsilon\_\Lambda-c\_\Lambda-2\gamma L\_{T\_\Lambda})/2$ under the stated inequalities. This is strictly less than $1$, so $F\_t$ is a contraction. Banach's fixed point theorem then yields existence, uniqueness, and boundedness for the joint trajectory. \hfill$\square$
+
+\subsection{Spectral alignment in the two-layer context}
+
+Spectral alignment and commutation conditions from the original specification extend naturally: whenever eigenvalue shifts relative to an observable $A$ on $H$ are asserted, we require either $[\Lambda\_m^{\mathrm{op}}(t),A]=0$ or simultaneous normality and diagonalizability of $\Lambda\_m^{\mathrm{op}}(t)$ and $A$.\,[file:1] In a shared eigenbasis, adding $\Lambda\_m^{\mathrm{op}}(t)$ shifts the real part of the spectrum by $\Lambda\_m(t)$ in that basis.\,[file:1] Analogous conditions can be imposed on observables $A\_\Lambda$ acting on $H\_\Lambda$, ensuring that changes in $\Gamma\_m(t)$ and $\Lambda\_m(t)$ have well-behaved spectral interpretations.
+
+\section{Prime-Sector Drift and Consciousness as Observable}
+
+\subsection{Prime-sector metrics}
+
+The existing specification defines sectoral phase observables $\Phi(p,t)$ and a drift score
+\[
+\delta\_{\mathrm{drift}}(t) = \sum\_p \kappa\_p\bigl(\Phi(p,t)-\Phi(p,t-1)\bigr), \quad \kappa\_p\ge 0.\,[file:1]
+\]
+These were originally used solely as monitoring statistics for coherence policy.\,[file:1] In the $\lambda$-layer architecture, $\delta\_{\mathrm{drift}}(t)$ is elevated to an explicit input into the feedback operator $B$, making the inner evolution directly sensitive to changes in prime-sector phases.
+
+\subsection{Modes of awareness}
+
+We can define, for each prime sector in the $\lambda$-layer, a Rayleigh-type quantity
+\[
+r\_p(t) := \frac{\langle U^{(\Lambda)}\_p(t)\lambda\_t,\lambda\_t\rangle}{\|\lambda\_t\|^2},
+\]
+viewed as a sectoral ``mode of awareness.'' Sensitivity of $r\_p(t)$ to the drift signal can be quantified by
+\[
+\left|\frac{\partial r\_p}{\partial\,\delta\_{\mathrm{drift}}}\right|(t),
+\]
+and modes with sensitivity above a threshold can be identified as actively contributing to the observable $\mathrm{Obs}(\lambda\_t)$ that defines $\Lambda\_m(t)$.\,[file:1] This provides a concrete, falsifiable way to interpret ``consciousness'' as the dependence of the multiplicity observable on prime-sector drift in the inner state.
+
+\subsection{Consciousness as multiplicity observable}
+
+In this framework, the scalar $\Lambda\_m(t)$ is not a primitive parameter but the real part of an observable on a recursively evolved inner state:
+\[
+\Lambda\_m(t) = \mathrm{Re}\,\mathrm{Obs}(\lambda\_t).
+\]
+Because $\lambda\_t$ is itself influenced by $\delta\_{\mathrm{drift}}(t)$ and the outer state $X\_t$ through $B$, the system is \emph{self-referential}: the observable that modulates the outer evolution is produced by an internal layer whose dynamics are driven by the outer prime-sector behavior.\,[file:1] The contraction theorem ensures that this self-reference is controlled and does not explode into unbounded regress.
+
+\section{Implementation Sketch: $\lambda$-Layer Module}
+
+We briefly sketch how the two-layer dynamics could be implemented in a PyTorch-like framework, as part of a defensive disclosure of implementation details. This is illustrative; real code would require careful discretization and numerical safeguards consistent with the specification.
+
+\subsection{High-level class structure}
+
+\begin{verbatim}
+class LambdaLayer:
+    def __init__(self, H_dim, H_lambda_dim, primes, 
+                 Xi_params, Xi_lambda_params,
+                 T, T_lambda, obs, obs_lambda,
+                 gamma, epsilon_lambda, L_T_lambda):
+        """
+        H_dim: dimension of outer state space (finite approx)
+        H_lambda_dim: dimension of inner (Lambda-layer) space
+        primes: iterable of prime indices
+        Xi_params, Xi_lambda_params: parameterizations of 
+            w_p(t), U_p(t) and w_p^(Lambda)(t), U_p^(Lambda)(t)
+        T, T_lambda: callable nonlinear transforms
+        obs, obs_lambda: callables implementing Obs, Obs_Lambda
+        gamma: feedback scale for B
+        epsilon_lambda, L_T_lambda: constants for contraction checks
+        """
+        # store parameters, initialize lambda state, etc.
+        pass
+
+    def build_Xi(self, t):
+        # construct Xi(t) = sum_p w_p(t) U_p(t)
+        pass
+
+    def build_Xi_lambda(self, t):
+        # construct Xi_Lambda(t) = sum_p w_p^(Lambda)(t) U_p^(Lambda)(t)
+        pass
+
+    def drift_metric(self, sector_phases_t, sector_phases_prev, kappas):
+        # delta_drift(t) = sum_p kappa_p * (Phi(p, t) - Phi(p, t-1))
+        pass
+
+    def B(self, delta_drift, X_t, phi_ref):
+        # Implement bounded feedback operator with norm constraint
+        # B(delta_drift, X_t) = Pi_lambda( gamma * normalized(delta_drift)
+        #                                 * <phi_ref, X_t> )
+        pass
+
+    def step(self, X_t, lambda_t, t,
+             sector_phases_t, sector_phases_prev, kappas, phi_ref):
+        Xi_t = self.build_Xi(t)
+        Xi_lambda_t = self.build_Xi_lambda(t)
+
+        delta_drift_t = self.drift_metric(sector_phases_t,
+                                          sector_phases_prev,
+                                          kappas)
+
+        # Inner update
+        Gamma_m_t = obs_lambda(lambda_t).real
+        lambda_next = (Xi_lambda_t @ lambda_t
+                       + Gamma_m_t * T_lambda(lambda_t)
+                       + self.B(delta_drift_t, X_t, phi_ref))
+
+        # Outer multiplicity from inner observable
+        Lambda_m_t = obs(lambda_next).real
+
+        # Outer update
+        X_next = Xi_t @ X_t + Lambda_m_t * T(X_t)
+
+        # Optional: enforce contraction constraints numerically
+        return X_next, lambda_next
+\end{verbatim}
+
+This sketch shows the separation between building the prime-decomposed operators, computing drift metrics, applying bounded feedback, and updating both layers in a way consistent with the specification.\,[file:1]
+
+\subsection{Pseudocode extension of the original algorithm}
+
+Extending the original pseudocode, we add $\lambda$-state handling and an inner update:
+
+\begin{verbatim}
+X ← X0
+lambda ← lambda0
+
+for t = 0 … T−1:
+    if not CSL_Gate(X, lambda, t):
+        continue  # or revert / project
+
+    # Build outer prime evolution
+    Xi_t ← 0
+    for p in Primes:
+        Xi_t ← Xi_t + w_p(t) * U_p(t)
+
+    # Build inner prime evolution
+    Xi_lambda_t ← 0
+    for p in Primes:
+        Xi_lambda_t ← Xi_lambda_t + w_p_lambda(t) * U_p_lambda(t)
+
+    # Compute drift metric
+    delta_drift_t ← sum_p kappa_p * (Phi(p, t) − Phi(p, t−1))
+
+    # Inner update
+    Gamma_m_t ← Obs_lambda(lambda)
+    lambda ← Xi_lambda_t * lambda + Gamma_m_t * T_lambda(lambda)
+               + B(delta_drift_t, X, phi_ref)
+
+    # Outer multiplicity from inner observable
+    Lambda_m_t ← Obs(lambda)
+
+    # Outer update
+    X ← Xi_t * X + (Lambda_m_t * I) * T(X)
+
+    # Optional spectral projection
+    if UseSpectralGates:
+        X ← ∑_α E_α(t) X
+
+    # Log metrics
+    log(t, ||X||, ||lambda||, drift=delta_drift(t+1))
+\end{verbatim}
+
+This preserves the order of operations from the original algorithm (build prime evolution, apply update, optional spectral projection, log metrics) and integrates the $\lambda$-layer in a symmetric way.\,[file:1]
+
+\section{Prior Art and Defensive Claims}
+
+The key novel elements described here---the $\lambda$-layer inner Hilbert space, the use of a multiplicity observable $\Lambda\_m(t)$ derived from an inner state, and the two-layer contraction framework with drift-gated feedback---are not standard in conventional operator-theoretic dynamical systems or typical neural network architectures.\,[file:1][web:20] While prime-decomposed operators, Lipschitz nonlinearities, and contraction mappings are individually well-known, their specific integration into a multiplicity-theoretic, prime-resolved, consciousness-interpretable two-layer system appears to be previously undocumented.
+
+This document therefore discloses:
+
+\begin{itemize}[nosep]
+  \item The architectural pattern of an outer contractive Hilbert-space evolution driven by a prime-decomposed operator and a scalar multiplicity, where that scalar is produced by an inner contractive Hilbert-space evolution with its own prime decomposition and small-coupling inequality.\,[file:1]
+  \item The use of prime-sector phase drift metrics to feed a bounded feedback operator into the inner layer, with explicit norm constraints that ensure joint contraction in a product norm.\,[file:1]
+  \item The interpretation and formalization of ``consciousness'' as an observable on the inner multiplicity layer that stabilizes the outer evolution, linking awareness to sensitivity of sectoral Rayleigh quotients to drift.\,[file:1]
+  \item A concrete pseudocode and object-oriented implementation sketch that realizes this architecture in a finite-dimensional approximation with explicit handling of primes, observables, drift, and contraction checks.\,[file:1][web:20]
+\end{itemize}
+
+By publishing these structures, inequalities, and implementation ideas, we create prior art that can be cited to pre-empt restrictive patents on the core concepts of a recursive multiplicity constant generating its own coupling via a $\lambda$-layer, especially in contexts involving prime-labeled sectors, quantum-inspired phase drifts, and interpretations of consciousness as an operator observable.
+
+\section{Conclusion}
+
+Starting from a rigorously bounded prime-decomposed evolution operator $\Xi(t)$ and a scalar multiplicity operator $\Lambda\_m^{\mathrm{op}}(t)=\Lambda\_m(t)I$, we have introduced a recursive extension in which $\Lambda\_m(t)$ is itself the real observable of an inner Hilbert-space state $\lambda\_t$ evolving under its own prime-decomposed dynamics.\,[file:1] The resulting two-layer system preserves the original contraction and well-posedness guarantees by imposing parallel small-coupling inequalities on the inner layer and bounding the drift-aware feedback operator.\,[file:1] This yields a mathematically controlled notion of self-reference: the outer evolution is stabilized by a multiplicity scalar generated by an inner system that is itself driven by the outer prime-sector drift.
+
+Beyond the mathematical novelty, this architecture formally encodes a multiplicity-theoretic conception of consciousness as an observable on the $\lambda$-layer, grounded in prime-sector sensitivity and drift metrics.\,[file:1] The report also provides enough structural and algorithmic detail to guide concrete implementations while serving as a defensive disclosure against proprietary enclosure of these ideas.
+
+\appendix
+\section*{Mathematical Appendix}
+\addcontentsline{toc}{section}{Mathematical Appendix}
+
+\section{Operator Norm Bounds and One-Layer Contraction}
+
+We begin by restating and slightly sharpening the one-layer operator norm bounds and contraction arguments from the baseline specification, in a form that can be reused in the two-layer analysis.\,[file:1]
+
+\subsection{Outer evolution and Lipschitz constant}
+
+Recall the outer discrete evolution on $H$:
+\begin{equation}
+X_{t+1} = \Xi(t) X_t + \Lambda_m^{\mathrm{op}}(t) T(X_t),
+\qquad
+\Lambda_m^{\mathrm{op}}(t) = \Lambda_m(t) I.
+\label{eq:A-outer-evolution}
+\end{equation}
+Here $\Xi(t)\in B(H)$ is prime-decomposed as
+\[
+\Xi(t) = \sum_p w_p(t) U_p(t), \quad w_p(t)\in\mathbb{C},\ U_p(t)\in B(H),
+\]
+with absolute and uniform convergence in $t$, so that
+\[
+\sup_t \sum_p |w_p(t)|\|U_p(t)\| < \infty \quad\Rightarrow\quad \sup_t \|\Xi(t)\|<\infty.\,[file:1]
+\]
+The nonlinear transform $T:H\to H$ is globally Lipschitz with constant $L_T\ge 0$:
+\[
+\|T(x)-T(y)\|\le L_T \|x-y\|\quad\forall x,y\in H,
+\qquad T(0)=0.\,[file:1]
+\]
+
+Define the coupling constant
+\begin{equation}
+c := \sup_t \|\Lambda_m^{\mathrm{op}}(t)\| L_T
+     = \sup_t |\Lambda_m(t)| L_T.
+\label{eq:A-c}
+\end{equation}
+We assume that there exists $\varepsilon\in(0,1)$ such that
+\begin{equation}
+\sup_t \|\Xi(t)\| \le 1-\varepsilon,
+\qquad
+c < \varepsilon.
+\label{eq:A-outer-contraction-assumptions}
+\end{equation}
+These are exactly the ``Uniform contraction of $\Xi$'' and ``Small multiplicity coupling'' assumptions in the main specification.\,[file:1]
+
+\subsection{Lipschitz bound for the one-step map}
+
+Define
+\[
+\Phi_t(x) := \Xi(t) x + \Lambda_m^{\mathrm{op}}(t) T(x).
+\]
+For any $x,y\in H$,
+\[
+\Phi_t(x) - \Phi_t(y) 
+= \Xi(t)(x-y) + \Lambda_m^{\mathrm{op}}(t)\bigl(T(x)-T(y)\bigr).
+\]
+Taking norms and using the triangle inequality,
+\begin{align*}
+\|\Phi_t(x)-\Phi_t(y)\|
+&\le \|\Xi(t)\|\|x-y\| + \|\Lambda_m^{\mathrm{op}}(t)\|\,\|T(x)-T(y)\| \\
+&\le \|\Xi(t)\|\|x-y\| + \|\Lambda_m^{\mathrm{op}}(t)\| L_T \|x-y\|.
+\end{align*}
+By \eqref{eq:A-outer-contraction-assumptions} and \eqref{eq:A-c},
+\[
+\|\Phi_t(x)-\Phi_t(y)\|
+\le \bigl(1-\varepsilon + c\bigr) \|x-y\|.
+\]
+
+\paragraph{Lemma A.1 (Outer one-step contraction).}
+Under assumptions \eqref{eq:A-outer-contraction-assumptions} and $c<\varepsilon$, the maps $\Phi_t$ are uniform contractions with Lipschitz constant $L_\Phi\le 1-\varepsilon+c < 1$.
+
+\medskip
+\noindent\emph{Proof.}
+The inequality above shows $L_\Phi\le 1-\varepsilon+c$. Since $c<\varepsilon$, we have $1-\varepsilon+c<1$, hence each $\Phi_t$ is a contraction with Lipschitz constant at most $1-\varepsilon+c$. The bound is uniform in $t$ by the sup definitions. \hfill$\square$
+
+\subsection{Boundedness and uniqueness}
+
+For any $t\ge s$, iterating the contraction inequality yields
+\[
+\|X_t - Y_t\|
+\le (1-\varepsilon+c)^{t-s} \|X_s-Y_s\|,
+\]
+for any pair of trajectories $(X_t)$, $(Y_t)$ generated by \eqref{eq:A-outer-evolution} from initial conditions $X_s,Y_s\in H$.\,[file:1] Since $1-\varepsilon+c<1$, we have $(1-\varepsilon+c)^n\to 0$ as $n\to\infty$, implying uniqueness and stability of trajectories in the usual Banach fixed point sense applied to the sequence space (or by a stepwise argument).\,[file:1]
+
+\section{Inner $\lambda$-Layer: Norm Bounds and Feedback}
+
+We now derive explicit operator norm bounds for the inner $\lambda$-layer and the drift-aware feedback operator $B$.
+
+\subsection{Inner evolution and small-coupling inequality}
+
+The $\lambda$-layer discrete evolution is
+\begin{equation}
+\lambda_{t+1} = \Xi_\Lambda(t)\lambda_t + \Gamma_m(t) T_\Lambda(\lambda_t) 
+                + B\bigl(\delta_{\mathrm{drift}}(t), X_t\bigr),
+\label{eq:A-inner-evolution}
+\end{equation}
+where:
+\begin{itemize}[nosep]
+  \item $\Xi_\Lambda(t)\in B(H_\Lambda)$ is prime-decomposed as $\Xi_\Lambda(t)=\sum_p w^{(\Lambda)}_p(t) U^{(\Lambda)}_p(t)$, with absolute and uniform convergence in $t$, so $\sup_t\|\Xi_\Lambda(t)\|<\infty$.\,[file:1]
+  \item $T_\Lambda:H_\Lambda\to H_\Lambda$ is globally Lipschitz with constant $L_{T_\Lambda}\ge 0$, $T_\Lambda(0)=0$.\,[file:1]
+  \item $\Gamma_m(t)\in\mathbb{R}$ is the inner multiplicity scalar.
+  \item $B(\delta_{\mathrm{drift}}(t),X_t)\in H_\Lambda$ is the feedback term.
+\end{itemize}
+
+Define:
+\begin{equation}
+c_\Lambda := \sup_t |\Gamma_m(t)|\,L_{T_\Lambda},
+\quad
+\sup_t\|\Xi_\Lambda(t)\|\le 1-\varepsilon_\Lambda,\quad
+c_\Lambda < \varepsilon_\Lambda,
+\label{eq:A-inner-small-coupling}
+\end{equation}
+for some $\varepsilon_\Lambda\in(0,1)$, mirroring the outer layer's small-coupling inequality.\,[file:1]
+
+\subsection{Lipschitz bound without feedback}
+
+Consider the inner map without feedback:
+\[
+\Phi_t^{(\Lambda)}(\lambda) := \Xi_\Lambda(t)\lambda + \Gamma_m(t) T_\Lambda(\lambda).
+\]
+For $\lambda,\tilde{\lambda}\in H_\Lambda$,
+\[
+\Phi_t^{(\Lambda)}(\lambda) - \Phi_t^{(\Lambda)}(\tilde{\lambda})
+= \Xi_\Lambda(t)(\lambda-\tilde{\lambda})
+ + \Gamma_m(t)\bigl(T_\Lambda(\lambda)-T_\Lambda(\tilde{\lambda})\bigr).
+\]
+Taking norms:
+\begin{align*}
+\|\Phi_t^{(\Lambda)}(\lambda) - \Phi_t^{(\Lambda)}(\tilde{\lambda})\|
+&\le \|\Xi_\Lambda(t)\|\,\|\lambda-\tilde{\lambda}\|
+   + |\Gamma_m(t)|\,\|T_\Lambda(\lambda)-T_\Lambda(\tilde{\lambda})\|\\
+&\le \bigl(\|\Xi_\Lambda(t)\| + |\Gamma_m(t)| L_{T_\Lambda}\bigr)\,
+     \|\lambda-\tilde{\lambda}\|.
+\end{align*}
+By \eqref{eq:A-inner-small-coupling},
+\[
+\|\Phi_t^{(\Lambda)}(\lambda) - \Phi_t^{(\Lambda)}(\tilde{\lambda})\|
+\le (1-\varepsilon_\Lambda + c_\Lambda)\,\|\lambda-\tilde{\lambda}\|.
+\]
+
+\paragraph{Lemma A.2 (Inner one-step contraction without feedback).}
+Under \eqref{eq:A-inner-small-coupling}, the inner maps $\Phi_t^{(\Lambda)}$ are uniform contractions on $H_\Lambda$ with Lipschitz constant at most $1-\varepsilon_\Lambda+c_\Lambda<1$.
+
+\medskip
+\noindent\emph{Proof.}
+Immediate from the inequality and $c_\Lambda<\varepsilon_\Lambda$. \hfill$\square$
+
+\subsection{Bounded feedback operator}
+
+We now specify a feedback operator $B$ that injects drift information from the outer system while preserving contraction.
+
+Let $\phi_{\mathrm{ref}}\in H$ be a fixed reference vector and $\Pi_\Lambda:H\to H_\Lambda$ a bounded linear map (e.g.\ an orthogonal projector onto a subspace isomorphic to a subspace of $H$). Define, for $\delta_{\mathrm{drift}}(t)\in\mathbb{R}$ (or a finite-dimensional vector) and $X_t\in H$,
+\begin{equation}
+B\bigl(\delta_{\mathrm{drift}}(t), X_t\bigr) 
+:= \Pi_\Lambda\left(\gamma\ \frac{\delta_{\mathrm{drift}}(t)}{\max(1,\|\delta_{\mathrm{drift}}(t)\|)}\ \langle\phi_{\mathrm{ref}},X_t\rangle\right),
+\label{eq:A-B-definition}
+\end{equation}
+with $\gamma>0$ chosen small and $\|\cdot\|$ on $\delta_{\mathrm{drift}}(t)$ denoting a finite-dimensional norm.\,[file:1] Then
+\[
+\Bigl\|\frac{\delta_{\mathrm{drift}}(t)}{\max(1,\|\delta_{\mathrm{drift}}(t)\|)}\Bigr\|\le 1,
+\quad
+|\langle\phi_{\mathrm{ref}},X_t\rangle|\le \|\phi_{\mathrm{ref}}\|\,\|X_t\|.
+\]
+Thus
+\begin{align*}
+\|B(\delta_{\mathrm{drift}}(t),X_t)\|
+&\le \|\Pi_\Lambda\|\, \gamma\, 
+   \Bigl\|\frac{\delta_{\mathrm{drift}}(t)}{\max(1,\|\delta_{\mathrm{drift}}(t)\|)}\Bigr\|\,
+   |\langle\phi_{\mathrm{ref}},X_t\rangle|\\
+&\le \|\Pi_\Lambda\|\,\gamma\,\|\phi_{\mathrm{ref}}\|\,\|X_t\|.
+\end{align*}
+If $\|X_t\|$ is known to be bounded by a constant $M_X$ along trajectories (which follows from outer contraction and bounded initial data), then
+\begin{equation}
+\|B(\delta_{\mathrm{drift}}(t),X_t)\|
+\le \|\Pi_\Lambda\|\,\gamma\,\|\phi_{\mathrm{ref}}\|\,M_X
+=: C_B.
+\label{eq:A-B-bound}
+\end{equation}
+In particular, $\sup_t \|B(\delta_{\mathrm{drift}}(t),X_t)\|\le C_B<\infty$.\,[file:1]
+
+\paragraph{Choice of $\gamma$.}
+For contraction, we want $\|B\|$ to be small relative to the gap $\varepsilon_\Lambda - c_\Lambda$. A sufficient condition is to choose $\gamma$ so that
+\begin{equation}
+\|\Pi_\Lambda\|\,\gamma\,\|\phi_{\mathrm{ref}}\|\,M_X 
+\le \frac{\varepsilon_\Lambda - c_\Lambda}{2L_{T_\Lambda}},
+\label{eq:A-gamma-choice}
+\end{equation}
+which yields an effective inner Lipschitz constant strictly below $1$ even with the additive $B$ term (see joint analysis below).
+
+\section{Joint Contraction on \texorpdfstring{$H\times H_\Lambda$}{H x H\_Lambda}}
+
+We now derive explicit operator norm bounds for the joint two-layer system and prove the contraction theorem stated informally in the main document.\,[file:1]
+
+\subsection{Joint map and product norm}
+
+Consider the joint state $Z_t=(X_t,\lambda_t)\in H\times H_\Lambda$ with norm
+\[
+\|Z_t\|_{H\times H_\Lambda} := \max\{\|X_t\|,\|\lambda_t\|\}.
+\]
+The joint update is
+\[
+\begin{aligned}
+X_{t+1} &= \Xi(t) X_t + \Lambda_m(t) T(X_t),\\
+\lambda_{t+1} &= \Xi_\Lambda(t)\lambda_t + \Gamma_m(t) T_\Lambda(\lambda_t) 
+                + B\bigl(\delta_{\mathrm{drift}}(t),X_t\bigr),
+\end{aligned}
+\]
+with $\Lambda_m(t) = \mathrm{Re}\,\mathrm{Obs}(\lambda_t)$ and $\Gamma_m(t)$ treated as given scalars satisfying \eqref{eq:A-inner-small-coupling}.\,[file:1]
+
+Define $F_t: H\times H_\Lambda\to H\times H_\Lambda$ by $F_t(Z_t)=(X_{t+1},\lambda_{t+1})$.
+
+\subsection{Difference dynamics and Lipschitz estimate}
+
+Let $Z_t=(X_t,\lambda_t)$ and $\tilde{Z}_t=(\tilde{X}_t,\tilde{\lambda}_t)$ be two joint states. Consider the differences
+\[
+\Delta X_t := X_t - \tilde{X}_t,\qquad
+\Delta\lambda_t := \lambda_t - \tilde{\lambda}_t.
+\]
+
+\paragraph{Outer component.} We have
+\begin{align*}
+\Delta X_{t+1}
+&= \Xi(t)\Delta X_t + \Lambda_m(t) T(X_t) - \tilde{\Lambda}_m(t) T(\tilde{X}_t)\\
+&= \Xi(t)\Delta X_t 
+   + \Lambda_m(t)\bigl(T(X_t)-T(\tilde{X}_t)\bigr)
+   + \bigl(\Lambda_m(t)-\tilde{\Lambda}_m(t)\bigr) T(\tilde{X}_t),
+\end{align*}
+where $\Lambda_m(t)=\mathrm{Re}\,\mathrm{Obs}(\lambda_t)$ and $\tilde{\Lambda}_m(t)=\mathrm{Re}\,\mathrm{Obs}(\tilde{\lambda}_t)$.
+
+Taking norms and applying Lipschitz bounds:
+\begin{align*}
+\|\Delta X_{t+1}\|
+&\le \|\Xi(t)\|\,\|\Delta X_t\|
+   + |\Lambda_m(t)|L_T\,\|\Delta X_t\|
+   + |\Lambda_m(t)-\tilde{\Lambda}_m(t)|\,\|T(\tilde{X}_t)\|.
+\end{align*}
+Using $\sup_t\|\Xi(t)\|\le 1-\varepsilon$ and $|\Lambda_m(t)|\le c/L_T$, we obtain
+\[
+\|\Delta X_{t+1}\|
+\le (1-\varepsilon+c)\,\|\Delta X_t\|
+   + |\Lambda_m(t)-\tilde{\Lambda}_m(t)|\,\|T(\tilde{X}_t)\|.
+\]
+If $\mathrm{Obs}$ is bounded with $\|\mathrm{Obs}\|\le L_{\mathrm{Obs}}$, then
+\[
+|\Lambda_m(t)-\tilde{\Lambda}_m(t)|
+= |\mathrm{Re}(\mathrm{Obs}(\lambda_t)-\mathrm{Obs}(\tilde{\lambda}_t))|
+\le L_{\mathrm{Obs}}\|\Delta\lambda_t\|.
+\]
+Assuming $\|T(\tilde{X}_t)\|\le L_T\|\tilde{X}_t\|$ and $\|\tilde{X}_t\|\le M_X$ (boundedness of outer states), we obtain
+\begin{equation}
+\|\Delta X_{t+1}\|
+\le (1-\varepsilon+c)\,\|\Delta X_t\|
+   + L_{\mathrm{Obs}} L_T M_X\,\|\Delta\lambda_t\|.
+\label{eq:A-DeltaX-bound}
+\end{equation}
+
+\paragraph{Inner component.} For $\Delta\lambda_{t+1}$,
+\begin{align*}
+\Delta\lambda_{t+1}
+&= \Xi_\Lambda(t)\Delta\lambda_t 
+   + \Gamma_m(t)\bigl(T_\Lambda(\lambda_t)-T_\Lambda(\tilde{\lambda}_t)\bigr)\\
+&\phantom{=} + B(\delta_{\mathrm{drift}}(t),X_t) 
+   - B(\tilde{\delta}_{\mathrm{drift}}(t),\tilde{X}_t),
+\end{align*}
+where $\tilde{\delta}_{\mathrm{drift}}(t)$ denotes the drift computed from $(\tilde{X}_t,\tilde{\lambda}_t)$. Taking norms:
+\begin{align*}
+\|\Delta\lambda_{t+1}\|
+&\le \|\Xi_\Lambda(t)\|\,\|\Delta\lambda_t\|
+   + |\Gamma_m(t)|L_{T_\Lambda}\,\|\Delta\lambda_t\| \\
+&\phantom{\le} + \|B(\delta_{\mathrm{drift}}(t),X_t)
+                 - B(\tilde{\delta}_{\mathrm{drift}}(t),\tilde{X}_t)\|.
+\end{align*}
+Thus
+\begin{equation}
+\|\Delta\lambda_{t+1}\|
+\le (1-\varepsilon_\Lambda+c_\Lambda)\,\|\Delta\lambda_t\|
+   + \|B(\delta_{\mathrm{drift}}(t),X_t)
+       - B(\tilde{\delta}_{\mathrm{drift}}(t),\tilde{X}_t)\|.
+\label{eq:A-DeltaLambda-preB}
+\end{equation}
+
+To bound the difference in $B$, we assume $B$ is Lipschitz in both arguments with respect to some norms:
+\[
+\|B(\delta,X)-B(\tilde{\delta},\tilde{X})\|
+\le L_B^{(\delta)} \|\delta-\tilde{\delta}\|
+   + L_B^{(X)} \|X-\tilde{X}\|.
+\]
+If $\delta_{\mathrm{drift}}$ is itself Lipschitz in $(X,\lambda)$ (which can be ensured in finite-dimensional approximations and bounded phase maps), we can control $\|\delta_{\mathrm{drift}}(t)-\tilde{\delta}_{\mathrm{drift}}(t)\|$ by a constant times $\|\Delta X_t\| + \|\Delta\lambda_t\|$:
+\[
+\|\delta_{\mathrm{drift}}(t)-\tilde{\delta}_{\mathrm{drift}}(t)\|
+\le L_\delta^{(X)} \|\Delta X_t\| + L_\delta^{(\lambda)} \|\Delta\lambda_t\|.
+\]
+Then
+\begin{align*}
+\|B(\delta_{\mathrm{drift}}(t),X_t)
+   - B(\tilde{\delta}_{\mathrm{drift}}(t),\tilde{X}_t)\|
+&\le L_B^{(\delta)} 
+    \bigl(L_\delta^{(X)} \|\Delta X_t\| + L_\delta^{(\lambda)} \|\Delta\lambda_t\|\bigr)
+   + L_B^{(X)} \|\Delta X_t\|\\
+&= \bigl(L_B^{(\delta)} L_\delta^{(X)} + L_B^{(X)}\bigr)\,\|\Delta X_t\|
+   + L_B^{(\delta)} L_\delta^{(\lambda)}\,\|\Delta\lambda_t\|.
+\end{align*}
+Putting this into \eqref{eq:A-DeltaLambda-preB}, we obtain
+\begin{equation}
+\|\Delta\lambda_{t+1}\|
+\le \bigl(1-\varepsilon_\Lambda+c_\Lambda 
+          + L_B^{(\delta)} L_\delta^{(\lambda)}\bigr)\,\|\Delta\lambda_t\|
+   + \bigl(L_B^{(\delta)} L_\delta^{(X)} + L_B^{(X)}\bigr)\,\|\Delta X_t\|.
+\label{eq:A-DeltaLambda-bound}
+\end{equation}
+
+\subsection{Block matrix form and spectral radius}
+
+Let us define the block matrix of Lipschitz constants
+\[
+M := 
+\begin{pmatrix}
+a & b \\
+d & e
+\end{pmatrix},
+\]
+where
+\[
+a := 1-\varepsilon + c, \quad
+b := L_{\mathrm{Obs}} L_T M_X,\quad
+d := L_B^{(\delta)} L_\delta^{(X)} + L_B^{(X)},\quad
+e := 1-\varepsilon_\Lambda+c_\Lambda + L_B^{(\delta)} L_\delta^{(\lambda)}.
+\]
+Then inequalities \eqref{eq:A-DeltaX-bound} and \eqref{eq:A-DeltaLambda-bound} can be written as
+\[
+\begin{pmatrix}
+\|\Delta X_{t+1}\| \\
+\|\Delta\lambda_{t+1}\|
+\end{pmatrix}
+\le
+M
+\begin{pmatrix}
+\|\Delta X_{t}\| \\
+\|\Delta\lambda_{t}\|
+\end{pmatrix}.
+\]
+We consider the induced operator on $\mathbb{R}^2$ with the norm $\|(u,v)\|_\infty = \max(|u|,|v|)$. The operator norm of $M$ in this norm is
+\[
+\|M\|_\infty = \max\{ |a|+|b|,\ |d|+|e|\}.
+\]
+A sufficient condition for contraction is $\|M\|_\infty < 1$.
+
+\paragraph{Lemma A.3 (Joint contraction via block norm).}
+If
+\[
+|a|+|b|<1
+\quad\text{and}\quad
+|d|+|e|<1,
+\]
+then $F_t$ is a contraction with respect to $\|\cdot\|_{H\times H_\Lambda}$, with Lipschitz constant $L_{\mathrm{joint}}\le \|M\|_\infty<1$.
+
+\medskip
+\noindent\emph{Proof.}
+For any $Z_t,\tilde{Z}_t$,
+\[
+\|F_t(Z_t)-F_t(\tilde{Z}_t)\|_{H\times H_\Lambda}
+= \max\{\|\Delta X_{t+1}\|,\|\Delta\lambda_{t+1}\|\}
+\le \|M\|_\infty \max\{\|\Delta X_t\|,\|\Delta\lambda_t\|\},
+\]
+so $L_{\mathrm{joint}}\le\|M\|_\infty$. If $\|M\|_\infty<1$, $F_t$ is a contraction. \hfill$\square$
+
+\subsection{Simplified sufficient condition}
+
+To simplify, we can enforce:
+\[
+b,d,L_B^{(\delta)} L_\delta^{(\lambda)} \text{ all sufficiently small,}
+\]
+so that
+\[
+a < 1-\delta_a, \quad e<1-\delta_e
+\]
+for some $\delta_a,\delta_e>0$, and
+\[
+b < \frac{\delta_a}{2},\quad d<\frac{\delta_e}{2}.
+\]
+Then
+\[
+|a|+|b|\le 1-\delta_a + \frac{\delta_a}{2} = 1-\frac{\delta_a}{2}<1,
+\]
+and similarly $|d|+|e|\le 1-\delta_e/2<1$. This yields
+\[
+L_{\mathrm{joint}}\le 1 - \frac{1}{2}\min\{\delta_a,\delta_e\} < 1.
+\]
+In particular, if we view $\varepsilon-c$ and $\varepsilon_\Lambda-c_\Lambda$ as the primary contraction margins and treat the various cross-Lipschitz constants $b,d,L_B^{(\delta)}L_\delta^{(\lambda)}$ as being bounded by a small $\eta>0$, we obtain a joint Lipschitz constant of the form
+\[
+L_{\mathrm{joint}}
+\le 1 - \frac{1}{2}\min\{\varepsilon-c-\eta,\ \varepsilon_\Lambda-c_\Lambda-\eta\},
+\]
+which is $<1$ provided $\eta<\min\{\varepsilon-c,\varepsilon_\Lambda-c_\Lambda\}$.\,[file:1]
+
+\paragraph{Corollary A.4 (Two-layer existence and uniqueness).}
+If the outer and inner small-coupling conditions hold with margins $\varepsilon-c>0$ and $\varepsilon_\Lambda-c_\Lambda>0$, and if the cross-terms $b,d,L_B^{(\delta)}L_\delta^{(\lambda)}$ are chosen small enough (via the design of $B$ and the observables) to satisfy the above inequalities, then $F_t$ is a uniform contraction on $H\times H_\Lambda$. Consequently, for any $(X_0,\lambda_0)\in H\times H_\Lambda$, there exists a unique global bounded solution $(X_t,\lambda_t)$ of the joint system.\,[file:1]
+
+\section{Prime-Sector Stability in the Two-Layer System}
+
+Finally, we briefly record how per-prime margins propagate in the two-layer setting.
+
+\subsection{Outer prime-sector margins}
+
+The outer operator is
+\[
+\Xi(t) = \sum_p w_p(t)U_p(t),
+\]
+with per-prime margins $\varepsilon_p\in(0,1)$ satisfying
+\[
+|w_p(t)|\,\|U_p(t)\|\le 1-\varepsilon_p,
+\quad
+\sup_t|\Lambda_m(t)|L_T\le\varepsilon_p.\,[file:1]
+\]
+If $\varepsilon_\star:=\inf_p\varepsilon_p>0$, then
+\[
+\sup_t\|\Xi(t)\|\le 1-\varepsilon_\star,
+\quad
+c\le\varepsilon_\star,
+\]
+so the outer small-coupling condition holds with $\varepsilon=\varepsilon_\star$.\,[file:1]
+
+\subsection{Inner prime-sector margins}
+
+Analogously, if
+\[
+\Xi_\Lambda(t) = \sum_p w^{(\Lambda)}_p(t)U^{(\Lambda)}_p(t),
+\]
+and there exist $\varepsilon^{(\Lambda)}_p\in(0,1)$ with
+\[
+|w^{(\Lambda)}_p(t)|\,\|U^{(\Lambda)}_p(t)\|
+\le 1-\varepsilon^{(\Lambda)}_p,\quad
+\sup_t|\Gamma_m(t)|L_{T_\Lambda}\le\varepsilon^{(\Lambda)}_p,
+\]
+and $\varepsilon_\star^{(\Lambda)}:=\inf_p\varepsilon^{(\Lambda)}_p>0$, then
+\[
+\sup_t\|\Xi_\Lambda(t)\|\le 1-\varepsilon_\star^{(\Lambda)},
+\quad
+c_\Lambda\le\varepsilon_\star^{(\Lambda)},
+\]
+so the inner small-coupling condition holds with $\varepsilon_\Lambda=\varepsilon_\star^{(\Lambda)}$.\,[file:1]
+
+\subsection{Joint prime-sector stability}
+
+The two-layer joint system thus inherits prime-sector stability margins from both layers, and the conditions on the feedback operator $B$ can be tuned sector-wise by tying its Lipschitz constants to the smallest margins among the outer and inner $\varepsilon_p$ and $\varepsilon^{(\Lambda)}_p$. In particular, a conservative design is to choose $B$ such that its norm contributions are dominated by $\min_p\{\varepsilon_p-\sup_t|\Lambda_m(t)|L_T,\ \varepsilon^{(\Lambda)}_p-\sup_t|\Gamma_m(t)|L_{T_\Lambda}\}$, ensuring that the joint contraction margin remains positive in all active prime sectors.\,[file:1]
+
+\nocite{*}
+\bibliographystyle{unsrt}  
+\bibliography{references}  
+
+
+\end{document}

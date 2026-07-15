@@ -1,0 +1,276 @@
+% !TEX program = pdflatex
+\documentclass[11pt]{article}
+
+% --- Packages ---
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amsthm,amssymb,amsfonts,mathtools}
+\usepackage{microtype}
+\usepackage{bm}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage[nameinlink,capitalise]{cleveref}
+\usepackage{thmtools}
+\usepackage{xcolor}
+\usepackage{mathrsfs}
+
+% --- Hyperref setup ---
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  citecolor=teal,
+  urlcolor=magenta,
+  pdfauthor={},
+  pdftitle={A Stability-Form Program Toward the Riemann Hypothesis},
+  pdfsubject={Analytic Number Theory},
+  pdfkeywords={Riemann Hypothesis, Dirichlet polynomials, explicit formula, mean-square, Toeplitz forms}
+}
+
+% --- Theorem environments ---
+\declaretheoremstyle[
+  headfont=\bfseries, bodyfont=\itshape, headpunct={.}, postheadspace=0.5em]{thmstyle}
+\declaretheoremstyle[
+  headfont=\bfseries, bodyfont=\normalfont, headpunct={.}, postheadspace=0.5em]{defstyle}
+
+\declaretheorem[style=thmstyle,numberwithin=section]{theorem}
+\declaretheorem[style=thmstyle,sibling=theorem]{proposition}
+\declaretheorem[style=thmstyle,sibling=theorem]{lemma}
+\declaretheorem[style=thmstyle,sibling=theorem]{corollary}
+\declaretheorem[style=thmstyle,sibling=theorem]{conjecture}
+\declaretheorem[style=defstyle,sibling=theorem]{definition}
+\declaretheorem[style=defstyle,sibling=theorem]{remark}
+\declaretheorem[style=defstyle,sibling=theorem]{example}
+
+% --- Macros ---
+\newcommand{\RR}{\mathbb{R}}
+\newcommand{\NN}{\mathbb{N}}
+\newcommand{\CC}{\mathbb{C}}
+\newcommand{\QQ}{\mathbb{Q}}
+\newcommand{\EE}{\mathbf{E}}
+\newcommand{\e}{\mathrm{e}}
+\newcommand{\ii}{\mathrm{i}}
+\newcommand{\dd}{\mathrm{d}}
+\newcommand{\avg}[1]{\left\langle #1 \right\rangle}
+\newcommand{\abs}[1]{\left\lvert #1 \right\rvert}
+\newcommand{\norm}[1]{\left\lVert #1 \right\rVert}
+\newcommand{\floor}[1]{\left\lfloor #1 \right\rfloor}
+\newcommand{\widehatw}{\widehat{w}}
+\newcommand{\Rea}{\operatorname{Re}}
+\newcommand{\Ima}{\operatorname{Im}}
+
+\newcommand{\zetaR}{\zeta}
+\newcommand{\xiR}{\xi}
+\newcommand{\chiR}{\chi}
+\newcommand{\Zfunc}{Z}
+\newcommand{\thetaRS}{\theta}
+
+% Fourier/Mellin conventions
+% Fourier: \widehat{f}(u)=\int_{\RR} f(t)\,\e^{-\ii u t}\,\dd t
+% Mellin: \mathcal{M}[f](s)=\int_0^\infty f(x) x^{s-1}\,\dd x
+
+% --- Title ---
+\title{A Stability-Form Program}
+\author{\bfseries{Mubeen Mohammad \\ \\ With formal structuring aid:\\ Ryan Van Gelder}}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We formulate a windowed ``energy'' at the Riemann--Siegel scale that measures the balance between the two Dirichlet-polynomial halves of the approximate functional equation on the critical line. Let $N\asymp\sqrt{T}$ and define $\EE(T)=\langle\,\lvert S_N^+ - S_N^-\rvert^2\,\rangle_T$ with smooth windowing. A calibrated balance hypothesis $\EE(T)\le (2-\eta)\log N + C$ (or weaker density/limsup variants) asks for a positive cross-term of order $\eta\log N$ relative to the trivial ceiling $2\log N$. We express the cross-term as a Toeplitz quadratic form with symbol $\widehat{w}(u)\,\mathfrak{g}_T(u)$ and derive a smoothed explicit formula with zero kernels $K_{T,N}(\rho)=\Rea\int \Phi_{T,N}(x)x^{\rho-1/2}\,\dd x/x$. A local-positivity window for $\Phi_{T,N}(x)$ near $x=1$ and phase localization near a zero height yield $K_{T,N}(\rho)\gg \lvert\beta-\tfrac12\rvert\,\log N$ whenever $\lvert T-\gamma\rvert$ is small, inflating $\EE(T)$ to $(2+\eta_\rho)\log N$ infinitely often if any off-line zero exists. This contradicts any of the balance conditions and implies the Riemann Hypothesis. The proof reduces to verifying explicit kernel bounds, now formulated as Lemmas~\ref{lem:local-positivity} and~\ref{lem:phase-localization}.
+\end{abstract}
+
+\section{Introduction}
+Let $\zetaR(s)$ be the Riemann zeta function, $\xiR(s)=\tfrac12 s(s-1)\pi^{-s/2}\Gamma(s/2)\zetaR(s)$ the completed zeta, and $\chiR(s)=\pi^{s-1/2}\tfrac{\Gamma((1-s)/2)}{\Gamma(s/2)}$ so that $\zetaR(s)=\chiR(s)\zetaR(1-s)$ and $\xiR(s)=\xiR(1-s)$. Write $s=\tfrac12+\ii t$. The Riemann Hypothesis (RH) asserts that all nontrivial zeros $\rho=\beta+\ii\gamma$ satisfy $\beta=\tfrac12$.
+
+This report packages a \\emph{stability-form} program for RH: we define a scale-coupled energy $\EE(T)$ measuring the lack of balance between the forward and dual Dirichlet polynomials in the smooth approximate functional equation (AFE), and we show that any zero with $\beta\neq\tfrac12$ forces persistent inflation of this energy near its height. If the energy is globally (or typically) bounded strictly below the trivial ceiling, RH follows.
+
+The novel content lies in three technical cores: (i) a smoothed explicit-formula decomposition of the cross-term, (ii) a local-positivity window for the correlation profile $\Phi_{T,N}(x)$, and (iii) phase localization that isolates a single zero near its height. We state a calibrated conjecture aligned with known second-moment scales and also provide weaker density/limsup variants that still imply RH.
+
+\paragraph{Bookkeeping note.} We employ the Arithmetic Control Engine (ACE) and the Prime-Encoded Tensor Calculus (PETC) solely as structuring devices for dependency tracking: \textbf{ACE=Tyler Van Osdol, PETC=Ryan Van Gelder}. They play no analytic role and can be ignored by readers who prefer classical arguments.
+
+\section{Setup and Baseline Bounds}
+Fix smooth, even $w\in C_c^\infty(\RR)$ with support in $[1,2]$ and $\int w=1$, and $V\in C_c^\infty([0,\infty))$ with $V\equiv1$ on $[0,1]$ and $V\equiv0$ on $[2,\infty)$.
+For a scale $T\ge T_0$, put
+\begin{equation}
+N(T):=\Big\lfloor \kappa\,\sqrt{\tfrac{T}{2\pi}}\,\Big\rfloor,\qquad \kappa\in[1,2].
+\end{equation}
+Define the forward and dual Dirichlet polynomials
+\begin{align}
+S_N^+(t)&:=\sum_{n\ge1}\frac{V(n/N)}{n^{1/2+\ii t}},
+&
+S_N^-(t)&:=\chiR\!\left(\tfrac12+\ii t\right)\sum_{n\ge1}\frac{V(n/N)}{n^{1/2-\ii t}}.
+\end{align}
+For a function $F(t)$, define the windowed mean-square near $T$ by
+\begin{equation}
+\avg{\lvert F\rvert^2}_T:=\frac1T\int_{\RR} \lvert F(t)\rvert^2\, w(t/T)\,\dd t.
+\end{equation}
+
+\begin{lemma}[Baseline mean-square]\label{lem:baseline}
+With $N=N(T)$ as above and $T\to\infty$,
+\[
+\avg{\lvert S_N^\pm\rvert^2}_T=\log N + O(1),
+\]
+where the $O(1)$ depends only on $V,w,\kappa$.
+\end{lemma}
+\begin{proof}
+Apply the Montgomery--Vaughan mean-value theorem for Dirichlet polynomials to $\sum a_n n^{-\ii t}$ with $a_n=V(n/N)/\sqrt{n}$, using smooth compact support.
+\end{proof}
+
+Define the \emph{energy}
+\begin{equation}
+\EE(T):=\avg{\,\lvert S_N^+(t)-S_N^-(t)\rvert^2\,}_T.
+\end{equation}
+Expanding,
+\begin{equation}
+\EE(T)=\avg{\lvert S_N^+\rvert^2}_T+\avg{\lvert S_N^-\rvert^2}_T-2\,\Rea\,\avg{ S_N^+\overline{S_N^-}}_T.
+\tag{0.1}
+\end{equation}
+
+\section{The Calibrated Balance Hypotheses}
+\begin{conjecture}[Conjecture E$'$]\label{conj:Eprime}
+There exist $\eta\in(0,1)$, $T_0$ and $C$ (depending only on $V,w,\kappa$) such that for all $T\ge T_0$,
+\begin{equation}
+\EE(T)\ \le\ (2-\eta)\,\log N(T)\ +\ C.
+\tag{E$'$}
+\end{equation}
+\end{conjecture}
+Weaker forms sufficient for our implication to RH:
+\begin{itemize}[leftmargin=2.25em]
+  \item \textbf{Density-one variant} (E$_\mathrm{dens}$): the bound holds for a set of $T$ of asymptotic density 1.
+  \item \textbf{Limsup variant} (E$_\mathrm{limsup}$): $\limsup_{T\to\infty} \EE(T)/\log N(T)\le 2-\eta$.
+\end{itemize}
+These relax uniform control while preserving the contradiction engine.
+
+\section{Cross-Term as a Toeplitz Quadratic Form}
+Set $a_n:=V(n/N)/\sqrt{n}$ and
+\begin{equation}
+\Psi_T(u):=\frac1T\int_{\RR} w(t/T)\,\e^{2\ii\thetaRS(t)}\,\e^{\ii u t}\,\dd t
+=\widehatw(u)\,\mathfrak{g}_T(u),\qquad
+\mathfrak{g}_T(u):=\pi^{-\ii T u}\,\frac{\Gamma\big(\tfrac{1+\ii T u}{4}\big)}{\Gamma\big(\tfrac{1-\ii T u}{4}\big)}.
+\end{equation}
+Then
+\begin{equation}
+\avg{ S_N^+\overline{S_N^-}}_T
+=\sum_{m,n\ge1}\frac{V(m/N)V(n/N)}{\sqrt{mn}}\,\Psi_T\!\big(\log(n/m)\big).
+\tag{2.2}
+\end{equation}
+
+\section{Off-line Zeros Force Energy Inflation}
+Let $\rho=\beta+\ii\gamma$ be a zero of $\zetaR$. The key target is a lower bound for a zero kernel $K_{T,N}(\rho)$ defined via the explicit formula.
+
+\begin{proposition}[Inflation from an off-line zero]\label{prop:inflation}
+Fix $V,w,\kappa$. If $\beta\neq\tfrac12$, there exist $c,\delta,\eta_\rho>0$ and arbitrarily large $T$ with $\abs{T-\gamma}\le c T^\delta$ such that
+\begin{equation}
+\EE(T)\ \ge\ (2+\eta_\rho)\,\log N(T)\ -\ C',\qquad \eta_\rho\asymp \abs{\beta-\tfrac12}.
+\tag{4.1}
+\end{equation}
+\end{proposition}
+The proof reduces to establishing
+\begin{equation}
+\boxed{\quad K_{T,N}(\rho)\ \ge\ c\,\abs{\beta-\tfrac12}\,\log N\ -\ O(1).\quad}
+\tag{3.4}
+\end{equation}
+Once (\ref{prop:inflation}) holds, Conjecture~\ref{conj:Eprime} (or its variants) implies RH by contradiction.
+
+\begin{theorem}[Any balance hypothesis $\Rightarrow$ RH]\label{thm:EtoRH}
+If Conjecture~\ref{conj:Eprime} holds, or if either (E$_\mathrm{dens}$) or (E$_\mathrm{limsup}$) holds, then all nontrivial zeros of $\zetaR$ satisfy $\beta=\tfrac12$.
+\end{theorem}
+\begin{proof}[Idea]
+Under any balance condition, $\EE(T)\le (2-\eta)\log N +C$ on infinitely many $T$. If an off-line zero exists, \cref{prop:inflation} supplies infinitely many windows with $\EE(T)\ge (2+\eta_\rho)\log N -C'$, a contradiction for fixed $\eta,\eta_\rho>0$.
+\end{proof}
+
+\section{Non-circularity Ledger}
+Inputs permitted throughout: the smooth AFE, the Montgomery--Vaughan mean-value theorem, the functional equation, standard smoothed explicit formulas, and Stirling asymptotics of $\Gamma$; no RH-equivalent results (Beurling--Nyman density, pair-correlation conjectures) are used. Each lemma/proposition explicitly lists its inputs.
+
+\section{Numerical Falsifiability (Optional)}
+Choose $V\equiv1$ on $[0,1]$ and smooth to 0 on $[1,2]$; take $w$ even with $\widehatw\ge0$. For $T$ on a logarithmic grid, evaluate $S_N^\pm$ via FFT-accelerated Dirichlet polynomials and approximate $\EE(T)$ by quadrature of $\abs{S_N^+-S_N^-}^2 w(t/T)$. Plot $\EE(T)/\log N$ and estimate the observed gap $\eta$. Probe windows near large $\gamma$ to visualize phase localization.
+
+\section*{Acknowledgments}
+We thank the structuring frameworks \textbf{ACE=Tyler Van Osdol} and \textbf{PETC=Ryan Van Gelder} for their role as dependency ledgers. All analytic content stands independently of these frameworks.
+
+\appendix
+
+\section{From the Toeplitz Form to the Zero Kernels} \label{app:explicit}
+We sketch the derivation of the decomposition claimed in (3.2).
+
+\subsection*{A.1. Toeplitz form}
+Equation (\ref{2.2}) writes $\avg{ S_N^+\overline{S_N^-}}_T$ as a Toeplitz quadratic form with symbol $\Psi_T$.
+
+\subsection*{A.2. Mellinization}
+For $\Re s>1$, define $A(s)=\sum_{n\ge1} V(n/N) n^{-s}$ with Mellin representation
+\[
+A(s)=\frac{1}{2\pi \ii}\int_{(2)} \widetilde V(z) N^z \zetaR(s+z)\,\dd z,\qquad \widetilde V(z)=\int_0^\infty V(y) y^{z-1}\,\dd y.
+\]
+Insert into
+\[
+\avg{ S_N^+\overline{S_N^-}}_T=\frac{1}{2\pi}\int_{\RR}\widehatw(u)\,\mathfrak g_T(u)\,A(\tfrac12-\ii u)\,A(\tfrac12+\ii u)\,\dd u.
+\tag{4.1a}
+\]
+Interchange integrals (absolute convergence from compact support and rapid decay), and conduct the inverse Mellin in the ratio variable to uncover the correlation profile
+\begin{equation}
+\Phi_{T,N}(x):=\sum_{n\ge1} \frac{V(n/N)\,V(xn/N)}{n}.
+\tag{3.3a}
+\end{equation}
+Shifting the $z$-contours left picks up the diagonal residue ($=\Psi_T(0)\log N+O(1)$) and residues at nontrivial zeros after inserting the functional equation, giving
+\begin{equation}
+\sum_{m,n}\frac{V(m/N)V(n/N)}{\sqrt{mn}}\,\Psi_T(\log(n/m))
+=\mathcal D_{\mathrm{diag}}(T,N)+\sum_{\rho}K_{T,N}(\rho)+\mathcal A(T,N),
+\tag{3.2}
+\end{equation}
+with
+\[
+K_{T,N}(\rho):=\Rea\int_0^\infty \Phi_{T,N}(x)\,x^{\rho-1/2}\,\frac{\dd x}{x},\qquad \mathcal A(T,N)=O(1).
+\]
+
+\section{Archimedean (\texorpdfstring{$\Gamma$}{Gamma}) Control} \label{app:arch}
+For real $u$,
+\[
+\abs{\mathfrak g_T(u)}=1,\qquad \abs{\partial_u^k \mathfrak g_T(u)}\ll_k (1+\abs{Tu})^k.
+\]
+Thus $\Psi_T(u)=\widehatw(u)\,\mathfrak g_T(u)$ is a symbol of order $0$ with rapidly decaying envelope; repeated integrations by parts in Fourier-type integrals yield arbitrary power savings in any phase gap.
+
+\section{Local Positivity Window for \texorpdfstring{$\Phi_{T,N}(x)$}{Phi}} \label{app:local-positivity}
+\begin{lemma}[Local positivity]\label{lem:local-positivity}
+Fix $V\in C_c^\infty([0,2])$ with $V\equiv1$ on $[0,1]$. For any fixed $\varepsilon_0>0$, there exist $c_0>0$ and $T_0$ such that for all $T\ge T_0$, all $N=N(T)$, and all $x$ with $\abs{\log x}\le T^{-1/2+\varepsilon_0}$,
+\[
+\Phi_{T,N}(x)\ge c_0\,\log N - O(1).
+\]
+\end{lemma}
+\begin{proof}
+We have $\Phi_{T,N}(x)=\sum_{n\le 2N} V(n/N)V(xn/N)/n\ge \sum_{n\le \min(N,N/x)}1/n=\log \min(N,N/x)+\gamma + O(1/N)$. If $\abs{\log x}\le T^{-1/2+\varepsilon_0}$ and $N\asymp\sqrt{T}$, then $\log \min(N,N/x)=\log N-\abs{\log x}+O(1)$, giving the claim with any fixed $c_0<1$ for large $T$.
+\end{proof}
+
+\section{Phase Localization and Dominance} \label{app:phase-localization}
+\begin{lemma}[Phase localization]\label{lem:phase-localization}
+With $w$ even and $\widehatw$ rapidly decaying, for any zero $\rho'=\beta'+\ii\gamma'$ and any $A\ge1$,
+\[
+K_{T,N}(\rho')\ =\ O_A\!\left(\frac{\log N}{(1+\abs{T-\gamma'})^A}\right).
+\]
+Consequently, for $T$ satisfying $\abs{T-\gamma}\le cT^\delta$, the $\rho$-term dominates $\sum_{\rho'} K_{T,N}(\rho')$.
+\end{lemma}
+\begin{proof}
+Write $K_{T,N}(\rho')=\Rea\int_0^\infty \Phi_{T,N}(x)x^{\beta'-1/2}\e^{\ii(T-\gamma')\log x}\,\dd x/x$. Let $s=\log x$ and $F(s)=\Phi_{T,N}(\e^s)\,\e^{(\beta'-1/2)s}$ (compactly supported, with $\norm{F^{(A)}}_{L^1}\ll_A \log N$ by \cref{lem:local-positivity}). Repeated integration by parts yields the bound.
+\end{proof}
+
+\section{Symmetry and the Strength of Inflation} \label{app:symmetry}
+If $\Phi_{T,N}(\e^s)$ were exactly even in $s$, Taylor expansion around $s=0$ would cancel the linear term and yield the quadratic lower bound
+\[
+K_{T,N}(\rho)\ \ge\ c_2\,(\beta-\tfrac12)^2\,\log N - O(1),
+\]
+which already suffices to contradict any balance ceiling of the form $(2-\eta)\log N+C$ for fixed $\beta\ne\tfrac12$. In practice, finite-support shoulders and/or a mildly skew window $w$ (while keeping $\widehatw\ge0$) break evenness and restore a linear gain
+\[
+K_{T,N}(\rho)\ \ge\ c_1\,\abs{\beta-\tfrac12}\,\log N - O(1).
+\]
+
+\section{Minimal Numerics Blueprint} \label{app:numerics}
+\begin{enumerate}[leftmargin=2.25em]
+  \item Choose $V\equiv1$ on $[0,1]$, smooth to $0$ by $2$; pick even $w$ with $\widehatw\ge0$.
+  \item For $T$ on a log grid, set $N=\floor{\sqrt{T/2\pi}}$ and evaluate $S_N^\pm$ on a $t$-mesh via FFT-accelerated Dirichlet polynomials.
+  \item Compute $\EE(T)=T^{-1}\int \abs{S_N^+-S_N^-}^2 w(t/T)\,\dd t$; track $\EE(T)/\log N$.
+  \item Sample $x=\e^s$ with $\abs{s}\le T^{-1/2+\varepsilon}$ to verify \cref{lem:local-positivity} numerically.
+  \item Fix several zeros $\gamma'$ and plot $\abs{K_{T,N}(\rho')}$ vs.~$T-\gamma'$ to visualize phase localization.
+\end{enumerate}
+\nocite{*}
+\bibliographystyle{unsrt}
+\bibliography{references}
+\end{document}

@@ -1,6 +1,10 @@
 // ACE-SCN-CSC Continuous Mathematics Verified by Kani
 // These functions and proofs replace the need for Lean 4 Mathlib for continuous matrix bounds.
 
+pub mod scn;
+
+pub use scn::*;
+
 /// Lemma 1 (Weyl via Frobenius): eigenvalue perturbations bounded by Frobenius norm.
 /// For symbolic verification, we test on a 2x2 Hermitian matrix.
 pub fn frobenius_norm(matrix: &[[f64; 2]; 2]) -> f64 {

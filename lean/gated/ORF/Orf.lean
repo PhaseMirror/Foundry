@@ -1,5 +1,8 @@
 -- Orf Formalization
 
+import .Coherence
+import .Stratification
+import .Proofs
 
 namespace Orf
 

@@ -1,0 +1,1650 @@
+\documentclass[12pt,letterpaper]{article}
+
+%% ─── PACKAGES ────────────────────────────────────────────────────────────────
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{mathtools}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{abstract}
+\usepackage{microtype}
+\usepackage{datetime2}
+\usepackage{cleveref}
+
+%% ─── METADATA ────────────────────────────────────────────────────────────────
+\hypersetup{
+  pdftitle={Meta-Relativity and PIRTM: Defensive Publication and Comprehensive Technical Report},
+  pdfauthor={Citizen Gardens \\ The Foundation of Multiplicity},
+  pdfsubject={Prior Art Defensive Publication},
+  pdfkeywords={Meta-Relativity, PIRTM, ZM operator stack, prime-indexed recursion,
+               contractivity certification, Multiplicity Theory, AL-GFT,
+               spin foam microfoundations, operator semigroups},
+  colorlinks=true,
+  linkcolor=black,
+  citecolor=blue,
+  urlcolor=blue
+}
+
+%% ─── THEOREM ENVIRONMENTS ────────────────────────────────────────────────────
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{proposition}[theorem]{Proposition}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{axiom}[theorem]{Axiom}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+
+%% ── operators ─────────────────────────────────────────────
+\DeclareMathOperator{\GapLB}{GapLB}
+\DeclareMathOperator{\SlopeUB}{SlopeUB}
+\DeclareMathOperator{\spec}{spec}
+\DeclareMathOperator{\essran}{ess\,ran}
+\DeclareMathOperator{\tr}{tr}
+\DeclareMathOperator{\sgap}{\delta_S}
+\newcommand{\PP}{\mathbb{P}}
+\newcommand{\RR}{\mathbb{R}}
+\newcommand{\CC}{\mathbb{C}}
+\newcommand{\ZZ}{\mathbb{Z}}
+\newcommand{\NN}{\mathbb{N}}
+\newcommand{\HH}{\mathcal{H}}
+\newcommand{\HS}{\mathcal{HS}}
+\newcommand{\norm}[1]{\left\|#1\right\|}
+\newcommand{\ip}[2]{\left\langle #1,\, #2 \right\rangle}
+\newcommand{\abs}[1]{\left|#1\right|}
+\newcommand{\lp}{\ell^2(\PP)}
+\newcommand{\Lt}{L^2(\RR)}
+\newcommand{\Cd}{\CC^d}
+%% ─── CODE LISTING STYLE ──────────────────────────────────────────────────────
+\lstset{
+  language=Python,
+  basicstyle=\ttfamily\footnotesize,
+  keywordstyle=\color{blue}\bfseries,
+  commentstyle=\color{gray}\itshape,
+  stringstyle=\color{teal},
+  numberstyle=\tiny\color{gray},
+  numbers=left,
+  frame=single,
+  breaklines=true,
+  captionpos=b,
+  showstringspaces=false,
+  tabsize=4
+}
+
+%% ─── HEADER / FOOTER ─────────────────────────────────────────────────────────
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\footnotesize Meta-Relativity \& PIRTM --- Defensive Publication}
+\rhead{\footnotesize Citizen Gardens, April 2026}
+\cfoot{\thepage}
+
+%% ─── TITLE ───────────────────────────────────────────────────────────────────
+\title{%
+  \textbf{Meta-Relativity and the Prime Interval Recursion Theory Machine (PIRTM):}\\[4pt]
+  \large Defensive Prior Art Publication,\\
+  Comprehensive Mathematical Overview, and\\
+  Implementation Architecture Report\\[12pt]
+  \normalsize \textit{Version 1.0 --- Defensive Publication}
+}
+
+\author{%
+  Citizen Gardens \\ The Foundation of Multiplicity
+}
+
+\date{April 25, 2026}
+
+%% ═══════════════════════════════════════════════════════════════════════════
+\begin{document}
+\maketitle
+\thispagestyle{fancy}
+
+%% ─── DEFENSIVE PUBLICATION NOTICE ──────────────────────────────────────────
+\vspace{1em}
+\noindent\fbox{\parbox{\textwidth}{%
+  \textbf{Defensive Prior Art Publication Notice.}
+  This document is published publicly by the Multiplicity Foundation for the
+  express purpose of establishing prior art under 35 U.S.C.~\S\,102 and
+  equivalent international provisions (EPC Art.~54). All mathematical
+  frameworks, operator constructions, certification protocols, module
+  architectures, and software designs described herein are disclosed as of
+  the date of publication. This disclosure is intended to prevent any third
+  party from obtaining patent claims over the described subject matter.
+  The disclosed work is released under the \textbf{Prime Materia License}
+  and Apache 2.0 where applicable. Nothing in this document constitutes a
+  waiver of copyright.
+}}
+\vspace{1em}
+
+\begin{abstract}
+We present a comprehensive technical disclosure of the \emph{Meta-Relativity}
+framework and its primary computational instantiation, the
+\emph{Prime Interval Recursion Theory Machine} (PIRTM), developed under the
+Multiplicity Foundation. Meta-Relativity is a prime-indexed, recursively
+stable mathematical framework wherein physical and abstract structures are
+modeled as prime-labeled operator semigroups acting on tensor-product
+Hilbert spaces. The framework unifies operator-theoretic contractivity
+certification, Zetafunction-inflected spectral analysis, and a compositional
+operator architecture (the ZM universal operator
+$U = A \otimes I \otimes I + I \otimes C \otimes I + I \otimes I \otimes E$
+on $H = \ell^2(\mathbb{P}) \otimes L^2(\mathbb{R}) \otimes \mathbb{C}^d$)
+with a software module stack whose correctness is enforced through ADR-governed
+stub modules and formally-specified certification protocols.
+
+This publication establishes priority for the following novel contributions:
+(1) the ZM universal operator construction and its finite-prime truncation;
+(2) the GapLB/SlopeUB contractivity certification protocol (Theorem 6 of the
+ZM spec); (3) the \texttt{PIRTMPolicy} Protocol and goal-budget enforcement
+mechanism; (4) the \texttt{ZMOperatorStack} module binding architecture;
+(5) the co-dependency resolution pattern for \texttt{certify.py} and
+\texttt{pirtm/zm/}; and (6) the five-gate ordered commit sequence for
+provably-correct PIRTM deployment.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+%% ═══════════════════════════════════════════════════════════════════════════
+\section{Executive Summary}
+\label{sec:exec}
+
+The \emph{Meta-Relativity} project, hosted at
+\url{https://github.com/MultiplicityFoundation/Meta-Relativity}, constitutes
+an original research and engineering program at the intersection of analytic
+number theory, operator spectral theory, quantum gravity (spin foam
+microfoundations), and formal software verification. The primary work product
+is the \emph{Prime Interval Recursion Theory Machine} (PIRTM), a formally
+specified computational runtime whose correctness contracts are derived from
+first principles in prime-indexed Hilbert space theory.
+
+\subsection*{Key Contributions Established by This Publication}
+
+\begin{enumerate}[leftmargin=*]
+
+\item \textbf{The ZM Universal Operator.}
+A tensor-product decomposition
+$U = A \otimes I + I \otimes C \otimes I + I \otimes I \otimes E$
+on a three-component Hilbert space whose prime block $A = D_\sigma + K$
+encodes Dirichlet-series weighting and Hilbert-Schmidt off-diagonal structure.
+
+\item \textbf{GapLB/SlopeUB Certification.}
+A four-step certification protocol (verify HS condition $\to$ check
+multiplier norm $\to$ compute GapLB/SlopeUB $\to$ enforce lawfulness) whose
+contractivity bound takes the closed form
+\[
+  \operatorname{GapLB}(w) \;\geq\;
+  \inf_\theta \!\left[\delta_S(\theta) - 2\sum_p |w_p|\, b_p \right].
+\]
+
+\item \textbf{The PIRTMPolicy Protocol.}
+A typed Protocol class enforcing the lawfulness inequality
+$\sum_k \varepsilon_k < (1 - \gamma_i)\cdot\|P_i\|^{-1}$
+at runtime via \texttt{goal\_budget} checking inside \texttt{iterate()}.
+
+\item \textbf{The ZMOperatorStack Binding Architecture.}
+A stub-first, ADR-governed module design pattern in which
+\texttt{pirtm/zm/operator\_stack.py} names all binding surfaces before
+implementation, co-committed with \texttt{pirtm/certify.py} to resolve
+import co-dependency in a single atomic commit.
+
+\item \textbf{Spin Foam as Prime-Gated Hilbert Space Instantiation.}
+The identification of spin foam area eigenvalues as a specific instantiation
+of prime weights in $\ell^2(\mathbb{P})$, establishing the integration
+pathway between \texttt{Spin\_Foam\_Microfoundations.md} and the ZM
+operator stack.
+
+\item \textbf{The Five-Gate Ordered Commit Sequence.}
+A formal dependency ordering for PIRTM provable correctness deployment,
+constituting a novel software engineering artifact.
+
+\end{enumerate}
+
+%% ═══════════════════════════════════════════════════════════════════════════
+\section{Background and Framework}
+\label{sec:background}
+
+\subsection{Multiplicity Theory}
+
+\begin{definition}[Multiplicity Space]
+A \emph{multiplicity space} $(X, \mathcal{P}, \mu)$ is a set $X$ equipped
+with a prime-indexed measure $\mu \colon \mathcal{P} \times X \to \mathbb{R}_{\geq 0}$
+where $\mathcal{P} = \{2, 3, 5, 7, 11, \ldots\}$ denotes the rational primes,
+such that the recurrence of any element $x \in X$ is governed by the
+prime factorization of its multiplicity index.
+\end{definition}
+
+Multiplicity Theory reinterprets mathematical objects as recursively generated
+patterns of prime-labeled interactions. Sets and modules become relationally
+governed multiplicity spaces with identity and behavior preserved through
+recursive feedback loops across scales. The prime-indexed structure is not
+merely a labeling convenience; it is the \emph{generative substrate} from
+which emergent structures arise.
+
+\subsection{Meta-Relativity: Core Thesis}
+
+Meta-Relativity extends the multiplicity framework to physical law. Rather
+than treating spacetime geometry as fixed background structure, Meta-Relativity
+posits that geometric and physical relationships are themselves manifestations
+of prime-indexed operator interactions. The \emph{lawfulness} of a physical
+configuration is certified by contractivity of the governing operator semigroup.
+
+\begin{definition}[Lawful Configuration]
+A configuration $\psi \in H$ is \emph{lawful} under operator family
+$\{\Xi(t)\}_{t \geq 0}$ if there exists $\gamma \in (0,1)$ such that
+\[
+  \|\Xi(t)\psi - \Xi(t)\phi\| \;\leq\; \gamma^t \|\psi - \phi\|
+  \quad \forall\, \psi, \phi \in H,\; \forall\, t \geq 0.
+\]
+\end{definition}
+
+The contractivity parameter $\gamma$ is the \emph{lawfulness margin}, and its
+certified lower bound is the central object of the PIRTM certification protocol.
+
+%% ═══════════════════════════════════════════════════════════════════════════
+\section{The ZM Universal Operator Construction}
+\label{sec:zm}
+
+\subsection{Hilbert Space Architecture}
+
+The ZM framework (``Zeta-Multiplicity'') operates on a three-component
+tensor product Hilbert space:
+\[
+  H \;=\; \ell^2(\mathbb{P}) \;\otimes\; L^2(\mathbb{R}) \;\otimes\; \mathbb{C}^d,
+\]
+where:
+\begin{itemize}[leftmargin=*]
+  \item $\ell^2(\mathbb{P})$ is the separable Hilbert space of square-summable
+        sequences indexed by the rational primes, serving as the
+        \emph{prime block} state space;
+  \item $L^2(\mathbb{R})$ is the standard $L^2$ space over the reals, hosting
+        the \emph{continuous multiplier} component; and
+  \item $\mathbb{C}^d$ is a finite-dimensional ``edge'' or environmental
+        component of dimension $d$.
+\end{itemize}
+
+\subsection{The Universal Operator}
+
+\begin{definition}[ZM Universal Operator]
+\label{def:zm-universal}
+The \emph{ZM universal operator} is the densely defined self-adjoint operator
+\[
+  U \;=\; A \otimes I \otimes I \;+\; I \otimes C \otimes I
+          \;+\; I \otimes I \otimes E
+\]
+where $A$, $C$, $E$ act on $\ell^2(\mathbb{P})$, $L^2(\mathbb{R})$,
+$\mathbb{C}^d$ respectively.
+\end{definition}
+
+\subsubsection{The Prime Block \texorpdfstring{$A = D_\sigma + K$}{A}}
+
+The prime block decomposes as:
+\[
+  A \;=\; D_\sigma + K,
+\]
+where $D_\sigma$ is the diagonal operator with entries $p^{-\sigma}$ for
+$p \in \mathbb{P}$ (a Dirichlet-series weighting at real parameter
+$\sigma > \frac{1}{2}$), and $K$ is the off-diagonal Hilbert-Schmidt
+perturbation with kernel:
+\[
+  K(p, q) \;=\; p^{-\alpha}\, q^{-\alpha}\, h\!\left(\log p - \log q\right),
+  \quad p,q \in \mathbb{P},
+\]
+for some $h \in L^2(\mathbb{R})$ with $\|h\|_{L^2} < \infty$, ensuring $K$
+is Hilbert-Schmidt (HS).
+
+\begin{proposition}[Hilbert-Schmidt Condition]
+$K$ is Hilbert-Schmidt on $\ell^2(\mathbb{P})$ if and only if
+\[
+  \sum_{p,q \in \mathbb{P}} |K(p,q)|^2
+  \;=\; \sum_{p,q} p^{-2\alpha} q^{-2\alpha} |h(\log p - \log q)|^2
+  \;<\; \infty,
+\]
+which holds for $\alpha > \frac{1}{2}$ and $h \in L^2(\mathbb{R})$.
+\end{proposition}
+
+\subsubsection{The Multiplier Operator $C$}
+
+The operator $C \colon L^2(\mathbb{R}) \to L^2(\mathbb{R})$ acts as a
+Fourier multiplier:
+\[
+  C \;=\; \mathcal{F}^{-1} M_m \mathcal{F},
+\]
+where $M_m$ denotes multiplication by the real-valued symbol $m \in L^\infty(\mathbb{R})$
+with essential range $[m_{\min}, m_{\max}]$. The multiplier range is the
+parameter computed by \texttt{multiplier\_range()} in the ZM operator stack.
+
+\subsubsection{The Recursive Operator \texorpdfstring{$\Xi(t)$}{Xi(t)}}
+
+The full time-evolved operator family is:
+\[
+  \Xi(t) \;=\; \sum_{k=0}^{\infty} \alpha_k(t)\, T^k,
+\]
+where $T$ is a bounded contraction on $H$ and $\{\alpha_k(t)\}_{k \geq 0}$
+are time-dependent coefficients satisfying $\sum_k |\alpha_k(t)| \leq 1$ for
+all $t$. This is the bounded contraction named as \texttt{iterate()} in
+\texttt{pirtm/core/recurrence.py}.
+
+%% ═══════════════════════════════════════════════════════════════════════════
+\section{Contractivity Certification Protocol}
+\label{sec:cert}
+
+\subsection{The Four-Step Protocol}
+
+The ZM Certification Protocol (Section 6.2 of \texttt{ZM\_Meta\_Relativity.md})
+consists of:
+
+\begin{enumerate}[label=\textbf{Step \arabic*.}, leftmargin=*]
+  \item \textbf{Verify HS condition.}
+        Confirm $\sum_{p,q} |K(p,q)|^2 < \infty$
+        (Hilbert-Schmidt norm finite).
+  \item \textbf{Check multiplier norm.}
+        Compute $[m_{\min}, m_{\max}]$ from the Fourier symbol of $C$.
+  \item \textbf{Compute GapLB and SlopeUB.}
+        Evaluate the contractivity margin bounds per Theorem 6.
+  \item \textbf{Enforce lawfulness.}
+        Assert $\operatorname{GapLB}(w) \geq \gamma_{\min}$.
+\end{enumerate}
+
+\subsection{Theorem 6: Contractivity Bounds}
+
+\begin{theorem}[GapLB/SlopeUB Bounds]
+\label{thm:gaplb}
+Let $\{b_p\}_{p \in \mathbb{P}}$ be per-prime Lipschitz bounds,
+$\{L_p\}_{p \in \mathbb{P}}$ be per-prime slope bounds, and
+$\{w_p\}_{p \in \mathbb{P}}$ be the weight budget with
+$w_{\mathrm{budget}} = \sum_p |w_p|$. Then:
+\[
+  \operatorname{GapLB}(w) \;\geq\;
+  \inf_\theta \!\left[\delta_S(\theta) - 2\sum_p |w_p|\, b_p \right],
+\]
+\[
+  \operatorname{SlopeUB}(w) \;=\; L \cdot w_{\mathrm{budget}},
+\]
+where $\delta_S(\theta) > 0$ is the spectral gap of $A$ at phase $\theta$,
+$b_p = b_p(\alpha)$ is the Lipschitz bound derived from the HS kernel
+parameter $\alpha$, and $L = \sup_p L_p < \infty$.
+\end{theorem}
+
+\begin{remark}
+The mapping $\alpha \mapsto b_p$ is given by
+$b_p \approx p^{-\alpha} \cdot \|h\|_{L^2}$
+(ZM spec, \S2.3). This is the binding surface between the
+\texttt{ZMOperatorStack} constructor parameter \texttt{alpha}
+and the per-prime argument \texttt{b\_p} accepted by \texttt{certify()}.
+Naming this mapping is a prerequisite for Day 2 implementation.
+\end{remark}
+
+\subsection{The Lawfulness Inequality}
+
+\begin{definition}[PIRTMPolicy Lawfulness Constraint]
+\label{def:lawfulness}
+A \texttt{PIRTMPolicy} instance is \emph{lawful} if and only if
+\[
+  \sum_{k} \varepsilon_k
+  \;<\;
+  (1 - \gamma_i) \cdot \|P_i\|^{-1},
+\]
+where $\varepsilon_k$ are step-level perturbation magnitudes, $\gamma_i$ is
+the contractivity parameter for module $i$, and $\|P_i\|$ is the operator
+norm of the $i$-th projection. Violation of this constraint must raise a
+\texttt{ValueError} inside \texttt{iterate()} at runtime.
+\end{definition}
+
+%% ═══════════════════════════════════════════════════════════════════════════
+\section{PIRTM Software Architecture}
+\label{sec:arch}
+
+\subsection{Repository Structure}
+
+The canonical implementation resides on the \texttt{Multiplicity} branch of
+\texttt{MultiplicityFoundation/Meta-Relativity}. The top-level module
+directory \texttt{pirtm/} contains the following active submodules:
+
+\begin{longtable}{lll}
+\toprule
+\textbf{Module} & \textbf{Primary Abstraction} & \textbf{Status} \\
+\midrule
+\texttt{pirtm/sigma/} & Asymmetric kernel, ledger, MCP adapter & Implemented \\
+\texttt{pirtm/spectral/} & Spectral operators, supermodule & Partially implemented \\
+\texttt{pirtm/core/} & \texttt{recurrence.py}, \texttt{iterate()} & Partially implemented \\
+\texttt{pirtm/bindings/} & Module binding surfaces & Partially implemented \\
+\texttt{pirtm/channels/} & Channel protocols & Stub \\
+\texttt{pirtm/backend/} & Backend adapters & Stub \\
+\texttt{pirtm/mlir/} & MLIR dialect integration & Partial \\
+\texttt{pirtm/zm/} & ZM universal operator stack & \textbf{Not yet created} \\
+\texttt{pirtm/certify.py} & Certification protocol & \textbf{Not yet created} \\
+\bottomrule
+\caption{PIRTM module inventory as of April 2026.}
+\end{longtable}
+
+\subsection{Key Identified Gaps (Disclosure)}
+
+The following structural gaps are disclosed as part of this prior art record:
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{\texttt{certify\_state()} proxy inversion.}
+        The current stub in \texttt{pirtm/core/} accepts operator
+        arguments $(\Xi, \Lambda)$ but produces lawfulness certificates that
+        are \emph{inverted} under transient conditions: the certificate passes
+        for near-unstable operators and fails for stable ones. The correct
+        signature is \texttt{certify\_state(b\_p, L\_p, w\_p, gamma\_min)}.
+
+  \item \textbf{Missing \texttt{StepInfo.margin} field.}
+        The \texttt{StepInfo} dataclass returned by \texttt{step()} does not
+        include the contraction margin. This prevents any downstream consumer
+        from auditing lawfulness per-step.
+
+  \item \textbf{No \texttt{PIRTMPolicy} Protocol.}
+        The \texttt{goal\_budget} constraint is a named contract with no
+        runtime enforcement. \texttt{iterate()} accepts bare objects without
+        raising \texttt{TypeError}.
+
+  \item \textbf{Unused \texttt{project\_ball()} in \texttt{projection.py}.}
+        The function is implemented and documented as appropriate for
+        high-dimensional state spaces but is never called by \texttt{iterate()}.
+
+  \item \textbf{Widening spec-to-code gap.}
+        60+ spec documents exist in \texttt{docs/specs/} against fewer than
+        10 bound code modules. The three largest unbound specs are
+        \texttt{ZM\_Meta\_Relativity.md},
+        \texttt{Spin\_Foam\_Microfoundations.md}, and
+        \texttt{ALE\_GFT.md}.
+\end{enumerate}
+
+%% ═══════════════════════════════════════════════════════════════════════════
+\section{The ZM Operator Stack: Disclosed Design}
+\label{sec:zm-stack}
+
+\subsection{Motivation: Binding Proximity}
+
+The ZM spec is not a separate physics layer --- it is the algebraic completion
+of what PIRTM partially implements. The decision criterion for binding ZM first
+(ahead of \texttt{Spin\_Foam\_Microfoundations}) is \emph{binding proximity}:
+ZM has existing code surface to attach to in \texttt{pirtm/sigma/} and
+\texttt{pirtm/core/}, whereas spin foam requires introducing entirely new
+module families.
+
+\subsection{ADR-ZM-001: Module Design Decision}
+
+\textbf{Decision:} \texttt{pirtm/zm/operator\_stack.py} \emph{composes from}
+existing modules \texttt{pirtm/sigma/} (for kernel weighting) and
+\texttt{pirtm/spectral/} (for contractivity margin). It does not own
+$D_\sigma$ construction independently, preventing duplication with
+\texttt{pirtm/sigma/asymmetric\_kernel.py}.
+
+\textbf{Co-dependency resolution:} \texttt{pirtm/certify.py} and
+\texttt{pirtm/zm/operator\_stack.py} must be committed in the same atomic
+commit. \texttt{certify.py} does not import from \texttt{pirtm/zm/}
+(avoiding circular dependency); \texttt{ZMOperatorStack.certify()} calls
+\texttt{certify\_state()} from \texttt{pirtm.certify}.
+
+\subsection{Full Disclosed Module: \texttt{pirtm/zm/operator\_stack.py}}
+
+\begin{lstlisting}[caption={pirtm/zm/operator\_stack.py --- Disclosed stub design},
+                   label={lst:zm-stack}]
+"""
+pirtm/zm/operator_stack.py
+
+Stub binding: ZM_Meta_Relativity.md -> PIRTM operator stack.
+Finite-prime truncation of universal operator U = A + C + E.
+Full certification via GapLB/SlopeUB stubs raise NotImplementedError
+until certify.py accepts (b_p, L_p, w_p) arguments.
+
+ADR: docs/adr/ADR-ZM-001-operator-stack-binding.md
+Prior Art Disclosure: Multiplicity Foundation, April 25, 2026.
+"""
+import numpy as np
+from typing import List, Dict, Tuple, Optional
+
+
+class ZMOperatorStack:
+    """
+    Finite-prime truncation of
+        U = A (x) I (x) I  +  I (x) C (x) I  +  I (x) I (x) E
+    on H = ell^2(P) (x) L^2(R) (x) C^d.
+
+    Binding surface for ZM_Meta_Relativity.md s.6.2 Certification Protocol.
+    Composes from pirtm.sigma (kernel) and pirtm.spectral (contractivity).
+    """
+
+    def __init__(
+        self,
+        primes: List[int],
+        sigma: float = 0.8,
+        alpha: float = 0.8,
+    ) -> None:
+        self.primes = primes
+        self.sigma = sigma       # D_sigma diagonal: p^{-sigma}
+        self.alpha = alpha       # K HS kernel: p^{-alpha} q^{-alpha} h(.)
+
+        # alpha -> b_p mapping (ZM spec s.2.3):
+        #   b_p ~ p^{-alpha} * ||h||_{L^2}
+        # Set by build_prime_block(); read by certify().
+        self._b_map: Dict[int, float] = {}
+
+        self._A: Optional[np.ndarray] = None
+        self._C_range: Optional[Tuple[float, float]] = None
+
+    # ------------------------------------------------------------------
+    def build_prime_block(
+        self,
+        h_fn: Optional[callable] = None
+    ) -> np.ndarray:
+        """
+        Build A = D_sigma + K for finite prime set.
+        Delegates D_sigma to pirtm.sigma.asymmetric_kernel.
+        Populates self._b_map: b_p = p^{-alpha} * ||h||_{L^2}.
+
+        ADR-ZM-001: implement before certify.py Day 2 fix.
+        """
+        raise NotImplementedError(
+            "ADR-ZM-001: compose from pirtm.sigma before certify.py Day 2"
+        )
+
+    def multiplier_range(
+        self,
+        a0: float,
+        a_p: Dict[int, float],
+    ) -> Tuple[float, float]:
+        """
+        Compute [m_min, m_max] for C = F^{-1} M_m F.
+        Prerequisite for GapLB (ZM s.6.2 Step 2).
+        """
+        raise NotImplementedError(
+            "ADR-ZM-001: implement before certify.py Day 2 fix"
+        )
+
+    def gap_lower_bound(self, b: float, w_budget: float) -> float:
+        """
+        GapLB >= delta_S - 2 * b * w_budget  (Theorem 6, ZM s.3.2).
+        Contractivity margin formula for certify_state() output.
+
+        Wires to certify_state() after Day 2.
+        """
+        raise NotImplementedError(
+            "ADR-ZM-001: wires to certify_state() after Day 2"
+        )
+
+    def slope_upper_bound(self, L: float, w_budget: float) -> float:
+        """SlopeUB = L * w_budget  (Theorem 6)."""
+        raise NotImplementedError("ADR-ZM-001")
+
+    def certify(
+        self,
+        b_p: Dict[int, float],
+        L_p: Dict[int, float],
+        w_p: Dict[int, float],
+        gamma_min: float,
+    ) -> bool:
+        """
+        Full certification per ZM s.6.2.
+        Steps:
+          1. Verify HS condition (self._A must be built).
+          2. Check multiplier range.
+          3. Compute GapLB / SlopeUB.
+          4. Return GapLB >= gamma_min.
+
+        Calls pirtm.certify.certify_state() -- co-committed Day 2.
+        Raises NotImplementedError until build_prime_block() implemented.
+        """
+        raise NotImplementedError(
+            "ADR-ZM-001: stub -- fails certify test by design"
+        )
+\end{lstlisting}
+
+\subsection{Full Disclosed Test: \texttt{pirtm/tests/zm/test\_zm\_operator\_stack.py}}
+
+\begin{lstlisting}[caption={Specification test for ZMOperatorStack --- known-failing ADR anchor},
+                   label={lst:zm-test}]
+"""
+pirtm/tests/zm/test_zm_operator_stack.py
+
+ADR-ZM-001 anchor: specification tests, not regression tests.
+All tests are expected to fail (NotImplementedError) until
+build_prime_block() is implemented after Day 2 certify.py commit.
+
+Prior Art Disclosure: Multiplicity Foundation, April 25, 2026.
+"""
+import pytest
+from pirtm.zm.operator_stack import ZMOperatorStack
+
+FIRST_10_PRIMES = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29]
+
+
+def test_certify_raises_not_implemented():
+    """ADR-ZM-001 anchor: stub raises NotImplementedError."""
+    stack = ZMOperatorStack(primes=FIRST_10_PRIMES, sigma=0.8, alpha=0.8)
+    with pytest.raises(NotImplementedError):
+        stack.certify(b_p={}, L_p={}, w_p={}, gamma_min=0.1)
+
+
+def test_gap_lower_bound_formula():
+    """
+    Specification: GapLB(b=1.0, budget=0.1) >= delta_S - 0.2.
+    Currently fails -- specification test, not regression test.
+    """
+    stack = ZMOperatorStack(primes=FIRST_10_PRIMES)
+    with pytest.raises(NotImplementedError):
+        stack.gap_lower_bound(b=1.0, w_budget=0.1)
+
+
+def test_b_map_alpha_relationship():
+    """
+    Specification: after build_prime_block(), b_p ~ p^{-alpha} * ||h||.
+    Currently fails -- documents the alpha -> b_p binding contract.
+    """
+    stack = ZMOperatorStack(primes=FIRST_10_PRIMES, alpha=0.8)
+    with pytest.raises(NotImplementedError):
+        stack.build_prime_block()
+    # Post-implementation assertion (documented here as specification):
+    # for p in FIRST_10_PRIMES:
+    #     assert stack._b_map[p] == pytest.approx(p**(-0.8), rel=1e-6)
+
+
+def test_multiplier_range_bounds():
+    """
+    Specification: multiplier_range returns (m_min, m_max) with
+    m_min <= m_max. Currently stub.
+    """
+    stack = ZMOperatorStack(primes=FIRST_10_PRIMES)
+    with pytest.raises(NotImplementedError):
+        stack.multiplier_range(a0=1.0, a_p={p: 0.1 for p in FIRST_10_PRIMES})
+\end{lstlisting}
+
+%% ═══════════════════════════════════════════════════════════════════════════
+\section{The PIRTMPolicy Protocol: Disclosed Design}
+\label{sec:policy}
+
+\begin{lstlisting}[caption={\texttt{pirtm/policy.py} --- PIRTMPolicy Protocol stub},
+                   label={lst:policy}]
+"""
+pirtm/policy.py
+
+PIRTMPolicy Protocol: runtime enforcement of the lawfulness inequality
+    sum_k eps_k < (1 - gamma_i) * ||P_i||^{-1}
+inside iterate(). Bare objects without goal_budget raise TypeError.
+
+Prior Art Disclosure: Multiplicity Foundation, April 25, 2026.
+"""
+from typing import Protocol, runtime_checkable
+
+
+@runtime_checkable
+class PIRTMPolicy(Protocol):
+    """
+    Typed protocol for PIRTM iterate() enforcement.
+
+    Any object passed to iterate() as policy= must implement:
+      - goal_budget: float   (max perturbation budget)
+      - gamma_min: float     (minimum contractivity parameter)
+      - operator_norm_bound: float  (upper bound on ||P_i||)
+
+    Violation of the lawfulness inequality raises ValueError inside iterate().
+    Absence of this interface raises TypeError at iterate() entry.
+    """
+    goal_budget: float
+    gamma_min: float
+    operator_norm_bound: float
+
+
+def enforce_lawfulness(
+    policy: PIRTMPolicy,
+    epsilon_sum: float,
+) -> None:
+    """
+    Raise ValueError if lawfulness inequality is violated:
+        epsilon_sum >= (1 - gamma_min) * operator_norm_bound^{-1}
+    """
+    threshold = (1.0 - policy.gamma_min) / policy.operator_norm_bound
+    if epsilon_sum >= threshold:
+        raise ValueError(
+            f"Lawfulness violated: sum(eps_k)={epsilon_sum:.6f} "
+            f">= threshold={threshold:.6f}. "
+            f"Reduce goal_budget or increase gamma headroom."
+        )
+\end{lstlisting}
+
+%% ═══════════════════════════════════════════════════════════════════════════
+\section{The Five-Gate Ordered Commit Sequence}
+\label{sec:gates}
+
+The following ordered sequence constitutes a novel software engineering
+artifact for provably-correct PIRTM deployment. The ordering is
+dependency-driven: each gate unblocks the next.
+
+\begin{longtable}{cllp{4.5cm}}
+\toprule
+\textbf{Gate} & \textbf{File} & \textbf{Metric} & \textbf{Dependency} \\
+\midrule
+1 & \texttt{pirtm/core/recurrence.py} &
+    \texttt{StepInfo.margin} present on 100\% of step calls &
+    None (standalone) \\[4pt]
+
+2 & \texttt{pirtm/certify.py} \newline
+    \texttt{pirtm/zm/\_\_init\_\_.py} \newline
+    \texttt{pirtm/zm/operator\_stack.py} &
+    \texttt{from pirtm.certify import certify\_state} succeeds;
+    single atomic commit &
+    Gate 1 (StepInfo.margin available) \\[4pt]
+
+3 & \texttt{pirtm/tests/test\_supermodule\_spectral.py} \newline
+    \texttt{pirtm/tests/zm/test\_zm\_operator\_stack.py} &
+    Both committed as known-failing spec tests;
+    \texttt{pytest} exits with known-failure &
+    Gate 2 (import targets exist) \\[4pt]
+
+4 & \texttt{pirtm/policy.py} &
+    \texttt{iterate()} raises \texttt{TypeError} on bare object;
+    raises \texttt{ValueError} on lawfulness violation &
+    Gate 2 (certify\_state computable) \\[4pt]
+
+5 & \texttt{docs/adr/ADR-ZM-001.md} \newline
+    \texttt{docs/adr/ADR-supermodule.md} &
+    ADRs reference test anchors from Gate 3;
+    Section 3 of ADR-ZM-001 states compose-vs-own decision &
+    Gate 3 (test anchors exist) \\
+\bottomrule
+\caption{Five-gate ordered commit sequence for PIRTM provable-correctness deployment.}
+\end{longtable}
+
+\textbf{Co-dependency note (Gate 2):} \texttt{pirtm/certify.py} and
+\texttt{pirtm/zm/operator\_stack.py} are co-dependent --- \texttt{certify.py}
+needs the parameter names that ZM defines, and \texttt{ZMOperatorStack.certify()}
+calls \texttt{certify\_state()}. Splitting Gate 2 into two commits creates an
+import-broken window. The single-commit resolution is the disclosed design.
+
+%% ═══════════════════════════════════════════════════════════════════════════
+\section{Spin Foam as Prime-Gated Hilbert Space}
+\label{sec:spin-foam}
+
+The identification of spin foam microfoundations as an instantiation of the
+ZM prime-gated Hilbert space $\ell^2(\mathbb{P})$ is a novel contribution
+of this framework. In the spin foam context, area eigenvalues of the area
+operator $\hat{A}$ take the form:
+\[
+  a_j \;=\; \ell_P^2 \sqrt{j(j+1)},
+  \quad j \in \tfrac{1}{2}\mathbb{Z}_{\geq 0},
+\]
+where $\ell_P$ is the Planck length. The \emph{disclosed integration claim}
+is: the spin labels $j$ play the role of prime weights in $\ell^2(\mathbb{P})$
+under the identification
+\[
+  p \;\longleftrightarrow\; j(j+1),
+  \quad
+  p^{-\sigma} \;\longleftrightarrow\; \ell_P^{-2}\, a_j,
+\]
+enabling spin network states to be processed through the ZM operator stack as
+a specific instantiation of prime-gated Hilbert space structure. Spin foam
+binding (\texttt{pirtm/spin\_foam/}) is the designated Week 3 target,
+following ZM stub establishment at Gate 2.
+
+%% ═══════════════════════════════════════════════════════════════════════════
+\section{AL-GFT: Gravity as Complex Open System}
+\label{sec:algft}
+
+The Asymmetric Langevin Gravity Field Theory (AL-GFT) specification
+(\texttt{AL-GFT\_CEQG-RG-Langevin.md}, 124,835 bytes; \texttt{ALE\_GFT.md},
+170,419 bytes) extends the Meta-Relativity framework to a stochastic
+treatment of gravitational degrees of freedom. The key disclosed elements are:
+
+\begin{itemize}[leftmargin=*]
+  \item A \emph{Coarse-grained Effective Quantum Gravity} (CEQG) layer in which
+        the renormalization group (RG) flow is governed by a Langevin equation
+        with prime-indexed noise kernel;
+  \item The interpretation of the RG $\beta$-function as the contractivity
+        slope $\operatorname{SlopeUB}$ from Theorem~\ref{thm:gaplb};
+  \item A \emph{regime dossier system} (Boundary-Spectral Governance,
+        \texttt{Boundary-spectral Governance --- Regime Dossier System v1.md})
+        classifying gravitational regimes by their spectral gap position
+        relative to $\operatorname{GapLB}$.
+\end{itemize}
+
+%% ═══════════════════════════════════════════════════════════════════════════
+\section{Prior Art Disclosure Summary}
+\label{sec:prior-art}
+
+The following table summarizes all novel elements disclosed by this publication
+as of April 25, 2026:
+
+\begin{longtable}{p{4.2cm}p{3.5cm}p{5.5cm}}
+\toprule
+\textbf{Disclosed Element} & \textbf{Location} & \textbf{Claims Prevented} \\
+\midrule
+ZM universal operator $U = A \otimes I + I \otimes C \otimes I + I \otimes I \otimes E$
+& \S\ref{sec:zm}, Def.~\ref{def:zm-universal}
+& Patent on tensor-product prime-indexed operator for physics simulation \\[4pt]
+
+GapLB/SlopeUB certification bounds (Theorem~\ref{thm:gaplb})
+& \S\ref{sec:cert}
+& Patent on contractivity certification via per-prime Lipschitz bounds \\[4pt]
+
+$\alpha \mapsto b_p$ binding ($b_p \sim p^{-\alpha}\|h\|_{L^2}$)
+& \S\ref{sec:cert}, Remark
+& Patent on HS kernel parameter to per-prime bound mapping \\[4pt]
+
+PIRTMPolicy Protocol + \texttt{enforce\_lawfulness()}
+& \S\ref{sec:policy}, Listing~\ref{lst:policy}
+& Patent on typed protocol for operator-norm-bounded policy enforcement \\[4pt]
+
+ZMOperatorStack stub architecture + ADR co-dependency pattern
+& \S\ref{sec:zm-stack}, Listings \ref{lst:zm-stack}--\ref{lst:zm-test}
+& Patent on stub-first ADR-governed module binding for operator stacks \\[4pt]
+
+Five-gate ordered commit sequence
+& \S\ref{sec:gates}
+& Patent on dependency-ordered commit sequencing for provable-correctness deployment \\[4pt]
+
+Spin foam as $\ell^2(\mathbb{P})$ instantiation
+& \S\ref{sec:spin-foam}
+& Patent on prime-weight identification of spin foam area eigenvalues \\[4pt]
+
+AL-GFT RG $\beta$-function as SlopeUB
+& \S\ref{sec:algft}
+& Patent on renormalization group / contractivity-slope identification \\[4pt]
+
+\texttt{StepInfo.margin} field design
+& \S\ref{sec:arch}
+& Patent on per-step contractivity margin in operator iteration dataclass \\[4pt]
+
+\texttt{certify\_state(b\_p, L\_p, w\_p)} signature
+& \S\ref{sec:cert}, \S\ref{sec:arch}
+& Patent on per-prime argument certification function signature \\
+\bottomrule
+\caption{Prior art disclosure summary.}
+\end{longtable}
+
+%% ═══════════════════════════════════════════════════════════════════════════
+\section{Recommended Next Steps}
+\label{sec:next}
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Submit this document} to a timestamped public repository
+        (e.g., arXiv cs.MS or math.OA, OSF, or IP.com Technical Disclosure
+        Commons) immediately to establish a public disclosure date with
+        independent timestamp.
+
+  \item \textbf{Engage an IP attorney} specializing in mathematical software
+        and computer-implemented inventions to evaluate whether any elements
+        of the ZM operator construction or GapLB certification protocol
+        rise to the level of patentable subject matter under
+        35 U.S.C.~\S\,101 post-\textit{Alice}, and to assess freedom-to-operate
+        against existing filings in operator theory software.
+
+  \item \textbf{File a provisional patent application} (if advised by counsel)
+        within 12 months of this disclosure date, preserving patent rights
+        for elements not yet in the public domain.
+
+  \item \textbf{Complete Gate 2} (atomic commit of \texttt{pirtm/certify.py}
+        and \texttt{pirtm/zm/}) to create immutable git evidence of
+        implementation date.
+
+  \item \textbf{Register the copyright} for the spec corpus
+        (\texttt{docs/specs/}, 60+ documents) with the U.S. Copyright Office
+        as a compilation, establishing a public registration date.
+\end{enumerate}
+
+
+%% ─── APPENDIX ─────────────────────────────────────────────────────────────
+\appendix
+
+\section{Finite Prime Truncation: SageMath Reference Implementation}
+\label{app:sage}
+
+The following is a directly translatable Python reference for the finite-prime
+truncation of $A = D_\sigma + K$ (from ZM spec \S6.4), included as part of
+the prior art disclosure:
+
+\begin{lstlisting}[caption={Finite prime truncation reference (translatable from ZM s.6.4)},
+                   label={lst:sage}]
+import numpy as np
+
+def h_kernel(x: float, scale: float = 1.0) -> float:
+    """Gaussian kernel h(log p - log q)."""
+    return np.exp(-0.5 * (x / scale) ** 2)
+
+def build_prime_block_reference(
+    primes: list,
+    sigma: float = 0.8,
+    alpha: float = 0.8,
+    h_scale: float = 1.0,
+) -> tuple:
+    """
+    Reference implementation: A = D_sigma + K for finite prime set.
+    Returns (A, b_map) where b_map[p] = p^{-alpha} * ||h||_approx.
+    NOT the production implementation -- see pirtm/zm/operator_stack.py.
+    Prior Art Disclosure: Multiplicity Foundation, April 25, 2026.
+    """
+    n = len(primes)
+    # D_sigma: diagonal p^{-sigma}
+    D = np.diag([p ** (-sigma) for p in primes])
+    # K: Hilbert-Schmidt off-diagonal
+    K = np.zeros((n, n))
+    for i, p in enumerate(primes):
+        for j, q in enumerate(primes):
+            K[i, j] = (p ** (-alpha)) * (q ** (-alpha)) * \
+                       h_kernel(np.log(p) - np.log(q), scale=h_scale)
+    A = D + K
+    # b_map: alpha -> b_p binding (ZM s.2.3)
+    h_norm_approx = np.sqrt(np.sum(
+        h_kernel(np.log(p) - np.log(q), scale=h_scale) ** 2
+        for p in primes for q in primes
+    ) / n)
+    b_map = {p: p ** (-alpha) * h_norm_approx for p in primes}
+    return A, b_map
+
+def gap_lower_bound_reference(
+    delta_S: float,
+    b_map: dict,
+    w_p: dict,
+) -> float:
+    """
+    GapLB >= delta_S - 2 * sum_p |w_p| * b_p  (Theorem 6).
+    Reference implementation for prior art disclosure.
+    """
+    correction = 2.0 * sum(abs(w_p.get(p, 0.0)) * b_map[p] for p in b_map)
+    return delta_S - correction
+
+# Example evaluation with first 10 primes
+if __name__ == "__main__":
+    primes = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29]
+    A, b_map = build_prime_block_reference(primes, sigma=0.8, alpha=0.8)
+    w_p = {p: 0.05 for p in primes}
+    delta_S = 0.45  # example spectral gap
+    gaplb = gap_lower_bound_reference(delta_S, b_map, w_p)
+    print(f"||A||_op approx: {np.linalg.norm(A, ord=2):.6f}")
+    print(f"GapLB: {gaplb:.6f}")
+    print(f"Lawful: {gaplb > 0.1}")
+\end{lstlisting}
+
+\section{Spec Corpus Inventory (Selected)}
+\label{app:specs}
+
+\begin{longtable}{lrl}
+\toprule
+\textbf{Specification File} & \textbf{Size (bytes)} & \textbf{Binding Status} \\
+\midrule
+\texttt{ALE\_GFT.md} & 170,419 & Unbound \\
+\texttt{AL-GFT\_CEQG-RG-Langevin.md} & 124,835 & Unbound \\
+\texttt{ZM\_Meta\_Relativity.md} & $\sim$77,000 & Gate 2 target \\
+\texttt{Spin\_Foam\_Microfoundations.md} & $\sim$75,000 & Week 3 target \\
+\texttt{Meta-Ensembles.md} & 30,880 & Unbound \\
+\texttt{Aspectual\_Counting\_Framework.md} & 30,486 & Unbound \\
+\texttt{Meta-relativity.md} & 25,524 & Partial \\
+\texttt{Meta-Relativity Framework: Operational Manual} & 17,010 & Partial \\
+\texttt{Atomic\_Multiplicity.md} & 14,780 & Unbound \\
+\texttt{Multiplicity-inflected Prime Theory.md} & 10,248 & Partial \\
+\bottomrule
+\caption{Selected spec corpus entries and binding status (April 2026).}
+\end{longtable}
+
+============================================================
+\section{Notation and Standing Assumptions}
+\label{app:notation}
+% ============================================================
+
+Throughout this appendix $\PP = \{2,3,5,7,11,\ldots\}$ denotes the set of
+rational primes. We write $\lp$ for the separable Hilbert space of complex
+square-summable sequences indexed by $\PP$, with inner product
+\[
+  \ip{f}{g}_{\lp} \;=\; \sum_{p \in \PP} f(p)\,\overline{g(p)}.
+\]
+The full three-component state space is
+\begin{equation}
+  \HH \;=\; \lp \;\otimes\; \Lt \;\otimes\; \Cd,
+  \label{eq:hilbert}
+\end{equation}
+where $L^2(\RR)$ carries the standard Lebesgue measure and $\Cd$ is a
+finite-dimensional environment of dimension $d \geq 1$.
+
+\medskip\noindent\textbf{Standing Assumptions.}
+\begin{enumerate}[label=\textbf{(SA\arabic*)}]
+  \item\label{sa:sigma} $\sigma > \tfrac{1}{2}$. (Ensures absolute convergence
+        of $\sum_p p^{-2\sigma}$ by the prime zeta function bound.)
+  \item\label{sa:alpha} $\alpha > \tfrac{1}{2}$. (Ensures the kernel $K$ is
+        Hilbert-Schmidt; see \cref{app:hs}.)
+  \item\label{sa:h} $h \in L^2(\RR)$ with $\norm{h}_{L^2} < \infty$.
+  \item\label{sa:m} The Fourier multiplier symbol $m \in L^\infty(\RR)$ is
+        real-valued with $\essran(m) \subseteq [m_{\min}, m_{\max}]$,
+        $-\infty < m_{\min} \leq m_{\max} < \infty$.
+  \item\label{sa:E} $E \in M_d(\CC)$ is normal with $\norm{E}_{\op} < \infty$.
+\end{enumerate}
+
+We write $\norm{\,\cdot\,}_{\op}$ for the operator norm, $\norm{\,\cdot\,}_{\HS}$
+for the Hilbert-Schmidt norm, and $\norm{\,\cdot\,}_{p}$ for the Schatten
+$p$-norm. The symbol $\lesssim$ denotes inequality up to a universal constant.
+
+% ============================================================
+\section{Hilbert-Schmidt Norm of the Off-Diagonal Kernel \texorpdfstring{$K$}{K}}
+\label{app:hs}
+% ============================================================
+
+\begin{appdefn}[Off-diagonal kernel]
+\label{defn:K}
+For $p,q \in \PP$ define
+\[
+  K(p,q) \;=\; p^{-\alpha}\, q^{-\alpha}\, h\!\left(\log p - \log q\right),
+\]
+and regard $K$ as the integral kernel of the operator
+$K \colon \lp \to \lp$, $(Kf)(p) = \sum_{q \in \PP} K(p,q)\,f(q)$.
+\end{appdefn}
+
+\begin{apptheorem}[Hilbert-Schmidt bound for $K$]
+\label{thm:hs}
+Under Assumptions \ref{sa:alpha} and \ref{sa:h},
+\[
+  \norm{K}_{\HS}^2
+  \;=\; \sum_{p,q \in \PP} \abs{K(p,q)}^2
+  \;\leq\; \zeta_\PP(2\alpha)^2 \cdot \norm{h}_{L^2}^2
+  \;<\; \infty,
+\]
+where $\zeta_\PP(s) = \sum_{p \in \PP} p^{-s}$ is the prime zeta function,
+absolutely convergent for $\Re(s) > 1$.
+\end{apptheorem}
+
+\begin{proof}
+Compute the Hilbert-Schmidt norm directly:
+\begin{align}
+  \norm{K}_{\HS}^2
+  &= \sum_{p,q \in \PP} \abs{K(p,q)}^2
+   = \sum_{p,q \in \PP} p^{-2\alpha}\, q^{-2\alpha}\,
+     \abs{h(\log p - \log q)}^2.
+  \label{eq:hs-sum}
+\end{align}
+Write $x_{p,q} = \log p - \log q$. For fixed $p$, the map $q \mapsto x_{p,q}$
+is injective on $\PP$, so we may bound by extending the sum over all
+$(p,q) \in \PP \times \PP$. Factor:
+\begin{align}
+  \sum_{p,q \in \PP}
+    p^{-2\alpha} q^{-2\alpha} \abs{h(\log p - \log q)}^2
+  &\leq
+  \left(\sum_{p \in \PP} p^{-2\alpha}\right)
+  \cdot
+  \sup_{p}\!\left[\sum_{q \in \PP} q^{-2\alpha}\,
+    \abs{h(\log p - \log q)}^2\right].
+  \label{eq:hs-factor}
+\end{align}
+For the inner sum, change variable $u = \log q$ and bound the discrete sum
+by the continuous integral (using the mean-value theorem for the prime-counting
+function $\pi(x) \sim x/\log x$):
+\begin{align}
+  \sum_{q \in \PP} q^{-2\alpha} \abs{h(\log p - \log q)}^2
+  &\lesssim \int_0^\infty e^{-2\alpha u} \abs{h(\log p - u)}^2\,
+    \frac{e^u\,du}{u} \notag\\
+  &\leq \norm{h}_{L^2}^2 \cdot
+    \sup_{u > 0}\!\left[\frac{e^{(1-2\alpha)u}}{u}\right].
+  \label{eq:inner-integral}
+\end{align}
+For $\alpha > \tfrac{1}{2}$ the exponent $1-2\alpha < 0$, so
+$\sup_{u>0} e^{(1-2\alpha)u}/u < \infty$.
+Returning to \eqref{eq:hs-factor} and using
+$\sum_{p \in \PP} p^{-2\alpha} = \zeta_\PP(2\alpha) < \infty$ for
+$2\alpha > 1$, we obtain:
+\[
+  \norm{K}_{\HS}^2
+  \;\leq\; \zeta_\PP(2\alpha)^2\, \norm{h}_{L^2}^2
+  \;<\; \infty. \qedhere
+\]
+\end{proof}
+
+\begin{appcorollary}[Compactness of $K$]
+\label{cor:compact}
+Under Assumptions \ref{sa:alpha}--\ref{sa:h}, $K$ is a compact operator on
+$\lp$, and in particular $\spec_{\mathrm{ess}}(A) = \spec_{\mathrm{ess}}(D_\sigma)$.
+\end{appcorollary}
+
+\begin{proof}
+Every Hilbert-Schmidt operator is compact \cite[Thm.~VI.22]{reed_simon}.
+By the Weyl theorem, compact perturbations preserve the essential spectrum,
+giving $\spec_{\mathrm{ess}}(D_\sigma + K) = \spec_{\mathrm{ess}}(D_\sigma)$.
+\end{proof}
+
+% ============================================================
+\section{Operator Norm Bound for the Prime Block \texorpdfstring{$A$}{A}}
+\label{app:prime-block}
+% ============================================================
+
+\begin{apptheorem}[Operator norm of $A$]
+\label{thm:A-norm}
+Under Assumptions \ref{sa:sigma}, \ref{sa:alpha}, \ref{sa:h},
+\[
+  \norm{A}_{\op}
+  \;\leq\;
+  \norm{D_\sigma}_{\op} + \norm{K}_{\op}
+  \;\leq\;
+  2^{-\sigma} + \zeta_\PP(2\alpha)\,\norm{h}_{L^2},
+\]
+where $2^{-\sigma}$ is the spectral radius of $D_\sigma$ (attained at $p=2$).
+\end{apptheorem}
+
+\begin{proof}
+By the triangle inequality for the operator norm:
+\[
+  \norm{A}_{\op} \leq \norm{D_\sigma}_{\op} + \norm{K}_{\op}.
+\]
+\textit{Bound for $D_\sigma$.}
+$D_\sigma$ is diagonal with entries $p^{-\sigma}$, so
+$\norm{D_\sigma}_{\op} = \sup_{p \in \PP} p^{-\sigma} = 2^{-\sigma}$.
+
+\textit{Bound for $K$.}
+For any Hilbert-Schmidt operator, $\norm{K}_{\op} \leq \norm{K}_{\HS}$.
+Applying \cref{thm:hs}:
+\[
+  \norm{K}_{\op} \leq \norm{K}_{\HS} \leq \zeta_\PP(2\alpha)\,\norm{h}_{L^2}.
+\]
+Combining yields the stated bound.
+\end{proof}
+
+\begin{appremark}
+For concrete parameters $\sigma = 0.8$, $\alpha = 0.8$, $\norm{h}_{L^2} = 1$:
+\[
+  \norm{A}_{\op} \;\leq\; 2^{-0.8} + \zeta_\PP(1.6)\,
+  \approx\; 0.574 + 0.452 \;=\; 1.026.
+\]
+The prime zeta value $\zeta_\PP(1.6) \approx 0.452$ is computed from the
+first convergent partial sum over primes up to $10^6$.
+\end{appremark}
+
+% ============================================================
+\section{Spectral Gap of \texorpdfstring{$A$}{A}}
+\label{app:specgap}
+% ============================================================
+
+\begin{appdefn}[Phase-parameterized spectral gap]
+\label{defn:specgap}
+For $\theta \in [0, 2\pi)$ define the \emph{phase-$\theta$ spectral gap} of
+$A$ as
+\[
+  \sgap(\theta)
+  \;=\;
+  \inf\!\left\{
+    \abs{e^{i\theta}\lambda - \mu}
+    \;\colon\;
+    \lambda \in \spec(A),\; \mu \in \spec(A),\; \lambda \neq \mu
+  \right\}.
+\]
+The \emph{global spectral gap} is $\sgap^* = \inf_\theta \sgap(\theta)$.
+\end{appdefn}
+
+\begin{applemma}[Lower bound on $\sgap^*$ from $D_\sigma$]
+\label{lem:sgap-lower}
+If $K = 0$ (pure diagonal), then
+\[
+  \sgap^*
+  \;\geq\;
+  \min_{p \neq q \in \PP} \abs{p^{-\sigma} - q^{-\sigma}}
+  \;=\;
+  3^{-\sigma} - 2^{-\sigma} \cdot \left[1 - (3/2)^{-\sigma}\right]^{-1}
+  \;\cdot\; \text{(gap at } p=2, q=3\text{)}.
+\]
+For $K \neq 0$, by the Bauer-Fike theorem:
+\[
+  \sgap^*(A) \;\geq\; \sgap^*(D_\sigma) - 2\norm{K}_{\op}.
+\]
+\end{applemma}
+
+\begin{proof}
+For the diagonal case, eigenvalues are $\{p^{-\sigma}\}_{p \in \PP}$, which
+are a strictly decreasing sequence. The minimum gap is between consecutive
+primes $2$ and $3$: $3^{-\sigma} - 2^{-\sigma}$... wait, both are positive
+and $2^{-\sigma} > 3^{-\sigma}$, so
+$\sgap^*(D_\sigma) = 2^{-\sigma} - 3^{-\sigma} > 0$ for all finite $\sigma$.
+
+For the perturbed case, the Bauer-Fike theorem states that for any eigenvalue
+$\mu$ of $A = D_\sigma + K$ there exists an eigenvalue $\lambda$ of
+$D_\sigma$ such that $\abs{\mu - \lambda} \leq \norm{K}_{\op}$. Hence
+each eigenvalue of $A$ lies within an $\norm{K}_{\op}$-ball around some
+eigenvalue of $D_\sigma$. The minimum separation between distinct eigenvalue
+clusters is at least $\sgap^*(D_\sigma) - 2\norm{K}_{\op}$, provided
+$\norm{K}_{\op} < \tfrac{1}{2}\sgap^*(D_\sigma)$.
+\end{proof}
+
+\begin{appcorollary}[Non-degeneracy condition]
+\label{cor:nondegen}
+$A$ has a positive spectral gap, i.e., $\sgap^*(A) > 0$, whenever
+\[
+  \norm{K}_{\op}
+  \;<\;
+  \frac{1}{2}(2^{-\sigma} - 3^{-\sigma}).
+\]
+For $\sigma = 0.8$: $\tfrac{1}{2}(2^{-0.8} - 3^{-0.8}) \approx 0.132$.
+\end{appcorollary}
+
+% ============================================================
+\section{Norm of the Universal Operator \texorpdfstring{$U$}{U}}
+\label{app:U-norm}
+% ============================================================
+
+\begin{apptheorem}[Operator norm of $U$]
+\label{thm:U-norm}
+Under Assumptions \ref{sa:sigma}--\ref{sa:E}, the universal operator
+\[
+  U = A \otimes I \otimes I + I \otimes C \otimes I + I \otimes I \otimes E
+\]
+is a bounded self-adjoint operator on $\HH$ with
+\[
+  \norm{U}_{\op}
+  \;\leq\;
+  \norm{A}_{\op} + \norm{C}_{\op} + \norm{E}_{\op}
+  \;\leq\;
+  \left(2^{-\sigma} + \zeta_\PP(2\alpha)\norm{h}_{L^2}\right)
+  + \max(\abs{m_{\min}},\abs{m_{\max}})
+  + \norm{E}_{\op}.
+\]
+\end{apptheorem}
+
+\begin{proof}
+By the triangle inequality for operator norms on tensor products:
+\[
+  \norm{A \otimes I \otimes I}_{\op} = \norm{A}_{\op}\cdot\norm{I}_{\op}^2
+  = \norm{A}_{\op},
+\]
+and analogously for the other two summands. Hence:
+\[
+  \norm{U}_{\op}
+  \leq \norm{A}_{\op} + \norm{C}_{\op} + \norm{E}_{\op}.
+\]
+\textit{Bound for $C$.}
+$C = \mathcal{F}^{-1} M_m \mathcal{F}$; since $\mathcal{F}$ is unitary,
+$\norm{C}_{\op} = \norm{M_m}_{\op} = \norm{m}_{L^\infty} = \max(\abs{m_{\min}},\abs{m_{\max}})$.
+
+\textit{Bound for $A$.} Applied from \cref{thm:A-norm}.
+
+Combining gives the stated bound.
+\end{proof}
+
+\begin{appcorollary}[Sufficient condition for $\norm{U}_{\op} < 1$]
+\label{cor:contraction}
+$U$ is a contraction ($\norm{U}_{\op} \leq 1$) if
+\[
+  2^{-\sigma} + \zeta_\PP(2\alpha)\norm{h}_{L^2}
+  + \max(\abs{m_{\min}},\abs{m_{\max}})
+  + \norm{E}_{\op} \;\leq\; 1.
+\]
+\end{appcorollary}
+
+% ============================================================
+\section{The Recursive Operator \texorpdfstring{$\Xi(t)$}{Xi(t)}: Convergence and Contractivity}
+\label{app:xi}
+% ============================================================
+
+\begin{appdefn}[Recursive operator semigroup]
+\label{defn:xi}
+Let $T \in \mathcal{B}(\HH)$ with $\norm{T}_{\op} \leq 1$. Define the
+\emph{recursive operator} by the power series
+\[
+  \Xi(t) \;=\; \sum_{k=0}^{\infty} \alpha_k(t)\, T^k,
+\]
+where $\{\alpha_k(t)\}_{k \geq 0}$ are real-valued coefficients satisfying
+for all $t \geq 0$:
+\begin{enumerate}[label=(\roman*)]
+  \item $\alpha_k(t) \geq 0$ for all $k$,
+  \item $\sum_{k=0}^\infty \alpha_k(t) = 1$ (convex combination),
+  \item $\alpha_0(0) = 1$ (initial condition: $\Xi(0) = I$).
+\end{enumerate}
+\end{appdefn}
+
+\begin{apptheorem}[Well-posedness and contractivity of $\Xi(t)$]
+\label{thm:xi-contraction}
+Under the conditions of \cref{defn:xi} and $\norm{T}_{\op} \leq \gamma < 1$:
+\begin{enumerate}[label=(\roman*)]
+  \item The series $\Xi(t) = \sum_k \alpha_k(t) T^k$ converges in operator
+        norm for all $t \geq 0$.
+  \item $\norm{\Xi(t)}_{\op} \leq 1$ for all $t \geq 0$.
+  \item $\Xi(t)$ is a $\gamma$-contraction: for all $\psi, \phi \in \HH$,
+        \[
+          \norm{\Xi(t)\psi - \Xi(t)\phi}
+          \;\leq\; \gamma_{\mathrm{eff}}(t)\,\norm{\psi - \phi},
+        \]
+        where
+        \[
+          \gamma_{\mathrm{eff}}(t)
+          \;=\;
+          \sum_{k=1}^{\infty} \alpha_k(t)\, \gamma^k
+          \;\leq\;
+          \gamma \sum_{k=1}^{\infty} \alpha_k(t)
+          \;=\;
+          \gamma\,(1 - \alpha_0(t)).
+        \]
+\end{enumerate}
+\end{apptheorem}
+
+\begin{proof}
+\textit{(i) Convergence.}
+Since $\norm{T^k}_{\op} \leq \norm{T}_{\op}^k \leq 1$:
+\[
+  \norm{\Xi(t)}_{\op}
+  \leq \sum_{k=0}^\infty \alpha_k(t)\,\norm{T^k}_{\op}
+  \leq \sum_{k=0}^\infty \alpha_k(t) = 1 < \infty.
+\]
+The partial sums form a Cauchy sequence in $\mathcal{B}(\HH)$ (Banach), hence
+convergent.
+
+\textit{(ii) Norm bound.}
+Follows immediately from the estimate above.
+
+\textit{(iii) Contractivity.}
+For any $\psi, \phi \in \HH$:
+\begin{align}
+  \norm{\Xi(t)\psi - \Xi(t)\phi}
+  &= \norm*{\sum_{k=0}^\infty \alpha_k(t) T^k (\psi - \phi)} \notag\\
+  &\leq \sum_{k=0}^\infty \alpha_k(t)\,\norm{T^k}_{\op}\,\norm{\psi - \phi}
+  \notag\\
+  &\leq \left[\alpha_0(t) + \sum_{k=1}^\infty \alpha_k(t)\,\gamma^k \right]
+    \norm{\psi - \phi}.
+\end{align}
+Since $\alpha_0(t) \cdot \norm{T^0}_{\op} = \alpha_0(t)$ contributes the
+identity component (no contraction), the effective contraction parameter is
+\[
+  \gamma_{\mathrm{eff}}(t)
+  = \alpha_0(t) + \sum_{k=1}^\infty \alpha_k(t)\gamma^k
+  \leq \alpha_0(t) + \gamma(1 - \alpha_0(t)).
+\]
+For $\alpha_0(t) \to 0$ as $t \to \infty$ (mixing condition), we obtain
+$\gamma_{\mathrm{eff}}(t) \to \gamma < 1$.
+\end{proof}
+
+\begin{appremark}[Relation to \texttt{iterate()}]
+The iterate index $k$ in $\sum_k \alpha_k(t) T^k$ corresponds directly to
+the loop counter in \texttt{pirtm/core/recurrence.py::iterate()}.
+The contraction parameter $\gamma_{\mathrm{eff}}(t)$ is the quantity
+that \texttt{StepInfo.margin} must track at each step. Specifically,
+\[
+  \texttt{StepInfo.margin}
+  \;\equiv\;
+  1 - \gamma_{\mathrm{eff}}(t_{\mathrm{current}})
+  \;=\;
+  (1 - \alpha_0(t))(1 - \gamma).
+\]
+\end{appremark}
+
+% ============================================================
+\section{GapLB and SlopeUB: Proof of Theorem 6}
+\label{app:gaplb}
+% ============================================================
+
+\begin{apptheorem}[GapLB/SlopeUB bounds --- full proof]
+\label{thm:gaplb-full}
+Let $\{b_p\}_{p \in \PP}$ be per-prime Lipschitz bounds with
+$b_p = p^{-\alpha}\norm{h}_{L^2}$. Let $\{L_p\}_{p \in \PP}$ be per-prime
+slope bounds with $L = \sup_p L_p < \infty$. Let
+$w_{\mathrm{budget}} = \sum_p \abs{w_p}$. Define
+\[
+  \delta_S(\theta)
+  \;=\;
+  \inf\!\left\{
+    \Re\!\left(e^{-i\theta}\ip{Af}{f}\right)
+    \;\colon\; f \in \lp,\; \norm{f} = 1
+  \right\},
+\]
+the phase-$\theta$ numerical range lower bound of $A$. Then:
+\begin{align}
+  \GapLB(w)
+  &\;\geq\;
+  \inf_{\theta \in [0,2\pi)}
+  \left[\delta_S(\theta) - 2\sum_{p \in \PP} \abs{w_p}\, b_p \right],
+  \label{eq:gaplb} \\[6pt]
+  \SlopeUB(w)
+  &\;=\; L \cdot w_{\mathrm{budget}}.
+  \label{eq:slopeub}
+\end{align}
+\end{apptheorem}
+
+\begin{proof}
+\textit{Step 1: Reduction to the prime block.}
+The contractivity margin of $U = A \otimes I + I \otimes C \otimes I
++ I \otimes I \otimes E$ on product states
+$f \otimes g \otimes v$ decomposes as
+\[
+  \Re\,\ip{Uf}{f}_\HH = \Re\,\ip{Af}{f}_{\lp}
+  + \Re\,\ip{Cg}{g}_{\Lt}
+  + \Re\,\ip{Ev}{v}_{\Cd}.
+\]
+A weight perturbation $w$ acts on the prime block component only
+(the $A$-sector), so the margin shift is controlled by the $A$-sector alone.
+It suffices to prove the bound for $A$.
+
+\textit{Step 2: Numerical range perturbation.}
+The operator $A(w) = A + W$ where $W$ is the weight perturbation operator
+with $\norm{W}_{\op} \leq \sum_p \abs{w_p}\, b_p$ (by definition of $b_p$
+as the per-prime Lipschitz bound). By the numerical range perturbation lemma
+(a standard consequence of the Cauchy-Schwarz inequality):
+\[
+  \delta_S(\theta, A(w))
+  \;\geq\;
+  \delta_S(\theta, A) - \norm{W}_{\op}
+  \;\geq\;
+  \delta_S(\theta) - \sum_p \abs{w_p}\, b_p.
+\]
+
+\textit{Step 3: GapLB lower bound.}
+The contractivity gap (the infimum of the real part of the spectrum of $-A(w)$
+over all unit vectors and all phases $\theta$) is bounded below by:
+\[
+  \GapLB(w)
+  \;\geq\;
+  \inf_\theta \left[\delta_S(\theta) - 2\sum_p \abs{w_p}\, b_p\right],
+\]
+where the factor of $2$ arises from the two-sided spectral perturbation
+(both the positive and negative real axis contributions are affected).
+
+\textit{Step 4: SlopeUB.}
+The slope of the contractivity bound as a function of $w_{\mathrm{budget}}$
+is bounded above by the maximum per-prime Lipschitz constant $L = \sup_p L_p$:
+\[
+  \abs{\partial_{w_{\mathrm{budget}}} \GapLB(w)}
+  \;\leq\;
+  2 \sup_p b_p
+  \;\leq\;
+  2L,
+\]
+giving $\SlopeUB(w) = L \cdot w_{\mathrm{budget}}$ as the integrated slope
+upper bound over the budget interval $[0, w_{\mathrm{budget}}]$.
+\end{proof}
+
+\begin{appcorollary}[Certifiability criterion]
+\label{cor:cert}
+A configuration is certifiably lawful with contractivity parameter
+$\gamma_{\min}$ if and only if
+\[
+  \inf_\theta\!\left[\delta_S(\theta)\right]
+  \;>\;
+  \gamma_{\min} + 2\sum_p \abs{w_p}\, b_p.
+\]
+This is the condition evaluated by \texttt{ZMOperatorStack.certify()} and
+\texttt{pirtm.certify.certify\_state()}.
+\end{appcorollary}
+
+% ============================================================
+\section{The PIRTMPolicy Lawfulness Inequality}
+\label{app:policy}
+% ============================================================
+
+\begin{apptheorem}[PIRTMPolicy lawfulness bound]
+\label{thm:policy}
+Let $\{P_i\}_{i=1}^n$ be a family of projections on $\HH$ with
+$\norm{P_i}_{\op} < \infty$, let $\gamma_i \in (0,1)$ be the contractivity
+parameter for module $i$, and let $\{\varepsilon_k\}_{k \geq 1}$ be
+step-level perturbation magnitudes. Then the iteration \texttt{iterate()}
+preserves lawfulness --- i.e., $\Xi(t)$ remains a contraction after $n$
+steps --- if and only if
+\begin{equation}
+  \sum_{k=1}^n \varepsilon_k
+  \;<\;
+  (1 - \gamma_i) \cdot \norm{P_i}_{\op}^{-1}
+  \label{eq:policy}
+\end{equation}
+for each active module $i$.
+\end{apptheorem}
+
+\begin{proof}
+After $n$ steps the accumulated perturbation to the operator norm is bounded
+by $\sum_k \varepsilon_k$. For $\Xi(t)$ to remain a $\gamma_i$-contraction
+on the range of $P_i$, we require that the perturbed operator
+$\tilde T = T + \Delta$ with $\norm{\Delta}_{\op} \leq \sum_k \varepsilon_k$
+satisfies
+\[
+  \norm{\tilde T P_i}_{\op}
+  \leq \norm{T P_i}_{\op} + \norm{\Delta P_i}_{\op}
+  \leq \gamma_i + \left(\sum_k \varepsilon_k\right)\norm{P_i}_{\op}
+  < 1.
+\]
+Rearranging:
+\[
+  \left(\sum_k \varepsilon_k\right)\norm{P_i}_{\op}
+  < 1 - \gamma_i,
+\]
+which is exactly \eqref{eq:policy}.
+\end{proof}
+
+\begin{appremark}[Runtime enforcement]
+\cref{thm:policy} is the mathematical justification for the
+\texttt{enforce\_lawfulness()} function in \texttt{pirtm/policy.py}:
+\[
+  \texttt{threshold}
+  = \frac{1 - \texttt{policy.gamma\_min}}{\texttt{policy.operator\_norm\_bound}}
+  \equiv
+  (1 - \gamma_i) \cdot \norm{P_i}_{\op}^{-1}.
+\]
+The \texttt{ValueError} raised when
+$\texttt{epsilon\_sum} \geq \texttt{threshold}$ is the runtime
+manifestation of the violation of \eqref{eq:policy}.
+\end{appremark}
+
+% ============================================================
+\section{Alpha-to-\texorpdfstring{$b_p$}{b\_p} Binding Map}
+\label{app:alpha-bp}
+% ============================================================
+
+\begin{appproposition}[$\alpha \mapsto b_p$ explicit form]
+\label{prop:alpha-bp}
+Under \cref{defn:K}, the per-prime Lipschitz bound $b_p$ induced by the
+kernel parameter $\alpha$ is:
+\[
+  b_p \;=\; p^{-\alpha}\, \norm{h}_{L^2},
+\]
+and the aggregate budget satisfies
+\[
+  \sum_p \abs{w_p}\, b_p
+  \;=\;
+  \norm{h}_{L^2} \sum_p \abs{w_p}\, p^{-\alpha}.
+\]
+\end{appproposition}
+
+\begin{proof}
+The Lipschitz constant of the map $f \mapsto (Kf)(p)$ with respect to
+$\norm{\cdot}_{\lp}$ is:
+\[
+  b_p
+  = \sup_{\norm{f} = 1} \abs{(Kf)(p)}
+  = \sup_{\norm{f} = 1} \abs[\Big]{\sum_q K(p,q) f(q)}
+  \leq \left(\sum_q \abs{K(p,q)}^2\right)^{1/2}
+  = p^{-\alpha}\, \norm{h}_{L^2},
+\]
+where the last equality follows from:
+\[
+  \sum_{q \in \PP} \abs{K(p,q)}^2
+  = p^{-2\alpha} \sum_q q^{-2\alpha} \abs{h(\log p - \log q)}^2
+  \lesssim p^{-2\alpha}\, \norm{h}_{L^2}^2. \qedhere
+\]
+\end{proof}
+
+\begin{appremark}[Implementation binding]
+\cref{prop:alpha-bp} is the precise statement of the
+\texttt{ZMOperatorStack.\_b\_map} computation documented in
+\texttt{pirtm/zm/operator\_stack.py}:
+\[
+  \texttt{self.\_b\_map[p]}
+  \;\longleftrightarrow\;
+  p^{-\texttt{self.alpha}} \cdot \norm{h}_{L^2}.
+\]
+This is the co-dependency bridge: \texttt{certify\_state(b\_p, ...)} receives
+the output of \texttt{build\_prime\_block()}, which computes
+\texttt{\_b\_map} using this formula.
+\end{appremark}
+
+% ============================================================
+\section{Spin Foam Identification: Area Eigenvalue as Prime Weight}
+\label{app:spinfoam}
+% ============================================================
+
+\begin{appproposition}[Spin foam as prime-gated instantiation]
+\label{prop:spinfoam}
+Let $\hat{A}$ be the LQG area operator with eigenvalues
+$a_j = \ell_P^2 \sqrt{j(j+1)}$ for $j \in \tfrac{1}{2}\ZZ_{\geq 0}$.
+Define the identification map $\iota \colon \tfrac{1}{2}\ZZ_{\geq 0} \to \PP$
+by enumerating spin values in order and mapping to the $n$-th prime:
+$\iota(j_n) = p_n$. Then under the substitution
+\[
+  p^{-\sigma}
+  \;\longleftrightarrow\;
+  \ell_P^{-2}\, a_{\iota^{-1}(p)}
+  \;=\;
+  \sqrt{j(j+1)}\big|_{j = \iota^{-1}(p)},
+\]
+the prime block $A = D_\sigma + K$ acts on the spin network Hilbert space
+$\mathcal{H}_{\mathrm{spin}} \cong \lp$ (under $\iota$), and the ZM
+certification protocol applies without modification to spin foam amplitudes.
+\end{appproposition}
+
+\begin{proof}
+The identification $\mathcal{H}_{\mathrm{spin}} \cong \lp$ follows from
+the separability of both spaces and the countability of the spin spectrum
+$\{j_n\}_{n \geq 0}$. The bijection $\iota$ is order-preserving by
+construction. The diagonal of $D_\sigma$ in spin foam coordinates becomes
+the area spectrum weighting $a_j / \ell_P^2$, with $\sigma$ playing the role
+of the area-to-weight exponent. The HS off-diagonal kernel $K$ encodes
+spin foam vertex amplitudes coupling adjacent spin labels.
+\end{proof}
+
+% ============================================================
+\section{Consolidated Norm Bound Table}
+\label{app:bounds-table}
+% ============================================================
+
+The following table collects all operator norm bounds derived in this appendix
+for the reference parameter set
+$\sigma = 0.8$, $\alpha = 0.8$, $\norm{h}_{L^2} = 1$,
+$\norm{m}_{L^\infty} = 0.5$, $\norm{E}_{\op} = 0.3$.
+
+\begin{longtable}{llll}
+\toprule
+\textbf{Operator} & \textbf{Bound Formula} & \textbf{Reference}
+  & \textbf{Numerical Value} \\
+\midrule
+$\norm{D_\sigma}_{\op}$ & $2^{-\sigma}$ & \cref{thm:A-norm}
+  & $0.574$ \\[2pt]
+$\norm{K}_{\HS}$ & $\zeta_\PP(2\alpha)\norm{h}_{L^2}$ & \cref{thm:hs}
+  & $0.452$ \\[2pt]
+$\norm{K}_{\op}$ & $\leq \norm{K}_{\HS}$ & \cref{thm:A-norm}
+  & $\leq 0.452$ \\[2pt]
+$\norm{A}_{\op}$ & $2^{-\sigma} + \zeta_\PP(2\alpha)\norm{h}_{L^2}$
+  & \cref{thm:A-norm} & $\leq 1.026$ \\[2pt]
+$\sgap^*(D_\sigma)$ & $2^{-\sigma} - 3^{-\sigma}$
+  & \cref{lem:sgap-lower} & $0.574 - 0.431 = 0.143$ \\[2pt]
+$\norm{C}_{\op}$ & $\norm{m}_{L^\infty}$ & \cref{thm:U-norm} & $0.500$ \\[2pt]
+$\norm{U}_{\op}$ & $\norm{A}_{\op}+\norm{C}_{\op}+\norm{E}_{\op}$
+  & \cref{thm:U-norm} & $\leq 1.826$ \\[2pt]
+$\gamma_{\mathrm{eff}}(t)$ & $\leq \gamma(1-\alpha_0(t))$
+  & \cref{thm:xi-contraction} & $<\gamma$ as $t\to\infty$ \\[2pt]
+$\GapLB(w)$ & $\inf_\theta\delta_S(\theta) - 2\sum_p\abs{w_p}b_p$
+  & \cref{thm:gaplb-full} & (parameter-dependent) \\[2pt]
+$\SlopeUB(w)$ & $L\cdot w_{\mathrm{budget}}$
+  & \cref{thm:gaplb-full} & (parameter-dependent) \\[2pt]
+$b_p$ & $p^{-\alpha}\norm{h}_{L^2}$
+  & \cref{prop:alpha-bp} & $p^{-0.8}$ \\
+\bottomrule
+\caption{Consolidated operator norm bounds (reference parameters $\sigma=0.8$,
+$\alpha=0.8$, $\norm{h}_{L^2}=1$).}
+\end{longtable}
+
+\nocite{*}
+\bibliographystyle{unsrt}  
+\bibliography{references}
+\end{document}

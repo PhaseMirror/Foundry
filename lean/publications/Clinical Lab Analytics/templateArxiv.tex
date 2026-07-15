@@ -1,0 +1,228 @@
+% !TEX program = pdflatex
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage{siunitx}
+\usepackage{mathtools}
+\usepackage{listings}
+\usepackage[T1]{fontenc}
+\usepackage{courier}
+\lstset{basicstyle=\ttfamily\footnotesize,breaklines=true,frame=single,columns=fullflexible}
+\setlist{noitemsep,topsep=2pt}
+\title{A Production-Ready Framework for Multiplicity Control and Quality Control in Clinical Laboratories}
+\author{Kara Olivarria \& Ryan O. van Gelder  \\  \\ Citizen Gardens}
+\date{October 23, 2025}
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We formalize a practical, auditable framework for multi-analyte statistical inference and laboratory quality control. The design combines validated multiplicity adjustments, robust precision metrics, classical and multivariate control charts, lot-to-lot equivalence testing, engineering interfaces, and quantitative acceptance criteria suitable for regulated environments.
+\end{abstract}
+
+\section{Objective}
+Reduce false positives in multi-analyte panels and strengthen QC using validated, transparent procedures. Outputs: adjusted p-values, stable precision metrics, timely shift detection, defensible SOPs.
+
+\section{Data Model and Notation}
+Samples \(i=1,\dots,n\), analytes \(j=1,\dots,m\). Measurement \(X_{ij}\). Control result at time \(t\): \(Q_t\). Per analyte: mean \(\mu_j\), standard deviation \(\sigma_j\), bias \(b_j\), allowable total error \(\mathrm{TEa}_j\).
+
+\subsection{Data-Quality Gates}
+\begin{itemize}
+  \item \textbf{Missingness}: compute per-analyte and per-run rates. Warn at 2--4\%, block at $>5$\% unless MAR handling is configured. If MCAR test fails \cite{Little1988}, escalate to review.
+  \item \textbf{Range checks}: enforce analytic measurement ranges; soft-flag values within 5\% of bounds.
+  \item \textbf{Units and monotonicity}: verify unit codes; reject mixed units. For control time series, forbid impossible jumps given instrument specs.
+  \item \textbf{Instrument flags}: ingest manufacturer error codes; halt QC updates on critical flags.
+  \item \textbf{Duplicates and timing}: deduplicate by sample+analyte+timestamp; enforce nondecreasing timestamps.
+  \item \textbf{Storage}: retain raw, cleaned, and derived fields; no destructive edits. All actions logged.
+\end{itemize}
+
+\section{Multiplicity Control}
+Let $p_1,\dots,p_m$ be per-analyte p-values.
+
+\subsection{Family-wise Error Rate: Holm}Sort $p_{(1)}\le\cdots\le p_{(m)}$. Find the smallest $k$ with $p_{(k)}>\alpha/(m-k+1)$. Reject $H_{(r)}$ for $r<k$. Controls FWER at $\alpha$ \cite{Holm1979}.
+
+\subsection{False Discovery Rate: Benjamini--Hochberg}
+Choose target $q\in(0,1)$. Let $k=\max\{r: p_{(r)}\le rq/m\}$. Reject $H_{(1)},\dots,H_{(k)}$. Report adjusted p-values \cite{BH1995}.
+
+\subsection{Dependence-Aware Options}
+Benjamini--Yekutieli controls FDR under arbitrary dependence using thresholds $rq/(mH_m)$ with $H_m=\sum_{i=1}^m 1/i$ \cite{BY2001}. Storey q-values estimate $\pi_0$ to improve power when many nulls are true \cite{Storey2002}.
+
+\subsection{Reporting Rules}
+For each panel: report $m$, method, raw p-values, adjusted p-values, and the set of rejections. Default: BH at $q=0.05$ for exploratory panels; Holm at $\alpha=0.05$ for confirmatory reflex rules.
+
+\subsection{Pseudocode (BH)}
+\begin{lstlisting}[language=Python,caption={Benjamini--Hochberg step-up procedure}]
+import numpy as np
+
+def bh(pvals, q=0.05):
+    p = np.asarray(pvals)
+    m = len(p)
+    order = np.argsort(p)
+    thresh = q * (np.arange(1, m+1) / m)
+    passed = p[order] <= thresh
+    k = np.where(passed)[0].max() + 1 if passed.any() else 0
+    reject = np.zeros(m, dtype=bool)
+    if k > 0:
+        reject[order[:k]] = True
+    # adjusted p-values (step-up)
+    adj = np.minimum.accumulate((m / np.arange(m, 0, -1)) * p[order][::-1])[::-1]
+    adj_full = np.empty_like(p)
+    adj_full[order] = np.minimum(adj, 1.0)
+    return reject, adj_full
+\end{lstlisting}
+
+\section{Precision and Repeatability}
+\subsection{Coefficient of Variation}
+Classical $\mathrm{CV}_j = 100\,\sigma_j/\mu_j$\%. Robust alternative: $\sigma^{\mathrm{rob}}=1.4826\,\mathrm{MAD}$; use when non-Gaussian.
+
+\subsection{Outlier Screening}
+Robust z-score $z_i = \lvert X_i-\mathrm{median}(X)\rvert/(1.4826\,\mathrm{MAD})$. Flag if $z_i>3.5$. Review, do not auto-delete.
+
+\section{QC Charts}
+\subsection{Shewhart} Limits $\mu\pm3\sigma$. Rules pre-registered.
+
+\subsection{EWMA}
+$Z_t = \lambda Q_t + (1-\lambda)Z_{t-1}$, $Z_0=\mu$. Limits $\mu\pm L\,\sigma\sqrt{\lambda/(2-\lambda)}$ \cite{Roberts1959,LucasSaccucci1990}.
+
+\begin{lstlisting}[language=Python,caption={Streaming EWMA with limits}]
+class EWMA:
+    def __init__(self, mu, sigma, lam=0.2, L=3.0):
+        self.mu, self.sigma = mu, sigma
+        self.lam, self.L = lam, L
+        self.z = mu
+    def update(self, q_t):
+        self.z = self.lam * q_t + (1 - self.lam) * self.z
+        s = (self.sigma * (self.lam / (2 - self.lam)) ** 0.5)
+        return self.z, self.mu + self.L * s, self.mu - self.L * s
+\end{lstlisting}
+
+\subsection{CUSUM}
+Two one-sided CUSUMs: $C_t^{+}=\max\{0, Q_t-(\mu+k)+C_{t-1}^{+}\}$, $C_t^{-}=\max\{0,(\mu-k)-Q_t+C_{t-1}^{-}\}$. Signal if $C_t^{+}>h$ or $C_t^{-}>h$ \cite{Page1954}.
+
+\subsection{Multivariate QC}
+Hotelling $T^2$ for subgroup mean: $T^2=(\bar{\mathbf{x}}-\boldsymbol\mu)^\top\Sigma^{-1}(\bar{\mathbf{x}}-\boldsymbol\mu)$ with classical $F$ limits \cite{Hotelling1947}. MEWMA for correlated analytes \cite{Lowry1992}. Use Ledoit--Wolf covariance shrinkage when $p$ large or $n$ small \cite{LedoitWolf2004}. Maintain univariate charts for interpretability.
+
+\section{Lot-to-Lot Validation}
+\subsection{Design}
+Paired or bridged patient samples ($n\ge20$) across lots A and B, spanning clinical range. Regression with intercept and slope; plus equivalence on mean difference.
+
+\subsection{TOST Equivalence}
+Compute $\Delta = \mu_B-\mu_A$. Accept if $-\delta < \Delta < \delta$ using two one-sided tests at $\alpha=0.05$ \cite{Schuirmann1987}.
+
+\begin{lstlisting}[language=Python,caption={Paired TOST for mean difference}]
+from math import sqrt
+from statistics import mean, pstdev
+from scipy.stats import t, ttest_1samp
+
+def paired_tost(a, b, delta, alpha=0.05):
+    d = [bi - ai for ai, bi in zip(a, b)]
+    n = len(d)
+    mu = mean(d)
+    sd = (sum((x - mu) ** 2 for x in d) / (n - 1)) ** 0.5
+    se = sd / sqrt(n)
+    t1 = (mu + delta) / se  # H0: mu <= -delta
+    t2 = (delta - mu) / se  # H0: mu >=  delta
+    p1 = 1 - t.cdf(t1, df=n-1)
+    p2 = 1 - t.cdf(t2, df=n-1)
+    ci = (mu - t.ppf(1 - alpha/2, n-1) * se, mu + t.ppf(1 - alpha/2, n-1) * se)
+    return dict(delta_hat=mu, ci=ci, accept=max(p1, p2) <= alpha)
+\end{lstlisting}
+
+\section{Panel-Level Decision Framework}
+\begin{enumerate}
+  \item Choose error control (Holm for confirmatory, BH for screening).
+  \item Lock thresholds pre-analysis.\footnote{Pre-registration prevents post-hoc tuning on production data.}
+  \item Run and generate adjusted p-values.
+  \item Apply clinical interpretation only to rejections.
+  \item Record decisions with timestamps and operators.
+\end{enumerate}
+
+\section{Implementation Architecture}
+\subsection{REST API}
+\begin{lstlisting}[language=Python,caption={FastAPI skeleton for key endpoints}]
+from fastapi import FastAPI
+from pydantic import BaseModel
+from typing import List, Literal, Optional
+
+app = FastAPI()
+
+class PanelRequest(BaseModel):
+    panel_id: str
+    p_values: List[float]
+    method: Literal['BH','Holm','BY'] = 'BH'
+    q_or_alpha: float = 0.05
+
+@app.post('/panels/evaluate')
+def panel_evaluate(req: PanelRequest):
+    if req.method == 'BH':
+        reject, adj = bh(req.p_values, req.q_or_alpha)
+    elif req.method == 'Holm':
+        reject, adj = holm(req.p_values, req.q_or_alpha)
+    else:
+        reject, adj = by(req.p_values, req.q_or_alpha)
+    return {"panel_id": req.panel_id, "adj_p": adj.tolist(), "reject": reject.tolist()}
+
+# /qc/ewma, /qc/cusum, /lot/tost would follow similarly
+\end{lstlisting}
+
+\subsection{Database Schema and Auditability}
+\begin{lstlisting}[language=SQL,caption={Core tables for audit and configuration}]
+CREATE TABLE audit_log (
+  id UUID PRIMARY KEY,
+  event_time TIMESTAMP NOT NULL,
+  user_id VARCHAR NOT NULL,
+  endpoint VARCHAR NOT NULL,
+  parameters JSONB NOT NULL,
+  result JSONB,
+  config_version INTEGER NOT NULL
+);
+
+CREATE TABLE config_versions (
+  version_id INTEGER PRIMARY KEY,
+  config_type VARCHAR NOT NULL,  -- 'multiplicity', 'qc', 'lot'
+  parameters JSONB NOT NULL,
+  effective_date DATE NOT NULL,
+  dataset_hash VARCHAR
+);
+\end{lstlisting}
+
+\section{Validation, SLOs, and Acceptance Criteria}
+\subsection{Runtime Targets}
+Panel evaluation $\le$ \SI{100}{ms} at p99 for $m\le500$; EWMA update path $\le$ \SI{1}{s} at p99. Uptime $\ge$ 99.9\%.
+
+\subsection{Phase 1 Acceptance Criteria}
+\begin{itemize}
+  \item \textbf{Data quality}: warnings at 2--4\% missing; scoped blocks at $>5$\%; 100\% override audit completeness.
+  \item \textbf{Multiplicity}: BH or Holm live on two panels; latency meets target; reports include $m$, method, raw and adjusted p, rejections.
+  \item \textbf{QC replay}: $\ge$20\% reduction in detection delay vs baseline at matched false-alarm rate; $\le$1 false alert/1000 runs.
+  \item \textbf{Audit}: 100\% of config changes versioned with author, diff, timestamp.
+\end{itemize}
+
+\section{Governance and Training}
+Parameter board approves $\lambda, L, k, h, q/\alpha$ pre–go-live. Tiered training by role with competency checks. Two-week stabilization, advance only if criteria met for two consecutive weeks. Align with CLIA/CAP and ISO 15189.
+
+\section{Rollout Plan}
+Phase 1: data-quality gates, BH/Holm on 1--2 panels, EWMA on stable controls, Tier-1 dashboard. Phase 2: CUSUM, TOST, BY, enhanced audit, Tier-2 dashboard. Phase 3: multivariate QC (2--3 analytes), change-point detection, Bayesian equivalence, Tier-3 dashboard.
+
+\section{Conclusion}
+The framework delivers production-grade multiplicity control and QC with clear engineering interfaces, measurable acceptance criteria, and defensible governance. It is suitable for immediate Phase 1 deployment with a path to advanced capabilities.
+
+\begin{thebibliography}{99}
+\bibitem{Holm1979} S. Holm, ``A simple sequentially rejective multiple test procedure,'' \emph{Scandinavian Journal of Statistics}, 6(2):65--70, 1979.
+\bibitem{BH1995} Y. Benjamini and Y. Hochberg, ``Controlling the false discovery rate: a practical and powerful approach to multiple testing,'' \emph{Journal of the Royal Statistical Society: Series B}, 57(1):289--300, 1995.
+\bibitem{BY2001} Y. Benjamini and D. Yekutieli, ``The control of the false discovery rate in multiple testing under dependency,'' \emph{Annals of Statistics}, 29(4):1165--1188, 2001.
+\bibitem{Storey2002} J. D. Storey, ``A direct approach to false discovery rates,'' \emph{Journal of the Royal Statistical Society: Series B}, 64(3):479--498, 2002.
+\bibitem{Roberts1959} S. W. Roberts, ``Control chart tests based on geometric moving averages,'' \emph{Technometrics}, 1(3):239--250, 1959.
+\bibitem{LucasSaccucci1990} J. M. Lucas and M. S. Saccucci, ``Exponentially weighted moving average control schemes: properties and enhancements,'' \emph{Technometrics}, 32(1):1--12, 1990.
+\bibitem{Page1954} E. S. Page, ``Continuous inspection schemes,'' \emph{Biometrika}, 41(1/2):100--115, 1954.
+\bibitem{Hotelling1947} H. Hotelling, ``Multivariate Quality Control,'' in \emph{Techniques of Statistical Analysis}, 111--184, McGraw-Hill, 1947.
+\bibitem{Lowry1992} C. A. Lowry, W. H. Woodall, C. W. Champ, and S. E. Rigdon, ``A multivariate exponentially weighted moving average control chart,'' \emph{Technometrics}, 34(1):46--53, 1992.
+\bibitem{LedoitWolf2004} O. Ledoit and M. Wolf, ``A well-conditioned estimator for large-dimensional covariance matrices,'' \emph{Journal of Multivariate Analysis}, 88(2):365--411, 2004.
+\bibitem{Schuirmann1987} D. J. Schuirmann, ``A comparison of the two one-sided tests procedure and the power approach for assessing the equivalence of average bioavailability,'' \emph{Journal of Pharmacokinetics and Biopharmaceutics}, 15(6):657--680, 1987.
+\bibitem{Little1988} R. J. A. Little, ``A test of Missing Completely at Random for multivariate data with missing values,'' \emph{Journal of the Royal Statistical Society: Series C (Applied Statistics)}, 37(3):259--268, 1988.
+\end{thebibliography}
+
+\end{document}

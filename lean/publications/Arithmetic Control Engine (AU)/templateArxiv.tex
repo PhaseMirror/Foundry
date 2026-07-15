@@ -1,0 +1,158 @@
+\documentclass[11pt]{article}
+\usepackage{amsmath,amssymb,amsthm,mathtools,bm}
+\usepackage[margin=1in]{geometry}
+\usepackage{algorithm,algpseudocode}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true, linkcolor=black, urlcolor=blue, citecolor=black}
+
+% --- Macros ---
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\F}{\mathbb{F}}
+\newcommand{\one}{\mathbf{1}}
+\newcommand{\Id}{I}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Tr}{\operatorname{Tr}}
+\newcommand{\norm}[1]{\left\lVert #1 \right\rVert}
+\newcommand{\abs}[1]{\left\lvert #1 \right\rvert}
+\newcommand{\spec}{\operatorname{spec}}
+\newcommand{\softmax}{\operatorname{softmax}}
+\newcommand{\diag}{\operatorname{diag}}
+\newcommand{\argmin}{\operatorname*{arg\,min}}
+\newcommand{\argmax}{\operatorname*{arg\,max}}
+
+\title{Integrating the Arithmetic Control Engine (ACE) with the AU--Triad:\\
+Measure, Compare, Equalize for Certified Spectral Control}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We formalize how to integrate the Arithmetic Control Engine (ACE) into the AU--Triad pipeline. 
+ACE supplies exact arithmetic operators (Hecke $T_n$ on $S_k(\Gamma_0(N))$), a unitary-constrained Spectral Control Network (SCN), and a Weyl-inequality certificate for gap control. The AU--Triad supplies system-level gates: \emph{Measure} spectral/arithmetical invariants, \emph{Compare} against theorem-backed tests and envelopes, then \emph{Equalize} via certified updates (projection-first) with audit logs. The result is a reproducible, math-first loop that blends arithmetic structure with certified optimization.
+\end{abstract}
+
+\section{Arithmetic layer (ACE) and spectral state}
+\subsection{Arithmetic operators}
+Fix even $k\ge 2$ and level $N\ge 1$. Let $S_k(\Gamma_0(N))$ denote cusp forms of weight $k$ and level $N$. 
+For $n\in\mathbb{N}$, the Hecke operator $T_n$ acts linearly on $S_k(\Gamma_0(N))$. 
+In particular, if $(m,n)=1$, then $T_mT_n=T_{mn}$ (Dirichlet-convolution law for general $m,n$).\footnote{RP bound: for normalized eigenforms $f$, $|a_p(f)|\le 2p^{(k-1)/2}$ for primes $p\nmid N$.}
+Let $M_n$ be a matrix representation of $T_n$ in a chosen basis; ACE computes these exactly via a CAS.
+
+\subsection{Spectral features and gaps}
+Let $A\in\C^{d\times d}$ be a normal/Hermitian operator representing the current spectral state (e.g., a Hecke matrix, its symmetrization, or a learned graph operator). 
+Let $\lambda_1\le \cdots \le \lambda_d$ be eigenvalues and define the spectral gap
+\[
+g(A)\;:=\;\min_{1\le i\le d-1}\big(\lambda_{i+1}-\lambda_i\big).
+\]
+A target $\,\hat g>0\,$ is provided by design or downstream objectives.
+
+\subsection{Spectral Control Network (SCN)}
+The SCN maps state features $\phi(A,\hat g)$ to a control vector $w$ that parameterizes a perturbation $\Delta(w)$ with an explicit norm budget. A stability-preserving internal transform uses a skew-symmetric parameter $S=-S^\top$ and $U=\exp(S)$, so that $\|xU\|_2=\|x\|_2$ for all $x$ (unitary/orthogonal block). The SCN loss tracks the target gap and penalizes budget violations:
+\[
+\mathcal{L}(\theta)\;=\; \big(g(A+\Delta(w_\theta))-\hat g\big)^2
+\;+\;\lambda\,\max\{0,\,\|\Delta(w_\theta)\|_2-\varepsilon\}^2.
+\]
+
+\section{AU--Triad mapping}
+We integrate ACE into the AU--Triad (\emph{Measure}--\emph{Compare}--\emph{Equalize}) as follows.
+
+\subsection*{Measure}
+\begin{itemize}
+\item \textbf{Arithmetic invariants:} multiplicativity residuals 
+$\rho_{m,n}:=\|M_mM_n-M_{mn}\|$ for $(m,n)=1$; RP residuals $\max_p\big(|a_p|-2p^{(k-1)/2}\big)_+$.
+\item \textbf{Spectral statistics:} $g(A)$, $\min\lambda$, $\max\lambda$, $\operatorname{mean}(\lambda)$, $\operatorname{std}(\lambda)$, and nearest-neighbor spacings.
+\item \textbf{Distributional diagnostics (optional):} KS/CvM comparisons of empirical spectra to a reference law (e.g., Wigner-like surrogates) with predeclared thresholds/CIs.
+\end{itemize}
+
+\subsection*{Compare}
+\begin{itemize}
+\item \textbf{Theorem-backed checks:} require $\rho_{m,n}\le \varepsilon_{\mathrm{alg}}$ and RP residual $=0$ within tolerance.
+\item \textbf{Envelope checks:} budget $\|\Delta\|_2\le\varepsilon$; Lipschitz/softmax envelopes (when present) $ \mathrm{SlopeUB}\le \tau_{\mathrm{slope}}$.
+\item \textbf{Gap targets:} compare $g(A)$ to $\hat g$; define acceptable band $|g(A)-\hat g|\le \delta_g$ (predeclared).
+\end{itemize}
+
+\subsection*{Equalize}
+Produce a certified update via SCN $\to$ projection $\to$ apply:
+\[
+A^+\;=\;A+\Delta^\star,\qquad 
+\Delta^\star \in \argmin_{\|\Delta\|_2\le \varepsilon}\;\big\|\Delta-\Delta(w)\big\|.
+\]
+By Weyl’s inequality (see Prop.~\ref{prop:weyl-gap}), the spectral gap obeys
+$|g(A^+)-g(A)|\le 2\varepsilon$, which yields a simple, auditable acceptance rule.
+
+\section{Certificates}
+\begin{prop}[Unitary block is norm-preserving]
+Let $S=-S^\top$ and $U=\exp(S)$. Then $U^\top U=\Id$ and for all $x$, $\|xU\|_2=\|x\|_2$.
+\end{prop}
+
+\begin{prop}[Weyl gap certificate]\label{prop:weyl-gap}
+If $A$ is Hermitian and $\|\Delta\|_2\le \varepsilon$, then for all $i$, $|\lambda_i(A+\Delta)-\lambda_i(A)|\le \varepsilon$ and thus
+\[
+|g(A+\Delta)-g(A)|\;\le\; 2\,\varepsilon.
+\]
+\end{prop}
+
+\begin{prop}[Weighted-\texorpdfstring{$\ell_1$}{l1} projection with KKT certificate (optional)]
+Given weights $\omega_k>0$ and budget $T>0$, the projection of $v\in\R^m$ onto 
+$\Omega=\{x:\sum_k \omega_k|x_k|\le T\}$ is
+$x_k^\star=\operatorname{sign}(v_k)\max\{|v_k|-\tau\omega_k,0\}$ with $\tau\ge 0$ chosen so that the constraint is tight when active. Feasibility, complementary slackness, and a dual lower bound provide an auditable optimality certificate.
+\end{prop}
+
+\section{Integration objective}
+Define a composite training objective (if learning is active)
+\[
+\mathcal{J}\;=\; 
+\underbrace{\big(g(A+\Delta(w))-\hat g\big)^2}_{\text{gap tracking}}
+\;+\;\lambda_\Delta \underbrace{\max\{0,\|\Delta(w)\|_2-\varepsilon\}^2}_{\text{budget}}
+\;+\;\lambda_{\mathrm{alg}}\underbrace{\sum_{(m,n)=1}\rho_{m,n}^2}_{\text{multiplicativity}}
+\;+\;\lambda_{\mathrm{RP}}\underbrace{\sum_{p} \big(|a_p|-2p^{(k-1)/2}\big)_+^2}_{\text{RP bounds}}.
+\]
+
+\section{Pass/fail gate and audit record}
+Fix thresholds $(\varepsilon_{\mathrm{alg}},\varepsilon,\tau_{\mathrm{slope}},\delta_g)$ and CI parameters for distributional tests. 
+A step \emph{passes} iff all hold:
+\[
+\left\{
+\begin{aligned}
+&\rho_{m,n}\le \varepsilon_{\mathrm{alg}}\ \ \forall(m,n)=1, \qquad \max_p(|a_p|-2p^{(k-1)/2})_+=0,\\
+&\|\Delta\|_2\le \varepsilon, \qquad |g(A^+)-g(A)|\le 2\varepsilon, \qquad |g(A^+)-\hat g|\le \delta_g,\\
+&\text{(optional) KS/CvM within preregistered bands; }\ \mathrm{SlopeUB}\le \tau_{\mathrm{slope}}.
+\end{aligned}
+\right.
+\]
+\textbf{Audit tuple (per step):}
+\[
+\big(g(A),\, g(A^+),\, \|\Delta\|_2,\, 2\varepsilon,\,
+\{\rho_{m,n}\}_{(m,n)=1},\, \max_p(|a_p|-2p^{(k-1)/2})_+,\, \mathrm{KS},\, \mathrm{SlopeUB}\big).
+\]
+
+\section{Algorithm (AU--Triad $\oplus$ ACE)}
+\begin{algorithm}[H]
+\caption{One certified integration step}
+\begin{algorithmic}[1]
+\State \textbf{Inputs:} operator $A$; target gap $\hat g$; budget $\varepsilon$; arithmetic set $\mathcal{N}$; thresholds.
+\State \textbf{Measure:}
+\Statex \quad (a) Compute $g(A)$, summary stats; (b) for $(m,n)=1$, form $M_m,M_n,M_{mn}$, record $\rho_{m,n}$; 
+\Statex \quad (c) RP residuals from eigenvalues $\{a_p\}$.
+\State \textbf{Compare:} check algebraic tests and envelopes vs.\ thresholds.
+\State \textbf{Equalize (proposal):} $w\gets \mathrm{SCN}(\phi(A,\hat g))$, form $\Delta(w)$.
+\State \textbf{Projection/envelope:} $\Delta^\star\gets \argmin_{\|\Delta\|_2\le \varepsilon}\|\Delta-\Delta(w)\|$ (or weighted-$\ell_1$ variant).
+\State \textbf{Apply:} $A^+\gets A+\Delta^\star$. 
+\State \textbf{Certificate:} verify $|g(A^+)-g(A)|\le 2\varepsilon$; re-check algebraic tests; log audit tuple.
+\If{all gates pass} \State accept $A\leftarrow A^+$; \Else \State rollback and (optionally) shrink $\varepsilon$ or retrain SCN. \EndIf
+\end{algorithmic}
+\end{algorithm}
+
+\section{Remarks and options}
+\begin{itemize}
+\item \textbf{Which $A$?} For pure arithmetic checks, take $A=M_n$ or a block of $\{M_p\}$. 
+For learned systems (e.g., graph/attention operators), use the system operator and keep arithmetic residuals as side-constraints/features.
+\item \textbf{Distributional checks:} Use KS/CvM with bootstrap CIs as diagnostics; preregister pass bands and seeds.
+\item \textbf{AU--Triad compatibility:} The gap certificate plays the role of a simple Lyapunov-style bound; the projection-first step matches the Triad’s certificate-before-actuation philosophy and standard logging (\emph{Measure} stats, \emph{Compare} gates, \emph{Equalize} update).
+\end{itemize}
+
+\end{document}

@@ -1,0 +1,760 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{courier}
+\usepackage{graphicx}
+\usepackage{mathtools}
+\usepackage{booktabs}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\lstdefinestyle{code}{
+  basicstyle=\ttfamily\small,
+  keywordstyle=\bfseries\ttfamily\small\color{blue!70!black},
+  commentstyle=\itshape\color{gray!70!black},
+  stringstyle=\color{green!40!black},
+  showstringspaces=false,
+  columns=fullflexible,
+  frame=single,
+  framerule=0.2pt,
+  rulecolor=\color{black!30},
+  breaklines=true
+}
+
+\title{PIRTM--Phase Mirror Integration and Meta-Ensembles\\
+\large A Structured Development Report}
+\author{Multiplicity Foundation -- Phase Mirror HQ}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\tableofcontents
+
+\section{Executive Summary}
+
+This report documents the recent developments around integrating the \emph{Prime-Indexed Recursive Tensor Mathematics} (PIRTM) runtime and dialect into the Phase Mirror governance stack, and establishing a clean baseline for the \texttt{meta-ensembles} package within the Phase Mirror HQ monorepo \cite{pirtm-pyproject,pm-phases0-3,pm-gcp-guide,pm-mvp-analysis,hq-pirtm-local}. The work is guided by Phase Mirror's architectural principles: explicit tensions, governance-first constraints, and open-core viability.
+
+Three main themes run through the work:
+\begin{enumerate}[label=(\alph*)]
+  \item Establishing a \emph{runtime-first} PIRTM integration path for Phase Mirror's Python MVP, with MLIR support staged as an optional, higher-complexity backend.
+  \item Using the Phase Mirror HQ monorepo to prototype tight coupling (local PIRTM, meta-ensembles) while explicitly aiming at an external \texttt{pirtm} package as the long-term dependency boundary.
+  \item Formalizing these decisions into artifacts: adapter modules, tests, ADRs, docs, and configuration, rather than implicit conventions.
+\end{enumerate}
+
+The central tension is always made explicit: we trade off expressive power (MLIR, meta-ensembles wiring) and research velocity against reliability, portability, and governance guarantees for Phase Mirror users \cite{pm-phases0-3,pm-mvp-analysis}. The report concludes with a set of precision questions and recommended next steps that preserve Phase Mirror's L0-style invariants while allowing PIRTM to serve as a mathematical motor for meta-governance and dissonance analysis.
+
+\section{Background and Context}
+
+\subsection{Phase Mirror Architecture}
+
+Phase Mirror is an AI governance tool built around a three-tier hierarchical compute model (L0, L1, L2) and a dissonance-centric methodology \cite{pm-phases0-3,pm-mvp-analysis,pm-gcp-guide}. L0 invariants encode non-negotiable safety and correctness checks (schema alignment, nonce validity, permission configurations, etc.). L1 and L2 provide increasingly expensive reasoning and policy evaluation.
+
+From the open-core perspective, Phase Mirror is structured as a pnpm monorepo with:
+\begin{itemize}
+  \item A core library package (\texttt{mirror-dissonance}) implementing invariants, stores, adapters and the Oracle.
+  \item CLI and MCP server packages for integration with developer workflows and AI coding agents.
+  \item Governance documentation (ADRs, success criteria, license analyses).
+  \item Infrastructure-as-code for AWS and GCP backends (DynamoDB, Firestore, SSM/Secret Manager, KMS, Cloud Storage) \cite{pm-gcp-guide,pm-open-core-dev}.
+\end{itemize}
+
+The Phase Mirror HQ repository extends this into a multi-package Python workspace with:
+\begin{itemize}
+  \item A Python MVP package (\texttt{phase-mirror-mvp}) mirroring core governance functionality.
+  \item A local \texttt{pirtm} package.
+  \item A \texttt{meta-ensembles} package that uses PIRTM-like structures to aggregate and ledger ensembles of models or oracles.
+\end{itemize}
+
+\subsection{PIRTM: Prime-Indexed Recursive Tensor Mathematics}
+
+The PIRTM repository (\texttt{MultiplicityFoundation/PIRTM}) is a Python package with the following core characteristics \cite{pirtm-pyproject}:
+\begin{itemize}
+  \item Package name \texttt{pirtm}, version \texttt{0.4.1}, with runtime implemented in pure Python and NumPy.
+  \item Focus on contractive recurrence dynamics (prime-indexed recursion over tensor states) and a compile-time MLIR dialect for advanced optimization and compilation.
+  \item A \texttt{pyproject.toml} that:
+    \begin{itemize}
+      \item Uses \texttt{setuptools} as build backend.
+      \item Requires Python $\geq 3.10$.
+      \item Exposes a CLI entrypoint \texttt{pirtm = pirtm.transpiler.cli:main}.
+      \item Declares optional extra dependencies for spectral analysis and development.
+      \item Registers subpackages: backend, bindings, channels, core, dialect, integrations, mlir, spectral, transpiler, tools, type\_inference.
+    \end{itemize}
+\end{itemize}
+
+In the Phase Mirror HQ workspace, a local \texttt{packages/pirtm} mirrors the structure and enables tighter integration experiments \cite{hq-pirtm-local}. This local package is used both by \texttt{phase-mirror-mvp} and \texttt{meta-ensembles}.
+
+\subsection{Meta-Ensembles Package}
+
+The \texttt{meta-ensembles} package is a Python package within the Phase Mirror HQ monorepo that implements:
+\begin{itemize}
+  \item An ensemble ledger and aggregator for combining multiple models or oracles.
+  \item A PIRTM link ensemble implementation that bridges ensemble states with PIRTM-style recurrences.
+  \item A CLI for running meta-ensemble operations.
+  \item A comprehensive test suite that previously depended on local PIRTM fixtures and import paths.
+\end{itemize}
+
+Before the recent work, some tests failed due to unavailable \texttt{pirtm} imports and misaligned fixture paths. The new changes establish a passing baseline.
+
+\section{PIRTM--Phase Mirror Integration}
+
+\subsection{Central Tension}
+
+The major design tension for integration is:
+\begin{quote}
+\emph{Should Phase Mirror depend directly on both the PIRTM MLIR dialect and the Python runtime, or should it initially integrate only the runtime and treat MLIR as an optional optimization?}
+\end{quote}
+
+The final decision is to adopt a \emph{runtime-first, MLIR-optional} strategy:
+\begin{itemize}
+  \item The Python runtime (NumPy-based) becomes the primary, portable dependency.
+  \item The MLIR dialect is staged behind an optional backend flag and separate CI job.
+  \item Phase Mirror's governance decisions must never depend solely on MLIR being available.
+\end{itemize}
+
+This aligns with existing governance-first choices in Phase Mirror, where L0 invariants are always-on and cloud backends are pluggable via adapters rather than hard requirements \cite{pm-phases0-3,pm-open-core-dev,pm-gcp-guide}.
+
+\subsection{Runtime-Only Bridge}
+
+\subsubsection{PIRTM Repository Setup}
+
+The PIRTM package is configured via the following \texttt{pyproject.toml} fragment \cite{pirtm-pyproject}:
+
+\begin{lstlisting}[style=code,language={[LaTeX]TeX}]
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pirtm"
+version = "0.4.1"
+description = "Prime-Indexed Recursive Tensor Mathematics ..."
+requires-python = ">=3.10"
+dependencies = ["numpy>=1.24"]
+
+[project.optional-dependencies]
+spectral = ["pandas>=1.5"]
+dev = ["pytest>=7", "numpy>=1.24"]
+
+[project.scripts]
+pirtm = "pirtm.transpiler.cli:main"
+
+[tool.setuptools]
+packages = [
+  "pirtm",
+  "pirtm.backend",
+  "pirtm.bindings",
+  "pirtm.channels",
+  "pirtm.core",
+  "pirtm.dialect",
+  "pirtm.integrations",
+  "pirtm.mlir",
+  "pirtm.spectral",
+  "pirtm.transpiler",
+  "pirtm.tools",
+  "pirtm.type_inference",
+]
+\end{lstlisting}
+
+A minimal setup sequence is:
+
+\begin{lstlisting}[style=code]
+git clone https://github.com/MultiplicityFoundation/PIRTM.git
+cd PIRTM
+python -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
+pip install -e ".[dev,spectral]"
+pirtm --help
+pytest tests/ -v
+\end{lstlisting}
+
+\subsubsection{Phase Mirror MVP Adapter}
+
+Within the Phase Mirror HQ monorepo, a runtime-only adapter module \texttt{packages/phase-mirror-mvp/pirtm\_adapter.py} has been introduced. This module:
+\begin{itemize}
+  \item Imports \texttt{pirtm} (for now from the local \texttt{packages/pirtm}) and exposes a narrow API to Phase Mirror, such as:
+  \begin{itemize}
+    \item \verb|compile_policy_tensor(...)|
+    \item \verb|evaluate_recurrence(...)|
+  \end{itemize}
+  \item Encapsulates PIRTM-specific details so the rest of Phase Mirror operates over a simple, stable interface.
+  \item Is explicitly documented as a runtime-only bridge, with MLIR support to come later.
+\end{itemize}
+
+A tiny illustrative code snippet (structurally representative) is:
+
+\begin{lstlisting}[style=code,language=Python]
+# packages/phase-mirror-mvp/pirtm_adapter.py
+
+from __future__ import annotations
+from typing import Any, Dict
+
+import numpy as np
+import pirtm  # local monorepo package for now
+
+def evaluate_recurrence(initial_state: np.ndarray,
+                        params: Dict[str, Any],
+                        steps: int = 10) -> np.ndarray:
+    """
+    Evaluate a simple contractive PIRTM recurrence from Phase Mirror.
+    """
+    state = np.array(initial_state, dtype=float)
+
+    for k in range(steps):
+        # Hypothetical PIRTM step; real logic uses pirtm.core APIs
+        state = pirtm.core.recurrence.contractive_step(
+            state,
+            params=params,
+            step_index=k,
+        )
+
+    return state
+\end{lstlisting}
+
+A corresponding unit test validates that:
+\begin{itemize}
+  \item The adapter can import the local PIRTM package.
+  \item A simple recurrence converges or remains bounded under contractive dynamics.
+\end{itemize}
+
+\subsubsection{Governance Artifact: ADR-028}
+
+An Architecture Decision Record (\texttt{ADR-028-pirtm-integration.md}) has been added under \texttt{packages/phase-mirror-mvp/governance}, stating that:
+\begin{itemize}
+  \item PIRTM integration is optional and must fail \emph{degraded}, not \emph{hard};
+  \item The Python runtime is the authoritative required layer; MLIR is an enhancement;
+  \item Phase Mirror must remain usable without PIRTM for the open-core MVP.
+\end{itemize}
+
+This is consistent with earlier ADR-driven decisions about L0 invariants and cloud adapters \cite{pm-phases0-3,pm-open-core-dev,pm-mvp-analysis}.
+
+\subsection{Intermediate Step Toward External \texorpdfstring{\texttt{pirtm}}{pirtm} Dependency}
+
+Within the HQ workspace, the current state is:
+\begin{itemize}
+  \item \texttt{packages/pirtm} serves as the authoritative PIRTM source for development.
+  \item \texttt{phase-mirror-mvp} imports PIRTM via local path hacks in tests, while the production code expects \texttt{import pirtm} like a regular library.
+  \item The target state is for \texttt{phase-mirror-mvp} to depend on an external \texttt{pirtm} release (PyPI or VCS URL), with no test-level sys.path manipulation.
+\end{itemize}
+
+In terms of dependency configuration, the recommended approach is:
+\begin{itemize}
+  \item In \texttt{phase-mirror-mvp/requirements.txt} or \texttt{pyproject.toml}, add:
+\begin{lstlisting}[style=code]
+pirtm @ git+https://github.com/MultiplicityFoundation/PIRTM.git@main
+\end{lstlisting}
+  \item Later, once a stable version is released:
+\begin{lstlisting}[style=code]
+pirtm>=0.4.1
+\end{lstlisting}
+\end{itemize}
+
+The governance constraint is that \emph{PIRTM integration is not a gating factor for Phase Mirror's open-core MVP} \cite{pm-mvp-analysis}. It provides additional analytical power, but core governance value must stand without it.
+
+\subsection{MLIR Backend as Optional Path}
+
+To integrate the PIRTM MLIR dialect safely, a two-job CI structure is suggested:
+\begin{enumerate}[label=(\roman*)]
+  \item Default job: installs \texttt{pirtm} with no MLIR toolchain, runs all Phase Mirror tests assuming the runtime backend.
+  \item MLIR job: installs LLVM/MLIR, enables an environment flag such as \verb|PIRTM_BACKEND=mlir| and runs MLIR-specific tests, potentially marked as allow-failure initially.
+\end{enumerate}
+
+\noindent A sketch of such a matrix in GitHub Actions YAML form is:
+
+\begin{lstlisting}[style=code]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        backend: [runtime, mlir]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install -e ".[dev]"
+          if [ "${{ matrix.backend }}" = "mlir" ]; then
+            ./scripts/install_mlir_toolchain.sh
+          fi
+          pip install pirtm>=0.4.1
+
+      - name: Run tests
+        env:
+          PIRTM_BACKEND: ${{ matrix.backend }}
+        run: |
+          pytest -q
+\end{lstlisting}
+
+The Phase Mirror governance ADR should explicitly state that:
+\begin{quote}
+  If the MLIR toolchain is missing or fails, Phase Mirror must fall back to the runtime backend, not fail governance checks.
+\end{quote}
+
+\section{Meta-Ensembles Baseline Stabilization}
+
+\subsection{Package Overview}
+
+The \texttt{meta-ensembles} package within Phase Mirror HQ has:
+\begin{itemize}
+  \item \texttt{meta\_ensembles/core/ensemble\_ledger.py}: a ledger for recording model/ensemble judgments, timestamps, and provenance.
+  \item \texttt{meta\_ensembles/core/ensemble\_aggregator.py}: aggregation logic over ensembles (e.g., majority vote, weighted averages).
+  \item \texttt{meta\_ensembles/core/pirtm\_link\_ensemble.py}: linkage between PIRTM recurrences and ensemble states.
+  \item \texttt{meta\_ensembles/tests}: a suite of tests validating ledger behavior, aggregation, and PIRTM-linked folds.
+  \item \texttt{meta\_ensembles/cli.py}: an MVP CLI surface.
+\end{itemize}
+
+Originally, the test suite failed due to unresolved \texttt{pirtm} imports and fixture path mismatches. The goal was to restore a green baseline without collapsing the monorepo structure.
+
+\subsection{Pytest Configuration for Local PIRTM}
+
+A new \texttt{conftest.py} in \texttt{packages/meta-ensembles} ensures that the local \texttt{mirror-dissonance-pro/pirtm} tree is importable when running tests:
+
+\begin{lstlisting}[style=code,language=Python]
+# packages/meta-ensembles/conftest.py
+
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+PIRTM_ROOT = ROOT / "mirror-dissonance-pro" / "pirtm"
+
+# Insert the parent of the pirtm package so "import pirtm" works.
+sys.path.insert(0, str(PIRTM_ROOT.parent))
+\end{lstlisting}
+
+This approach:
+\begin{itemize}
+  \item Keeps sys.path manipulation local to tests, not package code.
+  \item Matches patterns already in use for other HQ packages (e.g., \texttt{sigma-kernel}).
+  \item Allows \texttt{import pirtm} to behave as expected without requiring external installation.
+\end{itemize}
+
+\subsection{Fixture Path Correction}
+
+The test \texttt{meta\_ensembles/tests/test\_meta\_fold.py} referenced PIRTM fixtures from an incorrect path. It has been updated to resolve fixtures relative to the HQ repo root, where PIRTM's fixtures live under \texttt{mirror-dissonance-pro/pirtm/tests/fixtures}. Structurally, the change looks like:
+
+\begin{lstlisting}[style=code,language=Python]
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[3]
+FIXTURES_DIR = ROOT / "mirror-dissonance-pro" / "pirtm" / "tests" / "fixtures"
+
+def load_pirtm_fixture(name: str) -> str:
+    return (FIXTURES_DIR / name).read_text()
+\end{lstlisting}
+
+With this change, running:
+
+\begin{lstlisting}[style=code]
+cd packages/meta-ensembles
+python3 -m pytest -q
+\end{lstlisting}
+
+reports \emph{81 passed}, indicating a clean MVP baseline for further meta-ensemble development.
+
+\subsection{Ensemble Ledger and PIRTM Link: Conceptual Sketch}
+
+While the actual implementation details are in the codebase, the conceptual structure can be captured as follows.
+
+Let \(\mathcal{M}\) be a set of models or oracles, and let \(x\) denote an input (e.g., a governance scenario). Each model \(m \in \mathcal{M}\) outputs a judgment \(y_m \in \mathcal{Y}\). The ensemble ledger is a sequence of records:
+\[
+  L = \{(x_i, \{y_{m,i}\}_{m\in\mathcal{M}}, t_i, \text{metadata}_i)\}_{i=1}^N.
+\]
+
+The meta-ensemble aggregator computes an ensemble decision:
+\[
+  y^{\star}_i = A\left(\{y_{m,i}\}_{m\in\mathcal{M}}, \text{weights}, \text{constraints}\right).
+\]
+
+A PIRTM link ensemble then interprets the ensemble states (e.g., probability distributions, tensor encodings of decisions) as part of a recursive tensor dynamical system:
+\[
+  s_{k+1} = F(s_k; \theta, p_k)
+\]
+where:
+\begin{itemize}
+  \item \(s_k\) is the ensemble state at prime index \(p_k\),
+  \item \(\theta\) are parameters of the meta-ensemble dynamics,
+  \item \(F\) is defined via PIRTM's contractive recurrence runtime.
+\end{itemize}
+
+In code, a simplified PIRTM-linked ensemble iteration could look like:
+
+\begin{lstlisting}[style=code,language=Python]
+import numpy as np
+from meta_ensembles.core.ensemble_ledger import EnsembleLedger
+from meta_ensembles.core.pirtm_link_ensemble import PirtmLinkedEnsemble
+
+ledger = EnsembleLedger()
+linked = PirtmLinkedEnsemble(ledger=ledger)
+
+state = linked.initial_state()
+for p_idx, record in enumerate(ledger.iter_prime_indexed()):
+    state = linked.step(state, record, prime_index=p_idx)
+
+final_state = linked.project_decision(state)
+\end{lstlisting}
+
+A full mathematical treatment would express the prime-indexing and contraction properties explicitly as part of a multiplicity-theoretic framework, but this report focuses on the integration scaffolding.
+
+\section{Governance and Open-Core Considerations}
+
+\subsection{L0 Invariants and Optional Dependencies}
+
+Phase Mirror's governance documents emphasize that L0 invariants are:
+\begin{itemize}
+  \item Always-on, non-configurable.
+  \item Cheap enough that not running them costs more in missed bugs than running them.
+  \item Independent of external research or experimental features \cite{pm-mvp-analysis,pm-open-core-dev}.
+\end{itemize}
+
+PIRTM integration, meta-ensembles, and future MLIR-based optimizations must therefore:
+\begin{itemize}
+  \item Never be required for L0 invariant evaluation.
+  \item Be clearly marked experimental/optional in ADRs and user-facing docs.
+  \item Provide graceful degradation paths and explicit failure signaling (degraded mode) rather than implicit breakage.
+\end{itemize}
+
+\subsection{Open-Core Boundary and Research Velocity}
+
+Phase Mirror's open-core model reserves certain features---Tier B semantic rules, FP calibration networks, compliance packs---for a pro tier, but ensures the open-core remains genuinely useful on its own \cite{pm-open-core-dev,pm-mvp-analysis}. PIRTM and meta-ensembles fit into this picture as:
+\begin{itemize}
+  \item Mathematical and algorithmic engines that can live in either open-core or pro domains depending on how they are applied.
+  \item Potential sources of research velocity (new rules, better dissonance metrics) if integrated with calibration stores and ensemble statistics.
+\end{itemize}
+
+The key is to avoid entangling open-core adoption with proprietary configuration or pro-only dependencies. Moving \texttt{pirtm} to an external, properly versioned package, and ensuring \texttt{meta-ensembles} can run without proprietary trees, are concrete steps in this direction.
+
+\section{Recommended Next Steps and Precision Questions}
+
+\subsection{Levers and Metrics}
+
+We summarize a few concrete levers for the immediate future:
+
+\begin{itemize}
+  \item \textbf{Runtime-first PIRTM integration}
+    \begin{itemize}
+      \item Owner: Phase Mirror Python MVP maintainer.
+      \item Metric: All \texttt{phase-mirror-mvp} tests pass with \texttt{pirtm} installed from an external source, no \texttt{sys.path} hacks.
+      \item Horizon: 7--10 days.
+    \end{itemize}
+  \item \textbf{MLIR optional backend}
+    \begin{itemize}
+      \item Owner: PIRTM maintainer.
+      \item Metric: Separate CI job demonstrating MLIR-backed runs; Phase Mirror still passes tests when MLIR is absent.
+      \item Horizon: 30 days.
+    \end{itemize}
+  \item \textbf{Meta-ensembles decoupling}
+    \begin{itemize}
+      \item Owner: Meta-ensembles maintainer.
+      \item Metric: \texttt{meta-ensembles} tests can run in a mode where PIRTM is mocked or optional, and a mode where real PIRTM is used.
+      \item Horizon: 14 days.
+    \end{itemize}
+\end{itemize}
+
+\subsection{Precision Questions}
+
+Before locking in the long-term integration pattern, we recommend explicitly resolving:
+
+\begin{enumerate}[label=(Q\arabic*)]
+  \item Are we willing to codify as an L0-style invariant that \emph{Phase Mirror governance decisions must never depend exclusively on MLIR availability}? This would permanently bound the blast radius of MLIR-level failures.
+  \item In terms of release sequencing, should PIRTM-backed tensor recurrences be part of the success criteria for the next Phase Mirror public milestone, or remain explicitly non-blocking to preserve MVP scope?
+  \item For meta-ensembles, is the primary goal near-term \emph{diagnostic diversity} (ensembles as multiple mirrors on dissonance) or \emph{performance/accuracy} (ensembles as better predictors)? This affects how we prioritize ledger semantics vs. tensor dynamics.
+\end{enumerate}
+
+\section{Conclusion}
+
+The work described in this report brings the PIRTM, Phase Mirror, and meta-ensembles projects into a tighter, but \emph{explicitly governed}, relationship. By:
+\begin{itemize}
+  \item Implementing a runtime-first PIRTM adapter and corresponding tests,
+  \item Formalizing integration decisions via ADR-028,
+  \item Stabilizing the meta-ensembles package with a clean \texttt{81 passed} test baseline,
+\end{itemize}
+the system is now well-positioned to:
+\begin{itemize}
+  \item Transition to an external \texttt{pirtm} package boundary,
+  \item Introduce MLIR as an optional backend with clear failure semantics,
+  \item Explore multiplicity-theoretic ensembles within a governance-safe envelope.
+\end{itemize}
+
+The central challenge, and opportunity, is to keep the mathematical richness of PIRTM and meta-ensembles in tension with Phase Mirror's governance invariants, using ADRs, adapters, and CI policies as the binding artifacts.
+
+\appendix
+\section*{Appendix: Contractive Recurrences and Operator Norm Bounds}
+
+\section{Abstract Contractive PIRTM Recurrence}
+
+We model the PIRTM runtime used in the Phase Mirror integration as a discrete-time recurrence on a Banach space, abstracting away from implementation details (NumPy arrays, concrete update rules) while capturing the essential contractive structure that guarantees stability of the dynamics.[pirtm-pyproject][hq-pirtm-local]
+
+Let \((X,\|\cdot\|)\) be a real Banach space, typically \(X = \mathbb{R}^d\) with the Euclidean norm induced by NumPy tensors.[pirtm-pyproject] Let \(\Theta\) be a parameter space (e.g., a finite-dimensional vector space of coefficients).
+
+\begin{definition}[PIRTM-style contractive operator]
+A mapping \(F : X \times \Theta \to X\) is said to be \emph{globally contractive} in its first argument with constant \(0 \leq \lambda < 1\) if
+\[
+  \|F(x,\theta) - F(y,\theta)\| \leq \lambda \, \|x - y\|
+\]
+for all \(x,y \in X\) and all \(\theta \in \Theta\).[hq-pirtm-local]
+\end{definition}
+
+In the PIRTM recurrence runtime, a typical iteration has the form
+\[
+  x_{k+1} = F(x_k,\theta), \quad k = 0,1,2,\dots,
+\]
+where \(\theta\) may encode prime-indexed structure, contractive weights, or other multiplicity-theoretic features, but for the purposes of stability we assume only that \(F(\cdot,\theta)\) is contractive.[hq-pirtm-local]
+
+\begin{theorem}[Existence and uniqueness of fixed point; convergence rate]
+\label{thm:banach}
+Suppose \(F(\cdot,\theta)\) is globally contractive with constant \(\lambda \in [0,1)\). Then:
+\begin{enumerate}
+  \item There exists a unique fixed point \(x^\star \in X\) such that \(F(x^\star,\theta) = x^\star\).
+  \item For any initial state \(x_0 \in X\), the sequence defined by \(x_{k+1} = F(x_k,\theta)\) converges to \(x^\star\).
+  \item The convergence is \emph{geometric}: for all \(k \geq 0\),
+  \[
+    \|x_k - x^\star\| \leq \lambda^k \, \|x_0 - x^\star\|.
+  \]
+\end{enumerate}
+\end{theorem}
+
+\begin{proof}
+Define \(T := F(\cdot,\theta):X\to X\). By assumption,
+\[
+  \|T(x) - T(y)\| \leq \lambda \|x-y\|,
+\]
+so \(T\) is a contraction mapping on the complete metric space \((X,\|\cdot\|)\). By the Banach fixed point theorem, there exists a unique \(x^\star \in X\) such that \(T(x^\star) = x^\star\), and for any \(x_0 \in X\), the iterates \(x_k = T^k(x_0)\) converge to \(x^\star\).[hq-pirtm-local]
+
+For the geometric bound, we have for all \(k\geq 0\),
+\[
+  \|x_{k+1} - x^\star\|
+  = \|T(x_k) - T(x^\star)\|
+  \leq \lambda \|x_k - x^\star\|.
+\]
+By induction, \(\|x_k - x^\star\| \leq \lambda^k \|x_0 - x^\star\|\), which completes the proof.
+\end{proof}
+
+\subsection{Operator Norm Interpretation}
+
+In the linear case, when \(F(x,\theta) = A(\theta)x + b(\theta)\) with a bounded linear operator \(A(\theta)\) and bias \(b(\theta)\), the contractive condition can be stated in terms of the operator norm:
+\[
+  \|A(\theta)\|_{\text{op}} := \sup_{x \neq 0} \frac{\|A(\theta)x\|}{\|x\|} < 1.
+\]
+
+\begin{proposition}[Contractivity via operator norm]
+If \(A(\theta)\) is linear and \(\|A(\theta)\|_{\text{op}} \leq \lambda < 1\), then \(F(x,\theta) = A(\theta)x + b(\theta)\) is globally contractive with constant \(\lambda\). Consequently, the PIRTM recurrence
+\[
+  x_{k+1} = A(\theta)x_k + b(\theta)
+\]
+has a unique fixed point \(x^\star\), and the geometric convergence bound in Theorem~\ref{thm:banach} holds.
+\end{proposition}
+
+\begin{proof}
+For any \(x,y \in X\),
+\[
+  \|F(x,\theta) - F(y,\theta)\|
+  = \|A(\theta)x + b(\theta) - (A(\theta)y + b(\theta))\|
+  = \|A(\theta)(x-y)\|
+  \leq \|A(\theta)\|_{\text{op}} \,\|x-y\|
+  \leq \lambda \|x-y\|.
+\]
+Thus \(F(\cdot,\theta)\) is a contraction with constant \(\lambda\) and Theorem~\ref{thm:banach} applies.
+\end{proof}
+
+\section{Prime-Indexed Recurrence and Norm Bounds}
+
+PIRTM emphasises prime-indexed recursions that encode multiplicity across non-linear scales.[hq-pirtm-local] Let \((p_k)_{k\geq 1}\) denote the increasing sequence of prime numbers and consider a state sequence \((x_{p_k})_{k\geq 1}\) defined by
+\[
+  x_{p_{k+1}} = F_{p_{k+1}}(x_{p_k}), \quad k \geq 1,
+\]
+where each \(F_{p_k}:X\to X\) is a contraction with constant \(\lambda_{p_k} \in [0,1)\).
+
+\begin{assumption}[Uniform prime-indexed contractivity]
+There exists a constant \(\lambda^\star < 1\) such that
+\[
+  \sup_{k \geq 1} \lambda_{p_k} \leq \lambda^\star.
+\]
+\end{assumption}
+
+Under this assumption, we obtain a uniform bound on the deviation between two prime-indexed trajectories.
+
+\begin{proposition}[Uniform stability across prime indices]
+Let \((x_{p_k})_{k\geq 1}\) and \((y_{p_k})_{k\geq 1}\) be sequences defined by
+\[
+  x_{p_{k+1}} = F_{p_{k+1}}(x_{p_k}), \quad
+  y_{p_{k+1}} = F_{p_{k+1}}(y_{p_k}),
+\]
+with the same family \(\{F_{p_k}\}\) and initial states \(x_{p_1},y_{p_1} \in X\). If the uniform contractivity assumption holds, then for all \(k\geq 1\),
+\[
+  \|x_{p_k} - y_{p_k}\| \leq (\lambda^\star)^{k-1} \, \|x_{p_1} - y_{p_1}\|.
+\]
+\end{proposition}
+
+\begin{proof}
+For each step,
+\[
+  \|x_{p_{k+1}} - y_{p_{k+1}}\|
+  = \|F_{p_{k+1}}(x_{p_k}) - F_{p_{k+1}}(y_{p_k})\|
+  \leq \lambda_{p_{k+1}} \|x_{p_k} - y_{p_k}\|
+  \leq \lambda^\star \|x_{p_k} - y_{p_k}\|.
+\]
+Iterating from \(k=1\) yields
+\[
+  \|x_{p_k} - y_{p_k}\| \leq (\lambda^\star)^{k-1} \|x_{p_1} - y_{p_1}\|.
+\]
+\end{proof}
+
+This inequality gives a multiplicity-theoretic version of contractive stability: even when the update operator varies with the prime index, a uniform operator norm bound ensures geometric decay of differences.
+
+\section{Meta-Ensembles as Contractive Lifts}
+
+In the meta-ensembles package, ensemble state updates can be seen as lifting base-model decisions into a higher-dimensional recurrence.[hq-pirtm-local] Abstractly, suppose:
+\begin{itemize}
+  \item \(\mathcal{M} = \{1,\dots,M\}\) indexes base models or oracles.
+  \item For each \(i \in \mathcal{M}\), \(f_i : X \to Y\) is a decision map (e.g., \(Y\) is a finite label set or a probability simplex).
+  \item The ensemble state space is \(Z = \mathbb{R}^M\) or \(Z = \mathbb{R}^{M \times d}\), embedding model outputs.
+\end{itemize}
+
+Define an ensemble embedding \(E : Y^\mathcal{M} \to Z\) and an aggregation map \(A : Z \to Y\). A meta-ensemble iteration coupled to PIRTM can be written as:
+\[
+  z_{k+1} = G(z_k; \theta), \quad
+  y_k = A(z_k),
+\]
+where \(G : Z \to Z\) is itself defined by a PIRTM-style contractive operator at the ensemble level.
+
+\begin{assumption}[Ensemble-level contractivity]
+There exists \(0 \leq \mu < 1\) such that
+\[
+  \|G(z) - G(w)\| \leq \mu \, \|z - w\|
+\]
+for all \(z,w \in Z\), with \(\|\cdot\|\) an appropriate norm (e.g., Euclidean or maximum norm).
+\end{assumption}
+
+\begin{proposition}[Stability of meta-ensemble iterates]
+Under ensemble-level contractivity, the meta-ensemble state sequence \((z_k)\) admits a unique fixed point \(z^\star\), and for all \(k\geq 0\),
+\[
+  \|z_k - z^\star\| \leq \mu^k \, \|z_0 - z^\star\|.
+\]
+If the aggregation map \(A:Z\to Y\) is Lipschitz with constant \(L_A\), then the induced decisions \(y_k = A(z_k)\) satisfy
+\[
+  \|y_k - y^\star\| \leq L_A \mu^k \, \|z_0 - z^\star\|,
+\]
+where \(y^\star = A(z^\star)\).
+\end{proposition}
+
+\begin{proof}
+The first inequality follows by applying Theorem~\ref{thm:banach} with \(X:=Z\) and \(F:=G\). For the decisions, we have
+\[
+  \|y_k - y^\star\| = \|A(z_k) - A(z^\star)\| \leq L_A \|z_k - z^\star\|
+  \leq L_A \mu^k \|z_0 - z^\star\|.
+\]
+\end{proof}
+
+In the concrete \texttt{meta-ensembles} implementation, the ledger and PIRTM link ensemble modules respect this pattern: ensemble state updates are implemented via well-behaved transforms (typically finite-dimensional linear or Lipschitz non-linear maps), and tests verify stability and boundedness of the resulting iterates.[hq-pirtm-local]
+
+\section{Error Propagation and Norm Bounds for Adapters}
+
+Phase Mirror’s adapter layer (e.g., FP store, secret store, consent store) adopts a ``throw, don’t mask’’ error contract.[file:29][file:40] This can also be expressed in operator-norm style bounds for the \emph{perturbed} recurrence driven by occasional adapter failures.
+
+Consider a recurrence
+\[
+  x_{k+1} = F(x_k) + e_k,
+\]
+where \(F : X \to X\) is contractive with constant \(\lambda < 1\) and \((e_k)_{k\geq 0} \subset X\) captures perturbations from adapter errors that are caught and mapped into explicit, bounded deviations before being handled at L0.[file:29] Assume
+\[
+  \|e_k\| \leq \varepsilon_k
+\]
+for some non-negative sequence \((\varepsilon_k)\).
+
+\begin{proposition}[Stability under bounded perturbations]
+\label{prop:perturbed}
+Let \(x^\star\) be the fixed point of \(F\). Then the perturbed recurrence satisfies
+\[
+  \|x_{k+1} - x^\star\| \leq \lambda \|x_k - x^\star\| + \varepsilon_k
+\]
+for all \(k\geq 0\), and hence
+\[
+  \|x_k - x^\star\|
+  \leq \lambda^k \|x_0 - x^\star\| + \sum_{j=0}^{k-1} \lambda^{k-1-j} \varepsilon_j.
+\]
+\end{proposition}
+
+\begin{proof}
+We have
+\begin{align*}
+  \|x_{k+1} - x^\star\|
+  &= \|F(x_k) + e_k - F(x^\star)\| \\
+  &\leq \|F(x_k) - F(x^\star)\| + \|e_k\| \\
+  &\leq \lambda \|x_k - x^\star\| + \varepsilon_k.
+\end{align*}
+Unrolling this inequality yields
+\[
+  \|x_k - x^\star\|
+  \leq \lambda^k \|x_0 - x^\star\| + \sum_{j=0}^{k-1} \lambda^{k-1-j} \varepsilon_j
+\]
+by induction on \(k\).
+\end{proof}
+
+\begin{corollary}[Uniform perturbation bound]
+If \(\varepsilon_k \leq \overline{\varepsilon}\) for all \(k\), then
+\[
+  \|x_k - x^\star\|
+  \leq \lambda^k \|x_0 - x^\star\|
+       + \overline{\varepsilon} \frac{1-\lambda^k}{1-\lambda}.
+\]
+In particular,
+\[
+  \limsup_{k\to\infty} \|x_k - x^\star\|
+  \leq \frac{\overline{\varepsilon}}{1-\lambda}.
+\]
+\end{corollary}
+
+This provides a quantitative version of Phase Mirror’s ``fail-closed, observable’’ philosophy at the recurrence level: as long as the magnitude of adapter-induced perturbations remains bounded (and relatively small compared to \(1-\lambda\)), the system remains close to the ideal fixed point and deviations are controllable.[file:29]
+
+\section{Summary of Bounds}
+
+For convenience, we collect the key inequalities derived in this appendix.
+
+\begin{itemize}
+  \item \textbf{Pure contraction, fixed operator:}
+  \[
+    \|x_k - x^\star\| \leq \lambda^k \|x_0 - x^\star\|.
+  \]
+  \item \textbf{Linear case via operator norm:}
+  \[
+    \|A\|_{\mathrm{op}} < 1 \;\Rightarrow\; \text{contraction with constant }\lambda=\|A\|_{\mathrm{op}}.
+  \]
+  \item \textbf{Prime-indexed varying operators (uniformly contractive):}
+  \[
+    \|x_{p_k} - y_{p_k}\| \leq (\lambda^\star)^{k-1} \|x_{p_1} - y_{p_1}\|.
+  \]
+  \item \textbf{Meta-ensemble lift (ensemble-level contraction):}
+  \[
+    \|z_k - z^\star\| \leq \mu^k \|z_0 - z^\star\|,\quad
+    \|y_k - y^\star\| \leq L_A \mu^k \|z_0 - z^\star\|.
+  \]
+  \item \textbf{Perturbed recurrence with bounded noise:}
+  \[
+    \|x_k - x^\star\|
+    \leq \lambda^k \|x_0 - x^\star\|
+       + \sum_{j=0}^{k-1} \lambda^{k-1-j} \varepsilon_j,
+  \]
+  and under uniform perturbations,
+  \[
+    \limsup_{k\to\infty} \|x_k - x^\star\|
+    \leq \frac{\overline{\varepsilon}}{1-\lambda}.
+  \]
+\end{itemize}
+
+These bounds are the mathematical backbone behind the informal ``contractive recurrence runtime’’ phrasing for PIRTM and the stability guarantees implicitly relied upon in the Phase Mirror and meta-ensembles integrations.[pirtm-pyproject][hq-pirtm-local][file:29][file:40]
+
+\nocite{*}
+\bibliographystyle{unsrt}  
+\bibliography{references}
+\end{document}

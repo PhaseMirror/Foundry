@@ -2,9 +2,9 @@
 --
 -- Controlled vocabulary types (enum classes).
 
-import UOR.Primitives
+import Core.UOR
 
-open UOR.Primitives
+open Core.UOR
 
 /-- Ontology space classification. -/
 inductive Space where

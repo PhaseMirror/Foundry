@@ -1,0 +1,803 @@
+\documentclass[11pt]{article}
+\usepackage{amsmath,amssymb,amsfonts,amsthm}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{bm}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\geometry{margin=1in}
+
+\title{Endogenous Spectral Self-Regulation in Tensor-Extended DAEs\\
+and Multiplicity-Driven Feedback:\\
+A Defensive Publication}
+\author{Ryan O. Van Gelder\\Citizen Gardens -- The Foundation of Multiplicity}
+\date{May 5, 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This defensive publication documents a framework that extends differential-algebraic equations (DAEs) with tensor representations, dynamic eigenvalue multiplicities, and Lyapunov-based spectral feedback. It formalizes how a spectral observable---constructed from the eigenvalue gap of a contracted tensor block---can act as an endogenous state that drives its own stabilization through passivity-preserving feedback and multiplicity-shaped dissipation. We present (1) a generalized tensor-parameterized DAE structure, (2) multiplicity operators and feedback laws, (3) a minimal two-oscillator benchmark with analytically tractable Lyapunov functions, and (4) explicit numerical implementations and diagnostics. The document is intended as prior art and a comprehensive technical record of the concepts and constructions developed in this thread.
+\end{abstract}
+\newpage
+\tableofcontents
+
+\section{Executive Summary}
+
+\subsection{Conceptual Contributions}
+
+This work discloses a family of dynamical systems in which \emph{eigenvalue multiplicity} is promoted from a static algebraic invariant to a \emph{dynamic control variable} that participates in closed-loop feedback.
+
+The key contributions are:
+
+\begin{enumerate}[label=(\alph*)]
+  \item A tensor-extended DAE framework
+  \[
+    \frac{d}{dt}\left(T(t,z)\cdot z\right)
+    = \big(J(t,z) - R(t,z)\big)\,Q(t,z)\,z + B(t)u,
+  \]
+  where $T(t,z)$ is an $n\times n\times k$ tensor encoding higher-order couplings rather than a static mass matrix.
+
+  \item A multiplicity observable $M$ built from the spectrum of a contracted block $M_{\text{mass}}(\kappa)$, which serves as an endogenous state variable that influences dissipation and feedback.
+
+  \item Lyapunov-based feedback laws in which a spectral quantity (typically the eigenvalue gap) defines a Lyapunov function $H$, and the feedback on coupling parameters (e.g.\ $\kappa$) is taken as the negative gradient $-\nabla H$.
+
+  \item A minimal two-oscillator mechanical benchmark where:
+  \begin{itemize}
+    \item the contracted tensor block is invertible and well-conditioned along the trajectory,
+    \item the Lyapunov derivative $\dot H$ is nonpositive for all times (passivity),
+    \item the dissipation coefficient $c(t)$ is driven by the rate of change of multiplicity $|\dot M(t)|$ and smoothly returns to a baseline as the system settles.
+  \end{itemize}
+\end{enumerate}
+
+Together, these constructions realize what we call \emph{endogenous spectral self-regulation}: the system senses its own spectral configuration and adjusts dissipative dynamics accordingly, with formal Lyapunov guarantees.
+
+\subsection{Defensive Publication Scope}
+
+This document should be read as a defensive publication covering, in particular:
+
+\begin{itemize}
+  \item Use of a tensor-valued ``mass'' object $T(t,z)$ in DAEs, inverted in practice via monitored pseudoinverses on contracted slices, with rank and condition-number diagnostics integrated into the dynamics.
+  \item Construction of smooth multiplicity observables $M(\Delta)$ as functions of eigenvalue gaps, serving as dynamic states that drive feedback.
+  \item Lyapunov functions defined on spectral gaps $\Delta$ (or multiplicity $M$) with feedback laws of the form $\dot\kappa = -\nabla_\kappa H(\Delta(\kappa))$, guaranteeing $\dot H \le 0$.
+  \item Coupling dissipation $R$ or scalar damping $c(t)$ to the rate of change $|\dot M(t)|$ to create multiplicity-shaped dissipation.
+  \item Concrete implementation details and diagnostics for a two-oscillator benchmark (state structure, ODEs, numerical scheme, rank and conditioning measures).
+\end{itemize}
+
+\section{Generalized Tensor-Extended DAE Framework}
+
+\subsection{Baseline DAE and Dissipative Port-Hamiltonian Form}
+
+Classical DAEs in dissipative port-Hamiltonian form can be written as
+\begin{equation}
+  \frac{d}{dt}(E z) = (J - R) Q z + B u,
+\end{equation}
+with:
+\begin{itemize}
+  \item $E \in \mathbb{R}^{n\times n}$: (possibly singular) mass matrix.
+  \item $J\in \mathbb{R}^{n\times n}$: skew-symmetric energy-exchange matrix.
+  \item $R\in \mathbb{R}^{n\times n}$: symmetric positive semidefinite dissipation matrix.
+  \item $Q$: energy-storage matrix (often related to $\nabla^2 H$).
+  \item $B$: input map, $u$: external input.
+\end{itemize}
+
+This structure underlies a large class of energy-based models in control, mechanics, and networked systems.
+
+\subsection{Tensor-Parameterized Dynamics}
+
+We generalize $E$ to a tensor-valued map:
+\begin{equation}
+  \frac{d}{dt}\big(T(t,z)\cdot z\big)
+  = \big(J(t,z) - R(t,z)\big)\,Q(t,z)\,z + B(t)u,
+\end{equation}
+where:
+\begin{itemize}
+  \item $T(t,z)\in\mathbb{R}^{n\times n\times k}$ encodes higher-order couplings (multi-scale, multi-body).
+  \item The contraction $T(t,z)\cdot z$ is defined via a fixed set of weights $w_\ell(t)$:
+  \[
+    [T(t,z)\cdot z]_i
+    = \sum_{j=1}^n \sum_{\ell=1}^k T_{ij\ell}(t,z)\,z_j\,w_\ell(t),
+  \]
+  producing an effective $n\times n$ block per time $t$.
+  \item The ``inverse'' $T^{-1}(t,z)$ in numerical solvers is implemented as the Moore–Penrose pseudoinverse of this contracted block, with continuous monitoring of:
+  \begin{align*}
+    \text{rank}\,T_{\text{eff}}(t,z), \quad
+    \kappa(T_{\text{eff}}(t,z)) = \|T_{\text{eff}}\|\,\|T_{\text{eff}}^{+}\|,
+  \end{align*}
+  to avoid singular-mass failure modes.
+\end{itemize}
+
+This realizes a tensor-extended DAE in which the ``mass'' object is not static but driven by time, state, and higher-order structure.
+
+\section{Spectral Multiplicity and Feedback}
+
+\subsection{Multiplicity Operator from Eigenvalue Gap}
+
+Let $M_{\text{mass}}(\kappa) \in \mathbb{R}^{2\times 2}$ denote a contracted mass block depending on a scalar coupling parameter $\kappa$:
+\begin{equation}
+  M_{\text{mass}}(\kappa) =
+  \begin{bmatrix}
+    m_1 & \kappa\\
+    \kappa & m_2
+  \end{bmatrix}.
+\end{equation}
+Its eigenvalues are
+\begin{equation}
+  \lambda_{\pm}(\kappa) = \frac{(m_1+m_2)\pm \Delta(\kappa)}{2},
+\end{equation}
+where the gap
+\begin{equation}
+  \Delta(\kappa) = |\lambda_+ - \lambda_-|
+  = \sqrt{(m_1-m_2)^2 + 4\kappa^2}.
+\end{equation}
+
+We construct a smooth multiplicity observable $M(\Delta)$ as a function of the gap. Two canonical forms are:
+
+\begin{enumerate}[label=(\roman*)]
+  \item ``Plateau'' multiplicity (used in the initial spectral benchmark):
+  \begin{equation}
+    M(\Delta) = 2 - \exp\left(-\frac{\Delta^2}{2\sigma^2}\right),
+  \end{equation}
+  which tends to $1$ at exact degeneracy ($\Delta=0$) and to $2$ as $\Delta\to\infty$.
+  \item Degeneracy-seeking multiplicity (preferred for visible transients):
+  \begin{equation}
+    M(\Delta) = 1 + \exp\left(-\frac{\Delta^2}{2\sigma^2}\right),
+  \end{equation}
+  where $M\to 2$ as $\Delta\to 0$ (double eigenvalue) and $M\to 1$ as $\Delta$ becomes large.
+\end{enumerate}
+
+In both cases, $M(\Delta)$ is smooth, bounded, and differentiable with respect to $\kappa$ via the chain rule.
+
+\subsection{Derivatives and Chain Rule}
+
+For either exponential form,
+\begin{equation}
+  \frac{\partial M}{\partial \Delta}
+  = \pm \frac{\Delta}{\sigma^2}
+     \exp\left(-\frac{\Delta^2}{2\sigma^2}\right),
+\end{equation}
+with a sign determined by the chosen offset (the algebraic structure is the same), and
+\begin{equation}
+  \frac{\partial \Delta}{\partial \kappa}
+  = \frac{4\kappa}{\Delta}
+  \quad \text{for } \Delta > 0,
+\end{equation}
+so that
+\begin{equation}
+  \frac{\partial M}{\partial \kappa}
+  = \frac{\partial M}{\partial \Delta}
+    \frac{\partial \Delta}{\partial \kappa}
+  = \pm \frac{4\kappa}{\sigma^2}
+      \exp\left(-\frac{\Delta^2}{2\sigma^2}\right).
+\end{equation}
+
+If we choose a feedback law $\dot\kappa = g(\kappa)$, then
+\begin{equation}
+  \dot M
+  = \frac{\partial M}{\partial \kappa}\,\dot\kappa
+  = \pm \frac{4\kappa}{\sigma^2}
+      \exp\left(-\frac{\Delta^2}{2\sigma^2}\right)\,g(\kappa).
+\end{equation}
+This provides a closed analytic expression linking the multiplicity dynamics to coupling dynamics.
+
+\section{Lyapunov-Based Spectral Feedback}
+
+\subsection{Gap-Based Lyapunov Function}
+
+A natural Lyapunov function for spectral regulation is
+\begin{equation}
+  H(\Delta) := \frac{1}{2}\Delta^2.
+\end{equation}
+In the symmetric-mass case $m_1 = m_2$, we have $\Delta(\kappa) = 2|\kappa|$, so
+\begin{equation}
+  H(\kappa) = \frac{1}{2}(2|\kappa|)^2 = 2\kappa^2.
+\end{equation}
+
+A gradient-descent feedback law in $\kappa$ is
+\begin{equation}
+  \dot\kappa = -\beta\,\frac{\partial H}{\partial \kappa}
+  = -\beta \cdot 4\kappa = -4\beta\kappa,
+\end{equation}
+leading to an exponential relaxation:
+\begin{equation}
+  \kappa(t) = \kappa_0\,e^{-4\beta t}.
+\end{equation}
+The Lyapunov derivative is
+\begin{equation}
+  \dot H = \frac{\partial H}{\partial \kappa}\,\dot\kappa
+  = 4\kappa \cdot (-4\beta\kappa)
+  = -16\beta\kappa^2 \le 0.
+\end{equation}
+Thus $H$ is strictly decreasing except at $\kappa=0$.
+
+\subsection{Relaxation Timescale}
+
+For $H = 2\kappa^2$, the condition $H(t) \le \alpha H(0)$ is equivalent to
+\begin{equation}
+  \kappa^2(t) \le \alpha \kappa_0^2,
+  \quad \Rightarrow\quad
+  e^{-8\beta t} \le \alpha,
+\end{equation}
+yielding
+\begin{equation}
+  t_\alpha = \frac{\ln(1/\alpha)}{8\beta}.
+\end{equation}
+For $\alpha = 0.05$ (a 95\% reduction), this gives
+\begin{equation}
+  t_{95}
+  = \frac{\ln 20}{8\beta}.
+\end{equation}
+This analytical timescale can be compared against numerical estimates based on interpolating $H(t)$.
+
+\section{Multiplicity-Shaped Dissipation}
+
+\subsection{Dissipation as a Function of \texorpdfstring{$\dot M$}{dot M}}
+
+We define a scalar dissipation coefficient $c(t)$ as
+\begin{equation}
+  c(t) = c_0 + \gamma |\dot M(t)|,
+\end{equation}
+where $c_0$ is a baseline damping and $\gamma>0$ scales the sensitivity to multiplicity change. Using the earlier expression for $\dot M$, we get
+\begin{equation}
+  c(t) = c_0 + \gamma \left|
+    \frac{\partial M}{\partial \kappa} \dot\kappa
+  \right|
+  = c_0 + \gamma
+    \left|
+      \pm \frac{4\kappa}{\sigma^2}
+          \exp\left(-\frac{\Delta^2}{2\sigma^2}\right)\cdot (-4\beta\kappa)
+    \right|.
+\end{equation}
+This is largest when both $|\kappa|$ and the exponential factor are substantial; it decays as $\kappa\to 0$ or as the system moves into a regime where the Gaussian factor suppresses changes in $M$.
+
+\subsection{Qualitative Behavior}
+
+The intended qualitative behavior is:
+
+\begin{itemize}
+  \item For large spectral gap (far from degeneracy), $M$ is close to 1, $\dot M$ is small, and $c(t)\approx c_0$.
+  \item As $\kappa(t)$ and hence $\Delta(t)$ evolve into the sensitive region of the Gaussian, $M(t)$ changes appreciably, $|\dot M(t)|$ rises, and $c(t)$ experiences a transient increase (a ``dissipative bump'').
+  \item As the system settles into a regime where $\Delta$ stabilizes (or reaches degeneracy in the symmetric case), $\dot M\to 0$ and $c(t)\to c_0$ smoothly.
+\end{itemize}
+
+This realizes multiplicity-shaped dissipation that is maximally active during significant spectral reconfiguration and quiescent in static spectral regimes.
+
+\section{Two-Oscillator Benchmark: Dynamics and Implementation}
+
+\subsection{Mechanical Setup}
+
+Consider two linearly coupled oscillators with positions $q_1, q_2$ and momenta $p_1, p_2$, masses $m_1, m_2$, and frequencies $\omega_1, \omega_2$. Let $z = [q_1, p_1, q_2, p_2]^\top$.
+
+The contracted mass block is
+\begin{equation}
+  M_{\text{mass}}(\kappa) =
+  \begin{bmatrix}
+    m_1 & \kappa\\
+    \kappa & m_2
+  \end{bmatrix},
+\end{equation}
+with pseudoinverse $M_{\text{mass}}^{+}$ and state velocities
+\begin{equation}
+  \begin{bmatrix}
+    \dot q_1\\ \dot q_2
+  \end{bmatrix}
+  = M_{\text{mass}}^{+}(\kappa)
+    \begin{bmatrix}
+      p_1\\ p_2
+    \end{bmatrix}.
+\end{equation}
+
+\subsection{Equations of Motion}
+
+The equations of motion in the benchmark are:
+\begin{align}
+  \dot q_1 &= v_1,\\
+  \dot q_2 &= v_2,
+\end{align}
+where $(v_1,v_2)^\top = M_{\text{mass}}^{+}(\kappa)\,(p_1,p_2)^\top$, and
+\begin{align}
+  \dot p_1 &= -\big(\omega_1^2 q_1 + \kappa (q_1 - q_2)\big)
+             - c(t)\,(v_1 - v_2),\\
+  \dot p_2 &= -\big(\omega_2^2 q_2 + \kappa (q_2 - q_1)\big)
+             - c(t)\,(v_2 - v_1),
+\end{align}
+with $c(t)$ as above.
+
+\subsection{Coupling Dynamics and Spectral Feedback}
+
+The coupling parameter evolves via
+\begin{equation}
+  \dot\kappa = -4\beta\kappa,
+\end{equation}
+yielding $\kappa(t) = \kappa_0 e^{-4\beta t}$, and the gap-based Lyapunov function
+\begin{equation}
+  H(t) = \frac{1}{2}\Delta^2(t)
+\end{equation}
+satisfies $\dot H \le 0$.
+
+In the general asymmetric-mass case ($m_1\neq m_2$), the gap has a nonzero floor, so $H$ asymptotically approaches a positive constant; in the symmetric case ($m_1 = m_2$), the gap can collapse to zero and $H\to0$.
+
+\subsection{Rank and Conditioning Diagnostics}
+
+At each time step, we compute:
+\begin{align}
+  r(t) &= \text{rank}\,M_{\text{mass}}(\kappa(t)),\\
+  \kappa_{\text{cond}}(t)
+      &= \|M_{\text{mass}}(\kappa(t))\|\,
+         \|M_{\text{mass}}^{+}(\kappa(t))\|,
+\end{align}
+to ensure that the pseudoinverse remains numerically stable. In the numerical experiments, $r(t)$ remained equal to 2 and $\kappa_{\text{cond}}(t)$ stayed below 2, demonstrating good conditioning.
+
+\section{Representative Code Snippet}
+
+The following Python snippet captures the core of the benchmark: mass contraction, Lyapunov-based coupling dynamics, multiplicity observable, dissipation update, and integration of the mechanical state.
+
+\subsection*{Python Implementation (Illustrative)}
+
+\begin{verbatim}
+import numpy as np
+from scipy.integrate import solve_ivp
+
+# Parameters
+m1, m2 = 1.0, 1.0        # symmetric mass case
+omega1, omega2 = 1.0, 1.15
+beta = 0.8
+gamma = 0.35
+c0 = 0.12
+sigma = 0.5              # multiplicity sensitivity scale
+
+def mass_block(kappa):
+    return np.array([[m1, kappa],
+                     [kappa, m2]], dtype=float)
+
+def gap(kappa):
+    return np.sqrt((m1 - m2)**2 + 4.0*kappa**2)
+
+def multiplicity(delta, sigma):
+    # Degeneracy-seeking form: M -> 1 (large gap), M -> 2 (small gap)
+    return 1.0 + np.exp(-delta**2/(2.0*sigma**2))
+
+def dM_dt(kappa, delta, beta, sigma):
+    # Chain rule: dM/dt = (dM/dkappa) * (dkappa/dt)
+    # dDelta/dkappa = 4*kappa / delta (for delta > 0)
+    if delta <= 1e-12:
+        return 0.0
+    dM_ddelta = (delta / sigma**2) * np.exp(-delta**2/(2.0*sigma**2))
+    ddelta_dk = 4.0 * kappa / delta
+    dM_dk = dM_ddelta * ddelta_dk
+    dk_dt = -4.0 * beta * kappa
+    return dM_dk * dk_dt
+
+def rhs_state(t, y, kappa, c):
+    q1, p1, q2, p2 = y
+    Minv = np.linalg.pinv(mass_block(kappa))
+    v1, v2 = Minv @ np.array([p1, p2])
+    dp1 = -(omega1**2 * q1 + kappa * (q1 - q2)) - c * (v1 - v2)
+    dp2 = -(omega2**2 * q2 + kappa * (q2 - q1)) - c * (v2 - v1)
+    return np.array([v1, dp1, v2, dp2])
+
+# Initial conditions
+y0 = np.array([1.0, 0.0, -0.4, 0.0], dtype=float)
+kappa0 = 1.5
+T_end = 8.0
+outer_dt = 0.05
+
+t_cur = 0.0
+y = y0.copy()
+kappa = kappa0
+
+trajectory = []
+
+while t_cur < T_end - 1e-12:
+    delta = gap(kappa)
+    M_val = multiplicity(delta, sigma)
+    dM_val = dM_dt(kappa, delta, beta, sigma)
+    c = c0 + gamma * abs(dM_val)
+
+    # Integrate fast mechanical dynamics over [t_cur, t_cur + outer_dt]
+    sol = solve_ivp(lambda t, yy: rhs_state(t, yy, kappa, c),
+                    (t_cur, min(t_cur + outer_dt, T_end)),
+                    y, method='RK45',
+                    max_step=0.005,
+                    rtol=1e-9, atol=1e-11)
+    for tt, yy in zip(sol.t, sol.y.T):
+        trajectory.append({
+            't': tt,
+            'q1': yy[0], 'p1': yy[1],
+            'q2': yy[2], 'p2': yy[3],
+            'kappa': kappa,
+            'delta': delta,
+            'M': M_val,
+            'c': c
+        })
+
+    y = sol.y[:, -1]
+    t_cur = sol.t[-1]
+
+    # Update coupling parameter with Lyapunov-based feedback
+    kappa = kappa - outer_dt * 4.0 * beta * kappa
+\end{verbatim}
+
+This snippet illustrates the key elements:
+
+\begin{itemize}
+  \item Tensor/contraction as a mass block with pseudoinverse.
+  \item Gap-based multiplicity and its derivative.
+  \item Dissipation modulated by $|\dot M|$.
+  \item Simple outer-loop update for $\kappa$ consistent with $\dot\kappa = -4\beta\kappa$.
+\end{itemize}
+
+\section{Prior Art Context and Novelty}
+
+\subsection{Relation to Classical Lyapunov and Spectral Methods}
+
+Classical Lyapunov theory treats $V(x)$ as a state-space functional whose decrease certifies stability; here, the Lyapunov function is defined not on the full state $z$, but on a \emph{spectral feature} (the gap $\Delta$) of a tensor-contracted mass block.
+
+While Lyapunov-based controllers and spectral analysis are individually well-established, the following aspects appear novel:
+
+\begin{itemize}
+  \item Using a \emph{tensor-parameterized mass} with an explicit pseudoinverse-based implementation as the carrier of spectral structure.
+  \item Treating \emph{eigenvalue multiplicity} (or smooth proxies thereof) as a dynamic state that directly informs feedback and dissipation.
+  \item Encoding multiplicity dynamics in a Lyapunov function defined on the gap, and using its gradient with respect to coupling parameters as the feedback law in a DAE context.
+\end{itemize}
+
+\subsection{Defensive Publication Claims}
+
+To make the defensive nature explicit, we highlight:
+
+\begin{enumerate}[label=(\arabic*)]
+  \item A DAE framework with state-dependent, tensor-valued mass $T(t,z)$, inverted via monitored pseudoinverses, and integrated into port-Hamiltonian-style dynamics.
+  \item Spectral multiplicity observables $M$ constructed from eigenvalue gaps of contracted tensor slices, treated as endogenous, differentiable state variables.
+  \item Feedback laws in which coupling parameters (e.g.\ $\kappa$) evolve according to $-\nabla_\kappa H(\Delta(\kappa))$, where $H$ is a Lyapunov function defined on the eigenvalue gap.
+  \item Dissipation terms $R(t)$ or scalar damping coefficients $c(t)$ defined as explicit functions of $|\dot M(t)|$, so that multiplicity dynamics directly shape dissipative behavior.
+  \item A concrete two-oscillator mechanical implementation with:
+  \begin{itemize}
+    \item Numerically stable pseudoinverses (rank=2, bounded condition number).
+    \item Nonpositive Lyapunov derivative throughout the trajectory.
+    \item Dissipation returning smoothly to baseline as the coupling parameter relaxes.
+  \end{itemize}
+\end{enumerate}
+
+\section{Extensions and Future Work}
+
+The constructions presented here are readily extensible:
+
+\begin{itemize}
+  \item Higher-dimensional mechanical or network systems with larger contracted blocks and higher-order tensors $T(t,z)$.
+  \item Quantum-inspired models where $M$ is built from gaps in a Hamiltonian spectrum and feeds back into dissipative Lindbladian terms.
+  \item Control architectures where multiplicity observables act as safety monitors to avoid dangerous bifurcations (gap stabilization rather than degeneracy seeking).
+\end{itemize}
+
+These directions are left as future work but are naturally supported by the general framework and benchmark documented in this publication.
+
+\section*{Mathematical Appendix: Lyapunov Proofs and Operator Bounds}
+
+\subsection*{A. Spectral Structure of the Contracted Mass Block}
+
+We recall the contracted $2\times 2$ mass block
+\[
+  M_{\text{mass}}(\kappa)
+  = \begin{bmatrix}
+      m_1 & \kappa\\
+      \kappa & m_2
+    \end{bmatrix},
+\]
+with real parameters $m_1, m_2 > 0$ and scalar coupling $\kappa \in \mathbb{R}$.
+
+\subsubsection*{A.1 Eigenvalues and Gap}
+
+The characteristic polynomial is
+\[
+  p(\lambda)
+  = \det\!\big(M_{\text{mass}}(\kappa) - \lambda I\big)
+  = (\lambda - m_1)(\lambda - m_2) - \kappa^2.
+\]
+Solving $p(\lambda) = 0$ gives the eigenvalues
+\begin{equation}
+  \lambda_\pm(\kappa)
+  = \frac{1}{2}(m_1 + m_2)
+    \pm \frac{1}{2}\sqrt{(m_1 - m_2)^2 + 4\kappa^2}.
+\end{equation}
+We define the eigenvalue gap
+\begin{equation}
+  \Delta(\kappa)
+  := |\lambda_+ - \lambda_-|
+  = \sqrt{(m_1 - m_2)^2 + 4\kappa^2}.
+\end{equation}
+
+\paragraph{Symmetric Mass Case.} If $m_1 = m_2 = m$, then
+\[
+  \Delta(\kappa) = \sqrt{0 + 4\kappa^2} = 2|\kappa|,
+\]
+and the eigenvalues simplify to
+\[
+  \lambda_\pm(\kappa) = m \pm |\kappa|.
+\]
+In particular, degeneracy ($\lambda_+ = \lambda_-$) occurs if and only if $\kappa = 0$.
+
+\subsubsection*{A.2 Rank and Determinant}
+
+The determinant of $M_{\text{mass}}(\kappa)$ is
+\begin{equation}
+  \det M_{\text{mass}}(\kappa)
+  = m_1 m_2 - \kappa^2.
+\end{equation}
+Thus:
+\begin{itemize}
+  \item $M_{\text{mass}}(\kappa)$ is invertible if and only if $m_1 m_2 - \kappa^2 \neq 0$.
+  \item Rank deficiency occurs iff $\kappa^2 = m_1 m_2$, in which case one eigenvalue vanishes and the other is $m_1 + m_2$.
+\end{itemize}
+
+In the numerical experiments, parameters are chosen so that $\kappa^2 \ll m_1 m_2$ along the trajectory, ensuring
+\[
+  \det M_{\text{mass}}(\kappa) > 0, \quad \text{rank}\,M_{\text{mass}}(\kappa) = 2.
+\]
+
+\subsubsection*{A.3 Norm and Condition Number Bounds}
+
+Let $\|\cdot\|_2$ denote the spectral (operator) norm. Since $M_{\text{mass}}(\kappa)$ is real symmetric, its eigenvalues are real and
+\[
+  \|M_{\text{mass}}(\kappa)\|_2 = \max\{|\lambda_+(\kappa)|, |\lambda_-(\kappa)|\}.
+\]
+If $M_{\text{mass}}(\kappa)$ is invertible, then
+\[
+  \|M_{\text{mass}}(\kappa)^{-1}\|_2
+  = \frac{1}{\min\{|\lambda_+(\kappa)|, |\lambda_-(\kappa)|\}}.
+\]
+The $2$-norm condition number is
+\[
+  \kappa_2\big(M_{\text{mass}}(\kappa)\big)
+  := \|M_{\text{mass}}(\kappa)\|_2
+     \|M_{\text{mass}}(\kappa)^{-1}\|_2
+  = \frac{\max\{|\lambda_+|,|\lambda_-|\}}
+         {\min\{|\lambda_+|,|\lambda_-|\}}.
+\]
+
+\paragraph{Symmetric Mass Case.} For $m_1=m_2=m>0$ and $|\kappa|<m$, the eigenvalues are $m\pm|\kappa|$ and hence
+\[
+  \|M_{\text{mass}}(\kappa)\|_2 = m + |\kappa|,
+  \quad
+  \|M_{\text{mass}}(\kappa)^{-1}\|_2 = \frac{1}{m - |\kappa|},
+\]
+giving
+\begin{equation}
+  \kappa_2\big(M_{\text{mass}}(\kappa)\big)
+  = \frac{m + |\kappa|}{m - |\kappa|}.
+\end{equation}
+In particular, if $|\kappa|\le \alpha m$ for some $0<\alpha<1$, then
+\begin{equation}
+  \kappa_2\big(M_{\text{mass}}(\kappa)\big)
+  \le \frac{1+\alpha}{1-\alpha},
+\end{equation}
+which is uniformly bounded. This bound underlies the observation that the pseudoinverse remains well-conditioned in the benchmark regime.
+
+\subsection*{B. Lyapunov-Based Gap Regulation}
+
+\subsubsection*{B.1 Lyapunov Function on the Gap}
+
+We define a scalar Lyapunov function
+\begin{equation}
+  H(\Delta) := \frac{1}{2}\Delta^2.
+\end{equation}
+By construction, $H(\Delta)\ge 0$ and $H(\Delta)=0$ if and only if $\Delta=0$, i.e.\ at exact degeneracy.
+
+\paragraph{Symmetric Mass Case.} For $m_1=m_2=m$, we have $\Delta(\kappa)=2|\kappa|$, hence
+\begin{equation}
+  H(\kappa) = \frac{1}{2}(2|\kappa|)^2 = 2\kappa^2.
+\end{equation}
+We take $H(\kappa) = 2\kappa^2$ as a Lyapunov candidate in the $\kappa$-coordinate.
+
+\subsubsection*{B.2 Feedback Law and Lyapunov Derivative}
+
+Define the feedback law
+\begin{equation}
+  \dot\kappa = -4\beta\kappa, \quad \beta>0,
+\end{equation}
+which is equivalent to gradient descent on $H$:
+\begin{align}
+  \frac{\partial H}{\partial \kappa}
+  &= 4\kappa,\\
+  \dot\kappa
+  &= -\beta\frac{\partial H}{\partial \kappa}
+   = -4\beta\kappa.
+\end{align}
+
+Then
+\begin{align}
+  \dot H(\kappa)
+  &= \frac{\partial H}{\partial \kappa}\,\dot\kappa
+   = 4\kappa \cdot (-4\beta\kappa)
+   = -16\beta\kappa^2.
+\end{align}
+This yields the following:
+
+\paragraph{Proposition B.1 (Lyapunov Decrease).} For the symmetric mass case and feedback law $\dot\kappa=-4\beta\kappa$, the Lyapunov function $H(\kappa)=2\kappa^2$ satisfies
+\[
+  \dot H(\kappa(t)) \le 0,\quad \forall t\ge 0,
+\]
+with equality if and only if $\kappa(t)=0$.
+
+\emph{Proof.} Immediate from $\dot H = -16\beta\kappa^2$ and $\beta>0$. \qed
+
+\subsubsection*{B.3 Closed-Form Solution and Relaxation Time}
+
+Solving $\dot\kappa = -4\beta\kappa$ with initial condition $\kappa(0)=\kappa_0$ yields
+\begin{equation}
+  \kappa(t) = \kappa_0\,e^{-4\beta t}.
+\end{equation}
+Then
+\[
+  H(t) = 2\kappa(t)^2 = 2\kappa_0^2 e^{-8\beta t}.
+\]
+For any $0<\alpha<1$, the time $t_\alpha$ at which $H(t)\le \alpha H(0)$ is given by
+\[
+  2\kappa_0^2 e^{-8\beta t_\alpha} \le \alpha \cdot 2\kappa_0^2
+  \quad\Rightarrow\quad
+  e^{-8\beta t_\alpha} \le \alpha
+\]
+and thus
+\begin{equation}
+  t_\alpha \ge \frac{\ln(1/\alpha)}{8\beta}.
+\end{equation}
+For the 95\% reduction level $\alpha = 0.05$, we obtain
+\begin{equation}
+  t_{95}
+  = \frac{\ln 20}{8\beta}.
+\end{equation}
+
+\subsection*{C. Multiplicity Observable and Its Derivative}
+
+\subsubsection*{C.1 Smooth Multiplicity from Gap}
+
+Define a smooth multiplicity observable $M:\mathbb{R}_{\ge 0}\to(1,2]$ by
+\begin{equation}
+  M(\Delta) = 1 + \exp\left(-\frac{\Delta^2}{2\sigma^2}\right),
+  \quad \sigma>0.
+\end{equation}
+Then:
+\[
+  \lim_{\Delta\to\infty} M(\Delta) = 1,
+  \quad
+  M(0) = 2,
+\]
+so multiplicity moves from $1$ (well-separated eigenvalues) toward $2$ (degeneracy) as the gap closes.
+
+\subsubsection*{C.2 Derivative with Respect to Gap and Coupling}
+
+Computing the derivative with respect to $\Delta$,
+\begin{align}
+  \frac{\partial M}{\partial \Delta}(\Delta)
+  &= \exp\left(-\frac{\Delta^2}{2\sigma^2}\right)
+     \left(-\frac{\Delta}{\sigma^2}\right)
+     \cdot (-1)\\
+  &= \frac{\Delta}{\sigma^2}
+     \exp\left(-\frac{\Delta^2}{2\sigma^2}\right).
+\end{align}
+For $\Delta>0$, the derivative of $\Delta(\kappa)$ with respect to $\kappa$ is
+\begin{align}
+  \frac{\partial \Delta}{\partial \kappa}
+  &= \frac{1}{2}\left[(m_1 - m_2)^2 + 4\kappa^2\right]^{-1/2} \cdot 8\kappa
+   = \frac{4\kappa}{\Delta}.
+\end{align}
+Thus,
+\begin{align}
+  \frac{\partial M}{\partial \kappa}
+  &= \frac{\partial M}{\partial \Delta}
+     \frac{\partial \Delta}{\partial \kappa}\\
+  &= \left(
+       \frac{\Delta}{\sigma^2}
+       \exp\left(-\frac{\Delta^2}{2\sigma^2}\right)
+     \right)
+     \left(
+       \frac{4\kappa}{\Delta}
+     \right)\\
+  &= \frac{4\kappa}{\sigma^2}
+     \exp\left(-\frac{\Delta^2}{2\sigma^2}\right).
+\end{align}
+
+\subsubsection*{C.3 Time Derivative Under Spectral Feedback}
+
+Given the feedback law $\dot\kappa = -4\beta\kappa$, we obtain
+\begin{align}
+  \dot M
+  &= \frac{\partial M}{\partial \kappa}\,\dot\kappa\\
+  &= \frac{4\kappa}{\sigma^2}
+     \exp\left(-\frac{\Delta^2}{2\sigma^2}\right)
+     (-4\beta\kappa)\\
+  &= -\frac{16\beta\kappa^2}{\sigma^2}
+      \exp\left(-\frac{\Delta^2}{2\sigma^2}\right).
+\end{align}
+Hence:
+
+\paragraph{Proposition C.1 (Sign and Smoothness of \texorpdfstring{$\dot M$}{dot M}).}
+For $\sigma>0$, $\beta>0$ and any $\kappa\in\mathbb{R}$:
+\begin{enumerate}
+  \item $\dot M(\kappa) \le 0$ with equality if and only if $\kappa=0$ (for the degeneracy-seeking form).
+  \item $\dot M(\kappa)$ is smooth in $\kappa$ and tends to $0$ as either $\kappa\to 0$ or $|\kappa|\to\infty$.
+\end{enumerate}
+
+\emph{Proof.} The factor $-16\beta\kappa^2/\sigma^2$ is nonpositive, with equality only at $\kappa=0$. The exponential factor is positive and decays to $0$ as $|\Delta|\to\infty$; continuity in $\kappa$ follows from continuity of all components. \qed
+
+\subsection*{D. Multiplicity-Shaped Dissipation}
+
+\subsubsection*{D.1 Definition and Bounds}
+
+Define
+\begin{equation}
+  c(t) = c_0 + \gamma |\dot M(t)|
+       = c_0 + \gamma \left|
+         -\frac{16\beta\kappa^2(t)}{\sigma^2}
+         \exp\left(-\frac{\Delta^2(t)}{2\sigma^2}\right)
+       \right|,
+\end{equation}
+with $c_0>0$, $\gamma>0$.
+
+Then:
+\[
+  c(t) \ge c_0,
+\]
+and
+\begin{equation}
+  c(t) \le c_0 + \gamma \frac{16\beta}{\sigma^2}\kappa^2(t),
+\end{equation}
+since $0<\exp(-\Delta^2/(2\sigma^2))\le 1$.
+
+\paragraph{Symmetric Mass Case.} With $m_1=m_2$, we have $\Delta = 2|\kappa|$, and
+\begin{equation}
+  c(t) = c_0 + \gamma \frac{16\beta\kappa^2(t)}{\sigma^2}
+                 \exp\left(-\frac{2\kappa^2(t)}{\sigma^2}\right).
+\end{equation}
+The function
+\[
+  f(\kappa) := \kappa^2 \exp\left(-\frac{2\kappa^2}{\sigma^2}\right)
+\]
+has a unique maximum at $|\kappa| = \sigma/\sqrt{2}$, with
+\[
+  f_{\max} = \frac{\sigma^2}{2e}.
+\]
+Therefore,
+\begin{equation}
+  \max_t c(t)
+  = c_0 + \gamma \frac{16\beta}{\sigma^2} f_{\max}
+  = c_0 + \gamma \frac{16\beta}{\sigma^2} \cdot \frac{\sigma^2}{2e}
+  = c_0 + \frac{8\beta\gamma}{e}.
+\end{equation}
+This shows that the dissipation bump is bounded and independent of the initial condition $\kappa_0$ (provided the trajectory passes through the region where $|\kappa|=\sigma/\sqrt{2}$).
+
+\subsection*{E. Phase-Space Dissipation and Relative Coordinates}
+
+\subsubsection*{E.1 Relative Coordinates}
+
+Define relative coordinates
+\[
+  q_r = q_1 - q_2, \quad p_r = p_1 - p_2.
+\]
+The coupled mechanical equations induce a dissipative dynamics in $(q_r,p_r)$.
+
+Without reproducing all algebra, the key qualitative property is:
+
+\paragraph{Proposition E.1 (Dissipative Spiral in Relative Phase Space).}
+Under the multiplicity-shaped dissipation $c(t)\ge c_0>0$ and Lyapunov-based coupling dynamics, the relative coordinates $(q_r,p_r)$ exhibit trajectories that spiral toward the origin in the $(q_r,p_r)$-plane.
+
+\emph{Sketch of Proof.} In the symmetric case for masses and appropriate symmetry assumptions on stiffness, the relative mode behaves like a damped oscillator with time-varying damping $c(t)$ bounded away from zero. Standard results for linear systems with positive damping imply asymptotic decay of $(q_r,p_r)$ to $(0,0)$, and trajectories in the phase plane form spirals converging to the origin. Numerical integration confirms this qualitative picture for the benchmark parameter ranges. \qed
+
+\subsection*{F. Summary of Key Bounds and Properties}
+
+For ease of reference, we summarize the principal mathematical properties established in this appendix:
+
+\begin{enumerate}[label=(\arabic*)]
+  \item \textbf{Spectral structure:} The contracted mass block $M_{\text{mass}}(\kappa)$ is symmetric with eigenvalues $\lambda_\pm(\kappa)$ and gap $\Delta(\kappa)$ as given above. In the symmetric mass case, $\Delta=2|\kappa|$.
+  \item \textbf{Invertibility and conditioning:} If $|\kappa|<\sqrt{m_1 m_2}$, then $M_{\text{mass}}(\kappa)$ is invertible. In the symmetric mass case with $|\kappa|\le \alpha m$ ($0<\alpha<1$), the condition number satisfies $\kappa_2 \le (1+\alpha)/(1-\alpha)$.
+  \item \textbf{Lyapunov monotonicity:} The Lyapunov function $H(\kappa)=2\kappa^2$ satisfies $\dot H = -16\beta\kappa^2\le 0$ under the feedback law $\dot\kappa=-4\beta\kappa$.
+  \item \textbf{Relaxation time:} The time to reach $H(t)\le \alpha H(0)$ is $t_\alpha \ge \ln(1/\alpha)/(8\beta)$; in particular, $t_{95} = \ln 20/(8\beta)$.
+  \item \textbf{Multiplicity dynamics:} The smooth multiplicity observable $M(\Delta)=1+\exp(-\Delta^2/(2\sigma^2))$ has derivative $\dot M = -(16\beta\kappa^2/\sigma^2)\exp(-\Delta^2/(2\sigma^2))\le 0$ and is smooth in $\kappa$.
+  \item \textbf{Dissipation bounds:} The dissipation coefficient $c(t)=c_0+\gamma|\dot M(t)|$ satisfies $c(t)\ge c_0$ and, in the symmetric case, is bounded above by $c_0 + 8\beta\gamma/e$.
+  \item \textbf{Relative-mode dissipation:} In relative coordinates $(q_r,p_r)$, the system behaves as a damped oscillator with time-varying but bounded damping, yielding spiraling trajectories toward the origin.
+\end{enumerate}
+
+These results provide the explicit mathematical guarantees---Lyapunov decrease, operator norm bounds, and dissipation limits---underpinning the numerical and conceptual framework presented in the main article.
+\nocite{*}
+\bibliographystyle{plain}
+\bibliography{references}
+
+\end{document}

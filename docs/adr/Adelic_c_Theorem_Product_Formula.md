@@ -1,7 +1,8 @@
 # Adelic c-Theorem Product Formula
 
 **Version 1.0 – 2026-07-04**  
-**Status:** Exploratory / Foundational  
+## Status
+**Adopted**
 **Related ADRs:** p-adic c-Theorem, p-adic AdS Realization, Continuous Topological Phase Mirror, Phase Mirror Duality Symmetry, PIRTM Tensor-Recursive Kernels, CRMF Resonance Terms
 
 ---

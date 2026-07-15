@@ -1,14 +1,15 @@
-//! Auto-generated from Lean verified theorems.
-//! This file is a fallback used when the `lean-gen` feature is disabled.
-//! It must be kept in sync with the Lean `ExportThresholds.lean` generator.
-//! To regenerate: run `cargo build -p sigma --features lean-gen`.
+// Auto-generated from Lean verified theorems.
+// This file is a fallback used when the `lean-gen` feature is disabled.
+// It must be kept in sync with the Lean `ExportThresholds.lean` generator.
+// To regenerate: run `cargo build -p sigma --features lean-gen`.
 
-use serde::{Deserialize, Serialize};
+// Note: `serde` and `bincode` traits are resolved contextually if imported in lib.rs
+// but it's safer to use fully qualified paths to avoid `use` collisions.
 use bincode::{Decode, Encode};
 
 /// Thresholds governing the Sigma Kernel's contractivity and dissonance checks.
 /// All values are derived from Lean theorems (Rpi_seq_ub_seven, Rlambda1_pos, etc.).
-#[derive(Debug, Clone, Serialize, Deserialize, Encode, Decode)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, Encode, Decode)]
 pub struct Thresholds {
     /// Reference R value for the sequence (F₁ grounding).
     pub tau_r: f64,

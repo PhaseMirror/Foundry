@@ -47,7 +47,7 @@ inductive MocOp
   deriving Repr, DecidableEq
 
 /-- Operator Word: A sequence of MOC operators -/
-def OperatorWord := List MocOp
+abbrev OperatorWord := List MocOp
 
 /-- 
   PIRTM State Morphism (Inductive):

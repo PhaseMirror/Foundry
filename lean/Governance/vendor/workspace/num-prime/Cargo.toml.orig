@@ -1,0 +1,48 @@
+[workspace.package]
+edition = "2018"
+rust-version = "1.70"
+
+[package]
+name = "num-prime"
+version = "0.5.0"
+edition.workspace = true
+rust-version.workspace = true
+repository = "https://github.com/uutils/num-prime"
+keywords = ["mathematics", "primes", "number-theory", "bigint", "num"]
+categories = ["cryptography", "science", "algorithms"]
+documentation = "https://docs.rs/num-prime"
+license = "Apache-2.0"
+description = """
+Generic and optimized primality test, factorization and various number theoretic functions with arbitrary precision based on `num`.
+"""
+readme = "README.md"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+num-integer = "0.1.44"
+num-traits = "0.2.14"
+num-modular = "0.6.1"
+bitvec = "1.0.0"
+rand = "0.8.4"
+lru = "0.16.3"
+either = "1.6.1"
+
+[dependencies.num-bigint]
+optional = true
+version = "0.4.6"
+features = ["rand"]
+
+[features]
+default = ['big-table', 'big-int']
+big-table = []
+# TODO: use the new cargo feature to override the num-bigint option
+big-int = ['num-bigint', 'num-modular/num-bigint', 'num-modular/num-traits', 'num-modular/num-integer']
+
+[workspace]
+members = [
+  "bench",
+]
+
+[package.metadata.docs.rs]
+all-features = true

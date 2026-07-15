@@ -2,7 +2,8 @@
 ## Adding Computational Content to the Free Compact-Closed PETC Structure
 
 **Version 1.0 – 2026-07-04**  
-**Status:** Exploratory ADR – builds directly on `Free_CompactClosed_Category.md` and `Compact_Closed_Enrichment.md`
+## Status
+**Adopted**
 
 ---
 

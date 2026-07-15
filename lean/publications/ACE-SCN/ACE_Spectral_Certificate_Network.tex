@@ -1,0 +1,384 @@
+\documentclass[11pt]{article}
+
+% ------------------------------------------------
+% Packages
+% ------------------------------------------------
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{bm}
+\usepackage{bbm}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage[capitalize,nameinlink]{cleveref}
+
+% ------------------------------------------------
+% Listings (code formatting)
+% ------------------------------------------------
+\definecolor{codebg}{RGB}{248,248,248}
+\definecolor{codecomment}{RGB}{120,120,120}
+\definecolor{codecmt}{RGB}{0,102,204}
+\lstset{
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  showstringspACE/SCNs=false,
+  frame=single,
+  backgroundcolor=\color{codebg},
+  commentstyle=\color{codecomment}\itshape,
+  keywordstyle=\color{codecmt}\bfseries,
+  columns=fullflexible,
+  tabsize=2,
+  aboveskip=6pt,
+  belowskip=6pt
+}
+
+% ------------------------------------------------
+% Theorem environments
+% ------------------------------------------------
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}{Proposition}
+\newtheorem{lemma}{Lemma}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\newtheorem{example}{Example}
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}
+
+% ------------------------------------------------
+% Macros
+% ------------------------------------------------
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\one}{\mathbbm{1}}
+\newcommand{\norm}[1]{\left\lVert #1 \right\rVert}
+\newcommand{\abs}[1]{\left\lvert #1 \right\rvert}
+\newcommand{\inner}[2]{\left\langle #1,\,#2 \right\rangle}
+
+% ------------------------------------------------
+% Title
+% ------------------------------------------------
+\title{\textbf{Arithmetic Control Engine}\\
+\large Hecke Operators, Stable Learning Dynamics, and Scientific Validation}
+\author{Tyler Van Osdol}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We present \emph{ACE/SCN} (Spectral Control Framework), a minimal and rigorous stack for arithmetic spectral analysis and operator control. 
+The first contribution replACE/SCNs ad hoc matrices with genuine Hecke operators \(T_n\) acting on spACE/SCNs of modular forms \(S_k(\Gamma_0(N))\), computed via computer algebra.
+The second contribution introduces the \emph{Spectral Control Network} (SCN), a stability-aware model that maps spectral state features to bounded operator perturbations using unitary-constrained layers.
+The third contribution is a scientific validation layer that codifies theorem-backed tests (e.g., Ramanujan--Petersson bounds, Hecke multiplicativity) and statistical comparisons.
+We provide a reproducible repository layout, formal problem statements, learning objectives, and property-based tests. 
+The framework is deliberately narrow: it avoids unverifiable terminology and production over-engineering, focusing instead on falsifiable claims and mathematical guarantees.
+\end{abstract}
+\newpage
+\tableofcontents
+
+% =========================================================
+\section{Introduction}
+\label{sec:intro}
+Arithmetic spectral problems naturally arise in the study of Hecke operators acting on spACE/SCNs of modular forms. 
+In practice, interpretability and guarantees benefit from (i) exact algebraic constructions where possible and (ii) stability-aware learning when data-driven control is required.
+ACE/SCN implements these principles through:
+\begin{enumerate}[leftmargin=*,itemsep=2pt]
+  \item \textbf{Mathematical Core:} exact Hecke operators \(T_n\) on \(S_k(\Gamma_0(N))\) using a computer algebra system.
+  \item \textbf{Stability-Aware Learning:} a \emph{Spectral Control Network} with unitary-constrained blocks for robust mappings from spectral states to control actions.
+  \item \textbf{Validation:} theorem-backed tests and statistical checks, replacing heuristic or keyword-based ``validation theater''.
+\end{enumerate}
+
+This article formalizes the design, gives precise definitions, states the key properties we check, and describes the software artifacts enabling reproducibility.
+
+% =========================================================
+\section{Mathematical Foundations}
+\label{sec:foundations}
+
+\subsection{SpACE/SCNs of modular forms}
+Fix integers \(k\ge 2\) (even) and \(N\ge 1\).
+Let \(\Gamma_0(N) \subset \mathrm{SL}_2(\Z)\) be the congruence subgroup of level \(N\).
+We denote by \(M_k(\Gamma_0(N))\) the spACE/SCN of holomorphic modular forms of weight \(k\) and by \(S_k(\Gamma_0(N))\subset M_k(\Gamma_0(N))\) the subspACE/SCN of cusp forms.
+Elements \(f\in S_k(\Gamma_0(N))\) admit Fourier (q-) expansions
+\[
+  f(z) = \sum_{n\ge 1} a_n(f)\, q^n, \qquad q:=e^{2\pi i z}.
+\]
+
+\subsection{Hecke operators}
+For \(n\in\N\), the Hecke operator \(T_n\) acts linearly on \(S_k(\Gamma_0(N))\). 
+On q-expansions, \(T_n\) is compatible with convolution of coefficients; for primes \(p\nmid N\), one has the well-known multiplicativity and recurrence relations. 
+We record the following standard identity.
+
+\begin{proposition}[Hecke multiplicativity, coprime case]
+\label{prop:multiplicativity}
+For \(m,n\in\N\) with \(\gcd(m,n)=1\), the Hecke operators satisfy
+\[
+  T_m T_n \;=\; T_{mn}\quad \text{on } S_k(\Gamma_0(N)).
+\]
+\end{proposition}
+
+For general \(m,n\), the product \(T_mT_n\) decomposes as a Dirichlet-convolution sum:
+\[
+  T_m T_n \;=\; \sum_{d\mid (m,n)} T_{mn/d^2}.
+\]
+We use these identities as algebraic acceptance tests for our implementation.
+
+\subsection{Ramanujan--Petersson bounds}
+If \(f\) is a normalized Hecke eigenform in \(S_k(\Gamma_0(N))\) with Hecke eigenvalues \(a_p(f)\) for primes \(p\nmid N\), one has the classical bound
+\begin{equation}
+\label{eq:ramanujan}
+  \abs{a_p(f)} \;\le\; 2\, p^{\frac{k-1}{2}}.
+\end{equation}
+In ACE/SCN we verify that all computed Hecke eigenvalues respect \eqref{eq:ramanujan} (up to numerical tolerance where applicable).
+
+% =========================================================
+\section{Implementation: Exact Hecke Operators}
+\label{sec:implementation-hecke}
+
+\paragraph{InterfACE/SCN.}
+We implement a minimal Python interfACE/SCN that delegates arithmetic to a computer algebra system capable of constructing Hecke operators on \(S_k(\Gamma_0(N))\).
+For concreteness, the following functions are provided:
+\begin{itemize}[leftmargin=*,itemsep=2pt]
+  \item \texttt{hecke\_matrix(level, weight, n)}: returns a matrix representation of \(T_n\) acting on \(S_k(\Gamma_0(N))\).
+  \item \texttt{hecke\_eigenvalues(level, weight, n)}: returns the eigenvalues of \(T_n\).
+\end{itemize}
+
+\paragraph{Sanity and algebraic tests.}
+We encode two essential tests:
+\begin{enumerate}[leftmargin=*,itemsep=2pt]
+  \item \emph{Multiplicativity check} for coprime \(m,n\): verify \(\norm{T_mT_n - T_{mn}} \le \varepsilon\).
+  \item \emph{Ramanujan--Petersson bounds}: verify \(\abs{a_p}\le 2p^{(k-1)/2}+\varepsilon\) for a set of primes.
+\end{enumerate}
+Here \(\varepsilon\) is a numerical tolerance (often \(10^{-8}\) in double precision) and the norm is any operator norm consistent across checks.
+
+\paragraph{Minimal code excerpt.}
+\begin{lstlisting}[language=Python,caption={Exact Hecke operator interfACE/SCN.}]
+from sage.all import CuspForms
+
+def hecke_matrix(level: int, weight: int, n: int):
+    S = CuspForms(level, weight)
+    Tn = S.hecke_operator(n)
+    return Tn.matrix()
+
+def hecke_eigenvalues(level: int, weight: int, n: int):
+    M = hecke_matrix(level, weight, n)
+    return M.eigenvalues()
+\end{lstlisting}
+
+% =========================================================
+\section{Spectral Control Network (SCN)}
+\label{sec:scn}
+
+\subsection{Problem setting}
+Let \(A\in\C^{d\times d}\) be a (normal or symmetric) operator with eigenvalues \(\lambda_1\le \dots \le \lambda_d\).
+Define the \emph{spectral gap} \(g(A):=\min_{i}(\lambda_{i+1}-\lambda_i)\) for \(d\ge 2\).
+Given a target gap \(\hat g>0\), we seek a bounded perturbation \(\Delta\) with \(\norm{\Delta}\le \varepsilon\) that moves the spectrum toward the target: \(g(A+\Delta)\approx \hat g\).
+In data-driven regimes, we learn a mapping from spectral features of \(A\) and \(\hat g\) to a proposed control vector \(w\) parameterizing \(\Delta(w)\).
+
+\subsection{Unitary-constrained internal dynamics}
+To promote stability, we employ a \emph{unitary (orthogonal in the real case) block} parameterized by a skew-symmetric matrix. 
+Let \(A\in\R^{h\times h}\) be trainable and define \(S:=A-A^\top\). Then \(U:=\exp(S)\) is orthogonal and induces a norm-preserving transform.
+
+\begin{lemma}[Stability of the unitary block]
+\label{lem:unitary}
+For any \(x\in\R^{1\times h}\), \( \norm{xU}_2 = \norm{x}_2\).
+Hence the block does not amplify the hidden representation in Euclidean norm.
+\end{lemma}
+
+\begin{proof}
+Orthogonality implies \(U^\top U = I\). Then \(\norm{xU}_2^2 = xUU^\top x^\top = xx^\top = \norm{x}_2^2\).
+\end{proof}
+
+\subsection{Certificate via Weyl's inequality}
+Let \(A\) and \(\Delta\) be Hermitian. By Weyl's inequality, for each \(i\),
+\[
+  \abs{\lambda_i(A+\Delta)-\lambda_i(A)} \le \norm{\Delta}_2.
+\]
+Therefore the change in any gap satisfies
+\begin{equation}
+\label{eq:gap-bound}
+  \abs{g(A+\Delta) - g(A)} \le 2\,\norm{\Delta}_2.
+\end{equation}
+Thus, constraining \(\norm{\Delta}_2\le \varepsilon\) certifies that the gap changes by at most \(2\varepsilon\).
+
+\begin{proposition}[Gap-control certificate]
+\label{prop:gap-certificate}
+If the SCN produces a perturbation \(\Delta\) with \(\norm{\Delta}_2\le \varepsilon\), then the spectral gap deviation is bounded by \eqref{eq:gap-bound}. 
+\end{proposition}
+
+\subsection{SCN architecture and objective}
+We define a feature map \(\phi\) collecting spectral statistics:
+\[
+  \phi(A,\hat g) = \big[g(A),\, \hat g,\, \operatorname{mean}(\lambda),\, \operatorname{std}(\lambda),\, \min \lambda,\, \max \lambda,\, \operatorname{mean}(\Delta\lambda),\, \operatorname{std}(\Delta\lambda)\big] \in \R^{s}.
+\]
+A small network \(F_\theta:\R^{s}\to\R^{m}\) outputs a control vector \(w\), and a differentiable map \(w\mapsto \Delta(w)\) yields the proposed perturbation. 
+Training minimizes
+\[
+  \mathcal{L}(\theta) 
+  = \underbrACE/SCN{\big(g(A+\Delta(w_\theta))-\hat g\big)^2}_{\text{gap tracking}}
+  + \lambda \underbrACE/SCN{\max\{0,\norm{\Delta(w_\theta)}_2-\varepsilon\}^2}_{\text{certificate penalty}},
+\]
+optionally with regularizers on \(w\) or structure in \(\Delta\).
+
+\paragraph{Minimal code excerpt.}
+\begin{lstlisting}[language=Python,caption={Spectral Control Network (unitary block).}]
+import torch, torch.nn as nn
+import numpy as np
+
+class UnitaryBlock(nn.Module):
+    def __init__(self, dim: int):
+        super().__init__()
+        self.A = nn.Parameter(torch.randn(dim, dim) * 0.01)
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        S = self.A - self.A.T
+        U = torch.matrix_exp(S)    # orthogonal in R, unitary in C
+        return x @ U
+
+class SpectralControlNetwork(nn.Module):
+    def __init__(self, state_dim=8, hidden_dim=32, control_dim=8):
+        super().__init__()
+        self.inp = nn.Linear(state_dim, hidden_dim)
+        self.unitary = UnitaryBlock(hidden_dim)
+        self.out = nn.Linear(hidden_dim, control_dim)
+    def forward(self, state: torch.Tensor) -> torch.Tensor:
+        h = torch.tanh(self.inp(state))
+        h = self.unitary(h)
+        return torch.tanh(self.out(h))
+\end{lstlisting}
+
+% =========================================================
+\section{Validation and Scientific Tests}
+\label{sec:validation}
+
+\subsection{Arithmetic tests}
+\begin{itemize}[leftmargin=*,itemsep=2pt]
+  \item \textbf{Hecke multiplicativity:} verify \(\norm{T_mT_n - T_{mn}}\le \varepsilon\) for coprime \((m,n)\).
+  \item \textbf{Ramanujan--Petersson:} verify \(\abs{a_p}\le 2p^{(k-1)/2}+\varepsilon\) for a set of primes \(p\nmid N\).
+\end{itemize}
+
+\subsection{Statistical distribution checks}
+When comparing empirical spectral statistics to a reference distribution, we employ the Kolmogorov--Smirnov two-sample test and report the statistic and \(p\)-value; we \emph{do not} claim agreement without explicit thresholds and power discussion.
+
+\subsection{Reproducibility}
+To ensure determinism:
+\begin{enumerate}[leftmargin=*,itemsep=2pt]
+  \item Fix random seeds across libraries.
+  \item Pin package versions.
+  \item Provide exact scripts for each table/figure.
+\end{enumerate}
+
+\subsection{Illustrative test excerpts}
+\begin{lstlisting}[language=Python,caption={Ramanujan--Petersson bound test.}]
+from ACE/SCN.core.hecke_core import hecke_eigenvalues
+def verify_rp(evals, p, k, tol=1e-8):
+    bound = 2 * (p ** ((k-1)/2))
+    return all(abs(complex(ev)) <= bound + tol for ev in evals)
+
+def test_rp_level1_weight12():
+    primes = [2,3,5,7,11,13,17,19,23]
+    for p in primes:
+        evals = hecke_eigenvalues(level=1, weight=12, n=p)
+        assert verify_rp(evals, p, 12)
+\end{lstlisting}
+
+% =========================================================
+\section{Repository Layout and Workflow}
+\label{sec:repo}
+
+\subsection{Minimal structure}
+\begin{lstlisting}[language=bash,caption={Directory layout.}]
+ACE/SCN-Spectral-Control/
+  ACE/SCN/
+    core/           # Hecke operators (exact)
+    control/        # Spectral Control Network
+    validation/     # Bound checks, stats, units
+  tests/
+    scientific/     # Theorem-backed tests
+    unit/           # Lightweight unit tests
+  examples/         # Minimal end-to-end scripts
+  requirements.txt
+  README.md
+\end{lstlisting}
+
+\subsection{Quickstart}
+\begin{enumerate}[leftmargin=*,itemsep=2pt]
+  \item Install a computer algebra system that provides \(T_n\) on \(S_k(\Gamma_0(N))\).
+  \item \texttt{pip install -r requirements.txt}.
+  \item Run \texttt{python tests/scientific/test\_ramanujan\_bounds.py}.
+  \item Explore \texttt{examples/basic\_hecke.py} and \texttt{examples/scn\_demo.py}.
+\end{enumerate}
+
+% =========================================================
+\section{Limitations and Scope}
+\label{sec:limitations}
+ACE/SCN currently focuses on:
+\begin{itemize}[leftmargin=*,itemsep=2pt]
+  \item Classical cusp forms \(S_k(\Gamma_0(N))\) and prime-power Hecke operators.
+  \item Hermitian/symmetric operators for gap control and certification via \eqref{eq:gap-bound}.
+\end{itemize}
+We do not claim:
+\begin{itemize}[leftmargin=*,itemsep=2pt]
+  \item New theorems in number theory.
+  \item Quantum computation or hardware-level models.
+  \item Production infrastructure beyond research reproducibility.
+\end{itemize}
+
+% =========================================================
+\section{Roadmap}
+\label{sec:roadmap}
+\begin{enumerate}[leftmargin=*,itemsep=2pt]
+  \item Extend arithmetic functionality to new levels \(N\), weights \(k\), and Atkin--Lehner operators; add old/newform decompositions.
+  \item Enrich SCN with structured perturbations \(\Delta(w)\) aligned with known operator symmetries.
+  \item Add property-based tests for spectral gap shaping; benchmark against curated modular-form datasets.
+  \item Package reproducible containers for exact-environment runs.
+\end{enumerate}
+
+% =========================================================
+\section*{Acknowledgments}
+We thank the community for careful critiques that motivated this revision: replacing superficial terminology with explicit constructions and falsifiable tests.
+
+% =========================================================
+\appendix
+
+\section{Educational Fallback (Optional)}
+\label{app:fallback}
+For environments without computer algebra, an \emph{educational stub} may synthesize small symmetric matrices to exercise the SCN and the validation harness.
+These stubs are clearly marked and never used to make arithmetic claims.
+
+\section{Environment and Seeding}
+\label{app:env}
+We fix seeds in NumPy/PyTorch; versions are pinned in \texttt{requirements.txt}. For exact arithmetic, we rely on the CAS implementation of Hecke operators.
+
+% =========================================================
+\begin{thebibliography}{9}
+
+\bibitem{diamondshurman}
+F.~Diamond and J.~Shurman,
+\newblock \emph{A First Course in Modular Forms},
+\newblock Springer, 2005.
+
+\bibitem{serre}
+J.-P.~Serre,
+\newblock \emph{A Course in Arithmetic},
+\newblock Springer, 1973.
+
+\bibitem{iwaniecluo}
+H.~Iwaniec,
+\newblock \emph{Topics in Classical Automorphic Forms},
+\newblock American Mathematical Society, 1997.
+
+\end{thebibliography}
+
+\end{document}
+
+
+

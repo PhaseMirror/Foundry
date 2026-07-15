@@ -1,10 +1,10 @@
-// lean/Core/Multiset.lean
+-- lean/Core/Multiset.lean
 -- Multiplicity Theory – Core Prime‑Encoded Multisets
 -- No imports from Mathlib; only core Lean definitions.
 
 namespace Multiplicity.Core
 
-open Nat
+def Prime (p : Nat) : Prop := 2 ≤ p ∧ ∀ m, m ∣ p → m = 1 ∨ m = p
 
 /-! ### Prime‑encoded multiset definition
 We represent a multiset as a function `f : Nat → Nat` that is non‑zero only on primes
@@ -20,17 +20,13 @@ structure FiniteSupport where
   prime_enc : is_prime_encoding f
   bound : ∃ N, ∀ n ≥ N, f n = 0
 
-instance : DecidableEq FiniteSupport := by
-  unfold FiniteSupport
-  infer_instance
-
 /-- The type of prime‑encoded multisets. -/
 abbrev Multiset := FiniteSupport
 
 /-- Empty multiset. -/
 def empty : Multiset :=
   { f := fun _ => 0,
-    prime_enc := by intro n h; cases h,
+    prime_enc := by intro n h; contradiction,
     bound := ⟨0, by intro n _; rfl⟩ }
 
 /-- Singleton multiset containing one occurrence of a prime `p`. -/
@@ -38,36 +34,43 @@ def singleton (p : Nat) (hp : Prime p) : Multiset :=
   { f := fun q => if q = p then 1 else 0,
     prime_enc := by
       intro q hq
-      have : q = p := by
-        have : (if q = p then 1 else 0) = 1 := by
-          simpa [hq] using hq
-        simpa [if_pos, if_neg] using this
-      subst this; exact hp,
-    bound := ⟨p + 1, by intro n hn; simp [Nat.not_le_of_gt hn]⟩ }
+      dsimp at hq
+      split at hq
+      · next heq =>
+        subst heq
+        exact hp
+      · contradiction,
+    bound := ⟨p + 1, by
+      intro n hn
+      by_cases hne : n = p
+      · have hp_absurd : p ≥ p + 1 := by rw [hne] at hn; exact hn
+        have h_absurd : p < p := Nat.lt_of_lt_of_le (Nat.lt_succ_self p) hp_absurd
+        exact False.elim (Nat.lt_irrefl p h_absurd)
+      · have : (if n = p then 1 else 0) = 0 := if_neg hne
+        exact this⟩ }
 
 /-- Union of two multisets corresponds to pointwise addition of exponents. -/
 def union (M N : Multiset) : Multiset :=
   { f := fun p => M.f p + N.f p,
     prime_enc := by
       intro p hp
-      have hM : M.f p = 0 ∨ M.f p ≠ 0 := em (M.f p = 0)
-      have hN : N.f p = 0 ∨ N.f p ≠ 0 := em (N.f p = 0)
-      cases hM with
-      | inl hM0 =>
-        have : N.f p ≠ 0 := by
-          intro h0; have : M.f p + N.f p = 0 := by simpa [hM0, h0] using hp
-          exact Nat.succ_ne_zero _ (by simpa using this)
-        exact N.prime_enc p this
-      | inr hMne0 =>
-        exact M.prime_enc p hMne0,
+      dsimp at hp
+      by_cases h : M.f p = 0
+      · have hn_nz : N.f p ≠ 0 := by
+          intro hN
+          rw [h, hN] at hp
+          contradiction
+        exact N.prime_enc p hn_nz
+      · exact M.prime_enc p h,
     bound := by
       rcases M.bound with ⟨NM, hM⟩
       rcases N.bound with ⟨NN, hN⟩
       refine ⟨max NM NN, ?_⟩
       intro n hn
-      have hMzero : M.f n = 0 := hM n (le_of_max_le_left hn)
-      have hNzero : N.f n = 0 := hN n (le_of_max_le_right hn)
-      simpa [hMzero, hNzero] }
+      have hMzero : M.f n = 0 := hM n (Nat.le_trans (Nat.le_max_left _ _) hn)
+      have hNzero : N.f n = 0 := hN n (Nat.le_trans (Nat.le_max_right _ _) hn)
+      have hSum : M.f n + N.f n = 0 := by rw [hMzero, hNzero]
+      exact hSum }
 
 /-- The exponent of a prime `p` in the union is the sum of exponents. -/
 theorem interaction_exponent_add (M N : Multiset) (p : Nat) :

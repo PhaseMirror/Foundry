@@ -1,0 +1,184 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{microtype}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{doi}
+
+\title{\vspace{-1em}
+Unknotting Number is Not Additive Under Connected Sum:\\
+A Certified Computational Proof and Conceptual Framing
+\vspace{-.5em}}
+\author{Ryan O. Van Gelder \\
+\small This note summarizes and reframes the result of\\[-.25em]
+\small \textbf{Mark Brittenham and Susan Hermiller}, \emph{Unknotting number is not additive under connected sum},\\[-.25em]
+\small arXiv:2506.24088 (v2, Sept.\ 15, 2025), \href{https://doi.org/10.48550/arXiv.2506.24088}{DOI: 10.48550/arXiv.2506.24088}.}
+\date{\small October 10, 2025}
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}
+\newtheorem{question}{Question}
+
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\K}{K}
+\newcommand{\Kb}{\overline{K}}
+\newcommand{\Kone}{K_1}
+\newcommand{\Ktwo}{K_2}
+\newcommand{\Kthree}{K_3}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We give the first explicit examples of knots \(K_1,K_2\subset S^3\) for which
+\[
+u(K_1\#K_2)\;<\;u(K_1)+u(K_2).
+\]
+In particular, for \(K=7_1=T(2,7)\) with \(u(K)=3\), we construct a concrete 5--move unknotting sequence for \(L=K\#\overline K\), proving \(u(L)\le5<6=u(K)+u(\overline K)\), thereby answering Kirby’s Problem 1.69(B) in the negative. The proof is \emph{certified by explicit combinatorial data} (braid words, DT codes) and \emph{independent checks} (prime decomposition and group invariants) using SnapPy/Spherogram and Sage, following Brittenham--Hermiller~\cite{BH25}. We further promote the construction to infinite families, including non-torus examples, via Gordian adjacency.
+\end{abstract}
+
+\section{Introduction and statement of the main result}
+Let \(u(\cdot)\) denote the unknotting number. Brittenham and Hermiller~\cite{BH25} prove that unknotting number fails to be additive under connected sum.
+
+\begin{theorem}[Brittenham--Hermiller]
+\label{thm:main}
+Let \(K=7_1=T(2,7)\). Then
+\[
+u\bigl(K\#\overline K\bigr)\le5<6=u(K)+u(\overline K)=3+3,
+\]
+so unknotting number is not additive under connected sum.
+\end{theorem}
+
+The proof is constructive and relies on an explicit diagrammatic sequence of crossing changes, all of which are verifiable by the computational protocol of~\cite{BH25}. We record the key steps and the reproducibility framework in a compact form.
+
+\section{Proof outline and roadmap for Theorem~\ref{thm:main}}
+Write \(L=K\#\overline K\) with \(K=7_1\). The authors of~\cite{BH25} provide a specific \(5\)-strand, \(20\)-crossing braid for \(L\),
+\[
+\texttt{brd}=[1,-4,2,3,3,3,2,3,2,2,4,-3,-3,-3,-3,-1,-3,-2,-3,-3],
+\]
+obtained by simplifying an initial \(119\)-crossing presentation using KnotPlot/SnapPy. The verification script shipped with~\cite{BH25} demonstrates that the closure of \texttt{brd} is \(L\) by computing a prime decomposition (via \texttt{spherogram}'s \texttt{Link.prime\_decomposition()} interface) and identifying the two summands as \(7_1\) and \(\overline{7_1}\).
+
+\medskip
+\noindent\textbf{Roadmap (LaTeX-friendly).} Label the crossings to be changed in figures and code as \((c_1,c_2,d_0,e_6,f_{13})\). The sequence is
+\begin{enumerate}[label=\textbf{(\arabic*)}, leftmargin=2.2em]
+  \item \(L=7_1\#\overline{7_1}\)\; \(\xRightarrow[\text{2 changes at }(c_1,c_2)]{}\)\; \(\Kone=\text{K14a18636}\).
+  \item \(\Kone\)\; \(\xRightarrow[\text{1 change at }(d_0)]{}\)\; \(\Ktwo=\text{K15n81556}\).
+  \item \(\Ktwo\)\; \(\xRightarrow[\text{1 change at }(e_6)]{}\)\; \(\Kthree=\text{K12n412}\).
+  \item \(\Kthree\)\; \(\xRightarrow[\text{1 change at }(f_{13})]{}\)\; \(\)unknot.
+\end{enumerate}
+
+\begin{lemma}\label{lem:K1le3}
+\(u(\Kone)\le 3\).
+\end{lemma}
+
+\begin{proof}[Proof sketch]
+From a \(15\)-crossing diagram of \(\Kone\) with DT code \([4,-16,24,26,18,20,28,22,-2,10,12,30,6,8,14]\), a single labeled change produces \(\Ktwo=\text{K15n81556}\).
+From an alternative \(15\)-crossing diagram of \(\Ktwo\) with DT code \([4,12,-24,14,18,2,20,26,8,10,-28,-30,16,-6,-22]\), a single labeled change yields \(\Kthree=\text{K12n412}\).
+Finally \(u(\Kthree)=1\) (see KnotInfo~\cite{KnotInfo}), so one more change unknots it. Hence \(u(\Kone)\le 3\).
+\end{proof}
+
+\begin{proof}[Proof of Theorem~\ref{thm:main}]
+Step~(1) performs two changes to reach \(\Kone\); by Lemma~\ref{lem:K1le3}, \(u(\Kone)\le3\). Therefore
+\(
+u(L)\le 2+u(\Kone)\le 2+3=5<6=u(K)+u(\overline K).
+\)
+\end{proof}
+
+\section{A sharp contrast: \(u(K\#K)=6\) for \(K=7_1\)}
+\begin{remark}[Signature bound and additivity for \(K\#K\)]
+For \(K=T(2,7)\) we have \(\sigma(K)=6\) and \(\sigma(\overline K)=-6\).
+The Murasugi--Tristram bound gives \(u(J)\ge \tfrac12|\sigma(J)|\). Hence
+\[
+u(K\#K)\;\ge\;\tfrac12|\sigma(K)+\sigma(K)|\;=\;6.
+\]
+Subadditivity yields \(u(K\#K)\le u(K)+u(K)=6\), so \(u(K\#K)=6\).
+In contrast, \(\sigma(K\#\overline K)=0\), so the signature bound does not obstruct the \(5\)-move sequence above.
+For background on signatures of torus knots, see e.g.~\cite{Borodzik2010}.
+\end{remark}
+
+\section{Conceptual mechanism: diagram-global crossing changes}
+The two initial changes on \(L=K\#\overline K\) do \emph{not} decompose into independent local moves on the summands.
+Instead, they place \(L\) on a \emph{Gordian path} that passes through the prime knot \(\Kone\) with \(u(\Kone)=3\).
+Thus the path from \(L\) to the unknot factors through a single prime knot rather than two disjoint sequences of lengths \(3\) and \(3\).
+This diagram-global effect is unavailable for \(K\#K\) because the nonzero signature lower bound forces \(u(K\#K)=6\).
+
+\begin{question}
+Characterize connected-sum diagrams \(\mathcal D(K\#\overline K)\) that admit two crossing changes producing a prime \(K'\) with \(u(K')<u(K)+u(\overline K)-2\).
+\end{question}
+
+\section{Certified computation and reproducibility}
+Following \cite{BH25}, the argument is \emph{computational but certified}, not a black-box appeal.
+
+\begin{itemize}[leftmargin=2em]
+\item \textbf{Explicit combinatorics.}
+The braid word for \(L\), the labeled crossing changes \((c_1,c_2)\), and the DT codes for \(\Kone,\Ktwo,\Kthree\) are published in the paper and ancillary materials.
+
+\item \textbf{Independent identification checks.}
+Recognition is corroborated by prime decomposition using \texttt{spherogram}’s \texttt{Link.prime\_decomposition()} (invoked via SnapPy) and by group-invariant checks, which are particularly important in non-hyperbolic cases.
+
+\item \textbf{Verification script.}
+A Sage/Python script reconstructs the sequence
+\(L \to \Kone \to \Ktwo \to \Kthree \to \text{unknot}\),
+prints identifications, and records seeds for randomized routines. Identifications are robust to such randomness.
+
+\item \textbf{External cross-checks.}
+Subsequent notes (e.g.\ Wang~\cite{Wang2025}) give independent verifications in the same spirit. Accessible exposition appears in Quanta~\cite{Quanta2025}.
+\end{itemize}
+
+\section{Broader context}
+Beyond the single example \(K\#\overline K\), Brittenham--Hermiller~\cite{BH25} promote the construction to infinite families via Gordian adjacency, including non-torus examples.
+This indicates that non-additivity is a widespread phenomenon rather than an isolated curiosity.
+
+\bigskip
+\noindent\textbf{Acknowledgment of sources.}
+This note is derivative of, and intended to complement, the original article by Brittenham and Hermiller~\cite{BH25}, to whom full credit for the discovery belongs.
+
+\begin{thebibliography}{9}
+
+\bibitem{BH25}
+M.~Brittenham and S.~Hermiller,
+\newblock \emph{Unknotting number is not additive under connected sum}.
+\newblock arXiv:2506.24088 (v2, Sept.\ 15, 2025).
+\newblock \href{https://doi.org/10.48550/arXiv.2506.24088}{doi:10.48550/arXiv.2506.24088}.
+
+\bibitem{KnotInfo}
+J.~C. Cha and C.~Livingston,
+\newblock \emph{KnotInfo: Table of Knot Invariants}.
+\newblock \url{https://knotinfo.math.indiana.edu/} (accessed 2025).
+% Use this for the statement \(u(\mathrm{K12n412})=1\).
+
+\bibitem{Borodzik2010}
+M.~Borodzik,
+\newblock \emph{On the signatures of torus knots}.
+\newblock \href{https://arxiv.org/abs/1002.4500}{arXiv:1002.4500} (2010).
+
+\bibitem{Wang2025}
+C.~Wang,
+\newblock \emph{A remark on the counterexample to the unknotting number additivity}.
+\newblock arXiv:2507.14265 (2025).
+
+\bibitem{Quanta2025}
+L.~Sloman,
+\newblock \emph{A Simple Way To Measure Knots Has Come Unraveled}.
+\newblock Quanta Magazine, Sept.\ 22, 2025.
+\newblock \url{https://www.quantamagazine.org/}.
+
+\bibitem{SnapPy}
+M.~Culler, N.~M. Dunfield, M.~Goerner, and J.~R. Weeks,
+\newblock \emph{SnapPy, a computer program for studying the geometry and topology of $3$-manifolds}.
+\newblock \url{http://snappy.computop.org}.
+
+\bibitem{Spherogram}
+N.~M. Dunfield,
+\newblock \emph{spherogram} (Python library, distributed with SnapPy).
+\newblock \url{http://snappy.computop.org}.
+
+\end{thebibliography}
+
+\end{document}

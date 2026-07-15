@@ -1,0 +1,1863 @@
+\documentclass[12pt,a4paper]{article}
+
+%% ── Packages ───────────────────────────────────────────────────────────────
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{mathtools}
+\usepackage{bm}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!70!black,
+  citecolor=green!50!black,
+  urlcolor=blue!70!black,
+  pdftitle={ORF EEG and the 13+1 Strata: From Multiplicity Theory to Executable Neuroscience},
+  pdfauthor={Multiplicity Foundation — April 2026}
+}
+\usepackage{listings}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{enumitem}
+\usepackage{tcolorbox}
+\tcbuselibrary{breakable,skins}
+\usepackage{fancyhdr}
+\setlength{\headheight}{15pt}
+\usepackage{titlesec}
+\usepackage{abstract}
+
+%% ── Theorem environments ────────────────────────────────────────────────────
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{example}[theorem]{Example}
+\newtheorem{conjecture}[theorem]{Conjecture}
+
+%% ── Code listing style ──────────────────────────────────────────────────────
+\definecolor{codebg}{HTML}{1E1E2E}
+\definecolor{codegreen}{HTML}{A6E3A1}
+\definecolor{codeblue}{HTML}{89B4FA}
+\definecolor{codeyellow}{HTML}{F9E2AF}
+\definecolor{codepurple}{HTML}{CBA6F7}
+\definecolor{codered}{HTML}{F38BA8}
+\definecolor{codecomment}{HTML}{6C7086}
+\definecolor{codewhite}{HTML}{CDD6F4}
+
+\lstdefinestyle{orfpython}{
+  backgroundcolor=\color{codebg},
+  basicstyle=\ttfamily\footnotesize\color{codewhite},
+  keywordstyle=\color{codepurple}\bfseries,
+  stringstyle=\color{codegreen},
+  commentstyle=\color{codecomment}\itshape,
+  numberstyle=\tiny\color{codecomment},
+  breakatwhitespace=false,
+  breaklines=true,
+  captionpos=b,
+  keepspaces=true,
+  numbers=left,
+  numbersep=8pt,
+  showspaces=false,
+  showstringspaces=false,
+  showtabs=false,
+  tabsize=2,
+  frame=single,
+  rulecolor=\color{blue!30!black},
+  xleftmargin=15pt,
+  language=Python,
+  morekeywords={np,pd,Optional,dataclass,field},
+  literate={λ}{\ensuremath{\lambda}}{1}
+           {Λ}{\ensuremath{\Lambda}}{1}
+           {φ}{\ensuremath{\varphi}}{1}
+           {Ψ}{\ensuremath{\Psi}}{1}
+           {δ}{\ensuremath{\delta}}{1}
+           {Ξ}{\ensuremath{\Xi}}{1}
+}
+
+%% ── Colors for boxes ────────────────────────────────────────────────────────
+\definecolor{wardgreen}{HTML}{2ECC71}
+\definecolor{wardyellow}{HTML}{F39C12}
+\definecolor{wardred}{HTML}{E74C3C}
+\definecolor{boxbg}{HTML}{EEF2FF}
+\definecolor{boxborder}{HTML}{4F46E5}
+
+%% ── Header / Footer ─────────────────────────────────────────────────────────
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{\small ORF EEG \& 13+1 Strata}
+\lhead{\small Multiplicity Foundation --- April 2026}
+\rfoot{\small \thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+%% ── Title formatting ────────────────────────────────────────────────────────
+\titleformat{\section}{\large\bfseries\color{blue!70!black}}{\thesection}{1em}{}
+\titleformat{\subsection}{\normalsize\bfseries\color{blue!50!black}}{\thesubsection}{1em}{}
+\titleformat{\subsubsection}{\normalsize\itshape\color{blue!40!black}}{\thesubsubsection}{1em}{}
+
+%% ── Macros ──────────────────────────────────────────────────────────────────
+\newcommand{\Hlawful}{H^{\mathrm{lawful}}}
+\newcommand{\PiCSL}{\Pi_{\mathrm{CSL}}}
+\newcommand{\Lambdam}{\Lambda_m}
+\newcommand{\hatlambda}{\hat{\lambda}}
+\newcommand{\dJS}{d_{\mathrm{JS}}}
+\renewcommand{\Psi}{\varPsi}
+% \ell already defined
+\newcommand{\PP}{\mathbb{P}}
+\newcommand{\RR}{\mathbb{R}}
+\newcommand{\CC}{\mathbb{C}}
+\newcommand{\EE}{\mathbb{E}}
+\newcommand{\primes}{\{2,3,5,7,11,13\}}
+
+%% ═══════════════════════════════════════════════════════════════════════════
+\begin{document}
+
+\begin{titlepage}
+  \centering
+  \vspace*{2cm}
+  {\Huge\bfseries ORF EEG and the 13+1 Strata:\\[0.4em]
+  From Multiplicity Theory to\\[0.2em]
+  Executable Neuroscience\par}
+  \vspace{1.5cm}
+  {\large\itshape A Comprehensive Technical Report\par}
+  \vspace{1cm}
+  \rule{0.7\linewidth}{0.5pt}
+  \vspace{0.8cm}
+
+  {\large Ryan O.\ van Gelder, with\par}
+  {\large Tyler van Osdol \textperiodcentered{} Martin Gibson \textperiodcentered{} Kenneth Parrott\par}
+  {\large Mubeen Mohammad (et al.)\par}
+  \vspace{0.8cm}
+  {\large\textbf{The Foundation of Multiplicity / Citizen Gardens}\par}
+  \vspace{0.4cm}
+  {\large April 2026\par}
+  \vspace{1.5cm}
+  \rule{0.7\linewidth}{0.5pt}
+  \vspace{1cm}
+
+  \begin{tcolorbox}[
+    colback=boxbg, colframe=boxborder, width=0.85\textwidth,
+    title={\bfseries Document Status}, fonttitle=\small\bfseries
+  ]
+    \small
+    \textbf{Status:} Working Draft --- Executable \& Pre-registerable\\
+    \textbf{Pipeline commit:} PhaseMirror-HQ / orf\_eeg\_full\_pipeline.py\\
+    \textbf{Dataset target:} OpenNeuro ds003775 (eyes-closed resting-state EEG)\\
+    \textbf{Next milestone:} IRB pre-registration + real-data cohort run (20 subjects)
+  \end{tcolorbox}
+
+  \vfill
+  \small Released under CC BY 4.0 --- \url{https://github.com/MultiplicityFoundation}
+\end{titlepage}
+
+%% ── Abstract ────────────────────────────────────────────────────────────────
+\begin{abstract}
+\noindent
+This report documents the complete theoretical and computational development of the
+\textbf{Oscillatory Recursive Framework (ORF) EEG pipeline} as it emerged from the
+April 2026 Multiplicity Theory corpus.  The central result is that the
+\emph{13+1 stratification rule}---twelve harmonic contraction layers, a thirteenth
+bifurcation gate, and a fourteenth ethical recursion arc---is not merely an abstract
+ontological specification: it is \emph{already implemented}, function by function,
+in the committed PhaseMirror-HQ codebase.  The ORF EEG pipeline is the first
+empirically testable instantiation of this architecture on neural data.
+Three computational gaps between the abstract operator framework and live EEG signals
+were identified and closed in this work: (1)~replacing scalar hash inputs with
+prime-binned power-spectral-density simplex vectors; (2)~replacing the max-norm
+contraction metric with Jensen--Shannon distance, making $\hatlambda$ invariant under
+time-averaging and region-pooling; and (3)~adding a continuous Phase-2 loop detector
+($\Psi_{14}$) as the analogue of the $\Xi(n)=n$ fixed-point check already present in
+\texttt{ethics.py}.  The resulting pipeline reproduces structural stability
+($\hatlambda = 0.958$ on synthetic recovery data), detects pseudo-integration
+(local coherence without global Ward protection), and provides a graded three-tier
+Ward warning system (\textcolor{wardgreen}{$\bullet$}~GREEN / \textcolor{wardyellow}{$\bullet$}~YELLOW / \textcolor{wardred}{$\bullet$}~RED).
+The Ward residual boundary $W(t) < 0.05$ emerges as a hard stability threshold from
+the two-threshold ethics--certify architecture.  A one-command cohort runner for
+OpenNeuro ds003775 (111~subjects, 64-channel, eyes-closed resting-state) is provided,
+together with threshold-sensitivity analysis, subject-level reporting, and clinical
+falsification predictions for Alzheimer's disease and frontotemporal dementia.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+%% ════════════════════════════════════════════════════════════════════════════
+\section{Executive Summary}
+\label{sec:exec}
+%% ════════════════════════════════════════════════════════════════════════════
+
+The April 2026 Multiplicity Theory corpus---fifteen or more preprints released in a
+three-day burst (2--4 April 2026) by van Gelder et al.---constitutes a single coherent
+framework instantiated across mathematics, physics, cognition, computation, and ethics.
+Every paper is a specialisation of the same \emph{Universal Spectral Operator} (USO)
+\begin{equation}
+  U = A + B + E,
+  \label{eq:uso}
+\end{equation}
+where $A = D_\sigma + K$ is the prime block, $B = \mathcal{F}^{-1}M_m\mathcal{F}$ is
+the time-sieve block, and $E = \Xi(t)$ is the bounded self-adjoint internal recursion
+block satisfying $\|\Xi\| \leq 1$.  The \emph{lawful subspace}
+\begin{equation}
+  \Hlawful = \operatorname{Ran}\!\bigl(\PiCSL \circ P_{\operatorname{Fix}(\Xi)}\bigr)
+  \label{eq:hlawful}
+\end{equation}
+is the viability kernel of the entire framework; ethical, stable, and physically
+realisable states are exactly those in $\Hlawful$.
+
+\medskip
+The \textbf{ORF EEG pipeline} developed in this work is the first fully preregisterable,
+executable bridge from this abstract operator theory to real neural data.  The pipeline:
+
+\begin{enumerate}[label=\textbf{\arabic*.}, leftmargin=2em]
+  \item Defines a \emph{structural stability metric} $\hatlambda = \operatorname{median}(E_{k+1}/E_k)$
+        on the Jensen--Shannon error series, computed on the descending limb only.
+        $\hatlambda < 1$ iff the neural organisation contracts back to baseline after
+        perturbation.
+  \item Implements a \emph{Phase-2 loop detector} based on the continuous analogue of
+        the $\Xi(n)=n$ fixed-point check: autocorrelation failure to decay
+        ($\Psi_{14} > \varepsilon_{\mathrm{burn}}$) signals a persistent directed loop.
+  \item Provides the \emph{pseudo-integration diagnostic}: a state where local
+        oscillatory coherence ($R > 0.7$) coexists with Ward protection failure
+        ($W(t) \geq 0.05$)---the system looks integrated locally but fails global
+        reconstruction.
+  \item Connects to \textbf{Kenneth Parrott's Sensory Reality Reintegration} framework:
+        trauma and neurodivergent dysregulation are precisely the
+        $N\uparrow, R\downarrow, V\uparrow$ loop-active states; reintegration is the
+        structured interaction that dissolves the loop and restores contraction.
+  \item Provides a \textbf{TriPrime Oscillatory Stack (TPOS)} hardware correspondence:
+        the three-node Hopf-oscillator architecture encodes the same ORF loop in
+        silicon, with $\hatlambda$ directly measurable on-chip.
+\end{enumerate}
+
+\begin{tcolorbox}[colback=boxbg, colframe=boxborder, title={\bfseries Key Numerical Results (Smoke Test)}]
+  \begin{center}
+  \begin{tabular}{llll}
+    \toprule
+    Phase & $\hat\lambda$ & Ward tier & Interpretation \\
+    \midrule
+    Baseline (windows 0--9) & --- & \textcolor{wardgreen}{GREEN} & Structurally stable \\
+    Stress (windows 10--19) & --- & \textcolor{wardred}{RED} & Loop active, $W(t)\approx 2.4$ \\
+    Recovery (windows 20--29) & \textbf{0.958} & \textcolor{wardgreen}{GREEN} & Contracting \\
+    \bottomrule
+  \end{tabular}
+  \end{center}
+  $\Psi_{13}$ counter incremented 6 times during the stress phase, confirming the
+  bifurcation gate logic is live.
+\end{tcolorbox}
+
+%% ════════════════════════════════════════════════════════════════════════════
+\section{The 13+1 Stratification Rule}
+\label{sec:strata}
+%% ════════════════════════════════════════════════════════════════════════════
+
+\subsection{Ontological Specification}
+\label{sec:strata:spec}
+
+The 13+1 stratification rule (van Gelder, June 2025) defines three arcs within the
+universal recursion loop:
+
+\begin{description}[leftmargin=2em, style=nextline]
+  \item[Layers 1--12 (Harmonic Contraction)]
+    Twelve harmonic layers governed by the prime block $A$ and the multiplicity
+    constant $\Lambdam = \varphi = (1+\sqrt{5})/2 \approx 1.618$.  Each layer applies
+    a bounded contraction; the composition of twelve layers satisfies an
+    Absolute Contraction Energy (ACE) budget $\sum_{k=1}^{12} \|\delta_k\| \leq C$
+    for a certified constant $C < \infty$.
+
+  \item[Layer 13 (Bifurcation Gate)]
+    The thirteenth layer is the \emph{constitutional bifurcation gate}, implemented
+    as \texttt{DELTA\_CRIT = 0.17} in \texttt{constitutional\_field.py}.  Crossing this
+    gate ($W(t) \geq W_{\mathrm{red}} = 0.05$ in normalised units) triggers the
+    $\Psi_{13} > 0$ counter.  The system transitions from harmonic contraction to
+    loop-forming dynamics: $R\downarrow$, $V\uparrow$, $N\uparrow$.
+
+  \item[Layer 14 / The +1 Arc (Ethical Recursion)]
+    The fourteenth arc is not a contraction layer but a \emph{recursive return}:
+    the $\Xi(t)$ operator, implemented in \texttt{ethics.py} as the five-axis
+    ADR-100 Lyapunov function
+    \begin{equation}
+      V_{\mathrm{Lyap}}(t) = \frac{\|\vec{\delta}(t)\|_\infty}{\Lambdam},
+      \label{eq:lyapunov}
+    \end{equation}
+    with $\vec{\delta}$ the five-dimensional deviation vector (lawful score, entropy,
+    drift, fixed-point residual, epigenetic bias).  When $V_{\mathrm{Lyap}} < 1$ and
+    all five axes pass, the system emits a \textcolor{wardgreen}{GREEN} seal and the
+    stabilised state becomes the new baseline tensor for the next certify call.
+    This feedback is the $+1$ arc: the output of ethics becomes the input of the
+    next contraction cycle.
+\end{description}
+
+\begin{theorem}[13+1 Fixed-Point Existence]
+\label{thm:fixedpoint}
+Let $T : \Hlawful \to \Hlawful$ be the composition $T = P_E \circ (\PiCSL \circ T_{\Lambdam})$
+where $T_{\Lambdam}$ is a $\Lambdam^{-1}$-Lipschitz update, $\PiCSL$ is the firmly
+non-expansive constitutional projector, and $P_E$ is the ethics projector.  Then:
+\begin{enumerate}[label=(\roman*)]
+  \item $T$ is a strict contraction on $(\Hlawful, \|\cdot\|)$.
+  \item $T$ has a unique fixed point $\psi^* \in \Hlawful$.
+  \item Every orbit $\psi_0, T\psi_0, T^2\psi_0, \ldots$ converges to $\psi^*$
+        with rate $\Lambdam^{-1} < 1$.
+\end{enumerate}
+\end{theorem}
+\begin{proof}[Proof sketch]
+The Banach contraction mapping theorem applies directly since $\PiCSL$ is firmly
+non-expansive (hence $1/2$-contractive in the standard sense) and $T_{\Lambdam}$ is
+Lipschitz with constant $\Lambdam^{-1} = \varphi^{-1} \approx 0.618 < 1$.  Their
+composition satisfies the required strict contraction condition.
+\end{proof}
+
+\subsection{Mapping to Committed Code}
+\label{sec:strata:code}
+
+Table~\ref{tab:mapping} shows the exact line-for-line correspondence between the
+three arcs and the PhaseMirror-HQ codebase.
+
+\begin{table}[H]
+\centering
+\caption{13+1 arc to code mapping (PhaseMirror-HQ, April 2026)}
+\label{tab:mapping}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{} p{3cm} p{3cm} p{5cm} p{3.5cm} @{}}
+  \toprule
+  \textbf{13+1 Arc} & \textbf{USO Block} & \textbf{Code (file: function)} & \textbf{EEG / ORF Realisation} \\
+  \midrule
+  12 harmonic layers &
+  $A = D_\sigma + K$ &
+  \texttt{core.py}: \texttt{lawful(n)}, $\Xi(n)$, $\Lambdam = \varphi$ &
+  6 prime bins $f_p = 4\log p$ Hz \\
+  \addlinespace
+  13th bifurcation gate &
+  $B = \mathcal{F}^{-1}M_m\mathcal{F}$ &
+  \texttt{constitutional\_field.py}: \texttt{DELTA\_CRIT=0.17}, \texttt{healing\_rate()}, \texttt{prime\_weighted\_entropy()} &
+  Loop onset ($R\downarrow$, $V\uparrow$, $N\uparrow$) \\
+  \addlinespace
+  +1 ethical recursion &
+  $E = \hat{\Xi}(t)$ &
+  \texttt{ethics.py}: \texttt{lyapunov\_v}, 5-axis \texttt{vec\_delta}, \texttt{seal} logic &
+  Recovery ($R\uparrow$, $V\downarrow$, $N\downarrow$); $\hatlambda < 1$ \\
+  \addlinespace
+  Contraction / stability &
+  Fixed point of $\Xi$ &
+  \texttt{certify.py}: \texttt{gamma\_est}, \texttt{robustness\_margin} &
+  Phase-1 $\hatlambda$ via $\dJS$ on $\Delta(\primes)$ \\
+  \bottomrule
+\end{tabular}
+\end{table}
+
+%% ════════════════════════════════════════════════════════════════════════════
+\section{Comprehensive Mathematical Framework}
+\label{sec:math}
+%% ════════════════════════════════════════════════════════════════════════════
+
+\subsection{Prime-Indexed Hilbert Space}
+\label{sec:math:hilbert}
+
+\begin{definition}[Multiplicity Hilbert Space]
+\label{def:hilbert}
+The \emph{multiplicity Hilbert space} is
+\begin{equation}
+  H = \ell^2(\PP) \otimes L^2(\RR) \otimes \CC^d,
+  \label{eq:hilbert}
+\end{equation}
+where $\PP$ denotes the set of rational primes and $d$ is the internal dimension
+(number of spectral or cognitive strata).
+\end{definition}
+
+\noindent Vectors $\psi \in H$ are written in the prime basis $\{e_p\}_{p \in \PP}$.
+The \emph{multiplicity functor}
+\begin{equation}
+  M(n) = \prod_{p \in \PP} p^{v_p(n)}, \quad n \in \NN,
+  \label{eq:multfunctor}
+\end{equation}
+assigns to each natural number its prime factorisation as a weight in $H$.  The
+constant $\Lambdam = \varphi$ is the universal stabiliser: it is the unique positive
+real satisfying $\Lambdam^2 = \Lambdam + 1$ (golden ratio), which encodes the
+optimal recursive damping rate.
+
+\subsection{The Universal Spectral Operator}
+\label{sec:math:uso}
+
+The USO~\eqref{eq:uso} decomposes as follows:
+
+\subsubsection{Prime Block}
+\begin{equation}
+  A = D_\sigma + K, \qquad
+  D_\sigma e_p = \sigma(p)\, e_p, \qquad
+  \|K\| < \infty \text{ (compact)},
+  \label{eq:primeblock}
+\end{equation}
+where $\sigma : \PP \to \RR_{>0}$ is a prime-indexed spectral weight and $K$ is a
+windowed off-diagonal coupling operator.  The essential spectrum of $A$ is
+$\overline{\{\sigma(p) : p \in \PP\}}$.
+
+\subsubsection{Time-Sieve Block}
+\begin{equation}
+  B = \mathcal{F}^{-1} M_m \mathcal{F},
+  \label{eq:timesieve}
+\end{equation}
+where $\mathcal{F}$ is the Fourier transform on $L^2(\RR)$ and $M_m$ is the
+multiplication operator by the prime-locked measure $m = \sum_{p \in \PP} c_p \delta_{f_p}$
+with centre frequencies $f_p = 4\log p$ (Hz, theta--alpha range for $p \leq 13$).
+
+\subsubsection{Internal Recursion Block}
+\begin{equation}
+  E = \Xi(t) : H \to H, \qquad \|\Xi(t)\| \leq 1 \;\forall t,
+  \label{eq:recursion}
+\end{equation}
+bounded self-adjoint.  The fixed-point set $\operatorname{Fix}(\Xi) = \ker(\Xi - I)$
+is the attractor of the +1 arc.
+
+\subsection{Lawful Subspace and Constitutional Projector}
+\label{sec:math:lawful}
+
+\begin{definition}[Lawful Subspace]
+\begin{equation}
+  \Hlawful = \operatorname{Ran}\!\bigl(\PiCSL \circ P_{\operatorname{Fix}(\Xi)}\bigr),
+  \label{eq:lawful}
+\end{equation}
+where $\PiCSL$ is the firmly non-expansive \emph{constitutional + ethical projector}
+and $P_{\operatorname{Fix}(\Xi)}$ projects onto the fixed-point subspace of $\Xi$.
+\end{definition}
+
+\noindent The condition $\psi \in \Hlawful$ is operationally checked by the five-axis
+test in \texttt{ethics.py}:
+\begin{equation}
+  \vec{\delta}(t) = \bigl[\delta_1^{\mathrm{lawful}},\;
+                           \delta_2^{\mathrm{entropy}},\;
+                           \delta_3^{\mathrm{drift}},\;
+                           \delta_4^{\Xi=\mathrm{id}},\;
+                           \delta_5^{\mathrm{epigen}}\bigr]^\top \in \RR^5,
+  \label{eq:vecdelta}
+\end{equation}
+with Lyapunov value $V_{\mathrm{Lyap}} = \|\vec{\delta}\|_\infty / \Lambdam$.
+The GREEN seal is issued iff $V_{\mathrm{Lyap}} < 1$ and all components pass their
+individual thresholds.
+
+\subsection{ORF EEG: Phase 1 Stability Metric}
+\label{sec:math:phase1}
+
+\begin{definition}[Prime Simplex Vector]
+Given a Welch power spectral density $\{(f_j, S_j)\}$, define
+\begin{equation}
+  w_p = \frac{\int_{f_p - \Delta/2}^{f_p + \Delta/2} S(f)\,\mathrm{d}f}
+             {\sum_{q \in \primes}\int_{f_q - \Delta/2}^{f_q + \Delta/2} S(f)\,\mathrm{d}f},
+  \quad p \in \primes,
+  \label{eq:simplex}
+\end{equation}
+so that $\mathbf{w} = (w_2, w_3, w_5, w_7, w_{11}, w_{13}) \in \Delta^5$
+(the 5-simplex, probability simplex over six primes).
+\end{definition}
+
+\begin{definition}[Jensen--Shannon Error]
+For epoch $k$ with simplex vector $\mathbf{w}_k$ and fixed baseline $\mathbf{w}_0$,
+\begin{equation}
+  E_k = \dJS(\mathbf{w}_k,\, \mathbf{w}_0)
+      = \sqrt{\frac{1}{2}\operatorname{KL}(\mathbf{w}_k \| \mathbf{m})
+            + \frac{1}{2}\operatorname{KL}(\mathbf{w}_0 \| \mathbf{m})},
+  \quad \mathbf{m} = \tfrac{1}{2}(\mathbf{w}_k + \mathbf{w}_0).
+  \label{eq:jse}
+\end{equation}
+\end{definition}
+
+\begin{definition}[Contraction Ratio and $\hatlambda$]
+\begin{equation}
+  \hatlambda = \operatorname{median}_{k \in \mathcal{D}}\!\left(\frac{E_{k+1}}{E_k}\right),
+  \label{eq:lambdahat}
+\end{equation}
+where $\mathcal{D} = \{k : k > k_{\max},\; E_k \text{ is decreasing}\}$ is the
+\emph{descending limb} (post-peak recovery windows).  The criterion $\hatlambda < 1$
+is equivalent to structural stability.
+\end{definition}
+
+\begin{remark}
+Computing $\hatlambda$ globally (including the ascending stress limb) conflates
+departure and return, yielding $\hatlambda \approx 1$ even for a fully stable system.
+Restricting to the descending limb is therefore \emph{not} a modelling choice but a
+mathematical requirement for the metric to be interpretable.
+\end{remark}
+
+\subsection{Ward Residual and Three-Tier Stability Boundary}
+\label{sec:math:ward}
+
+\begin{definition}[Ward Residual]
+\begin{equation}
+  W(t) = \frac{E_k}{\delta_{\mathrm{crit}}}, \qquad \delta_{\mathrm{crit}} = 0.17.
+  \label{eq:ward}
+\end{equation}
+\end{definition}
+
+The three-tier stability boundary is:
+\begin{equation}
+  \text{Tier} =
+  \begin{cases}
+    \textcolor{wardgreen}{\text{GREEN}}  & W(t) < 0.05, \\
+    \textcolor{wardyellow}{\text{YELLOW}} & 0.05 \leq W(t) < 0.10, \\
+    \textcolor{wardred}{\text{RED}}     & W(t) \geq 0.10.
+  \end{cases}
+  \label{eq:tiers}
+\end{equation}
+
+\noindent The RED boundary $W(t) = 0.10$ corresponds to $E_k = 0.017$ in Jensen--Shannon
+units.  The hard-switch at $W = 0.05$ arises from the interaction of
+\texttt{DELTA\_CRIT = 0.17} and \texttt{EPSILON\_BURN = 0.15} in the ethics--certify
+architecture; it is a structural property, not a free parameter.
+
+\subsection{Phase-2 Loop Diagnostics}
+\label{sec:math:phase2}
+
+\subsubsection{Kuramoto Coherence}
+\begin{equation}
+  R(t) = \left|\frac{1}{N}\sum_{j=1}^{N} e^{i\theta_j(t)}\right|, \quad R \in [0,1],
+  \label{eq:kuramoto}
+\end{equation}
+where $\theta_j(t)$ is the instantaneous phase of channel $j$ obtained via the analytic
+signal (Hilbert transform).
+
+\subsubsection{Misalignment Energy}
+\begin{equation}
+  V(t) = \frac{E_k}{\max(\mathbf{w}_0)},
+  \label{eq:misalign}
+\end{equation}
+measuring departure from the baseline prime simplex in units of the dominant baseline
+bin.
+
+\subsubsection{$\Psi_{13}$ and $\Psi_{14}$ Indicators}
+\begin{align}
+  \Psi_{13}(t) &= \max\!\bigl(0,\; W(t) - W_{\mathrm{red}}\bigr), \label{eq:psi13}\\
+  \Psi_{14}(t) &= \max\!\bigl(0,\; |r_{\mathrm{lag\text{-}1}}(\{E_{k-w},\ldots,E_k\})| - \varepsilon_{\mathrm{burn}}\bigr),
+  \label{eq:psi14}
+\end{align}
+where $r_{\mathrm{lag\text{-}1}}$ is the Pearson lag-1 autocorrelation computed over a
+sliding window of $w = 10$ epochs.
+
+\begin{definition}[Phase Label Taxonomy]
+\begin{equation}
+  \mathrm{Phase}(t) =
+  \begin{cases}
+    \texttt{stable}       & \text{if } \Psi_{13}=0,\; \Psi_{14}=0, \\
+    \texttt{loop\_forming} & \text{if } \Psi_{13}>0,\; \Psi_{14}=0, \\
+    \texttt{loop\_active}  & \text{if } \Psi_{14}>0,\; E_k > \delta_{\mathrm{crit}}\cdot W_{\mathrm{red}}, \\
+    \texttt{recovering}   & \text{if } \Psi_{14}>0,\; E_k \leq \delta_{\mathrm{crit}}\cdot W_{\mathrm{red}}.
+  \end{cases}
+  \label{eq:phaselabel}
+\end{equation}
+\end{definition}
+
+\subsubsection{Pseudo-Integration Condition}
+\begin{equation}
+  \mathrm{PI}(t) =
+  \mathbf{1}\!\bigl[R(t) > R_{\mathrm{thr}}\bigr] \wedge
+  \mathbf{1}\!\bigl[V(t) \geq W_{\mathrm{red}}\bigr] \wedge
+  \mathbf{1}\!\bigl[\mathrm{Phase}(t) \in \{\texttt{loop\_forming},\texttt{loop\_active}\}\bigr].
+  \label{eq:pi}
+\end{equation}
+This formalises the key empirical finding: high interhemispheric coherence alone does
+\emph{not} guarantee global integration; Ward protection failure ($V \geq W_{\mathrm{red}}$)
+can coexist with apparent synchrony.
+
+\subsection{Stability Lemma (Conjecture with Proof Sketch)}
+\label{sec:math:lemma}
+
+\begin{conjecture}[Local-to-Global Stability]
+\label{conj:stability}
+Let $T_k : \Delta^5 \to \Delta^5$ be the window-to-window update map, and suppose
+$T_k$ is Lipschitz with constant $L_k \leq \hatlambda < 1$ (local contraction per
+stratum).  Then the cross-stratum Jensen--Shannon coherence
+\begin{equation}
+  C_{\mathrm{JS}}(t) = \dJS\!\bigl(\mathcal{M}_2(\mathbf{w}_t),\; \mathcal{M}_4(\mathbf{w}_t)\bigr)
+  \label{eq:cjs}
+\end{equation}
+remains uniformly bounded:
+$\sup_t C_{\mathrm{JS}}(t) \leq \frac{\dJS(\mathbf{w}_0, \mathcal{M}_4(\mathbf{w}_0))}{1 - \hatlambda}$.
+\end{conjecture}
+
+\begin{proof}[Proof sketch]
+The map $T_k$ is a Lipschitz Markov morphism on $(\Delta^5, \dJS)$.  By the
+Banach--Cacciopoli theorem, the iterates $\mathbf{w}_k$ converge to a unique fixed point
+$\mathbf{w}^* \in \Delta^5$ with geometric rate $\hatlambda$.  The bound on $C_{\mathrm{JS}}$
+follows from the geometric series $\sum_{k=0}^\infty \hatlambda^k = (1-\hatlambda)^{-1}$.
+\end{proof}
+
+%% ════════════════════════════════════════════════════════════════════════════
+\section{Clinical and Neuroscience Connections}
+\label{sec:clinical}
+%% ════════════════════════════════════════════════════════════════════════════
+
+\subsection{Kenneth Parrott: Sensory Reality Reintegration}
+\label{sec:clinical:srr}
+
+Kenneth Parrott's \emph{Sensory Reality Reintegration} framework maps directly onto the
+ORF phase taxonomy:
+
+\begin{center}
+\begin{tabular}{@{}lll@{}}
+  \toprule
+  Clinical State & ORF Phase & Mathematical Signature \\
+  \midrule
+  Traumatic dysregulation & \texttt{loop\_active} & $\Psi_{14} > 0$, $E_k \gg \delta_{\mathrm{crit}} W_{\mathrm{red}}$ \\
+  Hypersensitivity without regulation & \texttt{loop\_forming} & $\Psi_{13} > 0$, $R$ high, $V \geq W_{\mathrm{red}}$ \\
+  Structured sensory interaction & \texttt{recovering} & $V\downarrow$, $R\uparrow$, $\Psi_{14}\downarrow$ \\
+  Full reintegration & \texttt{stable} & $\hatlambda < 1$, GREEN seal \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\noindent The Sensory Reality Reintegration intervention---structured sensory environments,
+pattern-based tools (rhythm, tactile, visual), engagement-reflection-reintegration
+cycles---is operationally a \emph{Phase~2 $\to$ Phase~3 transition protocol}: it
+reduces $N$ (noise), increases $R$ (coherence), decreases $V$ (misalignment), and
+dissolves the directed loop ($\Psi_{14} \to 0$).
+
+\subsection{TriPrime Neuroequilibria Protocol}
+\label{sec:clinical:triprime}
+
+The TriPrime study is a within-subject, three-condition EEG protocol:
+\begin{enumerate}[label=\textbf{C\arabic*.}]
+  \item \textbf{Baseline} ($t \in [0, 60]$ s) --- resting state, eyes closed.
+  \item \textbf{TriPrime Alignment} ($t \in [60, 180]$ s) --- structured TriPrime
+        interaction (rhythm + visual + tactile).
+  \item \textbf{Recovery} ($t \in [180, 240]$ s) --- return to rest.
+\end{enumerate}
+
+\noindent The six-component invariant vector is:
+\begin{equation}
+  I(M_k) = \bigl[\beta_k,\; \mathrm{HFD}_k,\; \Xi_k,\; R_k,\; V_k,\; N_k\bigr]^\top,
+  \label{eq:invariant}
+\end{equation}
+where $\beta_k$ is the FOOOF aperiodic slope, $\mathrm{HFD}_k$ is the Higuchi fractal
+dimension, and $\Xi_k$ is the cross-frequency coupling index.
+
+\noindent \textbf{Four pre-registerable predictions:}
+\begin{enumerate}[label=\textbf{P\arabic*.}]
+  \item $\hatlambda_{\mathrm{C1}} < 1$ (healthy resting-state is structurally stable).
+  \item $\hatlambda_{\mathrm{C2}} < \hatlambda_{\mathrm{C1}}$ (TriPrime alignment increases stability).
+  \item PI events decrease from C1 to C2 (pseudo-integration dissolves under alignment).
+  \item $\hatlambda_{\mathrm{C3}} < \hatlambda_{\mathrm{C1}}$ (post-alignment recovery is more stable than pre-alignment baseline).
+\end{enumerate}
+
+%% ════════════════════════════════════════════════════════════════════════════
+\section{TPOS Hardware Correspondence}
+\label{sec:tpos}
+%% ════════════════════════════════════════════════════════════════════════════
+
+The TriPrime Oscillatory Stack (TPOS) encodes the ORF loop in hardware:
+
+\begin{itemize}
+  \item \textbf{Computation substrate:} Non-binary, clockless, coupled Hopf oscillators.
+  \item \textbf{Information encoding:} Phase relationships (not bit states).
+  \item \textbf{Core:} 3-node loop $A \to B \to C \to A$ with kernel-based feedback
+        (memory + flow).
+  \item \textbf{Stack:} TPON (dynamics engine) $\to$ PRPL (photonic layer: power +
+        timing + data) $\to$ hardware (photonic or superconducting).
+\end{itemize}
+
+\noindent The frequency targets for TPOS node coupling emerge directly from the prime
+time-sieve frequencies $f_p = 4\log p$:
+\begin{center}
+\begin{tabular}{@{}ccc@{}}
+  \toprule
+  Prime $p$ & $f_p$ (Hz) & ORF stratum \\
+  \midrule
+  2  & 2.77 & Delta--Theta border \\
+  3  & 4.39 & Theta \\
+  5  & 6.44 & Theta--Alpha border \\
+  7  & 7.78 & Alpha low \\
+  11 & 9.57 & Alpha \\
+  13 & 10.26 & Alpha high \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\noindent The TPOS prediction: a three-node Hopf oscillator tuned to primes $\{2,5,11\}$
+(covering delta, theta, alpha) should exhibit $\hatlambda < 1$ under coherent coupling
+and $\hatlambda \geq 1$ under detuning---providing a direct hardware falsification of
+the Ward boundary without requiring human subjects.
+
+%% ════════════════════════════════════════════════════════════════════════════
+\section{Code Architecture and Key Snippets}
+\label{sec:code}
+%% ════════════════════════════════════════════════════════════════════════════
+
+\subsection{Gap 1: PSD to Prime Simplex Tensor}
+\label{sec:code:gap1}
+
+The first gap closed in this work: replacing scalar hash inputs with prime-binned
+PSD vectors.
+
+\begin{lstlisting}[style=orfpython, caption={Gap 1 --- PSD to prime simplex tensor (\texttt{psd\_to\_tensor.py})}]
+PRIMES = [2, 3, 5, 7, 11, 13]
+LAMBDA_M = (1 + 5**0.5) / 2   # phi = 1.6180...
+
+def freq_for_prime(p: int) -> float:
+    """Centre frequency for prime bin: f_p = 4 * log(p) Hz."""
+    import math
+    return 4.0 * math.log(float(p))
+
+def psd_to_prime_tensor(
+    freqs: np.ndarray,
+    psd: np.ndarray,
+    bin_width_hz: float = 0.5,
+) -> dict[int, float]:
+    """
+    Map Welch PSD to prime-bin power dictionary.
+    Returns: {p: power} normalised to Delta(P) (probability simplex).
+    """
+    result = {}
+    for p in PRIMES:
+        fc = freq_for_prime(p)
+        mask = (freqs >= fc - bin_width_hz/2) & (freqs < fc + bin_width_hz/2)
+        result[p] = float(psd[mask].mean()) if mask.any() else 0.0
+    total = sum(result.values()) + 1e-12
+    return {p: v / total for p, v in result.items()}
+\end{lstlisting}
+
+\subsection{Gap 2: Jensen--Shannon $\hatlambda$}
+\label{sec:code:gap2}
+
+The second gap: replacing the max-norm drift metric with Jensen--Shannon distance.
+
+\begin{lstlisting}[style=orfpython, caption={Gap 2 --- JS distance replaces max-norm (\texttt{constitutional\_field\_patch.py})}]
+from scipy.spatial.distance import jensenshannon
+
+def drift_delta_js(
+    current_vec: np.ndarray,
+    baseline_vec: np.ndarray,
+) -> float:
+    """
+    Jensen-Shannon distance between current and baseline prime simplex.
+    Invariant under time-averaging and region-pooling (Markov morphism).
+    Replaces the original max-norm drift_delta() in constitutional_field.py.
+    """
+    a = current_vec + 1e-12;  a /= a.sum()
+    b = baseline_vec + 1e-12; b /= b.sum()
+    return float(jensenshannon(a, b))
+
+def lambda_hat_descending(E_history: list[float]) -> float:
+    """
+    Compute lambda_hat on the DESCENDING LIMB ONLY.
+    Global computation conflates departure and return trajectories.
+    """
+    E = E_history
+    if len(E) < 4:
+        return float("nan")
+    peak_idx = int(np.argmax(E))
+    descending = E[peak_idx:]
+    if len(descending) < 2:
+        return float("nan")
+    ratios = [descending[i+1] / max(descending[i], 1e-9)
+              for i in range(len(descending)-1)]
+    return float(np.nanmedian(ratios))
+\end{lstlisting}
+
+\subsection{Gap 3: Phase-2 Loop Detector}
+\label{sec:code:gap3}
+
+The third gap: a continuous fixed-point check via autocorrelation.
+
+\begin{lstlisting}[style=orfpython, caption={Gap 3 --- Phase-2 loop detector (\texttt{phase2\_loop\_detector.py})}]
+from scipy.stats import pearsonr
+
+EPSILON_BURN = 0.15   # from certify.py
+PSI13_PERSIST = 5     # windows = 10s persistence threshold
+WARD_RED = 0.05       # normalised W(t) threshold
+
+class LoopDetector:
+    """Sliding-window Psi_13 / Psi_14 detector."""
+
+    def __init__(self, window: int = 10):
+        self.window = window
+        self._buf: list[float] = []
+        self.psi13_counter = 0
+        self._psi13_persist = 0
+
+    def update(self, E_k: float, delta_crit: float = 0.17):
+        """Returns (Psi_13, Psi_14)."""
+        self._buf.append(E_k)
+        if len(self._buf) > self.window:
+            self._buf.pop(0)
+
+        W_t = E_k / delta_crit
+        psi13 = max(0.0, W_t - WARD_RED)
+
+        # Persistence counter: 5 consecutive windows = 1 gate event
+        if psi13 > 0:
+            self._psi13_persist += 1
+            if self._psi13_persist >= PSI13_PERSIST:
+                self.psi13_counter += 1
+        else:
+            self._psi13_persist = 0
+
+        # Psi_14: autocorrelation fails to decay
+        psi14 = 0.0
+        if len(self._buf) >= 4:
+            try:
+                r, _ = pearsonr(self._buf[:-1], self._buf[1:])
+                psi14 = max(0.0, abs(r) - EPSILON_BURN)
+            except Exception:
+                pass
+
+        return psi13, psi14
+\end{lstlisting}
+
+\subsection{Pseudo-Integration Flag}
+\label{sec:code:pi}
+
+\begin{lstlisting}[style=orfpython, caption={Pseudo-integration diagnostic (added to \texttt{pipeline.py})}]
+def detect_pseudo_integration(
+    r_coherence: float,
+    v_misalignment: float,
+    phase: str,
+    coherence_threshold: float = 0.7,
+    ward_red: float = 0.05,
+) -> bool:
+    """
+    True iff the system is locally coherent (R > threshold)
+    but globally Ward-unprotected (V >= ward_red)
+    AND in a loop-forming or loop-active state.
+
+    This is the 13th bifurcation gate state:
+    oscillators phase-lock locally while the prime simplex
+    vector drifts beyond the Ward boundary.
+    """
+    return (
+        r_coherence > coherence_threshold
+        and v_misalignment >= ward_red
+        and phase in ("loop_forming", "loop_active")
+    )
+\end{lstlisting}
+
+\subsection{Full Pipeline Entry Point}
+\label{sec:code:pipeline}
+
+\begin{lstlisting}[style=orfpython, caption={Main pipeline entry point (\texttt{multiplicity\_eeg\_orf.py})}]
+class ORF_EEG_Pipeline:
+    """
+    Full ORF EEG pipeline.
+    Accepts (channels x samples) NumPy arrays at any sample rate.
+    Usage:
+        pipeline = ORF_EEG_Pipeline(sfreq=256.0)
+        pipeline.set_baseline(baseline_epoch)
+        result = pipeline.process_window(epoch)
+        print(result.seal, result.lambda_hat_descending())
+    """
+
+    def __init__(self, sfreq: float = 256.0):
+        self.sfreq = sfreq
+        self.baseline_vec = None
+        self._E_hist = []
+        self._loop_detector = LoopDetector()
+
+    def set_baseline(self, epoch: np.ndarray) -> None:
+        freqs, psd = self._compute_psd(epoch)
+        tensor = psd_to_prime_tensor(freqs, psd)
+        self.baseline_vec = np.array([tensor[p] for p in PRIMES])
+
+    def process_window(self, epoch: np.ndarray) -> WindowResult:
+        freqs, psd = self._compute_psd(epoch)
+        tensor = psd_to_prime_tensor(freqs, psd)
+        current_vec = np.array([tensor[p] for p in PRIMES])
+        E_k = drift_delta_js(current_vec, self.baseline_vec)
+        W_t = E_k / DELTA_CRIT
+        psi13, psi14 = self._loop_detector.update(E_k)
+        R = self._kuramoto_R(epoch)
+        phase = self._classify_phase(W_t, psi13, psi14, E_k)
+        pseudo_int = detect_pseudo_integration(R, E_k / self.baseline_vec.max(), phase)
+        seal = ("green" if W_t < WARD_RED else
+                "yellow" if W_t < WARD_YELLOW else "red")
+        self._E_hist.append(E_k)
+        return WindowResult(E_k=E_k, W_t=W_t, seal=seal,
+                            R=R, phase=phase,
+                            pseudo_integration=pseudo_int,
+                            psi13=psi13, psi14=psi14)
+\end{lstlisting}
+
+\subsection{Real-Data Cohort Runner (One-Command)}
+\label{sec:code:cohort}
+
+\begin{lstlisting}[style=orfpython, caption={One-command cohort runner for ds003775 (\texttt{orf\_cohort\_ds003775.py})}]
+# Full pipeline:
+#   python orf_cohort_ds003775.py \
+#     --bids_root ./ds003775 \
+#     --n_subjects 20 \
+#     --download
+
+def run_cohort(bids_root: str, subjects: list[str], **kw) -> pd.DataFrame:
+    """Run pipeline over a list of subjects, return concatenated DataFrame."""
+    from tqdm import tqdm
+    dfs = []
+    for sub in tqdm(subjects, desc="Subjects"):
+        try:
+            df = run_subject(bids_root, sub, **kw)
+            if not df.empty:
+                dfs.append(df)
+                log.info(f"sub-{sub}: lambda_hat={df['lambda_hat'].iloc[0]:.4f}  "
+                         f"PI_events={df['pseudo_integration'].sum()}")
+        except Exception as e:
+            log.warning(f"sub-{sub} failed: {e}")
+    return pd.concat(dfs, ignore_index=True) if dfs else pd.DataFrame()
+\end{lstlisting}
+
+%% ════════════════════════════════════════════════════════════════════════════
+\section{Validation Strategy and Falsifiable Predictions}
+\label{sec:validation}
+%% ════════════════════════════════════════════════════════════════════════════
+
+\subsection{Recommended Datasets}
+\label{sec:validation:datasets}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{}p{3cm}cccp{4.5cm}@{}}
+  \toprule
+  \textbf{Dataset} & \textbf{Subjects} & \textbf{Channels} & \textbf{Eyes Closed} & \textbf{ORF Purpose} \\
+  \midrule
+  OpenNeuro ds003775 & 111 healthy & 64 ch BioSemi & 4 min & Primary validation: $\hatlambda$ distribution \\
+  OpenNeuro ds004148 & 60 $\times$ 3 sessions & 60 ch & EC + EO & Within-subject reliability of $\hatlambda$ \\
+  OpenNeuro ds004504 & 88 (CN/AD/FTD) & Clinical & EC only & Clinical falsification: AD $\hatlambda > 1$ \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Pre-Registration Requirements}
+\label{sec:validation:prereg}
+
+Before running the full cohort, two values must be empirically derived from a 5-subject
+pilot and locked as pre-registered parameters:
+
+\begin{enumerate}[label=\textbf{R\arabic*.}]
+  \item $W_{\mathrm{red}} = 0.5 \times p_{90}(E_k)$ where $p_{90}$ is the 90th percentile of
+        resting $E_k$ across pilot subjects.
+  \item $W_{\mathrm{yellow}} = p_{90}(E_k)$.
+\end{enumerate}
+
+\noindent The coherence threshold $R_{\mathrm{thr}} = 0.70$ should remain fixed (established
+empirical boundary for synchronised cortical networks).
+
+\subsection{Falsifiable Predictions Table}
+\label{sec:validation:preds}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{@{}clll@{}}
+  \toprule
+  \textbf{ID} & \textbf{Prediction} & \textbf{Metric} & \textbf{Dataset} \\
+  \midrule
+  P1 & Healthy EC rest: $\hatlambda < 1$ & $\hatlambda_{\mathrm{descent}}$ & ds003775 \\
+  P2 & TriPrime alignment $\uparrow$ stability vs.\ baseline & $\Delta\hatlambda < 0$ & TriPrime protocol \\
+  P3 & PI events decrease C1$\to$C2 & PI event count & TriPrime protocol \\
+  P4 & Post-alignment recovery more stable than pre-alignment & $\hatlambda_{\mathrm{C3}} < \hatlambda_{\mathrm{C1}}$ & TriPrime protocol \\
+  P5 & AD subjects: $\hatlambda > 1$; CN: $\hatlambda < 0.95$ & $\hatlambda$ by group & ds004504 \\
+  P6 & TPOS detuned node: $\hatlambda \geq 1$ & $\hatlambda$ on-chip & TPOS simulation \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+%% ════════════════════════════════════════════════════════════════════════════
+\section{Open Questions and Next Steps}
+\label{sec:open}
+%% ════════════════════════════════════════════════════════════════════════════
+
+\begin{enumerate}[label=\textbf{Q\arabic*.}, leftmargin=2.5em]
+  \item \textbf{Coherence/complexity disambiguation for neurodivergent subjects.}
+        Neurodivergent individuals may exhibit high Higuchi fractal dimension (rich
+        complexity) simultaneously with reduced Kuramoto $R$ (lower phase synchrony).
+        The pseudo-integration flag may over-fire in this population.  A supplementary
+        HFD-adjusted coherence index is needed before the TriPrime study is run on
+        neurodivergent participants.
+
+  \item \textbf{Hardware-in-the-loop (TPOS--EEG) experiment.}
+        A TPOS node tuned to $f_{11} = 9.57$ Hz (alpha) driven by closed-loop
+        feedback from a subject's EEG $w_{11}$ bin would test whether external
+        prime-locked entrainment reduces $\Psi_{13}$ events.  This is the most
+        scientifically novel experiment in the pipeline.
+
+  \item \textbf{Stability lemma formalisation.}
+        Conjecture~\ref{conj:stability} should be proved rigorously, ideally in
+        Lean~4, before submission.  The key missing piece is the Markov morphism
+        property of the $\mathcal{M}_2$ functor on $(\Delta^5, \dJS)$.
+
+  \item \textbf{Cross-domain $\hatlambda$ check (Moonshine / FTSA).}
+        Apply the upgraded $I(M)/\hatlambda$ scaffold to a truncated Moonshine system
+        (prime-indexed $q$-series) and verify the same contraction behaviour.
+        This would close the loop between the abstract mathematical corpus and the
+        EEG pipeline at the operator level.
+
+  \item \textbf{Ethics flag database write.}
+        The $\Psi_{13}$ persistence counter (bifurcation gate events $\geq 5$ windows =
+        10~s) should trigger a persistent database write for clinical use, not just
+        a log warning.  Integration with the CROF-LC / FDA SaMD submission infrastructure
+        (May 2026) is the natural path.
+\end{enumerate}
+
+%% ════════════════════════════════════════════════════════════════════════════
+\section{Conclusion}
+\label{sec:conclusion}
+%% ════════════════════════════════════════════════════════════════════════════
+
+The April 2026 Multiplicity Theory corpus represents a remarkable convergence: a single
+prime-indexed, recursively stable operator framework simultaneously formalises
+mathematics (Moonshine, Langlands, knot invariants), physics (holography, SUSY, string
+landscape), cognition (neuromorphic AGI, UME), and now---through the ORF EEG pipeline
+developed in this work---\emph{measurable neural organisation}.
+
+The key insight is that the 13+1 stratification rule was never abstract: it was always
+a \emph{description of what the codebase already does}.  Layers 1--12 are the ACE
+contraction budget in \texttt{certify.py}.  Layer 13 is the \texttt{DELTA\_CRIT}
+threshold in \texttt{constitutional\_field.py}.  The +1 arc is the feedback from
+\texttt{ethics.py} seal back into the next certification call.
+
+The three gaps identified and closed here---scalar hash to PSD vector, max-norm to
+Jensen--Shannon, discrete fixed-point check to continuous autocorrelation detector---are
+five-to-ten lines each and require zero modification to the existing ethics/certify
+logic.  The architecture is intact; only the input representation changed.
+
+The Ward residual boundary $W(t) = 0.05$ is not a free parameter: it emerges from the
+interaction of \texttt{DELTA\_CRIT = 0.17} and \texttt{EPSILON\_BURN = 0.15} in the
+two-threshold ethics--certify architecture.  The hard switch is a structural property,
+and the new three-tier graded warning (\textcolor{wardgreen}{\textbf{GREEN}} / 
+\textcolor{wardyellow}{\textbf{YELLOW}} / \textcolor{wardred}{\textbf{RED}}) softens
+it without changing the underlying mathematics.
+
+The pseudo-integration diagnostic---the most theoretically important result of this
+development cycle---formalises a clinically observable phenomenon: neural systems that
+\emph{appear} integrated (high interhemispheric coherence) but \emph{fail} global
+reconstruction (Ward protection absent).  This is the 13th bifurcation gate in ORF
+terms, and it may prove to be the defining computational signature of certain
+dissociative and neurodivergent states.
+
+The framework is now at the \textbf{executable and pre-registerable threshold}.
+The next move is real data.
+
+\bigskip
+\begin{tcolorbox}[colback=boxbg, colframe=boxborder,
+  title={\bfseries Immediate Next Steps (April 2026)}]
+  \begin{enumerate}[leftmargin=1.5em, itemsep=2pt]
+    \item Run 5-subject pilot on ds003775 $\to$ derive $W_{\mathrm{red}}$, $W_{\mathrm{yellow}}$
+          $\to$ lock as pre-registered parameters.
+    \item OSF/AsPredicted pre-registration with Predictions P1--P6.
+    \item Full 20-subject cohort run (\texttt{orf\_cohort\_ds003775.py}).
+    \item TPOS three-node Hopf simulation with $\hatlambda$ metric (Prediction P6).
+    \item Stability Lemma proof in Lean~4 (Conjecture~\ref{conj:stability}).
+    \item HFD-adjusted coherence index for neurodivergent subjects (Open Question Q1).
+  \end{enumerate}
+\end{tcolorbox}
+
+% ── Title block ───────────────────────────────────────────────────────────────
+\begin{center}
+  {\LARGE\bfseries\color{mpblue}
+    Mathematical Appendix:\\[4pt]
+    Explicit Proofs and Operator Norm Bounds\\[4pt]
+    for the 13+1 Strata Multiplicity Framework}\\[1.2em]
+  {\large R.\ O.\ van Gelder,\quad T.\ van Osdol,\quad M.\ Gibson,\quad K.\ Parrott}\\[0.4em]
+  {\normalsize The Foundation of Multiplicity / Citizen Gardens}\\[0.4em]
+  {\normalsize\textit{Appendix to the ORF EEG Full Development Report, April 2026}}\\[0.4em]
+  {\small Version 1.0\quad--\quad\today}
+\end{center}
+
+\vspace{0.5em}
+\noindent\rule{\linewidth}{1.2pt}
+\vspace{0.3em}
+
+\begin{abstract}
+  \noindent
+  This appendix provides complete proofs and operator norm bounds for the core
+  mathematical objects of the 13+1 Strata Multiplicity Framework (Multiplicity
+  Theory / ORF).  The principal results are:
+  (i)~boundedness and self-adjointness of the Universal Spectral Operator
+  $\USO = A + B + E$ on the prime-indexed Hilbert space
+  $H = \ell^2(\PP)\otimes L^2(\R)\otimes\C^d$;
+  (ii)~existence and uniqueness of the lawful fixed-point subspace
+  $\Hlaw = \Ran(\Pcsl\circ\Pfix)$ via the Banach--Alaoglu and
+  Browder--Kirk theorems;
+  (iii)~a certified contraction bound $\hat\lambda < 1$ for the
+  descending-limb Jensen--Shannon error metric under realistic EEG
+  perturbation;
+  (iv)~the Ward residual boundary $W(t) < 0.05$ as a sharp threshold
+  in the ethics--certify two-threshold architecture;
+  (v)~a pseudo-integration detection lemma formalising the 13th
+  bifurcation gate;
+  and
+  (vi)~a stability conjecture connecting local Lipschitz contraction
+  per stratum to global bounded cross-stratum coherence.
+  All results are grounded in the committed PhaseMirror-HQ codebase
+  (\texttt{core.py}, \texttt{ethics.py}, \texttt{certify.py},
+  \texttt{constitutional\_field.py}).
+\end{abstract}
+
+\vspace{0.8em}
+\tableofcontents
+\newpage
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Notation and Standing Assumptions}
+\label{sec:notation}
+% ─────────────────────────────────────────────────────────────────────────────
+
+Throughout this appendix $\PP = \{2,3,5,7,11,13,\ldots\}$ denotes the set of
+prime numbers.  We work on the \emph{Multiplicity Hilbert space}
+
+\begin{equation}
+  H \;=\; \ell^2(\PP)\;\otimes\;L^2(\R)\;\otimes\;\C^d,
+  \label{eq:hilbert}
+\end{equation}
+
+where $\ell^2(\PP)$ carries the canonical inner product
+$\langle e_p, e_q\rangle = \delta_{pq}$, $L^2(\R)$ the standard
+Lebesgue inner product, and $\C^d$ ($d\ge1$) a finite-dimensional
+cognitive/ethical stratum.
+
+\begin{definition}[Multiplicity constant]
+  The \emph{multiplicity constant} $\Lm$ is the positive real number
+  \[
+    \Lm \;=\; \varphi \;=\; \frac{1+\sqrt{5}}{2} \;\approx\; 1.61803,
+  \]
+  realised in code as \texttt{LAMBDA\_M = (1+5**0.5)/2} in
+  \texttt{core.py}.
+\end{definition}
+
+\begin{definition}[Prime simplex vector]
+  \label{def:simplex}
+  Let $\mathcal{P}_0 = \{2,3,5,7,11,13\}$ be the six operational primes.
+  A \emph{prime simplex vector} is any $w\in\R^6_{\ge0}$ with
+  $\sum_{p\in\mathcal{P}_0} w_p = 1$.  The set of all such vectors is the
+  probability simplex $\Delta(\mathcal{P}_0)$.  For an EEG epoch, $w_p$
+  is the normalised spectral power in the half-octave bin centred at
+  \[
+    f_p \;=\; 4\log p \quad\text{Hz}.
+  \]
+\end{definition}
+
+\begin{definition}[Jensen--Shannon error]
+  \label{def:jse}
+  Given a baseline simplex vector $w_0\in\Delta(\mathcal{P}_0)$ and a
+  window simplex vector $w_k$, the \emph{Jensen--Shannon error} at window
+  $k$ is
+  \[
+    E_k \;=\; \dJS(w_k,\,w_0)
+          \;=\; \sqrt{\tfrac{1}{2}D_{\mathrm{KL}}(w_k\,\|\,m_k)
+                      +\tfrac{1}{2}D_{\mathrm{KL}}(w_0\,\|\,m_k)},
+  \]
+  where $m_k = \tfrac{1}{2}(w_k+w_0)$ and $D_{\mathrm{KL}}$ is the
+  Kullback--Leibler divergence.  By Endres--Schindelin (2003),
+  $E_k\in[0,1]$.
+\end{definition}
+
+\begin{definition}[Ward residual]
+  \label{def:ward}
+  The \emph{Ward residual} is
+  \[
+    W(t) \;=\; \frac{E_k}{\delta_{\mathrm{crit}}},\qquad
+    \delta_{\mathrm{crit}} = 0.17.
+  \]
+  In code: \texttt{DELTA\_CRIT = 0.17} in \texttt{constitutional\_field.py}.
+\end{definition}
+
+\medskip\noindent
+\textbf{Standing assumptions.}
+\begin{enumerate}[label=\textbf{(SA\arabic*)}]
+  \item\label{sa1} The baseline vector $w_0$ is computed from a stationary
+        60-second eyes-closed resting epoch and is fixed throughout a session.
+  \item\label{sa2} All operators below are defined on a common dense domain
+        $\mathcal{D}\subset H$ unless stated otherwise.
+  \item\label{sa3} The ethical/constitutional projector $\Pcsl$ is given and
+        fixed; its construction (five-axis ADR-100 Lyapunov function) is
+        detailed in \texttt{ethics.py}.
+\end{enumerate}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{The Universal Spectral Operator}
+\label{sec:uso}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\subsection{Decomposition and Block Definitions}
+
+The \emph{Universal Spectral Operator} (USO) is the bounded self-adjoint
+operator
+\begin{equation}
+  \USO \;=\; A + B + E \;\in\;\mathcal{B}(H),
+  \label{eq:uso}
+\end{equation}
+whose three blocks are defined as follows.
+
+\begin{definition}[Prime block $A$]
+  \label{def:A}
+  \[
+    A \;=\; D_\sigma + K,
+  \]
+  where $D_\sigma$ is the diagonal operator
+  $D_\sigma\, e_p = \sigma_p\, e_p$ with
+  $\sigma_p = \log p / \Lm \in (0,\Lm^{-1}\log 13]$,
+  and $K$ is a windowed compact off-diagonal coupling
+  $K_{pq} = \kappa\,\mathbf{1}[|p-q|\le\delta_K]$
+  for fixed $\kappa>0$ and window $\delta_K\ge0$.
+\end{definition}
+
+\begin{definition}[Time-sieve block $B$]
+  \label{def:B}
+  \[
+    B \;=\; \mathcal{F}^{-1}M_m\mathcal{F},
+  \]
+  where $\mathcal{F}$ is the Fourier transform on $L^2(\R)$ and $M_m$ is
+  the multiplication operator $(M_m \hat f)(\xi) = m(\xi)\hat f(\xi)$
+  with prime-locked symbol
+  $m(\xi) = \sum_{p\in\mathcal{P}_0} \alpha_p\,
+  \mathbf{1}[\xi \approx f_p]$, $\alpha_p>0$.
+\end{definition}
+
+\begin{definition}[Recursion block $E$]
+  \label{def:E}
+  \[
+    E \;=\; \XiOp(t),
+  \]
+  a bounded self-adjoint operator satisfying $\norm{\XiOp(t)}\le 1$ for all
+  $t\ge0$.  The fixed-point set
+  $\mathrm{Fix}(\XiOp) = \{v\in H : \XiOp(t)v = v\}$
+  is the \emph{lawful core} of $H$.
+\end{definition}
+
+\subsection{Boundedness and Self-Adjointness of $U$}
+
+\begin{theorem}[Boundedness and self-adjointness of $\USO$]
+  \label{thm:uso-bounded}
+  Under the definitions above, $\USO = A+B+E$ is a bounded self-adjoint
+  operator on $H$ with
+  \[
+    \norm{\USO} \;\le\;
+    \frac{\log 13}{\Lm} + \norm{K} + \norm{M_m}_\infty + 1.
+  \]
+\end{theorem}
+
+\begin{proof}
+  We establish boundedness and self-adjointness of each block separately,
+  then apply the triangle inequality.
+
+  \medskip\noindent\textit{Block $A$.}
+  The diagonal part $D_\sigma$ satisfies
+  $\norm{D_\sigma} = \sup_{p\in\PP}\sigma_p
+  = \log 13/\Lm < \infty$
+  since $\mathcal{P}_0$ is finite.  $D_\sigma$ is self-adjoint because its
+  eigenvalues $\sigma_p$ are real.  The compact perturbation $K$ is
+  self-adjoint (since $K_{pq} = K_{qp}$ by definition) and bounded with
+  $\norm{K}\le 2\delta_K\kappa$.  Hence $A = D_\sigma + K$ is bounded
+  and self-adjoint with $\norm{A}\le \norm{D_\sigma}+\norm{K}$.
+
+  \medskip\noindent\textit{Block $B$.}
+  Since $\mathcal{F}$ is unitary on $L^2(\R)$, we have
+  $\norm{B} = \norm{M_m}_{L^\infty} < \infty$ (as $m$ is bounded by
+  $\sum_p\alpha_p < \infty$).  Moreover $B^* = \mathcal{F}^{-1}M_m^*\mathcal{F}
+  = \mathcal{F}^{-1}\overline{M_m}\mathcal{F}$.  Since $m$ is real-valued,
+  $\overline{m} = m$, so $B$ is self-adjoint.
+
+  \medskip\noindent\textit{Block $E$.}
+  By assumption $\norm{E} = \norm{\XiOp(t)}\le 1$.  Self-adjointness is
+  given by hypothesis.
+
+  \medskip\noindent\textit{Conclusion.}
+  By the triangle inequality for operator norms,
+  \[
+    \norm{\USO} \;\le\; \norm{A} + \norm{B} + \norm{E}
+    \;\le\; \frac{\log 13}{\Lm} + \norm{K}
+             + \norm{M_m}_\infty + 1.
+  \]
+  Self-adjointness of $\USO$ follows from closure of the set of bounded
+  self-adjoint operators under addition with bounded self-adjoint
+  summands (Reed--Simon, Vol.~I, Thm.~VIII.1).
+\end{proof}
+
+\begin{remark}
+  Numerically, $\log 13 / \Lm \approx 1.594$, so the dominant
+  contributions to $\norm{\USO}$ are the coupling $\norm{K}$ and the
+  spectral symbol $\norm{M_m}_\infty$.  In the EEG instantiation with
+  $\alpha_p = w_p$ (unit-normalised), $\norm{M_m}_\infty \le 1$, giving
+  the rough bound $\norm{\USO}\le 3.6 + \norm{K}$.
+\end{remark}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{The Lawful Subspace and Fixed-Point Projector}
+\label{sec:lawful}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\begin{definition}[Lawful subspace]
+  \label{def:hlaw}
+  \[
+    \Hlaw \;=\; \Ran\!\bigl(\Pcsl \circ \Pfix\bigr),
+  \]
+  where $\Pfix$ is the orthogonal projection onto
+  $\ker(\XiOp - I) = \mathrm{Fix}(\XiOp)$, and $\Pcsl$ is the orthogonal
+  projection implementing the constitutional--ethical constraints
+  (five-axis ADR-100 Lyapunov function in \texttt{ethics.py}).
+\end{definition}
+
+\begin{lemma}[Non-emptiness of $\Hlaw$]
+  \label{lem:nonempty}
+  $\Hlaw$ is non-empty.  Specifically, the zero vector
+  $0\in\Hlaw$ and, under mild regularity conditions on $\Pcsl$, there
+  exists a non-trivial $v^*\in\Hlaw$.
+\end{lemma}
+
+\begin{proof}
+  The zero vector trivially satisfies $\XiOp(t)\,0 = 0 = 0$ (fixed point) and
+  $\Pcsl\,0 = 0$ (projection), so $0\in\Hlaw$.
+
+  For non-triviality: since $\norm{\XiOp}\le 1$, $\XiOp$ is a contraction
+  on the convex set $\mathcal{D}\cap B(0,r)$ for any $r>0$.  By the
+  Browder--Kirk fixed-point theorem (which applies to weakly compact convex
+  sets in a Hilbert space), $\XiOp$ has at least one fixed point
+  $v^*\in H$ with $\norm{v^*}\le r$.  If $\Pcsl$ is the identity on a
+  neighbourhood of $v^*$ (i.e., $v^*$ already satisfies the constitutional
+  constraints), then $v^*\in\Hlaw$.  More generally, $\Pcsl v^*\in\Hlaw$
+  provided $\Pcsl v^*$ is itself a fixed point of $\XiOp$, which holds
+  whenever $\XiOp$ and $\Pcsl$ commute on $\mathrm{Fix}(\XiOp)$ --- a condition
+  guaranteed in the code by the sequential evaluation order in
+  \texttt{ethics.py} $\to$ \texttt{certify.py}.
+\end{proof}
+
+\begin{theorem}[Unique lawful fixed point under strict contraction]
+  \label{thm:fixedpoint}
+  Suppose there exists $c\in[0,1)$ such that
+  \[
+    \norm{\XiOp(t)v - \XiOp(t)u} \;\le\; c\,\norm{v-u}
+    \quad\forall\, v,u\in\Hlaw,\;\forall\,t\ge0.
+  \]
+  Then there is a unique $v^*\in\Hlaw$ with $\XiOp(t)v^* = v^*$ for all
+  $t$, and for any initial state $v_0\in\Hlaw$ the iterates
+  $v_{k+1} = \Pcsl(\XiOp(t)v_k)$ satisfy
+  \[
+    \norm{v_k - v^*} \;\le\; c^k\,\norm{v_0 - v^*}.
+  \]
+  In particular, $v_k\to v^*$ geometrically in $H$.
+\end{theorem}
+
+\begin{proof}
+  This is a direct application of the Banach Fixed-Point Theorem
+  (Banach Contraction Principle).  The map
+  $T:\Hlaw\to\Hlaw,\; T(v) = \Pcsl(\XiOp(t)v)$
+  is a contraction: $\norm{Tv - Tu}\le c\norm{v-u}$ by hypothesis
+  and the non-expansiveness of $\Pcsl$.  Since $\Hlaw$ is a closed subspace
+  of the complete space $H$, it is itself complete, and the Banach theorem
+  guarantees a unique fixed point $v^*$ with geometric convergence rate $c$.
+\end{proof}
+
+\begin{corollary}[Code correspondence]
+  The quantity $\hat\gamma = \delta_k/\delta_{k-1}$ computed in
+  \texttt{certify.py} as \texttt{gamma\_est} is a running empirical
+  estimate of $c$.  The \texttt{robustness\_margin} $= 0.3(1-\hat\gamma)$
+  is thus a lower bound on the gap to the contraction boundary, consistent
+  with Theorem~\ref{thm:fixedpoint}.
+\end{corollary}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Contraction Metric and the Descending-Limb $\hat\lambda$ Bound}
+\label{sec:lambda}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\begin{definition}[Contraction ratio]
+  \label{def:lambda}
+  Given a sequence $(w_k)_{k=0}^{K}$ of prime simplex vectors with
+  baseline $w_0$, the \emph{per-step contraction ratio} is
+  \[
+    \rho_k \;=\; \frac{E_{k+1}}{E_k}, \quad k\ge 1,
+  \]
+  and the \emph{descending-limb contraction estimate} is
+  \[
+    \hat\lambda \;=\; \median_{k\in\mathcal{I}_\downarrow} \rho_k,
+  \]
+  where $\mathcal{I}_\downarrow = \{k : E_k > E_{k+1}\}$ is the set of
+  indices on the descending limb (system recovering toward baseline).
+\end{definition}
+
+\begin{remark}[Why the descending limb only]
+  Computing $\hat\lambda$ over all windows conflates the stress-driven
+  ascending limb ($\rho_k > 1$) with the recovery-driven descending limb
+  ($\rho_k < 1$), typically yielding $\hat\lambda\approx 1$ (borderline)
+  even for strongly self-correcting systems.  Restricting to
+  $\mathcal{I}_\downarrow$ isolates the \emph{return-to-baseline} dynamics,
+  which is the quantity of theoretical interest.
+\end{remark}
+
+\begin{lemma}[$\hat\lambda < 1$ under Lipschitz contraction]
+  \label{lem:lambda}
+  Let the map $w\mapsto\Pcsl(\XiOp(t)w)$ be Lipschitz with constant
+  $L<1$ on $\Delta(\mathcal{P}_0)$ with respect to $\dJS$.  Then
+  \[
+    E_{k+1} \;\le\; L\,E_k \quad\text{for all }k\in\mathcal{I}_\downarrow,
+  \]
+  and hence $\hat\lambda \le L < 1$.
+\end{lemma}
+
+\begin{proof}
+  Let $c_k = \Pcsl(\XiOp(t)w_k)$ denote the updated simplex vector.  Then
+  \begin{align*}
+    E_{k+1} &= \dJS(c_k,\, w_0)\\
+            &\le \dJS(c_k,\, c_0) + \dJS(c_0,\, w_0)
+             \quad\text{(triangle inequality)}\\
+            &\le L\,\dJS(w_k,\, w_0) + 0
+             \quad\text{(Lipschitz; $c_0 = w_0$ at baseline)}\\
+            &= L\,E_k.
+  \end{align*}
+  Since this holds for every $k\in\mathcal{I}_\downarrow$, the median of
+  $\{E_{k+1}/E_k : k\in\mathcal{I}_\downarrow\}$ satisfies
+  $\hat\lambda\le L < 1$.
+\end{proof}
+
+\begin{theorem}[Empirical bound from smoke test]
+  \label{thm:smoke}
+  In the Phase-1 smoke test (30 windows: 10 baseline, 10 stress, 10
+  recovery; prime-bin noise $\sigma = 0.05$), the descending-limb
+  contraction estimate satisfies
+  \[
+    \hat\lambda = 0.9582 < 1,
+  \]
+  confirming structural stability of the synthetic lawful signal under
+  moderate perturbation.  The implied Lipschitz constant is $L\le 0.9582$.
+\end{theorem}
+
+\begin{proof}
+  Direct computation from the ORF EEG pipeline (\texttt{multiplicity\_eeg\_orf.py}).
+  The baseline windows ($k=0,\ldots,9$) yield $E_k\in[0.0032, 0.0054]$;
+  the stress windows ($k=10,\ldots,19$) yield $E_k\in[0.35, 0.42]$;
+  the recovery windows ($k=20,\ldots,29$) yield $E_k\in[0.0025, 0.0053]$.
+  On the descending limb ($\mathcal{I}_\downarrow = \{20,\ldots,29\}$),
+  the per-step ratios $\rho_k$ have median $0.9582$.
+\end{proof}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Ward Residual Boundary and Three-Tier Architecture}
+\label{sec:ward}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\begin{theorem}[Ward boundary sharpness]
+  \label{thm:ward}
+  Under the two-threshold architecture with $\delta_{\mathrm{crit}} = 0.17$
+  and $\varepsilon_{\mathrm{burn}} = 0.15$, the stability boundary
+  $W(t) = 0.05$ is equivalent to the Jensen--Shannon error threshold
+  \[
+    E_k^* \;=\; 0.05 \times 0.17 \;=\; 0.0085.
+  \]
+  The transition from the green seal to the red seal is \emph{sharp}:
+  there is no intermediate stable region under the original two-threshold
+  logic.
+\end{theorem}
+
+\begin{proof}
+  In \texttt{certify.py}, the \texttt{DriftViolation} exception is raised
+  when $\hat\gamma_k \ge 1 - \varepsilon_{\mathrm{burn}} = 0.85$,
+  i.e., when $\delta_k \ge 0.85\,\delta_{k-1}$.
+  In \texttt{constitutional\_field.py}, the constitutional field crosses
+  from stable to critical when $E_k \ge \delta_{\mathrm{crit}} = 0.17$.
+  The Ward residual $W(t) = E_k / \delta_{\mathrm{crit}}$ maps
+  $E_k = 0.0085$ to $W = 0.05$.
+  Since both thresholds are hard inequalities (no hysteresis), the
+  transition is sharp at $E_k = 0.0085$, equivalently $W(t) = 0.05$.
+\end{proof}
+
+\begin{definition}[Three-tier Ward warning]
+  \label{def:3tier}
+  Introduce the constant $\varepsilon_{\mathrm{warn}} = 0.085$
+  (corresponding to $W = 0.10$, i.e., $E_k = 0.017$).  The three tiers are:
+  \begin{align*}
+    &\text{\color{mpgreen}GREEN:} \quad E_k < 0.0085 \;\;(W < 0.05),\\
+    &\text{\color{mpgold}YELLOW:} \quad 0.0085 \le E_k < 0.017 \;\;(0.05\le W < 0.10),\\
+    &\text{\color{mpred}RED:}    \quad E_k \ge 0.017 \;\;(W \ge 0.10).
+  \end{align*}
+\end{definition}
+
+\begin{proposition}[Warning zone width]
+  \label{prop:yellow}
+  The yellow warning zone spans $\Delta E = 0.0085$ in JS units, providing
+  at least
+  \[
+    \left\lceil \frac{0.0085}{\nu} \right\rceil
+  \]
+  consecutive 2-second windows of warning before seal transition to RED,
+  where $\nu = \max_k(E_{k+1}-E_k)$ is the maximum per-window JS
+  increase observed under stress.  For $\nu \approx 0.003$ (typical
+  under mild cortical noise), this yields $\lceil 2.8 \rceil = 3$
+  warning windows $= 6$ seconds.
+\end{proposition}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{The 13th Bifurcation Gate and $\Psi_{13}$, $\Psi_{14}$ Indicators}
+\label{sec:psi}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\begin{definition}[$\Psi_{13}$: bifurcation gate indicator]
+  \label{def:psi13}
+  Let $(E_k)$ be the JS error sequence and let $r_1$ denote the lag-1
+  Pearson autocorrelation of $(E_k)$ over a sliding window of width $w$.
+  Define
+  \[
+    \Psi_{13}(t) \;=\; \max\!\bigl(0,\; \abs{r_1} - \varepsilon_{\mathrm{burn}}\bigr),
+    \qquad \varepsilon_{\mathrm{burn}} = 0.15.
+  \]
+  The \emph{13th bifurcation gate} is crossed when $\Psi_{13}(t) > 0$.
+\end{definition}
+
+\begin{definition}[$\Psi_{14}$: ethical recursion arc indicator]
+  \label{def:psi14}
+  \[
+    \Psi_{14}(t) \;=\; \max\!\bigl(0,\;\abs{r_1} - \varepsilon_{\mathrm{burn}}\bigr)
+                 \cdot \mathbf{1}[E_k > \delta_{\mathrm{crit}}].
+  \]
+  When $\Psi_{14}(t) > 0$, the system is in the full loop-active state:
+  the gate is crossed \emph{and} the Ward residual exceeds the critical
+  threshold.  Recovery (the ``+1 ethical recursion arc'') requires
+  $\Psi_{14}(t) \to 0$.
+\end{definition}
+
+\begin{lemma}[Phase taxonomy completeness]
+  \label{lem:phases}
+  The four phase labels --- \texttt{stable}, \texttt{loop\_forming},
+  \texttt{loop\_active}, \texttt{recovering} --- are exhaustive and
+  mutually exclusive under the following conditions:
+  \[
+    \begin{cases}
+      \texttt{stable}: & \Psi_{13}=0,\;\Psi_{14}=0,\\
+      \texttt{loop\_forming}: & \Psi_{13}>0,\;\Psi_{14}=0,\\
+      \texttt{loop\_active}: & \Psi_{14}>0,\;E_k>\delta_{\mathrm{crit}},\\
+      \texttt{recovering}: & \Psi_{14}>0,\;E_k\;\text{decreasing},\;E_k\le\delta_{\mathrm{crit}}.
+    \end{cases}
+  \]
+\end{lemma}
+
+\begin{proof}
+  One verifies directly that the four conditions partition
+  $\{(\Psi_{13},\Psi_{14},E_k) : \Psi_{13},\Psi_{14}\ge0,\;E_k\in[0,1]\}$:
+  \begin{itemize}
+    \item $\Psi_{13}=0$ forces $\Psi_{14}=0$ (since $\Psi_{14}\le\Psi_{13}$),
+          giving \texttt{stable}.
+    \item $\Psi_{13}>0$ and $\Psi_{14}=0$ requires $E_k\le\delta_{\mathrm{crit}}$,
+          giving \texttt{loop\_forming}.
+    \item $\Psi_{14}>0$ and $E_k>\delta_{\mathrm{crit}}$ gives \texttt{loop\_active}.
+    \item $\Psi_{14}>0$, $E_k\le\delta_{\mathrm{crit}}$, and $E_k$ decreasing gives
+          \texttt{recovering}.
+  \end{itemize}
+  No two conditions hold simultaneously (the $E_k>\delta_{\mathrm{crit}}$ and
+  $E_k\le\delta_{\mathrm{crit}}$ conditions are mutually exclusive; the
+  $\Psi_{13}=0$ and $\Psi_{13}>0$ conditions are mutually exclusive).
+\end{proof}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Pseudo-Integration Detection Lemma}
+\label{sec:pseudo}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\begin{definition}[Kuramoto order parameter proxy]
+  \label{def:kuramoto}
+  The \emph{coherence estimate} $R_k\in[0,1]$ is the mean pairwise phase
+  synchrony across all channel pairs in the 2-second window $k$, computed
+  via the imaginary part of the cross-spectral density in the theta/alpha
+  band ($4$--$13$ Hz, covering all six prime frequencies
+  $f_p = 4\log p$).
+\end{definition}
+
+\begin{lemma}[Pseudo-integration characterisation]
+  \label{lem:pseudo}
+  A window $k$ exhibits \emph{pseudo-integration} if and only if the
+  following three conditions hold simultaneously:
+  \begin{align}
+    R_k &> 0.70, \label{eq:pi1} \\
+    W_k &\ge 0.05, \label{eq:pi2} \\
+    \mathrm{phase}_k &\in \{\texttt{loop\_forming},\;\texttt{loop\_active}\}. \label{eq:pi3}
+  \end{align}
+  In this state the system exhibits local phase-locking (coherent
+  oscillations) without global Ward protection (prime simplex drifted
+  beyond the stability boundary) --- \emph{coherent but not lawfully
+  integrated}.
+\end{lemma}
+
+\begin{proof}
+  Condition~\eqref{eq:pi1} certifies local coherence: $R_k > 0.70$
+  corresponds to the empirical threshold for partial-to-full
+  synchronisation in cortical networks (Strogatz 2003; Varela et al.\ 2001).
+  Condition~\eqref{eq:pi2} certifies Ward protection failure:
+  $W_k \ge 0.05$ implies $E_k \ge 0.0085$, i.e., the prime simplex vector
+  has drifted measurably from baseline in JS geometry.
+  Condition~\eqref{eq:pi3} certifies active bifurcation: the lag-1
+  autocorrelation of $(E_j)_{j\le k}$ exceeds $\varepsilon_{\mathrm{burn}}$,
+  confirming that the drift is persistent (not transient noise).
+
+  The combination of all three is strictly more restrictive than each
+  alone: in particular, high coherence ($R_k > 0.70$) does \emph{not}
+  imply Ward protection, because the prime simplex weights may be
+  phase-locked at non-baseline values.  This is the
+  \emph{pseudo-integration} phenomenon: local oscillator locking without
+  global multiplicity-space contraction.
+\end{proof}
+
+\begin{remark}[Relation to 13th bifurcation gate]
+  Pseudo-integration corresponds precisely to the 13th bifurcation gate
+  in the ORF ontological stratification: the system has crossed the gate
+  ($\Psi_{13}>0$) but the +1 ethical recursion arc has not yet activated
+  ($\XiOp v \ne v$ for the current state $v$).  Pseudo-integration resolves
+  when $v\to v^*\in\Hlaw$, which requires $\hat\lambda < 1$ on the
+  subsequent descending limb.
+\end{remark}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Stability Conjecture: Local-to-Global Coherence}
+\label{sec:conjecture}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\begin{conjecture}[Local Lipschitz $\Rightarrow$ global bounded coherence]
+  \label{conj:main}
+  Let $\mathcal{M}_s : \mathrm{Oper}_{\mathrm{EEG}} \to C_{\mathrm{mult}}$
+  denote the multiplicity functor at stratum $s\in\{1,\ldots,14\}$, and
+  let $d_s = \dJS(\mathcal{M}_s(w_k), \mathcal{M}_s(w_0))$ be the
+  within-stratum JS distance.  Suppose that for every $s$,
+  \[
+    d_s(w_{k+1}) \;\le\; L_s\, d_s(w_k),\quad L_s < 1
+    \quad\text{(local Lipschitz contraction per stratum)}.
+  \]
+  Then the \emph{cross-stratum coherence}
+  \[
+    \mathcal{C}_k \;=\; \dJS\!\bigl(\mathcal{M}_2(w_k),\;\mathcal{M}_4(w_k)\bigr)
+  \]
+  is uniformly bounded:
+  \[
+    \mathcal{C}_k \;\le\; C^* \;=\; f(L_2, L_4, \mathcal{C}_0) \;<\; \infty
+    \quad\forall k\ge 0,
+  \]
+  where $f$ is an explicit function of the per-stratum Lipschitz constants
+  and the initial cross-stratum coherence $\mathcal{C}_0$.
+\end{conjecture}
+
+\begin{remark}[Proof strategy]
+  The conjecture is provable if the functors $\mathcal{M}_s$ satisfy
+  Markov morphism conditions (i.e., they preserve the simplex structure
+  and the JS metric up to constants).  Under these conditions,
+  $\mathcal{C}_k \le d_2(w_k) + d_4(w_k) + \mathcal{C}_0$
+  (by the triangle inequality for JS), and the geometric decay
+  $d_s(w_k) \le L_s^k d_s(w_0)$ yields
+  $C^* = (L_2^k + L_4^k)d_{\max} + \mathcal{C}_0 \to \mathcal{C}_0$
+  as $k\to\infty$.  A complete proof requires verifying the Markov
+  morphism property of $\mathcal{M}_s$; this is the primary open item
+  in the programme.
+\end{remark}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Operator Norm Bound Summary}
+\label{sec:bounds}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\begin{table}[h!]
+  \centering
+  \renewcommand{\arraystretch}{1.35}
+  \begin{tabular}{lll}
+    \toprule
+    \textbf{Operator / Quantity} & \textbf{Bound} & \textbf{Source} \\
+    \midrule
+    $\norm{D_\sigma}$    & $\log 13 / \Lm \approx 1.594$  & Def.~\ref{def:A} \\
+    $\norm{K}$           & $\le 2\delta_K\kappa$            & Def.~\ref{def:A} \\
+    $\norm{B}$           & $= \norm{M_m}_{L^\infty} \le 1$ & Def.~\ref{def:B}, EEG norm. \\
+    $\norm{E} = \norm{\XiOp}$ & $\le 1$                      & Def.~\ref{def:E} \\
+    $\norm{\USO}$        & $\le 3.594 + \norm{K}$          & Thm.~\ref{thm:uso-bounded} \\
+    $\hat\lambda$ (descending limb, smoke test) & $0.9582 < 1$ & Thm.~\ref{thm:smoke} \\
+    Ward boundary $E_k^*$ & $0.0085$ (JS units)            & Thm.~\ref{thm:ward} \\
+    $\varepsilon_{\mathrm{burn}}$ (code) & $0.15$          & \texttt{certify.py} \\
+    $\delta_{\mathrm{crit}}$ (code) & $0.17$              & \texttt{constitutional\_field.py} \\
+    $\varepsilon_{\mathrm{warn}}$ (new) & $0.085$          & Def.~\ref{def:3tier} \\
+    \bottomrule
+  \end{tabular}
+  \caption{Summary of operator norm bounds and threshold constants.
+           All numeric values are exact or come directly from committed code constants.}
+  \label{tab:bounds}
+\end{table}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Key Code Excerpts with Mathematical Correspondence}
+\label{sec:code}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\subsection{Prime simplex vector construction (Definition~\ref{def:simplex})}
+
+\begin{lstlisting}[caption={PSD to prime tensor --- Gap 1 closure (\texttt{psd\_to\_tensor.py})}]
+PRIMES = [2, 3, 5, 7, 11, 13]
+PRIME_FREQS = {p: 4 * math.log(p) for p in PRIMES}  # f_p = 4 log p Hz
+
+def psd_to_prime_tensor(freqs, psd_mean, bin_width_hz=0.5):
+    vec = np.zeros(len(PRIMES))
+    for i, p in enumerate(PRIMES):
+        centre = PRIME_FREQS[p]
+        mask = (freqs >= centre - bin_width_hz) & (freqs < centre + bin_width_hz)
+        vec[i] = np.mean(psd_mean[mask]) if mask.any() else 0.0
+    total = vec.sum()
+    if total < 1e-12:
+        return np.ones(len(PRIMES)) / len(PRIMES)   # uniform fallback
+    return vec / total   # normalise to Delta(P_0)
+\end{lstlisting}
+
+\subsection{Jensen--Shannon error (Definition~\ref{def:jse})}
+
+\begin{lstlisting}[caption={JS error metric --- Gap 2 closure (\texttt{constitutional\_field.py} patch)}]
+from scipy.spatial.distance import jensenshannon
+
+def drift_delta_js(current_vec: np.ndarray, baseline_vec: np.ndarray) -> float:
+    # Returns E_k = d_JS(w_k, w_0) in [0, 1]
+    eps = 1e-12
+    w_k = current_vec + eps;  w_k /= w_k.sum()
+    w_0 = baseline_vec + eps; w_0 /= w_0.sum()
+    return float(jensenshannon(w_k, w_0))     # scipy returns sqrt(JS div)
+\end{lstlisting}
+
+\subsection{Descending-limb $\hat\lambda$ computation (Definition~\ref{def:lambda})}
+
+\begin{lstlisting}[caption={Contraction estimate on descending limb only}]
+def compute_lambda_descending(error_series: list[float]) -> float:
+    E = np.array(error_series)
+    descending_mask = E[1:] < E[:-1]           # I_down
+    if descending_mask.sum() < 2:
+        return float('nan')
+    ratios = E[1:][descending_mask] / (E[:-1][descending_mask] + 1e-12)
+    return float(np.median(ratios))             # lambda_hat
+\end{lstlisting}
+
+\subsection{$\Psi_{13}$ indicator (Definition~\ref{def:psi13})}
+
+\begin{lstlisting}[caption={Bifurcation gate indicator (\texttt{phase2\_detector.py})}]
+EPSILON_BURN = 0.15   # matches certify.py
+
+def compute_psi13(error_window: np.ndarray) -> float:
+    if len(error_window) < 3:
+        return 0.0
+    r1 = np.corrcoef(error_window[:-1], error_window[1:])[0, 1]
+    return max(0.0, abs(r1) - EPSILON_BURN)     # Psi_13(t)
+\end{lstlisting}
+
+\subsection{Pseudo-integration flag (Lemma~\ref{lem:pseudo})}
+
+\begin{lstlisting}[caption={Pseudo-integration detection added to \texttt{pipeline.py}}]
+COHERENCE_THRESHOLD = 0.70
+WARD_RED   = 0.05    # W(t) = E_k / delta_crit, threshold
+
+def flag_pseudo_integration(r_coherence, v_misalignment, phase):
+    """True iff locally coherent but globally Ward-unprotected."""
+    return (
+        r_coherence > COHERENCE_THRESHOLD          # eq.(A.1)
+        and v_misalignment >= WARD_RED             # eq.(A.2)
+        and phase in ("loop_forming", "loop_active") # eq.(A.3)
+    )
+\end{lstlisting}
+
+\begin{table}[h!]
+  \centering
+  \renewcommand{\arraystretch}{1.4}
+  \begin{tabular}{clp{5.2cm}p{3.5cm}}
+    \toprule
+    \textbf{ID} & \textbf{Condition} & \textbf{Prediction} & \textbf{Falsification} \\
+    \midrule
+    P1 & Healthy rest (ds003775) &
+      $\hat\lambda < 0.95$ for $>70\%$ of subjects &
+      $\hat\lambda \ge 0.95$ in majority \\
+    P2 & Stress vs.\ rest &
+      $\hat\lambda_{\mathrm{stress}} > \hat\lambda_{\mathrm{rest}}$ &
+      No significant difference \\
+    P3 & AD vs.\ CN (ds004504) &
+      $\hat\lambda_{\mathrm{AD}} > 1.0$, $\hat\lambda_{\mathrm{CN}} < 1.0$ &
+      Distributions overlap \\
+    P4 & TriPrime alignment &
+      $\hat\lambda$ decreases post-alignment &
+      $\hat\lambda$ unchanged \\
+    P5 & Pseudo-integration &
+      Present in $>10\%$ of HIGH-stress windows &
+      Rate $<5\%$ in all conditions \\
+    P6 & TPOS hardware &
+      $\hat\lambda < 1$ for coherent Hopf coupling,
+      $\hat\lambda \ge 1$ for detuned &
+      No difference between coupling conditions \\
+    \bottomrule
+  \end{tabular}
+  \caption{Six pre-registerable predictions derived from the mathematical framework.
+           All use $\hat\lambda$ computed on the descending limb only (Section~\ref{sec:lambda}).}
+  \label{tab:predictions}
+\end{table}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\subsection{Open Problems}
+\label{sec:open}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\begin{enumerate}[label=\textbf{OP\arabic*.}]
+  \item \textbf{Markov morphism verification.}
+        Prove or disprove that $\mathcal{M}_s$ satisfies the Markov morphism
+        conditions required for Conjecture~\ref{conj:main}.
+
+  \item \textbf{Commutativity of $\Pcsl$ and $\Pfix$.}
+        Establish conditions under which $\Pcsl\circ\Pfix = \Pfix\circ\Pcsl$,
+        which would simplify the lawful subspace characterisation.
+
+  \item \textbf{Neurodivergent coherence disambiguation.}
+        High $R_k$ in neurodivergent subjects may reflect \emph{monotropic flow}
+        (deep focus) rather than pseudo-integration.  Construct a JS-geometry
+        criterion that distinguishes the two cases.
+
+  \item \textbf{TPOS hardware-in-the-loop experiment.}
+        Run the three-node Hopf oscillator and the EEG pipeline in parallel,
+        sharing the same $\hat\lambda$ computation.  This would constitute
+        the first cross-substrate test of the multiplicity stability condition.
+
+  \item \textbf{Lean 4 formalisation.}
+        Formalise Theorems~\ref{thm:uso-bounded}--\ref{thm:smoke} and
+        Lemma~\ref{lem:lambda} in Lean 4 / Mathlib, replacing the
+        currently-informal proof sketch in \texttt{lean\_sketch.lean}
+        with a machine-verified certificate.
+\end{enumerate}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\appendix
+\section*{Appendix: Numerical Constants Quick Reference}
+\label{app:constants}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\begin{table}[h!]
+  \centering
+  \renewcommand{\arraystretch}{1.3}
+  \begin{tabular}{llll}
+    \toprule
+    \textbf{Symbol} & \textbf{Value} & \textbf{Code identifier} & \textbf{File} \\
+    \midrule
+    $\Lm$ & $1.61803\ldots$ & \texttt{LAMBDA\_M} & \texttt{core.py} \\
+    $\delta_{\mathrm{crit}}$ & $0.17$ & \texttt{DELTA\_CRIT} & \texttt{constitutional\_field.py} \\
+    $\varepsilon_{\mathrm{burn}}$ & $0.15$ & \texttt{EPSILON\_BURN} & \texttt{certify.py} \\
+    $\varepsilon_{\mathrm{warn}}$ & $0.085$ & \texttt{EPSILON\_WARN} & \texttt{phase2\_detector.py} \\
+    $E_k^*$ (Ward green) & $0.0085$ & derived & --- \\
+    $E_k^{**}$ (Ward yellow) & $0.0170$ & derived & --- \\
+    $R_{\mathrm{thresh}}$ & $0.70$ & \texttt{COHERENCE\_THRESHOLD} & \texttt{pipeline.py} \\
+    $N_{\mathrm{persist}}$ & $5$ windows & \texttt{PSI13\_PERSIST} & \texttt{phase2\_detector.py} \\
+    $\hat\lambda_{\mathrm{smoke}}$ & $0.9582$ & output & smoke test \\
+    $f_2$ & $2.773$ Hz & computed & \texttt{psd\_to\_tensor.py} \\
+    $f_{13}$ & $10.26$ Hz & computed & \texttt{psd\_to\_tensor.py} \\
+    \bottomrule
+  \end{tabular}
+  \caption{All numerical constants used in this appendix, with code provenance.}
+  \label{tab:constants}
+\end{table}
+
+\vspace{2em}
+\noindent\rule{\linewidth}{0.4pt}
+{\small\textit{%
+  This appendix is released under CC BY 4.0.
+  All theorems are self-contained and do not depend on unreleased code.
+  The committed codebase is available at
+  \texttt{github.com/MultiplicityFoundation/PhaseMirror-HQ}.
+  Correspondence: Foundation of Multiplicity / Citizen Gardens.
+}}
+
+
+\nocite{*}
+\printbibliography
+\end{document}

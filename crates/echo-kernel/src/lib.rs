@@ -2,11 +2,13 @@ pub mod dialetheic;
 pub mod aperture;
 pub mod contractivity;
 pub mod identity;
+pub mod braid;
 
 pub use dialetheic::{LpTruth, DialetheicFilter};
 pub use aperture::Aperture;
 pub use contractivity::{enforce_contractivity, enforce_sovereign_contractivity, LambdaTraceAtom, MetricSpace, ContractivityError};
 pub use identity::PrimeDecomposable;
+pub use braid::*;
 
 #[cfg(test)]
 mod tests {

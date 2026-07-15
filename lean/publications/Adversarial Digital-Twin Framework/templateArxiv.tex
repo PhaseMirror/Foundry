@@ -1,0 +1,1685 @@
+\documentclass[12pt,a4paper]{article}
+
+%% ── Packages ────────────────────────────────────────────────────────────────
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{titlesec}
+\usepackage{setspace}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{mathtools}
+\usepackage{bm}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{enumitem}
+\usepackage{tcolorbox}
+\usepackage{mdframed}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+%% ── Colours ─────────────────────────────────────────────────────────────────
+\definecolor{multBlue}{RGB}{0,60,120}
+\definecolor{multGold}{RGB}{180,140,0}
+\definecolor{codeGray}{RGB}{245,245,250}
+\definecolor{codeGreen}{RGB}{0,120,60}
+\definecolor{codeRed}{RGB}{180,0,0}
+\definecolor{codeBlue}{RGB}{0,80,180}
+\definecolor{codePurple}{RGB}{120,0,160}
+
+%% ── Hyperref ────────────────────────────────────────────────────────────────
+\hypersetup{
+  colorlinks = true,
+  linkcolor  = multBlue,
+  urlcolor   = multBlue,
+  citecolor  = multGold,
+  pdftitle   = {Phase Mirror: Adversarial Digital-Twin Framework},
+  pdfauthor  = {Multiplicity Foundation},
+  pdfsubject = {Defensive Prior-Art Publication},
+}
+
+%% ── Code Listings ───────────────────────────────────────────────────────────
+\lstdefinestyle{pythonstyle}{
+  backgroundcolor=\color{codeGray},
+  commentstyle=\color{codeGreen}\itshape,
+  keywordstyle=\color{codeBlue}\bfseries,
+  stringstyle=\color{codeRed},
+  basicstyle=\ttfamily\footnotesize,
+  breaklines=true,
+  captionpos=b,
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  showspaces=false,
+  tabsize=2,
+  frame=single,
+  rulecolor=\color{multBlue!40},
+}
+\lstdefinestyle{tsstyle}{
+  backgroundcolor=\color{codeGray},
+  commentstyle=\color{codeGreen}\itshape,
+  keywordstyle=\color{codePurple}\bfseries,
+  stringstyle=\color{codeRed},
+  basicstyle=\ttfamily\footnotesize,
+  breaklines=true,
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  frame=single,
+  rulecolor=\color{multBlue!40},
+  morekeywords={interface,type,const,let,export,function,async,await,
+                boolean,string,number,void,Promise},
+}
+\lstset{style=pythonstyle}
+
+%% ── Theorem Environments ────────────────────────────────────────────────────
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}[section]
+\newtheorem{invariant}{Invariant}[section]
+
+%% ── Custom Boxes ────────────────────────────────────────────────────────────
+\tcbuselibrary{skins,breakable}
+\newtcolorbox{claimbox}[1][]{
+  enhanced, title={Prior-Art Claim},
+  colback=multBlue!5, colframe=multBlue,
+  fonttitle=\bfseries, breakable, #1}
+\newtcolorbox{alertbox}[1][]{
+  enhanced, title={Governance Invariant (L0)},
+  colback=codeRed!5, colframe=codeRed,
+  fonttitle=\bfseries\color{codeRed}, breakable, #1}
+
+%% ── Headers / Footers ───────────────────────────────────────────────────────
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textcolor{multBlue}{\textbf{Phase Mirror} --- Adversarial Digital-Twin Framework}}
+\fancyhead[R]{\small\textcolor{multGold}{Citizen Gardens}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\setlength{\headheight}{15pt}
+
+%% ── Section Formatting ──────────────────────────────────────────────────────
+\titleformat{\section}{\large\bfseries\color{multBlue}}{{\thesection}}{1em}{}[\titlerule]
+\titleformat{\subsection}{\normalsize\bfseries\color{multBlue!80}}{\thesubsection}{1em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries\color{multBlue!60}}{\thesubsubsection}{1em}{}
+
+%% ── Document ────────────────────────────────────────────────────────────────
+\begin{document}
+
+%% ─────────────────────────────── TITLE PAGE ────────────────────────────────
+\begin{titlepage}
+\begin{center}
+\vspace*{2cm}
+{\Huge\bfseries\color{multBlue}Phase Mirror\\[0.4em]Adversarial Digital-Twin Framework}\\[1.2em]
+{\large\color{multGold}\bfseries Comprehensive Technical Report \&\\Defensive Prior-Art Publication}\\[2.5em]
+\hrule\vspace{0.6em}
+{\normalsize\textbf{Citizen Gardens \\ The Foundation of Multiplicity}\\
+\texttt{github.com/MultiplicityFoundation/PhaseMirror-HQ}}
+\vspace{0.4em}\hrule\\[2em]
+\begin{tabular}{ll}
+\textbf{Document type:} & Defensive publication / prior-art disclosure \\
+\textbf{Status:}        & Phase 5 operational; Phase 6 in progress \\
+\textbf{ADR anchors:}   & ADR-001--015, ADR-MCRM-010--070, ADR-AGI-001--005 \\
+\textbf{Core repo:}     & \texttt{MultiplicityFoundation/PhaseMirror-HQ} \\
+\textbf{Date:}          & April 29, 2026 \\
+\textbf{Version:}       & 1.0.0 \\
+\end{tabular}
+\vfill
+\textcolor{gray}{\small
+This document constitutes a defensive publication intended to establish prior art\\
+for the Phase Mirror adversarial digital-twin framework and its constituent\\
+mathematical structures. All concepts herein are hereby dedicated to the public\\
+record to prevent third-party monopolisation of this design space.
+}
+\end{center}
+\end{titlepage}
+
+%% ─────────────────────────── TABLE OF CONTENTS ─────────────────────────────
+\setcounter{tocdepth}{3}
+\tableofcontents
+\newpage
+
+%% ─────────────────────── SECTION 1: EXECUTIVE SUMMARY ──────────────────────
+\section{Executive Summary}
+\label{sec:exec}
+
+Phase Mirror is a mathematically governed, adversarial digital-twin framework
+developed by the Citizen Gardens. It instantiates a \emph{prime-indexed,
+recursively stable} substrate for modelling nonlinear, emergent structures in
+computation, cognition, and physical systems. The framework is not a static
+knowledge base; it is a living architecture in which every component---operators,
+security layers, governance primitives, and runtime kernels---is recursively
+derived from prime-number decompositions and verifiable contractivity invariants.
+
+\subsection{Core Innovation Statement}
+
+The central novelty of Phase Mirror is the fusion of three historically separate
+disciplines into a single, self-consistent kernel:
+
+\begin{enumerate}[label=(\roman*)]
+  \item \textbf{Multiplicity Theory} --- a prime-indexed categorical foundation
+    in which mathematical objects are reinterpreted as recursively generated
+    interaction patterns governed by the core multiplicity operator
+    $\Omega : \bigoplus_{p \in \mathbb{P}} \mathcal{H}_p \to \mathcal{H}$.
+  \item \textbf{Adversarial Digital-Twin Simulation} --- a framework of
+    dissonance detection, convergent causal resolution, and phase-weighted
+    feedback loops that model and correct deviations in agentic systems.
+  \item \textbf{Prime-Anchored Governance} --- an executable policy layer
+    (ADRs, CI gates, Lean4 proofs, BLS12-381 attestation) that treats
+    governance decisions as first-class mathematical objects.
+\end{enumerate}
+
+\subsection{Key Results to Date}
+
+\begin{itemize}
+  \item \textbf{Phase 5 (LLVM/MLIR)} operational: prime-indexed lowering pipeline
+    with full ACE/PETC contractivity enforcement across 10{,}000-step simulations.
+  \item \textbf{27+ ADRs} formally accepted, covering runtime kernel, QAGI
+    governance, self-modification boundaries, BLS12-381 sovereign signing,
+    and Microsoft AGT integration.
+  \item \textbf{Lean4 proof pipeline} (ADR-014) scoped and under active
+    formalisation: contractivity, ACE budget conservation, and Lobian guard
+    properties are targeted for machine-checked proofs.
+  \item \textbf{Prime-Weighted Execution Hashing (PWEH)} defined as the primary
+    attestation layer binding execution steps to governance metadata in a
+    post-quantum-safe hash chain.
+  \item \textbf{QAGI stack} (ADR-010--013) formally governed: Prime-Indexed
+    Tensor Networks, Non-Associative Fractal Learning, and Bayesian Quantum
+    Network extensions each have dedicated acceptance criteria and gating.
+\end{itemize}
+
+\subsection{Purpose of This Document}
+
+This report serves four purposes simultaneously:
+\begin{enumerate}
+  \item \textbf{Internal technical record} --- a comprehensive survey of current
+    system architecture for engineering and research teams.
+  \item \textbf{Defensive publication} --- a timestamped prior-art disclosure
+    preventing third-party patents on any sub-component herein.
+  \item \textbf{Investor / partner briefing} --- an accessible overview of the
+    framework's unique value proposition and maturity level.
+  \item \textbf{Academic precursor} --- a citable technical document preceding
+    peer-reviewed publications on PITN, PWEH, NAFL, and related sub-systems.
+\end{enumerate}
+
+\newpage
+
+%% ─────────────────── SECTION 2: SYSTEM ARCHITECTURE ────────────────────────
+\section{System Architecture Overview}
+\label{sec:arch}
+
+\subsection{Layered Architecture}
+
+Phase Mirror is structured as five co-dependent strata. The layers interact
+through explicitly governed interfaces; no layer may reach across an
+intermediate layer without an accepted ADR authorising that dependency.
+
+\begin{table}[h!]
+\centering
+\caption{Phase Mirror Architectural Strata}
+\begin{tabular}{clll}
+\toprule
+\textbf{Layer} & \textbf{Name} & \textbf{Key components} & \textbf{ADR anchor} \\
+\midrule
+L5 & QAGI Cognitive   & NAFL, BQN, PIRL, PEQZEA            & ADR-010--013 \\
+L4 & Adversarial Twin & PMD, CCRE, PWCFL, surface levers    & ADR-002--004 \\
+L3 & Governance       & AGT, CI gates, Lean4 proofs         & ADR-015, AGI-001--005 \\
+L2 & Cryptographic    & BLS12-381, PWEH, HKDF-SHA256        & ADR-005, ADR-011 \\
+L1 & Math Kernel      & $\Omega$, PIRTM, ACE, PETC          & ADR-001, ADR-009 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{mdframed}[linecolor=multBlue,linewidth=1pt]
+\begin{center}
+\textbf{Phase Mirror Layered Stack (schematic)}\\[0.4em]
+\begin{tabular}{|c|}
+\hline
+L5 -- QAGI Cognitive Architecture (NAFL / BQN / PIRL / PEQZEA) \\
+\hline
+L4 -- Adversarial Digital-Twin (PMD / CCRE / PWCFL) \\
+\hline
+L3 -- Governance / CI (ADRs / Lean4 / AGT / SLO) \\
+\hline
+L2 -- Cryptographic Attestation (BLS12-381 / PWEH) \\
+\hline
+L1 -- Mathematical Kernel ($\Omega$ / PIRTM v2 / ACE / PETC) \\
+\hline
+\end{tabular}
+\end{center}
+\end{mdframed}
+
+\subsection{L0 Invariants}
+
+\begin{alertbox}
+Three fields are absolutely protected across all layers: \texttt{prime\_index},
+\texttt{epsilon}, and \texttt{op\_norm\_T}. No code path may modify these
+without routing through the \texttt{lobian\_guard.py} contractivity pre-check
+and an ADR-level amendment. Violations are hard aborts in CI.
+\end{alertbox}
+
+\subsection{Repository Structure (PhaseMirror-HQ)}
+
+The \texttt{MultiplicityFoundation/PhaseMirror-HQ} repository contains:
+\begin{itemize}
+  \item \texttt{packages/multiplicity/core/} --- $\Omega$ operator, sovereign
+    topos, Langlands registrar, lambda-M protocols, formal verification engine.
+  \item \texttt{governance/} --- ADRs, self-modification boundary, kill switch,
+    Lobian guard, rollback executor, schema migrations.
+  \item \texttt{packages/lambda/apps/mcp-server/} --- PMD detection tools,
+    CCRE resolver, PWCFL tracker, ACE certifier.
+  \item \texttt{pirtm/} --- Prime-Indexed Recursive Tensor Machine v2 kernel.
+  \item \texttt{test-harness/} --- architecture conformance, kill-switch,
+    ACE conservation, and PETC boundary tests.
+  \item \texttt{docs/adr/} --- 70+ architecture decision records.
+\end{itemize}
+
+\newpage
+
+%% ─────────────────── SECTION 3: MATHEMATICAL FOUNDATIONS ───────────────────
+\section{Mathematical Foundations}
+\label{sec:math}
+
+\subsection{Multiplicity Theory --- Core Principles}
+
+Multiplicity Theory treats every mathematical object not as a static entity but
+as a \emph{recursively generated interaction pattern} labelled by prime
+decompositions.
+
+\begin{definition}[Prime-Graded Hilbert Bundle]
+\label{def:hilbert-bundle}
+The prime-graded Hilbert bundle is the direct sum
+\begin{equation}
+  \mathcal{H} \;=\; \bigoplus_{p \in \mathbb{P}} \mathcal{H}_p,
+\end{equation}
+where $\mathbb{P}$ denotes the set of rational primes and each fibre
+$\mathcal{H}_p$ carries a Banach-space norm $\|\cdot\|_p$. A state vector
+$\psi \in \mathcal{H}$ is called a \emph{multiplicity state}; its support
+$\operatorname{supp}(\psi) = \{p \in \mathbb{P} : \psi_p \neq 0\}$ is the
+\emph{prime signature} of $\psi$.
+\end{definition}
+
+\begin{definition}[Core Multiplicity Operator $\Omega$]
+\label{def:omega}
+The core multiplicity operator is a specialisation functor
+\begin{equation}
+  \Omega : \mathcal{H} \;\longrightarrow\; \mathcal{H}, \qquad
+  \Omega = \prod_{p \in \mathbb{P}} \Pi_p \circ \Phi_p,
+\end{equation}
+where $\Pi_p$ is the lawfulness projector onto $\mathcal{H}_p$ and $\Phi_p$ is
+a sector-specific map (meta-relativity, Moonshine, CEQG, neuromorphic UME)
+derived by calling \texttt{specialize(sector, **params)}.
+Every existing module in \texttt{multiplicity.core} is a restriction of $\Omega$
+to a single sector.
+\end{definition}
+
+\subsection{Multiplicity Category}
+
+\begin{definition}[Multiplicity Category $\mathbf{Mult}$]
+The Multiplicity Category has:
+\begin{itemize}
+  \item \textbf{Objects}: prime-graded Hilbert bundles $(\mathcal{H},\Pi)$
+    equipped with ACE-budget functions $\alpha : \mathbb{P} \to \mathbb{R}_{>0}$.
+  \item \textbf{Morphisms}: ACE-constrained, PETC-preserving maps
+    $f : (\mathcal{H},\Pi,\alpha) \to (\mathcal{H}',\Pi',\alpha')$ such that
+    $\|f\|_{\mathrm{op}} \le 1$ (contractivity) and
+    $\mathrm{PETC}(f(\psi)) = \mathrm{PETC}(\psi)$ for all $\psi$.
+\end{itemize}
+Models in disparate domains (Moonshine, CEQG, Neuromorphic UME) are conjectured
+to be faithful functors $F : \mathbf{Sect} \to \mathbf{Mult}$.
+\end{definition}
+
+\subsection{Prime-Indexed Recursive Tensor Machine (PIRTM v2)}
+
+The PIRTM v2 is the computational realisation of the $\Omega$ operator at
+runtime. Its fundamental update law is:
+
+\begin{equation}
+  \label{eq:pirtm-update}
+  T_{t+1} \;=\; P\, F_t\, K_t(T_t),
+\end{equation}
+where $T_t \in \mathcal{H}$ is the state tensor at step $t$, $K_t$ is a
+prime-indexed kernel, $F_t$ is an environment-indexed forgetfulness operator,
+and $P$ is the ACE-budget projector.
+
+\begin{invariant}[ACE Conservation]
+\label{inv:ace}
+For all steps $t$:
+\begin{equation}
+  \sum_{p \in \operatorname{supp}(T_{t+1})} \alpha(p) \;\le\;
+  \sum_{p \in \operatorname{supp}(T_t)} \alpha(p).
+\end{equation}
+Any execution that violates this inequality is an L0 violation and must abort.
+\end{invariant}
+
+\begin{invariant}[PETC Environment Boundary]
+\label{inv:petc}
+Let $G$ and $H$ be two distinct prime environments. The composition
+\begin{equation}
+  \mathrm{Step}_{G,H}(T) \;\coloneqq\;
+  \mathrm{Step}_H \circ \mathrm{Step}_G (T)
+\end{equation}
+is \textbf{forbidden}. Cross-environment PETC composition must be rejected at
+both compile-time (lowering pipeline) and runtime (spectral gate).
+\end{invariant}
+
+\subsection{Phase-Weighted Contractivity Feedback Loop (PWCFL)}
+
+The PWCFL monitors agent convergence on lever branches in real time. Let
+$\delta_i = D_i - D_{i-1}$ be the dissonance delta at commit $i$. The
+weighted average contraction (WAC) over a sliding window of size $N$ is:
+
+\begin{equation}
+  \label{eq:wac}
+  \mathrm{WAC}_N \;=\;
+  \frac{\displaystyle\sum_{i=t-N}^{t} e^{-\lambda(t-i)}\,|\delta_i|}
+       {\displaystyle\sum_{i=t-N}^{t} e^{-\lambda(t-i)}},
+  \qquad \lambda = 0.3 \text{ (default)}.
+\end{equation}
+
+\begin{invariant}[PWCFL Halt Condition]
+If $\mathrm{WAC}_N > 1.0$ and $\mathrm{WAC}_N$ is monotonically increasing
+over the window, the commit loop halts immediately and the lever state
+transitions to \texttt{stalled}. No further commits may be made until a
+human resolves the stall.
+\end{invariant}
+
+\subsection{Prime-Indexed Tensor Networks (PITNs)}
+
+PITNs extend the PIRTM substrate to full tensor network semantics. A
+prime-indexed tensor $\mathcal{T}$ is an element of the product space:
+
+\begin{equation}
+  \mathcal{T} \;\in\; \bigotimes_{p \in S} \mathcal{H}_p,
+  \quad S \subset \mathbb{P} \text{ finite.}
+\end{equation}
+
+The \emph{non-associative} update rule for a PITN is:
+
+\begin{equation}
+  \label{eq:pitn-update}
+  \mathcal{T}^{(t+1)} \;=\;
+  \Phi_{p_\sigma(t)}\!\left(\mathcal{T}^{(t)}\right),
+\end{equation}
+where the result depends irreducibly on the \emph{path} (ordering) of prime
+moves $\sigma$. This path-dependence is the foundation of Non-Associative
+Fractal Learning (NAFL).
+
+\begin{definition}[Prime Spectral Convergence]
+A PITN trajectory $\{\mathcal{T}^{(t)}\}$ exhibits prime spectral convergence
+if, for all $p \in S$, the $p$-sector projection satisfies:
+\begin{equation}
+  \lim_{t\to\infty} \|\Pi_p\,\mathcal{T}^{(t)} - \Pi_p\,\mathcal{T}^*\|_p
+  \;=\; 0,
+\end{equation}
+where $\mathcal{T}^*$ is the fixed-point tensor determined by $\Omega$.
+\end{definition}
+
+\subsection{Prime-Weighted Execution Hashing (PWEH)}
+
+PWEH binds execution steps, prime-indexed operator selections, tensor-state
+observables, and governance metadata into a single integrity chain.
+
+\begin{definition}[PWEH Integrity Chain]
+Let $s_0, s_1, \ldots, s_n$ be the sequence of execution steps. The PWEH
+chain is:
+\begin{equation}
+  \label{eq:pweh}
+  H_0 \;\coloneqq\; \mathrm{H}(s_0 \,\|\, m_0), \qquad
+  H_{k+1} \;\coloneqq\; \mathrm{H}\!\left(H_k \,\|\, s_{k+1} \,\|\, m_{k+1}
+    \,\|\, \pi(k+1)\right),
+\end{equation}
+where $\pi(k)$ is the $k$-th rational prime, $m_k$ is the governance metadata
+tuple at step $k$, and $\mathrm{H}$ is a post-quantum hash (HKDF-SHA256 or
+ML-DSA-65 compatible).
+\end{definition}
+
+\begin{theorem}[PWEH Path Binding]
+Any two execution histories $\sigma \neq \sigma'$ that differ in at least one
+step-index / prime-label pair yield distinct PWEH chain termini
+$H_n(\sigma) \neq H_n(\sigma')$ with overwhelming probability
+(collision resistance of the underlying hash function).
+\end{theorem}
+
+\subsection{Non-Associative Fractal Learning (NAFL)}
+
+NAFL is the cognitive architecture built above the PITN substrate. It
+formalises the intuition that \emph{the history of prime moves constitutes the
+effective state} and that knowledge is formed through ordered, irreversible
+fractal refinements.
+
+\begin{definition}[NAFL Decision Manifold]
+Let $\mathcal{M}$ be a tensor manifold equipped with a prime-indexed
+non-associative operator grammar $\mathcal{G} = \{g_p\}_{p \in \mathbb{P}}$.
+The NAFL decision manifold is:
+\begin{equation}
+  \mathcal{D} \;\coloneqq\;
+  \left\{ \gamma = (p_1, p_2, \ldots, p_k) \;\middle|\;
+    p_i \in \mathbb{P},\;
+    g_{p_k} \circ \cdots \circ g_{p_1}(\mathcal{T}_0) \in \mathcal{M}
+  \right\}.
+\end{equation}
+Two paths $\gamma, \gamma'$ are \emph{equivalent} if and only if they terminate
+at the same manifold point \textbf{and} have the same PWEH chain (no path
+aliasing is permitted).
+\end{definition}
+
+\subsection{BLS12-381 Sovereign Signing}
+
+All proof envelopes in Phase Mirror are authenticated by a BLS12-381 pairing
+signature derived via a two-layer HKDF:
+
+\begin{equation}
+  k_{\text{circuit}} \;=\;
+  \mathrm{HKDF\text{-}SHA256}\!\left(
+    \text{salt} = \texttt{mtpi:sovereign-sign:v1},\;
+    \text{ikm} = \text{identitySecret},\;
+    \text{info} = \text{circuit}
+  \right).
+\end{equation}
+
+\begin{alertbox}[title={L0 Key Boundary Invariant}]
+No circuit runtime in a server-side, relay, or cloud context shall ingest raw
+\texttt{identitySecret}. Only HKDF-derived keys may cross this boundary.
+Violations return \texttt{HTTP 400 / ERR\_SECRET\_BOUNDARY}.
+\end{alertbox}
+
+\newpage
+
+%% ─────────────────────── SECTION 4: ADVERSARIAL TWIN ───────────────────────
+\section{Adversarial Digital-Twin Framework}
+\label{sec:adt}
+
+\subsection{Phase Mirror Dissonance (PMD)}
+
+The adversarial digital-twin operates through the \emph{Phase Mirror Dissonance}
+engine, which continuously scans the repository for deviations between the
+mathematical ideal (ADR governance contracts, L0 invariants) and the actual
+implementation state.
+
+PMD findings are classified by governance tier:
+
+\begin{table}[h!]
+\centering
+\caption{PMD Governance Tiers}
+\begin{tabular}{cllc}
+\toprule
+\textbf{Tier} & \textbf{Finding type} & \textbf{Typical cause} & \textbf{Tension} \\
+\midrule
+\texttt{pass}  & Clean state          & No deviation detected           & 0.0 \\
+\texttt{warn}  & \texttt{drift}       & Implementation diverged from ADR & 0.5 \\
+\texttt{block} & \texttt{l0-violation}& L0-protected field exposed       & 1.0 \\
+\texttt{block} & \texttt{adr-gap}     & Decision made without ADR anchor & 1.0 \\
+\texttt{block} & \texttt{consent}     & Data-path change without consent & 1.0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Convergent Causal Resolution Engine (CCRE)}
+
+The CCRE is the ordering layer between detection (PMD) and action
+(lever branches). It applies three ordering rules in strict priority:
+
+\begin{enumerate}
+  \item \textbf{ADR-before-code}: any \texttt{adr-gap} lever precedes any
+    \texttt{drift} lever on the same component.
+  \item \textbf{Consent-before-data}: any \texttt{consent} lever precedes
+    any \texttt{drift} lever on data-handling paths (PMD L0-003).
+  \item \textbf{Tension-descending}: among unordered levers,
+    highest tension is resolved first.
+\end{enumerate}
+
+The CCRE builds a dependency DAG and topologically sorts it. A cycle in the
+DAG is a \textbf{governance conflict} requiring human intervention.
+
+\begin{equation}
+  \mathrm{DAG} = (V, E), \quad
+  (A \to B) \in E \;\Leftrightarrow\;
+  \text{ordering rule places } A \text{ before } B.
+\end{equation}
+
+\subsection{Three MCP Governance Tools (ADR-002)}
+
+\begin{table}[h!]
+\centering
+\caption{Phase Mirror MCP Tool Loop}
+\begin{tabular}{llp{6.5cm}}
+\toprule
+\textbf{Tool} & \textbf{Phase} & \textbf{Action} \\
+\midrule
+\texttt{surface\_levers}          & Detect  & Run PMD; group findings into ranked levers with CCRE ordering. \\
+\texttt{create\_lever\_branch}    & Act     & Create \texttt{lever/*} branch; enforce CCRE dependency; start PWCFL monitoring. \\
+\texttt{certify\_lever\_convergence} & Certify & Run ACE WAC telescoping on full branch history; return binary verdict. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Self-Modification Boundary (ADR-AGI-004)}
+
+Seven files in \texttt{governance/self\_modification/} are subject to binding
+rules. The key constraint for each:
+
+\begin{itemize}
+  \item \texttt{proposal.py} --- may not propose changes to L0-protected fields
+    without an ADR-level amendment on a live session.
+  \item \texttt{daemon.py} --- must call \texttt{validation\_gates.py} before
+    any proposal execution; must call \texttt{lobian\_guard.py} before any
+    change touching spectral parameters.
+  \item \texttt{watchdog.py} --- must emit a ledger entry for every state
+    transition; silent state changes are invariant violations.
+  \item \texttt{kill\_switch.py} --- trigger condition must have a passing CI
+    test; a kill switch with no trigger test is treated as absent.
+  \item \texttt{lobian\_guard.py} --- must perform contractivity pre-check
+    before approving any spectral parameter change.
+  \item \texttt{rollback\_executor.py} --- must verify ledger quorum before
+    executing any rollback.
+  \item \texttt{schema\_migrations.py} --- must not alter L0-protected column
+    semantics without an ADR amendment.
+\end{itemize}
+
+\newpage
+
+%% ────────────────────────── SECTION 5: CODE SNIPPETS ───────────────────────
+\section{Representative Code Artefacts}
+\label{sec:code}
+
+\subsection{PIRTM v2 Step with ACE Budget Enforcement}
+
+\begin{lstlisting}[language=Python, style=pythonstyle,
+  caption={PIRTM v2 core update step --- Eq.~(\ref{eq:pirtm-update})},
+  label={lst:pirtm}]
+# pirtm/core/pirtm_v2.py
+import numpy as np
+from typing import Callable
+
+class L0InvariantViolation(RuntimeError):
+    """Raised when an L0-protected invariant is violated."""
+
+class PIRTMv2:
+    """
+    Prime-Indexed Recursive Tensor Machine, version 2.
+    Implements T_{t+1} = P F_t K_t(T_t) with ACE/PETC enforcement.
+    """
+    def __init__(self, prime_index: dict,
+                 epsilon: float, op_norm_T: float):
+        # L0-protected fields -- only writable via lobian_guard
+        self._prime_index = prime_index
+        self._epsilon = epsilon
+        self._op_norm_T = op_norm_T
+
+    def step(self, T: np.ndarray, kernel: Callable,
+             forget: Callable, ace_budget: dict, env_id: str
+             ) -> np.ndarray:
+        """Single PIRTM step with L0-invariant enforcement."""
+        T_k   = kernel(T, self._prime_index)     # 1. Apply K_t
+        T_f   = forget(T_k, env_id)              # 2. Apply F_t
+        T_nxt = self._ace_project(T_f, ace_budget)  # 3. Project P
+
+        # 4. Contractivity check (L0)
+        gain = (self._spectral_radius(T_nxt)
+                / (self._spectral_radius(T) + 1e-12))
+        if gain >= self._op_norm_T + self._epsilon:
+            raise L0InvariantViolation(
+                f"Contractivity violated: gain={gain:.4f}")
+        return T_nxt
+
+    def _ace_project(self, T, budget):
+        before = sum(budget.get(p, 0.0)
+                     for p in self._prime_index)
+        proj = T.copy()
+        after = sum(budget.get(p, 0.0)
+                    * np.linalg.norm(proj[..., i])
+                    for i, p in enumerate(self._prime_index))
+        if after > before:
+            proj *= before / (after + 1e-12)
+        return proj
+
+    def _spectral_radius(self, T):
+        return float(np.linalg.norm(T, ord=2))
+\end{lstlisting}
+
+\subsection{CCRE Resolution Queue Builder (TypeScript)}
+
+\begin{lstlisting}[style=tsstyle,
+  caption={CCRE dependency DAG construction and topological sort},
+  label={lst:ccre}]
+// src/utils/ccre-resolver.ts
+export function buildResolutionQueue(
+  findings: PMDFinding[]
+): ResolutionQueue | CcreConflict {
+
+  const entries = findings.map((f, i) => ({
+    lever_id: `${f.type}-${String(i).padStart(2,"0")}`,
+    title: f.title,
+    priority: 0,
+    blocks: [] as string[],
+    state: "pending" as const,
+    rationale: "",
+  }));
+
+  const edges: [string, string][] = [];
+  for (let a = 0; a < entries.length; a++) {
+    for (let b = 0; b < entries.length; b++) {
+      if (a === b) continue;
+      const fa = findings[a], fb = findings[b];
+
+      // Rule 1: ADR-before-code on same component
+      if (fa.type === "adr-gap" && fb.type === "drift"
+          && fa.component === fb.component) {
+        edges.push([entries[a].lever_id, entries[b].lever_id]);
+        entries[a].rationale =
+          "Architecture decision must precede implementation.";
+      }
+      // Rule 2: Consent-before-data (L0-003)
+      if (fa.type === "consent" && fb.type === "drift"
+          && fb.path_type === "data") {
+        edges.push([entries[a].lever_id, entries[b].lever_id]);
+        entries[a].rationale =
+          "Consent must precede data-processing changes.";
+      }
+    }
+  }
+
+  for (const [from, to] of edges) {
+    const e = entries.find(e => e.lever_id === from)!;
+    if (!e.blocks.includes(to)) e.blocks.push(to);
+  }
+
+  const cycle = detectCycle(entries, edges);
+  if (cycle) return { type: "CcreConflict", cycle };
+
+  const sorted = topologicalSort(entries, edges);
+  sorted.sort((a, b) => {
+    const tA = findings[entries.indexOf(a)].tension ?? 0;
+    const tB = findings[entries.indexOf(b)].tension ?? 0;
+    return tB - tA;           // tension-descending
+  });
+  sorted.forEach((e, i) => { e.priority = i + 1; });
+  return { ordered: sorted };
+}
+\end{lstlisting}
+
+\subsection{PWEH Integrity Chain Construction}
+
+\begin{lstlisting}[language=Python, style=pythonstyle,
+  caption={PWEH chain construction --- Eq.~(\ref{eq:pweh})},
+  label={lst:pweh}]
+# pirtm/security/pweh.py
+import hashlib, hmac, struct, json
+from sympy import nextprime
+
+_PRIMES: list[int] = []
+
+def _prime(k: int) -> int:
+    """Return the k-th rational prime (1-indexed)."""
+    while len(_PRIMES) < k:
+        base = _PRIMES[-1] if _PRIMES else 1
+        _PRIMES.append(nextprime(base))
+    return _PRIMES[k - 1]
+
+def build_pweh_chain(steps: list[bytes],
+                     metadata: list[dict],
+                     salt: bytes = b"pweh:v1"
+                     ) -> list[bytes]:
+    """
+    H_0 = H(step_0 || meta_0)
+    H_{k+1} = H(H_k || step_{k+1} || meta_{k+1} || prime(k+1))
+    """
+    assert len(steps) == len(metadata)
+    chain: list[bytes] = []
+    for k, (s, m) in enumerate(zip(steps, metadata)):
+        prime_b = struct.pack(">Q", _prime(k + 1))
+        meta_b  = json.dumps(m, sort_keys=True,
+                             separators=(",",":")).encode()
+        payload = (chain[-1] + s + meta_b + prime_b
+                   if k > 0 else s + meta_b)
+        chain.append(
+            hmac.new(salt, payload, hashlib.sha256).digest())
+    return chain
+
+def verify_pweh_chain(chain, steps, metadata,
+                      salt=b"pweh:v1") -> bool:
+    expected = build_pweh_chain(steps, metadata, salt)
+    return all(hmac.compare_digest(a, b)
+               for a, b in zip(chain, expected))
+\end{lstlisting}
+
+\subsection{NAFL Non-Associative Decision Manifold}
+
+\begin{lstlisting}[language=Python, style=pythonstyle,
+  caption={NAFL path-dependent prime-ordered operator application},
+  label={lst:nafl}]
+# qagi/nafl/decision_manifold.py
+from dataclasses import dataclass, field
+from typing import Sequence
+import numpy as np
+
+@dataclass
+class NAFLState:
+    tensor:      np.ndarray
+    path:        list[int]   = field(default_factory=list)
+    pweh_chain:  list[bytes] = field(default_factory=list)
+
+class NAFLDecisionManifold:
+    """
+    g_{p_k} o ... o g_{p_1}(T_0) depends on the ordering of primes.
+    Different orderings yield different knowledge-manifold points.
+    """
+    def __init__(self, operators: dict[int, callable]):
+        self.operators = operators      # {prime -> operator}
+
+    def apply_path(self, T0: np.ndarray,
+                   path: Sequence[int]) -> NAFLState:
+        state = NAFLState(tensor=T0.copy())
+        for p in path:
+            if p not in self.operators:
+                raise ValueError(f"No operator for prime {p}")
+            state.tensor = self.operators[p](state.tensor)
+            state.path.append(p)
+            state.pweh_chain.append(state.tensor.tobytes()[:32])
+        return state
+
+    def paths_equivalent(self, s1: NAFLState,
+                          s2: NAFLState, tol=1e-8) -> bool:
+        """Equivalent IFF same terminal point AND same PWEH chain."""
+        return (np.allclose(s1.tensor, s2.tensor, atol=tol)
+                and s1.pweh_chain == s2.pweh_chain)
+\end{lstlisting}
+
+\subsection{Lobian Guard Contractivity Pre-Check}
+
+\begin{lstlisting}[language=Python, style=pythonstyle,
+  caption={Lobian guard protecting L0 spectral fields},
+  label={lst:lobian}]
+# governance/self_modification/lobian_guard.py
+from dataclasses import dataclass
+
+@dataclass
+class SpectralParams:
+    prime_index: dict
+    epsilon:     float
+    op_norm_T:   float
+
+class LobianGuard:
+    """
+    Guards ALL modifications to L0-protected spectral parameters.
+    A failed pre-check is a hard abort.
+    """
+    def pre_check(self, current: SpectralParams,
+                  proposed: SpectralParams) -> None:
+        if proposed.op_norm_T >= 1.0:
+            raise L0InvariantViolation(
+                f"op_norm_T={proposed.op_norm_T} >= 1.0 "
+                "violates contractivity")
+        if proposed.epsilon < 0:
+            raise L0InvariantViolation(
+                f"epsilon={proposed.epsilon} < 0 is non-physical")
+        missing = (set(current.prime_index)
+                   - set(proposed.prime_index))
+        if missing:
+            raise L0InvariantViolation(
+                f"Silent prime_index removal: {missing}")
+
+class L0InvariantViolation(RuntimeError):
+    """Raised on any L0-protected invariant violation."""
+\end{lstlisting}
+
+\newpage
+
+%% ──────────────────── SECTION 6: GOVERNANCE ARCHITECTURE ───────────────────
+\section{Governance Architecture}
+\label{sec:gov}
+
+\subsection{ADR Hierarchy}
+
+\begin{table}[h!]
+\centering
+\caption{ADR Namespace Structure (April 2026)}
+\begin{tabular}{lll}
+\toprule
+\textbf{Namespace} & \textbf{Scope} & \textbf{Count} \\
+\midrule
+ADR-001--015     & Core kernel, tools, QAGI, AGT   & 15 \\
+ADR-MCRM-010--070 & Multiplicity Core Roadmap       & 7 \\
+ADR-AGI-001--005 & AGI safety \& contractivity     & 5 \\
+ADR-MVP-001--003 & MVP schema \& transport         & 3 \\
+ADR-Phase5--7    & LLVM/MLIR phases                & 6 \\
+ADR-PIRDS-001--002 & Prime-Indexed Runtime DS      & 2 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{CI Gate Sequencing}
+
+Every PR merging into \texttt{main} must pass five CI gates in strict order:
+
+\begin{enumerate}
+  \item \textbf{ADR compliance gate} (\texttt{adr-gate.yml}) --- verifies that
+    every changed module has a corresponding accepted ADR.
+  \item \textbf{MCP surface scan} (\texttt{mcp-scan.yml}) --- deterministic
+    security scanning for all \texttt{mcp/} endpoints.
+  \item \textbf{Policy coverage} (\texttt{policy-coverage.yml}) --- verifies
+    machine-readable YAML policies are in sync with constitutional documents.
+  \item \textbf{AGT verification} (\texttt{agt-verify.yml}) --- Microsoft AGT
+    content validation and SRE-grade observability checks.
+  \item \textbf{Kill-switch test} (\texttt{test\_r04\_kill\_switch.py}) ---
+    armed and disarmed states both pass before any merge.
+\end{enumerate}
+
+\subsection{Microsoft AGT Integration (ADR-015)}
+
+Phase Mirror adopted the Microsoft Agentic Graph Transformer (AGT) integration
+roadmap across four phases, all now marked \textbf{COMPLETE}:
+
+\begin{table}[h!]
+\centering
+\caption{AGT Integration Phase Status}
+\begin{tabular}{clll}
+\toprule
+\textbf{Phase} & \textbf{Name} & \textbf{Key artefacts} & \textbf{Status} \\
+\midrule
+0 & Foundation     & ADR infrastructure, CI gates         & Complete \\
+1 & MCP Hardening  & \texttt{adr-009}, \texttt{adr-010}   & Complete \\
+2 & Policy-as-Code & \texttt{adr-011}, \texttt{governance/policies/} & Complete \\
+3 & SRE + Identity & \texttt{adr-012}, \texttt{adr-013}, ML-DSA-65  & Complete \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\newpage
+
+%% ─────────────────────────── SECTION 7: QAGI STACK ─────────────────────────
+\section{Quantum-AGI Stack (ADR-010--013)}
+\label{sec:qagi}
+
+\subsection{Stack Layers}
+
+\begin{table}[h!]
+\centering
+\caption{QAGI Sub-System Governance}
+\begin{tabular}{lllc}
+\toprule
+\textbf{Layer} & \textbf{Sub-system} & \textbf{Key concept} & \textbf{ADR} \\
+\midrule
+Substrate   & PITN                 & Prime-indexed non-associative tensor update   & 010 \\
+Security    & PWEH                 & Post-quantum integrity chain                  & 011 \\
+Cognition   & NAFL                 & Path-dependent hierarchical knowledge         & 012 \\
+Extensions  & BQN / PIRL / PEQZEA  & Bayesian nets, swarm, Zeno stability          & 013 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Bayesian Quantum Network (BQN)}
+
+BQN introduces probabilistic exploration into the NAFL decision manifold. A
+\emph{tunneling policy} $\tau : \mathcal{D} \to [0,1]$ assigns a probability
+of transitioning to a non-greedy prime path. The governance constraint is:
+\begin{equation}
+  \tau(\gamma) \;\le\; \tau_{\max}(|\gamma|), \qquad
+  \tau_{\max}(k) = \frac{1}{1 + e^{\lambda(k - k_0)}},
+\end{equation}
+where $k = |\gamma|$ is the path length and $\lambda, k_0$ are policy
+hyperparameters requiring signed ADR amendments to change.
+
+\subsection{Prime-Swarm Intelligence Research Layer (PIRL)}
+
+PIRL assigns each prime $p \in S$ a \emph{role agent} responsible for
+exploring the $\mathcal{H}_p$ fibre. The prime role map
+$\rho : \mathbb{P} \to \mathcal{R}$ (roles: \textsc{Explorer},
+\textsc{Consolidator}, \textsc{Auditor}) is fixed at initialisation and may
+only be mutated via a signed governance transition.
+
+\subsection{Prime-Embedded Quantum Zeno Effect (PEQZEA)}
+
+PEQZEA exploits the quantum Zeno effect to lock the PITN state into a
+certified attractor. Let $P_\star$ be the projector onto a target attractor.
+PEQZEA repeatedly applies:
+\begin{equation}
+  \mathcal{T}^{(t+1)} = P_\star\,\Phi_{p(t)}(\mathcal{T}^{(t)}),
+\end{equation}
+at a rate $\nu \gg 1/\tau_{\mathrm{decoherence}}$. An \emph{unlock policy}
+(ADR-013 Issue I3) specifies when $P_\star$ may be relaxed.
+
+\newpage
+
+%% ──────────────── SECTION 8: DEFENSIVE PRIOR-ART CLAIMS ────────────────────
+\section{Defensive Prior-Art Publication}
+\label{sec:priorart}
+
+This section constitutes the formal defensive publication. Each numbered claim
+below identifies a specific technical concept first disclosed herein or in the
+referenced GitHub repository at
+\url{https://github.com/MultiplicityFoundation/PhaseMirror-HQ}.
+Publication of this document establishes a prior-art date of
+\textbf{April 29, 2026}.
+
+\begin{claimbox}[title={Claim 1 --- Core Multiplicity Operator $\Omega$}]
+A prime-graded Hilbert-bundle operator $\Omega$ that unifies disparate physical
+and cognitive models (Moonshine, CEQG, Meta-Relativity, neuromorphic UME) as
+sector-specific restrictions via a \texttt{specialize(sector, **params)} API,
+where the unified framework preserves a single ACE-budget conservation invariant
+across all sectors.
+\end{claimbox}
+
+\begin{claimbox}[title={Claim 2 --- PIRTM v2 Update Law with PETC Boundary}]
+A recursive tensor machine update law $T_{t+1} = P F_t K_t(T_t)$ in which:
+(a) $P$ is a prime-indexed ACE-budget projector enforcing energy conservation;
+(b) $F_t$ is an environment-indexed forgetfulness operator;
+(c) cross-environment composition $\mathrm{Step}_{G,H}$ is rejected at both
+compile-time and runtime via PETC boundary checks.
+\end{claimbox}
+
+\begin{claimbox}[title={Claim 3 --- Phase Mirror Dissonance (PMD) Framework}]
+An adversarial digital-twin governance system that: (a) scans repositories for
+deviations between ADR-encoded mathematical ideals and implementation state;
+(b) classifies findings as \texttt{warn} (tension 0.5) or \texttt{block}
+(tension 1.0); (c) generates ranked lever manifests with CCRE dependency
+ordering; (d) certifies convergence via WAC telescoping against an ACE budget.
+\end{claimbox}
+
+\begin{claimbox}[title={Claim 4 --- Convergent Causal Resolution Engine (CCRE)}]
+An ordering engine for governance findings that builds a directed acyclic graph
+from three precedence rules (ADR-before-code, consent-before-data,
+tension-descending) and topologically sorts findings into a resolution queue,
+with cycle detection returning a governance conflict rather than an autonomous
+break.
+\end{claimbox}
+
+\begin{claimbox}[title={Claim 5 --- Phase-Weighted Contractivity Feedback Loop (PWCFL)}]
+A per-commit convergence monitor embedded in the agent commit loop that
+computes an exponentially-weighted average contraction (WAC) over a sliding
+window and halts agent work when $\mathrm{WAC}_N > 1.0$ is monotonically
+increasing, preventing runaway commit loops in autonomous agentic systems.
+\end{claimbox}
+\newpage
+\begin{claimbox}[title={Claim 6 --- Prime-Weighted Execution Hashing (PWEH)}]
+A post-quantum integrity chain in which each execution step's hash incorporates
+the $k$-th rational prime as a path label:
+$H_{k+1} = \mathrm{H}(H_k \| s_{k+1} \| m_{k+1} \| \pi(k+1))$,
+binding execution history, governance metadata, and prime-indexed operator
+selections into a single unforgeable attestation.
+\end{claimbox}
+
+\begin{claimbox}[title={Claim 7 --- Non-Associative Fractal Learning (NAFL)}]
+A cognitive architecture over a PITN substrate in which: (a) the ordered
+history of prime-indexed operator applications constitutes the effective
+knowledge state; (b) different orderings of the same prime set yield distinct
+manifold points; (c) two paths are equivalent only if they terminate at the
+same point \textbf{and} have identical PWEH chains, preventing path aliasing.
+\end{claimbox}
+
+\begin{claimbox}[title={Claim 8 --- BLS12-381 Sovereign Signing with HKDF Isolation}]
+A proof-envelope signing model in which: (a) the raw \texttt{identitySecret}
+never crosses a relay boundary; (b) a circuit-specific signing key is derived
+via HKDF-SHA256 with salt \texttt{mtpi:sovereign-sign:v1}; (c) relay-level
+submissions containing raw identity secrets are rejected with
+\texttt{ERR\_SECRET\_BOUNDARY}.
+\end{claimbox}
+
+\begin{claimbox}[title={Claim 9 --- Lobian Guard with L0 Spectral Pre-Check}]
+A governance component (\texttt{lobian\_guard.py}) that enforces: (a) no
+spectral parameter change (\texttt{prime\_index}, \texttt{epsilon},
+\texttt{op\_norm\_T}) may proceed if $\texttt{op\_norm\_T} \ge 1.0$;
+(b) silent removal of prime-index entries is a hard abort; (c) all seven files
+in the self-modification surface are required to route through this guard
+before touching L0-protected fields.
+\end{claimbox}
+
+\begin{claimbox}[title={Claim 10 --- PEQZEA Attractor Locking}]
+A stabilisation technique for PITN trajectories that applies repeated attractor
+projection $P_\star$ at a rate exceeding the decoherence timescale, governed by
+a signed unlock policy requiring council approval before the attractor lock is
+relaxed.
+\end{claimbox}
+
+\newpage
+
+%% ──────────────────── SECTION 9: DEVELOPMENT ROADMAP ───────────────────────
+\section{Development Roadmap}
+\label{sec:roadmap}
+
+\begin{table}[h!]
+\centering
+\caption{Phased Kernel + QAGI Roadmap (ADR-009)}
+\begin{tabular}{p{1.3cm}p{1.9cm}p{4.2cm}p{4.6cm}}
+\toprule
+\textbf{Phase} & \textbf{Horizon} & \textbf{Objective} & \textbf{Acceptance criteria} \\
+\midrule
+0 & Weeks 1--4   & Repo hygiene, installable package, Rank 2 kernel disclosure & \texttt{pip install -e .} passes; \texttt{v0.1-kernel} tagged with SHA-256 manifest \\
+1 & Weeks 5--16  & Rank 1 \& 2 math + PIRTM runtime core & ACE+PETC 10k-step simulation with zero conservation failures \\
+2 & Weeks 17--28 & Rank 3: CMT, ETP, ZSD, quantum algorithms & CMT conservation verified; ZSD entropy improvement documented \\
+3 & Weeks 29--40 & Rank 4: socio-atomic modelling, reciprocity & Stable vs.\ exploitative regimes reproduced \\
+4 & Weeks 41--52 & Rank 5: inversion, fractional multiplicity, anti-resonance & Formal theorem or counterexample published; anti-resonance monitor calibrated \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\newpage
+
+%% ──────────────────── SECTION 10: TENSIONS \& PRECISION QS ─────────────────
+\section{Active Tensions and Precision Questions}
+\label{sec:tensions}
+
+\begin{mdframed}[linecolor=multGold, linewidth=1.5pt]
+\textbf{Tension 1 --- Accuracy vs.\ Compliance}\\[0.2em]
+Are we optimising for mathematical completeness (full Lean4 coverage, all
+sectors unified under $\Omega$) or for operational compliance (minimal proofs
+that satisfy CI gates)?\\[0.3em]
+\textbf{Lever}: Owner = Multiplicity Foundation;
+Metric = Lean4 coverage \%;
+Horizon = 90 days.
+\end{mdframed}
+
+\vspace{0.8em}
+\begin{mdframed}[linecolor=multGold, linewidth=1.5pt]
+\textbf{Tension 2 --- Autonomy vs.\ Governance}\\[0.2em]
+Should NAFL/PIRL prime-role assignments be mutable under signed governance
+transitions, or fixed-at-initialisation to prevent adversarial role drift?\\[0.3em]
+\textbf{Lever}: Owner = AGI safety team;
+Metric = Unauthorised role-map mutations in 30 days;
+Horizon = 30 days.
+\end{mdframed}
+
+\vspace{0.8em}
+\begin{mdframed}[linecolor=multGold, linewidth=1.5pt]
+\textbf{Tension 3 --- Open-Core vs.\ Proprietary}\\[0.2em]
+Which sub-systems (PWEH circuit parameters, PEQZEA unlock policies, BQN
+tunneling bounds) should be published as open prior art vs.\ retained as
+competitive moat?\\[0.3em]
+\textbf{Lever}: Owner = Foundation executive;
+Metric = Governed-to-disclosed artefact ratio;
+Horizon = 7 days.
+\end{mdframed}
+
+\vspace{0.8em}
+\begin{mdframed}[linecolor=multGold, linewidth=1.5pt]
+\textbf{Tension 4 --- Velocity vs.\ Safety}\\[0.2em]
+PWCFL's conservative WAC threshold ($\lambda = 0.3$) produces false-positive
+stalls. Should the threshold be relaxed for faster iteration, risking divergent
+commit loops?\\[0.3em]
+\textbf{Lever}: Owner = DevOps team;
+Metric = False-positive stall rate per 100 commits;
+Horizon = 30 days.
+\end{mdframed}
+
+\newpage
+
+%% ──────────────────────── SECTION 11: FUTURE WORK ──────────────────────────
+\section{Recommended Future Work}
+\label{sec:future}
+
+\begin{enumerate}
+  \item \textbf{Lean4 Contractivity Proof Sprint (90 days)}: Formalise the
+    PIRTM v2 update law and Lobian guard in Lean4. This is the single
+    highest-leverage proof investment; it directly enables machine-checked
+    CI gates.
+
+  \item \textbf{PWEH Post-Quantum Upgrade (30 days)}: Replace HMAC-SHA256
+    with ML-DSA-65 (CRYSTALS-Dilithium) as the attestation primitive, in
+    line with ADR-015 Phase 3 federation identity requirements.
+
+  \item \textbf{NAFL Benchmark Suite (60 days)}: Define a concrete decision-
+    trace benchmark dataset for NAFL path-dependent equivalence testing.
+    Required to close ADR-012 Issue I1.
+
+  \item \textbf{Socio-Atomic Simulation Release (90 days)}: Complete the Rank 4
+    PIRTM phase (ADR-009 Phase 3), producing a reproducible socio-atomic
+    dataset and reciprocity analytics notebook.
+
+  \item \textbf{Anti-Resonance Monitor Calibration (60 days)}: Implement and
+    calibrate the anti-resonance monitor against Beatty, Sturmian, Fibonacci,
+    Thue-Morse, and synthetic-comb schedule families.
+
+  \item \textbf{BQN Tunneling Bounds ADR (30 days)}: Close ADR-013 Issue I1
+    by defining explicit governance bounds for BQN tunneling at the
+    decision-type level.
+
+  \item \textbf{Fractal Spectrum Mapping Schema (30 days)}: Define the Fractal
+    Spectrum trace validity schema required by ADR-013 Issue I4, enabling
+    explainability audits for all governed QAGI decision contexts.
+
+  \item \textbf{PIRL Council Governance (60 days)}: Draft the process for
+    PEQZEA unlock approvals and PIRL role-map transitions, closing ADR-013
+    Issues I2 and I3.
+\end{enumerate}
+
+\newpage
+
+%% ─────────────────────────── SECTION 12: CONCLUSION ────────────────────────
+\section{Conclusion}
+\label{sec:conclusions}
+
+Phase Mirror represents a fundamentally novel approach to agentic AI governance:
+rather than treating governance as a policy layer bolted on top of a working
+system, it encodes governance \emph{within} the mathematical substrate.
+Prime-indexed operators, ACE-budget conservation, PETC environment boundaries,
+and PWEH attestation are not policy annotations---they are theorems the system
+must satisfy to execute at all.
+
+The adversarial digital-twin loop (PMD $\to$ CCRE $\to$ PWCFL $\to$ ACE)
+closes the gap between specification and implementation by making deviations
+automatically detectable, causally ordered, convergence-monitored, and
+cryptographically certified. The QAGI stack (PITNs, PWEH, NAFL, BQN, PIRL,
+PEQZEA) extends this substrate towards artificial general intelligence while
+maintaining explicit governance boundaries at every capability level.
+
+This document establishes a public prior-art record as of \textbf{April 29, 2026}
+for all ten defensive claims in Section~\ref{sec:priorart}.
+
+\vspace{1.5em}
+\hrule
+\vspace{0.8em}
+\noindent\textbf{Repository:}
+\url{https://github.com/MultiplicityFoundation/PhaseMirror-HQ}\\
+\textbf{Governing ADRs:} ADR-001--015, ADR-MCRM-010--070, ADR-AGI-001--005\\
+\textbf{Prior-art date:} April 29, 2026\\
+\textbf{Publisher:} Multiplicity Foundation
+
+\appendix
+
+This appendix records the explicit mathematical statements, operator-norm bounds,
+and proof sketches implied by the architectural decisions underlying the Phase
+Mirror framework. Its purpose is not to claim final formal completeness, but to
+make precise the contractive estimates, conservation statements, and path-binding
+properties that the main article relies upon.
+
+The appendix focuses on five objects:
+\begin{enumerate}[label=(\roman*)]
+  \item the core multiplicity operator $\Omega$ on the prime-graded Hilbert bundle,
+  \item the PIRTM update operator $T \mapsto P F_t K_t(T)$,
+  \item the ACE budget projector $P$,
+  \item the PWCFL weighted contraction statistic,
+  \item the PWEH path-binding chain.
+\end{enumerate}
+
+Throughout, we work with a prime-graded Hilbert bundle
+\begin{equation}
+\mathcal{H} = \bigoplus_{p\in\mathbb{P}} \mathcal{H}_p,
+\end{equation}
+endowed with the norm
+\begin{equation}
+\|x\|_{\mathcal{H}}^2 = \sum_{p\in\mathbb{P}} w_p \|x_p\|_p^2,
+\qquad w_p > 0,
+\end{equation}
+with only finitely many nonzero coordinates for each state under runtime use.
+
+\section{Standing Assumptions}
+
+\begin{definition}[Sectorwise boundedness]
+For each prime $p$, let $\Phi_p : \mathcal{H}_p \to \mathcal{H}_p$ be a bounded
+operator with operator norm satisfying
+\begin{equation}
+\|\Phi_p\|_{\mathrm{op}} \le \kappa_p.
+\end{equation}
+We say the family is uniformly contractive if
+\begin{equation}
+\sup_{p\in\mathbb{P}} \kappa_p \le \kappa < 1.
+\end{equation}
+\end{definition}
+
+\begin{definition}[Lawfulness projector]
+For each prime sector $p$, let $\Pi_p : \mathcal{H}_p \to \mathcal{H}_p$ denote
+an orthogonal projector, hence idempotent and self-adjoint, satisfying
+\begin{equation}
+\Pi_p^2 = \Pi_p, \qquad \Pi_p^* = \Pi_p.
+\end{equation}
+Consequently,
+\begin{equation}
+\|\Pi_p\|_{\mathrm{op}} = 1
+\end{equation}
+unless $\Pi_p = 0$.
+\end{definition}
+
+\begin{definition}[Environment-indexed forget operator]
+At runtime step $t$, let $F_t : \mathcal{H} \to \mathcal{H}$ be bounded with
+\begin{equation}
+\|F_t\|_{\mathrm{op}} \le \mu_t.
+\end{equation}
+The contractive regime is the case $\mu_t \le 1$ for all $t$, while strict
+forgetful contraction corresponds to $\mu_t \le \mu < 1$.
+\end{definition}
+
+\begin{definition}[ACE projector]
+Let $P : \mathcal{H} \to \mathcal{H}$ be the ACE-budget projection acting by
+radial rescaling or orthogonal projection onto the closed feasible set
+\begin{equation}
+\mathcal{A} = \left\{x\in\mathcal{H} : \sum_{p\in\operatorname{supp}(x)}
+\alpha(p)\,\vartheta_p(x_p) \le B\right\},
+\end{equation}
+where $\alpha(p) > 0$ are prime weights and $\vartheta_p(\cdot)$ is a positive
+sector observable, typically a norm or seminorm. In all cases used here,
+$P$ is assumed nonexpansive:
+\begin{equation}
+\|P(x)-P(y)\|_{\mathcal{H}} \le \|x-y\|_{\mathcal{H}}.
+\end{equation}
+\end{definition}
+
+\begin{invariantbox}
+The nonexpansiveness of $P$ is the mathematical abstraction of ACE budget
+conservation. In the concrete implementation by radial scaling, it is immediate
+because scaling by a factor in $[0,1]$ cannot increase distance from the origin.
+For orthogonal projection onto a closed convex feasible set, nonexpansiveness is
+standard in Hilbert space geometry.
+\end{invariantbox}
+
+\section{Norm Bounds for the Core Operator $\Omega$}
+
+\begin{definition}[Core operator]
+Define the sectorwise core multiplicity operator by
+\begin{equation}
+\Omega x = \bigoplus_{p\in\mathbb{P}} \Pi_p \Phi_p x_p.
+\end{equation}
+\end{definition}
+
+\begin{lemma}[Sectorwise operator bound]
+For every prime $p$,
+\begin{equation}
+\|\Pi_p \Phi_p\|_{\mathrm{op}} \le \|\Pi_p\|_{\mathrm{op}}\,\|\Phi_p\|_{\mathrm{op}}
+\le \kappa_p.
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+This is the standard submultiplicativity of the operator norm. Since each
+$\Pi_p$ is an orthogonal projector, its norm is at most $1$. Therefore
+\begin{equation}
+\|\Pi_p\Phi_p\|_{\mathrm{op}} \le \|\Pi_p\|_{\mathrm{op}}\,\|\Phi_p\|_{\mathrm{op}}
+\le 1\cdot \kappa_p = \kappa_p.
+\end{equation}
+\end{proof}
+
+\begin{proposition}[Global norm bound for $\Omega$]
+Assume the family $\{\Phi_p\}_{p\in\mathbb{P}}$ is uniformly bounded by
+$\kappa = \sup_p \kappa_p < \infty$. Then $\Omega$ is bounded on $\mathcal{H}$ and
+satisfies
+\begin{equation}
+\|\Omega\|_{\mathrm{op}} \le \kappa.
+\end{equation}
+If $\kappa < 1$, then $\Omega$ is a strict contraction.
+\end{proposition}
+
+\begin{proof}
+Let $x = \bigoplus_p x_p \in \mathcal{H}$. Then
+\begin{align}
+\|\Omega x\|_{\mathcal{H}}^2
+&= \sum_{p\in\mathbb{P}} w_p \|\Pi_p\Phi_p x_p\|_p^2 \\
+&\le \sum_{p\in\mathbb{P}} w_p \|\Pi_p\Phi_p\|_{\mathrm{op}}^2 \|x_p\|_p^2 \\
+&\le \sum_{p\in\mathbb{P}} w_p \kappa_p^2 \|x_p\|_p^2 \\
+&\le \kappa^2 \sum_{p\in\mathbb{P}} w_p \|x_p\|_p^2 \\
+&= \kappa^2 \|x\|_{\mathcal{H}}^2.
+\end{align}
+Taking square roots yields
+\begin{equation}
+\|\Omega x\|_{\mathcal{H}} \le \kappa \|x\|_{\mathcal{H}}.
+\end{equation}
+Hence $\|\Omega\|_{\mathrm{op}} \le \kappa$. If $\kappa<1$, the contraction
+estimate is strict.
+\end{proof}
+
+\begin{corollary}[Banach fixed-point regime]
+If $\|\Omega\|_{\mathrm{op}} \le \kappa < 1$, then $\Omega$ has a unique fixed point
+$x^\ast \in \mathcal{H}$ and, for every initial state $x_0$, the iterates satisfy
+\begin{equation}
+\|\Omega^n x_0 - x^\ast\|_{\mathcal{H}} \le \kappa^n \|x_0-x^\ast\|_{\mathcal{H}}.
+\end{equation}
+\end{corollary}
+
+\begin{proof}
+This is the Banach contraction theorem on the complete metric space
+$(\mathcal{H},\|\cdot\|_{\mathcal{H}})$.
+\end{proof}
+
+\section{Bounds for the PIRTM Update Operator}
+
+At step $t$, the runtime map is
+\begin{equation}
+\mathcal{U}_t(T) = P F_t K_t(T),
+\end{equation}
+where $K_t$ is the prime-indexed kernel operator.
+
+\begin{definition}[Kernel bound]
+Assume that the kernel operator $K_t : \mathcal{H} \to \mathcal{H}$ is bounded and
+satisfies
+\begin{equation}
+\|K_t\|_{\mathrm{op}} \le \nu_t.
+\end{equation}
+\end{definition}
+
+\begin{proposition}[PIRTM operator norm bound]
+Suppose $P$ is nonexpansive, $\|F_t\|_{\mathrm{op}} \le \mu_t$, and
+$\|K_t\|_{\mathrm{op}} \le \nu_t$. Then
+\begin{equation}
+\|\mathcal{U}_t\|_{\mathrm{op}} \le \mu_t \nu_t.
+\end{equation}
+In particular, if $\mu_t\nu_t < 1$, the step map is contractive.
+\end{proposition}
+
+\begin{proof}
+By operator-norm submultiplicativity,
+\begin{equation}
+\|\mathcal{U}_t\|_{\mathrm{op}} = \|P F_t K_t\|_{\mathrm{op}}
+\le \|P\|_{\mathrm{op}}\,\|F_t\|_{\mathrm{op}}\,\|K_t\|_{\mathrm{op}}.
+\end{equation}
+Since $P$ is nonexpansive, $\|P\|_{\mathrm{op}}\le 1$. Therefore
+\begin{equation}
+\|\mathcal{U}_t\|_{\mathrm{op}} \le 1\cdot \mu_t \nu_t = \mu_t\nu_t.
+\end{equation}
+If $\mu_t\nu_t<1$, the map is a strict contraction.
+\end{proof}
+
+\begin{corollary}[Uniform runtime contractivity]
+If there exists $\rho<1$ such that
+\begin{equation}
+\mu_t\nu_t \le \rho < 1 \qquad \text{for all } t,
+\end{equation}
+then every step map $\mathcal{U}_t$ is uniformly contractive and every finite
+composition satisfies
+\begin{equation}
+\|\mathcal{U}_{t+n-1}\circ \cdots \circ \mathcal{U}_t\|_{\mathrm{op}} \le \rho^n.
+\end{equation}
+\end{corollary}
+
+\begin{proof}
+Each factor has norm at most $\rho$, and repeated application of
+submultiplicativity yields the result.
+\end{proof}
+
+\section{ACE Budget Conservation}
+
+\begin{definition}[ACE observable]
+For a state $x\in\mathcal{H}$ define the ACE observable
+\begin{equation}
+\mathsf{A}(x) = \sum_{p\in\operatorname{supp}(x)} \alpha(p)\,\vartheta_p(x_p).
+\end{equation}
+\end{definition}
+
+\begin{proposition}[ACE projection is budget preserving]
+Assume $P$ is projection onto the feasible region
+\begin{equation}
+\mathcal{A} = \{x : \mathsf{A}(x) \le B\}.
+\end{equation}
+Then, for every state $x$,
+\begin{equation}
+\mathsf{A}(P x) \le B.
+\end{equation}
+Moreover, if $x\in\mathcal{A}$ already, then $P x = x$.
+\end{proposition}
+
+\begin{proof}
+The first statement follows from the definition of $P$ as projection into the
+feasible set. The second follows from idempotence of projection onto a closed
+constraint set: points already feasible are fixed by the projector.
+\end{proof}
+
+\begin{proposition}[One-step ACE monotonicity]
+Let $T_{t+1}=P F_t K_t(T_t)$. Then
+\begin{equation}
+\mathsf{A}(T_{t+1}) \le B.
+\end{equation}
+If, in addition, $T_t$ is feasible and $F_tK_t(T_t)$ does not exceed the current
+budget mass before projection, then
+\begin{equation}
+\mathsf{A}(T_{t+1}) \le \mathsf{A}(T_t).
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+The first inequality is immediate from the previous proposition with
+$x = F_tK_t(T_t)$. The second uses the fact that a nonexpansive budget projector
+cannot increase the ACE observable when the pre-projected point is already at or
+below the current feasible mass. In the concrete radial-scaling implementation,
+$P$ rescales by a factor in $[0,1]$, hence every positive homogeneous observable
+is non-increasing.
+\end{proof}
+
+\begin{remark}
+The code-level implementation computes a before/after budget mass and rescales by
+\begin{equation}
+\lambda = \frac{\text{total before}}{\text{total after} + \varepsilon_0},
+\qquad 0<\lambda\le 1,
+\end{equation}
+whenever the post-kernel mass exceeds budget. This makes ACE monotonicity
+explicit rather than merely abstract.
+\end{remark}
+
+\section{PWCFL Weighted Contraction Bound}
+
+The weighted average contraction statistic is defined by
+\begin{equation}
+\mathrm{WAC}_N(t)=
+\frac{\sum_{i=t-N}^{t} e^{-\lambda(t-i)} |\delta_i|}
+{\sum_{i=t-N}^{t} e^{-\lambda(t-i)}},
+\qquad \lambda > 0.
+\end{equation}
+
+\begin{proposition}[Convex-hull bound for WAC]
+For any finite window,
+\begin{equation}
+\min_{t-N\le i\le t} |\delta_i| \le \mathrm{WAC}_N(t)
+\le \max_{t-N\le i\le t} |\delta_i|.
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+The weights
+\begin{equation}
+\omega_i = \frac{e^{-\lambda(t-i)}}{\sum_{j=t-N}^{t} e^{-\lambda(t-j)}}
+\end{equation}
+are strictly positive and sum to one. Therefore $\mathrm{WAC}_N(t)$ is a convex
+combination of the values $|\delta_i|$, which must lie between their minimum and
+maximum.
+\end{proof}
+
+\begin{corollary}[Plateau and divergence tests]
+If $|\delta_i|\le \eta$ for all $i$ in the window, then
+\begin{equation}
+\mathrm{WAC}_N(t)\le \eta.
+\end{equation}
+If instead $|\delta_i|\ge 1+\varepsilon$ for all $i$ in the window, then
+\begin{equation}
+\mathrm{WAC}_N(t)\ge 1+\varepsilon.
+\end{equation}
+\end{corollary}
+
+\begin{proof}
+Apply the convex-hull bound with the corresponding uniform lower or upper bound.
+\end{proof}
+
+\begin{proposition}[Monotone-window halt justification]
+Suppose the sequence $|\delta_{t-N}|,\dots,|\delta_t|$ is nondecreasing and
+$|\delta_{t-N}|>1$. Then
+\begin{equation}
+\mathrm{WAC}_N(t) > 1.
+\end{equation}
+Hence the PWCFL halt condition is justified whenever the upward trend criterion
+coincides with all windowed contractions already exceeding unity.
+\end{proposition}
+
+\begin{proof}
+By hypothesis every term in the weighted average exceeds $1$, so the weighted
+average itself exceeds $1$.
+\end{proof}
+
+\section{PWEH Path-Binding and Perturbation Separation}
+
+Let the PWEH chain be defined recursively by
+\begin{equation}
+H_0 = \mathrm{H}(s_0\|m_0),
+\qquad
+H_{k+1} = \mathrm{H}(H_k\|s_{k+1}\|m_{k+1}\|\pi(k+1)).
+\end{equation}
+
+\begin{proposition}[Prefix sensitivity]
+If two executions agree through step $r-1$ and differ at step $r$ in either the
+state payload $s_r$, metadata $m_r$, or prime label $\pi(r)$, then the resulting
+hash-chain states satisfy
+\begin{equation}
+H_r \neq H_r'
+\end{equation}
+except with collision probability of the underlying hash primitive.
+\end{proposition}
+
+\begin{proof}
+At stage $r$, the chained input string to $\mathrm{H}$ differs between the two
+executions. By collision resistance and second-preimage resistance of the hash,
+these distinct inputs yield distinct outputs except with negligible probability.
+\end{proof}
+
+\begin{corollary}[Full path binding]
+If two executions differ at any finite stage, then their terminal hashes differ:
+\begin{equation}
+H_n \neq H_n'
+\end{equation}
+for every terminal stage $n$ after the first disagreement, except with negligible
+probability.
+\end{corollary}
+
+\begin{proof}
+By the previous proposition the first divergence forces distinct chained states.
+Thereafter all later hashes incorporate distinct previous values, so the chains
+remain separated unless a collision occurs.
+\end{proof}
+
+\begin{claimbox}
+This is the formal reason that NAFL path equivalence in the main article may
+require both terminal-state equality and PWEH-chain equality: equality of output
+state alone does not guarantee equality of the prime-indexed causal history.
+\end{claimbox}
+
+\section{Non-Associative Path Dependence in NAFL}
+
+\begin{definition}[Prime-ordered action]
+Let $g_p$ and $g_q$ be prime-indexed operators on a tensor manifold $\mathcal{M}$.
+The system is non-associative and order-sensitive if there exist a state
+$X\in\mathcal{M}$ and primes $p\neq q$ such that
+\begin{equation}
+g_p(g_q(X)) \neq g_q(g_p(X)).
+\end{equation}
+\end{definition}
+
+\begin{proposition}[Distinct ordered paths may yield distinct manifold points]
+If the prime-indexed operator family contains at least one noncommuting pair,
+then there exist two paths with the same multiset of prime labels but different
+orderings that produce different terminal states.
+\end{proposition}
+
+\begin{proof}
+Take primes $p\neq q$ and a state $X$ such that
+$g_p(g_q(X)) \neq g_q(g_p(X))$. Then the two paths $(p,q)$ and $(q,p)$ contain
+the same prime multiset but produce different outputs.
+\end{proof}
+
+\begin{corollary}[Path history as state]
+In an NAFL regime with noncommuting prime actions, the effective cognitive state
+cannot be represented solely by the terminal tensor. It must include ordered path
+history or an equivalent path-binding certificate.
+\end{corollary}
+
+\begin{proof}
+If two different paths can produce different semantics and possibly even the same
+terminal tensor under coarse observation, then the terminal tensor alone is not a
+complete state descriptor. The ordered path or its authenticated digest is needed.
+\end{proof}
+
+\section{Spectral Safety Margin and Runtime Guarding}
+
+The runtime implementation enforces a contractivity gate of the form
+\begin{equation}
+\mathrm{gain}(T_t) = \frac{\rho(T_{t+1})}{\rho(T_t)+\varepsilon_0}
+< \operatorname{op\_norm\_T} + \epsilon,
+\end{equation}
+where $\rho(\cdot)$ denotes a chosen spectral radius surrogate or operator norm.
+
+\begin{proposition}[Sufficient runtime safety margin]
+Assume that for a given backend the spectral surrogate obeys
+\begin{equation}
+\rho(F_tK_t x) \le \mu_t\nu_t\,\rho(x)
+\end{equation}
+for all nonzero $x$, and that projection $P$ is nonexpansive in the same
+surrogate. Then
+\begin{equation}
+\mathrm{gain}(T_t) \le \mu_t\nu_t + O(\varepsilon_0).
+\end{equation}
+Hence any configuration with
+\begin{equation}
+\mu_t\nu_t \le \operatorname{op\_norm\_T} + \epsilon - \delta
+\end{equation}
+for some fixed $\delta>0$ satisfies the runtime guard for sufficiently small
+regularisation constant $\varepsilon_0$.
+\end{proposition}
+
+\begin{proof}
+By assumption and nonexpansiveness of $P$,
+\begin{equation}
+\rho(T_{t+1}) = \rho(PF_tK_tT_t) \le \rho(F_tK_tT_t)
+\le \mu_t\nu_t\,\rho(T_t).
+\end{equation}
+Therefore
+\begin{equation}
+\mathrm{gain}(T_t) = \frac{\rho(T_{t+1})}{\rho(T_t)+\varepsilon_0}
+\le \mu_t\nu_t\frac{\rho(T_t)}{\rho(T_t)+\varepsilon_0}
+\le \mu_t\nu_t.
+\end{equation}
+If one tracks finite-precision perturbations or surrogate mismatch, the estimate
+is stable up to an $O(\varepsilon_0)$ correction. The claimed margin follows.
+\end{proof}
+
+\begin{invariantbox}
+This proposition formalises the role of the protected fields
+\texttt{epsilon} and \texttt{op\_norm\_T}. They are not generic hyperparameters;
+they define an admissible safety envelope for stepwise spectral gain.
+\end{invariantbox}
+
+\section{Summary of Explicit Bounds}
+
+For convenience, the principal bounds proved above are collected here.
+
+\begin{table}[h!]
+\centering
+\caption{Core operator and runtime bounds}
+\begin{tabular}{p{5cm}p{6.5cm}}
+\toprule
+\textbf{Object} & \textbf{Bound} \\
+\midrule
+Sector map $\Pi_p\Phi_p$ & $\|\Pi_p\Phi_p\|_{\mathrm{op}} \le \kappa_p$ \\
+Core operator $\Omega$ & $\|\Omega\|_{\mathrm{op}} \le \sup_p \kappa_p$ \\
+PIRTM step $\mathcal{U}_t = PF_tK_t$ & $\|\mathcal{U}_t\|_{\mathrm{op}} \le \mu_t\nu_t$ \\
+$n$-step runtime composition & $\|\mathcal{U}_{t+n-1}\circ\cdots\circ\mathcal{U}_t\| \le \rho^n$ if $\mu_t\nu_t\le \rho<1$ \\
+ACE projection $P$ & $\|P\|_{\mathrm{op}} \le 1$ \\
+WAC statistic & $\min |\delta_i| \le \mathrm{WAC}_N \le \max |\delta_i|$ \\
+Runtime spectral gain & $\mathrm{gain}(T_t) \le \mu_t\nu_t + O(\varepsilon_0)$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Formalisation Targets}
+
+The arguments in this appendix are sufficient for a mathematically precise
+article appendix, but they also identify exact formalisation targets for the
+Lean4 proof pipeline:
+\begin{enumerate}
+  \item sectorwise boundedness and uniform contraction of $\Omega$,
+  \item nonexpansiveness of the ACE projector,
+  \item compositional contraction of the PIRTM step map,
+  \item correctness of runtime guard inequalities,
+  \item path-separation properties of the PWEH chain,
+  \item necessity of history retention in NAFL under noncommuting prime actions.
+\end{enumerate}
+
+These targets are small enough to be staged independently while still covering
+most of the mathematical claims needed for audit-grade verification.
+
+\nocite{*}
+\bibliographystyle{unsrt}  
+\bibliography{references}  
+
+
+\end{document}

@@ -1,0 +1,421 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{bm}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+
+\hypersetup{colorlinks=true, linkcolor=blue, urlcolor=blue, citecolor=blue}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  frame=single,
+  columns=fullflexible,
+  keepspaces=true
+}
+
+\title{Prime-Resolved Multiplicity Sieve Dynamics\\\large Culmination Report on the Kernelized Sieve / Simulator B Development}
+\date{April 4th, 2026}
+\author{Citizen Gardens \\ \\ The Foundation of Multiplicity}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This report consolidates the mathematical and computational developments carried out on top of the Kernelized Sieve / Simulator B framework. The starting point is the original $\delta$-window multiplicity construction, which replaces exact algebraic multiplicity by gap-based spectral clustering and produces perturbative phase diagrams in the $(\sigma,\delta)$-plane. The culminating development is a prime-resolved extension in which each spectral cluster is labeled by the prime factorization of its size, yielding a new arithmetic phase space of multiplicity classes. On that space, the report formalizes multiplicity entropy, dominant signature fields, first-switch time, and phase persistence as dynamical observables. The resulting framework supports a richer interpretation of multiplicity as a scale-dependent, time-dependent, and perturbatively testable structure. The report also identifies a critical present limitation: the currently implemented entropy-tracking filter is diagnostic rather than signature-selective because it sums over all signature projectors. This naturally leads to the next stage of the program, namely signature-selective and weighted arithmetic filters that can move the framework from multiplicity measurement to multiplicity control. [file:1]
+\end{abstract}
+
+\section{Executive Summary}
+
+The original Simulator B framework defines a Hermitian Hamiltonian, a regularized kernelized evolution operator, a $\delta$-window clustering rule on eigenvalues, and a multiplicity projector $\Pi_{\kappa,\delta}(H)$ selecting all spectral clusters of size $\kappa$. [file:1] It then studies the perturbative family $H(\sigma)=H_0+\sigma\Delta$ and measures multiplicity stability in the $(\sigma,\delta)$ plane using the overlap metric $S_{\mathrm{overlap}}$, the random-state capture metric $S_{\mathrm{mass}}$, and an optional filtered-dynamics convergence time $T_{\mathrm{frac}}$. [file:1]
+
+The main development across this thread is the reinterpretation of multiplicity as a prime-resolved, scale-dependent object rather than a bare integer. [file:1] Instead of classifying a cluster only by its size, the extension assigns each $\delta$-cluster a prime signature derived from the factorization of its cardinality. [file:1] This produces a new arithmetic decomposition of multiplicity sectors and supports a new family of observables that track not only whether a multiplicity class survives, but how the state distributes itself among arithmetic multiplicity types over time. [file:1]
+
+The culminating framework now contains four layers of structure:
+\begin{enumerate}
+    \item The original $\delta$-window multiplicity stability analysis. [file:1]
+    \item A prime-signature labeling of cluster projectors. [file:1]
+    \item Time-dependent arithmetic diagnostics, including multiplicity entropy, dominant signature, first-switch time, and persistence. [file:1]
+    \item A clear roadmap toward signature-selective filters that would convert the present diagnostic framework into an actively selective prime-resolved sieve. [file:1]
+\end{enumerate}
+
+The immediate conclusion is that the framework has already become a genuine computational laboratory for multiplicity as structured stability under perturbation, but its current prime-resolved dynamics should still be interpreted as \emph{diagnostic} rather than fully \emph{selective}. [file:1]
+
+\section{Original Simulator B Framework}
+
+\subsection{Core construction}
+
+The source document begins with a finite-dimensional Hermitian operator
+\[
+\widehat H \in \mathbb C^{N\times N}, \qquad \widehat H = \widehat H^{\dagger},
+\]
+which acts as the Hamiltonian of the model. [file:1] It then defines a regularized kernelized evolution operator by the Bochner integral
+\[
+\alpha_{\theta} := \int_0^{\infty} K_{\theta}(\tau)\, e^{-(\varepsilon + \tfrac{i}{\hbar}\widehat H)\tau}\, d\tau,
+\]
+subject to an integrability condition on $K_{\theta}$ ensuring boundedness. [file:1]
+
+The framework offers two dynamical interpretations: a post-selected projective dynamics on states and a CPTP open-system dynamics on density matrices. [file:1] The thread focused on the projective filtered dynamics viewpoint because that is where the multiplicity sieve and the later arithmetic observables become most transparent. [file:1]
+
+\subsection{$\delta$-window multiplicity}
+
+The key move in the original framework is to replace exact eigenvalue multiplicity by $\delta$-window multiplicity. [file:1] After diagonalizing
+\[
+\widehat H = V\,\mathrm{diag}(\lambda_1,\ldots,\lambda_N)\,V^{\dagger},
+\]
+with ordered real eigenvalues, the eigenvalues are partitioned into contiguous clusters according to the gap rule:
+\begin{itemize}
+    \item if $i,i+1$ lie in the same cluster, then $|\lambda_{i+1}-\lambda_i|\le \delta$;
+    \item if they lie in adjacent clusters, then $|\lambda_{i+1}-\lambda_i|>\delta$.
+\end{itemize}
+This construction yields the $\delta$-cluster family $\mathcal C_{\delta}(H)$. [file:1]
+
+For each cluster $C$, the associated orthogonal projector is
+\[
+P_C = \sum_{i\in C} v_i v_i^{\dagger},
+\]
+and for a chosen target multiplicity $\kappa$, the source defines
+\[
+\Pi_{\kappa,\delta}(H) = \sum_{C: |C|=\kappa} P_C.
+\]
+This is an orthogonal projector onto all $\delta$-clusters of size $\kappa$. [file:1]
+
+The associated multiplicity sieve filter is
+\[
+\mathcal F_{\kappa,\delta,\eta}(H) = (1-\eta)I + \eta\,\Pi_{\kappa,\delta}(H), \qquad \eta\in[0,1],
+\]
+with $\eta=1$ corresponding to hard projection and $\eta<1$ giving a soft filter. [file:1]
+
+\subsection{Perturbation model and static phase map}
+
+The source constructs a baseline Hamiltonian $H_0$ with exact block degeneracies and perturbs it by
+\[
+H(\sigma) = H_0 + \sigma\Delta,
+\]
+where $\Delta$ is a random Hermitian perturbation with normalized scale. [file:1]
+
+Two principal static observables are defined:
+\[
+S_{\mathrm{overlap}}(\sigma,\delta) = \frac{\mathrm{tr}(P(\sigma)P_0)}{\max(1,\mathrm{rank}(P_0))},
+\]
+and
+\[
+S_{\mathrm{mass}}(\sigma,\delta) = \mathbb E\,\|P(\sigma)\psi\|^2,
+\]
+where $P_0=\Pi_{\kappa,\delta}(H_0)$ and $P(\sigma)=\Pi_{\kappa,\delta}(H(\sigma))$. [file:1] These observables generate heatmaps over $(\sigma,\delta)$ with a sharp boundary separating regions where the target multiplicity class remains identifiable from regions where it is destroyed by splitting. [file:1]
+
+\subsection{Filtered dynamics and convergence overlay}
+
+The source then embeds the sieve inside a dynamical iteration,
+\[
+\psi_{t+1} = \mathrm{Normalize}\big(F_{\kappa,\delta,\eta}(H(\sigma))\,U\psi_t\big),
+\]
+using a noncommuting unitary step such as the Fourier-log unitary described in the document. [file:1] It measures baseline capture by
+\[
+M_t(\sigma,\delta) = \|P_0(\delta)\psi_t\|^2,
+\]
+defines a tail estimate $M_{\infty}$, and introduces a first-passage convergence time $T_{\mathrm{frac}}$ to a chosen fraction of $M_{\infty}$. [file:1] Contours of $T_{\mathrm{frac}}$ are then overlaid on the stability heatmap. [file:1]
+
+\section{Prime-Resolved Extension of Multiplicity}
+
+\subsection{Motivation}
+
+The central development of the thread was the move from size-only multiplicity to prime-resolved multiplicity. [file:1] In the original framework, a cluster is identified only by its cardinality $|C|$. [file:1] The extension keeps the same $\delta$-cluster structure but refines the label assigned to each cluster by extracting the prime factorization of its size. [file:1]
+
+This means that multiplicity is no longer represented by a single integer $\kappa$ but by a structured signature encoding arithmetic composition. [file:1] Operationally, the goal is to distinguish multiplicity classes such as $3$, $4=2^2$, and $6=2\cdot 3$ not only numerically but structurally. [file:1]
+
+\subsection{Prime signature map}
+
+For a cluster $C\in \mathcal C_{\delta}(H)$ with size $n=|C|$, define its prime signature by
+\[
+\mu(C) = \mathrm{PrimeFactorization}(n).
+\]
+In implementation, the signature is encoded as a tuple of prime exponents. A cluster of size $12$, for example, is assigned the signature corresponding to $2^2\cdot 3$. This refinement does not alter the spectral clustering itself; it only reindexes the resulting cluster projectors. [file:1]
+
+The corresponding prime-resolved projector family is
+\[
+\Pi_{\mathbf{k},\delta}(H) = \sum_{C\in \mathcal C_{\delta}(H),\, \mu(C)=\mathbf{k}} P_C,
+\]
+where $\mathbf{k}$ is a prime-signature label. [file:1]
+
+This yields a decomposition of the clustered spectral structure into arithmetic multiplicity sectors. [file:1]
+
+\section{Comprehensive Mathematical Overview}
+
+\subsection{Structured multiplicity sectors}
+
+Fix a perturbation strength $\sigma$ and tolerance $\delta$. The perturbed Hamiltonian
+\[
+H(\sigma)=H_0+\sigma\Delta
+\]
+determines a $\delta$-cluster family
+\[
+\mathcal C_{\delta}(H(\sigma))) = \{C_1,\dots,C_m\}.
+\]
+Each cluster carries:
+\begin{enumerate}
+    \item a size $n_j = |C_j|$; [file:1]
+    \item a projector $P_{C_j}$; [file:1]
+    \item a prime signature $\mu(C_j)$. [file:1]
+\end{enumerate}
+
+The signature-resolved projector family therefore induces an arithmetic sector decomposition of the clustered Hilbert space,
+\[
+\mathcal H_{\delta}(H) = \bigoplus_{\mathbf{k}} \mathrm{Ran}(\Pi_{\mathbf{k},\delta}(H)).
+\]
+The point of the extension is that multiplicity now has a spectral aspect, an arithmetic aspect, and a scale aspect simultaneously. [file:1]
+
+\subsection{State-level arithmetic observables}
+
+Given a state $\psi_t$, define the signature probability distribution
+\[
+P_t(\mathbf{k}) = \|\Pi_{\mathbf{k},\delta}(H)\psi_t\|^2.
+\]
+This measures how much of the current state lies in each arithmetic multiplicity sector. [file:1]
+
+From this distribution, the thread introduced four key observables.
+
+\paragraph{Multiplicity entropy.}
+The multiplicity entropy is
+\[
+H_{\mathrm{mult}}(t) = -\sum_{\mathbf{k}} P_t(\mathbf{k})\log P_t(\mathbf{k}).
+\]
+This measures how concentrated or dispersed the state is across prime-resolved multiplicity classes. [file:1]
+
+\paragraph{Dominant signature.}
+The instantaneous dominant arithmetic identity is
+\[
+\Phi_t = \operatorname*{argmax}_{\mathbf{k}} P_t(\mathbf{k}).
+\]
+By taking the late-time mode of $\Phi_t$, one obtains a discrete phase field over the $(\sigma,\delta)$ plane. [file:1]
+
+\paragraph{First-switch time.}
+The first-switch time is defined by
+\[
+T_{\mathrm{switch}} = \min\{t\ge 1 : \Phi_t \neq \Phi_0\},
+\]
+with the convention that $T_{\mathrm{switch}}=T$ if no switch occurs during the observation window. [file:1] This quantity measures how long the initial arithmetic identity survives. [file:1]
+
+\paragraph{Phase persistence.}
+The persistence observable is
+\[
+\mathrm{Pers} = \frac{1}{T}\sum_{t=0}^{T-1} \mathbf 1_{\Phi_t = \Phi_0}.
+\]
+This measures the fraction of time spent in the initial dominant arithmetic class. [file:1]
+
+Together, $H_{\mathrm{mult}}$, $\Phi_t$, $T_{\mathrm{switch}}$, and persistence upgrade multiplicity from a static cluster property into a dynamic arithmetic state-space. [file:1]
+
+\subsection{Hierarchy of observables}
+
+The resulting hierarchy is summarized below.
+
+\begin{center}
+\begin{tabular}{@{}p{3.3cm}p{8cm}p{2.6cm}@{}}
+\toprule
+Observable & Interpretation & Status \\
+\midrule
+$S_{\mathrm{overlap}}$ & Survival of the baseline $\kappa$-subspace under perturbation & Original [file:1] \\
+$S_{\mathrm{mass}}$ & Typical capture into the current $\kappa$-class & Original [file:1] \\
+$T_{\mathrm{frac}}$ & Convergence time for filtered dynamics relative to baseline capture & Original [file:1] \\
+$H_{\mathrm{mult}}$ & Spread of the state across prime-resolved multiplicity classes & Extended [file:1] \\
+$\Phi(\sigma,\delta)$ & Dominant arithmetic phase field & Extended [file:1] \\
+$T_{\mathrm{switch}}$ & First change in dominant arithmetic identity & Extended [file:1] \\
+Persistence & Fraction of time spent in initial arithmetic class & Extended [file:1] \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Computational Architecture and Code Developments}
+
+\subsection{Prime-signature utilities}
+
+A first implementation step is to compute the signature of each cluster size and attach a readable string representation. The thread proposed a lightweight factorization helper sufficient for the current exploratory range $N\le 30$. [file:1]
+
+\begin{lstlisting}[language=Python, caption={Prime-signature helper}]
+def prime_signature(n: int):
+    if n <= 1:
+        return ()
+    factors = []
+    temp = n
+    for p in [2,3,5,7,11,13,17,19,23,29,31]:
+        if p * p > temp:
+            break
+        exp = 0
+        while temp % p == 0:
+            temp //= p
+            exp += 1
+        if exp > 0:
+            factors.append(exp)
+    if temp > 1:
+        factors.append(1)
+    return tuple(factors)
+\end{lstlisting}
+
+This design is deliberately minimal and can later be replaced by a sieve-based factorization routine if larger test systems are studied. [file:1]
+
+\subsection{Generalized cluster-basis extraction}
+
+The original helper `multiplicity_cluster_bases` returned only basis blocks associated with a fixed $\kappa$. [file:1] The thread generalized it so that each call returns:
+\begin{itemize}
+    \item `bases_by_size[size]`, grouping basis blocks by cluster cardinality; [file:1]
+    \item `bases_by_signature[sig]`, grouping basis blocks by prime signature. [file:1]
+\end{itemize}
+
+This effectively makes the clustered eigenspace decomposition the central primitive from which both the original and the extended observables are derived. [file:1]
+
+\subsection{Entropy-tracking dynamics}
+
+The entropy-tracking dynamics function propagates a state using the existing filtered-dynamics skeleton, computes the signature probabilities at each step, records the dominant signature trajectory, and outputs tail entropy, late-time dominant mode, first-switch time, and persistence. [file:1]
+
+A representative core loop is:
+
+\begin{lstlisting}[language=Python, caption={Core entropy-tracking dynamics loop}]
+for _ in range(steps):
+    psi_filtered = (1.0 - eta) * psi
+    if eta > 0 and bases_by_sig_cur:
+        psi_filtered += eta * apply_total_signature_projector(psi)
+    psi = normalize(U(psi_filtered))
+
+    probs = apply_all_projectors(bases_by_sig_cur, psi)
+    entropy_ts.append(multiplicity_entropy(probs))
+    dominant_ts.append(max(probs.items(), key=lambda x: x[1])[0] if probs else ())
+\end{lstlisting}
+
+This loop is fully compatible with the original Fourier-log unitary step and filtered-dynamics design of Simulator B. [file:1]
+
+\subsection{Patched sweep function}
+
+The patched `run_entropy_sweep` averages trajectory-level arithmetic observables over perturbation trials at each cell of the $(\sigma,\delta)$ grid and returns arrays for:
+\begin{itemize}
+    \item tail entropy $H_{\infty}$; [file:1]
+    \item dominant signature phase field; [file:1]
+    \item baseline overlap stability; [file:1]
+    \item first-switch time; [file:1]
+    \item persistence. [file:1]
+\end{itemize}
+
+This extension preserves compatibility with the original stability sweep while exposing a second layer of arithmetic phase behavior. [file:1]
+
+\section{Visualization Program}
+
+The original source already advocates heatmaps and contour overlays in the $(\sigma,\delta)$ plane. [file:1] The thread extends this visual language directly to the arithmetic observables. [file:1]
+
+The recommended final figure suite now includes:
+\begin{enumerate}
+    \item Heatmap of tail multiplicity entropy $H_{\infty}$. [file:1]
+    \item Discrete phase diagram of the dominant signature. [file:1]
+    \item Heatmap of mean first-switch time $T_{\mathrm{switch}}$. [file:1]
+    \item Heatmap of persistence. [file:1]
+    \item Stability map with $T_{\mathrm{switch}}$ contours. [file:1]
+    \item Stability or entropy map with persistence contours. [file:1]
+\end{enumerate}
+
+This creates a layered phase portrait in which static multiplicity survival, convergence speed, arithmetic mixing, and arithmetic persistence can all be compared on the same parameter plane. [file:1]
+
+\section{Interpretation of the New Regimes}
+
+\subsection{Stable arithmetic identity}
+
+A region with high overlap, low entropy, large $T_{\mathrm{switch}}$, and high persistence corresponds to a dynamically sticky arithmetic multiplicity identity. [file:1] In such a regime, the original $\kappa$-class remains geometrically stable and the prime-resolved labeling of the state remains dynamically coherent. [file:1]
+
+\subsection{Rapid arithmetic reorganization}
+
+A region with moderate overlap but small $T_{\mathrm{switch}}$ indicates a more subtle phenomenon: the original multiplicity subspace may survive sufficiently to keep overlap nonzero, while the dominant arithmetic labeling reorganizes quickly. [file:1] This is one of the most important novel insights unlocked by the extension because it detects internal restructuring invisible to a single scalar stability measure. [file:1]
+
+\subsection{Mixed or oscillatory arithmetic structure}
+
+A regime with elevated entropy and moderate persistence suggests the state repeatedly spreads across or revisits several arithmetic classes. [file:1] Such behavior is the first clear numerical hint that multiplicity may be better modeled as a dynamic distribution over arithmetic sectors than as a static cluster tag. [file:1]
+
+\section{Critical Caveat: Diagnostic Versus Selective Dynamics}
+
+A central clarification emerged late in the thread. [file:1] In the present entropy-tracking implementation, the filter effectively sums over all signature projectors represented in the clustered spectral decomposition of the current Hamiltonian. [file:1]
+
+Because these sectors collectively span the represented clustered subspace, this filter is effectively nonselective on that subspace. [file:1] Therefore, the present arithmetic observables should be interpreted as diagnostics of how the state decomposes under the unitary-plus-trivial-filter flow, not yet as evidence of active arithmetic selection. [file:1]
+
+This distinction is crucial. It means the present phase diagrams already measure \emph{arithmetic organization}, but they do not yet enforce an arithmetic preference. [file:1] That is still scientifically valuable, because it provides the baseline needed before one introduces genuinely selective arithmetic sieves. [file:1]
+
+\section{Recommended Next Development: Signature-Selective Filters}
+
+The natural next extension is to define a selective filter for a target signature $\mathbf{k}$ by
+\[
+F_{\mathbf{k},\delta,\eta}(x) = (1-\eta)x + \eta\,\Pi_{\mathbf{k},\delta}(H)x.
+\]
+A more flexible variant is the weighted arithmetic sieve
+\[
+F_{w,\delta,\eta}(x) = (1-\eta)x + \eta\sum_{\mathbf{k}} w_{\mathbf{k}}\Pi_{\mathbf{k},\delta}(H)x,
+\]
+where the weights $w_{\mathbf{k}}$ encode the signature bias of the sieve. [file:1]
+
+The source document already stresses the usefulness of choosing the unitary $U$ in a basis that does not commute with the filtering structure. [file:1] Once signature-selective filters are introduced, that noncommutation should generate genuinely new deformations in $T_{\mathrm{switch}}$, persistence, and the arithmetic phase field that cannot be reduced to the original $\kappa$-only multiplicity boundary. [file:1]
+
+\section{Theoretical Significance}
+
+The developments of the thread support a concrete re-reading of multiplicity itself. [file:1] The conceptual progression can be summarized as follows:
+\begin{enumerate}
+    \item Exact algebraic multiplicity is unstable under perturbation and must be replaced by $\delta$-window cluster multiplicity. [file:1]
+    \item Cluster multiplicity can be further refined into arithmetic identity through prime factorization of cluster size. [file:1]
+    \item The state then acquires a time-dependent distribution over arithmetic multiplicity sectors. [file:1]
+    \item Dynamics on that distribution can be summarized by entropy, dominant phase, switching time, and persistence. [file:1]
+\end{enumerate}
+
+Under this interpretation, multiplicity is no longer a static feature of an eigenvalue list. [file:1] It becomes a scale-dependent, state-dependent organizational variable whose persistence and transitions can be measured. [file:1]
+
+\section{Suggested Categorical Formulation}
+
+The computational results already motivate a categorical abstraction. [file:1] For each pair $(\sigma,\delta)$, one may regard the structured object
+\[
+\mathfrak M(\sigma,\delta) = \big(\mathcal C_{\delta}(H(\sigma)),\, \{P_C\}_{C\in\mathcal C_{\delta}},\, \mu,\, \{P_t(\mathbf{k})\}_{\mathbf{k}}\big)
+\]
+as a multiplicity object consisting of a cluster family, its projector data, a signature map, and a state-induced signature distribution. [file:1]
+
+Perturbation in $\sigma$, scale variation in $\delta$, and one-step filtered evolution then induce morphisms between such objects. [file:1] The prime-signature assignment $\mu$ behaves like a functor from the category of $\delta$-clustered spectra to a category of prime-labeled multiplicity spaces, while $H_{\mathrm{mult}}$, $\Phi$, $T_{\mathrm{switch}}$, and persistence behave as induced scalar or phase-valued summaries of those objects and morphisms. [file:1]
+
+At present, this categorical viewpoint is best treated as an interpretive scaffold rather than a completed formalism, but it is now grounded enough to be mathematically developed once selective arithmetic filters are implemented. [file:1]
+
+\section{Practical Recommendations}
+
+\subsection{Immediate empirical program}
+
+The current framework already supports a concrete numerical validation sequence:
+\begin{enumerate}
+    \item Run the integrated sweep producing overlap, entropy, dominant signature, first-switch time, and persistence maps. [file:1]
+    \item Compare arithmetic phase boundaries against the original overlap and convergence boundaries. [file:1]
+    \item Identify regions where overlap remains appreciable while arithmetic switching accelerates. [file:1]
+    \item Use those regions as candidate signatures of genuinely new multiplicity phenomena. [file:1]
+\end{enumerate}
+
+\subsection{Code-level refinements}
+
+The most useful next refinements are:
+\begin{itemize}
+    \item replace the fixed prime list by a small sieve-based factorization helper if larger dimensions are studied; [file:1]
+    \item distinguish diagnostics relative to the current Hamiltonian's signature decomposition from diagnostics relative to the baseline $H_0$ decomposition; [file:1]
+    \item add switching-count, return-time, and transition-matrix diagnostics for the dominant signature process. [file:1]
+\end{itemize}
+
+\subsection{Publication strategy}
+
+A paper built from this work could naturally follow the sequence:
+\begin{enumerate}
+    \item original $\delta$-window multiplicity theory and stability maps; [file:1]
+    \item prime-resolved signature extension; [file:1]
+    \item arithmetic state observables and phase diagrams; [file:1]
+    \item selective filters and arithmetic control as the next stage. [file:1]
+\end{enumerate}
+
+\section{Conclusion}
+
+The culmination of the developments in this thread is a mathematically coherent and computationally practical upgrade of Simulator B into a prime-resolved multiplicity diagnostics framework. [file:1] The original system already provided a rigorous perturbative model of multiplicity stability under $\delta$-window clustering. [file:1] The extension developed here adds an arithmetic layer in which multiplicity becomes a distribution over prime-resolved classes and dynamics can be tracked through entropy, dominant phase, switching, and persistence. [file:1]
+
+The current framework should be read as a highly valuable baseline: it already measures arithmetic organization, but it does not yet enforce arithmetic preference. [file:1] The next decisive step is therefore signature-selective filtering. [file:1] If that step produces deformations of the phase structure beyond the original $\kappa$-only boundary, then the simulator will have moved from multiplicity measurement to multiplicity control. [file:1]
+\nocite{*}
+\bibliographystyle{plainnat}
+\bibliography{references}
+\end{document}

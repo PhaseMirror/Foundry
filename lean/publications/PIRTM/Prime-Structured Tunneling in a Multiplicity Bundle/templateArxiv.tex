@@ -1,0 +1,931 @@
+\documentclass[11pt]{article}
+
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsfonts,amsthm}
+\usepackage{physics}
+\usepackage{bm}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{cite}
+
+\title{
+Prime-Structured Tunneling in a Multiplicity Bundle:\\
+Connecting Four-Prime Newton Holography to Tabletop Experiments
+}
+
+\author{
+  % Your name here
+}
+
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+We introduce a prime-labeled multiplicity field \(\Psi(x,t)\) whose
+prime-structured potential
+\(V_{\rm prime}(x) = \sum_k f_k(x) p_k^{-\sigma}\) deforms both quantum
+tunneling barriers and the effective gravitational action. In a
+four-prime truncation compatible with the four-prime Newton holography
+model, the latent fourth prime enforces holographic embedding stability.
+Within a one-dimensional double-well setting, WKB tunneling
+probabilities acquire arithmetic modulations in energy, while the
+variation of the tunneling probability with respect to curvature and
+topological data induces an effective response \(\Delta\chi_{\rm eff}\)
+in topology-sensitive invariants. The construction is directly
+implementable in the AZ--TFTC one-dimensional Hamiltonian, yielding
+falsifiable predictions for cavity spectra, Casimir deviations, and
+curvature-weighted frequency shifts. This prime-structured tunneling
+module thereby unifies Newton holography, Zeta--Schr\"odinger Dynamics,
+and topological quantum effects within the Multiplicity Computing
+Paradigm.
+\end{abstract}
+
+\tableofcontents
+
+\section*{Executive Summary}
+
+Multiplicity Theory treats physical and informational systems as
+prime-structured multiplicity spaces rather than as collections of
+independent point-like entities.\cite{hund_tunneling,multiplicity_overview}
+In this report we formalize \emph{prime-structured tunneling} as the
+first self-contained, simulation-ready module that connects this
+philosophy to experimentally accessible quantum tunneling phenomena.
+
+The core object is a prime-labeled multiplicity field
+\(\Psi(x,t) = \sum_k c_k(x,t)\ket{p_k}_x\) defined on a one-dimensional
+reduction of spacetime, with each fiber carrying a separable Hilbert
+space basis labeled by the ordered primes.\cite{tunneling_topology_draft}
+A prime-structured potential
+\(V_{\rm prime}(x) = \sum_k f_k(x)p_k^{-\sigma}\) deforms a standard
+double-well background \(V_0(x)\), producing an effective barrier
+\(V(x)=V_0(x)+V_{\rm prime}(x)\) that directly enters the WKB tunneling
+exponent.
+
+In a four-prime truncation compatible with the four-prime Newton
+holography model, the fourth latent prime stabilizes the embedding via a
+simple closure condition on the prime weights. This yields arithmetic,
+log-periodic structure in the tunneling probability \(T(E)\) and in the
+associated spectral data of the AZ--TFTC Hamiltonian. Differentiating
+the WKB exponent with respect to curvature-like data provides a concrete
+expression for an effective topological response
+\(\Delta\chi_{\rm eff}\), upgrading earlier heuristic links between
+tunneling and topological invariants.
+
+The module is directly simulatable in existing AZ--TFTC and
+Zeta--Schr\"odinger Dynamics code, and generates falsifiable tabletop
+predictions: prime-locked sidebands in cavity spectra, log-periodic
+ripples in Casimir forces, and curvature-weighted frequency shifts in
+tunneling-dominated regimes.
+
+\section{Prime-Labeled Multiplicity Field}
+
+\subsection{Multiplicity bundle and fibers}
+
+Let \(M\) denote a (possibly reduced) spacetime manifold, and consider a
+complex vector bundle \(\pi:\mathcal{E} \to M\) whose fibers
+\(\mathcal{E}_x\) are separable Hilbert spaces equipped with an
+orthonormal basis labeled by the ordered prime numbers.\cite{tunneling_topology_draft}
+For each \(x\in M\),
+\begin{equation}
+  \mathcal{E}_x \cong \ell^2(\mathbb{P}) =
+  \left\{ (c_k)_{k\ge 1} : \sum_{k=1}^\infty |c_k|^2 < \infty \right\},
+\end{equation}
+with canonical basis \(\{\ket{p_k}_x\}_{k\ge 1}\), where
+\(\mathbb{P} = \{p_1,p_2,p_3,\dots\} = \{2,3,5,\dots\}\).
+
+\begin{definition}[Prime-labeled multiplicity field]
+A \emph{multiplicity field} on \(M\) is a section
+\(\Psi:M\times \mathbb{R}\to \mathcal{E}\) of the form
+\begin{equation}
+  \Psi(x,t) = \sum_{k=1}^\infty c_k(x,t)\, \ket{p_k}_x,
+  \label{eq:psi_def}
+\end{equation}
+such that for each \((x,t)\),
+\begin{equation}
+  \lim_{N\to\infty} \sum_{k=1}^{N} |c_k(x,t)|^2 < \infty.
+  \tag{\(\star\)}
+\end{equation}
+We refer to \((\star)\) as the \emph{prime-sector square-summability}
+constraint or \emph{lawfulness constraint}.
+\end{definition}
+
+The lawfulness constraint ensures that \(\Psi(x,t)\) lies in the Hilbert
+fiber \(\mathcal{E}_x\) and that associated operators remain
+Hilbert--Schmidt for suitable decay exponents.\cite{tunneling_topology_draft}
+
+\subsection{Four-prime truncation and Newton holography}
+
+For the purposes of connecting to the four-prime Newton holography
+model, we consider a finite-prime truncation
+\(\mathcal{P}_4 = \{2,3,5,7\}\). In this setting, the multiplicity field
+reduces to
+\begin{equation}
+  \Psi^{(4)}(x,t) = \sum_{k=1}^{4} c_k(x,t)\, \ket{p_k}_x,
+  \qquad p_1=2,\ p_2=3,\ p_3=5,\ p_4=7.
+\end{equation}
+
+The three smallest primes play the role of visible degrees of freedom,
+while the fourth (latent) prime \(p_4=7\) encodes a hidden holographic
+dimension that stabilizes the embedding.\cite{newton_holography_draft}
+This stability is captured by a simple normalization condition on the
+prime weights,
+\begin{equation}
+  \sum_{k=1}^{4} w_k\,p_k^{-\sigma} = 1,
+  \qquad \sigma > \tfrac{1}{2},
+  \label{eq:closure_condition}
+\end{equation}
+which can be derived from the requirement that an associated kernel
+operator \(K\) be Hilbert--Schmidt in the four-prime sector.\cite{newton_holography_draft}
+
+\section{Prime-Structured Tunneling Potential}
+
+\subsection{Background double-well potential}
+
+We consider a one-dimensional reduction of the system, either as a
+tunneling coordinate in a more complex configuration space or as the
+effective coordinate of an AZ--TFTC cavity mode.\cite{tunneling_topology_draft}
+The background potential is chosen as a symmetric double well,
+\begin{equation}
+  V_0(x) = V_b\left(1 - \frac{x^2}{a^2}\right)^2 - E_0,
+  \label{eq:double_well}
+\end{equation}
+with fixed parameters
+\begin{equation}
+  V_b = 1,\quad a = 2,\quad E_0 = 0.3.
+\end{equation}
+This potential has minima near \(\pm a\) and a central barrier of
+height approximately \(0.7\) above the reference, so energies
+\(E\in[0,0.6]\) lie in a tunneling-dominated regime.
+
+\subsection{Prime-structured correction}
+
+We augment \(V_0\) by a prime-structured correction
+\(V_{\rm prime}(x)\) of the form
+\begin{equation}
+  V_{\rm prime}(x) = \sum_{k=1}^\infty f_k(x)\,p_k^{-\sigma},
+  \qquad \sigma>0,
+  \label{eq:Vprime_general}
+\end{equation}
+where \(f_k(x)\) encodes local geometric and multiplicity data.\cite{tunneling_topology_draft}
+In the four-prime truncation compatible with Newton holography, we
+restrict to
+\begin{equation}
+  V_{\rm prime}^{(4)}(x) = \sum_{k=1}^{4} f_k(x)\,p_k^{-\sigma},
+  \qquad p_1=2,\ p_2=3,\ p_3=5,\ p_4=7.
+  \label{eq:Vprime_4}
+\end{equation}
+
+We choose a concrete, curvature-coupled and oscillatory ansatz:
+\begin{align}
+  f_k(x) &= A_k\,R(x) + B_k \cos(\omega_k x + \phi_k),
+  \label{eq:fk_def} \\
+  R(x) &\approx x^2,
+\end{align}
+where \(R(x)\) plays the role of a one-dimensional toy analog of scalar
+curvature.\cite{tunneling_topology_draft}
+
+The coefficients and frequencies are fixed as
+\begin{align}
+  &A = [0.15, 0.12, 0.08, 0.05],\quad
+    B = [0.08, 0.06, 0.04, 0.03],\nonumber\\
+  &\omega_k = \frac{2\pi}{\log p_k},\quad
+    \phi_k = 0,\quad \sigma = 0.8.
+\end{align}
+The decay exponent \(\sigma=0.8\) satisfies \(\sigma>1/2\), ensuring
+Hilbert--Schmidt convergence of associated prime-weighted kernel
+operators.\cite{tunneling_topology_draft}
+
+\subsection{Total effective potential}
+
+The total potential is then
+\begin{equation}
+  V(x) = V_0(x) + V_{\rm prime}^{(4)}(x),
+  \label{eq:V_total}
+\end{equation}
+with \(V_0\) given by \eqref{eq:double_well} and
+\(V_{\rm prime}^{(4)}\) by \eqref{eq:Vprime_4}--\eqref{eq:fk_def}. This
+potential enters both the Schr\"odinger operator used in AZ--TFTC
+simulations and the WKB analysis of tunneling.
+
+\section{WKB Tunneling Probability and Prime Dependence}
+
+\subsection{Standard WKB formula}
+
+Consider a non-relativistic particle of mass \(m\) in one dimension,
+governed by
+\begin{equation}
+  -\frac{\hbar^2}{2m}\frac{d^2\psi}{dx^2} + V(x)\psi = E\psi,
+\end{equation}
+where \(V(x)\) is given by \eqref{eq:V_total}. For an energy
+\(E < V_{\text{max}}\) below the barrier, the WKB approximation yields
+the tunneling probability
+\begin{equation}
+  T(E) \approx
+  \exp\left[
+    -\frac{2}{\hbar}
+    \int_{x_L(E)}^{x_R(E)}
+    \sqrt{2m\left(V(x) - E\right)}\,dx
+  \right],
+  \label{eq:T_WKB}
+\end{equation}
+where \(x_L(E)\) and \(x_R(E)\) are the classical turning points
+defined by \(V(x)=E\).
+
+\subsection{Prime-structured WKB exponent}
+
+Substituting the explicit prime-structured potential \eqref{eq:V_total}
+into \eqref{eq:T_WKB}, we obtain
+\begin{equation}
+  T(E) \approx
+  \exp\left[
+    -\frac{2}{\hbar}
+    \int_{x_L(E)}^{x_R(E)}
+    \sqrt{
+      2m\left(
+        V_0(x) + \sum_{k=1}^{4} f_k(x)p_k^{-\sigma} - E
+      \right)
+    }\,dx
+  \right].
+  \label{eq:T_prime_structured}
+\end{equation}
+
+To make the dependence on the prime weights explicit, define
+\begin{equation}
+  W(x) = V_0(x) - E, \qquad
+  G(x) = \sum_{k=1}^4 f_k(x)p_k^{-\sigma},
+\end{equation}
+so that \(V(x)-E = W(x) + G(x)\). For sufficiently small or moderate
+prime corrections (relative to the barrier height), we can expand the
+square root to first order in \(G\),
+\begin{align}
+  \sqrt{W(x)+G(x)} 
+  &\approx \sqrt{W(x)} +
+    \frac{1}{2}\frac{G(x)}{\sqrt{W(x)}} + \mathcal{O}(G^2).
+\end{align}
+This yields
+\begin{align}
+  \ln T(E)
+  &= -\frac{2}{\hbar}\int_{x_L}^{x_R}
+     \sqrt{2m\left(W(x)+G(x)\right)}\,dx \nonumber\\
+  &\approx -\frac{2}{\hbar}\int_{x_L}^{x_R}
+     \sqrt{2m W(x)}\,dx
+     -\frac{2}{\hbar}\int_{x_L}^{x_R}
+     \frac{1}{2}\sqrt{\frac{2m}{W(x)}}\,G(x)\,dx
+     + \mathcal{O}(G^2)\nonumber\\
+  &= \ln T_0(E) +
+     \delta \ln T(E) + \mathcal{O}(G^2),
+\end{align}
+where
+\begin{align}
+  \ln T_0(E)
+  &:= -\frac{2}{\hbar}\int_{x_L}^{x_R}
+      \sqrt{2m W(x)}\,dx,
+  \\
+  \delta \ln T(E)
+  &:= -\frac{1}{\hbar}
+      \int_{x_L}^{x_R}
+      \sqrt{\frac{2m}{W(x)}}\,
+      \sum_{k=1}^{4} f_k(x)p_k^{-\sigma}\,dx.
+\end{align}
+Thus, to leading order, prime structure modifies \(\ln T\) linearly via
+the \(f_k(x)p_k^{-\sigma}\) contributions.
+
+\subsection{Sensitivity to prime-sector coefficients}
+
+We can compute the functional derivatives of \(\ln T\) with respect to
+the geometric coefficients \(f_k\). Formally,
+\begin{equation}
+  \frac{\partial \ln T}{\partial f_k}
+  \approx
+  -\frac{1}{\hbar}
+  \int_{x_L}^{x_R}
+  \sqrt{\frac{2m}{W(x)}}\,p_k^{-\sigma}\,dx,
+  \label{eq:dlnT_dfk}
+\end{equation}
+so that
+\begin{equation}
+  \frac{\partial T}{\partial f_k}
+  = T\,\frac{\partial \ln T}{\partial f_k}
+  \approx
+  -\frac{T}{\hbar}
+  \int_{x_L}^{x_R}
+  \sqrt{\frac{2m}{W(x)}}\,p_k^{-\sigma}\,dx.
+  \label{eq:dT_dfk}
+\end{equation}
+These expressions can be evaluated numerically for each \(k\) and each
+energy \(E\), providing a direct measure of how variations in the
+prime-coupled geometry affect tunneling probabilities.
+
+\section{Topological Response and Curvature Coupling}
+
+\subsection{Prime-modified Einstein equation (toy model)}
+
+In the full Multiplicity framework, prime-number oscillations contribute
+an additional term \(P_{\mu\nu}\) to the Einstein field equations, giving
+\begin{equation}
+  R_{\mu\nu} - \frac{1}{2}g_{\mu\nu}R + \Lambda g_{\mu\nu}
+  + P_{\mu\nu}
+  = \frac{8\pi G}{c^4} T_{\mu\nu},
+  \label{eq:einstein_prime}
+\end{equation}
+where \(P_{\mu\nu}\) is modeled as a prime-weighted oscillatory
+correction arising from the multiplicity field.\cite{tunneling_topology_draft}
+In the one-dimensional reduction, we capture its effect via the
+curvature-like scalar \(R(x)\) appearing in \(f_k(x)\).
+
+\subsection{Effective topological response \(\Delta\chi_{\rm eff}\)}
+
+Topological invariants such as the Euler characteristic \(\chi(M)\) are
+functional of the curvature and global structure of the manifold. In
+this prime-structured tunneling module, we introduce an \emph{effective}
+topological response \(\Delta\chi_{\rm eff}\) defined by the sensitivity
+of tunneling to curvature-like data.\cite{tunneling_topology_draft}
+
+Let \(\mathcal{I}[g]\) denote a scalar constructed from the metric,
+e.g.\ a scalar curvature density or Euler density. Assuming that the
+geometric coefficients \(f_k(x)\) depend on \(\mathcal{I}[g]\),
+we write
+\begin{equation}
+  \Delta \chi_{\rm eff}
+  \approx \sum_{k=1}^{4}
+  \left(
+    \frac{\partial T}{\partial f_k}
+  \right)
+  \left(
+    \frac{\partial f_k}{\partial \mathcal{I}}
+  \right),
+  \label{eq:Delta_chi_eff}
+\end{equation}
+where \(\partial T/\partial f_k\) is given by \eqref{eq:dT_dfk}. For the
+explicit ansatz \(f_k(x)=A_k R(x) + B_k \cos(\omega_k x)\) and
+\(\mathcal{I} \equiv R(x)\), we have
+\begin{equation}
+  \frac{\partial f_k}{\partial \mathcal{I}} = A_k.
+\end{equation}
+In this simplified setting, \eqref{eq:Delta_chi_eff} becomes
+\begin{equation}
+  \Delta \chi_{\rm eff}
+  \approx \sum_{k=1}^{4}
+  A_k\,
+  \frac{\partial T}{\partial f_k},
+\end{equation}
+which can be computed numerically for each energy \(E\) and parameter
+set, thereby turning the earlier heuristic relationship between
+tunneling probability and topological change into a computable response
+functional.
+
+\section{AZ--TFTC Implementation and Tabletop Signatures}
+
+\subsection{Discretized Hamiltonian with prime-structured potential}
+
+The AZ--TFTC framework employs a one-dimensional Hamiltonian, which in a
+finite-difference representation takes the form
+\begin{equation}
+  H = -\frac{\hbar^2}{2m} D^{(2)} + V_{\rm grid},
+\end{equation}
+where \(D^{(2)}\) is the discretized second-derivative operator and
+\(V_{\rm grid}\) is the potential evaluated on a spatial grid
+\(x \in [x_{\min}, x_{\max}]\).\cite{AZ_TFTC_draft}
+
+Given grid points \(x_j\), the prime-structured potential is implemented
+as
+\begin{equation}
+  V_{\rm grid}(x_j) = V_0(x_j) + V_{\rm prime}^{(4)}(x_j),
+\end{equation}
+with \(V_0\) and \(V_{\rm prime}^{(4)}\) as in
+\eqref{eq:double_well}--\eqref{eq:Vprime_4}.
+
+\subsection{Numerical pseudocode}
+
+A minimal Python/NumPy implementation of the potential is:
+\begin{verbatim}
+import numpy as np
+
+# Grid and constants (example)
+x = np.linspace(-5.0, 5.0, 2000)
+Vb, a, E0 = 1.0, 2.0, 0.3
+
+# Background double-well
+V0 = Vb * (1 - x**2 / a**2)**2 - E0
+
+# Prime-structured correction
+Vprime = np.zeros_like(x)
+primes = [2, 3, 5, 7]
+A = [0.15, 0.12, 0.08, 0.05]
+B = [0.08, 0.06, 0.04, 0.03]
+sigma = 0.8
+
+for i, p in enumerate(primes):
+    omega = 2.0 * np.pi / np.log(p)   # ω_k = 2π / log p_k
+    fk = A[i] * (x**2) + B[i] * np.cos(omega * x)  # φ_k = 0
+    Vprime += fk / (p**sigma)
+
+V_total = V0 + Vprime
+# V_total now goes into the finite-difference / MPS Hamiltonian
+\end{verbatim}
+
+This pseudocode can be inserted directly into the AZ--TFTC notebook to
+generate spectra, tunneling amplitudes, and Casimir-like observables in
+the presence of prime-structured corrections.
+
+\subsection{Predicted signatures}
+
+Within this setup, we expect:
+\begin{itemize}
+  \item \textbf{Prime-locked sidebands in cavity spectra}, arising from
+  the log-prime frequencies \(\omega_k = 2\pi/\log p_k\) entering the
+  oscillatory part of \(f_k(x)\).
+  \item \textbf{Log-periodic ripples in tunneling rates and Casimir
+  forces}, as a function of energy or separation, due to the
+  \(p_k^{-\sigma}\) weighting and the interference between prime
+  contributions.
+  \item \textbf{Curvature-weighted frequency shifts}, detectable when
+  the curvature-like term \(R(x)\) is varied (e.g.\ by modifying the
+  effective geometry), which can be traced via the response
+  \(\Delta\chi_{\rm eff}\).
+\end{itemize}
+These provide concrete, falsifiable predictions that connect the
+Multiplicity framework to tabletop experiments in quantum tunneling and
+cavity QED.\cite{tunneling_topology_draft,AZ_TFTC_draft,zeta_schrodinger_draft}
+
+\section{Discussion and Outlook}
+
+We have constructed a self-contained, prime-structured tunneling module
+based on a prime-labeled multiplicity field, a four-prime truncated
+potential, and a WKB analysis sensitive to curvature and topological
+data. This module:
+\begin{itemize}
+  \item Embeds naturally into the four-prime Newton holography model,
+  with the latent fourth prime stabilizing the embedding via
+  \eqref{eq:closure_condition}.
+  \item Implements directly in AZ--TFTC and Zeta--Schr\"odinger Dynamics
+  as a modified potential term, enabling numerical exploration with
+  modest computational resources.
+  \item Provides a concrete formula for an effective topological
+  response \(\Delta\chi_{\rm eff}\) driven by prime-weighted tunneling.
+\end{itemize}
+
+Future work includes:
+\begin{itemize}
+  \item Extending from the 1D toy curvature \(R(x)\approx x^2\) to
+  higher-dimensional and more realistic geometric backgrounds.
+  \item Investigating the relation between prime-structured tunneling
+  and genuine topological invariants (Euler, Pontryagin) in full
+  four-dimensional spacetimes.
+  \item Coupling this tunneling module to time-crystal phases of the
+  multiplicity field, thereby unifying non-equilibrium temporal order
+  and prime-structured barriers.
+\end{itemize}
+
+\appendix
+
+\section{Explicit WKB Derivation for Prime-Structured Potential}
+\label{app:wkb}
+
+Starting from the Schr\"odinger equation with potential
+\(V(x)=V_0(x)+\sum_k f_k(x)p_k^{-\sigma}\), we define the action
+\begin{equation}
+  S(x) = \int^x \sqrt{2m\left(V(y)-E\right)}\,dy,
+\end{equation}
+and write the WKB wavefunction in the classically forbidden region
+\(x\in[x_L,x_R]\) as
+\begin{equation}
+  \psi(x) \approx \frac{C}{\sqrt[4]{2m\left(V(x)-E\right)}}\,
+  \exp\left(-\frac{1}{\hbar}S(x)\right).
+\end{equation}
+Matching across the turning points yields the standard result
+\eqref{eq:T_WKB}. The explicit dependence on \(f_k\) then follows by
+differentiating \(S(x)\) with respect to \(f_k\) under the integral, as
+outlined in Section~4.
+
+\section{Numerical Implementation Details}
+\label{app:numerics}
+
+This appendix can include:
+\begin{itemize}
+  \item Details of the finite-difference discretization of the kinetic
+  term and boundary conditions.
+  \item Pseudocode or actual code snippets for computing eigenvalues,
+  tunneling probabilities, and response functions.
+  \item Example plots of \(V(x)\), \(|\psi(x)|^2\), and
+  \(T(E)\) for representative parameter choices.
+\end{itemize}
+
+\appendix
+\section*{Mathematical Appendix}
+\addcontentsline{toc}{section}{Mathematical Appendix}
+
+In this appendix we collect rigorous statements and proofs for the
+operator-theoretic aspects of the prime-structured tunneling module.
+We work in the one-dimensional setting described in the main text, with
+potential
+\[
+  V(x) = V_0(x) + V_{\rm prime}^{(4)}(x),
+\]
+where \(V_0\) is the double-well potential \eqref{eq:double_well} and
+\(V_{\rm prime}^{(4)}\) is the four-prime correction
+\eqref{eq:Vprime_4}--\eqref{eq:fk_def}.
+
+Throughout we assume units where \(\hbar = 1\) unless otherwise noted.
+
+\section{Hilbert Space and Prime-Labeled Multiplicity Sector}
+
+\subsection{Separable prime-labeled fiber}
+
+Let \(\mathbb{P} = \{p_1,p_2,p_3,\dots\} = \{2,3,5,\dots\}\) denote the
+ordered set of prime numbers. We define the Hilbert space
+\begin{equation}
+  \mathcal{H}_{\rm prime} \coloneqq \ell^2(\mathbb{P})
+  = \left\{ (c_k)_{k\ge 1} : \sum_{k=1}^{\infty} |c_k|^2 < \infty \right\},
+\end{equation}
+equipped with the standard inner product
+\begin{equation}
+  \braket{c}{d}
+  = \sum_{k=1}^{\infty} \overline{c_k}\,d_k.
+\end{equation}
+We denote by \(\{\ket{p_k}\}_{k\ge 1}\) the canonical orthonormal basis
+defined via
+\begin{equation}
+  \ket{p_k} \longleftrightarrow (0,\dots,0,1,0,\dots),
+\end{equation}
+with a \(1\) in the \(k\)-th position and zeros elsewhere. Then
+\(\mathcal{H}_{\rm prime}\) is separable, and every vector
+\(\psi \in \mathcal{H}_{\rm prime}\) has the expansion
+\(\psi = \sum_{k=1}^\infty c_k \ket{p_k}\) with
+\(\sum_k|c_k|^2 < \infty\).
+
+In the main text, for each spatial point \(x\) the fiber
+\(\mathcal{E}_x\) is taken to be isomorphic to \(\mathcal{H}_{\rm prime}\),
+and the multiplicity field is a section
+\(\Psi(x,t) = \sum_k c_k(x,t)\ket{p_k}_x\) satisfying the prime-sector
+square-summability constraint.
+
+\subsection{Four-prime truncation}
+
+For the four-prime Newton holography truncation we restrict attention to
+the finite-dimensional subspace
+\begin{equation}
+  \mathcal{H}_{\rm prime}^{(4)}
+  \coloneqq \operatorname{span}\{\ket{p_1},\ket{p_2},\ket{p_3},\ket{p_4}\}
+  \cong \mathbb{C}^4,
+\end{equation}
+with \(p_1=2,p_2=3,p_3=5,p_4=7\).
+
+Any vector \(\psi^{(4)} \in \mathcal{H}_{\rm prime}^{(4)}\) can be
+written as
+\begin{equation}
+  \psi^{(4)} = \sum_{k=1}^4 c_k \ket{p_k},
+  \qquad c_k\in\mathbb{C},
+\end{equation}
+and the lawfulness constraint is automatically satisfied.
+
+\section{Prime-Weighted Multiplication Operators and Norm Bounds}
+
+We now formalize the role of the prime-weighted factors \(p_k^{-\sigma}\)
+as multiplication operators acting on \(\mathcal{H}_{\rm prime}\) and
+derive basic operator-norm and Hilbert--Schmidt bounds.
+
+\subsection{Prime-weighted diagonal operators}
+
+\begin{definition}[Prime-weighted operator]
+For a fixed exponent \(\sigma > 0\), define the diagonal operator
+\(D_\sigma : \mathcal{H}_{\rm prime} \to \mathcal{H}_{\rm prime}\) by
+\begin{equation}
+  D_\sigma \ket{p_k} = p_k^{-\sigma} \ket{p_k},
+  \qquad k\ge 1,
+\end{equation}
+and extended by linearity and continuity to all of
+\(\mathcal{H}_{\rm prime}\).
+\end{definition}
+
+\begin{lemma}
+The operator \(D_\sigma\) is bounded on \(\mathcal{H}_{\rm prime}\) for
+every \(\sigma>0\), with operator norm
+\(\|D_\sigma\|_{\mathcal{B}(\mathcal{H}_{\rm prime})}=1\).
+\end{lemma}
+
+\begin{proof}
+For any \(\psi = \sum_{k} c_k \ket{p_k} \in \mathcal{H}_{\rm prime}\),
+\begin{equation}
+  \|D_\sigma \psi\|^2
+  = \sum_{k=1}^{\infty} |p_k^{-\sigma} c_k|^2
+  = \sum_{k=1}^\infty p_k^{-2\sigma} |c_k|^2.
+\end{equation}
+Since \(p_1 = 2\) is the smallest prime and \(p_k \ge 2\) for all \(k\),
+we have \(0 < p_k^{-\sigma} \le 2^{-\sigma} < 1\). In particular,
+\begin{equation}
+  p_k^{-2\sigma} \le 1
+  \quad\Rightarrow\quad
+  \|D_\sigma \psi\|^2 \le \sum_{k=1}^{\infty} |c_k|^2 = \|\psi\|^2.
+\end{equation}
+Thus \(\|D_\sigma\|\le 1\). The norm is exactly \(1\) because we can
+approach the bound by a unit vector supported on large primes, where the
+weights \(p_k^{-\sigma}\) are arbitrarily close to \(0\), but the
+supremum over all basis vectors is realized at \(k=1\) with
+\(p_1^{-\sigma}<1\). By standard properties of diagonal operators with
+bounded diagonal entries, we conclude \(\|D_\sigma\|=1\).
+\end{proof}
+
+\subsection{Hilbert--Schmidt bounds for prime-weighted kernels}
+
+In various constructions it is convenient to interpret the prime
+weights as defining an integral kernel on an auxiliary index space.
+We collect the relevant bounds here.
+
+\begin{definition}
+Let \(\sigma>0\). We define the matrix kernel
+\(K^{(\sigma)} = (K_{ij}^{(\sigma)})_{i,j\ge 1}\) on
+\(\mathcal{H}_{\rm prime}\) by
+\begin{equation}
+  K_{ij}^{(\sigma)} \coloneqq p_i^{-\sigma}\,\delta_{ij}.
+\end{equation}
+The corresponding operator \(K^{(\sigma)}\) is simply \(D_\sigma\)
+expressed in the prime basis.
+\end{definition}
+
+\begin{lemma}[Hilbert--Schmidt condition]
+For any \(\sigma > \tfrac{1}{2}\), the operator \(K^{(\sigma)}\) is
+Hilbert--Schmidt. In particular, its Hilbert--Schmidt norm satisfies
+\begin{equation}
+  \|K^{(\sigma)}\|_{\rm HS}^2
+  = \sum_{i,j=1}^{\infty} |K_{ij}^{(\sigma)}|^2
+  = \sum_{k=1}^{\infty} p_k^{-2\sigma} < \infty.
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+By definition of the Hilbert--Schmidt norm,
+\begin{equation}
+  \|K^{(\sigma)}\|_{\rm HS}^2
+  = \sum_{i,j=1}^\infty |p_i^{-\sigma}\,\delta_{ij}|^2
+  = \sum_{i=1}^\infty p_i^{-2\sigma}.
+\end{equation}
+The series \(\sum p_i^{-s}\) over primes converges for any
+\(s>1\), by comparison with the Riemann zeta function
+\(\zeta(s) = \sum_{n\ge 1} n^{-s}\). In our case \(s=2\sigma\), so
+\(s>1\) is equivalent to \(\sigma > \tfrac{1}{2}\). Therefore,
+\(\sum p_i^{-2\sigma}<\infty\) whenever \(\sigma>\tfrac{1}{2}\), and
+\(K^{(\sigma)}\) is Hilbert--Schmidt.
+\end{proof}
+
+\begin{corollary}
+For \(\sigma>\tfrac{1}{2}\), the spectrum of \(K^{(\sigma)}\) consists
+of a sequence of eigenvalues \(\{p_k^{-\sigma}\}_{k\ge 1}\) accumulating
+only at \(0\), and \(K^{(\sigma)}\) is compact on \(\mathcal{H}_{\rm prime}\).
+\end{corollary}
+
+\begin{proof}
+Diagonal operators with entries forming an \(\ell^2\)-sequence are
+Hilbert--Schmidt and hence compact. The eigenvalues are the diagonal
+entries \(p_k^{-\sigma}\), which converge to \(0\) as \(p_k\to\infty\).
+\end{proof}
+
+These bounds justify the choice \(\sigma>1/2\) in the main text for
+embedding stability, and connect directly to the four-prime
+normalization condition
+\(\sum_{k=1}^{4} w_k p_k^{-\sigma} = 1\).
+
+\section{Boundedness of the Prime-Structured Potential}
+
+We next show that the explicit prime-structured potential used in the
+tunneling problem defines a bounded multiplication operator on the
+one-particle Hilbert space \(L^2(\mathbb{R})\), and that it is a
+relatively bounded perturbation of the free Hamiltonian.
+
+\subsection{Explicit potential and basic bounds}
+
+Recall the explicit ansatz:
+\begin{align}
+  V_0(x) &= V_b\left(1 - \frac{x^2}{a^2}\right)^2 - E_0,
+  \\
+  V_{\rm prime}^{(4)}(x)
+  &= \sum_{k=1}^{4} f_k(x)p_k^{-\sigma},
+  \\
+  f_k(x) &= A_k x^2 + B_k \cos(\omega_k x + \phi_k),
+  \\
+  \omega_k &= \frac{2\pi}{\log p_k},\qquad \phi_k = 0,
+\end{align}
+with parameters
+\begin{equation}
+  V_b=1,\quad a=2,\quad E_0=0.3,\quad
+  A=[0.15,0.12,0.08,0.05],\quad
+  B=[0.08,0.06,0.04,0.03],\quad
+  \sigma=0.8.
+\end{equation}
+The total potential is
+\begin{equation}
+  V(x) = V_0(x) + V_{\rm prime}^{(4)}(x).
+\end{equation}
+
+\begin{lemma}[Growth bound]
+There exists a constant \(C>0\) such that
+\begin{equation}
+  |V(x)| \le C(1 + x^4)
+  \quad\text{for all } x\in\mathbb{R}.
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+The background term \(V_0(x)\) satisfies
+\begin{equation}
+  |V_0(x)| = \left|(1 - x^2/a^2)^2 - E_0\right|
+  \le C_0 (1 + x^4)
+\end{equation}
+for some constant \(C_0>0\), since the quartic dominates the polynomial
+growth. For the prime-structured term,
+\begin{align}
+  |V_{\rm prime}^{(4)}(x)|
+  &\le \sum_{k=1}^4 |f_k(x)|\,p_k^{-\sigma} \nonumber\\
+  &\le \sum_{k=1}^4 \left(|A_k|\,|x|^2 + |B_k|\right)p_k^{-\sigma}
+   \le C_1 (1 + x^2)
+\end{align}
+for some constant \(C_1>0\), using \(|\cos(\cdot)|\le 1\). Combining,
+\begin{equation}
+  |V(x)|
+  \le C_0 (1 + x^4) + C_1 (1 + x^2)
+  \le C(1 + x^4)
+\end{equation}
+for a suitable \(C\).
+\end{proof}
+
+\subsection{Self-adjointness and relative boundedness}
+
+Let \(H_0\) be the free one-dimensional Schr\"odinger operator,
+\begin{equation}
+  H_0 = -\frac{1}{2m}\frac{d^2}{dx^2},
+  \qquad \mathcal{D}(H_0) = H^2(\mathbb{R}),
+\end{equation}
+and define the full Hamiltonian
+\begin{equation}
+  H = H_0 + V(x)
+\end{equation}
+as an operator on \(L^2(\mathbb{R})\).
+
+\begin{lemma}
+The potential term \(V\) defines a relatively bounded perturbation of
+\(H_0\) with relative bound zero. In particular, \(H\) is
+self-adjoint on \(\mathcal{D}(H_0)\).
+\end{lemma}
+
+\begin{proof}
+It suffices to show that multiplication by \(V(x)\) is relatively
+bounded with respect to \(-d^2/dx^2\) with arbitrarily small relative
+bound. By the established growth bound, \(V(x)\) is at most quartic in
+\(|x|\). Standard results on Schr\"odinger operators with polynomial
+potentials (see, e.g., \cite{reed_simon2}) imply that multiplication by
+such a \(V\) is \(H_0\)-bounded with relative bound zero. Concretely,
+for any \(\epsilon>0\) there exists \(C_\epsilon>0\) such that
+\begin{equation}
+  \|V\psi\| \le \epsilon \|H_0\psi\| + C_\epsilon \|\psi\|
+  \quad\text{for all } \psi\in H^2(\mathbb{R}).
+\end{equation}
+By the Kato--Rellich theorem, \(H = H_0 + V\) is self-adjoint on
+\(\mathcal{D}(H_0)\).
+\end{proof}
+
+\section{WKB Exponent and Functional Derivatives}
+
+We now formalize the derivation of the functional derivative
+\(\partial \ln T / \partial f_k\) used in the definition of the
+effective topological response \(\Delta\chi_{\rm eff}\).
+
+\subsection{Differentiation under the WKB integral}
+
+For fixed mass \(m>0\) and energy \(E<V_{\max}\), define
+\begin{equation}
+  W(x) = V_0(x) - E > 0 \quad \text{on } [x_L,x_R],
+\end{equation}
+and let
+\begin{equation}
+  G(x) = \sum_{k=1}^4 f_k(x) p_k^{-\sigma}.
+\end{equation}
+The WKB exponent is
+\begin{equation}
+  S[f](E)
+  \coloneqq \int_{x_L}^{x_R} \sqrt{2m\left(W(x)+G(x)\right)}\,dx,
+\end{equation}
+and the tunneling probability
+\begin{equation}
+  T(E) \approx \exp\left[-2 S[f](E)\right].
+\end{equation}
+
+We regard \(S[f]\) as a functional of the functions \(f_k(x)\).
+
+\begin{proposition}
+Assume \(W(x)\ge c>0\) on \([x_L,x_R]\) and \(f_k \in C^1([x_L,x_R])\).
+Then the functional derivative of \(S[f]\) with respect to \(f_k\) is
+\begin{equation}
+  \frac{\delta S}{\delta f_k}(x;E)
+  = \frac{m\,p_k^{-\sigma}}{\sqrt{2m\left(W(x)+G(x)\right)}}.
+\end{equation}
+Consequently, for small variations \(\delta f_k\),
+\begin{equation}
+  \delta S(E)
+  = \sum_{k=1}^4 \int_{x_L}^{x_R}
+    \frac{m\,p_k^{-\sigma}}{\sqrt{2m\left(W(x)+G(x)\right)}}\,
+    \delta f_k(x)\,dx.
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+We compute the Fr{\'e}chet derivative of \(S\). For a variation
+\(\delta f_k(x)\), the induced variation \(\delta G(x)\) is
+\(\delta G(x) = \delta f_k(x)p_k^{-\sigma}\). Then
+\begin{align}
+  \delta S(E)
+  &= \int_{x_L}^{x_R}
+     \frac{d}{d\epsilon}\bigg|_{\epsilon=0}
+     \sqrt{ 2m\left(W(x)+G(x)+\epsilon\,\delta G(x)\right)}\,dx \nonumber\\
+  &= \int_{x_L}^{x_R}
+     \frac{1}{2}
+     \frac{ 2m\,\delta G(x) }
+          { \sqrt{2m\left(W(x)+G(x)\right)} }\,dx \nonumber\\
+  &= \int_{x_L}^{x_R}
+     \frac{m\,p_k^{-\sigma}}{\sqrt{2m\left(W(x)+G(x)\right)}}\,
+     \delta f_k(x)\,dx.
+\end{align}
+Identifying the kernel of the linear functional in \(\delta f_k\) yields
+the claimed expression for \(\delta S/\delta f_k\).
+\end{proof}
+
+\subsection{Derivative of \(\ln T\)}
+
+Since \(T(E) \approx \exp[-2 S[f](E)]\), we find
+\begin{equation}
+  \ln T(E) \approx -2 S[f](E).
+\end{equation}
+Therefore,
+\begin{equation}
+  \frac{\delta \ln T}{\delta f_k}(x;E)
+  = -2 \frac{\delta S}{\delta f_k}(x;E)
+  = -2\,\frac{m\,p_k^{-\sigma}}{\sqrt{2m\left(W(x)+G(x)\right)}}.
+\end{equation}
+Integrating over \(x\) we recover the expression used in the main text
+for the sensitivity of \(\ln T\) to changes in \(f_k\):
+\begin{equation}
+  \frac{\partial \ln T}{\partial f_k}
+  = \int_{x_L}^{x_R}
+    \frac{\delta \ln T}{\delta f_k}(x;E)\,dx
+  = -2m p_k^{-\sigma}
+    \int_{x_L}^{x_R}
+    \frac{1}{\sqrt{2m\left(W(x)+G(x)\right)}}\,dx.
+\end{equation}
+In the regime where \(G\) is small compared to \(W\), this reduces to
+the linearized form displayed in the main text.
+
+\section{Four-Prime Closure Condition as a Normalization Constraint}
+
+Finally we give a simple abstract formulation of the four-prime closure
+condition
+\(\sum_{k=1}^{4} w_k p_k^{-\sigma} = 1\) used to stabilize the
+four-prime Newton holographic embedding.
+
+\begin{definition}[Four-prime normalization functional]
+Let \(\sigma>0\) and \(\mathcal{P}_4=\{p_1,p_2,p_3,p_4\}=\{2,3,5,7\}\).
+Define the linear functional
+\(\Lambda_\sigma : \mathbb{C}^4 \to \mathbb{C}\) by
+\begin{equation}
+  \Lambda_\sigma(\bm{w})
+  = \sum_{k=1}^{4} w_k p_k^{-\sigma},
+  \qquad \bm{w}=(w_1,\dots,w_4).
+\end{equation}
+\end{definition}
+
+\begin{lemma}
+For any \(\sigma>0\), \(\Lambda_\sigma\) is surjective and continuous
+on \(\mathbb{C}^4\). In particular, the constraint
+\(\Lambda_\sigma(\bm{w}) = 1\) defines a three-dimensional affine
+subspace of \(\mathbb{C}^4\).
+\end{lemma}
+
+\begin{proof}
+Continuity is immediate from the finite sum. Surjectivity follows by
+choosing \(\bm{w}=(p_1^{\sigma},0,0,0)\), which gives
+\(\Lambda_\sigma(\bm{w})=1\). Since the equation
+\(\Lambda_\sigma(\bm{w})=1\) is a single nontrivial linear constraint in
+a 4-dimensional vector space, the solution set is a codimension-one
+affine subspace, hence 3-dimensional.
+\end{proof}
+
+In the context of the multiplicity bundle, \(\bm{w}\) encodes the
+relative weights of the four prime modes. The normalization
+\(\Lambda_\sigma(\bm{w})=1\) can be interpreted as fixing the effective
+“prime charge” of the four-prime sector, ensuring a well-defined
+embedding of the multiplicity field into the Newton holography
+construction.
+
+\bigskip
+
+These results provide the operator-theoretic backbone for the
+prime-structured tunneling module, ensuring that the constructions in
+the main text rest on well-defined, bounded operators with controlled
+spectral properties.
+
+
+\nocite{*}
+\bibliographystyle{unsrt}  
+\bibliography{references}
+\end{document}

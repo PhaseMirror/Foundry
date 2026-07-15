@@ -1,0 +1,884 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath, amssymb, amsfonts}
+\usepackage{bm}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{titlesec}
+
+\titleformat{\section}{\large\bfseries}{\thesection}{0.5em}{}
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection}{0.5em}{}
+
+\lstdefinestyle{code}{
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{blue},
+  commentstyle=\color{gray},
+  stringstyle=\color{green!50!black},
+  showstringspaces=false,
+  frame=single,
+  breaklines=true,
+  tabsize=2
+}
+
+\title{Integrating a Brain Aging State-Space Framework into Phase Mirror's Healthcare Stack}
+\author{Phase Mirror -- Brain Aging and Healthcare Integration}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+This report summarizes and formalizes the integration of a mechanistic brain aging
+state-space model into the Phase Mirror repository, focusing on its placement within
+the existing healthcare package structure and the definition of a clean, reusable
+module interface. We describe the latent state-space model, the measurement model for
+clinical biomarkers, the filtering and trial design machinery, and the concrete API
+sketches that bind the \texttt{brain aging}, \texttt{hcalc}, \texttt{healthspan}, and
+\texttt{clinical labs analytics} packages into a coherent capability for in-silico
+clinical trial design and healthspan decision support.
+\end{abstract}
+
+\tableofcontents
+
+\section{Executive Summary}
+
+The Phase Mirror repository contains a healthcare layer under
+\texttt{mirror-dissonance-pro/packages/healthcare/} with several domain-specific
+packages, including:
+\begin{itemize}[noitemsep]
+  \item \texttt{brain aging}
+  \item \texttt{clinical labs analytics}
+  \item \texttt{crof-lc}
+  \item \texttt{hcalc}
+  \item \texttt{healthspan}
+\end{itemize}
+
+Within \texttt{brain aging}, multiple JSON artifacts encode a state-space framework
+for simulating and optimizing clinical trials in brain aging. One of these,
+\texttt{Brain\_Aging\_State\_space\_Framework.json}, is a compact text/PDF extraction
+that effectively serves as a distilled module specification. It contains:
+\begin{itemize}[noitemsep]
+  \item A latent state vector for brain aging dynamics,
+  \item Transition dynamics expressed as coupled ODEs,
+  \item Measurement equations for a set of imaging, fluid, and functional biomarkers,
+  \item References to EKF/UKF/particle filtering estimation schemes,
+  \item Fisher-information-based biomarker subset scoring for trial optimization.
+\end{itemize}
+
+The central architectural decision is to treat this compact framework as the
+\emph{invariant interface specification} for brain aging in Phase Mirror, while using
+the larger JSON artifacts as detailed implementation and proposal layers. This leads
+to the following integration strategy:
+\begin{enumerate}[noitemsep]
+  \item Implement the state-space dynamics and filters in \texttt{hcalc} as a reusable
+        computation engine.
+  \item Map biomarker measurements to real-world lab and assessment definitions in
+        \texttt{clinical labs analytics}.
+  \item Expose trial design and healthspan decisions (e.g., biomarker panels, sample
+        sizes, intervention strategies) through \texttt{healthspan}.
+  \item Keep the \texttt{brain aging} JSON artifacts as domain specifications that
+        parameterize and constrain these modules.
+\end{enumerate}
+
+\section{Repository and Package Context}
+
+\subsection{Healthcare Package Layout}
+
+The relevant portion of the repository can be summarized as:
+\begin{verbatim}
+mirror-dissonance-pro/
+  packages/
+    healthcare/
+      brain aging/
+        A State-Space Framework for Simulating and Optimizing ...
+        Brain Aging.json
+        Brain_Aging_State_space_Framework.json
+        Research Proposal_ A State-Space Framework ...
+      clinical labs analytics/
+      crof-lc/
+      hcalc/
+      healthspan/
+\end{verbatim}
+
+The roles are:
+\begin{itemize}[noitemsep]
+  \item \textbf{brain aging:} Domain-specific research artifacts, including a compact
+        state-space specification and extended proposals.
+  \item \textbf{hcalc:} Healthcare calculation and modeling engine; natural host for
+        ODE dynamics, filters, and trial simulations.
+  \item \textbf{healthspan:} Healthspan and longevity semantics; natural host for
+        trial optimization and decision support interfaces.
+  \item \textbf{clinical labs analytics:} Measurement grounding; mapping between
+        abstract biomarkers and concrete lab/assessment definitions.
+\end{itemize}
+
+\subsection{Artifacts in \texttt{brain aging}}
+
+The \texttt{brain aging} folder contains at least four JSON resources:
+\begin{itemize}[noitemsep]
+  \item A large JSON representation of the full state-space trial framework.
+  \item A research proposal emphasizing the quantification and modulation of brain
+        aging dynamics.
+  \item A domain-knowledge artifact (\texttt{Brain Aging.json}).
+  \item \texttt{Brain\_Aging\_State\_space\_Framework.json}, which is a compact
+        extraction encoding the model structure, states, measurements, and design
+        logic.
+\end{itemize}
+
+From an integration perspective, the compact framework JSON is best treated as a
+\emph{module contract}: it defines the latent coordinates, the dynamical laws, and
+the mapping to observable clinical variables.
+
+\section{Mathematical Overview}
+
+\subsection{Latent State Vector}
+
+The compact framework describes a latent state vector that we denote as
+\[
+  \bm{x}(t) =
+  \begin{bmatrix}
+    W(t) \\
+    S(t) \\
+    I(t) \\
+    C(t) \\
+    M(t) \\
+    A(t)
+  \end{bmatrix} \in \mathbb{R}^{6},
+\]
+where, schematically:
+\begin{itemize}[noitemsep]
+  \item \(W\): white-matter integrity or structural reserve,
+  \item \(S\): senescent-cell or senescence burden,
+  \item \(I\): inflammation-related latent factor,
+  \item \(C\): cognition-related latent factor,
+  \item \(M\): motor/functional latent factor,
+  \item \(A\): age or latent aging clock.
+\end{itemize}
+
+In a discrete-time setting indexed by \(k\), we can write \(\bm{x}_k = \bm{x}(t_k)\).
+
+\subsection{State Dynamics}
+
+The brain aging process is modeled by a system of coupled ODEs
+\[
+  \frac{d\bm{x}}{dt} = \bm{f}(t, \bm{x}(t); \bm{\theta}),
+\]
+with parameter vector \(\bm{\theta}\) encoding rates of progression, coupling strengths,
+and possibly intervention sensitivities.
+
+A generic structure, consistent with the compact framework, can be written as:
+\begin{align*}
+  \frac{dW}{dt} &= f_W(W, S, I, C, M, A; \bm{\theta}), \\
+  \frac{dS}{dt} &= f_S(W, S, I, C, M, A; \bm{\theta}), \\
+  \frac{dI}{dt} &= f_I(W, S, I, C, M, A; \bm{\theta}), \\
+  \frac{dC}{dt} &= f_C(W, S, I, C, M, A; \bm{\theta}), \\
+  \frac{dM}{dt} &= f_M(W, S, I, C, M, A; \bm{\theta}), \\
+  \frac{dA}{dt} &= 1,
+\end{align*}
+where the exact forms of \(f_W, \dots, f_M\) are drawn from the framework equations
+(e.g. equations (1--5) in the original text). The last equation fixes age as an
+approximately linear drift in the chosen time units.
+
+For numerical implementation within \texttt{hcalc}, this is discretized with step
+size \(\Delta t\) to yield:
+\[
+  \bm{x}_{k+1} = \bm{x}_k + \Delta t \, \bm{f}(t_k, \bm{x}_k; \bm{\theta}) + \bm{w}_k,
+\]
+where \(\bm{w}_k \sim \mathcal{N}(\bm{0}, \bm{Q})\) is process noise.
+
+\subsection{Measurement Model}
+
+The measurement vector \(\bm{y}_k\) aggregates multi-modal biomarkers:
+\[
+  \bm{y}_k =
+  \begin{bmatrix}
+    \text{FA}_k \\
+    \text{MD}_k \\
+    \text{MWF}_k \\
+    \text{NfL}_k \\
+    \text{SASP}_k \\
+    \text{p16}_k \\
+    \text{IL6/IL8}_k \\
+    \text{PS}_k \\
+    \text{MoCA}_k \\
+    \text{Gait}_k \\
+    \text{Grip}_k
+  \end{bmatrix}
+  \in \mathbb{R}^{m},
+\]
+with \(m\) equal to the number of biomarkers used in a given protocol.
+
+The measurement equation is
+\[
+  \bm{y}_k = \bm{h}(\bm{x}_k; \bm{\phi}) + \bm{v}_k,
+\]
+where:
+\begin{itemize}[noitemsep]
+  \item \(\bm{h}\): nonlinear observation map from latent state to biomarkers,
+  \item \(\bm{\phi}\): measurement parameters (e.g., scaling exponents, offsets),
+  \item \(\bm{v}_k \sim \mathcal{N}(\bm{0}, \bm{R})\): measurement noise.
+\end{itemize}
+
+For example, a simplified structural choice might assume that p16 is a monotone
+function of senescence burden \(S\):
+\[
+  \text{p16}_k \approx \alpha_{p16} \exp(\beta_{p16} S_k) + \epsilon_{p16,k}.
+\]
+Analogously, SASP and IL6/IL8 ratio may depend primarily on \(S\) and \(I\), while
+cognitive and motor readouts (PS, MoCA, gait, grip) may depend on \(C\) and \(M\).
+
+\subsection{Filtering and Latent-State Estimation}
+
+Given noisy measurements \(\{\bm{y}_k\}\), we seek to estimate the latent trajectory
+\(\{\bm{x}_k\}\). The framework supports several nonlinear filtering approaches:
+\begin{itemize}[noitemsep]
+  \item Extended Kalman Filter (EKF),
+  \item Unscented Kalman Filter (UKF),
+  \item Particle Filter (PF).
+\end{itemize}
+
+In the EKF, we linearize \(\bm{f}\) and \(\bm{h}\) around the current estimate:
+\begin{align*}
+  \bm{x}_{k+1} &\approx \bm{f}(\bm{x}_k) + \bm{F}_k (\bm{x}_k - \hat{\bm{x}}_k), \\
+  \bm{y}_k &\approx \bm{h}(\bm{x}_k) + \bm{H}_k (\bm{x}_k - \hat{\bm{x}}_k),
+\end{align*}
+where \(\bm{F}_k\) and \(\bm{H}_k\) are Jacobians:
+\[
+  \bm{F}_k = \frac{\partial \bm{f}}{\partial \bm{x}}(\hat{\bm{x}}_k), \qquad
+  \bm{H}_k = \frac{\partial \bm{h}}{\partial \bm{x}}(\hat{\bm{x}}_k).
+\]
+The standard Kalman recursions (prediction and update) then apply with these linear
+approximations.
+
+The UKF uses a deterministic sigma-point approximation to propagate mean and
+covariance through the nonlinear dynamics, while particle filters represent the
+posterior distribution via weighted particle ensembles.
+
+\subsection{Fisher Information and Trial Design}
+
+To select biomarker panels and sampling schedules, the framework employs Fisher
+information calculations. For a parameter vector \(\bm{\theta}\), the Fisher
+information matrix over a given design can be approximated as
+\[
+  \bm{I}(\bm{\theta}) =
+  \mathbb{E}\left[
+    \left( \frac{\partial}{\partial \bm{\theta}}
+      \log p(\bm{y}_{1:K} \mid \bm{\theta})
+    \right)
+    \left( \frac{\partial}{\partial \bm{\theta}}
+      \log p(\bm{y}_{1:K} \mid \bm{\theta})
+    \right)^\top
+  \right],
+\]
+with \(\bm{y}_{1:K}\) denoting all observations under a candidate trial design.
+
+By simulating virtual cohorts and their measurement sequences given a trial protocol
+(e.g., biomarker set, sampling schedule, intervention pulses), we can approximate
+\(\bm{I}(\bm{\theta})\) and derive:
+\begin{itemize}[noitemsep]
+  \item Per-biomarker information contributions,
+  \item Overall information about key parameters or latent states,
+  \item Rankings of biomarker subsets by information gain,
+  \item Sample size recommendations for specified precision or power targets.
+\end{itemize}
+
+\section{Module and API Design}
+
+\subsection{\texttt{hcalc} Brain-Aging Engine}
+
+Within \texttt{hcalc}, we introduce a \texttt{brain\_aging} submodule defining the
+core data structures and engine functions. The central types are:
+\begin{itemize}[noitemsep]
+  \item \texttt{BrainAgingState}: encapsulates \((W, S, I, C, M, A)\),
+  \item \texttt{BrainAgingParams}: ODE and noise parameters,
+  \item \texttt{ObservationConfig}: which biomarkers are active and their noise levels,
+  \item \texttt{FilterConfig}: filter method, time step, and PF-specific settings,
+  \item \texttt{TrialDesign}: trial schedule, biomarker panel, and intervention protocol,
+  \item \texttt{FisherInfoResult}: per-biomarker and overall information metrics.
+\end{itemize}
+
+\subsubsection{Representative Engine API}
+
+\begin{lstlisting}[style=code,language=Python,caption={Brain-aging engine interface in \texttt{hcalc}.}]
+from dataclasses import dataclass
+from typing import Literal, Dict, Any, Callable, Optional
+import numpy as np
+
+StateName = Literal["W", "S", "I", "C", "M", "A"]
+ObsName = Literal[
+    "FA", "MD", "MWF", "NfL", "SASP", "p16",
+    "IL6_IL8", "PS", "MoCA", "Gait", "Grip"
+]
+
+@dataclass
+class BrainAgingParams:
+    k_WS: float
+    k_SW: float
+    k_SI: float
+    k_IC: float
+    k_CM: float
+    q_W: float
+    q_S: float
+    q_I: float
+    q_C: float
+    q_M: float
+    q_A: float
+
+@dataclass
+class BrainAgingState:
+    W: float
+    S: float
+    I: float
+    C: float
+    M: float
+    A: float
+
+    def as_vector(self) -> np.ndarray:
+        return np.array([self.W, self.S, self.I, self.C, self.M, self.A])
+
+    @classmethod
+    def from_vector(cls, x: np.ndarray) -> "BrainAgingState":
+        return cls(W=x[0], S=x[1], I=x[2], C=x[3], M=x[4], A=x[5])
+
+@dataclass
+class ObservationConfig:
+    active_obs: tuple[ObsName, ...]
+    obs_noise_std: Dict[ObsName, float]
+
+@dataclass
+class FilterConfig:
+    method: Literal["EKF", "UKF", "PF"]
+    dt: float
+    num_particles: int | None = None
+
+@dataclass
+class TrialDesign:
+    schedule_days: list[float]
+    biomarkers: tuple[ObsName, ...]
+    intervention_protocol: Dict[str, Any]
+
+@dataclass
+class FisherInfoResult:
+    per_biomarker: Dict[ObsName, float]
+    total_information: float
+    recommended_panel: tuple[ObsName, ...]
+
+def simulate_dynamics(
+    x0: BrainAgingState,
+    params: BrainAgingParams,
+    t_grid: np.ndarray,
+    intervention_fn: Optional[
+        Callable[[float, BrainAgingState], BrainAgingParams]
+    ] = None,
+) -> np.ndarray:
+    ...
+
+def simulate_observations(
+    x_traj: np.ndarray,
+    obs_cfg: ObservationConfig,
+    labs_bridge: "ClinicalLabsBridge",
+    rng: np.random.Generator | None = None,
+) -> Dict[ObsName, np.ndarray]:
+    ...
+
+def run_filter(
+    y_obs: Dict[ObsName, np.ndarray],
+    t_grid: np.ndarray,
+    params: BrainAgingParams,
+    filter_cfg: FilterConfig,
+    obs_cfg: ObservationConfig,
+    labs_bridge: "ClinicalLabsBridge",
+    x0_prior: BrainAgingState,
+    P0_prior: np.ndarray,
+) -> Dict[str, Any]:
+    ...
+
+def evaluate_trial_design(
+    design: TrialDesign,
+    params: BrainAgingParams,
+    filter_cfg: FilterConfig,
+    labs_bridge: "ClinicalLabsBridge",
+    num_virtual_subjects: int = 100,
+) -> FisherInfoResult:
+    ...
+\end{lstlisting}
+
+\subsection{State-Vector Indexing}
+
+To maintain a stable mapping between named states and vector indices, we introduce
+a small helper module:
+
+\begin{lstlisting}[style=code,language=Python,caption={State vector indexing utilities.}]
+import numpy as np
+from typing import Dict
+from .engine import BrainAgingState, StateName
+
+STATE_INDEX: Dict[StateName, int] = {
+    "W": 0,
+    "S": 1,
+    "I": 2,
+    "C": 3,
+    "M": 4,
+    "A": 5,
+}
+
+def to_vector(state: BrainAgingState) -> np.ndarray:
+    return state.as_vector()
+
+def from_vector(x: np.ndarray) -> BrainAgingState:
+    return BrainAgingState.from_vector(x)
+
+def idx(name: StateName) -> int:
+    return STATE_INDEX[name]
+\end{lstlisting}
+
+This prime-index view is compatible with Multiplicity Theory: each state component
+has a fixed index serving as a prime label for interactions in the dynamical system.
+
+\subsection{ODE Dynamics Implementation}
+
+The continuous-time dynamics are implemented in a dedicated module, with a clean hook
+for applying intervention modifiers:
+
+\begin{lstlisting}[style=code,language=Python,caption={ODE dynamics for brain aging.}]
+import numpy as np
+from typing import Callable, Optional
+from .engine import BrainAgingState, BrainAgingParams
+
+def f_ode(
+    t: float,
+    x: np.ndarray,
+    params: BrainAgingParams,
+    intervention_modifier: Optional[
+        Callable[[float, BrainAgingState, BrainAgingParams], BrainAgingParams]
+    ] = None,
+) -> np.ndarray:
+    state = BrainAgingState.from_vector(x)
+
+    if intervention_modifier is not None:
+        params = intervention_modifier(t, state, params)
+
+    dW = -params.k_WS * state.S * state.W
+    dS = params.k_SW * state.W - params.k_SI * state.I
+    dI = params.k_SI * state.S - params.k_IC * state.C
+    dC = -params.k_IC * state.I - params.k_CM * state.M
+    dM = -params.k_CM * state.C
+    dA = 1.0
+
+    return np.array([dW, dS, dI, dC, dM, dA])
+
+def integrate_ode_euler(
+    x0: BrainAgingState,
+    t_grid: np.ndarray,
+    params: BrainAgingParams,
+    intervention_modifier: Optional[
+        Callable[[float, BrainAgingState, BrainAgingParams], BrainAgingParams]
+    ] = None,
+) -> np.ndarray:
+    x = x0.as_vector()
+    traj = np.zeros((len(t_grid), x.size))
+    traj[0] = x
+    for k in range(1, len(t_grid)):
+        dt = t_grid[k] - t_grid[k - 1]
+        dx = f_ode(t_grid[k - 1], x, params, intervention_modifier)
+        x = x + dt * dx
+        traj[k] = x
+    return traj
+\end{lstlisting}
+
+\section{Clinical Labs Analytics Bridge}
+
+\subsection{Biomarker Metadata and Transformation}
+
+The \texttt{clinical labs analytics} package is used to ground the abstract biomarkers
+used by the state-space model in concrete lab tests and assessment codes. We define
+a \texttt{ClinicalLabsBridge} with biomarker metadata and latent-to-observation
+mappings:
+
+\begin{lstlisting}[style=code,language=Python,caption={Clinical labs bridge for brain-aging biomarkers.}]
+from dataclasses import dataclass
+from typing import Dict, Literal
+import numpy as np
+from healthcare.hcalc.brain_aging.engine import ObsName, BrainAgingState
+
+Unit = Literal["pg/mL", "ng/L", "ratio", "z_score", "seconds", "kg", "ml/100g/min"]
+
+@dataclass
+class BiomarkerMeta:
+    code: str
+    unit: Unit
+    normal_range: tuple[float, float] | None
+    transform: Literal["identity", "log", "log_ratio", "zscore"]
+
+@dataclass
+class ClinicalLabsBridge:
+    biomarker_meta: Dict[ObsName, BiomarkerMeta]
+
+    def latent_to_observation(self, x: BrainAgingState, name: ObsName) -> float:
+        if name == "p16":
+            val = np.exp(x.S)
+        elif name == "IL6_IL8":
+            val = np.exp(x.I)
+        else:
+            val = 0.0
+
+        meta = self.biomarker_meta[name]
+        if meta.transform == "log":
+            return float(np.log(val))
+        elif meta.transform == "log_ratio":
+            return float(np.log(val))
+        elif meta.transform == "zscore" and meta.normal_range:
+            lo, hi = meta.normal_range
+            mu = 0.5 * (lo + hi)
+            sigma = (hi - lo) / 4.0
+            return (val - mu) / sigma
+        return val
+
+    def sample_noise(self, name: ObsName, std: float, rng: np.random.Generator) -> float:
+        return float(rng.normal(0.0, std))
+
+def default_brain_aging_bridge() -> ClinicalLabsBridge:
+    meta = {
+        "p16": BiomarkerMeta(
+            code="LAB_P16",
+            unit="pg/mL",
+            normal_range=None,
+            transform="log",
+        ),
+        "SASP": BiomarkerMeta(
+            code="LAB_SASP_PANEL",
+            unit="pg/mL",
+            normal_range=None,
+            transform="log",
+        ),
+        "IL6_IL8": BiomarkerMeta(
+            code="LAB_IL6_IL8_RATIO",
+            unit="ratio",
+            normal_range=None,
+            transform="log_ratio",
+        ),
+        # Add FA, MD, NfL, PS, MoCA, Gait, Grip, etc.
+    }
+    return ClinicalLabsBridge(biomarker_meta=meta)
+\end{lstlisting}
+
+This bridge object allows the \texttt{hcalc} engine to remain agnostic to lab codes
+and units: it simply requests the deterministic part of \(h(\bm{x})\), and the bridge
+handles units and common transforms.
+
+\section{Healthspan Interface and Trial Design}
+
+\subsection{Healthspan-Facing Trial Design API}
+
+The \texttt{healthspan} package treats the brain aging engine as a service and exposes
+a higher-level API in terms of clinical scenarios, trials, and recommendations:
+
+\begin{lstlisting}[style=code,language=Python,caption={Healthspan-level trial design interface.}]
+from dataclasses import dataclass
+from typing import Dict, Any, Optional
+import numpy as np
+
+from healthcare.hcalc.brain_aging.engine import (
+    BrainAgingParams,
+    BrainAgingState,
+    ObservationConfig,
+    FilterConfig,
+    TrialDesign,
+    FisherInfoResult,
+    ObsName,
+    evaluate_trial_design,
+)
+from healthcare.clinical_labs_analytics.bridge_brain_aging import (
+    default_brain_aging_bridge,
+    ClinicalLabsBridge,
+)
+
+@dataclass
+class TrialScenarioConfig:
+    name: str
+    target_population: Dict[str, Any]
+    intervention_protocol: Dict[str, Any]
+    design: TrialDesign
+
+@dataclass
+class TrialRecommendation:
+    scenario: TrialScenarioConfig
+    fisher_result: FisherInfoResult
+    suggested_sample_size: int
+    notes: str
+
+def design_brain_aging_trial(
+    scenario: TrialScenarioConfig,
+    params: BrainAgingParams,
+    filter_cfg: FilterConfig,
+    obs_cfg: ObservationConfig,
+    labs_bridge: Optional[ClinicalLabsBridge] = None,
+    num_virtual_subjects: int = 200,
+) -> TrialRecommendation:
+    if labs_bridge is None:
+        labs_bridge = default_brain_aging_bridge()
+
+    fisher = evaluate_trial_design(
+        design=scenario.design,
+        params=params,
+        filter_cfg=filter_cfg,
+        labs_bridge=labs_bridge,
+        num_virtual_subjects=num_virtual_subjects,
+    )
+
+    suggested_n = _sample_size_from_information(fisher.total_information)
+    notes = (
+        "Recommended biomarker panel: "
+        + ", ".join(fisher.recommended_panel)
+        + ". Scenario: " + scenario.name
+    )
+
+    return TrialRecommendation(
+        scenario=scenario,
+        fisher_result=fisher,
+        suggested_sample_size=suggested_n,
+        notes=notes,
+    )
+
+def _sample_size_from_information(total_information: float) -> int:
+    if total_information <= 0:
+        return 400
+    base = 1000.0 / total_information
+    return max(50, int(base))
+\end{lstlisting}
+
+The \texttt{healthspan} layer:
+\begin{itemize}[noitemsep]
+  \item Does not manipulate ODEs or lab codes directly.
+  \item Delegates dynamics and filtering to \texttt{hcalc}.
+  \item Delegates measurement semantics to \texttt{clinical labs analytics}.
+  \item Focuses on trial scenarios, biomarker panels, sample sizes, and textual
+        recommendations.
+\end{itemize}
+
+\section{Recommendations and Next Steps}
+
+\subsection{Implementation Priorities}
+
+Based on the current design, the following steps are recommended:
+\begin{enumerate}[noitemsep]
+  \item Extract the exact ODEs and measurement equations from
+        \texttt{Brain\_Aging\_State\_space\_Framework.json} and implement them in
+        the \texttt{f\_ode} and \texttt{ClinicalLabsBridge.latent\_to\_observation}
+        functions.
+  \item Implement at least one robust filter (EKF or UKF) in \texttt{run\_filter}
+        to support latent state estimation and Fisher information approximation.
+  \item Define a minimal set of standard trial designs and biomarker panels as
+        concrete examples, and wire them into \texttt{healthspan} as reusable
+        templates.
+  \item Validate the engine by simulating virtual cohorts and checking that the
+        behavior matches expectations from the original research artifacts.
+\end{enumerate}
+
+\subsection{Extensions}
+
+Future extensions could include:
+\begin{itemize}[noitemsep]
+  \item Gradient-based or Bayesian optimization over trial designs,
+  \item Multi-objective optimization (information gain vs. cost vs. burden),
+  \item Integration with other Phase Mirror digital-twin modules to capture
+        multi-organ aging and systemic interactions,
+  \item Mapping to Multiplicity Theory by treating each state component and
+        biomarker as prime-labeled multiplicity units with recursively stable
+        interaction patterns across trials and cohorts.
+\end{itemize}
+
+\section{Conclusion}
+
+This report formalizes how a brain aging state-space model, originally encoded as a
+set of JSON research artifacts, can be integrated into Phase Mirror as a structured,
+module-based capability. The key move is to treat the compact state-space framework
+as a contract for latent dynamics and measurement, and to align it with the existing
+\texttt{hcalc}, \texttt{healthspan}, and \texttt{clinical labs analytics} packages.
+The resulting architecture supports principled in-silico clinical trial design,
+biomarker panel selection, and healthspan-oriented decision support.
+
+\appendix
+\section{Technical Proofs and Operator Norm Bounds}
+\label{app:proofs}
+
+In this appendix we collect the detailed derivations that support the claims made in the main text regarding the regularity of the brain‑aging dynamics, the stability of the filtering recursions, and the informativeness of the biomarker set. All constants are expressed in terms of the physiological parameters that appear in the compact framework \texttt{Brain\_Aging\_State\_space\_Framework.json}.
+
+\subsection{Lipschitz Continuity of the Vector Field}
+\label{sub:lipschitz}
+
+Recall the continuous‑time vector field $\bm{f}:\mathbb{R}_{\ge0}\times\mathbb{R}^{6}\to\mathbb{R}^{6}$ defined by
+\[
+\bm{f}(t,\bm{x};\bm{\theta})=
+\begin{bmatrix}
+ -k_{WS}\,S\,W \\[2pt]
+  k_{SW}\,W - k_{SI}\,I \\[2pt]
+  k_{SI}\,S - k_{IC}\,C \\[2pt]
+ -k_{IC}\,I - k_{CM}\,M \\[2pt]
+ -k_{CM}\,C \\[2pt]
+  1
+\end{bmatrix},
+\qquad
+\bm{x}=(W,S,I,C,M,A)^{\top},
+\]
+where the rate constants $\bm{\theta}=\{k_{WS},k_{SW},k_{SI},k_{IC},k_{CM}\}$ are strictly positive and bounded by known physiological limits:
+\[
+0 < k_{\min} \le k_{ij} \le k_{\max} < \infty .
+\]
+
+\begin{lemma}[Global Lipschitz bound]\label{lem:lipschitz}
+For any $\bm{x},\bm{y}\in\mathbb{R}^{6}$,
+\[
+\bigl\|\bm{f}(t,\bm{x})-\bm{f}(t,\bm{y})\bigr\|_{2}
+\;\le\;
+L\,\|\bm{x}-\bm{y}\|_{2},
+\]
+with
+\[
+L \;=\; \max\bigl\{k_{WS}(\|S\|_{\infty}+\|W\|_{\infty}),\;
+                k_{SW}+k_{SI},\;
+                k_{SI}+k_{IC},\;
+                k_{IC}+k_{CM},\;
+                k_{CM}\bigr\}.
+\]
+If the state variables are known to remain in a compact invariant set
+$\mathcal{X}=[0,W_{\max}]\times[0,S_{\max}]\times[0,I_{\max}]\times[0,C_{\max}]\times[0,M_{\max}]\times[0,A_{\max}]$,
+then a concrete numerical bound is
+\[
+L \le \max\bigl\{k_{WS}(S_{\max}+W_{\max}),\;k_{SW}+k_{SI},\;k_{SI}+k_{IC},\;k_{IC}+k_{CM},\;k_{CM}\bigr\}.
+\]
+\end{lemma}
+\begin{proof}
+The Jacobian of $\bm{f}$ with respect to $\bm{x}$ is
+\[
+\frac{\partial\bm{f}}{\partial\bm{x}}
+=
+\begin{bmatrix}
+ -k_{WS}S & -k_{WS}W & 0 & 0 & 0 & 0\\
+  k_{SW}  & 0        &-k_{SI}& 0 & 0 & 0\\
+  0       & k_{SI}   &-k_{IC}& 0 & 0 & 0\\
+  0       & 0        &-k_{IC}&-k_{CM}&0&0\\
+  0       & 0        & 0    &-k_{CM}&0&0\\
+  0       & 0        & 0    & 0   &0&0
+\end{bmatrix}.
+\]
+Its induced $2$‑norm satisfies
+\[
+\bigl\|\tfrac{\partial\bm{f}}{\partial\bm{x}}\bigr\|_{2}
+\;\le\;
+\sqrt{\sum_{i,j}\bigl(\tfrac{\partial f_i}{\partial x_j}\bigr)^{2}}
+\;\le\;
+\max\bigl\{|{-k_{WS}S}|+|{-k_{WS}W}|,\;|k_{SW}|+|{-k_{SI}}|,\;
+          |k_{SI}|+|{-k_{IC}}|,\;|{-k_{IC}}|+|{-k_{CM}}|,\;|{-k_{CM}}|\bigr\},
+\]
+which yields the claimed $L$. Since the state trajectories remain in $\mathcal{X}$ (a forward‑invariant set under the ODEs because all fluxes are non‑negative and age increases monotonically), we may replace $W,S$ by their suprema on $\mathcal{X}$, giving the numerical bound. By the mean value theorem, the Lipschitz inequality follows.
+\end{proof}
+
+\subsection{Bound on the Discrete‑Time State Transition Jacobian}
+\label{sub:disc_jac}
+
+Let $\Phi_{k}=\frac{\partial\bm{x}_{k+1}}{\partial\bm{x}_{k}}$ denote the Jacobian of the Euler‑discretised map
+$\bm{x}_{k+1}=\bm{x}_{k}+\Delta t\,\bm{f}(t_{k},\bm{x}_{k})$, with fixed step $\Delta t>0$.
+
+\begin{corollary}[Discrete transition Jacobian bound]\label{cor:disc_jac}
+Under the hypotheses of Lemma~\ref{lem:lipschitz},
+\[
+\|\Phi_{k}\|_{2}\;\le\;1+\Delta t\,L .
+\]
+Consequently, for any horizon $N$,
+\[
+\Bigl\|\frac{\partial\bm{x}_{k+N}}{\partial\bm{x}_{k}}\Bigr\|_{2}
+\;\le\;(1+\Delta t\,L)^{N}.
+\]
+\end{corollary}
+\begin{proof}
+$\Phi_{k}=I+\Delta t\,\frac{\partial\bm{f}}{\partial\bm{x}}(\xi)$ for some $\xi$ on the segment between $\bm{x}_{k}$ and $\bm{x}_{k+1}$ (by the mean value theorem). Taking norms and using sub‑multiplicativity gives the bound; iteration yields the $N$‑step result.
+\end{proof}
+
+\subsection{Observability Gramian Lower Bound}
+\label{sub:obs_gram}
+
+Define the (linearised) observation map $\bm{h}:\mathbb{R}^{6}\to\mathbb{R}^{m}$ by
+\[
+\bm{h}(\bm{x})=
+\begin{bmatrix}
+  h_{FA}(\bm{x})\\
+  h_{MD}(\bm{x})\\
+  \vdots\\
+  h_{Grip}(\bm{x})
+\end{bmatrix},
+\]
+where each component is a smooth monotone function of a single latent state (e.g. $h_{p16}(\bm{x})=\alpha_{p16}e^{\beta_{p16}S}$). Let $\bm{H}_{k}=\frac{\partial\bm{h}}{\partial\bm{x}}(\bm{x}_{k})$ be the Jacobian at time $k$.
+
+\begin{lemma}[Uniform observability]\label{lem:obs}
+Assume each biomarker satisfies a sector condition
+\[
+0<\underline{\gamma}_{i}\le \frac{\partial h_{i}}{\partial x_{j(i)}}(\bm{x})\le\overline{\gamma}_{i}<\infty
+\quad\forall\bm{x}\in\mathcal{X},
+\]
+where $j(i)$ indexes the latent state that primarily drives biomarker $i$ (e.g. $j(p16)=S$). Then the finite‑horizon observability Gramian
+\[
+\bm{W}_{o}(k_{0},N)=\sum_{i=0}^{N-1}\bigl(\Phi_{k_{0}+i}^{\top}\cdots\Phi_{k_{0}}^{\top}\bigr)
+                    \bm{H}_{k_{0}+i}^{\top}\bm{H}_{k_{0}+i}
+                    \bigl(\Phi_{k_{0}}\cdots\Phi_{k_{0}+i}\bigr)
+\]
+is uniformly positive definite:
+\[
+\bm{W}_{o}(k_{0},N)\;\succeq\;\lambda_{\min}\,I_{6},
+\qquad
+\lambda_{\min}
+\;=\;
+\frac{\underline{\gamma}^{2}}{(1+\Delta t\,L)^{2N}}
+\;\Bigl(1-(1+\Delta t\,L)^{-2N}\Bigr),
+\]
+with $\underline{\gamma}=\min_{i}\underline{\gamma}_{i}$.
+\end{lemma}
+\begin{proof}
+From the sector condition we have $\bm{H}_{k}^{\top}\bm{H}_{k}\succeq\underline{\gamma}^{2}\, \bm{e}_{j(i)}\bm{e}_{j(i)}^{\top}$, where $\bm{e}_{j}$ is the $j$‑th canonical basis vector. Using the bound on $\Phi$ from Corollary~\ref{cor:disc_jac} and summing the geometric series yields the stated eigenvalue lower bound; positivity follows because each latent state influences at least one biomarker (by construction of the framework).
+\end{proof}
+
+\subsection{Fisher Information Matrix Positivity}
+\label{sub:fim}
+
+Consider a trial design that samples a subset $\mathcal{B}\subseteq\{\text{FA},\dots,\text{Grip}\}$ at times $\{t_{k}\}_{k=0}^{N-1}$ with additive Gaussian noise $\bm{v}_{k}\sim\mathcal{N}(\bm{0},\bm{R})$, $\bm{R}\succ0$. The (approximate) Fisher information for the latent initial state $\bm{x}_{0}$ is
+\[
+\bm{I}(\bm{x}_{0})
+=
+\sum_{k=0}^{N-1}
+\Bigl(\frac{\partial\bm{x}_{k}}{\partial\bm{x}_{0}}\Bigr)^{\!\top}
+\bm{H}_{k}^{\top}\bm{R}^{-1}\bm{H}_{k}
+\Bigl(\frac{\partial\bm{x}_{k}}{\partial\bm{x}_{0}}\Bigr).
+\]
+
+\begin{proposition}[FIM lower bound]\label{prop:fim}
+Under the same sector assumptions as Lemma~\ref{lem:obs} and assuming $\bm{R}\succeq r_{\min}I$, the Fisher information satisfies
+\[
+\bm{I}(\bm{x}_{0})\;\succeq\;
+\frac{r_{\min}^{-1}\,\underline{\gamma}^{2}}{(1+\Delta t\,L)^{2N}}
+\;\Bigl(1-(1+\Delta t\,L)^{-2N}\Bigr)\;I_{6}.
+\]
+Hence $\bm{I}(\bm{x}_{0})$ is strictly positive definite for any $N\ge1$ provided at least one biomarker in $\mathcal{B}$ observes each latent state (i.e. the mapping $j:\mathcal{B}\to\{W,S,I,C,M,A\}$ is onto).
+\end{proposition}
+\begin{proof}
+Insert the bounds $\|\partial\bm{x}_{k}/\partial\bm{x}_{0}\|_{2}\le(1+\Delta t\,L)^{k}$ (Corollary~\ref{cor:disc_jac}) and $\bm{H}_{k}^{\top}\bm{R}^{-1}\bm{H}_{k}\succeq r_{\min}^{-1}\underline{\gamma}^{2}\bm{e}_{j(k)}\bm{e}_{j(k)}^{\top}$ into the sum, then note that the sum of outer products over a covering of the six directions yields a multiple of the identity. The geometric series evaluation gives the factor in front.
+\end{proof}
+
+\subsection{Remark on Constants}
+All constants ($k_{\min},k_{\max},W_{\max},\dots,\underline{\gamma},\overline{\gamma},r_{\min}$) can be read directly from the compact framework JSON or derived from the assay specifications stored in the \texttt{clinical labs analytics} package. In practice they are of order:
+\begin{itemize}
+\item $k_{ij}\in[10^{-4},10^{-1}]\,\text{day}^{-1}$,
+\item State amplitudes $W_{\max},S_{\max},\dots\approx[0,1]$ (normalised units),
+\item $\underline{\gamma}\approx[10^{-2},10^{0}]$ depending on biomarker scaling,
+\item $r_{\min}\approx(0.01\text{–}0.1)^{2}$ for typical assay CVs.
+\end{itemize}
+These values give Lipschitz constants $L$ typically below $0.5\,\text{day}^{-1}$ and lead to observable information accumulation over trial horizons of weeks to months, consistent with the design guidelines in the main text.
+
+\nocite{*}
+\bibliographystyle{unsrt}  
+\bibliography{references}
+\end{document}

@@ -72,4 +72,18 @@ impl WasmSigmaKernel {
         Ok(witness_json)
     }
 }
+
+#[wasm_bindgen]
+pub fn matrix_evaluate(kernel_json: &str, input_json: &str) -> Result<String, JsValue> {
+    let kernel: pirtm_stdlib::matrix_engine::TensorKernel = serde_json::from_str(kernel_json)
+        .map_err(|e| JsValue::from_str(&format!("Parse error kernel: {}", e)))?;
+    let input: pirtm_stdlib::matrix_engine::PrimeMonomialMatrix = serde_json::from_str(input_json)
+        .map_err(|e| JsValue::from_str(&format!("Parse error input: {}", e)))?;
+
+    match pirtm_stdlib::matrix_engine::evaluate(&kernel, &input) {
+        Ok(result) => Ok(serde_json::to_string(&result).unwrap()),
+        Err(e) => Err(JsValue::from_str(&e.to_string())),
+    }
+}
+
 pub mod fuzz_tests;

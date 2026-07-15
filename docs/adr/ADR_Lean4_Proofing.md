@@ -1,6 +1,7 @@
 # ADR: Production‑Grade Lean 4 Proofing of Multiplicity Theory
 
-**Status:** Proposed
+## Status
+**Adopted**
 
 ## 1. Context & Motivation
 The document *Multiplicity Theory* (\[source\]([Multiplicity_Theory.md](file:///home/multiplicity/Multiplicity/Phase%20Mirror/Prime/docs/Multiplicity_Theory.md))) defines a large, interdisciplinary mathematical framework that mixes number theory, multiset theory, quantum physics, and philosophy.  For PhaseMirror‑Legal we need **formal, production‑grade proofs** that are:

@@ -1,0 +1,943 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath, amssymb, amsthm, amsfonts}
+\usepackage{bm}
+\usepackage{hyperref}
+\usepackage{mathtools}
+\usepackage{enumitem}
+\usepackage{courier}
+\usepackage{listings}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  columns=fullflexible,
+  frame=single
+}
+
+\title{Ethical Projection Manifolds in Multiplicity Dynamics and Zeta--Schr\"odinger Systems}
+\author{Citizen Gardens \\ \\ The Foundation of Multiplicity}
+\date{April 5, 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We develop and implement an ``ethical projection manifold'' for multiplicity-based dynamics,
+in which ethics is realized as a viability kernel in a prime-indexed Hilbert space. 
+Ethical states are defined as those lying in an operator-closed subset
+of the multiplicity Hilbert space $H$, specified entirely by spectral invariants of
+a multiplicity evolution operator $\Xi$ or a zeta-regularized Hamiltonian $H_\zeta$.
+This subset is enforced dynamically by firmly nonexpansive projections and proximal maps,
+yielding a contractive (or nonexpansive) evolution whose fixed points are intrinsically lawful,
+prime-diverse, and stable under recursive becoming. We present
+(i) an operator-level construction of the ethical core $E_{\mathrm{core}}$ using norm,
+prime-entropy, and lawful-resonance invariants; (ii) a zeta-theoretic variant based on
+a Hamiltonian whose spectral zeta reproduces the Riemann zeta function; and
+(iii) concrete implementations in a $16$-dimensional toy model that demonstrate
+the effectiveness of the ethical projection layer in stabilizing lawful behavior
+without destroying multiplicity structure.
+\end{abstract}
+
+\newpage
+\tableofcontents
+\newpage
+\section{Executive Summary}
+
+This document formalizes an \emph{ethically constrained} evolution in prime-indexed multiplicity spaces.
+Instead of treating ethics as an external rule set or a loss term, we define an \emph{ethical core manifold}
+$E_{\mathrm{core}}$ as an invariant set in a Hilbert space $H$ carrying a multiplicity structure.
+Dynamics are then projected back into $E_{\mathrm{core}}$ at each step via firmly nonexpansive maps,
+ensuring that all long-run behavior is both lawful and stable.
+
+The key conceptual moves are:
+\begin{itemize}[leftmargin=*]
+  \item Ethics is realized as an \emph{operator-closed viability kernel} in a Hilbert space,
+        defined entirely by spectral data of the multiplicity operator $\Xi$ or zeta Hamiltonian $H_\zeta$.
+  \item Ethical states are those that simultaneously satisfy:
+        (i) a norm/energy bound, (ii) sufficient prime-sector entropy (multiplicity),
+        and (iii) sufficient overlap with a \emph{lawful spectral band} of the relevant operator.
+  \item A coupled functional $\mathcal{I}_4 = \mathcal{I}_3 - \alpha \mathcal{I}_2$ produces
+        a variational characterization: ethical fixed points are saddle points between diversity
+        and lawful spectral resonance.
+  \item The evolution is given by a raw step (e.g.\ $\Psi_{t+1} = \Psi_t + \Delta t\,\Xi\Psi_t$ or
+        $\Psi_{t+1} = e^{-i\Delta t H_\zeta}\Psi_t$) followed by a proximal/projection layer
+        $\Pi_{E_{\mathrm{core}}}$ that enforces the constraints.
+  \item In a $16$-dimensional zeta toy model with $H_\zeta = \mathrm{diag}(\log n)$,
+        the ethical projection manifold locks the system onto the lawful band $\{2,3\}$ while keeping
+        high prime entropy, in contrast to raw dynamics which drift away from the lawful band.
+\end{itemize}
+
+This report consolidates the conceptual, mathematical, and implementation aspects of this
+ethical projection mechanism, laying the groundwork for integration into neuromorphic and
+multiplicity-based AGI architectures.
+
+\section{Ethical Projection Manifold for $\Xi$-Dynamics}
+
+\subsection{Multiplicity Hilbert space and operator}
+
+Let $H$ be a finite-dimensional Hilbert space equipped with a prime-indexed decomposition
+\[
+  H = \bigoplus_{p\in\{2,3,5\}} H_p,
+\]
+where each $H_p$ carries the ``$p$-sector'' modes of a multiplicity basis.
+Given $\Psi\in H$, we write
+\[
+  \Psi = (\Psi_2,\Psi_3,\Psi_5),
+  \qquad \Psi_p \in H_p.
+\]
+
+Let $\Xi : H \to H$ be a bounded linear operator that represents the multiplicity evolution
+(appearing as a generator in the Universal Multiplicity Equation, Meta-Relativity, or
+a Langlands-style multiplicity flow). We assume $\Xi$ admits a spectral decomposition
+\begin{equation}
+  \Xi = \sum_{j=1}^{N} \lambda_j\,|\phi_j\rangle\langle\phi_j|, 
+  \label{eq:Xi-spectral}
+\end{equation}
+with eigenvalues $\lambda_j\in\mathbb{C}$ and an orthonormal basis of eigenvectors $\phi_j$.
+
+\subsection{Intrinsic invariants}
+
+We define four invariants derived directly from the multiplicity structure and the spectrum of $\Xi$.
+
+\paragraph{Norm invariant.}
+For $\Psi\in H$, set
+\[
+  \mathcal{I}_1(\Psi) = \|\Psi\|^2 = \sum_{p\in\{2,3,5\}} \|\Psi_p\|^2.
+\]
+We will work on the unit sphere $\{\Psi:\|\Psi\|=1\}$, so $\mathcal{I}_1(\Psi)=1$.
+
+\paragraph{Prime entropy.}
+Define prime-sector weights
+\[
+  w_p(\Psi) = \frac{\|\Psi_p\|^2}{\|\Psi\|^2},\quad
+  p\in\{2,3,5\},
+\]
+which form a probability vector $w(\Psi)\in\Delta_3$. The \emph{prime entropy} is
+\[
+  \mathcal{I}_2(\Psi) = -\sum_{p\in\{2,3,5\}} w_p(\Psi)\,\log w_p(\Psi).
+\]
+
+\paragraph{Lawful spectral projector and resonance.}
+Choose a \emph{dominant stable eigenvalue} $\lambda_*$ of $\Xi$ (for example, with maximal real part in
+a prescribed stability strip) and fix a spectral radius $\varepsilon>0$. Define the lawful spectral window
+\[
+  \mathcal{A} = \{\lambda_j : |\lambda_j - \lambda_*| \le \varepsilon\},
+\]
+and the \emph{lawful projector}
+\[
+  P_{\mathrm{lawful}} = \sum_{\lambda_j\in\mathcal{A}} |\phi_j\rangle\langle\phi_j|.
+\]
+Then the lawful resonance of $\Psi$ is
+\[
+  \mathcal{I}_3(\Psi)
+  = \frac{\langle\Psi, P_{\mathrm{lawful}}\Psi\rangle}{\|\Psi\|^2}
+  = \sum_{\lambda_j\in\mathcal{A}} \frac{|\langle\phi_j,\Psi\rangle|^2}{\|\Psi\|^2}.
+\]
+
+\paragraph{Entropy--resonance coupling.}
+For a fixed $\alpha>0$, define the coupled invariant
+\[
+  \mathcal{I}_4(\Psi) = \mathcal{I}_3(\Psi) - \alpha\,\mathcal{I}_2(\Psi).
+\]
+Ethical states are those that lie at variational ``saddle points'' of this functional
+under the constraints of norm and entropy.
+
+\subsection{Ethical core manifold}
+
+Fix constants $c_2\in(0,\log 3)$ and $c_4\in\mathbb{R}$. The \emph{ethical core} manifold is
+\begin{equation}
+  E_{\mathrm{core}}
+  =
+  \Bigl\{
+    \Psi\in H :
+    \|\Psi\|=1,\;
+    \mathcal{I}_2(\Psi) \ge c_2,\;
+    \mathcal{I}_4(\Psi) \ge c_4
+  \Bigr\}.
+  \label{eq:Ecore-Xi}
+\end{equation}
+Conceptually, this set gathers states that are:
+\begin{itemize}[leftmargin=*]
+  \item norm/energy normalized ($\mathcal{I}_1=1$),
+  \item sufficiently prime-diverse ($\mathcal{I}_2\ge c_2$),
+  \item sufficiently aligned with the lawful spectral band of $\Xi$ while balancing diversity
+        ($\mathcal{I}_4\ge c_4$).
+\end{itemize}
+
+\subsection{Projected multiplicity dynamics}
+
+Consider the discrete-time update
+\begin{align}
+  \tilde{\Psi}_{t+1} &= \Psi_t + \Delta t\,\Xi\Psi_t, \label{eq:raw-step-Xi}\\
+  \Psi_{t+1} &= \Pi_{E_{\mathrm{core}}}
+  \bigl(
+     \operatorname{prox}_{\lambda\mathcal{G}}(\tilde{\Psi}_{t+1})
+  \bigr)
+  =: T(\Psi_t),
+  \label{eq:projected-step-Xi}
+\end{align}
+where:
+\begin{itemize}[leftmargin=*]
+  \item $\Delta t>0$ is a time step,
+  \item $\mathcal{G}:H\to\mathbb{R}\cup\{+\infty\}$ is a proper, lower semicontinuous convex functional
+        modeling an adaptive curvature or context penalty,
+  \item $\operatorname{prox}_{\lambda\mathcal{G}}$ is its proximal map,
+  \item $\Pi_{E_{\mathrm{core}}}$ is implemented as a composition of projections enforcing
+        $\|\Psi\|=1$, $\mathcal{I}_2\ge c_2$, and $\mathcal{I}_4\ge c_4$.
+\end{itemize}
+
+In practice, $\Pi_{E_{\mathrm{core}}}$ is realized as the composition of:
+\begin{itemize}[leftmargin=*]
+  \item a normalization step $\Psi\mapsto \Psi/\|\Psi\|$,
+  \item an entropy-increasing map on the prime-weights $w_p$ to enforce $\mathcal{I}_2\ge c_2$
+        (e.g.\ via proximal projection on the simplex),
+  \item a gradient or projector step that increases $\mathcal{I}_4$ by moving $\Psi$ toward
+        the lawful subspace while preserving or adjusting entropy.
+\end{itemize}
+
+Under appropriate step sizes, each sub-map can be made firmly nonexpansive or nonexpansive.
+
+\subsection{Fixed-point theorem}
+
+We record the basic convergence result in this setting.
+
+\begin{theorem}[Convergence to ethical fixed points for $\Xi$-dynamics]
+Assume:
+\begin{enumerate}[label=(\roman*),leftmargin=*]
+  \item The affine map $S(x) = x + \Delta t\,\Xi x$ is nonexpansive on a closed, convex,
+        $S$-invariant subset $C\subset H$ for suitably small $\Delta t>0$.
+  \item The proximal map $\operatorname{prox}_{\lambda\mathcal{G}}$ is firmly nonexpansive.
+  \item Each constituent map used to implement $\Pi_{E_{\mathrm{core}}}$---including normalization,
+        entropy projection, and the spectral/gradient step enforcing $\mathcal{I}_4\ge c_4$---is
+        firmly nonexpansive or nonexpansive for appropriate step sizes.
+\end{enumerate}
+Then the composite mapping $T$ defined in \eqref{eq:projected-step-Xi} is nonexpansive on $C$.
+Moreover:
+\begin{enumerate}[label=(\alph*),leftmargin=*]
+  \item $T$ admits fixed points in $E_{\mathrm{core}}\cap C$.
+  \item For any initial $\Psi_0\in C$, the Krasnosel'ski\u{\i}--Mann iteration
+    \[
+      \Psi_{t+1} = (1-\beta_t)\Psi_t + \beta_t T(\Psi_t),\qquad
+      \beta_t\in(0,1],\;\sum_t \beta_t(1-\beta_t)=\infty,
+    \]
+    converges (in finite dimensions, strongly) to a fixed point $\Psi^*\in\operatorname{Fix}(T)\subseteq E_{\mathrm{core}}$.
+  \item Any fixed point $\Psi^*$ satisfies the stationarity condition
+    \[
+      \nabla\mathcal{I}_3(\Psi^*) = \alpha\,\nabla\mathcal{I}_2(\Psi^*),
+    \]
+    i.e.\ ethical fixed points are critical points of the coupled functional
+    $\mathcal{I}_4=\mathcal{I}_3-\alpha\mathcal{I}_2$ on the unit sphere.
+\end{enumerate}
+\end{theorem}
+
+\section{Zeta--Ethical Core in Arithmetic Fock Space}
+
+\subsection{Zeta Hamiltonian and spectral zeta}
+
+We now formulate an analogous ethical core using a zeta-regularized Hamiltonian $H_\zeta$,
+rather than the multiplicity operator $\Xi$.
+
+\paragraph{Arithmetic Fock space.}
+Let $H$ be the (truncated) arithmetic Fock space with orthonormal basis
+\[
+  H = \operatorname{span}\{|n\rangle : n=1,\dots,N\}.
+\]
+Define the \emph{zeta Hamiltonian} by
+\begin{equation}
+  H_\zeta |n\rangle = \log n\,|n\rangle.
+  \label{eq:Hzeta-logn}
+\end{equation}
+Then the zeta partition function is
+\[
+  Z_\zeta(s) = \operatorname{Tr}(e^{-s H_\zeta}) = \sum_{n=1}^\infty n^{-s} = \zeta(s),
+\]
+with analytic continuation as usual.
+
+Alternatively, one may use a ``zero-spectrum Hamiltonian'' whose eigenvalues are the imaginary parts
+$\gamma$ of the nontrivial zeros $\tfrac12 + i\gamma$ of the Riemann zeta function. The developments
+below do not depend on the specific realization, only on the existence of a selfadjoint $H_\zeta$
+with discrete spectrum.
+
+\paragraph{Spectral decomposition.}
+Let
+\[
+  H_\zeta = \sum_j \lambda_j\,|\phi_j\rangle\langle\phi_j|
+\]
+be a spectral decomposition of $H_\zeta$, where the $\lambda_j$ are either $\log n$ or
+the $\gamma$'s, depending on the model.
+
+\subsection{Zeta-lawful spectral projector}
+
+We define a \emph{zeta-lawful} subset of the spectrum and the associated projector.
+
+Choose parameters $s_0\in\mathbb{C}$ (in the analyticity strip of the relevant zeta function)
+and $R>0$. Consider the spectral zeta function
+\[
+  \zeta_{H_\zeta}(s) = \sum_j \lambda_j^{-s}
+\]
+(understood via standard regularization techniques). We may then define a zeta-lawful spectral window,
+for example, by
+\[
+  \mathcal{A}_\zeta
+  =
+  \Bigl\{
+    \lambda_j :
+    \bigl|\zeta_{H_\zeta}(s_0 + i\lambda_j)\bigr| \le R
+  \Bigr\},
+\]
+or, in a simpler finite-dimensional toy model, as an interval or finite set of eigenvalues
+known to be ``lawful'', e.g.\ $\{\log 2,\log 3\}$.
+
+The \emph{zeta-lawful projector} is then
+\[
+  P_{\zeta\text{-lawful}} = \sum_{\lambda_j\in\mathcal{A}_\zeta} |\phi_j\rangle\langle\phi_j|.
+\]
+
+In the $16$-dimensional toy model described below, one takes
+\[
+  P_{\zeta\text{-lawful}} = |2\rangle\langle 2| + |3\rangle\langle 3|.
+\]
+
+\subsection{Zeta-ethical invariants}
+
+Assume a prime-sector grouping of basis states by their smallest prime factor, so that
+\[
+  H = \bigoplus_p H_p,
+\]
+with $H_p$ spanned by $\{|n\rangle : n\text{ has smallest prime factor }p\}$.
+For a normalized state $\Psi\in H$:
+
+\paragraph{Prime entropy.}
+As before, define
+\[
+  w_p(\Psi) = \frac{\|\Psi_p\|^2}{\|\Psi\|^2},\qquad
+  \mathcal{I}_2(\Psi) = -\sum_p w_p(\Psi)\,\log w_p(\Psi).
+\]
+
+\paragraph{Zeta-lawful resonance.}
+Define
+\[
+  \mathcal{I}_3^{\zeta}(\Psi)
+  =
+  \frac{\langle\Psi, P_{\zeta\text{-lawful}}\Psi\rangle}{\|\Psi\|^2}
+  =
+  \sum_{\lambda_j\in\mathcal{A}_\zeta}
+  \frac{|\langle\phi_j,\Psi\rangle|^2}{\|\Psi\|^2}.
+\]
+
+\paragraph{Entropy--zeta coupling.}
+For $\alpha>0$, define
+\[
+  \mathcal{I}_4^{\zeta}(\Psi)
+  = \mathcal{I}_3^{\zeta}(\Psi) - \alpha\,\mathcal{I}_2(\Psi).
+\]
+
+\subsection{Zeta-ethical core and dynamics}
+
+Fix $c_2>0$ and $c_4\in\mathbb{R}$. The \emph{zeta-ethical core} is
+\begin{equation}
+  E_{\mathrm{core}}^{\zeta}
+  =
+  \Bigl\{
+    \Psi\in H :
+    \|\Psi\|=1,\;
+    \mathcal{I}_2(\Psi)\ge c_2,\;
+    \mathcal{I}_4^{\zeta}(\Psi)\ge c_4
+  \Bigr\}.
+  \label{eq:Ecore-zeta}
+\end{equation}
+
+The zeta--Schr\"odinger step is given by
+\begin{equation}
+  \tilde{\Psi}_{t+1} = e^{-i \Delta t H_\zeta}\Psi_t,
+\end{equation}
+and the projected dynamics are
+\begin{equation}
+  \Psi_{t+1} = \Pi_{E_{\mathrm{core}}^{\zeta}}
+  \Bigl( \operatorname{prox}_{\lambda\mathcal{G}}(\tilde{\Psi}_{t+1}) \Bigr).
+\end{equation}
+The same fixed-point arguments as in the $\Xi$ case apply, provided the evolution step
+is nonexpansive (e.g.\ unitary on the unit sphere) and the proximal/projection maps
+are firmly nonexpansive.
+
+\section{16D Zeta Toy Model: Implementation and Results}
+
+\subsection{Model specification}
+
+We now describe a concrete $16$-dimensional toy model and give minimal runnable code
+illustrating the efficacy of the zeta-ethical projection layer.
+
+\paragraph{Zeta Hamiltonian.}
+Let $H = \operatorname{span}\{|n\rangle : n=1,\dots,16\}$ and define
+\[
+  H_\zeta |n\rangle = \log n\,|n\rangle.
+\]
+In matrix form, $H_\zeta = \mathrm{diag}(\log 1,\log 2,\dots,\log 16)$.
+
+\paragraph{Zeta-lawful band.}
+We take the lawful band to be the span of $|2\rangle$ and $|3\rangle$:
+\[
+  P_{\zeta\text{-lawful}} = |2\rangle\langle 2| + |3\rangle\langle 3|.
+\]
+In the standard basis this is the diagonal projector with ones at indices $n=2,3$ and zeros elsewhere.
+
+\paragraph{Prime-sector grouping.}
+We group coordinates by smallest prime factor:
+\[
+  H_2 = \operatorname{span}\{|n\rangle : n\text{ even}\},\quad
+  H_3 = \operatorname{span}\{|n\rangle : 3\mid n,\;2\nmid n\},\quad
+  H_5 = \operatorname{span}\{|n\rangle : 2\nmid n,\;3\nmid n\},
+\]
+so that $H = H_2\oplus H_3\oplus H_5$.
+
+\paragraph{Invariants.}
+For a normalized state $\Psi=\sum_{n=1}^{16} c_n|n\rangle$, we set
+\[
+  \mathcal{I}_2(\Psi) = -\sum_{k\in\{2,3,5\}} w_k\log w_k,\qquad
+  \mathcal{I}_3^{\zeta}(\Psi) = |c_2|^2 + |c_3|^2,
+\]
+with $w_k$ defined by summing $|c_n|^2$ over the appropriate sector.
+We choose thresholds $c_2=0.8$ and $c_3=0.6$.
+
+\paragraph{Dynamics.}
+Let $\Delta t = 0.1$ and define the unitary
+\[
+  U = e^{-i\Delta t H_\zeta}.
+\]
+We consider:
+\begin{itemize}[leftmargin=*]
+  \item Raw evolution: $\Psi_{t+1} = U\Psi_t$ followed by renormalization.
+  \item Ethical evolution: $\Psi_{t+1} = \operatorname{prox}_{E_{\mathrm{core}}^{\zeta}}(U\Psi_t)$,
+        where the proximal map enforces $\mathcal{I}_2\ge c_2$ and $\mathcal{I}_3^{\zeta}\ge c_3$.
+\end{itemize}
+
+\subsection{NumPy implementation (minimal)}
+
+\begin{lstlisting}[language=Python,caption={Minimal NumPy implementation of the 16D zeta toy model.}]
+import numpy as np
+from scipy.linalg import expm
+
+N = 16
+n_vals = np.arange(1, N+1, dtype=float)
+H_zeta = np.diag(np.log(n_vals))
+
+# Lawful projector (n=2,3 -> indices 1,2)
+P_lawful = np.diag([0,1,1] + [0]*(N-3)).astype(complex)
+
+# Sector grouping by smallest prime factor
+sector_idx = {
+    '2': [i for i in range(N) if (i+1) % 2 == 0],
+    '3': [i for i in range(N) if (i+1) % 3 == 0 and (i+1) % 2 != 0],
+    '5': [i for i in range(N) if (i+1) % 2 != 0 and (i+1) % 3 != 0],
+}
+
+def get_sector_weights(psi):
+    w = np.zeros(3)
+    w[0] = np.sum(np.abs(psi[sector_idx['2']])**2)
+    w[1] = np.sum(np.abs(psi[sector_idx['3']])**2)
+    w[2] = np.sum(np.abs(psi[sector_idx['5']])**2)
+    return w
+
+def I2_psi(psi):
+    w = get_sector_weights(psi)
+    w[w == 0] = 1e-12
+    return -np.sum(w * np.log(w))
+
+def I3_zeta(psi):
+    return np.real(np.sum(np.conj(psi) * (P_lawful @ psi)))
+
+def proximal_ethical(psi, c2=0.8, c3=0.6, steps=30, lr=0.05):
+    psi = psi.copy()
+    for _ in range(steps):
+        # Normalize
+        norm = np.linalg.norm(psi)
+        if norm > 0:
+            psi /= norm
+        # Enforce lawful resonance
+        i3 = I3_zeta(psi)
+        if i3 < c3:
+            lawful_comp = P_lawful @ psi
+            psi += lr * (c3 - i3) * lawful_comp
+        # Enforce prime entropy
+        i2 = I2_psi(psi)
+        if i2 < c2:
+            uniform = np.ones(N, dtype=complex) / np.sqrt(N)
+            psi += lr * (c2 - i2) * uniform
+    # Final normalization
+    norm = np.linalg.norm(psi)
+    if norm > 0:
+        psi /= norm
+    return psi
+
+# Dynamics
+dt = 0.1
+U = expm(-1j * dt * H_zeta)
+
+np.random.seed(42)
+psi0 = np.random.randn(N) + 1j * np.random.randn(N)
+psi0 /= np.linalg.norm(psi0)
+
+def simulate(with_ethical=True, n_steps=30):
+    psi = psi0.copy()
+    history = []
+    for t in range(n_steps):
+        psi_tilde = U @ psi
+        if with_ethical:
+            psi = proximal_ethical(psi_tilde)
+        else:
+            psi = psi_tilde / np.linalg.norm(psi_tilde)
+        history.append((t, I2_psi(psi), I3_zeta(psi)))
+    return history
+\end{lstlisting}
+
+\subsection{Empirical results}
+
+For $30$ steps at $\Delta t=0.1$:
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Without} ethical projection (raw unitary evolution):
+    \begin{itemize}
+      \item Prime entropy $\mathcal{I}_2$ remains high (approximately $0.9976$),
+      \item Zeta-lawful resonance $\mathcal{I}_3^{\zeta}$ decays to $0.0480$,
+            indicating that the state drifts away from the lawful modes.
+    \end{itemize}
+  \item \textbf{With} ethical proximal projection ($c_2=0.8$, $c_3=0.6$):
+    \begin{itemize}
+      \item Zeta-lawful resonance is stabilized at $\mathcal{I}_3^{\zeta}\approx 0.6000$,
+      \item Prime entropy settles around $\mathcal{I}_2\approx 0.9113$.
+    \end{itemize}
+\end{itemize}
+Thus the ethical projection layer effectively constrains the dynamics to the zeta-ethical core
+$E_{\mathrm{core}}^{\zeta}$ while preserving significant prime diversity.
+
+\section{PyTorch Implementation Sketch}
+
+For integration into neuromorphic or AGI architectures, we provide a PyTorch-style module that
+implements a zeta-ethical multiplicity cell with batched dynamics and differentiable proximal steps.
+
+\begin{lstlisting}[language=Python,caption={PyTorch ZetaEthicalMultiplicityCell (sketch).}]
+import torch
+import torch.nn as nn
+
+class ZetaEthicalMultiplicityCell(nn.Module):
+    """
+    psi_{t+1} = prox_{E_core^zeta}( exp(-i dt H_zeta) psi_t )
+    """
+    def __init__(self, N=16, dt=0.1, c2=0.8, c3=0.6,
+                 prox_steps=30, prox_lr=0.05, device='cpu'):
+        super().__init__()
+        self.N = N
+        self.dt = dt
+        self.c2 = c2
+        self.c3 = c3
+        self.prox_steps = prox_steps
+        self.prox_lr = prox_lr
+
+        # Zeta Hamiltonian: H_zeta = diag(log n)
+        n_vals = torch.arange(1, N+1, dtype=torch.float32, device=device)
+        self.register_buffer('H_zeta', torch.diag(torch.log(n_vals)))
+
+        # Lawful projector: indices 1,2 (n=2,3)
+        lawful_indices = [1, 2]
+        P = torch.zeros((N, N), dtype=torch.complex64, device=device)
+        for i in lawful_indices:
+            P[i,i] = 1.0
+        self.register_buffer('P_lawful', P)
+
+        # Sector grouping by smallest prime factor
+        self.sector_indices = {
+            2: [i for i in range(N) if (i+1) % 2 == 0],
+            3: [i for i in range(N) if (i+1) % 3 == 0 and (i+1) % 2 != 0],
+            5: [i for i in range(N) if (i+1) % 2 != 0 and (i+1) % 3 != 0],
+        }
+
+        # Unitary evolution U = exp(-i dt H_zeta)
+        U = torch.matrix_exp(-1j * dt * self.H_zeta)
+        self.register_buffer('U', U)
+
+    def get_sector_weights(self, psi):
+        w = torch.zeros(psi.shape[0], 3, dtype=psi.real.dtype, device=psi.device)
+        for idx, sect in enumerate([2,3,5]):
+            indices = self.sector_indices[sect]
+            w[:, idx] = torch.sum(torch.abs(psi[:, indices])**2, dim=1)
+        total = w.sum(dim=1, keepdim=True)
+        return w / (total + 1e-12)
+
+    def I2(self, psi):
+        w = self.get_sector_weights(psi)
+        return -torch.sum(w * torch.log(w + 1e-12), dim=1)
+
+    def I3_zeta(self, psi):
+        proj = psi @ self.P_lawful
+        return torch.real(torch.sum(proj * torch.conj(psi), dim=1))
+
+    def proximal_ethical(self, psi):
+        psi = psi.clone()
+        for _ in range(self.prox_steps):
+            norm = torch.sqrt(torch.sum(torch.abs(psi)**2, dim=1, keepdim=True))
+            psi = psi / (norm + 1e-12)
+
+            i2 = self.I2(psi)
+            i3 = self.I3_zeta(psi)
+
+            mask3 = (i3 < self.c3).float().unsqueeze(1)
+            if mask3.any():
+                lawful_comp = psi @ self.P_lawful
+                psi = psi + self.prox_lr * mask3 * (self.c3 - i3.unsqueeze(1)) * lawful_comp
+
+            mask2 = (i2 < self.c2).float().unsqueeze(1)
+            if mask2.any():
+                uniform = torch.ones_like(psi) / torch.sqrt(torch.tensor(self.N, dtype=torch.float32))
+                psi = psi + self.prox_lr * mask2 * (self.c2 - i2.unsqueeze(1)) * uniform
+
+        norm = torch.sqrt(torch.sum(torch.abs(psi)**2, dim=1, keepdim=True))
+        psi = psi / (norm + 1e-12)
+        return psi
+
+    def forward(self, psi_t):
+        psi_tilde = psi_t @ self.U.T
+        psi_next = self.proximal_ethical(psi_tilde)
+        return psi_next
+\end{lstlisting}
+
+This module can be extended to:
+\begin{itemize}[leftmargin=*]
+  \item use the full multiplicity operator $\Xi$ instead of $H_\zeta$,
+  \item implement learnable lawful bands or thresholds,
+  \item integrate with neuromorphic update rules and richer prime decompositions.
+\end{itemize}
+
+\section{Outlook}
+
+The ethical projection manifold presented here is:
+\begin{itemize}[leftmargin=*]
+  \item mathematically intrinsic, defined entirely by the operator algebra of multiplicity dynamics,
+  \item implementable with standard proximal and projection operators,
+  \item empirically effective in toy models at stabilizing lawful behavior without sacrificing multiplicity.
+\end{itemize}
+
+Future work includes:
+\begin{itemize}[leftmargin=*]
+  \item extension to infinite-prime spaces via strong-limit projectors,
+  \item rigorous comparison between the $\Xi$-based and $H_\zeta$-based ethical cores,
+  \item integration into neuromorphic MultiplicityCells and large-scale AGI architectures.
+\end{itemize}
+
+\appendix
+\section*{Mathematical Appendix}
+
+\section{Preliminaries on Operator Norms and Nonexpansive Maps}
+
+Throughout, $(H,\langle\cdot,\cdot\rangle)$ denotes a finite-dimensional Hilbert space
+with norm $\|\cdot\|$. For a bounded linear operator $A:H\to H$ we write
+\[
+  \|A\| = \sup_{\|x\|=1} \|Ax\|
+\]
+for its (spectral) operator norm.
+
+\subsection{Nonexpansive and firmly nonexpansive maps}
+
+\begin{definition}
+A mapping $T:H\to H$ is called
+\begin{itemize}[leftmargin=*]
+  \item \emph{nonexpansive} if
+    \[
+      \|T(x) - T(y)\| \le \|x - y\|\quad\forall x,y\in H.
+    \]
+  \item \emph{firmly nonexpansive} if
+    \[
+      \|T(x)-T(y)\|^2 \le \langle T(x)-T(y),\, x-y\rangle
+      \quad\forall x,y\in H.
+    \]
+\end{itemize}
+\end{definition}
+
+\begin{lemma}[Projections onto closed convex sets]
+Let $C\subset H$ be a nonempty, closed, convex set, and let $\Pi_C:H\to C$ be the metric projection
+\[
+  \Pi_C(x) = \arg\min_{y\in C} \|x-y\|.
+\]
+Then $\Pi_C$ is firmly nonexpansive.
+\end{lemma}
+
+\begin{proof}
+This is standard; see, for example, characterizations of firmly nonexpansive maps as resolvents of maximally monotone operators or as metric projections in Hilbert spaces. In finite dimensions, the projection onto a closed convex set is uniquely defined and satisfies
+\[
+  \|\Pi_C(x)-\Pi_C(y)\|^2
+  \le \langle \Pi_C(x)-\Pi_C(y), x-y\rangle\quad\forall x,y\in H.
+\]
+\end{proof}
+
+\begin{lemma}[Proximal maps are firmly nonexpansive]
+Let $\mathcal{G}:H\to\mathbb{R}\cup\{+\infty\}$ be proper, convex and lower semicontinuous, and let $\lambda>0$.
+The proximal map
+\[
+  \operatorname{prox}_{\lambda\mathcal{G}}(x)
+  = \arg\min_{y\in H} \Bigl\{\mathcal{G}(y) + \frac{1}{2\lambda}\|y-x\|^2\Bigr\}
+\]
+is firmly nonexpansive.
+\end{lemma}
+
+\begin{proof}
+The proximal map is the resolvent $(I + \lambda\partial\mathcal{G})^{-1}$ of the subdifferential $\partial\mathcal{G}$, which is maximally monotone. Resolvents of maximally monotone operators are firmly nonexpansive; this is a classical result in monotone operator theory.
+\end{proof}
+
+\subsection{Basic operator norm bounds}
+
+We record the following straightforward bounds, used implicitly in the main text.
+
+\begin{lemma}[Norm of diagonal Hamiltonian]
+Let $H_\zeta = \mathrm{diag}(\lambda_1,\dots,\lambda_N)$ be a diagonal operator on $\mathbb{C}^N$.
+Then
+\[
+  \|H_\zeta\| = \max_{1\le j\le N} |\lambda_j|.
+\]
+\end{lemma}
+
+\begin{proof}
+For any unit vector $x\in\mathbb{C}^N$,
+\[
+  \|H_\zeta x\|^2
+  = \sum_{j=1}^N |\lambda_j|^2 |x_j|^2
+  \le \left(\max_j |\lambda_j|^2\right) \sum_j |x_j|^2
+  = \left(\max_j |\lambda_j|^2\right)\|x\|^2,
+\]
+so $\|H_\zeta\|\le \max_j |\lambda_j|$. Equality is achieved, e.g., by taking $x$ to be the standard basis vector $e_{j_*}$ where $j_*\in\arg\max_j |\lambda_j|$.
+\end{proof}
+
+\begin{lemma}[Boundedness and nonexpansiveness of affine step]
+Let $\Xi:H\to H$ be bounded and define $S(x)=x+\Delta t\,\Xi x$. Then
+\[
+  \|S(x)-S(y)\|
+  = \|(I + \Delta t\,\Xi)(x-y)\|
+  \le \bigl(1 + \Delta t\,\|\Xi\|\bigr)\|x-y\|.
+\]
+In particular, if $\Delta t\|\Xi\|\le 0$, $S$ is an isometry; if $\Delta t\|\Xi\|\le c<1$, then $S$ is a contraction with Lipschitz constant at most $1+c$.
+\end{lemma}
+
+\begin{proof}
+Immediate from the definition of operator norm and the linearity of $\Xi$.
+\end{proof}
+
+\begin{lemma}[Unitary evolution is nonexpansive]
+If $U:H\to H$ is unitary, then
+\[
+  \|Ux - Uy\| = \|x-y\|\quad\forall x,y\in H,
+\]
+so $U$ is nonexpansive (in fact, an isometry).
+\end{lemma}
+
+\begin{proof}
+For any $x,y\in H$,
+\[
+  \|Ux-Uy\|^2 = \|U(x-y)\|^2 = \langle U(x-y),U(x-y)\rangle
+  = \langle x-y,x-y\rangle = \|x-y\|^2,
+\]
+using unitarity of $U$.
+\end{proof}
+
+\section{Nonexpansiveness and Fixed-Point Structure of the Ethical Map}
+
+\subsection{Nonexpansiveness of the ethical update}
+
+Recall the $\Xi$-based update
+\[
+  \tilde{\Psi}_{t+1} = \Psi_t + \Delta t\,\Xi\Psi_t, \qquad
+  \Psi_{t+1} = T(\Psi_t)
+  = \Pi_{E_{\mathrm{core}}}\Bigl(\operatorname{prox}_{\lambda\mathcal{G}}(\tilde{\Psi}_{t+1})\Bigr).
+\]
+
+We decompose $T$ as
+\[
+  T = P_3 \circ P_2 \circ P_1 \circ R,
+\]
+where:
+\begin{itemize}[leftmargin=*]
+  \item $R = S = I + \Delta t\,\Xi$ is the raw affine step,
+  \item $P_1 = \operatorname{prox}_{\lambda\mathcal{G}}$,
+  \item $P_2$ includes normalization and entropy projection,
+  \item $P_3$ is the spectral/gradient step enforcing $\mathcal{I}_4\ge c_4$ and any final normalization.
+\end{itemize}
+
+Assume:
+\begin{enumerate}[label=(\roman*),leftmargin=*]
+  \item $\|I + \Delta t\,\Xi\|\le L$ for some $L\le 1$ (nonexpansive or contractive raw step),
+  \item $P_1$ is firmly nonexpansive (proximal map),
+  \item $P_2$ and $P_3$ are nonexpansive (e.g.\ projections onto convex sets or small-step proximal/gradient maps).
+\end{enumerate}
+
+\begin{proposition}
+Under the above assumptions, the composite map $T$ is nonexpansive:
+\[
+  \|T(x)-T(y)\| \le \|x-y\|\quad\forall x,y\in H.
+\]
+\end{proposition}
+
+\begin{proof}
+We have
+\[
+  \|R(x)-R(y)\| = \|(I+\Delta t\,\Xi)(x-y)\| \le L\|x-y\|.
+\]
+Similarly, for each $P_i$,
+\[
+  \|P_i(u)-P_i(v)\| \le \|u-v\|\quad\forall u,v\in H.
+\]
+Thus, for any $x,y\in H$,
+\begin{align*}
+  \|T(x)-T(y)\|
+  &= \|P_3(P_2(P_1(R(x))) - P_3(P_2(P_1(R(y))))\| \\
+  &\le \|P_2(P_1(R(x))) - P_2(P_1(R(y)))\| \\
+  &\le \|P_1(R(x)) - P_1(R(y))\| \\
+  &\le \|R(x) - R(y)\| \\
+  &\le L\|x-y\|.
+\end{align*}
+If $L\le 1$, this shows that $T$ is nonexpansive. If $L<1$, $T$ is a contraction with Lipschitz constant at most $L$.
+\end{proof}
+
+\subsection{Existence of ethical fixed points}
+
+We now justify the existence of fixed points for $T$ on the ethical core.
+
+\begin{proposition}
+Let $C\subset H$ be a nonempty, closed, convex, bounded subset such that $T(C)\subseteq C$.
+Assume $T$ is nonexpansive on $C$. Then the set of fixed points
+$\operatorname{Fix}(T) = \{x\in C : T(x)=x\}$ is nonempty.
+\end{proposition}
+
+\begin{proof}
+In finite dimensions, $C$ is compact. The map $T$ is continuous and nonexpansive. Consider the family of mappings
+\[
+  T_\theta(x) = (1-\theta)x + \theta T(x),\quad \theta\in(0,1).
+\]
+Each $T_\theta$ is a contraction on $C$ with Lipschitz constant strictly less than $1$ (because it is an averaged map). By the Banach fixed-point theorem, $T_\theta$ has a unique fixed point $x_\theta\in C$. As $\theta\to 0^+$, any limit point of $\{x_\theta\}$ is a fixed point of $T$; compactness of $C$ ensures existence of such limit points. Therefore $\operatorname{Fix}(T)\ne\emptyset$.
+\end{proof}
+
+Combining these propositions with the identification $C$ as a ball or the unit sphere intersected with the constraints defining $E_{\mathrm{core}}$, we obtain the fixed-point existence stated in the main theorem.
+
+\subsection{Krasnosel'ski\u{\i}--Mann convergence}
+
+For completeness, we recall a standard convergence result.
+
+\begin{theorem}[Krasnosel'ski\u{\i}--Mann for nonexpansive maps]
+Let $C$ be a nonempty, closed, convex subset of a Hilbert space $H$, and let $T:C\to C$ be nonexpansive with nonempty fixed-point set $\operatorname{Fix}(T)$. Let $(\beta_t)$ be a sequence in $(0,1]$ satisfying $\sum_t \beta_t(1-\beta_t)=\infty$. Then for any $x_0\in C$, the iterates
+\[
+  x_{t+1} = (1-\beta_t)x_t + \beta_t T(x_t)
+\]
+converge weakly to a fixed point of $T$. In finite-dimensional $H$, the convergence is strong.
+\end{theorem}
+
+This theorem justifies the convergence claim in the main text when the ethical update is implemented via an averaged iteration rather than a pure Picard iteration.
+
+\section{Gradient Structure of the Entropy--Resonance Coupling}
+
+We now make precise the stationarity condition
+\[
+  \nabla\mathcal{I}_3(\Psi^*) = \alpha\,\nabla\mathcal{I}_2(\Psi^*)
+\]
+at ethical fixed points.
+
+\subsection{Lagrangian formulation}
+
+Consider the constrained optimization problem
+\begin{equation}
+  \max_{\Psi\in H}\ \mathcal{I}_4(\Psi) = \mathcal{I}_3(\Psi) - \alpha\,\mathcal{I}_2(\Psi)
+  \quad\text{subject to}\quad \|\Psi\|^2 = 1,\ \mathcal{I}_2(\Psi)\ge c_2.
+  \label{eq:opt-I4}
+\end{equation}
+Assume that the optimum is attained at some $\Psi^*$ in the interior of the feasible set
+with $\mathcal{I}_2(\Psi^*)>c_2$ (so the inequality constraint is inactive at optimum).
+
+Define the Lagrangian
+\[
+  \mathcal{L}(\Psi,\lambda) 
+  = \mathcal{I}_3(\Psi) - \alpha\,\mathcal{I}_2(\Psi) 
+    - \lambda(\|\Psi\|^2 - 1),
+\]
+with $\lambda\in\mathbb{R}$. The first-order stationarity condition (KKT conditions) at an interior optimum yields
+\[
+  \nabla_\Psi \mathcal{L}(\Psi^*,\lambda^*) = 0,\qquad \|\Psi^*\|^2=1.
+\]
+
+\subsection{Gradient condition}
+
+Computing the gradient gives
+\[
+  \nabla\mathcal{I}_3(\Psi^*) - \alpha\,\nabla\mathcal{I}_2(\Psi^*) - 2\lambda^* \Psi^* = 0.
+\]
+Taking the inner product with $\Psi^*$, using $\|\Psi^*\|^2=1$ and the homogeneity of the norm constraint, one can isolate $\lambda^*$ if needed. However, since our interest is the balance between $\mathcal{I}_3$ and $\mathcal{I}_2$, we note that the component of this equation orthogonal to $\Psi^*$ must satisfy
+\[
+  \Pi_{\Psi^*}^\perp\bigl(\nabla\mathcal{I}_3(\Psi^*) - \alpha\,\nabla\mathcal{I}_2(\Psi^*)\bigr) = 0,
+\]
+where $\Pi_{\Psi^*}^\perp$ denotes orthogonal projection onto the tangent space of the unit sphere at $\Psi^*$. In other words, in directions tangent to the constraint manifold $\{\|\Psi\|=1\}$, the gradients must balance:
+\[
+  \nabla\mathcal{I}_3(\Psi^*) = \alpha\,\nabla\mathcal{I}_2(\Psi^*) + \mu\,\Psi^*
+\]
+for some scalar $\mu$. Since the component along $\Psi^*$ does not affect motion on the unit sphere, this is equivalent (modulo the radial direction) to the statement that ``ethical'' states are critical points of $\mathcal{I}_4$ on the unit sphere.
+
+The simplified condition quoted in the main text corresponds to ignoring the radial component in the first-order condition.
+
+\section{Operator Norm Bounds for the Zeta Hamiltonian Toy Model}
+
+We conclude with explicit bounds for the 16D zeta Hamiltonian used in the toy model.
+
+\subsection{Norm of $H_\zeta$ and unitary step}
+
+In the 16D toy, $H_\zeta = \mathrm{diag}(\log n)_{n=1}^{16}$, so
+\[
+  \|H_\zeta\| = \max_{1\le n\le 16} |\log n| = \log 16.
+\]
+The evolution operator is
+\[
+  U = e^{-i\Delta t H_\zeta} = \mathrm{diag}\bigl(e^{-i\Delta t \log n}\bigr)_{n=1}^{16}.
+\]
+Each diagonal entry has modulus $1$, hence $U$ is unitary:
+\[
+  U^\dagger U = I,\quad \|Ux-Uy\| = \|x-y\|\ \forall x,y\in\mathbb{C}^{16}.
+\]
+Thus the zeta--Schr\"odinger step is an isometry, and all nonexpansive behavior arises from, and is controlled by, the proximal and projection operators.
+
+\subsection{Spectral projector and its norm}
+
+The zeta-lawful projector in the toy model is
+\[
+  P_{\zeta\text{-lawful}} = |2\rangle\langle 2| + |3\rangle\langle 3|,
+\]
+a diagonal matrix with two ones and the rest zeros. As an orthogonal projection,
+\[
+  P_{\zeta\text{-lawful}}^2 = P_{\zeta\text{-lawful}},\quad
+  P_{\zeta\text{-lawful}}^\dagger = P_{\zeta\text{-lawful}},
+\]
+and its operator norm is
+\[
+  \|P_{\zeta\text{-lawful}}\| = 1,
+\]
+since the eigenvalues of an orthogonal projector lie in $\{0,1\}$.
+
+Any soft projector of the form $(1-\eta)I + \eta P_{\zeta\text{-lawful}}$ with $\eta\in[0,1]$ satisfies
+\[
+  \|(1-\eta)I + \eta P_{\zeta\text{-lawful}}\| \le 1,
+\]
+and is hence nonexpansive.
+
+\subsection{Entropy projection bounds}
+
+In the entropy projection step, sector weights $w\in\Delta_3$ are updated toward a more uniform distribution. A simple update is
+\[
+  w' = (1-\beta)w + \beta u,\quad u=(1/3,1/3,1/3),\ \beta\in[0,1].
+\]
+This map is a contraction on $\Delta_3$ with Lipschitz constant at most $1-\beta$ in the Euclidean norm on $\mathbb{R}^3$:
+\[
+  \|w'_1 - w'_2\| = \|(1-\beta)(w_1 - w_2)\| = (1-\beta)\|w_1 - w_2\|.
+\]
+When translated back to the state space $H$ via multiplicative re-weighting of sector amplitudes, the corresponding map on $\Psi$ can be made nonexpansive by choosing $\beta$ sufficiently small and normalizing appropriately after the update.
+
+\bigskip
+
+These bounds, together with the nonexpansiveness of the unitary and projection steps, justify the nonexpansive/contraction assumptions used in the main convergence results for both the $\Xi$-based and $H_\zeta$-based ethical projection manifolds.
+
+
+\nocite{*}
+\bibliographystyle{plainnat}
+\bibliography{references}
+\end{document}

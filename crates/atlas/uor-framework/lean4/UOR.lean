@@ -2,7 +2,7 @@
 --
 -- UOR Foundation — Lean 4 formalization root.
 
-import UOR.Primitives
+import Core.UOR
 import UOR.Enums
 import UOR.Structures
 import UOR.Individuals

@@ -2,7 +2,8 @@
 ## Prime-Indexed Recursive Tensor Mathematics – Formal Investigation
 
 **Version 1.0 – 2026-07-05**  
-**Status:** Exploratory ADR – definitions, theorems, and integration path proposed.
+## Status
+**Adopted**
 
 ---
 
@@ -186,3 +187,9 @@ This layer turns the static prime-encoded framework into a fully recursive, cert
 **End of ADR**
 
 *References to prior layers: Layered_Foundations.md, Prime_Monomial_Matrices.md, Free_CompactClosed_Category.md, Compact_Closed_Enrichment.md, Unified_Foundations_Outline.md*
+
+---
+
+## 10. Matrix Engine Formalization (ADR-064)
+
+Following the adoption of ADR-064, the Matrix Engine serves as the formally verified computational core of the PIRTM runtime. The execution of prime-monomial matrices and recursive tensor kernels now operates under strict `c < 1.0` Banach contraction bounds, guaranteed mathematically via Lean 4 proofs (`MatrixEngine.lean`) and enforced at runtime via exact-arithmetic checks in the `pirtm-stdlib` Rust crate. The Matrix Engine's `evaluate` loop strictly preserves signature grading, precluding diagrammatic inconsistency, and is fully accessible via the WASM SDK bridge.

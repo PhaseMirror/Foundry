@@ -5,7 +5,7 @@
 import UOR.Structures
 import UOR.Individuals.Op
 
-open UOR.Primitives
+open Core.UOR
 
 namespace UOR.User.Morphism
 

@@ -2,11 +2,15 @@ pub mod core;
 pub mod algebra;
 pub mod speculative;
 pub mod observables;
+pub mod fock;
+pub mod noise;
 
 pub use crate::core::{get_prime_factors, PrimeAnchor};
 pub use crate::speculative::{lindblad_rhs, euler_step, rk4_step, get_h_zeta, evaluate_zrsd_step, ZrsdCertificate};
 pub use crate::observables::{expectation, purity, entropy_vn};
 pub use crate::algebra::{get_binary_basis, get_creation_annihilation, multiplicity_operator};
+pub use crate::fock::{FockSpace, EvolutionOperator, ContractivityProof, Violation};
+pub use crate::noise::{NoiseChannel, NoiseDecayProfile, DynamicPrimeSelector, SelectionError, NoiseSuppressionWitness};
 
 #[cfg(test)]
 mod tests {

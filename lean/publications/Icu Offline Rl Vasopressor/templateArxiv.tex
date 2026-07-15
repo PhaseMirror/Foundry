@@ -1,0 +1,239 @@
+% !TEX TS-program = pdflatex
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsfonts,mathtools,bm}
+\usepackage{booktabs,tabularx,multirow}
+\usepackage{hyperref}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage{microtype}
+\usepackage{siunitx}
+\usepackage{cleveref}
+\usepackage{xcolor}
+\usepackage{url}
+\usepackage{float}
+\usepackage{longtable}
+
+% === Embed bibliography file ===
+\begin{filecontents*}{refs.bib}
+@article{kumar2020conservative,
+  title={Conservative {Q}-Learning for Offline Reinforcement Learning},
+  author={Kumar, Aviral and Zhou, Aurick and Tucker, George and Levine, Sergey},
+  journal={Advances in Neural Information Processing Systems},
+  year={2020}
+}
+@inproceedings{jiang2016doubly,
+  title={Doubly Robust Off-policy Value Evaluation for Reinforcement Learning},
+  author={Jiang, Nan and Li, Lihong},
+  booktitle={International Conference on Machine Learning},
+  year={2016}
+}
+@inproceedings{swaminathan2015crm,
+  title={Counterfactual Risk Minimization: Learning from Logged Bandit Feedback},
+  author={Swaminathan, Adith and Joachims, Thorsten},
+  booktitle={Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining},
+  year={2015}
+}
+@inproceedings{le2019fqe,
+  title={Batch Policy Learning under Constraints},
+  author={Le, Hoang Minh and Voloshin, Cameron and Yue, Yisong},
+  booktitle={Advances in Neural Information Processing Systems},
+  year={2019}
+}
+@inproceedings{fujimoto2019bcq,
+  title={Off-Policy Deep Reinforcement Learning without Exploration for Multi-step Tasks},
+  author={Fujimoto, Scott and Meger, David and Precup, Doina},
+  note={Batch-Constrained deep Q-learning},
+  booktitle={Advances in Neural Information Processing Systems},
+  year={2019}
+}
+@inproceedings{kostrikov2022iql,
+  title={Offline Reinforcement Learning with Implicit {Q}-Learning},
+  author={Kostrikov, Ilya and Nair, Ashvin and Levine, Sergey},
+  booktitle={International Conference on Learning Representations},
+  year={2022}
+}
+@article{pollard2018eicu,
+  title={The {eICU} Collaborative Research Database, a Freely Available Multi-center Database for Critical Care Research},
+  author={Pollard, Tom J and Johnson, Alistair E W and Raffa, Jesse and others},
+  journal={Scientific Data},
+  year={2018}
+}
+@misc{johnson2023mimiciv,
+  title={{MIMIC-IV} (Version 2.2)},
+  author={Johnson, Alistair E. W. and others},
+  howpublished={PhysioNet},
+  year={2023}
+}
+@inproceedings{guo2017calibration,
+  title={On Calibration of Modern Neural Networks},
+  author={Guo, Chuan and Pleiss, Geoff and Sun, Yu and Weinberger, Kilian Q.},
+  booktitle={International Conference on Machine Learning},
+  year={2017}
+}
+@article{brier1950,
+  title={Verification of Forecasts Expressed in Terms of Probability},
+  author={Brier, Glenn W},
+  journal={Monthly Weather Review},
+  year={1950}
+}
+@book{rosenbaum2002observational,
+  title={Observational Studies},
+  author={Rosenbaum, Paul R.},
+  publisher={Springer},
+  year={2002}
+}
+@book{efron1994bootstrap,
+  title={An Introduction to the Bootstrap},
+  author={Efron, Bradley and Tibshirani, Robert},
+  publisher={Chapman and Hall/CRC},
+  year={1994}
+}
+@book{astrom2008feedback,
+  title={Feedback Systems: An Introduction for Scientists and Engineers},
+  author={{\AA}str{\"o}m, Karl J. and Murray, Richard M.},
+  publisher={Princeton University Press},
+  year={2008}
+}
+\end{filecontents*}
+
+% === Formatting helpers ===
+\newcommand{\cbox}{\(\square\)}
+\newcommand{\cboxf}{\(\blacksquare\)}
+\newcommand{\ess}{\mathrm{ESS}}
+\newcommand{\kl}{\mathrm{KL}}
+
+\title{Offline Clinical Policy Optimization for ICU Vasopressor}
+\author{Citizen Gardens Research Initiative}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We specify a pre-registered offline reinforcement learning (RL) protocol to learn and evaluate vasopressor dosing policies from observational ICU data. The design defines the MDP, reward, safety constraints, and off-policy evaluation (OPE) using self-normalized importance sampling, doubly robust estimation, and fitted Q evaluation \citep{swaminathan2015crm,jiang2016doubly,le2019fqe}. Learning uses Conservative Q-Learning to control extrapolation \citep{kumar2020conservative}. We provide acceptance gates, a readiness checklist, and a data dictionary skeleton suitable for replication on public cohorts (eICU, MIMIC-IV) \citep{pollard2018eicu,johnson2023mimiciv}.
+\end{abstract}
+
+\section{Problem Setup}
+\textbf{Goal.} Learn a policy $\pi_\theta(a\mid s)$ that maximizes expected clinical utility for vasopressor dosing using only logged data.
+
+\textbf{Data.} Patient trajectories $\tau=(s_0,a_0,r_0,\ldots,s_T)$ aligned to an hourly grid across 72 hours.
+
+\textbf{Endpoint.} Primary: vasopressor-free hours (VFH) in $[0,72]$. Per-hour reward
+\begin{equation}
+ r_t=\mathbb{1}[\text{no vasopressor}] - \lambda\,\mathbb{1}[\mathrm{MAP}<65\,\mathrm{mmHg}].
+\end{equation}
+Secondary: in-ICU mortality, AKI progression, norepinephrine-equivalent exposure, and hypotension burden (time-under-threshold).
+
+\textbf{Assumptions.} Consistency, sequential strong ignorability given $s_t$, and positivity on the support of $\pi_\theta$.
+
+\section{State, Action, Reward}
+\textbf{State $s_t$:} demographics, comorbidities, vitals, labs, urine output, ventilation status, fluid balance, current dose, time since ICU admit, and missingness flags. Standardize continuous features on the training split.
+
+\textbf{Action $a_t$:} discretized norepinephrine-equivalent dose: $\mathcal A=\{0,\Delta,\ldots,(K-1)\Delta\}$ in $\si{\micro g\,kg^{-1}\,min^{-1}}$. Optional binary co-action: fluid bolus in past hour.
+
+\textbf{Terminal condition:} ICU discharge or death.
+
+\section{Learning}
+Sequence encoder $z_t=f_\psi(s_{0:t})$ (causal RNN/transformer). Action-value $Q_\phi(z,a)$.
+
+\paragraph{Conservative Q-Learning (CQL).} Minimize
+\begin{align}
+\mathcal L(\phi,\psi) &= \mathbb E_{(s,a,s')\sim\mathcal D}\Big[(Q_\phi(f_\psi(s),a)-\hat r-\gamma\max_{a'}Q_\phi(f_\psi(s'),a'))^2\Big]\\
+&\quad+\alpha\Big(\mathbb E_{s\sim\mathcal D}[\log\sum_{a\in\mathcal A}e^{Q_\phi(f_\psi(s),a)}]-\mathbb E_{(s,a)\sim\mathcal D}[Q_\phi(f_\psi(s),a)]\Big),
+\end{align}
+with $\alpha>0$ \citep{kumar2020conservative}. Extract soft policy $\pi_\theta(a\mid s)\propto \exp\{Q_\phi(f_\psi(s),a)/\tau\}$.
+
+\paragraph{Behavior policy model.} Train $\hat\beta(a\mid s)$ via calibrated multinomial logistic regression or gradient boosting. Assess calibration with reliability diagrams, ECE, and Brier score \citep{guo2017calibration,brier1950}.
+
+\section{Safety Constraints}
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{KL trust region:} $\kl(\pi_\theta(\cdot\mid s)\parallel \hat\beta(\cdot\mid s)) \leq \varepsilon$ on validation.
+  \item \textbf{Action-ratio cap:} Reject actions where $\pi_\theta(a\mid s)/\hat\beta(a\mid s) > c_{\max}$.
+  \item \textbf{Dose monotonicity:} If MAP $\geq 65$ for $\geq$2 consecutive hours and lactate slope $\leq 0$ over 4 hours, enforce non-increasing dose; otherwise allow step changes of at most one bin per hour.
+\end{enumerate}
+
+\section{Off-Policy Evaluation}\label{sec:ope}
+Define cumulative ratios $w_t=\prod_{k=0}^t \frac{\pi_\theta(a_k\mid s_k)}{\hat\beta(a_k\mid s_k)}$.
+\begin{description}[leftmargin=*,style=nextline]
+  \item[SNIPS] $\hat V_{\text{SNIPS}}= \dfrac{\sum_i\sum_t w_{i,t} r_{i,t}}{\sum_i\sum_t w_{i,t}}$ \citep{swaminathan2015crm}.
+  \item[DR] $\hat V_{\text{DR}}= \frac{1}{N}\sum_i\sum_t \gamma^t\big(w_{i,t}[r_{i,t}-\hat Q(s_{i,t},a_{i,t})]+\hat V(s_{i,t})\big)$ with $\hat V(s)=\sum_a\pi_\theta(a\mid s)\hat Q(s,a)$ \citep{jiang2016doubly}.
+  \item[FQE] Regress $\hat Q^{\pi}$ on Bellman targets under $\pi_\theta$ and estimate $\hat V=\tfrac{1}{N}\sum_i\hat V(s_{i,0})$ \citep{le2019fqe}.
+\end{description}
+Report point estimates with 1000-sample patient-level bootstrap CIs \citep{efron1994bootstrap}.
+
+\section{Experimental Design}
+\textbf{Cohort.} Adults ($\geq$18) with shock receiving any vasopressor. Exclude ICU stays $<6$h, or $>30\%$ missing MAP or dose in the first 24h.
+
+\textbf{Time grid.} 1-hour steps to 72h. Carry-forward for intermittent labs with missingness indicators.
+
+\textbf{Splits.} Patient-level 60/20/20 train/val/test. Fit preprocessing on train only. Hyperparameters selected by validation FQE with safety constraints enforced.
+
+\textbf{Baselines.} Supervised outcome models; behavior cloning; offline RL baselines BCQ and IQL \citep{fujimoto2019bcq,kostrikov2022iql}.
+
+\textbf{Robustness.} Sensitivity to action binning $(K,\Delta)$, $\alpha$, $\tau$, and reward weight $\lambda$. Negative control outcomes and Rosenbaum sensitivity bounds \citep{rosenbaum2002observational}.
+
+\section{Readiness Checklist}\label{sec:checklist}
+Mark each item when satisfied.
+\begin{enumerate}[leftmargin=*,itemsep=2pt]
+  \item Data use approved. De-identified dataset available. Extraction reproducible (commit hash recorded). \cbox
+  \item Data dictionary completed (\Cref{sec:data-dict}). Units and value ranges verified. \cbox
+  \item Dose mapping to norepinephrine-equivalent validated by pharmacist. \cbox
+  \item Temporal alignment fixed: time zero definition, resampling, carry-forward rules. \cbox
+  \item Behavior model $\hat\beta$ calibrated: reliability plots, ECE $<\epsilon$, Brier score reported \citep{guo2017calibration,brier1950}. \cbox
+  \item Overlap audited: state-action support maps, $\max w_t$ and coefficient of variation thresholds defined. \cbox
+  \item Safety thresholds pre-specified: $(\varepsilon,c_{\max})$ and monotonicity triggers. \cbox
+  \item OPE power analysis: variance of DR/FQE, effective sample size, minimal detectable $\Delta V$. \cbox
+  \item Pre-registration filed: endpoints, exclusions, reward $\lambda$ grid, hyperparameters, seeds. \cbox
+  \item Governance in place: DSMB charter, incident reporting, kill switch. \cbox
+\end{enumerate}
+
+\section{Acceptance Gates}\label{sec:gates}
+Accept $\pi_\theta$ for prospective silent-mode if all hold on the held-out test set:
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Value lift:} $\mathrm{LCI}_{95}(\hat V_{\mathrm{DR}}(\pi_\theta)-\hat V_{\mathrm{DR}}(\beta)) \geq \delta$.
+  \item \textbf{Weight health:} $\max_i\max_t\, w_{i,t} \leq c_{\max}$, median$(w_{i,t}) \leq m$, and $\ess \geq E$ for $\geq p\%$ of trajectories.
+  \item \textbf{Safety non-inferiority:} No degradation versus $\beta$ in mortality, AKI, and hypotension burden after multiplicity control.
+  \item \textbf{Overlap:} Fraction of state-action pairs outside support $\leq q\%$; those regions masked at inference.
+  \item \textbf{Calibration:} $\hat\beta$ passes ECE and Brier thresholds; reliability diagram shows no extreme miscalibration.
+  \item \textbf{Guardrail adherence:} KL and ratio caps never violated in validation replays.
+\end{enumerate}
+
+\section{Data Dictionary Skeleton}\label{sec:data-dict}
+Populate per-variable entries before training. Example schema:
+\begin{longtable}{p{3.2cm} p{1.8cm} p{1.8cm} p{1.6cm} p{4.6cm} p{2.2cm}}
+\toprule
+\textbf{Name} & \textbf{Type} & \textbf{Unit} & \textbf{Sampling} & \textbf{Preprocessing} & \textbf{Range}\\
+\midrule
+\endhead
+Patient ID & categorical & -- & episode & hashed, one-hot & unique \\
+Age & numeric & years & baseline & z-score & [18,120] \\
+Sex & categorical & -- & baseline & one-hot & M/F/other \\
+MAP & numeric & mmHg & hourly & carry-forward 2h max; winsorize 0.5\% & [30,140] \\
+Heart rate & numeric & bpm & hourly & carry-forward 2h; z-score & [30,220] \\
+Lactate & numeric & mmol/L & lab times & forward-fill 6h; missing flag & [0.5,20] \\
+Creatinine & numeric & mg/dL & lab times & forward-fill 24h; missing flag & [0.3,12] \\
+Urine output & numeric & mL & hourly & none; rolling 6h sum & [0,1000] \\
+Ventilation status & categorical & -- & hourly & binary encode & 0/1 \\
+Fluid bolus & categorical & mL & hourly & binary in past hour & 0/1 \\
+Vaso dose (NE-eq) & numeric & $\si{\micro g\,kg^{-1}\,min^{-1}}$ & hourly & map from drug-specific doses; discretize by $\Delta$ & $\{0,\Delta,\ldots\}$ \\
+Time since admit & numeric & h & hourly & none & [0,72] \\
+Missingness flags & categorical & -- & hourly & one-hot per variable & 0/1 \\
+\bottomrule
+\end{longtable}
+\textbf{Dose mapping note.} Provide a table converting epinephrine, vasopressin, dopamine, etc., to norepinephrine equivalents, reviewed by a pharmacist.
+
+\section{Implementation Notes}
+Adam optimizer, dropout, gradient clipping, early stopping on validation FQE. Strict temporal splits and leakage controls. PID-style heuristic baseline for comparison \citep{astrom2008feedback}.
+
+\section{Deployment Path}
+(1) Silent mode with logging of disagreements. (2) Guardrailed suggestions only when agreement with $\hat\beta$ or high confidence. (3) Randomized A/B with clinician override.
+
+\section{Limitations}
+Observational confounding risk; discrete actions may limit titration fidelity; OPE variance under weak overlap; reward shaping encodes preferences. Mitigate via sensitivity, overlap audits, and reward sweeps.
+
+\bibliographystyle{plainnat}
+\bibliography{refs}
+
+\end{document}

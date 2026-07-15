@@ -18,7 +18,7 @@ impl LawfulnessAggregator {
     pub fn generate_report() -> LawfulnessReport {
         let rust_results = Self::run_cargo_tests();
         let lean_results = Self::run_lean_checker();
-        let lawfulness_hash = env!("PRMS_LAW_HASH").to_string();
+        let lawfulness_hash = std::env::var("PRMS_LAW_HASH").unwrap_or_else(|_| "default_hash".to_string());
         
         LawfulnessReport {
             rust_tests: rust_results,

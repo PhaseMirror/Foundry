@@ -2,10 +2,10 @@
 --
 -- UOR Foundation — all structure declarations (single compilation unit).
 
-import UOR.Primitives
+import Core.UOR
 import UOR.Enums
 
-open UOR.Primitives
+open Core.UOR
 
 namespace UOR.Bridge.Boundary
 

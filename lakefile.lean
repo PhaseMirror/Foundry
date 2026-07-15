@@ -6,30 +6,24 @@ package "ADR-Scaffold" {
   testDriver := "test"
 }
 
-lean_lib "ADR" {
-  srcDir := "src"
+@[default_target]
+lean_lib ADR {
+  roots := #[
+    `ADR.Core,
+    `ADR.Proofs,
+    `ADR.Examples,
+    `ADR.Resonance,
+    `ADR.PhaseMirror,
+    `ADR.Export,
+    `ADR.Dissonance,
+    `ADR.LambdaProofBinding,
+    `ADR.SocioAtomic,
+    `ADR.Test,
+    `Orf.Coherence,
+    `Orf.Stratification,
+    `Orf.Proofs, `MOC,  ]
 }
 
-lean_lib "Analytic" {
-  srcDir := "src"
-}
-
-lean_lib "F1Square" {
-  srcDir := "lean/F1_SQUARE"
-}
-
-lean_exe test {
-  root := `TestMain
-  supportInterpreter := true
-}
-
-lean_lib "ADR" {
-  srcDir := "src"
-}
-
-lean_lib "Analytic" {
-  srcDir := "src"
-}
 lean_exe test {
   root := `TestMain
   supportInterpreter := true

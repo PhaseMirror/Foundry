@@ -1,3 +1,5 @@
+import ADR.Core
+
 /-!
 # Resonance module
 
@@ -32,10 +34,10 @@ def applyResonance (rt : ResonanceTerm) (exps : List Int) : List Int :=
 
 /-- A resonance term can be attached to an ADR only if the ADR is Accepted.
     The predicate `attached_to_accepted` expresses this condition. -/
-def attached_to_accepted (rt : ResonanceTerm) (a : ADR) : Prop :=
+def attached_to_accepted (_ : ResonanceTerm) (a : ADR) : Prop :=
   a.status = ADRStatus.Accepted
 
-@[simp] theorem attached_to_accepted_true (rt : ResonanceTerm) (a : ADR) (h : a.status = ADRStatus.Accepted) :
+@[simp] theorem attached_to_accepted_true (_ : ResonanceTerm) (a : ADR) (h : a.status = ADRStatus.Accepted) :
     attached_to_accepted rt a := by
   exact h
 

@@ -1,0 +1,331 @@
+\appendix
+\subsection*{A.4 Stability of BQN Inference Operators and Recursive Entropy}
+
+The Bayesian Quantum Network (BQN) module updates cognitive state amplitudes via recursive quantum state inference. The primary update equation is:
+
+\[
+|\psi(t+1)\rangle = \mathcal{E}(|\psi(t)\rangle) + \gamma \operatorname{Tr}(|\psi(t)\rangle \log |\psi(t)\rangle),
+\]
+
+where:
+\begin{itemize}
+    \item \(\mathcal{E}\) is a trace-preserving quantum operation (e.g., unitary or CPTP map),
+    \item \(\gamma\) is a scalar feedback gain (e.g., \(0 < \gamma \leq 0.2\)),
+    \item \(\operatorname{Tr}(|\psi\rangle \log |\psi\rangle)\) models recursive entropy feedback.
+\end{itemize}
+
+\paragraph{Entropy-Coupled Dynamics:}
+Let \(S(\psi_t) = -\operatorname{Tr}(\rho_t \log \rho_t)\) be the von Neumann entropy of the quantum state \(\rho_t = |\psi_t\rangle \langle \psi_t|\). Define a recursive Lyapunov function \(V_t := \| |\psi(t)\rangle - |\psi^\star\rangle \|^2 + \gamma S(\psi_t)\), where \(|\psi^\star\rangle\) is the stationary state.
+
+\paragraph{Theorem A.3 (Recursive Lyapunov Stability):}
+If \(\mathcal{E}\) is unitary or satisfies \(\|\mathcal{E}(|\psi\rangle)\| \leq \| |\psi\rangle \|\), and \(\gamma\) is sufficiently small, then the BQN update is Lyapunov-stable.
+
+\paragraph{Proof Sketch:}
+We compute the difference:
+
+\[
+\Delta V_{t+1} = V_{t+1} - V_t = \left(\| \psi_{t+1} - \psi^\star \|^2 - \| \psi_t - \psi^\star \|^2 \right) + \gamma (S(\psi_{t+1}) - S(\psi_t)).
+\]
+
+Using smoothness of entropy and boundedness of \(\mathcal{E}\), for small enough \(\gamma\), the perturbation term is dominated by the contraction in norm under \(\mathcal{E}\). Hence, \(\Delta V_{t+1} < 0\), implying \(V_t\) is decreasing and the system is asymptotically stable. \(\hfill \square\)
+
+\paragraph{Corollary A.2:}
+The recursive BQN operator converges to a fixed-point density matrix \(\rho^\star\), where \(S(\rho^\star)\) is locally minimal, and \(|\psi(t)\rangle \to |\psi^\star\rangle\) in norm as \(t \to \infty\).
+
+\section*{Appendix B: Post-Quantum Cryptographic Assumptions and Prime-Indexed Hardness}
+
+This appendix formalizes the computational assumptions underlying the cryptographic components of the QAGI system (Claims 6–7), specifically:
+
+\subsection*{B.1 Prime-Indexed Collision Resistance (PICR)}
+
+Let \(\mathcal{H} : \mathbb{N} \times \mathbb{T} \to \{0,1\}^k\) be a hash function defined over:
+\[
+\mathcal{H}(p_i, T_{ij}^{(p_i)}) := H(p_i^{\alpha_i} T_{ij}^{(p_i)} + Q_{\text{ent}}),
+\]
+where \(p_i \in \mathbb{P}_N\), and \(Q_{\text{ent}}\) is an entangled entropy vector.
+
+\paragraph{Definition B.1 (Prime-Indexed Collision Resistance):}
+A hash function \(\mathcal{H}\) is PICR-secure if it is computationally infeasible (in polynomial time) to find:
+\[
+(p_i, T), (p_j, T') \text{ such that } \mathcal{H}(p_i, T) = \mathcal{H}(p_j, T') \quad \text{with } (p_i, T) \ne (p_j, T').
+\]
+
+\paragraph{Conjecture (PICR-Hardness):}
+If \(p_i, p_j\) are distinct large primes (e.g., \(p_i > 2^{512}\)), and \(T_{ij}^{(p)}\) are quantum-generated tensors, then \(\mathcal{H}\) resists collision attacks from both:
+\begin{itemize}
+    \item Quantum adversaries operating under Shor-like oracle models,
+    \item Classical adversaries using algebraic or statistical collision search.
+\end{itemize}
+
+\subsection*{B.2 Recursive Tamper-Detection via Zeno Locks}
+
+The system implements dynamic quantum Zeno locking by evaluating the evolution of \(|\psi_p(t)\rangle\) under operator \(\hat{H}\):
+
+\[
+|\psi_p(t)\rangle = \exp\left(-\frac{i}{\hbar} p(t) \hat{H} t\right) |\psi(0)\rangle,
+\]
+where \(p(t)\) is a time-indexed prime sequence.
+
+\paragraph{Security Mechanism:}
+If a phase perturbation \(\delta \phi(t) > \varepsilon_{\text{thresh}}\), the system collapses entanglement, invalidating recursive state access. This tamper-detection scheme has complexity \(\Omega(p \cdot n^2)\), exceeding quantum search bounds under Grover’s oracle.
+
+\subsection*{B.3 Assumption Summary}
+
+The cryptographic guarantees of QAGI rest on the following hardness assumptions:
+
+\begin{itemize}
+    \item \textbf{PICR Assumption:} Prime-indexed collision resistance holds for large primes and fractal tensor spaces.
+    \item \textbf{Recursive Entanglement Integrity:} Any perturbation of recursive keys alters the entangled state \(Q_{\text{ent}}\), triggering collapse.
+    \item \textbf{Zeno Amplification Threshold:} Detection of phase deviation occurs before a successful quantum readout of key material.
+\end{itemize}
+
+Under these assumptions, the cryptographic layer offers resistance against classical and quantum adversaries without reliance on lattice hardness or factorization assumptions.
+
+\section*{Appendix C: Tensor Manifold Topologies and Spectral Embeddings}
+
+This appendix characterizes the geometric structure and spectral dynamics of the recursive tensor manifolds underlying the QAGI system, particularly those used in PIRTM and fractal entanglement operators.
+
+\subsection*{C.1 Prime-Indexed Tensor Manifolds}
+
+Let \(\mathcal{M}_t\) denote the recursive tensor manifold at time \(t\), defined by the set:
+
+\[
+\mathcal{M}_t := \left\{ T_t \in \mathbb{R}^{m \times n} \mid T_{t+1} = \sum_{p_i \in P_N(t)} \Lambda_m p_i^{\alpha(t)} T_t + F(t) \right\},
+\]
+
+where \(T_t\) evolves over a differentiable manifold embedded in \(\mathbb{R}^{m \times n}\), and each update preserves smoothness due to damping \(F(t)\). The topology of \(\mathcal{M}_t\) is shaped by the prime indexing, which acts as a discrete sheaf over the continuous tensor base.
+
+\paragraph{Proposition C.1 (Discrete Prime Sheaf Structure):}
+Each prime \(p_i\) defines a fiber bundle \(\mathcal{F}_{p_i} \to \mathcal{M}_t\), with transition maps induced by:
+
+\[
+\phi_{p_i p_j}(T) = \frac{p_j^{\alpha(t)}}{p_i^{\alpha(t)}} T, \quad \text{for } p_i, p_j \in P_N(t).
+\]
+
+This sheaf-like construction introduces non-homogeneous curvature on \(\mathcal{M}_t\), enabling selective recursion across subspaces defined by prime resonance.
+
+\subsection*{C.2 Spectral Embedding of Tensor States}
+
+To optimize inference and representation learning, QAGI applies spectral embedding to high-dimensional tensor states using the eigenstructure of the Laplacian graph operator:
+
+\[
+\mathcal{L} = D - A,
+\]
+where:
+\begin{itemize}
+    \item \(A\) is the adjacency matrix derived from inner products of tensors: \(A_{ij} = \langle T_i, T_j \rangle\),
+    \item \(D\) is the degree matrix with \(D_{ii} = \sum_j A_{ij}\).
+\end{itemize}
+
+\paragraph{Definition C.1 (Spectral Tensor Embedding):}
+Let \(T_t\) be the tensor at time \(t\). Its spectral embedding \(\Phi_k(T_t)\) is defined as:
+
+\[
+\Phi_k(T_t) := \left[ \nu_1^\top T_t, \nu_2^\top T_t, \dots, \nu_k^\top T_t \right],
+\]
+where \(\nu_i\) are the first \(k\) eigenvectors of \(\mathcal{L}\), corresponding to the smallest non-zero eigenvalues.
+
+This embedding preserves manifold structure while reducing dimensionality, enabling efficient inference in the BQN module.
+
+\subsection*{C.3 Curvature and Topological Stability}
+
+Let the Ricci tensor \(R_{\mu\nu}\) be defined over \(\mathcal{M}_t\) by:
+
+\[
+R_{\mu\nu}(t) = \sum_{p_i \in P_N(t)} p_i^{-\alpha(t)} T_{\mu\nu}^{(p_i)} + F_{\mu\nu}(t),
+\]
+
+as per Claim 9. The scalar curvature \(\mathcal{R}(t) = \operatorname{Tr}(R_{\mu\nu})\) evolves according to:
+
+\[
+\frac{d\mathcal{R}(t)}{dt} = - \gamma \mathcal{R}(t) + \sum_{p_i} \nabla^2 T_{\mu\nu}^{(p_i)}.
+\]
+
+\paragraph{Corollary C.1 (Topological Stability Criterion):}
+If \(\alpha(t) > 1\) and \(\gamma > 0\), then the recursive curvature \(\mathcal{R}(t)\) remains bounded and converges to a fixed point \(\mathcal{R}^\star\), ensuring long-term topological consistency of QAGI’s geometric representation.
+
+\subsection*{C.4 Fractal Flow and Dimensional Collapse}
+
+Fractal flow is modeled by recursively applying the operator:
+
+\[
+\mathcal{F}_{\text{frac}}(T_t) = \sum_{p_i} J_i \cdot T_t^{1 + \epsilon_i},
+\]
+where \(J_i\) are non-associative Lie algebra generators and \(\epsilon_i\) are scaling exponents derived from multifractal spectra.
+
+\paragraph{Theorem C.1 (Recursive Dimensional Collapse):}
+If \(\epsilon_i < 0\) for all \(i\), then:
+\[
+\lim_{t \to \infty} \dim(\mathcal{M}_t) \leq k,
+\]
+for some \(k \ll \min(m, n)\), implying convergence to a fractal attractor in tensor space. This ensures tractability and stability in infinite-dimensional regimes.
+
+
+\section*{Appendix D: Prime-Indexed Lie Algebra Dynamics and Tensor Entanglement Spectra}
+
+This appendix develops the non-commutative algebraic and informational framework used in QAGI’s quantum state modeling and inference subsystems.
+
+\subsection*{D.1 Prime-Indexed Lie Algebra Dynamics}
+
+Let \(\mathfrak{g}\) denote a non-associative algebra over a set of prime-indexed operators \(\{J_p\}_{p \in \mathbb{P}_N}\), where each generator \(J_p\) satisfies generalized Lie-type commutation rules:
+
+\[
+[J_{p_i}, J_{p_j}] = i f_{p_i p_j}^{p_k} J_{p_k}, \quad f_{p_i p_j}^{p_k} \in \mathbb{R},
+\]
+
+where \(f_{p_i p_j}^{p_k}\) are structure constants derived from a resonance-based mapping:
+
+\[
+f_{p_i p_j}^{p_k} = \sin\left( \frac{\pi (p_i - p_j)}{p_k} \right).
+\]
+
+This defines a curved, non-associative bracket space \((\mathfrak{g}, [\cdot,\cdot])\) where tensor operators evolve via:
+
+\[
+\frac{dT_t}{dt} = \sum_{p_i, p_j} [J_{p_i}, J_{p_j}] \cdot T_t + F_{\text{fractal}}(t).
+\]
+
+\paragraph{Proposition D.1 (Algebraic Non-Associativity):}
+For any triple \((p_i, p_j, p_k)\), the Jacobi identity is violated unless \(p_i = p_j = p_k\), due to prime modulation in \(f_{p_i p_j}^{p_k}\). Hence, \(\mathfrak{g}\) forms a Malcev-type algebra rather than a standard Lie algebra.
+
+\paragraph{Corollary D.1:}
+Non-associative algebra enables fractal information propagation through tensor space, with each prime index controlling local dimensional resonance.
+
+\subsection*{D.2 Tensor Entanglement Entropy Spectra}
+
+Let \(T_t \in \mathbb{R}^{m \times n}\) be a recursive tensor state reshaped into a pure quantum state \(|\psi_t\rangle\). Its reduced density matrix \(\rho_A\) is obtained via a partial trace over subsystem \(B\):
+
+\[
+\rho_A = \operatorname{Tr}_B(|\psi_t\rangle \langle \psi_t|).
+\]
+
+The entanglement entropy \(S(T_t)\) is defined as:
+
+\[
+S(T_t) = -\operatorname{Tr}(\rho_A \log \rho_A),
+\]
+and the associated spectral entropy profile is:
+
+\[
+\mathcal{S}_\lambda(T_t) = \sum_{i=1}^{r} \lambda_i \log \frac{1}{\lambda_i},
+\]
+where \(\{\lambda_i\}\) are the eigenvalues of \(\rho_A\), and \(r = \operatorname{rank}(\rho_A)\).
+
+\paragraph{Theorem D.1 (Spectral Boundedness under Recursive Updates):}
+Let \(T_{t+1} = A_t T_t + F(t)\), and assume \(A_t\) is norm-contracting and \(F(t)\) is exponentially decaying. Then the spectral entropy \(\mathcal{S}_\lambda(T_t)\) satisfies:
+
+\[
+\limsup_{t \to \infty} \mathcal{S}_\lambda(T_t) \leq \log r^\star,
+\]
+for some \(r^\star \ll \min(m, n)\), implying low-rank convergence and information condensation.
+
+\paragraph{Implication:}
+The entanglement profile of QAGI states evolves toward a sparse eigenvalue spectrum, enabling efficient compression, quantum inference, and modular decoupling across tensor partitions.
+
+\subsection*{D.3 Application to BQN and Cryptographic Hashing}
+
+\begin{itemize}
+    \item The BQN (Claim 5) leverages spectral profiles \(\mathcal{S}_\lambda(T_t)\) to dynamically regulate inference fidelity via adaptive entropy modulation (\(\gamma(t) \sim \frac{1}{\mathcal{S}_\lambda(T_t)}\)).
+    
+    \item The cryptographic hashing function \(\mathcal{H}(p_i, T_{ij}^{(p_i)})\) (Claim 6) embeds eigenvalue signatures as part of a recursive hash kernel:
+
+    \[
+    \mathcal{H}(T) = \sum_{p_i} p_i^{\alpha_i} \cdot \sum_{j=1}^{k} \lambda_j^{(p_i)},
+    \]
+    where \(\lambda_j^{(p_i)}\) are spectral values from \(\rho^{(p_i)}\).
+\end{itemize}
+
+These spectral constructs unify recursive cognition, security, and representation learning across QAGI’s hybrid modules.
+
+
+\section*{Appendix E: Tensor Field Variational Geometry and Recursive Gate Synthesis for QPUs}
+
+This appendix formalizes the variational geometry underlying recursive tensor dynamics in QAGI and presents a constructive method for compiling recursive state updates into quantum gates for execution on QPUs or emulators.
+
+\subsection*{E.1 Tensor Field Variational Geometry}
+
+Let \(\mathcal{T}(x,t)\) be a time-dependent tensor field defined over a base manifold \(\mathcal{M} \subset \mathbb{R}^d\). Each component \(T_{ij}(x,t)\) evolves recursively via:
+
+\[
+\frac{\partial T_{ij}(x,t)}{\partial t} = \Lambda_m \cdot M_{ik}(x) T_{kj}(x,t) + [M(x), T(x,t)]_{ij},
+\]
+where:
+\begin{itemize}
+    \item \(M(x)\) is a smooth field of Hilbert-Schmidt operators,
+    \item \([M, T] = MT - TM\) is the local non-commutative correction,
+    \item \(\Lambda_m\) is the stabilizing prime-indexed constant (Appendix A.1).
+\end{itemize}
+
+\paragraph{Action Functional:}
+Define the Lagrangian density \(\mathcal{L}(T, \nabla T)\) over the field configuration:
+
+\[
+\mathcal{L} = \frac{1}{2} \operatorname{Tr} \left( \left( \frac{\partial T}{\partial t} \right)^2 \right) - \frac{1}{2} \operatorname{Tr} \left( \nabla_\mu T^\top \cdot \nabla^\mu T \right) + V(T),
+\]
+
+where \(V(T)\) encodes spectral potential energy, e.g.,
+
+\[
+V(T) = \sum_{p_i \in P_N} \lambda_i^{(p_i)} \cdot \|T^{(p_i)}\|^2.
+\]
+
+Applying Hamilton’s principle \(\delta S = 0\), the Euler–Lagrange equations yield:
+
+\[
+\frac{\partial^2 T}{\partial t^2} - \nabla^2 T + \frac{\partial V}{\partial T} = 0,
+\]
+which describes the variational flow of tensor states under recursive energy minimization.
+
+\paragraph{Corollary E.1:}
+If \(V(T)\) is convex and \(\nabla^2 T\) is uniformly elliptic, then the tensor flow converges to a local minimum \(T^\star\), supporting recursive stability over \(\mathcal{M}\).
+
+\subsection*{E.2 Recursive Gate Synthesis for Quantum Processing Units}
+
+To implement recursive tensor updates on a quantum device, we express the evolution of a state \(|\psi(t)\rangle\) as a sequence of unitary gates generated by the exponential map of a Hamiltonian-like operator derived from tensor components.
+
+Let:
+
+\[
+\hat{H}_t = \sum_{p_i \in P_N(t)} p_i^{\alpha(t)} \cdot \hat{T}_{p_i}(t),
+\]
+where \(\hat{T}_{p_i}(t)\) are Hermitian embeddings of tensor slices \(T^{(p_i)}\). The quantum evolution is:
+
+\[
+|\psi(t+1)\rangle = e^{-i \hat{H}_t \Delta t} |\psi(t)\rangle.
+\]
+
+\paragraph{Gate Decomposition (Trotter–Suzuki):}
+Assuming \(\hat{H}_t = \sum_k H_k\), we approximate:
+
+\[
+e^{-i \hat{H}_t \Delta t} \approx \left( \prod_k e^{-i H_k \Delta t / m} \right)^m + \mathcal{O}\left(\frac{1}{m}\right).
+\]
+
+Each term \(e^{-i H_k \Delta t / m}\) can be compiled into basic gate sequences (e.g., CNOT, rotation gates), using known Lie algebra identities or Pauli decompositions.
+
+\paragraph{Example:}
+Suppose \(\hat{T}_{p_i} = \theta_i (X \otimes I + Z \otimes Z)\). Then:
+
+\[
+e^{-i \theta_i (X \otimes I + Z \otimes Z)} = e^{-i \theta_i X \otimes I} \cdot e^{-i \theta_i Z \otimes Z} + \mathcal{O}(\theta_i^2),
+\]
+with gate compilation via:
+
+\begin{itemize}
+    \item \(e^{-i \theta X}\): single-qubit \(R_x(\theta)\),
+    \item \(e^{-i \theta Z \otimes Z}\): entangled phase gate via CNOT + \(R_z\).
+\end{itemize}
+
+\paragraph{Recursive Compilation Engine:}
+A QAGI compiler dynamically maps each recursive update to a circuit \(\mathcal{C}_t\) such that:
+
+\[
+\mathcal{C}_t \equiv \text{GateSequence}(\hat{H}_t, \Delta t),
+\]
+with optimization over circuit depth and fidelity constraints.
+
+\paragraph{Theorem E.1 (Recursive Executability):}
+If each \(\hat{T}_{p_i}(t)\) admits a Hermitian decomposition into Pauli or Clifford basis, and the number of primes \(N(t)\) is poly-logarithmic in system size, then \(\hat{H}_t\) is efficiently simulable on a quantum processor with polynomial depth.
+
+\(\hfill \square\)
+

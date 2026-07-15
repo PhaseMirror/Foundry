@@ -1,0 +1,2774 @@
+\documentclass[11pt]{article}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{geometry}
+\geometry{a4paper, margin=1in}
+\usepackage{enumitem}
+\usepackage{multicol} % Multi-column figures/tables
+\usepackage{natbib}
+\usepackage{hyperref} % Hyperlinks
+\usepackage{listings} % Code listings\
+\usepackage[pagewise]{lineno}\linenumbers
+\usepackage{authblk} % For structured affiliations
+% Define theorem style (optional)
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}
+% Theorem environments
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{conjecture}[theorem]{Conjecture}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\nolinenumbers
+
+% Title page for "One-Loop Health-Education System — Build Blueprint"
+% Compile with pdfLaTeX (UTF-8). No external fonts required.
+
+\documentclass[12pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{array}
+\usepackage{setspace}
+\usepackage{hyperref}
+\hypersetup{
+  colorlinks=true,
+  linkcolor=black,
+  urlcolor=black,
+  pdftitle={One-Loop Health-Education System — Build Blueprint},
+  pdfauthor={Your Team},
+  pdfsubject={Intrinsica, Superhuman (S2H), M-Education HEP, Citizen Gardens Overlay},
+  pdfkeywords={FHIR, xAPI, ULMS, HIPAA, GDPR, XR, CSL, PER, TCI, MLEM}
+}
+
+\begin{document}
+\begin{titlepage}
+  \centering
+
+  % Optional: left/right logos
+  % \begin{minipage}{0.48\textwidth}\flushleft
+  %   \includegraphics[height=1.1cm]{logo_left.pdf}
+  % \end{minipage}
+  % \hfill
+  % \begin{minipage}{0.48\textwidth}\flushright
+  %   \includegraphics[height=1.1cm]{logo_right.pdf}
+  % \end{minipage}
+
+  \vspace*{2.5cm}
+
+  {\Large\textbf{One-Loop Health-Education System}}\\[6pt]
+  {\large Build Blueprint}\\[10pt]
+  {\normalsize Intrinsica \(\times\) Superhuman (S2H) \(\times\) M-Education HEP \(\times\) Citizen Gardens}\\[20pt]
+
+  \rule{\textwidth}{0.4pt}\\[-4pt]
+  \rule{\textwidth}{1.2pt}
+
+  \vspace{1.2cm}
+
+  \begin{tabular}{>{\bfseries}p{3.2cm} p{10.5cm}}
+    Document ID: & OLHES-BB-001 \\
+    Version:     & v1.1 \\
+    Status:      & Build-ready \\
+    Date:        & October 15, 2025 \\
+    Scope:       & Intrinsica data/AI plane; S2H digital clinic; HEP ULMS/XR; CG overlay \\
+    Keywords:    & FHIR R4, HL7 v2, LTI 1.3, xAPI, ULMS, XR, CSL, PER, TCI, MLEM, Ledger, De-ID \\
+  \end{tabular}
+
+  \vfill
+
+  \begin{tabular}{>{\bfseries}p{3.2cm} p{10.5cm}}
+    Authors:     & \textit{Ryan O. Van Gelder \& Kara Olivarria} \\
+    Affiliation: & Citizen Gardens: M-Education Health Nexus \\
+    Contact:     & \texttt{info@citizengardens.org} \\
+  \end{tabular}
+
+  \vspace{1.2cm}
+
+  \begin{spacing}{1.05}\small
+  \textbf{Abstract} \\
+  This blueprint specifies an end-to-end, closed-loop architecture linking clinical care and learning. It defines a single data plane (Intrinsica), dual experience skins (patient education | student learning), and shared governance. Interfaces include FHIR/xAPI, ULMS webhooks, and a permissioned ledger with consent-bound provenance.
+  \end{spacing}
+
+  \vfill
+
+  \begin{spacing}{1.05}\footnotesize
+  \textbf{Notice} \\
+  This document contains confidential information belonging to the project partners. Do not distribute, copy, or disclose without prior written permission. All ethics and privacy commitments apply to any derived workproducts. Subject to HIPAA/GDPR and local sovereignty policies. © Citizen Gardens.
+  \end{spacing}
+
+\end{titlepage}
+
+
+
+
+\newpage
+
+
+% Section 1 — Architecture at a Glance (expanded)
+\section{Architecture at a Glance}
+
+\subsection{Purpose}
+Close the loop between clinical care and learning. One data plane. Two experience skins. Shared governance.
+
+\subsection{System Tenets}
+\begin{enumerate}
+  \item \textbf{Single data plane:} Intrinsica is the source of truth for signals, features, risk vectors, and provenance.
+  \item \textbf{Dual experience skins:} Every learning object renders in \emph{patient education} or \emph{student learning} mode with identical IDs and policies.
+  \item \textbf{Privacy-by-design:} De-identification on egress to education; re-identification only inside the S2H enclave.
+  \item \textbf{Deterministic traceability:} Every write is purpose-bound, signed, and ledger-hashed with explicit policy versioning.
+  \item \textbf{Offline-first option:} Sovereign sites run local bundles and delayed sync with conflict resolution.
+\end{enumerate}
+
+\subsection{Layer Stack}
+\paragraph{Experience Layer}
+XR ``MaaS'' modules, ULMS, and S2H tele-care. Dual skins: patient education \(|\) student learning.
+\begin{itemize}
+  \item \textbf{Primary responsibilities:} Deliver interventions and lessons; collect attempts, time-on-task, CSL state; surface adherence and outcomes.
+  \item \textbf{Inputs:} Risk vectors, personalization hints, content policies, cohort assignments.
+  \item \textbf{Outputs:} Telemetry (\texttt{attempts}, \texttt{latency\_ms}, CSL load/gate, TCI), completions, dropouts, consented survey responses.
+  \item \textbf{Interfaces:} ULMS Webhooks (\texttt{/hooks/attempted}, \texttt{/hooks/module-complete}, \texttt{/hooks/csl-change}); FHIR Subscriptions for survey and vital-signs.
+  \item \textbf{SLOs:} p50 render \(<150\) ms (cloud), p50 input-to-ack \(<300\) ms; sovereign sites \(<24\) h sync tolerance.
+  \item \textbf{Failure modes:} Network loss, policy cache miss, stale content; \emph{backoffs:} CSL safe-mode, local queue with replay, version-pinned bundles.
+\end{itemize}
+
+\paragraph{Services Layer}
+Personalization, content gating (CSL), Reciprocity balancer, \(\pi\)Līla progression, analytics.
+\begin{itemize}
+  \item \textbf{Personalization:} Maps risk vectors and learner state to module parameters, item ordering, intensity bounds.
+  \item \textbf{CSL Gating:} Computes load score and gate state; enforces cooldowns; emits \texttt{csl.state.change}.
+  \item \textbf{Reciprocity:} Maintains cohort energy balance; rate-limits group asks; emits \texttt{reciprocity.delta}.
+  \item \(\boldsymbol{\pi}\)\textbf{Līla:} Tracks milestones along growth paths; emits \texttt{pilila.milestone}.
+  \item \textbf{Analytics:} Risk deltas, adherence, engagement, equity; exports de-ID aggregates to dashboards.
+  \item \textbf{SLOs:} p50 personalization \(<100\) ms per request; CSL decisions idempotent within a window; analytics windows hourly (cloud) or daily (sovereign).
+\end{itemize}
+
+\paragraph{Data/AI Layer}
+Intrinsica lakehouse, feature store, hybrid ML, FHIR/HL7 IO, de-ID stream, ledger.
+\begin{itemize}
+  \item \textbf{Ingest:} Wearables, EHR, survey data; schema-on-write for FHIR; schema-on-read for analytics.
+  \item \textbf{Feature store:} Versioned features with provenance; training/serving skew monitors.
+  \item \textbf{Modeling:} Batch and streaming models for sleep, stress, adherence risk, engagement propensity.
+  \item \textbf{De-ID stream:} Tokenization, generalization, purpose tagging, policy attach, hashing, emission to education topics.
+  \item \textbf{Ledger:} Permissioned, append-only; stores hashes and policy versions; identities via DIDs.
+  \item \textbf{SLOs:} p95 ingest-to-feature materialization \(<5\) min; online inference \(<80\) ms p50; ledger commit \(<1\) s.
+\end{itemize}
+
+\paragraph{Interop Layer}
+FHIR R4 and HL7 v2 where required; LTI 1.3 + xAPI for ULMS; webhooks for events; W3C DIDs for ledger IDs.
+\begin{itemize}
+  \item \textbf{Clinical objects:} \texttt{Patient, Group, Device, Observation, Procedure, MedicationStatement, QuestionnaireResponse, Consent, Provenance, ResearchStudy, ResearchSubject}.
+  \item \textbf{Education traces:} xAPI statements and ULMS webhooks mapped to de-ID event schemas.
+  \item \textbf{Subscriptions:} Criteria-based FHIR Subscriptions for survey and vital-signs; rest-hook delivery with auth-bound headers.
+  \item \textbf{Identity:} DID-bound JWTs; mTLS between zones; key rotation with audit.
+  \item \textbf{Change control:} Contract tests for resource profiles and webhook payloads; semantic versioning on topics.
+\end{itemize}
+
+\paragraph{Governance Layer}
+HIPAA/GDPR controls, consent + purpose binding, auditing, equity + neurodiversity policies.
+\begin{itemize}
+  \item \textbf{Consent:} Explicit purpose-of-use, revocation service, data minimization defaults; consent artifacts linked via \texttt{Provenance}.
+  \item \textbf{Privacy:} S2H holds re-ID keys in a KMS-sealed vault; education receives de-ID aggregates only.
+  \item \textbf{Audit:} Continuous privacy audit stream; pass-rate KPI; policy drift detection with alerting.
+  \item \textbf{Equity \& neurodiversity:} Distribution checks; EchoBraid profiles for ASD; culturally responsive content policies.
+  \item \textbf{Sovereignty:} Offline bundles, local LAN operation, delayed sync with CRDT merge and community key custody.
+\end{itemize}
+
+\subsection{Reference Dataflow}
+\begin{verbatim}
+Wearables/EHR -> Intrinsica [ingest -> feature store -> risk] -> ULMS + XR (personalized)
+        -> S2H protocols -> outcomes -> Intrinsica (retrain + recalibrate)
+                    \-> de-ID aggregates -> HEP dashboards + research
+\end{verbatim}
+
+\subsection{Interface Index (minimal)}
+\begin{itemize}
+  \item \textbf{FHIR Subscriptions:} \texttt{Observation?category=survey,vital-signs}; \texttt{QuestionnaireResponse}.
+  \item \textbf{ULMS Webhooks:} \texttt{POST /hooks/attempted}, \texttt{/module-complete}, \texttt{/csl-change}.
+  \item \textbf{Event Topics:} \texttt{intrinsica.risk.update.v1}, \texttt{ulms.session.attempted.v1}, \texttt{csl.state.change.v1},
+  \texttt{reciprocity.delta.v1}, \texttt{pilila.milestone.v1}, \texttt{privacy.audit.event.v1}.
+\end{itemize}
+
+\subsection{Security Boundaries}
+\begin{itemize}
+  \item \textbf{S2H enclave:} PHI-permitted zone, re-ID allowed under least-privilege, all egress de-ID.
+  \item \textbf{Education zone:} De-ID only; k-anonymity thresholds; no small-cell exports.
+  \item \textbf{Shared services:} Policy engine, consent registry, ledger; access via DID-bound OAuth2 and mTLS.
+\end{itemize}
+
+\subsection{Minimal SLO Summary}
+\begin{center}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Function} & \textbf{p50} & \textbf{p95} & \textbf{Notes} \\
+\midrule
+Personalization call & $<100$ ms & $<250$ ms & cache warm; per-learner \\
+XR render start & $<150$ ms & $<400$ ms & network-dependent \\
+Ingest $\rightarrow$ features & $<2$ min & $<5$ min & streaming path \\
+Online inference & $<80$ ms & $<200$ ms & CPU baseline \\
+Ledger commit & $<1$ s & $<2$ s & quorum achieved \\
+Sovereign sync & $<12$ h & $<24$ h & delay-tolerant \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Core Roles Alignment}
+
+\subsection*{Intrinsica $\rightarrow$ CG Infrastructure Layer}
+\paragraph{Mandate}
+Operate the sovereign, privacy-by-design data plane for Citizen Gardens (CG): hybrid ML + FHIR lakehouse with consent registry and permissioned ledger.
+
+\paragraph{Capabilities}
+\begin{itemize}
+  \item \textbf{Sovereignty}: community-held keys; offline-first firebooks; delayed sync with CRDT merge.
+  \item \textbf{Privacy}: de-ID on school egress; purpose-binding on writes; ledger-hashed \emph{Provenance}.
+  \item \textbf{Interoperability}: FHIR R4, HL7 v2 (as needed); Bulk Data; ULMS/xAPI aggregation.
+  \item \textbf{Analytics}: risk vectors, cohort trends, equity diagnostics; DP/noise for public CG dashboards.
+\end{itemize}
+
+\paragraph{CG Principles Mapping}
+\begin{center}
+\begin{tabular}{l l l}
+\hline
+CG Value & Intrinsica Control & Invariant \\
+\hline
+Sovereignty & Community DIDs, local custody & No cloud re-ID without dual control \\
+Dignity & Minimum-necessary, k-anonymity & No small-cell release ($k\ge10$) \\
+Consent & Purpose tags, revocation & Deny-by-default on mismatch \\
+Traceability & Ledger hashes, signatures & Every payload has provenance \\
+Open Ecosystem & Modular APIs, profiles & OSS-friendly deployment paths \\
+\hline
+\end{tabular}
+\end{center}
+
+\paragraph{Interfaces (CG overlay)}
+\begin{itemize}
+  \item \texttt{cg.civic.codex.trace.v1}: signed civic traces (de-ID) for public ledgers.
+  \item \texttt{cg.elm.reciprocity.update.v1}: cohort energy balance for ELM.
+  \item \texttt{cg.growth.milestone.v1}: $\pi$Līla/Growth-ring milestones.
+\end{itemize}
+
+\paragraph{Guarantees}
+p95 ingest$\rightarrow$feature $<5$\,min; ledger append $<2$\,s; privacy pass-rate $\ge0.98$; zero PHI in CG zone.
+
+\bigskip
+\subsection*{Superhuman (S2H) $\rightarrow$ CG Care Module}
+\paragraph{Mandate}
+Run the digital clinic for brain health, longevity, and resilience. Anchor multiplicative wellness in community contexts.
+
+\paragraph{Capabilities}
+\begin{itemize}
+  \item \textbf{Clinical ops}: protocols, remote trials, tele-neuro/rehab; PROMs and vitals to FHIR.
+  \item \textbf{PHI boundary}: re-ID keys in KMS vault; export only de-ID aggregates to CG learning spaces.
+  \item \textbf{Feedback}: subscribes to ULMS signals; adapts care plans; emits adherence and outcomes (PHI-scope).
+\end{itemize}
+
+\paragraph{CG Principles Mapping}
+\begin{center}
+\begin{tabular}{l l l}
+\hline
+CG Value & S2H Practice & Invariant \\
+\hline
+Community Multiplicity & Protocols tuned by cohort trends & No re-ID outside S2H enclave \\
+Resilience & CSL-aware care pacing & Overload $\rightarrow$ lawful stillness \\
+Mutualism & Share de-ID outcomes to schools & Staff access = need-to-know \\
+\hline
+\end{tabular}
+\end{center}
+
+\paragraph{Interfaces (selected)}
+\begin{itemize}
+  \item FHIR: \texttt{Observation}, \texttt{QuestionnaireResponse}, \texttt{Procedure}, \texttt{Provenance}.
+  \item Events: \texttt{s2h.adherence.event.v1} (PHI, enclave-only).
+\end{itemize}
+
+\paragraph{Guarantees}
+Tele-visit start p50 $<30$\,s; FHIR write p50 $<300$\,ms; zero unauthorized re-ID.
+
+\bigskip
+\subsection*{M-Education HEP $\rightarrow$ CG Learning Ecosystem}
+\paragraph{Mandate}
+Deliver regenerative, values-based learning across neurotypes and cultures via XR-powered ULMS; align with Economy League Multiplicity (ELM).
+
+\paragraph{Capabilities}
+\begin{itemize}
+  \item \textbf{Dual skin}: \emph{student} and \emph{patient} modes with identical IDs/policies.
+  \item \textbf{Inclusion}: CSL, Reciprocity, $\pi$Līla embedded; EchoBraid accommodations for ASD.
+  \item \textbf{Civic learning}: PER, MLEM, TCI as de-ID civic traces for CG ledgers.
+\end{itemize}
+
+\paragraph{CG Principles Mapping}
+\begin{center}
+\begin{tabular}{l l l}
+\hline
+CG Value & HEP Practice & Invariant \\
+\hline
+Regeneration & Growth-ring milestones, routines & Milestones signed; public aggregates only \\
+Multiplicity & ELM-aligned reciprocity & Group intensity auto-balanced \\
+Cultural Fit & Localized content packs & Steward review for context \\
+\hline
+\end{tabular}
+\end{center}
+
+\paragraph{Interfaces (selected)}
+\begin{itemize}
+  \item Webhooks: \texttt{/hooks/attempted}, \texttt{/hooks/csl-change}, \texttt{/module-complete}.
+  \item xAPI (optional): participation traces $\rightarrow$ CG civic logs.
+\end{itemize}
+
+\paragraph{Guarantees}
+XR engagement $>0.70$ in pilots; overload rate $\le0.10$; equity gap closed $\ge0.15$ on target metrics.
+
+\bigskip
+\subsubsection*{Cross-Role Handshake (CG overlay)}
+\begin{center}
+\begin{tabular}{l l l l}
+\hline
+Flow & Producer & Consumer & CG Artifact \\
+\hline
+Risk$\rightarrow$Personalize & Intrinsica & HEP/S2H & Garden tending index inputs \\
+Adherence$\rightarrow$Curricula & S2H & HEP (de-ID) & Civic codex traces \\
+Civic Milestones & HEP & Intrinsica/CG & Growth rings ledger entry \\
+Reciprocity Balance & Intrinsica & HEP/S2H & ELM energy balance update \\
+\hline
+\end{tabular}
+\end{center}
+
+\paragraph{RACI (overlay)}
+\begin{center}
+\begin{tabular}{l c c c c}
+\hline
+Decision & Stewards & Intrinsica & S2H & HEP \\
+\hline
+Policy change (CG) & R/A & C & C & C \\
+Civic metric schema & A & R & C & R \\
+Re-ID emergency & A & C & R & I \\
+Curriculum localization & A & I & C & R \\
+\hline
+\end{tabular}
+\end{center}
+
+
+
+% Section 2 — Roles and Contracts (expanded)
+\section{Roles and Contracts}
+
+\subsection{Intrinsica (Data/AI Plane)}
+
+\paragraph{Mission}
+Operate the single data plane: ingest, featureization, risk inference, provenance, and policy decisions.
+
+\paragraph{Responsibilities}
+\begin{itemize}
+  \item Lakehouse + feature store; hybrid ML (batch + streaming) for risk and engagement models.
+  \item FHIR/HL7 IO for clinical interoperability; API gateway for education-facing services.
+  \item De-identification (de-ID) on egress to education; consent registry; permissioned ledger for audit and integrity.
+  \item Emit cohort trends and privacy-safe aggregates; maintain model/version catalogs and drift monitors.
+\end{itemize}
+
+\paragraph{Inputs}
+\begin{itemize}
+  \item Clinical: FHIR \texttt{Observation}, \texttt{QuestionnaireResponse}, \texttt{Procedure}, \texttt{MedicationStatement}.
+  \item Device/Wearables: time-series biometrics (HRV, sleep, activity) via \texttt{Device}/\texttt{Observation}.
+  \item ULMS signals: de-ID \texttt{ulms.session.attempted}, CSL state changes, completion events.
+  \item Governance: \texttt{Consent}, \texttt{Provenance}, policy versions.
+\end{itemize}
+
+\paragraph{Outputs}
+\begin{itemize}
+  \item \textbf{Risk vectors} per subject/cohort; \textbf{cohort trends} and \textbf{equity diagnostics}.
+  \item \textbf{Provenance} records (signed, hashed); \textbf{policy decisions} for gating and personalization.
+  \item De-ID event streams for education dashboards.
+\end{itemize}
+
+\paragraph{Interfaces (contracts)}
+\begin{itemize}
+  \item \textbf{FHIR Endpoint} (R4): RESTful create/read/update, Bulk Data export for cohorts.
+  \item \textbf{Subscriptions} (rest-hook): \texttt{Observation?category=survey,vital-signs}, \texttt{QuestionnaireResponse}.
+  \item \textbf{Risk API} (\texttt{/risk/v1/assess}): POST subject or cohort; returns vector and explanations.
+  \item \textbf{Consent API} (\texttt{/consent/v1/register,\ /revoke}): purpose tags, scope, expiry; returns consent id.
+  \item \textbf{Event Bus} (append-only, versioned): \texttt{intrinsica.risk.update.v1}, \texttt{privacy.audit.event.v1}.
+\end{itemize}
+
+\paragraph{Example: Risk API}
+\begin{verbatim}
+POST /risk/v1/assess
+{
+  "subject_pid": "p_9f3…",
+  "context": {"cohort": "hs-10", "window": "7d"},
+  "features_hint": ["hrv_rmssd", "sleep_eff"]
+}
+-- Response --
+{
+  "risk": {"anxiety": 0.62, "sleep": 0.74},
+  "explanations": [{"feature":"hrv_rmssd","weight":0.31}],
+  "provenance": {"hash":"b64…","policy":"v1.2","model":"sleep-risk-2025.09"}
+}
+\end{verbatim}
+
+\paragraph{Security \& Governance}
+\begin{itemize}
+  \item Re-ID keys held only by S2H; Intrinsica processes PHI under BAA; all education egress is de-ID.
+  \item All writes purpose-bound, signed, and hashed to ledger; SAR/erasure honored by policy engine.
+\end{itemize}
+
+\paragraph{SLOs}
+\begin{itemize}
+  \item Online inference p50 $<80$\,ms; ingest$\rightarrow$feature materialization p95 $<5$\,min.
+  \item Ledger commit $<2$\,s p95; de-ID egress within $<60$\,s of event receipt.
+\end{itemize}
+
+\paragraph{Failure Modes \& Backoffs}
+\begin{itemize}
+  \item Policy cache miss $\rightarrow$ deny-by-default; queue until policy fetch.
+  \item Model outage $\rightarrow$ fallback policy; emit \texttt{privacy.audit.event.v1} with \texttt{mode:"degraded"}.
+\end{itemize}
+
+\bigskip
+\subsection{Superhuman (S2H) — Clinical Front End}
+
+\paragraph{Mission}
+Run digital clinic for brain health and longevity; operate protocols and remote trials; maintain PHI enclave.
+
+\paragraph{Responsibilities}
+\begin{itemize}
+  \item Execute care plans and trials; collect clinical outcomes and adherence.
+  \item Hold re-ID keys in a KMS-sealed vault; enforce least-privilege access.
+  \item Author canonical clinical FHIR resources; subscribe to ULMS signals for literacy and engagement.
+\end{itemize}
+
+\paragraph{Inputs}
+\begin{itemize}
+  \item Risk vectors and policy decisions from Intrinsica.
+  \item ULMS de-ID engagement and CSL overload flags.
+  \item Patient-reported outcomes via \texttt{QuestionnaireResponse}.
+\end{itemize}
+
+\paragraph{Outputs}
+\begin{itemize}
+  \item Clinical FHIR updates: \texttt{Observation} (vitals, PROMs), \texttt{Procedure} (interventions), \texttt{MedicationStatement}.
+  \item \texttt{s2h.adherence.event.v1} (kept inside S2H VPC; never leaves PHI enclave).
+\end{itemize}
+
+\paragraph{Interfaces (contracts)}
+\begin{itemize}
+  \item \textbf{FHIR Writer}: authoritative source for clinical records; includes \texttt{Provenance}.
+  \item \textbf{FHIR Subscription Consumer}: receives surveys/vitals for enrolled subjects.
+  \item \textbf{Trial API} (\texttt{/trials/v1/enroll}): maps \texttt{ResearchSubject} to cohort; returns enrollment id.
+\end{itemize}
+
+\paragraph{Clinical Write Example}
+\begin{verbatim}
+POST /fhir/Observation
+{
+ "resourceType":"Observation","status":"final","category":[{"coding":[{"code":"vital-signs"}]}],
+ "code":{"text":"HRV RMSSD"}, "subject":{"identifier":{"value":"p_9f3…"}},
+ "valueQuantity":{"value":32,"unit":"ms"},
+ "effectiveDateTime":"2025-10-15T14:15:00Z"
+}
+\end{verbatim}
+
+\paragraph{SLOs}
+\begin{itemize}
+  \item Tele-visit start p50 $<30$\,s from patient join; FHIR write ack $<300$\,ms p50.
+\end{itemize}
+
+\paragraph{PHI Boundary Rules}
+\begin{itemize}
+  \item No PHI leaves S2H except via authorized, audited pathways; education receives aggregates only.
+  \item Re-ID with dual control (clinician + steward) for emergency use; auto-logged to ledger.
+\end{itemize}
+
+\bigskip
+\subsection{M-Education HEP — Learning Ecosystem}
+
+\paragraph{Mission}
+Deliver inclusive learning via ULMS and XR studios; build systems thinking and early quantum literacy; support all neurotypes.
+
+\paragraph{Responsibilities}
+\begin{itemize}
+  \item Run dual-skin modules (student|patient) with identical IDs/policies.
+  \item Enforce CSL gating; apply Reciprocity balancer; track $\pi$Līla milestones.
+  \item Emit de-ID telemetry (PER, MLEM, TCI, attempts, latency, completions).
+\end{itemize}
+
+\paragraph{Inputs}
+\begin{itemize}
+  \item Personalization hints and risk vectors from Intrinsica.
+  \item Content policies, accommodations, and cultural context packs.
+\end{itemize}
+
+\paragraph{Outputs}
+\begin{itemize}
+  \item \texttt{ulms.session.attempted.v1}, \texttt{csl.state.change.v1}, \texttt{pilila.milestone.v1}.
+  \item xAPI statements for participation where required by LTI 1.3 contexts.
+\end{itemize}
+
+\paragraph{Interfaces (contracts)}
+\begin{itemize}
+  \item \textbf{ULMS Webhooks}: \texttt{POST /hooks/attempted}, \texttt{/module-complete}, \texttt{/csl-change}.
+  \item \textbf{LTI 1.3} launch for SIS/gradebook; optional xAPI store for research.
+  \item \textbf{Accessibility Profile} ingestion (e.g., EchoBraid): per-learner sensory and pacing preferences.
+\end{itemize}
+
+\paragraph{Telemetry Example}
+\begin{verbatim}
+POST /hooks/attempted
+{
+ "pseudo_id":"u_ab1…","module":"sleep-101","item":"breath-cadence",
+ "latency_ms":1830,"result":"correct",
+ "csl":{"load":0.43,"gate":"open"},
+ "tci":{"concept":"hrv-basics","time_s":95},
+ "per_ref":"per_7d2…","provenance":{"hash":"b64…"},"ts":"2025-10-15T14:22:10Z"
+}
+\end{verbatim}
+
+\paragraph{SLOs}
+\begin{itemize}
+  \item Module launch p50 $<150$\,ms; webhook ack p50 $<150$\,ms; offline-first sync $<24$\,h.
+\end{itemize}
+
+\paragraph{Safety}
+\begin{itemize}
+  \item CSL everywhere; overload $\rightarrow$ lawful stillness; respectful backoffs.
+  \item EchoBraid accommodations for ASD and sensory profiles; culturally responsive examples.
+\end{itemize}
+
+\bigskip
+\subsection{Cross-Organization Contract Terms}
+
+\paragraph{Data Stewardship Matrix}
+\begin{center}
+\begin{tabular}{l|c|c|c}
+\hline
+\textbf{Asset} & \textbf{Intrinsica} & \textbf{S2H} & \textbf{HEP} \\
+\hline
+PHI clinical records & P (proc.) & A (auth.) & V (view de-ID) \\
+De-ID education telemetry & A (auth.) & V (view) & P (proc./auth.) \\
+Risk vectors (per subject) & A (auth.) & V (view) & V (view) \\
+Consent \& Provenance & A (auth.) & A (auth.) & V (view) \\
+Ledger entries (hashes) & A (auth.) & A (auth.) & A (auth.) \\
+\hline
+\end{tabular}
+\end{center}
+
+\paragraph{RACI for Changes}
+\begin{center}
+\begin{tabular}{l|c|c|c|c}
+\hline
+\textbf{Change} & \textbf{Intrinsica} & \textbf{S2H} & \textbf{HEP} & \textbf{Stewards} \\
+\hline
+Model version bump & R/A & C & C & I \\
+FHIR profile change & R/A & C & I & I \\
+ULMS schema change & C & I & R/A & I \\
+Policy update (consent) & C & C & C & R/A \\
+XR content update & I & C & R/A & C \\
+\hline
+\end{tabular}
+\end{center}
+
+\paragraph{Versioning \& Compatibility}
+\begin{itemize}
+  \item Semantic versions for APIs/events (\texttt{MAJOR.MINOR.PATCH}); backward-compatible MINOR; breaking only on MAJOR.
+  \item Deprecation windows $\geq$ 90 days; dual-publish old/new topics during cutover.
+\end{itemize}
+
+\paragraph{Escalation \& Incident Response}
+\begin{itemize}
+  \item Sev-1 (privacy breach or safety failure): freeze egress, rotate keys, notify stewards, root-cause within 72\,h, ledger postmortem.
+  \item Sev-2 (availability): failover to read-only; degrade to cached policies and local bundles.
+\end{itemize}
+
+
+
+
+% Section 3 — Data Model and Interoperability (expanded)
+\section{Data Model and Interoperability}
+
+\subsection{FHIR R4 Resources (Must-Support)}\label{sec:fhir-must-support}
+
+\paragraph{Resource Set}
+\texttt{Patient, Group, Device, Observation, Procedure, MedicationStatement, QuestionnaireResponse, Consent, Provenance, ResearchStudy, ResearchSubject}.
+
+\paragraph{Profiles \& Notes}
+\begin{itemize}
+  \item \textbf{Observation} (must-support)
+    \begin{itemize}
+      \item \emph{Use}: vitals, HRV, sleep stages, cognitive tasks.
+      \item \emph{Category}: \texttt{activity | vital-signs | survey} (required; one or more).
+      \item \emph{Key elements}: \texttt{status}, \texttt{code}, \texttt{subject}, \texttt{effective[x]}, \texttt{value[x]} or \texttt{component}.
+      \item \emph{Constraints}:
+        \begin{enumerate}
+          \item If \texttt{category=survey}, then \texttt{subject} may be a de-identified \texttt{Identifier}.
+          \item All Observations written by S2H include \texttt{Provenance} with policy version.
+        \end{enumerate}
+      \item \emph{Example} (HRV RMSSD):
+\begin{verbatim}
+{
+ "resourceType":"Observation","status":"final",
+ "category":[{"coding":[{"system":"http://terminology.hl7.org/CodeSystem/observation-category",
+                         "code":"vital-signs"}]}],
+ "code":{"text":"HRV RMSSD"},
+ "subject":{"identifier":{"value":"p_9f3…"}},
+ "valueQuantity":{"value":32,"unit":"ms"},
+ "effectiveDateTime":"2025-10-15T14:15:00Z"
+}
+\end{verbatim}
+    \end{itemize}
+
+  \item \textbf{QuestionnaireResponse} (must-support)
+    \begin{itemize}
+      \item \emph{Use}: symptom checks, literacy polls.
+      \item \emph{Requirement}: linked \texttt{Provenance.signature} and policy version hash.
+\begin{verbatim}
+{
+ "resourceType":"QuestionnaireResponse","status":"completed",
+ "subject":{"identifier":{"value":"p_9f3…"}},
+ "item":[{"linkId":"sleep_quality","answer":[{"valueInteger":7}]}]
+}
+\end{verbatim}
+    \end{itemize}
+
+  \item \textbf{Consent} (must-support)
+    \begin{itemize}
+      \item \emph{Purpose-of-use tags}: e.g., \texttt{educational-deid}, \texttt{clinical-care}, \texttt{research}.
+      \item \emph{Data minimization flags}: scope restrictions by resource/category.
+      \item \emph{Revocation}: required timestamp; downstream processors must stop within SLA.
+    \end{itemize}
+
+  \item \textbf{Provenance} (must-support)
+    \begin{itemize}
+      \item \emph{Hash of payload}, signer DID, policy version; stored on the permissioned ledger.
+\begin{verbatim}
+{
+ "resourceType":"Provenance",
+ "target":[{"reference":"Observation/abc"}],
+ "recorded":"2025-10-15T14:21:03Z",
+ "signature":[{"type":[{"system":"urn:iso:astm:E1762-95:2013","code":"1.2.840.10065.1.12.1.5"}],
+               "who":{"identifier":{"value":"did:key:z6M…"}},
+               "data":"b64-signature…"}],
+ "reason":[{"text":"policy:v1.2"}]
+}
+\end{verbatim}
+    \end{itemize}
+
+  \item \textbf{ResearchStudy / ResearchSubject} (must-support)
+    \begin{itemize}
+      \item \emph{Link}: HEP cohorts (\texttt{Group}) to S2H pilots using de-ID subject IDs in \texttt{ResearchSubject}.
+      \item \emph{Rule}: re-identification only inside S2H enclave under dual control; all exports are de-ID.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Search \& Subscriptions (summary)}
+\begin{itemize}
+  \item Common searches: \texttt{/Observation?category=vital-signs\&date=ge2025-10-01}, \texttt{/QuestionnaireResponse?subject.identifier=p\_9f3…}
+  \item Subscriptions: see \S\ref{sec:subs-webhooks}.
+\end{itemize}
+
+\bigskip
+\subsection{ULMS Schema (Logical)}\label{sec:ulms-schema}
+
+\paragraph{Entities}
+\begin{itemize}
+  \item \textbf{Learner}(\texttt{id}, \texttt{pseudo\_id}, \texttt{cohort}, \texttt{accommodations}, \texttt{locale})
+  \item \textbf{Session}(\texttt{id}, \texttt{learner\_id}, \texttt{module\_id}, \texttt{started\_at}, \texttt{ended\_at}, \texttt{device\_meta})
+  \item \textbf{Attempt}(\texttt{id}, \texttt{session\_id}, \texttt{item\_id}, \texttt{result}, \texttt{latency\_ms}, \texttt{attempts\_n}, \texttt{hints\_used})
+  \item \textbf{PER}(\texttt{id}, \texttt{attempt\_id}, \texttt{artifacts\_uri[]}, \texttt{timestamps[]}) \emph{Process evidence record.}
+  \item \textbf{MLEM}(\texttt{id}, \texttt{learner\_id}, \texttt{window}, \texttt{gain\_units}, \texttt{effort\_units}, \texttt{value}) \emph{Meta-learning efficiency ratio.}
+  \item \textbf{TCI}(\texttt{id}, \texttt{learner\_id}, \texttt{concept\_id}, \texttt{time\_spent\_s}, \texttt{difficulty\_est}, \texttt{state}) \emph{Time-on-concept index.}
+  \item \textbf{CSLState}(\texttt{id}, \texttt{learner\_id}, \texttt{load\_score}, \texttt{gate}, \texttt{last\_change\_at}) \emph{Cognitive strain limiter.}
+  \item \textbf{ReciprocityDelta}(\texttt{id}, \texttt{cohort\_id}, \texttt{inflow}, \texttt{outflow}, \texttt{balance}, \texttt{window})
+  \item \textbf{PiLilaMilestone}(\texttt{id}, \texttt{learner\_id}, \texttt{path\_id}, \texttt{milestone}, \texttt{achieved\_at})
+\end{itemize}
+
+\paragraph{Common Columns}
+All ULMS tables carry \texttt{provenance\_id}, \texttt{policy\_version}, \texttt{content\_hash}.
+
+\paragraph{DDL Sketch}
+\begin{verbatim}
+CREATE TABLE Attempt (
+  id TEXT PRIMARY KEY,
+  session_id TEXT NOT NULL,
+  item_id TEXT NOT NULL,
+  result TEXT CHECK (result IN ('correct','incorrect','skipped')),
+  latency_ms INTEGER CHECK (latency_ms >= 0),
+  attempts_n INTEGER DEFAULT 1,
+  hints_used INTEGER DEFAULT 0,
+  provenance_id TEXT NOT NULL,
+  policy_version TEXT NOT NULL,
+  content_hash TEXT NOT NULL,
+  created_at TIMESTAMP NOT NULL
+);
+CREATE INDEX ix_attempt_session ON Attempt(session_id);
+\end{verbatim}
+
+\paragraph{Computations}
+\begin{itemize}
+  \item \textbf{MLEM}: \(\texttt{value}=\frac{\texttt{gain\_units}}{\max(1,\ \texttt{effort\_units})}\).
+  \item \textbf{TCI state}: derived from \texttt{time\_spent\_s} vs. adaptive band; values \(\in\{\texttt{rising},\texttt{steady},\texttt{overload}\}\).
+  \item \textbf{CSL gate}: \(\texttt{open|cooldown|closed}\) from \(\texttt{load\_score}\) with hysteresis.
+\end{itemize}
+
+\paragraph{PII Policy}
+\begin{itemize}
+  \item ULMS uses \texttt{pseudo\_id}; no direct identifiers. Mapping keys remain solely in S2H enclave.
+  \item Small-cell suppression and k-anonymity enforced on cohort exports.
+\end{itemize}
+
+\bigskip
+\subsection{Event Bus (Topics \& Payloads)}\label{sec:event-bus}
+
+\paragraph{Conventions}
+Kebab-case topic names; semantic versioning (\texttt{.v1}, \texttt{.v2}, \dots). All payloads are signed then hashed into the ledger. Idempotency via \texttt{id} and \texttt{ts}. Retries are backoff with DLQ.
+
+\paragraph{Security Envelope}
+\begin{verbatim}
+{
+ "topic":"…", "id":"evt_…", "payload":{…},
+ "provenance":{"did":"did:key:z6M…","hash":"b64…","policy":"v1.2","sig":"b64…"},
+ "ts":"2025-10-15T14:21:00Z"
+}
+\end{verbatim}
+
+\paragraph{Topics}
+\begin{itemize}
+  \item \texttt{intrinsica.risk.update.v1}
+\begin{verbatim}
+{
+ "subject_pid":"p_9f3…",
+ "risk":{"anxiety":0.62,"sleep":0.74},
+ "features":{"hrv_rmssd":32,"sleep_eff":0.81},
+ "cohort":"hs-grade10",
+ "provenance":{"did":"did:key:z6M…","hash":"b64…","policy":"v1.2"},
+ "ts":"2025-10-15T14:21:00Z"
+}
+\end{verbatim}
+  \item \texttt{ulms.session.attempted.v1} (de-ID)
+\begin{verbatim}
+{
+ "pseudo_id":"u_ab1…","module":"sleep-101","item":"breath-cadence","latency_ms":1830,
+ "result":"correct","csl":{"load":0.43,"gate":"open"},
+ "tci":{"concept":"hrv-basics","time_s":95},
+ "per_ref":"per_7d2…","provenance":{"hash":"b64…"},
+ "ts":"2025-10-15T14:22:10Z"
+}
+\end{verbatim}
+  \item \texttt{s2h.adherence.event.v1} (PHI only inside S2H VPC)
+  \item \texttt{privacy.audit.event.v1} (constraint hits, policy drifts)
+  \item \texttt{reciprocity.delta.v1}, \texttt{pilila.milestone.v1}, \texttt{csl.state.change.v1}
+\end{itemize}
+
+\paragraph{Delivery \& QoS}
+\begin{itemize}
+  \item At-least-once delivery; consumers must be idempotent.
+  \item DLQ after bounded retries; ledger still records failed-envelope hashes.
+\end{itemize}
+
+\bigskip
+\subsection{Subscriptions and Webhooks}\label{sec:subs-webhooks}
+
+\paragraph{FHIR Subscriptions}
+S2H subscribes to \texttt{Observation.category in [survey, vital-signs]} and \texttt{QuestionnaireResponse} for enrolled cohorts.
+\begin{verbatim}
+{
+ "resourceType":"Subscription","status":"active",
+ "criteria":"Observation?category=survey,vital-signs",
+ "channel":{"type":"rest-hook",
+            "endpoint":"https://s2h.example/hooks/fhir",
+            "payload":"application/fhir+json",
+            "header":["Authorization: Bearer <token>"]}
+}
+\end{verbatim}
+
+\paragraph{ULMS Webhooks}
+\texttt{POST /hooks/attempted}, \texttt{POST /hooks/module-complete}, \texttt{POST /hooks/csl-change}.
+\begin{itemize}
+  \item \emph{Auth}: DID-bound JWT + mTLS.
+  \item \emph{Idempotency}: \texttt{Idempotency-Key} header; duplicate bodies must be ignored.
+  \item \emph{Response}: \texttt{202 Accepted} with \texttt{receipt\_id}; retries with exponential backoff.
+\end{itemize}
+
+% Section 16.1 — Core Roles Alignment (expanded for Citizen Gardens overlay)
+
+
+% Section 4 — Security, Privacy, Governance (expanded)
+\section{Security, Privacy, Governance}
+
+\subsection{Principles}
+\begin{enumerate}
+  \item \textbf{Purpose-binding}: every write carries explicit purpose-of-use.
+  \item \textbf{Least privilege}: scoped, time-bound access tokens; mTLS between zones.
+  \item \textbf{De-identification by default}: education zone receives de-ID aggregates only.
+  \item \textbf{Traceability}: all events signed, hashed, and anchored to a permissioned ledger.
+  \item \textbf{Sovereignty}: offline-first operation with community-held keys and delayed sync.
+\end{enumerate}
+
+\subsection{HIPAA/GDPR Alignment}
+\begin{itemize}
+  \item \textbf{HIPAA}: access controls, audit controls, integrity, transmission security; BAAs in place.
+  \item \textbf{GDPR}: lawfulness and purpose limitation; data minimization; SAR/portability; erasure and revocation; DPIA for high-risk pilots.
+  \item \textbf{Operationalization}: policy engine enforces purpose tags; processors blocked if policy mismatch.
+\end{itemize}
+
+\subsection{Sovereignty}
+\begin{itemize}
+  \item \textbf{Community keys}: DID-based identities; local custodians rotate keys on schedule.
+  \item \textbf{Offline bundles}: content and policy packs signed; CRDT-based merge on reconnect.
+  \item \textbf{Delayed sync}: bounded staleness targets; conflict resolution rules favor newest policy version.
+\end{itemize}
+
+\subsection{Ledger and Provenance}
+\begin{itemize}
+  \item \textbf{Model}: permissioned, append-only; entries store \{\texttt{event\_hash}, \texttt{policy\_version}, \texttt{did}, \texttt{ts}\}.
+  \item \textbf{Usage}: every FHIR write and ULMS webhook emits a provenance record; ledger stores content-hash, not payload.
+  \item \textbf{Assurance}: verifiable chain for audits, incident postmortems, and DPIA evidence.
+\end{itemize}
+
+\subsection{Re-identification Boundary}
+\begin{itemize}
+  \item \textbf{Rule}: re-ID only inside the S2H enclave via KMS-sealed token vault.
+  \item \textbf{Dual control}: emergency re-ID requires two approvers (clinician + steward); ledger-logged.
+  \item \textbf{Exports}: all cross-zone egress is de-ID; small-cell suppression and k-anonymity thresholds applied.
+\end{itemize}
+
+\subsection{Audits}
+\begin{itemize}
+  \item \textbf{Stream}: continuous privacy audit events $\rightarrow$ dashboards.
+  \item \textbf{KPI}: \emph{Privacy audit pass-rate} $=$ compliant\_events / total\_auditable\_events.
+  \item \textbf{Signals}: constraint hits, policy drifts, denied writes, degraded modes.
+\end{itemize}
+
+\subsection{Equity \& Neurodiversity}
+\begin{itemize}
+  \item \textbf{Policy pack}: culturally responsive content; accommodations catalogs; ASD EchoBraid profiles.
+  \item \textbf{Checks}: routine distribution tests on outcomes; flag disparate impact; throttle intensity via CSL.
+\end{itemize}
+
+\subsection{De-ID Pipeline (Stream)}
+\paragraph{Steps}
+\begin{enumerate}
+  \item Tokenize \(\mathrm{PID}\rightarrow\mathrm{pseudo\_id}\) using format-preserving encryption (FPE).
+  \item Drop direct identifiers; generalize quasi-identifiers to cohort bins (age-band, zipcode prefix).
+  \item Attach \texttt{provenance+policy} and purpose; hash payload; emit de-ID topic.
+\end{enumerate}
+
+\paragraph{Pseudo-code}
+\begin{verbatim}
+function deid(event):
+  pid = event.subject_pid
+  pseudo = FPE.encrypt(pid, key=K_deid)
+  payload = strip_identifiers(event)
+  payload.subject = {"pseudo_id": pseudo}
+  payload.quasi = generalize(payload.quasi)
+  env = {policy: P.current, purpose: event.purpose}
+  hash = blake3(serialize(payload||env))
+  emit(topic=event.topic+".deid", body=payload, provenance={hash, env})
+\end{verbatim}
+
+\subsection{Consent and Subject Rights}
+\begin{itemize}
+  \item \textbf{Consent model}: purpose tags \{clinical-care, research, educational-deid\}; scope and expiry.
+  \item \textbf{Revocation}: real-time flag; downstream processors receive \emph{deny} on policy check.
+  \item \textbf{SAR/Portability}: subject export bundles; FHIR Bulk for clinical; ULMS traces as de-ID aggregates.
+  \item \textbf{Erasure}: best-effort deletion of primary stores; tombstone on ledger with revocation pointer.
+\end{itemize}
+
+\subsection{Access Control}
+\begin{itemize}
+  \item \textbf{AuthN}: OAuth2 client-credentials for services; DID-bound JWTs; mTLS between zones.
+  \item \textbf{AuthZ}: ABAC policy engine evaluates \{\texttt{purpose}, \texttt{role}, \texttt{cohort}, \texttt{zone}\}.
+  \item \textbf{Scopes}: \texttt{fhir.write:survey}, \texttt{fhir.read:deid}, \texttt{ulms.webhook:ingest}, \texttt{risk.read:cohort}.
+\end{itemize}
+
+\subsection{Key Management}
+\begin{itemize}
+  \item \textbf{Vault}: KMS-backed; split-key custody for re-ID; rotation every 90 days or on incident.
+  \item \textbf{At-rest}: AES-256-GCM; \emph{per-tenant} data keys; envelope encryption.
+  \item \textbf{In-transit}: TLS 1.3; certificate pinning for sovereign sites.
+\end{itemize}
+
+\subsection{Incident Response}
+\begin{itemize}
+  \item \textbf{Sev-1 (privacy/safety)}: freeze egress, rotate keys, notify stewards, root cause $<72$\,h, ledger postmortem.
+  \item \textbf{Sev-2 (availability)}: degrade to cached policies and offline bundles; replay on recovery.
+\end{itemize}
+
+\subsection{KPIs \& SLOs}
+\begin{center}
+\begin{tabular}{l l l}
+\hline
+\textbf{Metric} & \textbf{Target} & \textbf{Notes} \\
+\hline
+Privacy audit pass-rate & $\ge 0.98$ & rolling 30d \\
+SAR fulfillment time & $\le 30$ days & GDPR-aligned \\
+Revocation propagation & $< 5$ min p95 & cross-zone \\
+Policy drift MTTR & $< 24$ h & automated revert \\
+Re-ID approval latency & $< 10$ min & dual control \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{Governance Roles \& RACI}
+\begin{center}
+\begin{tabular}{l c c c c}
+\hline
+\textbf{Decision} & \textbf{Stewards} & \textbf{Intrinsica} & \textbf{S2H} & \textbf{HEP} \\
+\hline
+Policy update (consent) & R/A & C & C & C \\
+Ledger schema change & A & R & C & C \\
+Re-ID emergency access & A & C & R & I \\
+Content accommodation set & A & C & C & R \\
+Audit remediation plan & R/A & R & R & R \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{Audit Event Examples}
+\paragraph{\texttt{privacy.audit.event.v1}}
+\begin{verbatim}
+{
+ "id":"aud_7kx…","type":"policy-drift","severity":"warn",
+ "actor":"svc:ulms","resource":"Observation","zone":"education",
+ "details":{"expected_policy":"v1.3","observed":"v1.2"},
+ "provenance":{"did":"did:key:z6M…","hash":"b64…","policy":"v1.3"},
+ "ts":"2025-10-15T15:02:11Z"
+}
+\end{verbatim}
+
+\paragraph{Constraint Hit (CSL)}
+\begin{verbatim}
+{
+ "id":"aud_csl…","type":"constraint-hit","severity":"info",
+ "actor":"svc:ulms","constraint":"csl.cooldown",
+ "subject":{"pseudo_id":"u_ab1…"},"module":"sleep-101",
+ "ts":"2025-10-15T15:03:44Z"
+}
+\end{verbatim}
+
+% Section 5 — Feedback Loops (Instrumented)
+\section{Feedback Loops (Instrumented)}
+
+\subsection{Overview}
+Three loops are implemented and measured: \emph{Personalization}, \emph{Translation}, and \emph{R\&D}. Each loop has inputs, decisions, actions, telemetry, KPIs, SLOs, and failure backoffs.
+
+\subsection{Loop A: Personalization}\label{sec:loop-personalization}
+
+\paragraph{Narrative}
+Wearables/EHR $\rightarrow$ Intrinsica risk $\rightarrow$ XR micro-interventions in S2H + HEP $\rightarrow$ new signals. CSL rate-limits, Reciprocity balances cohort energy, $\pi$Līla tracks growth.
+
+\paragraph{Inputs}
+\begin{itemize}
+  \item \textbf{Signals}: HRV, sleep efficiency, activity, PROMs, ULMS attempts (de-ID).
+  \item \textbf{Context}: cohort, accommodations, cultural pack, prior $\pi$Līla milestones.
+  \item \textbf{Policies}: purpose tags, throttle bounds, inclusion rules.
+\end{itemize}
+
+\paragraph{Decisions}
+\begin{enumerate}
+  \item \textbf{Risk mapping}: $r=\mathrm{RiskModel}(x)$ from feature vector $x$.
+  \item \textbf{CSL gating}: compute load $L \in [0,1]$, gate $\in \{\mathrm{open},\mathrm{cooldown},\mathrm{closed}\}$ with hysteresis.
+  \item \textbf{Reciprocity balance}: maintain cohort energy $E_t$; rate-limit group asks if out-of-band.
+  \item \textbf{$\pi$Līla progression}: select next milestone step and intensity.
+\end{enumerate}
+
+\paragraph{CSL Algorithm (hysteresis)}
+\begin{verbatim}
+Inputs: load_score L, thresholds θ_open<θ_cool<θ_close, cooldown τ
+State: gate ∈ {open,cooldown,closed}, t_last
+if gate==open    and L>θ_cool  -> gate=cooldown; t_last=now
+if gate==cooldown and L<θ_open and now-t_last>τ -> gate=open
+if L>θ_close -> gate=closed (human-in-loop); emit alert
+\end{verbatim}
+
+\paragraph{Reciprocity Balance}
+\[
+E_t = \lambda E_{t-1} + \alpha \cdot \text{inflow}_t - \beta \cdot \text{outflow}_t
+\]
+If $E_t \notin [E_{\min},E_{\max}]$, reduce group intensity by factor $\gamma \in (0,1)$ and schedule restitution tasks. Emit \texttt{reciprocity.delta.v1}.
+
+\paragraph{$\pi$Līla Milestones}
+Let path $P$ have ordered milestones $m_1,\dots,m_k$. Advance when criteria met:
+\[
+\text{advance if } \text{TCI}_P \in [t_{\min}, t_{\max}] \wedge \text{CSL}=\mathrm{open} \wedge \Delta r \ge \delta
+\]
+Emit \texttt{pilila.milestone.v1}.
+
+\paragraph{Actions}
+\begin{itemize}
+  \item Personalize module parameters: target cadence, difficulty band, session length.
+  \item Switch to low-intensity variant if gate $\ne$ open, preserve continuity.
+  \item Notify clinician (S2H) on sustained overload or risk spike.
+\end{itemize}
+
+\paragraph{Telemetry (events)}
+\begin{itemize}
+  \item \texttt{intrinsica.risk.update.v1} (per subject/cohort).
+  \item \texttt{csl.state.change.v1} (gate transitions).
+  \item \texttt{ulms.session.attempted.v1} (de-ID attempts).
+  \item \texttt{reciprocity.delta.v1}, \texttt{pilila.milestone.v1}, \texttt{privacy.audit.event.v1}.
+\end{itemize}
+
+\paragraph{KPIs}
+\begin{itemize}
+  \item Risk-score delta (30d): $\overline{\Delta z(r)}$.
+  \item Overload rate: $\frac{\#\{\text{gate}\neq\mathrm{open}\}}{\#\text{sessions}}$.
+  \item Time-to-next-milestone: median days per $\pi$Līla step.
+\end{itemize}
+
+\paragraph{SLOs}
+\begin{itemize}
+  \item Personalization p50 $<100$\,ms; CSL decision p50 $<50$\,ms.
+  \item Event end-to-end (device$\rightarrow$dashboard) p95 $<5$\,min cloud; $<24$\,h sovereign.
+\end{itemize}
+
+\paragraph{Failure Modes \& Backoffs}
+\begin{itemize}
+  \item Model unavailable $\rightarrow$ fallback policy band; log degraded mode.
+  \item Policy fetch fail $\rightarrow$ deny-by-default; queue with retry + jitter.
+  \item High overload streak $\rightarrow$ human-in-loop, shorter sessions, content swap.
+\end{itemize}
+
+\bigskip
+\subsection{Loop B: Translation}\label{sec:loop-translation}
+
+\paragraph{Narrative}
+Clinical insights $\rightarrow$ student systems-ethics projects $\rightarrow$ improved self-management/adherence. Use diagrammatic \textbf{G$\leftrightarrow$N$\leftrightarrow$Q} tasks to promote transfer.
+
+\paragraph{G$\leftrightarrow$N$\leftrightarrow$Q Task Types}
+\begin{itemize}
+  \item \textbf{G (Graphical)}: causal graphs of sleep $\rightarrow$ mood $\rightarrow$ adherence.
+  \item \textbf{N (Numerical)}: compute HRV summary, risk deltas, adherence percentages.
+  \item \textbf{Q (Qualitative)}: ethics reflection on intensity throttling and consent.
+\end{itemize}
+
+\paragraph{Pipeline}
+\begin{enumerate}
+  \item Ingest de-ID cohort trends from Intrinsica; select 2--3 actionable findings.
+  \item Generate dual-skin micro-lessons with identical IDs/policies.
+  \item Orchestrate project prompts that span G, N, Q modalities.
+  \item Collect PER artifacts; compute MLEM; update TCI; feed back to risk models.
+\end{enumerate}
+
+\paragraph{Telemetry}
+\begin{itemize}
+  \item \texttt{ulms.session.attempted.v1} with PER refs.
+  \item \texttt{pilila.milestone.v1} for completed project rings.
+\end{itemize}
+
+\paragraph{Outcomes}
+\begin{itemize}
+  \item Adherence uplift in matched cohorts.
+  \item Literacy index gain (survey $\rightarrow$ \texttt{QuestionnaireResponse} de-ID).
+\end{itemize}
+
+\paragraph{KPIs \& SLOs}
+\begin{itemize}
+  \item Self-management score: composite of plan-day completion and literacy gain.
+  \item Transfer index: proportion of G tasks whose concepts reappear in N or Q answers within 14 days.
+  \item Lesson generation latency p50 $<10$\,s (cached assets), render p50 $<150$\,ms.
+\end{itemize}
+
+\paragraph{Backoffs}
+\begin{itemize}
+  \item Content drift detected $\rightarrow$ freeze variant, roll back to last signed bundle.
+  \item Low transfer index $\rightarrow$ raise graphical scaffolds, reduce numeric load.
+\end{itemize}
+
+\bigskip
+\subsection{Loop C: R\&D}\label{sec:loop-rnd}
+
+\paragraph{Narrative}
+HEP learners $\rightarrow$ S2H pilots (\emph{``Quantum Medicine''}) with Intrinsica telemetry/analytics. Classroom cadence, logging dashboards, offline alternatives defined.
+
+\paragraph{Enrollment Flow}
+\begin{enumerate}
+  \item Create \texttt{ResearchStudy} and \texttt{Group} (cohort).
+  \item Register de-ID \texttt{ResearchSubject} with cohort linkage.
+  \item Activate FHIR Subscriptions for survey/vital-signs; enable ULMS webhooks.
+\end{enumerate}
+
+\paragraph{Cadence}
+\begin{itemize}
+  \item \textbf{Classroom}: 2--3 sessions/week; 15--20\,min XR blocks; weekly reflection.
+  \item \textbf{Clinic}: tele-check every 2 weeks; adjust protocol; monitor PROMs.
+\end{itemize}
+
+\paragraph{Dashboards}
+\begin{itemize}
+  \item \emph{Ethical Vital Signs}: engagement, reciprocity balance, CSL hits, equity gaps.
+  \item \emph{R\&D Board}: enrollment, adherence, risk deltas, milestone velocity.
+\end{itemize}
+
+\paragraph{Offline Alternatives}
+\begin{itemize}
+  \item Firebook bundles with delayed sync; CRDT merge; audit stamps on reconnect.
+\end{itemize}
+
+\paragraph{Telemetry}
+\begin{itemize}
+  \item \texttt{s2h.adherence.event.v1} (PHI; S2H enclave only).
+  \item \texttt{intrinsica.risk.update.v1}, \texttt{ulms.session.attempted.v1}.
+\end{itemize}
+
+\paragraph{KPIs \& Acceptance}
+\begin{itemize}
+  \item Enrollment $\geq$ 90\% of invited learners; completion $\geq$ 70\%.
+  \item Adherence $+8$pp vs baseline by week 8; equity gap closed $\geq 0.15$ in target metric.
+\end{itemize}
+
+\paragraph{Governance}
+\begin{itemize}
+  \item DPIA on first cohort; consent scopes \{\texttt{clinical-care}, \texttt{research}, \texttt{educational-deid}\}.
+  \item Dual-control re-ID for SAE review; ledger-posted postmortems within 72\,h.
+\end{itemize}
+
+\bigskip
+\subsection{Loop Interfaces (Index)}
+\begin{itemize}
+  \item Events: \texttt{intrinsica.risk.update.v1}, \texttt{ulms.session.attempted.v1}, \texttt{csl.state.change.v1}, \texttt{reciprocity.delta.v1}, \texttt{pilila.milestone.v1}, \texttt{privacy.audit.event.v1}.
+  \item FHIR: \texttt{Observation}, \texttt{QuestionnaireResponse}, \texttt{ResearchStudy}, \texttt{ResearchSubject}, \texttt{Provenance}.
+\end{itemize}
+
+\subsection{Minimal Test Cases}
+\paragraph{A/B Personalization}
+\begin{verbatim}
+Given risk.sleep high AND CSL=open
+When XR intensity +10% vs control
+Then Δz(sleep) at 30d improves ≥ 0.25 AND overload rate ≤ 0.10
+\end{verbatim}
+
+\paragraph{Translation Transfer}
+\begin{verbatim}
+Given G-task completion ≥ 2 in week 1
+When N-task appears in week 2
+Then Transfer index ≥ 0.6 with no equity gap > 0.1
+\end{verbatim}
+
+\paragraph{R\&D Safety}
+\begin{verbatim}
+Given SAE flag in S2H
+When re-ID request occurs
+Then dual approval within 10 min AND ledger entry emitted
+\end{verbatim}
+
+% Section 6 — XR Module Family (Dual Skin) — expanded
+\section{XR Module Family (Dual Skin)}
+
+\subsection{Taxonomy and Skins}
+\paragraph{Families}
+\begin{itemize}
+  \item \textbf{Sleep/Stress/Metabolism (SSM)}: habits, HRV/breathwork, metabolic basics; CSL-gated intensities.
+  \item \textbf{Quantum Literacy ``Lite'' (QLL)}: copy vs.\ no-clone puzzles, chance boxes, flow labs; ethics notes.
+  \item \textbf{Systems Health (SH)}: braids/swaps for routines, random-walk recovery plans, conservation of attention.
+\end{itemize}
+
+\paragraph{Dual Skin Contract}
+Each module renders in two skins with identical IDs and policies.
+\begin{itemize}
+  \item \textbf{student}: pedagogy-first; credits to ULMS gradebook; richer PER artifacts.
+  \item \textbf{patient}: adherence-first; shorter blocks; clinical prompts and care-plan hooks.
+\end{itemize}
+
+\subsection{Module Contract}
+\begin{verbatim}
+{
+  "id": "sleep-101", "skin": "student|patient",
+  "prereq": ["intro-hrv"],
+  "csl_gates": {"max_load": 0.65, "backoff": {"cooldown_s": 120}},
+  "signals": ["breath-cadence", "focus-interval"],
+  "telemetry": ["attempts", "latency_ms", "hints", "dropouts", "csl"],
+  "outcomes": {"target": {"sleep_eff": ">=0.85"}, "time_horizon_d": 30}
+}
+\end{verbatim}
+
+\paragraph{Field Rules}
+\begin{itemize}
+  \item \texttt{id}: kebab-case; semver via package manifest.
+  \item \texttt{skin}: runtime parameter; cannot alter \texttt{id} or \texttt{policy}.
+  \item \texttt{prereq}: DAG with cycle check at publish.
+  \item \texttt{csl\_gates.max\_load} $\in (0,1)$; \texttt{cooldown\_s} $\ge 60$.
+  \item \texttt{signals}: must map to sensor API or simulated input.
+  \item \texttt{outcomes.target}: typed comparators; validated against analytics dictionary.
+\end{itemize}
+
+\paragraph{JSON Schema (excerpt)}
+\begin{verbatim}
+"csl_gates": {
+  "type":"object",
+  "properties":{
+    "max_load":{"type":"number","minimum":0.1,"maximum":0.95},
+    "backoff":{"type":"object","properties":{"cooldown_s":{"type":"integer","minimum":60}}}
+  },
+  "required":["max_load","backoff"]
+}
+\end{verbatim}
+
+\subsection{Intensity, CSL, Reciprocity, πLīla}
+\paragraph{CSL Gating}
+Let load $L\in[0,1]$. Gate$=\{\mathrm{open},\mathrm{cooldown},\mathrm{closed}\}$ with hysteresis thresholds $\theta_{o}<\theta_{c}<\theta_{x}$.
+\begin{verbatim}
+if gate==open and L>θ_c -> gate=cooldown (cooldown_s)
+if gate==cooldown and L<θ_o -> gate=open
+if L>θ_x -> gate=closed; human-in-loop alert
+emit csl.state.change
+\end{verbatim}
+
+\paragraph{Reciprocity Balance}
+\[
+E_t=\lambda E_{t-1}+\alpha\,\text{inflow}_t-\beta\,\text{outflow}_t,\quad
+E_t\notin[E_{\min},E_{\max}] \Rightarrow \text{group\_intensity}\leftarrow\gamma\cdot\text{group\_intensity}
+\]
+Emit \texttt{reciprocity.delta.v1}.
+
+\paragraph{$\pi$Līla Progression}
+Advance milestone when CSL=open, TCI within band, and $\Delta z(\text{risk})\ge\delta$. Emit \texttt{pilila.milestone.v1}.
+
+\subsection{Telemetry and Events}
+\begin{itemize}
+  \item Session attempts: \texttt{ulms.session.attempted.v1}.
+  \item CSL transitions: \texttt{csl.state.change.v1}.
+  \item Milestones: \texttt{pilila.milestone.v1}.
+  \item Privacy and policy: \texttt{privacy.audit.event.v1}.
+\end{itemize}
+
+\subsection{Family Blueprints}
+\paragraph{SSM Modules}
+\begin{itemize}
+  \item \textbf{sleep-101} (this contract): breath pacing, stimulus control micro-lessons.
+  \item \textbf{stress-201}: box-breath ladder, cognitive reframe mini-games; signal \texttt{focus-interval}.
+  \item \textbf{metabolism-101}: meal timing, gentle movement breaks; outcome target \texttt{postprandial\_drift $\le$ 20\%}.
+\end{itemize}
+
+\paragraph{QLL Modules}
+\begin{itemize}
+  \item \textbf{quantum-lite-101}: copy vs.\ no-clone puzzle; chance boxes; ethics prompt on certainty.
+  \item \textbf{quantum-lite-102}: flow labs on interference; stochastic narrative choices.
+\end{itemize}
+
+\paragraph{SH Modules}
+\begin{itemize}
+  \item \textbf{systems-101}: routine braids/swaps; conservation of attention tasks.
+  \item \textbf{recovery-random-walk}: stochastic micro-steps; safe bounds enforced by CSL.
+\end{itemize}
+
+\subsection{Skin Parameterization (examples)}
+\begin{center}
+\begin{tabular}{lcc}
+\hline
+\textbf{Parameter} & \textbf{student} & \textbf{patient} \\
+\hline
+Block length & 12--18 min & 6--12 min \\
+Prompt style & project/reflect & plan/adherence \\
+PER artifacts & rich (audio/img) & concise (checklist) \\
+Care hooks & none & care-plan writeback \\
+Cooldown & 120--180 s & 90--150 s \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{Assessment \& Outcomes Mapping}
+\begin{itemize}
+  \item \textbf{Engagement}: completion ratio; time-on-concept; dropout rate.
+  \item \textbf{Clinical/Behavioral}: sleep efficiency, HRV RMSSD, plan-day completion.
+  \item \textbf{Learning}: PER richness score, MLEM gain, TCI state stability.
+\end{itemize}
+
+\subsection{EchoBraid Add-on (ASD)}
+\paragraph{Design Goals}
+Rhythm-matched pacing; predictable turn-taking; co-regulation; sensory comfort; gradual ramps.
+
+\paragraph{Parameters}
+\begin{itemize}
+  \item \textbf{Pacing}: beat 40--90 BPM selectable; jitter $<\!\pm$5\%.
+  \item \textbf{Visual latency}: $<30$\,ms motion-to-photon; low-contrast palettes.
+  \item \textbf{Auditory envelopes}: attack 10--30\,ms; release 100--300\,ms within comfort band.
+  \item \textbf{Turn-taking}: explicit ``my turn/your turn'' markers; min 2\,s pause windows.
+  \item \textbf{Ramps}: intensity step $\le 10\%$ per minute; CSL override allowed to reduce further.
+\end{itemize}
+
+\paragraph{Contract Flags}
+\begin{verbatim}
+"echobraid": {
+  "enabled": true,
+  "pacing_bpm": 60,
+  "visual_latency_ms": 25,
+  "audio_env": {"attack_ms": 20, "release_ms": 200},
+  "turn_taking": {"min_pause_s": 2},
+  "ramp": {"max_step_per_min": 0.10}
+}
+\end{verbatim}
+
+\subsection{Accessibility \& Localization}
+Alt-text and captions; haptic alternatives; reading-level variants; locale packs; culturally responsive examples.
+
+\subsection{Offline-First Packaging}
+Signed ``firebook'' bundles with assets, policies, and tests; CRDT merge on reconnect; ledger stamps.
+
+\subsection{QA, Safety, and Versioning}
+\begin{itemize}
+  \item Content semver; lock during audits; A/B within guardrails.
+  \item Red-team checks for overload risks; CSL test suite; k-anonymity checks for aggregates.
+\end{itemize}
+
+\subsection{Acceptance Tests (per module)}
+\paragraph{SSM Sleep-101}
+\begin{verbatim}
+Given CSL=open and baseline sleep_eff < 0.80
+When breath-cadence used ≥ 4 sessions/week
+Then sleep_eff ≥ 0.85 within 30d and overload_rate ≤ 0.10
+\end{verbatim}
+
+\paragraph{QLL Quantum-Lite-101}
+\begin{verbatim}
+Given completion of copy vs no-clone puzzle
+When assessed after 7d
+Then transfer score ≥ 0.6 across G↔N↔Q prompts
+\end{verbatim}
+
+\paragraph{SH Systems-101}
+\begin{verbatim}
+Given routine-braid adoption ≥ 3 days/week
+Then plan-day completion +6pp vs baseline within 21d
+\end{verbatim}
+% Section 7 — KPIs and Formulas (expanded)
+\section{KPIs and Formulas}
+
+\subsection{Notation and Windows}
+Let learners be indexed by $i$, sessions by $s$, days by $t$, cohorts by $c$. Rolling window $W$ defaults to 30 days unless noted. Aggregation uses either macro average (per-learner mean) or micro average (global ratio). Denominators must be $>0$.
+
+\subsection{Core KPIs}
+
+\paragraph{XR engagement}
+Per learner: $E_i=\dfrac{\text{completed\_sessions}_i}{\text{assigned\_sessions}_i}$.
+\[
+E_{\text{macro}}=\frac{1}{|L|}\sum_{i\in L}E_i,\qquad
+E_{\text{micro}}=\frac{\sum_i \text{completed\_sessions}_i}{\sum_i \text{assigned\_sessions}_i}
+\]
+
+\paragraph{Risk-score delta}
+Let $r_{i,t}$ be a risk score and $\mu,\sigma$ be baseline mean and std from a pre period $B$. Define $z_{i,t}=\dfrac{r_{i,t}-\mu}{\sigma}$. The 30-day change for learner $i$ is
+\[
+\Delta z_{i}^{30}=\frac{1}{|W|}\sum_{t\in W}\left(z_{i,t}-z_{i,t-30}\right)
+\]
+Cohort aggregate: $\Delta z_{c}^{30}=\frac{1}{|L_c|}\sum_{i\in L_c}\Delta z_{i}^{30}$.
+
+\paragraph{Adherence}
+Dose adherence: $A^{\text{dose}}_i=\dfrac{\text{on\_time\_doses}_i}{\text{scheduled\_doses}_i}$.
+Plan-day adherence: $A^{\text{plan}}_i=\dfrac{\text{plan\_days\_completed}_i}{\text{plan\_days\_assigned}_i}$.
+
+\paragraph{ULMS completion}
+$C_i=\dfrac{\text{completed\_micro\_lessons}_i}{\text{assigned\_micro\_lessons}_i}$.
+Macro or micro aggregation as in engagement.
+
+\paragraph{Equity gap closed}
+Let $g$ index groups or use distributional bands. Default distributional gap: $G_{\text{now}}=P90-P10$ for the outcome of interest. With baseline $G_0$,
+\[
+\text{GapClosed}=\frac{G_0-G_{\text{now}}}{\max(G_0,\epsilon)}
+\]
+Group-wise variant: $\text{GapClosed}=\dfrac{(\bar{y}_{\max,0}-\bar{y}_{\min,0})-(\bar{y}_{\max}-\bar{y}_{\min})}{\max(\bar{y}_{\max,0}-\bar{y}_{\min,0},\epsilon)}$.
+
+\paragraph{Privacy audit pass-rate}
+\[
+P_{\text{privacy}}=\frac{\text{compliant\_events}}{\text{total\_auditable\_events}}
+\]
+Constraint hits, policy drift, and denied writes are noncompliant.
+
+\subsection{Learning Process Metrics}
+
+\paragraph{PER richness}
+Let $k$ be artifact types and $w_k$ weights. For learner $i$ in window $W$,
+\[
+\text{PER}_{i}=\frac{\sum_{a\in W}\sum_{k} w_k \cdot \mathbf{1}\{\text{artifact}_{a,k}\}}{\sum_{a\in W}1}
+\]
+
+\paragraph{MLEM}
+Gain units $G_i$ and effort units $E_i$ over $W$,
+\[
+\text{MLEM}_{i}=\frac{G_i}{\max(1,E_i)}\quad\text{with}\quad G_i=\Delta \text{TCI mastery or assessment delta},\ E_i=\text{time on task}+\text{hints}
+\]
+
+\paragraph{TCI state}
+Time on concept $T_{i,c}$ vs adaptive band $[t_{\min},t_{\max}]$,
+\[
+\text{state}_{i,c}=\begin{cases}
+\text{rising} & T_{i,c}\in[t_{\min},t_{\max}] \\
+\text{overload} & T_{i,c}>t_{\max} \\
+\text{underload} & T_{i,c}<t_{\min}
+\end{cases}
+\]
+Stability is the share of sessions with nonoverload states.
+
+\subsection{Aggregation and Robustness}
+\begin{itemize}
+  \item Winsorize outliers at 1st and 99th percentiles before cohort means.
+  \item Enforce $k$-anonymity on subgroup reports; suppress cells with $n<k$.
+  \item Prefer micro averages when assignment counts vary widely.
+\end{itemize}
+
+\subsection{Service Levels for Analytics}
+\begin{itemize}
+  \item Risk delta materialization p95 $<5$ min cloud, $<24$ h sovereign.
+  \item Dashboard freshness p95 $<10$ min for cloud cohorts.
+\end{itemize}
+
+\subsection{SQL and Pseudocode}
+
+\paragraph{Risk-score delta (30d)}
+\begin{verbatim}
+-- risk_daily: columns [subject_id, cohort, date, risk_z_today, risk_z_30d_ago]
+SELECT cohort, AVG(risk_z_today - risk_z_30d_ago) AS delta30
+FROM risk_daily
+WHERE date BETWEEN :start AND :end
+GROUP BY cohort;
+\end{verbatim}
+
+\paragraph{Equity gap closed}
+\begin{verbatim}
+-- outcomes_dist: columns [date, metric, p10, p90, baseline_gap]
+SELECT (baseline_gap - (p90 - p10)) / NULLIF(baseline_gap,0) AS gap_closed
+FROM outcomes_dist
+WHERE metric = :metric AND date BETWEEN :start AND :end;
+\end{verbatim}
+
+\paragraph{XR engagement (micro average)}
+\begin{verbatim}
+SELECT SUM(completed_sessions)::float / NULLIF(SUM(assigned_sessions),0) AS engagement_micro
+FROM xr_assignments
+WHERE date BETWEEN :start AND :end;
+\end{verbatim}
+
+\paragraph{ULMS completion (macro average)}
+\begin{verbatim}
+WITH per_learner AS (
+  SELECT learner_id,
+         SUM(completed_micro_lessons)::float / NULLIF(SUM(assigned_micro_lessons),0) AS comp_i
+  FROM ulms_lessons
+  WHERE date BETWEEN :start AND :end
+  GROUP BY learner_id
+)
+SELECT AVG(comp_i) AS completion_macro FROM per_learner;
+\end{verbatim}
+
+\paragraph{Privacy audit pass-rate}
+\begin{verbatim}
+SELECT SUM(CASE WHEN compliant THEN 1 ELSE 0 END)::float
+       / NULLIF(COUNT(*),0) AS privacy_pass_rate
+FROM privacy_audit_events
+WHERE ts BETWEEN :start AND :end;
+\end{verbatim}
+
+\paragraph{TCI stability}
+\begin{verbatim}
+WITH states AS (
+  SELECT learner_id,
+         SUM(CASE WHEN state IN ('rising','underload') THEN 1 ELSE 0 END)::float
+         / NULLIF(COUNT(*),0) AS stability
+  FROM tci_events
+  WHERE ts BETWEEN :start AND :end
+  GROUP BY learner_id
+)
+SELECT AVG(stability) AS tci_stability_macro FROM states;
+\end{verbatim}
+
+\subsection{Acceptance Bands}
+\begin{center}
+\begin{tabular}{l l}
+\hline
+Metric & Target band \\
+\hline
+XR engagement (micro) & $\ge 0.70$ during S1 \\
+Risk-score delta (sleep) & $\Delta z \le -0.25$ at 30d \\
+Plan-day adherence & $+8$ percentage points vs baseline \\
+Equity gap closed & $\ge 0.15$ in target metric \\
+Privacy audit pass-rate & $\ge 0.98$ rolling 30d \\
+TCI stability & $\ge 0.80$ nonoverload share \\
+\hline
+\end{tabular}
+\end{center}
+
+% Section 8 — API Surface (expanded)
+\section{API Surface}
+
+\subsection{Gateway}
+\begin{itemize}
+  \item \textbf{AuthN}: OAuth2 client-credentials for services. JWT access tokens are \emph{bound to W3C DIDs}.
+  \item \textbf{Transport}: mTLS between zones (client cert required). TLS\,1.3 only.
+  \item \textbf{AuthZ}: scope-checked at gateway; ABAC policy engine evaluates \{purpose, role, cohort, zone\}.
+  \item \textbf{Versioning}: semantic (\texttt{/v1/...}); deprecations with $\geq$90\,d overlap.
+  \item \textbf{Rate limits}: default 600 rpm per client; burst 60 rps; \texttt{Retry-After} on 429.
+  \item \textbf{Idempotency}: \texttt{Idempotency-Key} header for all POST webhooks; replay-safe within 24\,h.
+\end{itemize}
+
+\paragraph{Token Retrieval (client-credentials)}
+\begin{verbatim}
+POST https://gateway.example/oauth2/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=client_credentials&scope=fhir.read:deid fhir.write:survey ulms.webhook:ingest
+-- Response --
+{"access_token":"eyJhbGciOi...","token_type":"Bearer","expires_in":3600}
+\end{verbatim}
+
+\paragraph{JWT (claims excerpt; DID-bound)}
+\begin{verbatim}
+{
+ "iss":"https://gateway.example","sub":"svc:ulms","aud":"https://api.example",
+ "scope":"fhir.read:deid ulms.webhook:ingest","did":"did:key:z6M...",
+ "cnf":{"x5t#S256":"..."},"exp":1739558400,"iat":1739554800
+}
+\end{verbatim}
+
+\paragraph{Common Headers}
+\begin{verbatim}
+Authorization: Bearer <access_token>
+X-Policy-Version: v1.3
+X-Provenance-Hash: sha256-<base64>
+Idempotency-Key: <uuid>
+\end{verbatim}
+
+\subsection{FHIR Endpoints}
+Base: \texttt{https://api.example/fhir/R4}. Supports RESTful reads/writes, search, Bulk Data export, and Subscriptions.
+
+\paragraph{Search (examples)}
+\begin{verbatim}
+/Observation?category=vital-signs&date=ge2025-10-01
+/QuestionnaireResponse?subject.identifier=p_9f3...
+\end{verbatim}
+
+\paragraph{Bulk Export (cohort)}
+\begin{verbatim}
+GET /Group/hs-grade10/$export?_type=Observation,QuestionnaireResponse
+Prefer: respond-async
+-- 202 Accepted --
+Content-Location: https://api.example/fhir/R4/bulk/jobs/123
+\end{verbatim}
+
+\paragraph{Subscription (rest-hook)}
+\begin{verbatim}
+{ "resourceType": "Subscription", "status": "active",
+  "criteria": "Observation?category=survey,vital-signs",
+  "channel": {"type": "rest-hook", "endpoint": "https://s2h.example/hooks/fhir",
+              "payload": "application/fhir+json",
+              "header": ["Authorization: Bearer <token>"]}}
+\end{verbatim}
+
+\paragraph{QuestionnaireResponse (signed)}
+\begin{verbatim}
+{ "resourceType":"QuestionnaireResponse","status":"completed",
+  "subject":{"identifier":{"value":"p_9f3…"}},
+  "item":[{"linkId":"sleep_quality","answer":[{"valueInteger":7}]}] }
+-- Attach Provenance in same transaction or subsequent write:
+{ "resourceType":"Provenance","target":[{"reference":"QuestionnaireResponse/xyz"}],
+  "recorded":"2025-10-15T14:21:03Z",
+  "signature":[{"who":{"identifier":{"value":"did:key:z6M…"}},
+                "data":"b64-signature…"}],
+  "reason":[{"text":"policy:v1.2"}]}
+\end{verbatim}
+
+\subsection{ULMS Webhooks}
+Base: \texttt{https://ulms.example/hooks}. Auth: DID-bound JWT + mTLS. Responses are \texttt{202 Accepted} with receipt.
+
+\paragraph{POST /hooks/attempted}
+Stores \texttt{Attempt}, links \texttt{PER}, updates \texttt{TCI}, recomputes \texttt{MLEM}.
+\begin{verbatim}
+Headers:
+  Authorization: Bearer <token>
+  Idempotency-Key: <uuid>
+  Content-Type: application/json
+
+Body:
+{ "pseudo_id":"u_ab1…","module":"sleep-101","item":"breath-cadence",
+  "latency_ms":1830,"result":"correct",
+  "csl":{"load":0.43,"gate":"open"},
+  "tci":{"concept":"hrv-basics","time_s":95},
+  "per_ref":"per_7d2…","provenance":{"hash":"b64…"},
+  "ts":"2025-10-15T14:22:10Z" }
+
+-- 202 Accepted --
+{"receipt_id":"rcpt_7kxa...","status":"accepted"}
+\end{verbatim}
+
+\paragraph{POST /hooks/csl-change}
+Toggles gate/backoff and writes \texttt{CSLState}.
+\begin{verbatim}
+Body:
+{ "pseudo_id":"u_ab1…",
+  "from":"open","to":"cooldown",
+  "load":0.71,"cooldown_s":120,
+  "reason":"over_threshold","ts":"2025-10-15T14:23:05Z",
+  "provenance":{"hash":"sha256-...","policy":"v1.3"} }
+
+-- 202 Accepted --
+{"receipt_id":"rcpt_8mbf...","applied":true,"gate":"cooldown","until":"2025-10-15T14:25:05Z"}
+\end{verbatim}
+
+\paragraph{POST /hooks/module-complete} (optional)
+Writes completion artifact and updates progression.
+\begin{verbatim}
+Body:
+{ "pseudo_id":"u_ab1…","module":"sleep-101","duration_s":780,
+  "completion_state":"completed","artifacts":["per_7d2…"],"ts":"..."}
+\end{verbatim}
+
+\subsection{Schemas (excerpts)}
+\paragraph{\texttt{Attempt} webhook JSON Schema}
+\begin{verbatim}
+{
+ "type":"object",
+ "required":["pseudo_id","module","item","latency_ms","result","ts"],
+ "properties":{
+  "pseudo_id":{"type":"string"},
+  "module":{"type":"string","pattern":"^[a-z0-9-]+$"},
+  "item":{"type":"string"},
+  "latency_ms":{"type":"integer","minimum":0},
+  "result":{"type":"string","enum":["correct","incorrect","skipped"]},
+  "csl":{"type":"object","properties":{
+     "load":{"type":"number","minimum":0,"maximum":1},
+     "gate":{"type":"string","enum":["open","cooldown","closed"]}}},
+  "tci":{"type":"object","properties":{
+     "concept":{"type":"string"},"time_s":{"type":"integer","minimum":0}}},
+  "per_ref":{"type":"string"},
+  "provenance":{"type":"object","properties":{"hash":{"type":"string"}}},
+  "ts":{"type":"string","format":"date-time"}
+ }}
+\end{verbatim}
+
+\subsection{Error Model}
+\begin{verbatim}
+HTTP/1.1 400 Bad Request
+Content-Type: application/json
+{
+ "error":"invalid_payload",
+ "message":"latency_ms must be >= 0",
+ "trace_id":"trc_91f…",
+ "policy":"v1.3"
+}
+\end{verbatim}
+
+\subsection{Security Events}
+\begin{verbatim}
+Topic: privacy.audit.event.v1
+{
+ "id":"aud_7kx…","type":"deny","severity":"warn",
+ "actor":"svc:ulms","reason":"policy-mismatch",
+ "resource":"QuestionnaireResponse","zone":"education",
+ "provenance":{"did":"did:key:z6M…","hash":"b64…","policy":"v1.3"},
+ "ts":"2025-10-15T15:02:11Z"
+}
+\end{verbatim}
+
+% Section 9 — DevOps and Observability (expanded)
+\section{DevOps and Observability}
+
+\subsection{Environments \& IaC}
+\paragraph{Zones}
+\begin{itemize}
+  \item \textbf{S2H enclave}: PHI-permitted VPC; re-ID keys; FHIR writer.
+  \item \textbf{HEP zone}: de-ID only; ULMS + XR services.
+  \item \textbf{Intrinsica shared}: data plane, feature store, event bus, policy engine, ledger.
+\end{itemize}
+
+\paragraph{IaC (Terraform)}
+\begin{itemize}
+  \item Modules: \texttt{vpc}, \texttt{subnet\_sets}, \texttt{eks/aks}, \texttt{db\_lakehouse}, \texttt{event\_bus}, \texttt{kms}, \texttt{vault}, \texttt{waf}, \texttt{lb}, \texttt{s3/gcs}.
+  \item Per zone: network ACLs, SGs, private subnets, NAT egress, mTLS ingress.
+  \item State: backend with encryption and locking. CI plans require policy pass.
+\end{itemize}
+
+\paragraph{Environments}
+\begin{center}
+\begin{tabular}{l l l l}
+\hline
+Env & Purpose & Data class & Promotion \\
+\hline
+\texttt{dev} & rapid iteration & synthetic & PR merge \\
+\texttt{stage} & perf + policy & masked & tag + approval \\
+\texttt{prod} & live traffic & PHI/de-ID by zone & change window + dual approval \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{CI/CD}
+\begin{itemize}
+  \item \textbf{Gates}: policy-as-code, schema and API contract tests, SBOM presence, provenance attestation, vuln scan, license scan.
+  \item \textbf{Strategies}: blue/green for APIs, canary for ULMS, shadow for models, feature flags for XR content.
+  \item \textbf{Rollbacks}: automatic if SLO breach or error budget exhausted.
+\end{itemize}
+
+\paragraph{Pipeline (pseudo-YAML)}
+\begin{verbatim}
+stages: [lint, test, build, sbom, attest, deploy]
+- test: run unit+contract+policy
+- build: containerize; sign(image); push
+- sbom: syft -> store SBOM
+- attest: slsa-provenance -> in-toto
+- deploy: terraform plan+apply (gated); helm upgrade --atomic
+\end{verbatim}
+
+\subsection{Supply Chain Security}
+\begin{itemize}
+  \item Image signing, SLSA provenance, verified attestation at admission controller.
+  \item SBOM stored per release; CVE gates block deploys above threshold.
+\end{itemize}
+
+\subsection{Model Operations}
+\begin{itemize}
+  \item Registry with versioned features and models; training/serving skew monitors.
+  \item Drift: PSI/KL tests daily; alert if $>$ threshold. Champion/challenger online.
+\end{itemize}
+
+\subsection{Observability Stack}
+\begin{itemize}
+  \item \textbf{Metrics}: Prometheus/OpenMetrics; SLIs exported per service.
+  \item \textbf{Traces}: OpenTelemetry; 100\% head sampling for \texttt{/hooks/*}, 10\% for reads.
+  \item \textbf{Logs}: structured JSON; PII scrubbing at source; long-term archive WORM.
+  \item \textbf{Privacy audit stream}: dedicated topic; near-real-time dashboards.
+\end{itemize}
+
+\paragraph{Key SLIs}
+\begin{itemize}
+  \item ULMS webhook p50/p95 latency; error rate; idempotency conflict rate.
+  \item FHIR write success; subscription delivery delay.
+  \item Risk inference latency; feature freshness age.
+  \item Privacy pass-rate; policy drift count.
+\end{itemize}
+
+\subsection{SLOs and Error Budgets}
+\begin{center}
+\begin{tabular}{l l l}
+\hline
+Service & SLO & Error budget (30d) \\
+\hline
+ULMS webhooks & p95 $<150$ ms, $>$99.9\% success & 43 min latency+fail \\
+Risk API & p95 $<200$ ms, $>$99.9\% success & 43 min \\
+FHIR writer & p95 $<300$ ms, $>$99.95\% success & 21 min \\
+Privacy audit stream & p95 E2E $<2$ min & 1.4 h \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{Dashboards}
+\begin{itemize}
+  \item \textbf{Ethical Vital Signs}: engagement, reciprocity, CSL hits, equity gaps, privacy pass-rate.
+  \item \textbf{Ops}: latency histograms, saturation, error budgets, backlog depth, DLQ rate.
+  \item \textbf{Model}: drift, feature nulls, A/B deltas, calibration plots.
+\end{itemize}
+
+\subsection{Alerting \& Runbooks}
+\begin{itemize}
+  \item Alerts: page on SLO burn rate $>$ 2x, PHI egress attempt, policy drift, ledger lag, DLQ growth.
+  \item Runbooks: one-pagers for webhook backlog, subscription delay, drift breach, consent revocation surge.
+  \item On-call: follow-the-sun; sev-1 5 min ack, sev-2 15 min.
+\end{itemize}
+
+\subsection{PromQL Examples}
+\begin{verbatim}
+histogram_quantile(0.95, sum(rate(http_server_duration_seconds_bucket{
+  route="/hooks/attempted"}[5m])) by (le))
+sum(rate(http_requests_total{status=~"5.."}[5m])) by (service)
+/* Drift */
+avg(psi_observation_feature{x="hrv_rmssd"}) by (cohort)
+\end{verbatim}
+
+\subsection{Backups \& DR}
+\begin{itemize}
+  \item \textbf{Snapshots}: encrypted, hourly incrementals, daily full; 35-day retention.
+  \item \textbf{Lakehouse}: multi-region object storage with object lock; versioned parquet.
+  \item \textbf{RPO/RTO}: Intrinsica RPO 15 min / RTO 2 h; ULMS RPO 1 h / RTO 4 h; ledger RPO 0 / RTO 1 h.
+  \item \textbf{Sovereignty}: offline export packs (“firebooks”); checksum manifest; replay scripts.
+\end{itemize}
+
+\subsection{Chaos \& Resilience}
+\begin{itemize}
+  \item Fault injection: drop 5\% webhook acks; event bus partition; KMS throttle.
+  \item Acceptance: no data loss; at-least-once semantics; idempotent handlers verified.
+\end{itemize}
+
+\subsection{Secrets \& Keys}
+\begin{itemize}
+  \item Vault + KMS; short-lived tokens; rotation 90 days or on incident.
+  \item Split-key custody for re-ID; dual approval for unseal.
+\end{itemize}
+
+\subsection{Sample Terraform (excerpt)}
+\begin{verbatim}
+module "s2h_vpc" {
+  source = "./modules/vpc"
+  name   = "s2h-enclave"
+  cidr   = "10.10.0.0/16"
+  private_subnets = ["10.10.1.0/24","10.10.2.0/24"]
+  enable_vpn = true
+}
+
+module "event_bus" {
+  source = "./modules/event-bus"
+  topics = ["intrinsica.risk.update.v1","ulms.session.attempted.v1",
+            "privacy.audit.event.v1"]
+}
+\end{verbatim}
+
+\subsection{CD Guardrail (OPA/Rego sketch)}
+\begin{verbatim}
+package deploy.policy
+deny[msg] {
+  input.image.sbom.vuln.severity == "critical"
+  msg := "deny: critical CVE present"
+}
+deny[msg] {
+  not input.attestation.verified
+  msg := "deny: provenance attestation missing"
+}
+\end{verbatim}
+
+\subsection{Health Checks}
+\begin{itemize}
+  \item Liveness: process heartbeat; Readiness: downstreams reachable; Startup: schema and policy cache warm.
+\end{itemize}
+
+\subsection{Data Retention}
+\begin{itemize}
+  \item Logs 30 days hot, 365 days cold (WORM). Metrics 400 days downsampled. Traces 7 days.
+\end{itemize}
+
+% Section 10 — Compliance Mapping (expanded)
+\section{Compliance Mapping}
+
+\subsection{Scope and Roles}
+\begin{itemize}
+  \item \textbf{Intrinsica} (processor for education de-ID; BA/processor for clinical under BAA/DPA).
+  \item \textbf{S2H} (covered entity/clinical controller; PHI enclave; re-ID key custody).
+  \item \textbf{HEP (schools)} (education records controller; receives de-identified aggregates unless a School Official agreement is in place).
+\end{itemize}
+
+\subsection{HIPAA Security \& Privacy Rule}
+\paragraph{Required/Addressable Safeguards $\rightarrow$ Controls $\rightarrow$ Evidence}
+\begin{center}
+\begin{tabular}{l l l}
+\hline
+Safeguard & Implemented Control & Evidence/Metric \\
+\hline
+Access control & ABAC at gateway; least-privilege scopes & AuthZ logs; scope review quarterly \\
+Audit controls & Append-only ledger + SIEM & Ledger entries per write; audit dashboard pass-rate \\
+Integrity & Hash-on-write; provenance signatures & Hash match rate $=1.0$; tamper alerts $=0$ \\
+Transmission security & TLS 1.3 + mTLS between zones & Cert rotation logs; failed-handshake rate \\
+Person/entity auth & OAuth2 client-creds; DID-bound JWTs & Token issuance logs; key rotation artefacts \\
+Minimum necessary & Purpose-binding policy engine & Denied writes for mismatch; policy drift alarms \\
+Breach notification & Incident runbook; 60d outer limit & Postmortem on ledger; MTTR KPI \\
+Contingency & Backups/DR; sovereign firebooks & RPO/RTO tests; restore drills semiannual \\
+Business Associate & BAA with Intrinsica vendors & Executed BAAs; annual review records \\
+\hline
+\end{tabular}
+\end{center}
+
+\paragraph{Privacy Rule Mapping}
+\begin{itemize}
+  \item \textbf{Use/Disclosure}: education zone receives de-ID only; research use via ResearchStudy/Subject with consent.
+  \item \textbf{Minimum Necessary}: policy engine filters resource/category; small-cell suppression.
+  \item \textbf{Patient Rights}: access via FHIR; amendments recorded with \texttt{Provenance}; accounting via ledger queries.
+\end{itemize}
+
+\subsection{GDPR (where applicable)}
+\paragraph{Principles (Art. 5) $\rightarrow$ Enforcement}
+\begin{itemize}
+  \item \textbf{Lawfulness, fairness, transparency}: consent registry; signed notices with policy version.
+  \item \textbf{Purpose limitation}: purpose tags on every event; deny-by-default on mismatch.
+  \item \textbf{Data minimization}: de-ID on school egress; cohort bins; k-anonymity thresholds.
+  \item \textbf{Accuracy}: clinical source-of-truth (S2H FHIR); correction workflow.
+  \item \textbf{Storage limitation}: retention schedule per zone; WORM archives for audit only.
+  \item \textbf{Integrity \& confidentiality}: encryption at rest; mTLS; ledger hashing.
+\end{itemize}
+
+\paragraph{Lawful Bases (Art. 6/9)}
+\begin{itemize}
+  \item \textbf{Clinical care} (Art. 6(1)(e)/(d), Art. 9(2)(h)): S2H provision of care; special-category safeguards.
+  \item \textbf{Education de-ID analytics} (Art. 6(1)(e)/(f)): legitimate interest/public interest with balancing test; no re-ID keys in school zone.
+  \item \textbf{Research/pilots} (Art. 6(1)(a), 9(2)(a)/(j)): explicit consent or research basis; DPIA required for first cohort.
+\end{itemize}
+
+\paragraph{Data Subject Rights (Arts. 12–23)}
+\begin{center}
+\begin{tabular}{l l l}
+\hline
+Right & Mechanism & SLA/Metric \\
+\hline
+Access/Portability & FHIR Bulk export; ULMS de-ID bundle & $\le 30$ days (GDPR) \\
+Rectification & FHIR update; new \texttt{Provenance} & $< 7$ days typical \\
+Erasure & Primary store delete; ledger tombstone & Start $< 7$ days; complete per policy \\
+Restriction/Objection & Policy flag; processing deny & Real-time at gate \\
+Breach Notice & Incident runbook & $\le 72$ h to SA (where req.) \\
+\hline
+\end{tabular}
+\end{center}
+
+\paragraph{DPIA (Art. 35) — Template Outline}
+\begin{enumerate}
+  \item Processing description and purposes (care, research, education de-ID).
+  \item Necessity and proportionality (minimization, purpose-binding).
+  \item Risks to rights/freedoms (re-ID, bias, overload).
+  \item Mitigations (CSL, k-anonymity, governance, audits).
+  \item Residual risk and go/no-go decision; reviewer signatures; ledger hash.
+\end{enumerate}
+
+\paragraph{International Transfers}
+\begin{itemize}
+  \item Standard Contractual Clauses where cross-border; sovereign deployments avoid transfer by design.
+\end{itemize}
+
+\subsection{Education (FERPA) Alignment}
+\paragraph{Role and Boundary}
+\begin{itemize}
+  \item Default pattern: schools receive only \emph{de-identified aggregates} before ingress; no education records stored by Intrinsica/HEP unless designated as School Official under direct control.
+  \item If School Official: DPA/MOU defines legitimate educational interest, use limits, security, and destruction.
+\end{itemize}
+
+\paragraph{Key Requirements $\rightarrow$ Controls}
+\begin{center}
+\begin{tabular}{l l l}
+\hline
+FERPA Area & Control & Evidence \\
+\hline
+Access rights & Portal for student/parent review & Access logs; response times \\
+Consent for disclosure & Consent registry; scope tags & Consent artifacts; revocation logs \\
+Directory information & Opt-out flags; policy banners & Directory policy records \\
+Studies/audit exception & DPA with use limits; de-ID outputs & DPA on file; aggregate-only exports \\
+Recordkeeping & Disclosure log via ledger & Queryable ledger entries \\
+\hline
+\end{tabular}
+\end{center}
+
+\paragraph{De-ID for Schools}
+\begin{itemize}
+  \item Aggregation with k-anonymity ($k\ge 10$) and small-cell suppression.
+  \item L-diversity where sensitive attributes are present.
+  \item No re-ID keys present in education zone; mapping keys in S2H enclave only.
+\end{itemize}
+
+\subsection{Records of Processing Activities (RoPA)}
+\begin{itemize}
+  \item \textbf{Inventory fields}: purpose, categories, lawful basis, recipients, retention, safeguards, transfer, DPIA id.
+  \item Stored as signed JSON; hashed on ledger; versioned per change.
+\end{itemize}
+
+\subsection{Retention \& Destruction}
+\begin{center}
+\begin{tabular}{l l l}
+\hline
+Data Class & Retention & Destruction \\
+\hline
+Clinical PHI & Per provider policy; min 6--10y & Cryptographic wipe; revocation log \\
+Education aggregates & 2y rolling windows & Scheduled purge + manifest \\
+Audit/ledger hashes & 7y (no payload) & None; archive only \\
+Models/Features & Versioned; retire after 2y & Tombstone + lineage freeze \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{Policy Artifacts \& Training}
+\begin{itemize}
+  \item Policies: access, encryption, incident, retention, DPIA, vendor risk, sovereignty.
+  \item Training: annual privacy and security; role-based refreshers; completion tracked.
+\end{itemize}
+
+\subsection{Compliance KPIs}
+\begin{itemize}
+  \item Privacy audit pass-rate $\ge 0.98$ rolling 30d.
+  \item SAR fulfillment time $\le 30$ days; revocation propagation $< 5$ min p95.
+  \item DPIA completion before first production cohort; residual risk documented.
+\end{itemize}
+
+\subsection{Checklists}
+\paragraph{Go-Live (per site)}
+\begin{enumerate}
+  \item Executed BAA/DPA and, if applicable, School Official MOU.
+  \item Consent templates localized; notices versioned.
+  \item Sovereign keys issued; offline firebook signed.
+  \item DPIA completed; controls verified; ledger baseline stamped.
+\end{enumerate}
+
+\paragraph{Quarterly}
+\begin{enumerate}
+  \item Policy drift review; sample 5\% of events for purpose-binding.
+  \item FERPA directory policy audit; opt-out flags validated.
+  \item Re-ID access review; zero unauthorized events.
+\end{enumerate}
+
+% Section 11 — Risks & Mitigations (expanded)
+\section{Risks \& Mitigations}
+
+\subsection{Risk Register (overview)}
+\begin{center}
+\begin{tabular}{l l l l l}
+\hline
+\textbf{ID} & \textbf{Risk} & \textbf{Cause} & \textbf{Owner} & \textbf{Trigger/SLO} \\
+\hline
+R1 & Re-identification & Small cells, linkages, joins & S2H DPO & small\_cell\_exposures $=0$ \\
+R2 & Content drift & Unsigned or rapid XR changes & HEP PM & audit\_freeze \textit{on drift} \\
+R3 & Load/overwhelm & Excess intensity, outages & HEP CSL Lead & overload\_rate $\le 0.10$ \\
+R4 & Sovereign conflicts & Partitions, key loss & Intrinsica SE & sync\_conflicts resolved $<24$h \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{R1 — Re-identification}
+\paragraph{Threats}
+Linkage across public datasets, small-cell releases, quasi-identifier joins, membership inference on aggregates.
+
+\paragraph{Prevention Controls}
+\begin{itemize}
+  \item \textbf{k-anonymity}: enforce $k \ge 10$ on any cohort export; suppress if $n<k$.
+  \item \textbf{l-diversity / t-closeness}: for sensitive attributes ensure $l \ge 2$ and $D_{TV}(\text{group},\text{pop}) \le t$.
+  \item \textbf{Noise for public stats}: Laplace mechanism with $\epsilon \le 1.0$ on open dashboards; integer rounding and top/bottom coding.
+  \item \textbf{Thresholding}: \emph{no release} for slices with $n<k$ or $p\in\{0,1\}$.
+  \item \textbf{Zone isolation}: re-ID keys only in S2H enclave; education receives de-ID aggregates.
+  \item \textbf{Minimization}: drop direct identifiers; generalize quasi-identifiers (age-bands, geo prefixes).
+\end{itemize}
+
+\paragraph{Detection}
+\begin{itemize}
+  \item Uniqueness scans on exports; linkage attempt heuristics; query patterns that narrow to $n<k$.
+  \item \texttt{privacy.audit.event.v1} on policy mismatch, small-cell detection, or DP budget exhaustion.
+\end{itemize}
+
+\paragraph{Response}
+\begin{enumerate}
+  \item Embargo offending export; rotate de-ID keys; raise $k$ and increase noise.
+  \item Ledger-stamped postmortem; notify stewards; update DPIA if applicable.
+\end{enumerate}
+
+\paragraph{Metrics}
+\[
+\text{small\_cell\_exposures} = \sum_{\text{exports}} \mathbf{1}\{n<k\},\quad
+\text{dp\_budget\_spent} = \sum \epsilon_{\text{queries}} \le \epsilon_{\max}
+\]
+
+\paragraph{De-ID Guard (pseudo)}
+\begin{verbatim}
+if cohort_size < k or p in {0,1}: deny("small-cell")
+value := value + Laplace(1/epsilon); round(); publish()
+\end{verbatim}
+
+\subsection{R2 — Content Drift}
+\paragraph{Threats}
+Unreviewed XR updates, A/B outside guardrails, content-policy mismatch during audits.
+
+\paragraph{Prevention Controls}
+\begin{itemize}
+  \item \textbf{Versioning}: semver for modules; immutable, signed bundles.
+  \item \textbf{Guardrails}: pre-registered A/B ranges; CSL limits enforced at runtime.
+  \item \textbf{Change control}: two-person review; freeze windows during audits.
+\end{itemize}
+
+\paragraph{Detection}
+\begin{itemize}
+  \item Hash mismatch alarms; outcome skew monitors (PSI/KL) vs. baseline.
+  \item \texttt{privacy.audit.event.v1} for policy-version drift.
+\end{itemize}
+
+\paragraph{Response}
+\begin{enumerate}
+  \item Auto-rollback to last signed bundle; disable experiment flags.
+  \item Open incident; root-cause within 72\,h; re-release under change ticket.
+\end{enumerate}
+
+\paragraph{Metrics}
+\[
+\text{drift\_alerts} \downarrow,\quad \text{rollback\_MTTR} < 2\text{ h},\quad
+\text{policy\_mismatch} = 0
+\]
+
+\subsection{R3 — Load/Overwhelm}
+\paragraph{Threats}
+Cognitive overload, extended sessions, network retries causing rapid-fire prompts.
+
+\paragraph{Prevention Controls}
+\begin{itemize}
+  \item \textbf{CSL gating}: hysteresis thresholds $(\theta_o,\theta_c,\theta_x)$; cooldowns.
+  \item \textbf{Outage-safe backoffs}: exponential with jitter; never repeat high-load tasks on retry.
+  \item \textbf{Session caps}: max block lengths and daily limits per skin.
+\end{itemize}
+
+\paragraph{CSL Backoff (algorithm)}
+\begin{verbatim}
+if L > θ_c -> gate=cooldown for τ; next_variant=intensity * γ (γ<1)
+if L > θ_x -> gate=closed; alert human-in-loop; suspend high-intensity tracks
+\end{verbatim}
+
+\paragraph{Detection}
+\begin{itemize}
+  \item Overload streaks per learner; spike in \texttt{csl.state.change} to non-open.
+  \item Dropout uplift post-intensity increase.
+\end{itemize}
+
+\paragraph{Response}
+\begin{enumerate}
+  \item Switch to low-intensity variants; shorten blocks; increase spacing.
+  \item Clinician/educator review for repeated overload $(\ge 3$ events/week$)$.
+\end{enumerate}
+
+\paragraph{Metrics}
+\[
+\text{overload\_rate}=\frac{\#\{\text{gate}\neq\text{open}\}}{\#\text{sessions}} \le 0.10,\quad
+\text{cooldown\_median}\le 180\text{ s}
+\]
+
+\subsection{R4 — Sovereign Sites}
+\paragraph{Threats}
+Delayed sync, divergent edits, key loss, side-loaded content.
+
+\paragraph{Prevention Controls}
+\begin{itemize}
+  \item \textbf{CRDT data types}: counters, sets, maps with per-field merge.
+  \item \textbf{Vector clocks}: detect concurrency; policy versions resolve ties (highest wins).
+  \item \textbf{Local key custody}: community HSM; multi-sig for key ops; paper escrow.
+  \item \textbf{Signed firebooks}: content/policy bundles with checksums.
+\end{itemize}
+
+\paragraph{Conflict Resolution (CRDT sketch)}
+\begin{verbatim}
+merge(a,b):
+  for field in state:
+    if causal(a,f) > causal(b,f): out[f]=a[f]
+    else if ... : out[f]=b[f]
+    if tie: out[f]=policy_version_max(a,b).apply(f)
+\end{verbatim}
+
+\paragraph{Detection}
+\begin{itemize}
+  \item Sync lag monitors; conflict counts; signature verification failures.
+\end{itemize}
+
+\paragraph{Response}
+\begin{enumerate}
+  \item Queue conflicts to steward console; apply deterministic merge; re-stamp ledger.
+  \item Key-loss: rotate community keys; re-issue device certs; invalidate old bundles.
+\end{enumerate}
+
+\paragraph{Metrics}
+\[
+\text{sync\_lag\_p95} < 24\text{ h},\quad \text{conflicts\_resolved\_p95} < 4\text{ h},\quad
+\text{sig\_failures}=0
+\]
+
+\subsection{Cross-cutting Safeguards}
+\begin{itemize}
+  \item \textbf{Runbooks}: Sev-1 privacy/safety, Sev-2 availability, key compromise, DP budget breach.
+  \item \textbf{Testing}: synthetic linkage attacks; chaos on event bus; A/B guardrail fuzzing; sovereign offline drills.
+  \item \textbf{Governance}: quarterly risk review; ledger-stamped attestations; training refresh.
+\end{itemize}
+
+% Section 12 — Pilot Patterns (ready to run) — expanded
+\section{Pilot Patterns (Ready to Run)}
+
+\subsection{Cross-Pilot Preflight}
+\paragraph{Prerequisites}
+\begin{itemize}
+  \item Consent registry live; policy version $\ge$ v1.3; ULMS webhooks and FHIR Subscriptions verified.
+  \item Firebook bundle signed for sovereign sites (XR assets, policies, tests).
+  \item Dashboards: Ethical Vital Signs, Risk/Engagement, Privacy Audit.
+\end{itemize}
+
+\paragraph{Bill of Materials}
+\begin{center}
+\begin{tabular}{l l}
+\hline
+Component & Minimum set \\
+\hline
+XR modules & \texttt{sleep-101}, \texttt{stress-201}, \texttt{metabolism-101}, \texttt{systems-101} \\
+ULMS services & \texttt{/hooks/attempted}, \texttt{/hooks/module-complete}, \texttt{/hooks/csl-change} \\
+FHIR & \texttt{Observation}, \texttt{QuestionnaireResponse}, \texttt{Consent}, \texttt{Provenance} \\
+Policies & CSL thresholds, reciprocity window, de-ID export rules, k-anonymity $k\ge10$ \\
+Devices & Wearables with HRV/sleep; XR-capable headsets or tablets (low-latency mode) \\
+\hline
+\end{tabular}
+\end{center}
+
+\paragraph{Roles Matrix (RACI)}
+\begin{center}
+\begin{tabular}{l c c c c}
+\hline
+Activity & Stewards & Intrinsica & S2H & HEP \\
+\hline
+Consent onboarding & A & C & R & R \\
+Module deployment & C & C & I & R/A \\
+Clinical scheduling & I & I & R/A & C \\
+Data exports (de-ID) & A & R & C & C \\
+Privacy audit & R/A & R & R & R \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{Pilot A: Teen Brain-Health Pathway}\label{pilot:teen}
+\paragraph{Objective}
+Reduce sleep-risk and stress markers while increasing health literacy and adherence in adolescents.
+
+\paragraph{Cohort}
+$N=60$ students, grades 9--10, two arms (intervention vs.\ waitlist). Accommodations via EchoBraid profiles as needed.
+
+\paragraph{Runbook}
+\begin{enumerate}
+  \item \textbf{Week 0 (Enrollment)}: capture \texttt{Consent}; baseline HRV/sleep; literacy survey (\texttt{QuestionnaireResponse}).
+  \item \textbf{Weeks 1--2 (Ramp)}: XR \texttt{sleep-101} and \texttt{stress-201} 3x/week, 12--15\,min; CSL open thresholds conservative.
+  \item \textbf{Weeks 3--8 (Adaptive)}: personalize cadence from risk vectors; home plan issued; S2H tele-coaching biweekly.
+  \item \textbf{Weeks 9--12 (Consolidate)}: introduce \texttt{metabolism-101}; reinforce routines; milestone review ($\pi$Līla).
+\end{enumerate}
+
+\paragraph{Flows}
+\begin{itemize}
+  \item \textbf{HEP XR} $\rightarrow$ ULMS telemetry ($\texttt{ulms.session.attempted.v1}$).
+  \item \textbf{Wearables} $\rightarrow$ Intrinsica features $\rightarrow$ risk updates.
+  \item \textbf{S2H} tele-coaching notes $\rightarrow$ FHIR \texttt{Observation} (PROMs).
+\end{itemize}
+
+\paragraph{Instrumentation}
+\begin{verbatim}
+Topic: intrinsica.risk.update.v1  (sleep, anxiety)
+Topic: csl.state.change.v1        (gate transitions)
+Topic: ulms.session.attempted.v1  (attempts, TCI, PER ref)
+\end{verbatim}
+
+\paragraph{CSL/Reciprocity}
+\begin{itemize}
+  \item CSL thresholds: $\theta_o=0.45$, $\theta_c=0.60$, cooldown $=120$\,s; close at $\theta_x=0.80$.
+  \item Reciprocity window 7d; if cohort balance $E_t\notin[{-}1.0,1.0]$, reduce group intensity by $\gamma=0.85$.
+\end{itemize}
+
+\paragraph{KPIs \& Acceptance}
+\begin{itemize}
+  \item XR engagement (micro) $\ge 0.70$ by week 8.
+  \item Sleep risk $\Delta z \le -0.25$ at day 30; adherence $+8$pp vs baseline.
+  \item Privacy audit pass-rate $\ge 0.98$; overload rate $\le 0.10$.
+\end{itemize}
+
+\paragraph{Safety}
+CSL everywhere; \emph{lawful stillness} on overload; human-in-loop if closed $>2$ events/week.
+
+\paragraph{Offline}
+Firebook bundle with \texttt{sleep-101}/\texttt{stress-201}; queue telemetry; CRDT merge on reconnect.
+
+\subsection{Pilot B: Teacher Wellness + Student Co-Learning}\label{pilot:teacher}
+\paragraph{Objective}
+Improve teacher wellness and classroom climate while building student systems-ethics literacy.
+
+\paragraph{Cohorts}
+$N=25$ staff; $N=2\times$ classrooms per grade (anonymized student aggregates to staff).
+
+\paragraph{Runbook}
+\begin{enumerate}
+  \item \textbf{Week 0}: PD session; staff consent; baseline PROMs; CSL library install.
+  \item \textbf{Weeks 1--4}: Staff micro-sessions 10\,min/day (CSL awareness, breath ladders). Students run \texttt{systems-101} G$\leftrightarrow$N$\leftrightarrow$Q tasks twice weekly.
+  \item \textbf{Weeks 5--8}: Reciprocity circles weekly; student ethics prompts; publish de-ID cohort trends to staff console.
+  \item \textbf{Weeks 9--12}: Reflection artifacts; capstone share-out; policy refinement from audit learnings.
+\end{enumerate}
+
+\paragraph{Data Boundaries}
+\begin{itemize}
+  \item Staff wellness data remains in S2H enclave or de-ID aggregates for school.
+  \item Student ULMS telemetry de-ID only; no re-ID keys in education zone.
+\end{itemize}
+
+\paragraph{Dashboards}
+PER/MLEM cohort dashboard; Ethical Vital Signs (engagement, reciprocity, CSL hits, equity).
+
+\paragraph{KPIs \& Acceptance}
+\begin{itemize}
+  \item Staff session completion $\ge 75\%$; CSL overload rate $\le 0.08$.
+  \item Student ULMS completion macro $\ge 0.70$; transfer index $\ge 0.60$.
+  \item Equity gap closed $\ge 0.15$ on engagement.
+\end{itemize}
+
+\paragraph{Safety}
+EchoBraid accommodations where flagged; intensity ramps $\le 10\%$/min.
+
+\paragraph{Offline}
+Printed prompts + local XR; weekly sync window; signed bundle verification.
+
+\subsection{Pilot C: Clinic–School Hub}\label{pilot:hub}
+\paragraph{Objective}
+Stand up a community hub where tele-neuro/rehab and learning co-exist; unify outcomes across clinic and school.
+
+\paragraph{Architecture}
+\begin{itemize}
+  \item Hub site with S2H tele rooms; HEP XR studio; shared Intrinsica link via event bus.
+  \item Sovereign option: local gateway with delayed sync and community keys.
+\end{itemize}
+
+\paragraph{Runbook}
+\begin{enumerate}
+  \item \textbf{Week 0}: Create \texttt{ResearchStudy}/\texttt{Group}; enroll \texttt{ResearchSubject} (de-ID); publish firebook.
+  \item \textbf{Weeks 1--4}: XR rehab blocks 2x/week; student capstones on local determinants; risk/engagement boards live.
+  \item \textbf{Weeks 5--8}: Protocol adjustments via S2H; community showcase; add \texttt{metabolism-101}.
+  \item \textbf{Weeks 9--12}: Evaluate outcomes; conduct audit; scale decision.
+\end{enumerate}
+
+\paragraph{Instrumentation}
+\begin{verbatim}
+FHIR: Observation(vitals,PROMs), Procedure(rehab), Provenance
+Events: ulms.session.attempted.v1, intrinsica.risk.update.v1, privacy.audit.event.v1
+\end{verbatim}
+
+\paragraph{KPIs \& Acceptance}
+\begin{itemize}
+  \item Time-to-tele-visit start p50 $<30$\,s; FHIR write ack p50 $<300$\,ms.
+  \item Adherence +8pp vs baseline; equity gap closed $\ge 0.15$.
+  \item Privacy pass-rate $\ge 0.98$; offline sync lag p95 $<24$\,h.
+\end{itemize}
+
+\paragraph{Safety}
+Dual-control re-ID for SAE review; ledger-posted postmortems $<72$\,h.
+
+\paragraph{Offline}
+Hub mirror of ledger headers; CRDT merge rules; device cert rotation quarterly.
+
+\subsection{Pilot Config (YAML sketch)}
+\begin{verbatim}
+pilot_id: teen-brain-2025q4
+cohort: hs-grade10
+modules: [sleep-101, stress-201, metabolism-101]
+csl:
+  theta_open: 0.45
+  theta_cool: 0.60
+  theta_close: 0.80
+  cooldown_s: 120
+reciprocity:
+  window: 7d
+  gamma: 0.85
+dashboards: [ethical-vital-signs, risk-engagement, privacy-audit]
+\end{verbatim}
+
+\subsection{Go/No-Go Checklist}
+\begin{enumerate}
+  \item BAAs/DPAs executed; FERPA boundary documented.
+  \item Consent templates localized; ledger baseline hash stamped.
+  \item Webhooks and Subscriptions pass contract tests; firebook verified.
+  \item Privacy pass-rate $\ge 0.98$ in stage; k-anonymity tests pass.
+\end{enumerate}
+
+\subsection{Exit \& Scale-Out}
+\begin{itemize}
+  \item Exit if KPIs met for 2 consecutive weeks and no Sev-1 incidents.
+  \item Scale to next grade/site; raise $k$ or noise as cohort grows; enable additional XR families.
+\end{itemize}
+
+% Section 13 — 90-Day Plan (expanded)
+\section{90-Day Plan}
+
+\subsection{Overview}
+Three stages with hard gates. Parallel workstreams: Data/AI, Interop, Content, Security/Governance, Dashboards, People/Ops. Sprint cadence: 2 weeks. Daily stand-up: blockers, risks, decisions.
+
+\subsection{Milestones \& Gates}
+\begin{center}
+\begin{tabular}{l l l}
+\hline
+Stage & Gate (Go/No-Go) & Evidence \\
+\hline
+S0 (Weeks 0–2) & Event round-trip p50 $<200$ ms cloud; $<24$ h sovereign & Trace IDs, timing histograms \\
+S1 (Weeks 3–8) & XR engagement $>0.70$; privacy pass-rate $>0.98$; no PII at HEP ingress & Dashboards; audit logs \\
+S2 (Weeks 9–13) & Equity gap closed $\ge 0.15$; adherence $+8$pp vs baseline & Cohort analytics; signed report \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{S0 — Weeks 0–2 (Foundation)}
+\paragraph{Objectives}
+Consent + de-ID live; ledger bootstrap; feature store v0; smoke tests for Subscriptions and Webhooks.
+
+\paragraph{Workstreams \& Tasks}
+\begin{itemize}
+  \item \textbf{Security/Gov}: deploy consent registry; publish policy v1.3; issue service DIDs; enable mTLS.
+  \item \textbf{Data/AI}: stand up ingest; define feature views for HRV, sleep\_eff; deploy risk model stub; enable de-ID pipeline.
+  \item \textbf{Interop}: FHIR R4 endpoint; Subscriptions for survey|vital-signs; ULMS \texttt{/hooks/*} with idempotency.
+  \item \textbf{Ledger}: init permissioned network; write \texttt{Provenance} hashes; verify append-only.
+  \item \textbf{People/Ops}: on-call rota; runbooks for sev-1/2; sandbox wearables enrolled.
+\end{itemize}
+
+\paragraph{Artifacts}
+\begin{itemize}
+  \item Policy bundle v1.3 (consent templates, purpose tags, export rules).
+  \item Firebook v0 (offline assets + tests) for sovereignty sites.
+  \item Contract tests: FHIR profile, webhook schemas, event envelope.
+\end{itemize}
+
+\paragraph{Acceptance (must meet all)}
+\begin{itemize}
+  \item Round-trip event p50 $<200$ ms cloud; sovereign sync $<24$ h.
+  \item De-ID egress only; privacy pass-rate $\ge 0.98$ in stage.
+  \item Ledger commit p95 $<2$ s; hash match rate $=1.0$.
+\end{itemize}
+
+\paragraph{DoR / DoD}
+\begin{itemize}
+  \item \textbf{Ready}: policy v1.3 approved; service creds issued; test devices online.
+  \item \textbf{Done}: traces show end-to-end path; audit dashboard green; contracts signed.
+\end{itemize}
+
+\subsection{S1 — Weeks 3–8 (Experience + Telemetry)}
+\paragraph{Objectives}
+Ship 3 XR modules; enable PER/MLEM/TCI logging; teacher PD; pilot two grades; privacy audit dashboard v1; CSL gate library.
+
+\paragraph{Workstreams \& Tasks}
+\begin{itemize}
+  \item \textbf{Content}: release \texttt{sleep-101}, \texttt{stress-201}, \texttt{metabolism-101} (dual skin); sign bundles.
+  \item \textbf{ULMS}: persist Attempt, PER, TCI; compute MLEM nightly; expose cohort aggregates (de-ID).
+  \item \textbf{CSL}: deploy gate library with thresholds $\theta_o=0.45$, $\theta_c=0.60$, $\theta_x=0.80$; cooldown 120 s.
+  \item \textbf{Dashboards}: Ethical Vital Signs v1 (engagement, CSL hits, reciprocity, privacy).
+  \item \textbf{PD}: run staff training; publish playbooks for classroom cadence and safety.
+  \item \textbf{Interop}: Subscriptions to S2H; verify PROMs ingestion; webhook load tests (p95 $<150$ ms).
+\end{itemize}
+
+\paragraph{Instrumentation}
+\begin{itemize}
+  \item Events: \texttt{ulms.session.attempted.v1}, \texttt{csl.state.change.v1}, \texttt{intrinsica.risk.update.v1}.
+  \item SLIs: engagement micro, overload rate, webhook latency, privacy pass-rate.
+\end{itemize}
+
+\paragraph{Acceptance (must meet all)}
+\begin{itemize}
+  \item XR engagement $>0.70$; no PII at HEP ingress (zero violations).
+  \item Privacy pass-rate $>0.98$; webhook p95 $<150$ ms; Subscriptions delivery p95 $<30$ s.
+  \item Teacher PD completion $>90\%$; A/B ranges within guardrails; no audit freeze.
+\end{itemize}
+
+\paragraph{Risk Watch}
+\begin{itemize}
+  \item R3 Load/overwhelm: overload rate $\le 0.10$; escalate on streaks $\ge 3$/week.
+  \item R2 Content drift: hash mismatches $=0$; rollback MTTR $<2$ h.
+\end{itemize}
+
+\subsection{S2 — Weeks 9–13 (Inclusion + Population Views)}
+\paragraph{Objectives}
+Add ASD EchoBraid protocol; launch population dashboards; first audit cycle.
+
+\paragraph{Workstreams \& Tasks}
+\begin{itemize}
+  \item \textbf{EchoBraid}: pacing 40–90 BPM; visual latency $<30$ ms; audio envelopes (attack 10–30 ms, release 100–300 ms); turn-taking flags.
+  \item \textbf{Population dashboards}: risk deltas, engagement, equity gap, adherence; k-anonymity $k\ge 10$ with small-cell suppression.
+  \item \textbf{Audit}: run DPIA where required; sample 5\% events for purpose-binding; incident drill.
+  \item \textbf{Clinic linkage}: biweekly S2H tele-coaching; PROMs trend lines; adherence board.
+  \item \textbf{Sovereignty}: offline sync drill; CRDT conflict console; key rotation rehearsal.
+\end{itemize}
+
+\paragraph{Acceptance (must meet all)}
+\begin{itemize}
+  \item Equity gap closed $\ge 0.15$ on target metric; adherence $+8$pp vs baseline.
+  \item Offline sync lag p95 $<24$ h; conflict resolution p95 $<4$ h.
+  \item Privacy pass-rate $\ge 0.98$; audit report signed; zero Sev-1 incidents.
+\end{itemize}
+
+\subsection{Timeline (ASCII Gantt)}
+\begin{verbatim}
+Week:   0   1   2 | 3   4   5   6   7   8 | 9  10  11  12  13
+S0:    [ Consent+DeID  ][ Ledger+Features v0  ]
+S1:                    [ XR(3) + Telemetry + PD + Dash v1     ]
+S2:                                            [ EchoBraid + Pop Dash + Audit ]
+\end{verbatim}
+
+\subsection{RACI Summary}
+\begin{center}
+\begin{tabular}{l c c c c}
+\hline
+Deliverable & Stewards & Intrinsica & S2H & HEP \\
+\hline
+Policy v1.3 & R/A & C & C & C \\
+De-ID pipeline & C & R/A & C & C \\
+XR modules (3) & C & I & C & R/A \\
+CSL library & C & R & C & R \\
+Audit v1 & R/A & R & R & R \\
+Pop dashboards & C & R/A & C & C \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{Reporting \& Reviews}
+\begin{itemize}
+  \item Weekly: KPI snapshot (engagement, overload, risk delta, privacy).
+  \item Biweekly: risk burndown (R1–R4), action items, gate readiness.
+  \item End of stage: signed summary, ledger hash, go/no-go decision.
+\end{itemize}
+
+\subsection{Checklists}
+\paragraph{S0 Exit}
+\begin{enumerate}
+  \item Round-trip traces attached; ledger hash verified.
+  \item De-ID tests pass; no PII in HEP ingress.
+\end{enumerate}
+
+\paragraph{S1 Exit}
+\begin{enumerate}
+  \item XR(3) live; CSL thresholds enforced; PD complete.
+  \item Engagement $>0.70$; privacy $>0.98$; contracts stable.
+\end{enumerate}
+
+\paragraph{S2 Exit}
+\begin{enumerate}
+  \item EchoBraid enabled; population dashboards live; audit signed.
+  \item Equity gap $\ge 0.15$; adherence $+8$pp; no Sev-1.
+\end{enumerate}
+
+\subsection{Resource Map (minimal)}
+\begin{center}
+\begin{tabular}{l l l}
+\hline
+Role & FTE & Notes \\
+\hline
+Platform/Interop & 2 & FHIR, Subscriptions, ULMS hooks \\
+Data/ML & 2 & features, risk, analytics \\
+XR/Content & 2 & modules, EchoBraid, A/B guardrails \\
+Privacy/GRC & 1 & DPIA, audits, policies \\
+PM/Ops & 1 & sprints, dashboards, comms \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{Rollbacks \& Contingency}
+\begin{itemize}
+  \item Content rollback to last signed bundle within 2 h.
+  \item Policy revert to v1.3 on drift; freeze experiments.
+  \item Sovereign fallback to firebook; queue events for later sync.
+\end{itemize}
+
+% Section 14 — Backlog (Build Order) — expanded
+\section{Backlog (Build Order)}
+
+\subsection{Epics \& Scope}
+\begin{enumerate}
+  \item \textbf{E1: Data Plane} — ingest $\rightarrow$ feature store $\rightarrow$ risk API.
+  \item \textbf{E2: Event Bus \& Ledger} — topics, signing, envelopes, append-only ledger.
+  \item \textbf{E3: ULMS \& Services} — schema + webhooks; CSL / Reciprocity / $\pi$Līla.
+  \item \textbf{E4: XR Family v1} — SSM, QLL, SH modules; EchoBraid add-on.
+  \item \textbf{E5: Dashboards} — risk, engagement, equity, privacy.
+  \item \textbf{E6: Offline-first} — toolchain, firebooks, sync, CRDT resolution.
+\end{enumerate}
+
+\subsection{Epic Breakdown (deliverables, acceptance)}
+\paragraph{E1 — Data Plane}
+\textbf{Deliverables}
+\begin{itemize}
+  \item Connectors: wearables, FHIR read, survey intake; schema registry.
+  \item Feature store: versioned features (HRV, sleep\_eff, focus\_interval).
+  \item Online inference: \texttt{/risk/v1/assess}; model registry; drift probes.
+\end{itemize}
+\textbf{Acceptance}
+\begin{itemize}
+  \item Ingest$\rightarrow$feature materialization p95 $<5$\,min; inference p50 $<80$\,ms.
+  \item Hash-on-write provenance $=1.0$ match; contract tests green.
+\end{itemize}
+
+\paragraph{E2 — Event Bus \& Ledger}
+\textbf{Deliverables}
+\begin{itemize}
+  \item Topics: \texttt{intrinsica.risk.update.v1}, \texttt{ulms.session.attempted.v1}, \texttt{csl.state.change.v1},
+        \texttt{reciprocity.delta.v1}, \texttt{pilila.milestone.v1}, \texttt{privacy.audit.event.v1}.
+  \item Security envelope: DID-bound signature, policy tag, hash; DLQ; idempotency key.
+  \item Ledger appender: append-only; per-event hash + policy version.
+\end{itemize}
+\textbf{Acceptance}
+\begin{itemize}
+  \item End-to-end bus$\rightarrow$ledger p95 $<2$\,s; DLQ $<0.1\%$ of events.
+\end{itemize}
+
+\paragraph{E3 — ULMS \& Services}
+\textbf{Deliverables}
+\begin{itemize}
+  \item Schema: Learner, Session, Attempt, PER, MLEM, TCI, CSLState, ReciprocityDelta, PiLilaMilestone.
+  \item Webhooks: \texttt{/hooks/attempted}, \texttt{/hooks/module-complete}, \texttt{/hooks/csl-change}.
+  \item Services: CSL gate (hysteresis), Reciprocity balance, $\pi$Līla milestone engine.
+\end{itemize}
+\textbf{Acceptance}
+\begin{itemize}
+  \item Webhook p95 $<150$\,ms; idempotency collisions $<0.5\%$; CSL decisions deterministic in window.
+\end{itemize}
+
+\paragraph{E4 — XR Family v1}
+\textbf{Deliverables}
+\begin{itemize}
+  \item Modules: \texttt{sleep-101}, \texttt{stress-201}, \texttt{metabolism-101}, \texttt{systems-101}; dual skin.
+  \item EchoBraid pack: pacing 40–90 BPM; visual latency $<30$\,ms; audio envelopes; turn-taking markers.
+  \item Content signing: semver, bundle hashes, guardrails for A/B.
+\end{itemize}
+\textbf{Acceptance}
+\begin{itemize}
+  \item Engagement micro $>0.70$ in pilot; overload rate $\le 0.10$; zero unsigned bundle loads.
+\end{itemize}
+
+\paragraph{E5 — Dashboards}
+\textbf{Deliverables}
+\begin{itemize}
+  \item Risk \& engagement boards; \emph{Ethical Vital Signs} (CSL hits, reciprocity, equity, privacy).
+  \item Equity view: P90–P10 spread; group gaps; k-anonymity safeguards.
+\end{itemize}
+\textbf{Acceptance}
+\begin{itemize}
+  \item Freshness p95 $<10$\,min (cloud); small-cell suppression active; privacy pass-rate displayed.
+\end{itemize}
+
+\paragraph{E6 — Offline-first}
+\textbf{Deliverables}
+\begin{itemize}
+  \item Firebook builder: assets+policies+tests; checksum manifest; signature.
+  \item Sync agent: queue, retry, backoff, CRDT merge; conflict console.
+\end{itemize}
+\textbf{Acceptance}
+\begin{itemize}
+  \item Sovereign sync lag p95 $<24$\,h; conflicts resolved p95 $<4$\,h; signature failures $=0$.
+\end{itemize}
+
+\subsection{Dependencies}
+\begin{center}
+\begin{tabular}{l l}
+\hline
+Epic & Depends on \\
+\hline
+E2 Event Bus \& Ledger & E1 (schemas for payload features) \\
+E3 ULMS \& Services & E2 (topics/envelope) \\
+E4 XR Family v1 & E3 (CSL/Reciprocity), E2 (events) \\
+E5 Dashboards & E1 (features/metrics), E2 (events), E3 (telemetry) \\
+E6 Offline-first & E4 (bundles), E2 (envelope), E1 (schemas) \\
+\hline
+\end{tabular}
+\end{center}
+
+\paragraph{DAG (ASCII)}
+\begin{verbatim}
+E1 Data Plane
+ └─> E2 Bus+Ledger
+      └─> E3 ULMS+Services
+            └─> E4 XR v1
+                  └─> E5 Dashboards
+                        └─> E6 Offline-first
+\end{verbatim}
+
+\subsection{Story Queue (sample)}
+\begin{center}
+\begin{tabular}{l l p{7.8cm} l l}
+\hline
+ID & Epic & Description & Est & Exit \\
+\hline
+S1.1 & E1 & Wearables ingest connector + schema registry entry & 3d & 10k evts/day, loss $<0.1\%$ \\
+S1.2 & E1 & Feature view: HRV, sleep\_eff (batch+stream) & 4d & p95 mat. $<5$\,min \\
+S1.3 & E1 & Risk API \texttt{/risk/v1/assess} + tests & 3d & p50 $<80$\,ms \\
+S2.1 & E2 & Envelope signer (DID), verifier, DLQ & 3d & sig fail $=0$ \\
+S2.2 & E2 & Ledger appender + replay & 3d & append p95 $<2$\,s \\
+S3.1 & E3 & \texttt{/hooks/attempted} handler + idempotency & 3d & p95 $<150$\,ms \\
+S3.2 & E3 & CSL service (hysteresis + cooldown) & 3d & deterministic \\
+S4.1 & E4 & \texttt{sleep-101} module pack + signing & 4d & QA pass \\
+S5.1 & E5 & Risk/Engagement dashboard v1 & 3d & freshness $<10$\,min \\
+S6.1 & E6 & Firebook builder + verifier & 4d & checksum OK \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{Definition of Ready/Done}
+\paragraph{DoR}
+Spec approved; contracts fixed; test data available; policy version published.
+\paragraph{DoD}
+Contracts pass; metrics wired; alerts set; docs updated; ledger hash stamped.
+
+\subsection{Artifacts per Epic}
+\begin{itemize}
+  \item \textbf{E1}: OpenAPI for \texttt{/risk}, feature catalog, drift report.
+  \item \textbf{E2}: Topic catalog, envelope schema, ledger schema, DLQ playbook.
+  \item \textbf{E3}: DDLs, webhook JSON Schemas, CSL/Reciprocity/$\pi$Līla APIs.
+  \item \textbf{E4}: Signed XR bundles, EchoBraid config, A/B guardrails.
+  \item \textbf{E5}: Dashboard specs, queries, RBAC matrix.
+  \item \textbf{E6}: Firebook manifest, sync agent config, CRDT rules.
+\end{itemize}
+
+\subsection{Quality Gates (per build)}
+\begin{itemize}
+  \item Contract tests green; latency SLOs met; privacy pass-rate $\ge 0.98$ in stage.
+  \item No unsigned content; zero PII in HEP ingress; DLQ $<0.1\%$.
+\end{itemize}
+
+% Section 15 — Glossary (functional, with origins) — expanded
+\section{Glossary (Functional, with Origins)}
+
+\subsection*{Nexus–Native Constructs}
+\begin{description}
+  \item[PER] Process-evidence record of attempts and artifacts. \emph{Origin: M-Education Health Nexus pedagogy.}
+  \item[MLEM] Meta-learning efficiency metric; learning gain per unit effort. \emph{Origin: M-Education Health Nexus analytics.}
+  \item[TCI] Time-on-concept index with mastery state bands. \emph{Origin: M-Education Health Nexus analytics.}
+  \item[CSL] Cognitive Strain Limiter; gates intensity with hysteresis and cooldown. \emph{Origin: M-Education Health Nexus safety.}
+  \item[Reciprocity] Cohort energy balance over a rolling window; throttles group asks. \emph{Origin: Nexus cohort dynamics.}
+  \item[$\pi$Līla] Progression metaphor; milestone tracking along growth paths. \emph{Origin: Nexus learning design.}
+  \item[ULMS] Universal Learning Management Services layer and schema. \emph{Origin: Nexus platform architecture.}
+  \item[XR MaaS] Catalog of XR micro-modules delivered as a service, dual-skinned. \emph{Origin: Nexus content system.}
+  \item[Risk vector] Model output per subject/cohort for sleep, stress, adherence, etc. \emph{Origin: Intrinsica analytics.}
+  \item[G$\leftrightarrow$N$\leftrightarrow$Q] Frame-toggling task design: Graphical, Numerical, Qualitative. \emph{Origin: Q-Education framework (Nexus).}
+  \item[EchoBraid] Sensory-rhythm accommodations for ASD; pacing, envelopes, turn-taking. \emph{Origin: Nexus ASD protocol.}
+  \item[Firebook] Signed offline bundle with assets, policies, and tests for sovereign sites. \emph{Origin: Nexus sovereignty ops.}
+\end{description}
+
+\subsection*{Citizen Gardens Overlay}
+\begin{description}
+  \item[Citizen Gardens (CG)] Community-embedded governance and ethics layer. \emph{Origin: Citizen Gardens social design.}
+  \item[ELM] Economy League Multiplicity; social multiplicity and reciprocity ethic. \emph{Origin: Citizen Gardens framework.}
+  \item[Ethical Vital Signs] Dashboard set for engagement, reciprocity, CSL, equity, privacy. \emph{Origin: CG\,\&\,Nexus joint instrumentation.}
+\end{description}
+
+\subsection*{Clinical \& Education Interop}
+\begin{description}
+  \item[FHIR R4] HL7 clinical resource model and REST API. \emph{Origin: HL7.}
+  \item[HL7 v2] Event-driven clinical messaging (e.g., ADT). \emph{Origin: HL7.}
+  \item[Provenance] FHIR resource capturing signer, hash, policy version. \emph{Origin: HL7 FHIR.}
+  \item[Consent] FHIR resource for purpose, scope, revocation. \emph{Origin: HL7 FHIR.}
+  \item[ResearchStudy/Subject] FHIR linkage of cohorts to pilots. \emph{Origin: HL7 FHIR.}
+  \item[LTI 1.3] Launch and grade return for education tools. \emph{Origin: 1EdTech (IMS Global).}
+  \item[xAPI] Learning experience statements for traces. \emph{Origin: ADL Initiative.}
+  \item[FHIR Bulk Data] Flat export of cohorts for access/portability. \emph{Origin: SMART/Bulk Data IG.}
+\end{description}
+
+\subsection*{Identity, Security, Privacy}
+\begin{description}
+  \item[DID] Decentralized Identifier used for signing and audit. \emph{Origin: W3C.}
+  \item[OAuth2] Service authentication via client-credentials. \emph{Origin: IETF.}
+  \item[JWT] Bearer token format; DID-bound claims. \emph{Origin: IETF.}
+  \item[mTLS] Mutual TLS between zones. \emph{Origin: IETF/TLS.}
+  \item[ABAC] Attribute-based access control (purpose, role, zone). \emph{Origin: NIST SP 800-162.}
+  \item[KMS/HSM] Managed key service and hardware security module. \emph{Origin: NIST/FIPS 140-3 practices.}
+  \item[FPE] Format-preserving encryption for PID$\rightarrow$pseudo\_id. \emph{Origin: NIST FF3-1.}
+  \item[PHI/PII] Protected Health/Personally Identifiable Information. \emph{Origin: HIPAA/Privacy law.}
+  \item[HIPAA] US health privacy/security rules. \emph{Origin: HHS.}
+  \item[GDPR/DPIA] EU data protection and impact assessment. \emph{Origin: EU GDPR.}
+  \item[FERPA] US student record protections. \emph{Origin: US Dept. of Education.}
+  \item[k-anonymity] Release threshold to prevent singling out. \emph{Origin: Sweeney (privacy research).}
+  \item[$\ell$-diversity/$t$-closeness] Attribute diversity and distribution closeness for safe releases. \emph{Origin: Machanavajjhala et\,al.; Li et\,al.}
+  \item[Differential Privacy] Noise addition for open stats. \emph{Origin: Dwork et\,al.}
+\end{description}
+
+\subsection*{Reliability, Ops, and Supply Chain}
+\begin{description}
+  \item[SLO/SLI] Reliability objectives and indicators. \emph{Origin: SRE practices.}
+  \item[DLQ] Dead-letter queue for failed messages. \emph{Origin: Messaging patterns.}
+  \item[CRDT] Conflict-free replicated data type for offline merge. \emph{Origin: Shapiro et\,al.}
+  \item[RPO/RTO] Recovery point/time objectives. \emph{Origin: DR best practice.}
+  \item[WORM] Write-once read-many archival storage. \emph{Origin: Records compliance.}
+  \item[SBOM] Software bill of materials. \emph{Origin: NTIA/CISA supply chain.}
+  \item[SLSA] Supply-chain Levels for Software Artifacts. \emph{Origin: OpenSSF.}
+  \item[in-toto] Build provenance attestation framework. \emph{Origin: Supply chain security research.}
+  \item[OpenTelemetry] Distributed tracing/metrics standard. \emph{Origin: CNCF.}
+  \item[Prometheus] Metrics and alerting toolkit. \emph{Origin: CNCF.}
+\end{description}
+
+\subsection*{Signals, Metrics, and Clinical Terms}
+\begin{description}
+  \item[HRV (RMSSD)] Heart-rate variability metric (root mean square of successive differences). \emph{Origin: Cardiology/physiology.}
+  \item[PROMs] Patient-reported outcome measures captured via survey. \emph{Origin: Health services research.}
+  \item[PSI] Population Stability Index for drift monitoring. \emph{Origin: Credit risk/ML monitoring.}
+  \item[KL divergence] Information-theoretic drift measure. \emph{Origin: Information theory.}
+\end{description}
+
+\subsection*{Platform Entities and Zones}
+\begin{description}
+  \item[Intrinsica] Data/AI plane: lakehouse, feature store, risk, ledger. \emph{Origin: Intrinsica program.}
+  \item[Superhuman (S2H)] Digital clinic for brain health/longevity. \emph{Origin: S2H program.}
+  \item[M-Education HEP] XR-enabled learning ecosystem with inclusivity and early quantum. \emph{Origin: M-Education program.}
+  \item[S2H enclave] PHI-permitted clinical VPC; re-ID key custody. \emph{Origin: Nexus deployment pattern.}
+  \item[Education zone] De-ID only; ULMS and XR services. \emph{Origin: Nexus deployment pattern.}
+\end{description}
+
+
+
+\nocite{*}
+\bibliographystyle{unsrt}
+\bibliography{references}
+
+
+\end{document}

@@ -1,0 +1,1037 @@
+\documentclass[11pt]{article}
+
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{bm}
+\usepackage{hyperref}
+\usepackage{physics}
+\usepackage{mathtools}
+\usepackage{microtype}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage{courier}
+\usepackage[T1]{fontenc}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  citecolor=blue,
+  urlcolor=blue
+}
+
+\title{\vspace{-1em}
+Prime-Indexed Noncommutative Causal Dynamical Triangulations\\
+as a Multiplicity-Theoretic Model of Quantum Spacetime}
+\author{Multiplicity Foundation}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We develop a Multiplicity-native synthesis of Noncommutative Geometry (NCG)
+and Causal Dynamical Triangulations (CDT) by treating spacetime as a
+prime-indexed, recursively updated multiplicity network of operator-valued
+simplices. Building on previous drafts that treated NCG and CDT largely in
+parallel, we introduce a coupled action density
+\(
+  s_i = S_{\mathrm{Regge},i} + S_{\mathrm{NCG},i}
+       + \lambda \theta_p \varepsilon_i
+\)
+for simplex \(i\) in prime sector \(p\), and a dynamical feedback equation
+for the multiplicity weights \(w_{p,i}(t)\) that drives the evolution of
+the discrete geometry.\,[file:1] We implement this structure in a 2D CDT toy
+simulator with four prime sectors \(p \in \{2,3,5,7\}\), providing a concrete
+testbed for prime-structured quantum gravity and spectral-dimension
+phenomenology.\,[file:1]
+\end{abstract}
+\newpage
+\tableofcontents
+\newpage
+\section{Executive Summary}
+
+\subsection{Motivation}
+
+Multiplicity Theory views mathematical and physical objects as recursively
+generated patterns of interactions indexed by primes, rather than as static
+points on a manifold. In this ontology, quantum spacetime should emerge
+from a prime-indexed network of relations, with identity and behavior
+preserved through recursive feedback across scales.[file:1]
+
+Noncommutative Geometry (NCG) suggests that at Planckian scales the
+coordinates of spacetime become operators obeying non-trivial commutation
+relations, while Causal Dynamical Triangulations (CDT) offers a discrete,
+non-perturbative path integral over simplicial geometries with a causal
+foliation.[web:13][web:16][web:19] Previous work integrated NCG and CDT into Multiplicity
+largely as separate modules; here, we treat them as \emph{coupled
+deformations} of a single prime-indexed multiplicity space.[file:1]
+
+\subsection{Core Construction}
+
+We define a \emph{prime-indexed noncommutative triangulated multiplicity
+space} \(\mathbb{M}\) as the collection
+\begin{equation}
+  \mathbb{M} =
+    \bigl\{ \bigl(w_{p,i}(t), \sigma_{p,i}, \hat{x}^\mu_{p,i} \bigr)
+    \bigr\}_{p \in \mathcal{P},\; i \in I_p},
+\end{equation}
+where \(\mathcal{P}\) is the set of primes, \(\sigma_{p,i}\) encodes local
+simplicial/combinatorial data, and \(\hat{x}^\mu_{p,i}\) are operator-valued
+coordinates satisfying noncommutative relations.[file:1]
+The dynamics is driven by:
+\begin{enumerate}[label=(\alph*)]
+  \item A Regge--NCG action density
+  \(
+    s_i = S_{\mathrm{Regge},i} + S_{\mathrm{NCG},i}
+         + \lambda \theta_p \varepsilon_i
+  \),
+  where \(\varepsilon_i\) is the deficit angle, \(\theta_p\) the
+  sector-dependent noncommutativity parameter, and \(\lambda\) a coupling.[file:1][web:13][web:20]
+  \item A feedback equation for multiplicity weights \(w_{p,i}(t)\):
+  \begin{equation}
+    \frac{d w_{p,i}}{dt}
+      = \alpha\bigl(\langle s \rangle_p - s_i\bigr)
+      + \beta \sum_{p' \neq p} \theta_{pp'}
+          \bigl(\langle s \rangle_{p'} - \langle s \rangle_p \bigr)
+      - \gamma \bigl(w_{p,i} - w_0\bigr),
+    \label{eq:feedback}
+  \end{equation}
+  where \(\langle s \rangle_p\) is the sector-averaged action density and
+  \(\theta_{pp'}\) encodes cross-sector noncommutativity.[file:1]
+\end{enumerate}
+
+\subsection{Novelty}
+
+Relative to standard NCG and CDT frameworks, the novelty is threefold:
+\begin{itemize}
+  \item NCG and CDT are not merely parallel modules but are coupled via
+        the explicit term \(\lambda \theta_p \varepsilon_i\) in the local
+        action density \(s_i\), making noncommutativity dynamically deform
+        curvature rather than just modifying field interactions on a fixed
+        background.[file:1][web:20]
+  \item The degrees of freedom are prime-indexed simplices with
+        recursively updated weights \(w_{p,i}(t)\), so prime structure enters
+        directly into the geometry of spacetime and its evolution.[file:1]
+  \item Tensor networks are reinterpreted as prime-labeled multiplicity
+        networks, with phases and couplings determined by noncommutativity
+        and Regge curvature, aligning with Multiplicity's broader program of
+        prime-labeled recursion across mathematics and physics.[file:1]
+\end{itemize}
+
+\subsection{Implementation and Expected Signatures}
+
+We implement the construction in a 2D CDT toy simulator with four prime
+sectors \(p \in \{2,3,5,7\}\), constant sector-dependent noncommutativity
+\(\theta_p\), and Euler integration of Eq.\,\eqref{eq:feedback} for the
+weights \(w_{p,i}(t)\).[file:1] The simulator tracks:
+\begin{enumerate}[label=(\roman*)]
+  \item Sector-averaged weights \(\langle w \rangle_p(t)\),
+  \item Sector-averaged curvature \(\langle \varepsilon \rangle_p(t)\),
+  \item A proxy for the spectral dimension \(D_s(t)\) inferred from the
+        curvature flow.[file:1][web:15][web:18]
+\end{enumerate}
+We expect:
+\begin{itemize}
+  \item Recovery of baseline 2D CDT spectral-dimension behavior when
+        \(\beta = \lambda = 0\) and all \(\theta_p\) are equal, namely
+        \(D_s \lesssim 2\) with smooth scale dependence.[web:15][web:18]
+  \item Prime-sector competition, where sectors with favorable combinations
+        of \(\theta_p\) and curvature \(\varepsilon_i\) dominate the late-time
+        multiplicity distribution.
+  \item Possible plateaus or oscillations in \(D_s\) at scales associated
+        with dominant prime sectors, representing a characteristic
+        ``Multiplicity signature'' absent in plain CDT.[file:1]
+\end{itemize}
+
+\section{Mathematical Framework}
+
+\subsection{Noncommutative Spacetime Structure}
+
+In Noncommutative Geometry, spacetime coordinates are promoted to
+operators \(\hat{x}^\mu\) obeying
+\begin{equation}
+  [\hat{x}^\mu, \hat{x}^\nu]
+    = i \theta^{\mu\nu},
+\end{equation}
+where \(\theta^{\mu\nu}\) is an antisymmetric matrix characterizing the
+noncommutativity.\,[file:1][web:20] In the Multiplicity setting, we refine this
+to \emph{prime- and simplex-resolved} operators:
+\begin{equation}
+  [\hat{x}^\mu_{p,i}, \hat{x}^\nu_{p',j}]
+    = i \theta^{\mu\nu}_{pp',ij},
+\end{equation}
+where \(p,p'\) are primes and \(i,j\) label simplices within each
+sector.[file:1]
+
+In the simplest implementation considered here, we take
+\(\theta^{\mu\nu}_{pp',ij}\) to factor as
+\begin{equation}
+  \theta^{\mu\nu}_{pp',ij} =
+    \theta_0\,T^{\mu\nu}\,f_{pp'}\,g_{ij},
+\end{equation}
+where \(T^{\mu\nu}\) is a fixed antisymmetric tensor (e.g.\ a constant
+spacelike plane), \(f_{pp'}\) encodes cross-prime coupling, and \(g_{ij}\)
+encodes local structure (for the toy model we set \(g_{ij} \approx 1\)).[file:1]
+
+\subsection{Moyal--Weyl Star Product and NCG Action}
+
+Classically, fields \(\phi(x)\) on spacetime are replaced by fields
+\(\hat{\phi}(\hat{x})\) on the noncommutative algebra, and multiplication is
+deformed via the Moyal--Weyl star product
+\begin{equation}
+  (\phi \star \psi)(x)
+    = \phi(x)\,
+      \exp\!\left(
+        \frac{i}{2} \theta^{\mu\nu}
+        \overleftarrow{\partial_\mu}
+        \overrightarrow{\partial_\nu}
+      \right)\!
+      \psi(x),
+\end{equation}
+so that the scalar action becomes
+\begin{equation}
+  S[\hat{\phi}]
+    = \int d^4 x \sqrt{-g}\,
+      \bigl(
+        \hat{g}^{\mu\nu}\,
+        \partial_\mu \hat{\phi} \star
+        \partial_\nu \hat{\phi}
+        - V(\hat{\phi})
+      \bigr).\,[file:1][web:20]
+\end{equation}
+On a triangulated manifold, one must discretize both the geometry and the
+star product. For the present 2D toy model we treat the NCG contribution
+at each simplex \(i\) in sector \(p\) as an effective local term:
+\begin{equation}
+  S_{\mathrm{NCG},i}
+    = \kappa\,\theta_p
+    \quad\text{or more generally}\quad
+  S_{\mathrm{NCG},i} = \kappa\,\theta_p^2\,G_i,
+\end{equation}
+where \(G_i\) is a discrete scalar-gradient energy built from neighboring
+simplices, and \(\kappa\) is a coupling.[file:1] This already captures the key
+intuition: larger \(\theta_p\) sectors carry a higher noncommutative
+penalty unless compensated by geometric flow.
+
+\subsection{CDT and the Regge Action}
+
+Causal Dynamical Triangulations discretize spacetime as a piecewise linear
+manifold built from simplices with a global time foliation. In Regge
+calculus, curvature is concentrated at lower-dimensional ``hinges''
+(triangle faces in 4D, vertices in 2D), and the Einstein--Hilbert action
+is replaced by a sum over deficit angles \(\delta_j\) and volumes \(V_j\):[web:13][web:16][web:19]
+\begin{equation}
+  S_{\mathrm{Regge}} =
+    \sum_{j \in T} \bigl( k\,\delta_j - \lambda_{\mathrm{cosm}}\,V_j \bigr),
+\end{equation}
+where \(k \equiv 1/(8\pi G)\) and \(\lambda_{\mathrm{cosm}}\) is the
+cosmological constant.[web:13][web:16]
+
+In 2D CDT, the triangulations have a global discrete time parameter and
+spatial slices of fixed topology (e.g.\ circles). The spectral dimension
+\(D_s\) of such geometries is known to be \(\leq 2\), with various studies
+showing values around 2 for infinite triangulations and with matter
+coupling.[web:15][web:18][web:21]
+
+For simplex \(i\), we define a local Regge contribution
+\begin{equation}
+  S_{\mathrm{Regge},i} =
+    \varepsilon_i\,A_i,
+\end{equation}
+where \(\varepsilon_i\) is the deficit angle and \(A_i\) the area of the
+simplex.\,[file:1]
+
+\subsection{Unified Local Action Density}
+
+To couple NCG and CDT at the level of the local dynamics, we define at
+each simplex \(i\) in prime sector \(p\) the local action density:
+\begin{equation}
+  s_i \equiv s_{p,i} =
+    S_{\mathrm{Regge},i}
+    + S_{\mathrm{NCG},i}
+    + \lambda \theta_p \varepsilon_i,
+  \label{eq:local-action}
+\end{equation}
+where:
+\begin{itemize}
+  \item \(S_{\mathrm{Regge},i} = \varepsilon_i A_i\),
+  \item \(S_{\mathrm{NCG},i}\) is the effective NCG scalar contribution
+        (constant or gradient-based),
+  \item \(\lambda \theta_p \varepsilon_i\) is a new coupling that
+        explicitly links noncommutativity (\(\theta_p\)) to curvature
+        (\(\varepsilon_i\)).[file:1]
+\end{itemize}
+This term is precisely what closes the gap identified in the earlier
+draft: NCG and CDT no longer live in separate channels but deform the same
+object---the multiplicity-weighted prime-indexed triangulation.
+
+\subsection{Sector Averages and Feedback}
+
+For each prime sector \(p\), we define the multiplicity-weighted average
+action
+\begin{equation}
+  \langle s \rangle_p(t) =
+    \frac{1}{N_p}
+    \sum_{i \in \mathrm{sector}\;p}
+      w_{p,i}(t)\,s_{p,i}(t),
+\end{equation}
+where \(N_p\) is the number of simplices in sector \(p\). In practice, it
+is natural to normalize by total weight rather than count:
+\begin{equation}
+  \langle s \rangle_p(t) =
+    \frac{
+      \sum_{i} w_{p,i}(t)\,s_{p,i}(t)
+    }{
+      \sum_{i} w_{p,i}(t)
+    }.
+\end{equation}
+We also define sector-averaged curvature
+\begin{equation}
+  \langle \varepsilon \rangle_p(t) =
+    \frac{
+      \sum_{i} w_{p,i}(t)\,\varepsilon_{p,i}(t)
+    }{
+      \sum_{i} w_{p,i}(t)
+    }.
+\end{equation}
+
+\subsection{Feedback Dynamics for Weights}
+
+The core Multiplicity dynamics is encoded in the evolution equation for
+the multiplicity weights \(w_{p,i}(t)\). We postulate the feedback equation:
+\begin{equation}
+  \frac{d w_{p,i}}{dt}
+    = \alpha\bigl(\langle s \rangle_p - s_{p,i}\bigr)
+    + \beta \sum_{p' \neq p}
+        \theta_{pp'}
+        \bigl(\langle s \rangle_{p'} - \langle s \rangle_p \bigr)
+    - \gamma \bigl(w_{p,i} - w_0\bigr),
+  \label{eq:feedback-full}
+\end{equation}
+where:
+\begin{itemize}
+  \item \(\alpha\) controls within-sector competition: simplices with lower
+        local action \(s_{p,i}\) than the sector average gain weight.
+  \item \(\beta\) controls cross-sector coupling, modulated by
+        \(\theta_{pp'}\); differences in sector averages drive weight
+        transfer among primes.
+  \item \(\gamma\) controls relaxation toward the baseline multiplicity
+        \(w_0\), ensuring numerical and conceptual stability.
+\end{itemize}
+This is the continuum form of the discrete update implemented in the
+simulator.
+
+\subsection{Linear Stability Near Equilibrium}
+
+Write \(w_{p,i}(t) = w_0 + x_{p,i}(t)\) and consider small deviations
+\(x_{p,i} \ll w_0\). If the sector averages vary slowly relative to
+\(x_{p,i}\), the dominant local term is the decay component:
+\begin{equation}
+  \frac{dx_{p,i}}{dt} \approx -\gamma x_{p,i}.
+\end{equation}
+Using explicit Euler with time step \(dt\), we have
+\begin{equation}
+  x^{(n+1)}_{p,i} =
+    x^{(n)}_{p,i} + dt\,\frac{dx_{p,i}}{dt}
+    \approx (1 - \gamma dt)\,x^{(n)}_{p,i}.
+\end{equation}
+Stability of this mode requires \(|1 - \gamma dt| < 1\), which gives the
+condition
+\begin{equation}
+  0 < \gamma\,dt < 2.
+\end{equation}
+For the simulator choice \(dt = 0.05\), this permits \(\gamma\) up to
+approximately 40, while the current experiments use \(\gamma \lesssim 0.5\),
+comfortably inside the stable region.[code_file:1]
+
+The full coupled system introduces additional eigenmodes from the
+cross-sector and within-sector terms, but as long as the effective
+coefficients \(\alpha, \beta, \lambda,\theta_0\) remain \(O(1)\), and the
+weights are clamped to \(w_{p,i} \geq \epsilon\), the explicit Euler scheme
+is robust in the toy model regime.
+
+\section{Prime-Indexed Tensor Networks}
+
+Tensor networks in Multiplicity represent quantum states and entanglement
+across spacetime. In the NCG+CDT+Multiplicity setting, we refine the
+state:
+\begin{equation}
+  \hat{\Psi}(t) =
+    \sum_{(p,i),(p',j)}
+      \hat{T}_{(p,i),(p',j)}(t)\,
+      \hat{\Psi}_{p,i} \otimes \hat{\Psi}_{p',j}\,
+      e^{i(\theta_{p,i}(t) + \theta_{p',j}(t))},
+\end{equation}
+where:
+\begin{itemize}
+  \item \(\hat{T}_{(p,i),(p',j)}\) encodes couplings between simplices in
+        prime sectors \(p\) and \(p'\),
+  \item \(\theta_{p,i}(t)\) are phase factors influenced by the
+        noncommutative structure,
+  \item the indices themselves are prime-resolved, consistent with the
+        multiplicity ontology.[file:1]
+\end{itemize}
+CDT constrains which pairs \((p,i),(p',j)\) can couple (respecting
+causality and adjacency in the simplicial complex), while NCG determines
+phases and local star-product corrections. The multiplicity weights
+\(w_{p,i}(t)\) can be interpreted as modulating the amplitude or norm
+associated with each local tensor, naturally linking the geometric and
+quantum structures.
+
+\section{2D CDT Toy Model Implementation}
+
+\subsection{Setup}
+
+The current implementation focuses on a 2D CDT-inspired toy model with
+four prime sectors \(p \in \{2,3,5,7\}\), each with \(N_p\) simplices and
+sector-dependent noncommutativity \(\theta_p = \theta_0 \times
+\{1.0,1.5,0.8,2.0\}\).\,[file:1] Each simplex in sector \(p\) has:
+\begin{itemize}
+  \item A weight \(w_{p,i}(t)\),
+  \item A deficit angle \(\varepsilon_{p,i}\),
+  \item An area \(A_{p,i}\),
+  \item A position \((x_{p,i},y_{p,i})\) in a causal-strip layout,
+  \item A local NCG contribution \(S_{\mathrm{NCG},i}\).
+\end{itemize}
+
+The local action density is implemented as
+\begin{equation}
+  s_{p,i}(t)
+    = \varepsilon_{p,i}(t)\,A_{p,i}
+      + S_{\mathrm{NCG},i}(t)
+      + \lambda \theta_p \varepsilon_{p,i}(t),
+\end{equation}
+and the feedback equation \eqref{eq:feedback-full} is advanced with an
+explicit Euler step of size \(dt = 0.05\).[file:1]
+
+\subsection{Representative Code Snippet}
+
+The following JavaScript snippet, extracted and simplified from the
+simulator, illustrates the implementation of the local action density and
+feedback update (comments removed for brevity):
+
+\begin{verbatim}
+function actionDensity(s, theta_p, lambda) {
+  const regge   = s.epsilon * s.area;
+  const ncg     = s.ncg;              // effective NCG term
+  const coupling = lambda * theta_p * s.epsilon;
+  return regge + ncg + coupling;
+}
+
+function sectorAvg(sector, lambda) {
+  const tp = sector.theta;
+  let sum = 0, wsum = 0;
+  for (const s of sector.simplices) {
+    sum  += s.w * actionDensity(s, tp, lambda);
+    wsum += s.w;
+  }
+  return wsum > 0 ? sum / wsum : 0;
+}
+
+function stepSim() {
+  const alpha  = parseFloat(slAlpha.value);
+  const beta   = parseFloat(slBeta.value);
+  const gamma  = parseFloat(slGamma.value);
+  const lambda = parseFloat(slLambda.value);
+  const w0     = parseFloat(slW0.value);
+  const theta0 = parseFloat(slTheta.value);
+  const dt     = 0.05;
+
+  simState.sectors.forEach((sec, pi) => {
+    sec.theta = theta0 * THETA_SCALE[pi];
+  });
+
+  const avgs = simState.sectors.map(sec => sectorAvg(sec, lambda));
+
+  simState.sectors.forEach((sec, pi) => {
+    for (const s of sec.simplices) {
+      const si = actionDensity(s, sec.theta, lambda);
+      const T1 = alpha * (avgs[pi] - si);
+      let T2 = 0;
+      simState.sectors.forEach((sec2, pj) => {
+        if (pj !== pi) {
+          const theta_pp = theta0 * THETA_SCALE[pi] * THETA_SCALE[pj];
+          T2 += beta * theta_pp * (avgs[pj] - avgs[pi]);
+        }
+      });
+      const T3 = -gamma * (s.w - w0);
+      s.w = Math.max(0.01, s.w + dt * (T1 + T2 + T3));
+    }
+  });
+}
+\end{verbatim}
+
+This realizes the feedback equation with:
+\begin{itemize}
+  \item \(S_{\mathrm{Regge},i} = \varepsilon_i A_i\),
+  \item \(S_{\mathrm{NCG},i} \equiv s.\mathrm{ncg}\),
+  \item \(\lambda \theta_p \varepsilon_i\) as an explicit coupling,
+  \item \(\theta_{pp'} \propto \theta_0 \theta_p \theta_{p'}\).
+\end{itemize}
+
+\subsection{Baseline and Multiplicity Effects}
+
+To validate the model, one considers the following regimes:
+\begin{enumerate}[label=(\alph*)]
+  \item \textbf{Baseline CDT-like regime}: set \(\beta = 0\), \(\lambda = 0\),
+        small \(\gamma\), and all \(\theta_p\) equal. The system should
+        approximate plain 2D CDT plus a trivial scalar field, with spectral
+        dimension \(D_s \lesssim 2\) and smooth scale dependence.[web:15][web:18]
+  \item \textbf{Multiplicity regime}: restore \(\lambda > 0\) and
+        sector-dependent \(\theta_p\), then vary \(\beta\). Here one can
+        observe:
+        \begin{itemize}
+          \item Which prime sector dominates the late-time average weight
+                \(\langle w \rangle_p(t)\),
+          \item How the curvature \(\langle \varepsilon \rangle_p(t)\) flows
+                for each sector,
+          \item Whether \(D_s(t)\) exhibits plateaus or oscillations at
+                scales associated with dominant sectors.
+        \end{itemize}
+\end{enumerate}
+
+\section{Outlook and Validation Path}
+
+\subsection{Prime Indexing and Dynamic Reassignment}
+
+In the current prototype, sector labels are assigned by hand. A more
+fundamental Multiplicity implementation would derive the prime sector of
+each simplex from a global integer label via prime factorization, allowing
+dynamic reassignment of degrees of freedom across sectors as the
+triangulation evolves.[file:1]
+
+\subsection{Phase Diagrams and Spectral Signatures}
+
+By scanning \((\lambda,\beta)\) space and recording:
+\begin{itemize}
+  \item The fraction of late-time steps where each prime sector is
+        dominant,
+  \item The late-time mean and variance of \(D_s\),
+\end{itemize}
+one can map out phase diagrams indicating regimes of sector dominance,
+coexistence, and oscillatory behavior. Comparing these diagrams to the
+\(\beta=\lambda=0\) baseline quantifies the ``Multiplicity effect'' on
+spectral dimension and curvature flow.[file:1]
+
+\subsection{Higher Dimensions and Star-Product Refinement}
+
+Future work includes:
+\begin{itemize}
+  \item Extending to 2+1 dimensions, using the full Regge action with
+        2-simplices as hinges and 3-simplices as building blocks.[web:16][web:22]
+  \item Implementing a more faithful discretization of the Moyal star
+        product on the triangulation, possibly via dual graphs or matrix
+        models of noncommutative field theory.[web:14][web:17][web:20]
+  \item Connecting the weight evolution \(w_{p,i}(t)\) to PhaseMirror-style
+        entanglement spectra across primes, using Schmidt decompositions of
+        the prime-indexed tensor network.\,[file:1]
+\end{itemize}
+
+\subsection{Conceptual Significance}
+
+The construction presented here realizes, in a concrete and simulatable
+setting, the idea that spacetime is not a static manifold but a
+prime-indexed multiplicity space whose geometry and noncommutativity are
+jointly determined by recursive feedback dynamics. NCG and CDT become
+different facets of a single multiplicity-theoretic object, rather than
+external modules grafted onto GR. This paves the way for a genuinely
+arithmetic, recursively stable approach to quantum gravity and cosmology
+within the Multiplicity program.[file:1][web:15][web:18]
+
+\appendix
+\section*{Mathematical Appendix}
+\addcontentsline{toc}{section}{Mathematical Appendix}
+
+\section{Operator-Theoretic Setting and Notation}
+
+\subsection{Prime-Indexed Hilbert Decomposition}
+
+Let \(\mathcal{P}\) denote the set of prime numbers and let
+\(\{I_p\}_{p \in \mathcal{P}}\) be index sets labelling the simplices in
+each prime sector. For each \(p \in \mathcal{P}\), we consider a
+finite-dimensional Hilbert space
+\[
+  \mathcal{H}_p
+  := \ell^2(I_p)
+  = \left\{
+      \psi = (\psi_i)_{i \in I_p}
+      : \sum_{i \in I_p} |\psi_i|^2 < \infty
+    \right\},
+\]
+equipped with the standard inner product
+\(
+  \langle \psi, \varphi \rangle_p
+  = \sum_{i \in I_p} \overline{\psi_i} \varphi_i.
+\)[file:1]
+
+The global multiplicity Hilbert space is the orthogonal direct sum
+\begin{equation}
+  \mathcal{H}
+  := \bigoplus_{p \in \mathcal{P}} \mathcal{H}_p,
+\end{equation}
+so that each \(\Psi \in \mathcal{H}\) decomposes as
+\(
+  \Psi = \bigoplus_{p \in \mathcal{P}} \Psi^{(p)}
+\)
+with \(\Psi^{(p)} \in \mathcal{H}_p\).[file:1]
+
+For each sector \(p\), we define:
+\begin{itemize}
+  \item The \emph{weight vector}
+  \(
+    w^{(p)}(t) = \{w_{p,i}(t)\}_{i \in I_p} \in (0,\infty)^{I_p}
+  \),
+  \item The \emph{local action density} vector
+  \(
+    s^{(p)}(t) = \{ s_{p,i}(t) \}_{i \in I_p},
+  \)
+  where
+  \begin{equation}
+    s_{p,i}(t)
+      = S_{\mathrm{Regge},p,i}(t)
+        + S_{\mathrm{NCG},p,i}(t)
+        + \lambda\,\theta_p\,\varepsilon_{p,i}(t).
+  \end{equation}[file:1]
+\end{itemize}
+
+We also define the diagonal multiplication operators
+\(
+  W_p(t), S_p(t) : \mathcal{H}_p \to \mathcal{H}_p
+\)
+by
+\begin{equation}
+  (W_p(t)\psi)_i = w_{p,i}(t)\psi_i,
+  \qquad
+  (S_p(t)\psi)_i = s_{p,i}(t)\psi_i.
+\end{equation}
+Their direct sums yield bounded operators on \(\mathcal{H}\):
+\(
+  W(t) = \bigoplus_p W_p(t),
+  \ S(t) = \bigoplus_p S_p(t).
+\)
+
+\subsection{Sector-Average Operators}
+
+For each sector, we define the scalar
+\begin{equation}
+  \langle s \rangle_p(t)
+    := \frac{\sum_{i \in I_p} w_{p,i}(t)\,s_{p,i}(t)}
+             {\sum_{i \in I_p} w_{p,i}(t)}
+  = \frac{
+      \langle w^{(p)}(t), s^{(p)}(t) \rangle_p
+    }{
+      \|w^{(p)}(t)\|_1
+    },
+\end{equation}
+where \(\|\cdot\|_1\) is the \(\ell^1\)-norm on \(\mathbb{R}^{I_p}\).[file:1]
+We also introduce the rank-one projection operators
+\begin{equation}
+  P_p(t) : \mathcal{H}_p \to \mathcal{H}_p,
+  \qquad
+  P_p(t)\psi
+    = \frac{\langle w^{(p)}(t), \psi \rangle_p}{\|w^{(p)}(t)\|_2^2}
+      \, w^{(p)}(t),
+\end{equation}
+with \(\|\cdot\|_2\) the \(\ell^2\)-norm. These encode the ``direction''
+selected by the current multiplicity in each prime sector.
+
+\section{Feedback Dynamics as an Operator Equation}
+
+\subsection{Componentwise Form and Matrix Representation}
+
+Recall the feedback equation for the weights:
+\begin{equation}\label{eq:feedback-appendix}
+  \frac{d w_{p,i}}{dt}
+    = \alpha\bigl(\langle s \rangle_p - s_{p,i}\bigr)
+    + \beta \sum_{p' \neq p} \theta_{pp'}
+        \bigl(\langle s \rangle_{p'} - \langle s \rangle_p\bigr)
+    - \gamma \bigl(w_{p,i} - w_0\bigr),
+\end{equation}
+with parameters \(\alpha,\beta,\gamma,w_0,\lambda,\theta_{pp'}\) as in the
+main text.[file:1]
+
+Fix \(t\) and view \eqref{eq:feedback-appendix} as an ODE in the vector
+\(w(t) \in \mathbb{R}^{\bigsqcup_{p} I_p}\). We may write
+\begin{equation}
+  \frac{d}{dt} w_{p,i}
+    = -\gamma w_{p,i}
+      + \gamma w_0
+      - \alpha s_{p,i}
+      + \alpha \langle s \rangle_p
+      + \beta \sum_{p' \neq p} \theta_{pp'}
+          \bigl(\langle s \rangle_{p'} - \langle s \rangle_p \bigr).
+\end{equation}
+The terms involving \(\langle s \rangle_p\) are sector-constant and can be
+viewed as collective driving terms. For fixed \(s_{p,i}\) and \(\langle s
+\rangle_p(t)\), the evolution is affine-linear in \(w_{p,i}\).
+
+At the operator level, one can write on each sector:
+\begin{equation}
+  \frac{d}{dt} W_p(t)
+    \approx -\gamma \bigl( W_p(t) - w_0\,\mathbf{1}_p \bigr)
+      - \alpha S_p(t)
+      + \alpha \langle s \rangle_p(t)\,\mathbf{1}_p
+      + \mathcal{C}_p(t),
+\end{equation}
+where \(\mathbf{1}_p\) is the identity on \(\mathcal{H}_p\), and
+\(\mathcal{C}_p(t)\) is a scalar multiple of \(\mathbf{1}_p\) capturing
+the cross-sector coupling:
+\begin{equation}
+  \mathcal{C}_p(t)
+    = \beta \sum_{p' \neq p}
+        \theta_{pp'}
+        \bigl(\langle s \rangle_{p'}(t) - \langle s \rangle_p(t) \bigr)
+        \,\mathbf{1}_p.
+\end{equation}
+
+\subsection{Linearization Around Equilibrium}
+
+Let \(w_{p,i}(t) = w_0 + x_{p,i}(t)\) and assume a static background
+\(\bar{s}_{p,i}\) with \(\langle \bar{s} \rangle_p\) independent of time.
+Then the linearization of \eqref{eq:feedback-appendix} around the fixed
+point \(x_{p,i}=0\) yields:
+\begin{equation}
+  \frac{dx_{p,i}}{dt}
+    = -\gamma x_{p,i}
+      + \alpha\bigl(\langle s \rangle_p - \bar{s}_{p,i} \bigr)
+      + \beta \sum_{p' \neq p} \theta_{pp'}
+          \bigl(\langle s \rangle_{p'} - \langle s \rangle_p \bigr)
+      + \mathcal{O}(\|x\|^2),
+\end{equation}
+where \(\langle s \rangle_p = \langle \bar{s} \rangle_p + \mathcal{O}(x)\).
+Expanding to first order in \(x\), we obtain a system of the form:
+\begin{equation}
+  \frac{dx}{dt}
+    = -\gamma x + L x + b,
+\end{equation}
+where:
+\begin{itemize}
+  \item \(x \in \mathbb{R}^{\bigsqcup_p I_p}\) collects all deviations,
+  \item \(L\) is a matrix capturing the dependence of the averages
+        \(\langle s \rangle_p\) on \(x\),
+  \item \(b\) is a constant vector.
+\end{itemize}
+The leading-order stability is dictated by the eigenvalues of
+\(-\gamma I + L\).
+
+\begin{lemma}[Scalar mode stability]
+If we ignore the dependence of \(\langle s \rangle_p\) on \(x\) (i.e. treat
+them as constants), then for each component \(x_{p,i}\) the linearized
+equation reduces to
+\begin{equation}
+  \frac{dx_{p,i}}{dt} = -\gamma x_{p,i},
+\end{equation}
+which has solution \(x_{p,i}(t) = x_{p,i}(0)e^{-\gamma t}\). In
+particular, the equilibrium \(x_{p,i}=0\) is exponentially stable with rate
+\(\gamma\).
+\end{lemma}
+
+\begin{proof}
+Immediate integration of the scalar ODE
+\(
+  \dot{x} = -\gamma x
+\)
+yields
+\(
+  x(t) = e^{-\gamma t} x(0)
+\),
+so \(|x(t)| \le e^{-\gamma t} |x(0)|\).
+\end{proof}
+
+\subsection{Explicit Euler and Operator Norm Bound}
+
+Consider the explicit Euler discretization with step \(dt>0\):
+\begin{equation}
+  x^{(n+1)}_{p,i}
+    = x^{(n)}_{p,i}
+      + dt\,\frac{dx_{p,i}}{dt}\bigg|_{t = n dt}.
+\end{equation}
+In the scalar approximation \(\dot{x} = -\gamma x\), we have
+\begin{equation}
+  x^{(n+1)} = (1 - \gamma dt)\,x^{(n)}.
+\end{equation}
+
+\begin{lemma}[Scalar Euler stability]
+The explicit Euler scheme for \(\dot{x} = -\gamma x\) is stable in the
+sense \(|x^{(n)}| \to 0\) as \(n\to\infty\) if and only if
+\begin{equation}
+  |1 - \gamma dt| < 1,
+  \quad\text{i.e.}\quad
+  0 < \gamma dt < 2.
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+We have
+\(
+  x^{(n)} = (1 - \gamma dt)^n x^{(0)}.
+\)
+This converges to \(0\) as \(n\to\infty\) precisely when
+\(|1 - \gamma dt|<1\), which is equivalent to
+\(
+  -1 < 1 - \gamma dt < 1
+  \iff 0 < \gamma dt < 2.
+\)
+\end{proof}
+
+\begin{proposition}[Operator norm bound for Euler step]
+Let \(\mathcal{T} : \mathcal{H} \to \mathcal{H}\) be the linear operator
+defined by
+\(
+  \mathcal{T} = I - \gamma dt\,I + dt\,L
+\),
+where \(L\) is the linearization matrix of the feedback dynamics. Suppose
+\(\|L\|_{\mathcal{B}(\mathcal{H})} \leq C_L\) and choose \(dt>0\) such that
+\begin{equation}
+  \gamma dt > C_L dt,
+  \qquad
+  \gamma dt < 2 - C_L dt.
+\end{equation}
+Then
+\begin{equation}
+  \|\mathcal{T}\|_{\mathcal{B}(\mathcal{H})}
+    \leq 1 - (\gamma - C_L) dt < 1,
+\end{equation}
+and the discrete-time evolution is a strict contraction in operator norm.
+\end{proposition}
+
+\begin{proof}
+We have
+\(
+  \mathcal{T} = I + dt(-\gamma I + L)
+\),
+so
+\[
+  \|\mathcal{T}\|
+    \leq \|I\| + dt\|-\gamma I + L\|
+    \leq 1 + dt(\gamma + C_L).
+\]
+This upper bound is not sharp. A refined argument uses the spectral radius
+\(\rho(L)\) and the fact that the eigenvalues of \(\mathcal{T}\) are
+\(1 + dt(-\gamma + \lambda_L)\) where \(\lambda_L\) ranges over the
+spectrum of \(L\). If all eigenvalues satisfy
+\(|1 + dt(-\gamma + \lambda_L)| < 1\), then
+\(\|\mathcal{T}\| < 1\). One sufficient condition is
+\(|-\gamma + \lambda_L| < \frac{2}{dt}\) for all \(|\lambda_L| \le C_L\),
+which is equivalent to the inequalities in the statement. Under these
+conditions, \(\mathcal{T}\) is a strict contraction in operator norm.
+\end{proof}
+
+In the simulator regime, \(dt = 0.05\) and \(\gamma \lesssim 0.5\), while
+\(\alpha,\beta,\lambda,\theta_0\) are \(O(1)\), so the linearization
+constant \(C_L\) is modest and the discretization is numerically stable
+for the exploratory runs considered.[code_file:1][file:1]
+
+\section{Bounds on Local Action Operators}
+
+\subsection{Uniform Bounds on Regge and NCG Contributions}
+
+Assume that in the 2D toy model the deficit angles and areas satisfy
+\begin{equation}
+  0 < \varepsilon_{\min} \leq \varepsilon_{p,i}(t) \leq \varepsilon_{\max},
+  \qquad
+  0 < A_{\min} \leq A_{p,i}(t) \leq A_{\max},
+\end{equation}
+and that the effective NCG term satisfies
+\begin{equation}
+  |S_{\mathrm{NCG},p,i}(t)| \leq K_{\mathrm{NCG}},
+\end{equation}
+for all \(p,i,t\). Furthermore, let \(|\theta_p| \leq \Theta_{\max}\) and
+\(|\lambda| \leq \Lambda_{\max}\). Then the local action density satisfies
+the uniform bound
+\begin{equation}
+  |s_{p,i}(t)|
+    \leq \varepsilon_{\max} A_{\max}
+         + K_{\mathrm{NCG}}
+         + \Lambda_{\max} \Theta_{\max} \varepsilon_{\max}
+    =: K_s.
+\end{equation}
+
+\begin{lemma}[Boundedness of \(S_p(t)\)]
+Under the above assumptions, the diagonal operator \(S_p(t)\) on
+\(\mathcal{H}_p\) is bounded with operator norm
+\(
+  \|S_p(t)\|_{\mathcal{B}(\mathcal{H}_p)} \leq K_s
+\),
+uniformly in \(t\).
+\end{lemma}
+
+\begin{proof}
+For any \(\psi \in \mathcal{H}_p\),
+\begin{align*}
+  \|S_p(t)\psi\|_2^2
+    &= \sum_{i \in I_p} |s_{p,i}(t)|^2 |\psi_i|^2
+     \leq K_s^2 \sum_{i \in I_p} |\psi_i|^2
+     = K_s^2 \|\psi\|_2^2.
+\end{align*}
+Thus \(\|S_p(t)\| \leq K_s\).
+\end{proof}
+
+Consequently, the global operator \(S(t) = \bigoplus_p S_p(t)\) is bounded
+with \(\|S(t)\| \leq K_s\).
+
+\subsection{Bounds on Sector-Average Functionals}
+
+Define the linear functionals
+\begin{equation}
+  \mathcal{L}_p(t) : \mathcal{H}_p \to \mathbb{R},
+  \qquad
+  \mathcal{L}_p(t)(\psi)
+    := \frac{\langle w^{(p)}(t), \psi \rangle_p}
+             {\|w^{(p)}(t)\|_1},
+\end{equation}
+so that \(\langle s \rangle_p(t) = \mathcal{L}_p(t)\bigl(s^{(p)}(t)\bigr)\).
+Assume there exist constants \(0 < m_w \leq M_w < \infty\) such that
+\[
+  m_w \leq w_{p,i}(t) \leq M_w
+  \quad\text{for all } p,i,t.
+\]
+Then \(\|w^{(p)}(t)\|_1 \geq m_w |I_p|\) and
+\(\|w^{(p)}(t)\|_2 \leq M_w \sqrt{|I_p|}\). By Cauchy--Schwarz,
+\begin{align*}
+  |\mathcal{L}_p(t)(\psi)|
+    &= \frac{
+         |\langle w^{(p)}(t), \psi \rangle_p|
+       }{
+         \|w^{(p)}(t)\|_1
+       }
+     \leq \frac{
+         \|w^{(p)}(t)\|_2 \|\psi\|_2
+       }{
+         \|w^{(p)}(t)\|_1
+       }
+     \leq \frac{
+         M_w \sqrt{|I_p|}
+       }{
+         m_w |I_p|
+       } \|\psi\|_2
+     = \frac{M_w}{m_w} |I_p|^{-1/2} \|\psi\|_2.
+\end{align*}
+Thus
+\begin{equation}
+  \|\mathcal{L}_p(t)\|
+    \leq \frac{M_w}{m_w} |I_p|^{-1/2}.
+\end{equation}
+
+In particular, for fixed finite \(I_p\), the sector-average maps are
+uniformly bounded linear functionals.
+
+\section{Spectral Dimension Proxy and Bounds}
+
+In the toy model, the spectral dimension \(D_s(t)\) is not computed via a
+full diffusion process but via a curvature-based proxy:
+\begin{equation}
+  D_s(t)
+    \approx 2.0 - c\,\bar{\varepsilon}(t),
+\end{equation}
+where \(\bar{\varepsilon}(t)\) is a global curvature average and \(c>0\)
+is chosen such that \(D_s\) remains in the interval \([1,2]\).[file:1][web:15][web:18]
+
+Assume that \(\bar{\varepsilon}(t)\) satisfies
+\(0 \leq \bar{\varepsilon}(t) \leq \varepsilon_{\max}\). Then for any
+\(c \in (0, 1/\varepsilon_{\max}]\) we obtain:
+\[
+  1 \leq D_s(t) \leq 2.
+\]
+
+\begin{lemma}[Uniform bounds on \(D_s(t)\)]
+Suppose \(\bar{\varepsilon}(t) \in [0,\varepsilon_{\max}]\) for all \(t\)
+and choose \(c = \frac{0.8}{\varepsilon_{\max}}\). Then the proxy
+\(
+  D_s(t) = 2 - 0.8 \bar{\varepsilon}(t)
+\)
+satisfies
+\(
+  1.2 \leq D_s(t) \leq 2
+\),
+with variation strictly controlled by the curvature range.
+\end{lemma}
+
+\begin{proof}
+We have
+\(
+  D_s(t) \geq 2 - 0.8\varepsilon_{\max}
+\)
+and
+\(
+  D_s(t) \leq 2
+\).
+If \(\varepsilon_{\max} \leq 1\), then
+\(
+  D_s(t) \geq 2 - 0.8 = 1.2.
+\)
+\end{proof}
+
+This elementary bound is sufficient to guarantee that the proxy
+spectral dimension remains within the expected CDT range \([1,2]\) for
+reasonable curvature scales, and that its oscillations or plateaus are
+numerically controlled.
+
+\section{Prime-Sector Dominance and Lifetimes}
+
+Let \(t_n = n\,dt\) be discrete times and let \(p^\*(n)\) be the index of
+the dominant sector at time \(t_n\), i.e.
+\begin{equation}
+  p^\*(n)
+    := \arg\max_{p \in \mathcal{P}}
+        \langle w \rangle_p(t_n),
+  \qquad
+  \langle w \rangle_p(t)
+    = \frac{1}{|I_p|}\sum_{i \in I_p} w_{p,i}(t).
+\end{equation}
+
+For a fixed time window \(n \in \{n_0, \dots, N\}\), define the empirical
+dominant-sector frequency
+\begin{equation}
+  \pi_p
+    := \frac{1}{N - n_0 + 1}
+       \bigl|\{n \in [n_0, N] : p^\*(n) = p\}\bigr|.
+\end{equation}
+
+\begin{proposition}[Prime-sector lifetime fraction]
+For any finite set of primes \(\mathcal{P}\) and finite window
+\([n_0,N]\), the vector \(\pi = (\pi_p)_{p \in \mathcal{P}}\) is a
+probability vector:
+\begin{equation}
+  \pi_p \geq 0,
+  \qquad
+  \sum_{p \in \mathcal{P}} \pi_p = 1.
+\end{equation}
+Moreover, if the dynamics converges to a unique attracting set where a
+single prime \(p_\infty\) dominates, then
+\(
+  \pi_p \to \delta_{p,p_\infty}
+\)
+as the window is shifted to late times.
+\end{proposition}
+
+\begin{proof}
+By definition \(\pi_p\) counts the proportion of times in the discrete
+set \(\{n_0,\dots,N\}\) for which prime \(p\) is dominant. Each time step
+has exactly one dominant prime (assuming ties are broken consistently),
+so \(\sum_p \pi_p = 1\). Nonnegativity is clear. If the dynamics
+converges in the sense that there exists \(p_\infty\) such that
+\(p^\*(n) = p_\infty\) for all sufficiently large \(n\), then any
+sufficiently late window \([n_0,N]\) will have \(\pi_{p_\infty} \approx
+1\), establishing the convergence.
+\end{proof}
+
+This provides a rigorous notion of \emph{sector lifetime fraction} and
+connects the numerical experiments with the qualitative picture of prime
+sector dominance and decoupling in the long-time limit.
+
+\bigskip
+
+\noindent
+The results in this appendix formalize the operator-theoretic setting of
+the prime-indexed noncommutative CDT model, provide explicit stability
+and norm bounds for the feedback dynamics, and justify the numerical
+choices used in the 2D toy simulator. They confirm that, under modest
+assumptions on the Regge and NCG contributions, the multiplicity
+evolution is well-posed and exhibits controlled behavior in both the
+weight dynamics and the spectral-dimension proxy.[file:1][web:15][web:18]
+
+\nocite{*}
+\bibliographystyle{unsrt}  
+\bibliography{references}
+\end{document}

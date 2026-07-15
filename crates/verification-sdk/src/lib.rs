@@ -1,51 +1,79 @@
 // crates/verification-sdk/src/lib.rs
 
+//! Verification SDK for ALP and CSL compliance checks.
+//! Provides Rust and WebAssembly APIs to verify zero-knowledge proofs
+//! and enforce CSL (Compliance Specification Language) rules before
+//! submission to the ledger. This crate is production hardened with
+//! strict safety and linting policies.
+
+#![forbid(unsafe_code)]
+#![deny(clippy::all, missing_docs)]
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 use std::sync::Arc;
 
+/// Represents a zero‑knowledge proof bundle with associated public signals and verification key.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProofBundle {
-    pub proof: serde_json::Value,
+    /// The zero‑knowledge proof data.
+pub proof: serde_json::Value,
     #[serde(rename = "publicSignals")]
-    pub public_signals: Vec<String>,
+    /// The public signals associated with the proof.
+pub public_signals: Vec<String>,
     #[serde(rename = "vKey")]
-    pub v_key: serde_json::Value,
+    /// The verification key for the proof.
+pub v_key: serde_json::Value,
 }
 
+/// Result of a proof verification indicating success or error.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VerificationResult {
-    pub verified: bool,
+    /// Indicates whether the proof was verified successfully.
+pub verified: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub error: Option<String>,
+    /// Optional error message if verification failed.
+pub error: Option<String>,
 }
 
+/// Outcome of a CSL rule evaluation.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CslRuleResult {
-    pub allowed: bool,
+    /// Whether the CSL rule permits the operation.
+pub allowed: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub reason: Option<String>,
+    /// Optional justification when a rule disallows an operation.
+pub reason: Option<String>,
 }
 
+/// Result returned after a pre‑submission check, including verification and CSL outcomes.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PreSubmissionResult {
-    pub accepted: bool,
+    /// Overall acceptance result of the pre‑submission check.
+pub accepted: bool,
     #[serde(rename = "verificationResult")]
-    pub verification_result: VerificationResult,
+    /// Result of the proof verification step.
+pub verification_result: VerificationResult,
     #[serde(rename = "cslResult", skip_serializing_if = "Option::is_none")]
-    pub csl_result: Option<CslRuleResult>,
+    /// Result of the CSL rule evaluation, if any.
+pub csl_result: Option<CslRuleResult>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub receipt: Option<serde_json::Value>,
+    /// Optional receipt generated for silent submissions.
+pub receipt: Option<serde_json::Value>,
 }
 
+/// Trait for CSL (Compliance Specification Language) rules that can be evaluated against public signals.
 pub trait CslRule: Send + Sync {
-    fn evaluate(&self, public_signals: &[String]) -> Result<CslRuleResult, String>;
+    /// Evaluates this rule against the provided public signals.
+fn evaluate(&self, public_signals: &[String]) -> Result<CslRuleResult, String>;
 }
 
+/// A rule that caps a numeric signal at a maximum amount.
 #[derive(Debug, Clone)]
 pub struct AmountCapRule {
-    pub signal_index: usize,
-    pub max_amount: u64,
+    /// Index of the signal to which the cap applies.
+pub signal_index: usize,
+    /// Maximum allowed amount for the specified signal.
+pub max_amount: u64,
 }
 
 impl CslRule for AmountCapRule {
@@ -78,19 +106,24 @@ impl CslRule for AmountCapRule {
     }
 }
 
+/// Engine that holds a collection of CSL rules and evaluates them.
 pub struct CslEngine {
-    pub rules: Vec<Arc<dyn CslRule>>,
+    /// Collection of CSL rules registered with the engine.
+pub rules: Vec<Arc<dyn CslRule>>,
 }
 
 impl CslEngine {
+        /// Creates a new, empty CSL engine.
     pub fn new() -> Self {
         Self { rules: Vec::new() }
     }
 
+        /// Registers a new CSL rule with the engine.
     pub fn register_rule(&mut self, rule: Arc<dyn CslRule>) {
         self.rules.push(rule);
     }
 
+        /// Checks all registered rules against the provided public signals.
     pub fn check_lawfulness(&self, public_signals: &[String]) -> Result<CslRuleResult, String> {
         for rule in &self.rules {
             let res = rule.evaluate(public_signals)?;
@@ -105,9 +138,11 @@ impl CslEngine {
     }
 }
 
+/// Helper for building silent proof receipts used when CSL violations occur.
 pub struct ProofReceiptBuilder;
 
 impl ProofReceiptBuilder {
+        /// Constructs a minimal receipt for a silent proof submission.
     pub fn silent(proof: &serde_json::Value, nullifier: &str, reason: &str) -> serde_json::Value {
         serde_json::json!({
             "proof": proof,
@@ -120,9 +155,11 @@ impl ProofReceiptBuilder {
     }
 }
 
+/// Public entry point for verification operations.
 pub struct VerificationSDK;
 
 impl VerificationSDK {
+        /// Performs a quick local validation of the proof bundle structure.
     pub fn verify_locally(bundle: &ProofBundle) -> VerificationResult {
         // Simple structural and size validation matching legacy logic expectations
         if bundle.proof.is_null() || bundle.v_key.is_null() {
@@ -155,6 +192,7 @@ impl VerificationSDK {
         }
     }
 
+        /// Runs the full pre‑submission pipeline: local verification followed by CSL rule checks.
     pub fn pre_submission_check(
         bundle: &ProofBundle,
         csl_engine: &CslEngine,
@@ -194,6 +232,7 @@ impl VerificationSDK {
 // ----------------- WebAssembly Bindings -----------------
 
 #[wasm_bindgen]
+/// WebAssembly‑compatible wrapper around `CslEngine`.
 pub struct WasmCslEngine {
     inner: CslEngine,
 }
@@ -201,17 +240,20 @@ pub struct WasmCslEngine {
 #[wasm_bindgen]
 impl WasmCslEngine {
     #[wasm_bindgen(constructor)]
+        /// Constructs a new WASM CSL engine.
     pub fn new() -> Self {
         Self { inner: CslEngine::new() }
     }
 
     #[wasm_bindgen(js_name = registerRule)]
+        /// Registers a CSL rule via its WASM wrapper.
     pub fn register_rule(&mut self, rule: WasmCslRule) {
         self.inner.register_rule(rule.inner);
     }
 }
 
 #[wasm_bindgen]
+/// WASM wrapper for a concrete CSL rule implementation.
 pub struct WasmCslRule {
     inner: Arc<dyn CslRule>,
 }
@@ -219,6 +261,7 @@ pub struct WasmCslRule {
 #[wasm_bindgen]
 impl WasmCslRule {
     #[wasm_bindgen(js_name = newAmountCapRule)]
+        /// Creates a new amount‑cap rule from string parameters.
     pub fn new_amount_cap_rule(signal_index: usize, max_amount_str: String) -> Result<WasmCslRule, JsError> {
         let max_amount = max_amount_str.parse::<u64>().map_err(|e| JsError::new(&e.to_string()))?;
         Ok(WasmCslRule {
@@ -231,11 +274,13 @@ impl WasmCslRule {
 }
 
 #[wasm_bindgen]
+/// WASM entry point exposing verification SDK functions.
 pub struct WasmVerificationSDK;
 
 #[wasm_bindgen]
 impl WasmVerificationSDK {
     #[wasm_bindgen(js_name = verifyLocally)]
+        /// WASM binding for local verification of a proof bundle.
     pub fn verify_locally(bundle_val: JsValue) -> Result<JsValue, JsError> {
         let bundle: ProofBundle = serde_wasm_bindgen::from_value(bundle_val)?;
         let res = VerificationSDK::verify_locally(&bundle);
@@ -244,6 +289,7 @@ impl WasmVerificationSDK {
     }
 
     #[wasm_bindgen(js_name = preSubmissionCheck)]
+        /// WASM binding for the pre‑submission check pipeline.
     pub fn pre_submission_check(
         bundle_val: JsValue,
         engine_wrapper: &WasmCslEngine,
@@ -254,6 +300,22 @@ impl WasmVerificationSDK {
             .map_err(|e| JsError::new(&e))?;
         let res_val = serde_wasm_bindgen::to_value(&res)?;
         Ok(res_val)
+    }
+}
+
+#[wasm_bindgen]
+/// WASM wrapper exposing ALP policy checks.
+pub struct WasmAlpEngine;
+
+#[wasm_bindgen]
+impl WasmAlpEngine {
+    #[wasm_bindgen(js_name = alpCheck)]
+        /// Checks ALP policy compliance for a given system state.
+    pub fn alp_check(state_val: JsValue) -> Result<bool, JsError> {
+        let state: multiplicity_alp::SystemState = serde_wasm_bindgen::from_value(state_val)?;
+        let engine = multiplicity_alp::PolicyEngine;
+        let res = engine.check(&state).map_err(|e| JsError::new(&e.to_string()))?;
+        Ok(res)
     }
 }
 

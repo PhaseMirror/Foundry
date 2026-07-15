@@ -1,0 +1,218 @@
+% !TEX TS-program = pdflatex
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{geometry}
+\geometry{margin=1in}
+\usepackage{microtype}
+\usepackage{amsmath, amssymb, amsthm, mathtools}
+\usepackage{mathrsfs}
+\usepackage{bm}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage[nameinlink,capitalize]{cleveref}
+\usepackage{csquotes}
+\usepackage{tikz}
+\usepackage{caption}
+\usepackage{subcaption}
+% Optional for code/algorithms
+\usepackage{listings}
+\lstset{basicstyle=\ttfamily\small,breaklines=true,columns=fullflexible,frame=single,numberstyle=\tiny,numbers=left}
+
+%----- theorem styles -----
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+%----- macros -----
+\DeclareMathOperator{\vtwo}{v_2}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Odd}{\mathcal{O}} % odd positive integers
+\newcommand{\Todd}{T} % odd macro map
+\newcommand{\V}{V}
+\newcommand{\W}{W}
+\newcommand{\wt}{\widetilde}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\1}{\mathbf{1}}
+
+\title{Collatz via Drift on Odd Macro States: A Rigorous Core with Visual Intuition}
+\author{Ryan O. Van Gelder, Luis Morat´o de Dalmases, \& Tyler Van Osdol}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+ 
+\begin{abstract}
+We present a compact, rigorous reduction of the Collatz termination problem to a frequency surplus condition for the $2$-adic valuations of odd macro steps. The analytic core is an exact per-step drift identity for $\V(n)=\log n$ along the odd-state map $\Todd$, together with ambient density facts for $\vtwo(3n+1)$. We then state a conditional theorem: if the time-averaged cumulative frequency of events $\{\vtwo(3n_t+1)\ge k\}$ exceeds their ambient $2$-adic densities by a total surplus greater than a small universal buffer, then every trajectory terminates and no nontrivial odd cycle exists. We complement this with visualization-only figures (parity tree, affine branches on $\hat{\mathbb C}$) to build intuition for the counting quantities actually used in the proof, and with an empirical section reporting frequency histograms versus the ambient benchmark. All prior claims of $2$-adic contractivity are removed; visuals are explicitly labeled as heuristic.
+\end{abstract}
+
+\section{Roadmap and Objects}
+Let $\Odd=\{n\in\N: n\text{ odd}\}$. Define the \emph{odd macro map}
+\begin{equation}
+  \Todd(n) \coloneqq \frac{3n+1}{2^{\vtwo(3n+1)}},\qquad n\in\Odd,
+\end{equation}
+which maps odd integers to odd integers by executing a Collatz ``odd step'' followed by the maximal division by $2$.
+Set the Lyapunov candidate $\V(n)\coloneqq\log n$ (natural logarithm), and write the induced trajectory $n_{t+1}=\Todd(n_t)$ with $n_0\in\Odd$.
+
+We also adopt a convenient unit system:
+\begin{equation}
+  \gamma \coloneqq \frac{\log 3}{\log 2},\qquad \theta_{\max} \coloneqq \frac{\log(4/3)}{\log 2},\qquad \text{so that }\;\gamma+\theta_{\max}=2.
+\end{equation}
+We measure per-step drift both in natural units and in ``base-2 units,'' where dividing by $\log 2$ simplifies bookkeeping.
+
+\section{Exact One-Step Drift and a Uniform Remainder}
+\begin{lemma}[Drift identity]
+For $n\in\Odd$,
+\begin{equation}\label{eq:drift}
+  \V(\Todd(n)) - \V(n) 
+  \,=\, \log 3 \, -\, \vtwo(3n+1)\,\log 2 \, +\, \log\!\Bigl(1+\tfrac{1}{3n}\Bigr).
+\end{equation}
+Equivalently, in base-2 units with $\W\coloneqq \V/\log 2$,
+\begin{equation}\label{eq:drift-base2}
+  \W(\Todd(n)) - \W(n)
+  \,=\, \gamma \, -\, \vtwo(3n+1) \, +\, \theta(n),\qquad \theta(n)\coloneqq \frac{\log(1+1/(3n))}{\log 2}.
+\end{equation}
+Moreover, $0<\theta(n)\le \theta_{\max}$ with equality only at $n=1$.
+\end{lemma}
+\begin{proof}
+Immediate from $\Todd(n)=(3n+1)/2^{\vtwo(3n+1)}$ and $\log(3n+1)=\log 3+\log n+\log(1+1/(3n))$, followed by the bound $\log(1+x)\le x$ with $x\in(0,1/3]$ giving $\log(1+1/(3n))\le\log(4/3)$.
+\end{proof}
+
+\section{Ambient $2$-Adic Densities and a Counting Identity}
+For $k\ge1$ and $n\in\Odd$, define the indicators
+\begin{equation}
+  f_k(n) \coloneqq \1\{\vtwo(3n+1)\ge k\} .
+\end{equation}
+Then the valuation decomposes as the convergent sum $\vtwo(3n+1)=\sum_{k\ge1} f_k(n)$. The following facts are standard.
+
+\begin{proposition}[Ambient densities and mean]
+Fix $k\ge1$. Exactly one odd residue class modulo $2^k$ satisfies $\vtwo(3n+1)\ge k$. Consequently the upper/lower natural densities of $\{n\in\Odd: \vtwo(3n+1)\ge k\}$ inside the odd integers both equal $2^{-(k-1)}$. In particular,
+\begin{equation}
+  \lim_{X\to\infty} \frac{1}{\#\{n\le X\,:\, n\text{ odd}\}} \sum_{\substack{n\le X\\ n\,\text{odd}}} f_k(n) \,=\, 2^{-(k-1)},\qquad \sum_{k\ge1} 2^{-(k-1)} \,=\, 2.
+\end{equation}
+\end{proposition}
+
+\section{A Conditional Drift Theorem}
+Let $n_{t+1}=\Todd(n_t)$ and define temporal averages
+\begin{equation}
+  \alpha_k \coloneqq \liminf_{T\to\infty} \frac{1}{T} \sum_{t<T} f_k(n_t) \;\in[0,1].
+\end{equation}
+Note that by Fatou's lemma for nonnegative series,
+\begin{equation}\label{eq:fatou}
+  \liminf_{T\to\infty} \frac{1}{T} \sum_{t<T} \sum_{k\ge1} f_k(n_t) \;\ge\; \sum_{k\ge1} \alpha_k.
+\end{equation}
+
+\begin{theorem}[Frequency surplus $\Rightarrow$ termination]
+Suppose there exists $\eta>0$ such that
+\begin{equation}\label{eq:surplus}
+  \sum_{k\ge1} \alpha_k \;\ge\; 2+\eta. 
+\end{equation}
+Then no Collatz orbit in $\Odd$ is infinite, and there are no nontrivial odd cycles. Equivalently, every trajectory enters the trivial cycle $1\mapsto1$.
+\end{theorem}
+\begin{proof}
+Summing \eqref{eq:drift-base2} along the trajectory and dividing by $T$ gives
+\begin{align}
+  \frac{\W(n_T)-\W(n_0)}{T}
+  &= \gamma - \frac{1}{T}\sum_{t<T} \sum_{k\ge1} f_k(n_t) + \frac{1}{T}\sum_{t<T} \theta(n_t) \\
+  &\le \gamma - \frac{1}{T}\sum_{t<T} \sum_{k\ge1} f_k(n_t) + \theta_{\max} .
+\end{align}
+Taking $\limsup$ on the left and $\liminf$ on the right, and using \eqref{eq:fatou} plus $\gamma+\theta_{\max}=2$, we obtain
+\begin{equation}
+  \limsup_{T\to\infty} \frac{\W(n_T)-\W(n_0)}{T} \;\le\; 2 - \sum_{k\ge1} \alpha_k \;\le\; -\eta.
+\end{equation}
+Thus for all large $T$, $\W(n_T) \le \W(n_0) - \eta T$, i.e. $\V(n_T) \le \V(n_0) - (\eta\log2)\,T$. Since $\V(n_T)=\log n_T\ge0$ for all $T$, this is impossible unless the trajectory stops growing and enters the cycle at $1$. Hence no infinite orbit and no nontrivial odd cycle can exist under \eqref{eq:surplus}.
+\end{proof}
+
+\begin{remark}[Interpretation]
+The identity $\vtwo(3n+1)=\sum_k f_k(n)$ converts termination into a purely \emph{counting} surplus problem: the ambient (random-like) benchmark contributes exactly $2$ in base-2 units, while the small remainder $\theta(n)\in(0,\theta_{\max}]$ provides a universal buffer that the surplus must exceed.
+\end{remark}
+
+\section{Visualization Section (Heuristic Only)}
+\emph{This section is for intuition; no figure is used in proofs.} We illustrate:
+\begin{enumerate}[label=\textbf{V\arabic*}.,leftmargin=*]
+  \item The parity tree with branches labeled by the affine maps $n\mapsto n/2$ and $n\mapsto (3n+1)/2$.
+  \item Snapshots of these affine maps as Möbius transformations on the Riemann sphere $\hat{\mathbb C}$ (for geometric context only).
+  \item Residue plots for $n\bmod 2^k$ colored by $k=\vtwo(3n+1)$, visually connecting to the indicators $f_k$.
+\end{enumerate}
+\begin{figure}[h]
+  \centering
+  \fbox{\rule{0pt}{1.75in}\rule{0.95\linewidth}{0pt}}\\[-2pt]
+  \caption{Parity tree and affine branches (placeholder).}
+\end{figure}
+\begin{figure}[h]
+  \centering
+  \fbox{\rule{0pt}{1.75in}\rule{0.95\linewidth}{0pt}}\\[-2pt]
+  \caption{Residue-class coloring by $k=\vtwo(3n+1)$ (placeholder).}
+\end{figure}
+
+\section{Empirical Checks Against Ambient Benchmarks}
+We report simple computations designed as \emph{sanity checks} for the analytic targets above. For each seed $n_0\in\Odd$ and horizon $T$:
+\begin{enumerate}[label=\arabic*.]
+  \item Generate $n_{t+1}=\Todd(n_t)$ and record $k_t\coloneqq \vtwo(3n_t+1)$.
+  \item For each $k\in\{1,\dots,K\}$, accumulate counts of events $\{k_t\ge k\}$, producing empirical frequencies $\hat f_k(T)=\frac{1}{T}\sum_{t<T}\1\{k_t\ge k\}$.
+  \item Compare $\hat f_k(T)$ to $2^{-(k-1)}$ via bar plots and report the cumulative surplus $\sum_{k\le K}\bigl(\hat f_k(T)-2^{-(k-1)}\bigr)$.
+\end{enumerate}
+\noindent Example Python-like pseudocode (for reproducibility; replace with your environment):
+\begin{lstlisting}[language=Python]
+from math import log
+
+def v2(m):
+    c = 0
+    while m % 2 == 0:
+        m //= 2
+        c += 1
+    return c
+
+def T(n):
+    return (3*n+1) >> v2(3*n+1)
+
+def run(seed=27, Tsteps=2_000_000, K=12):
+    n = seed
+    counts = [0]* (K+1)  # 1..K used
+    for t in range(Tsteps):
+        k = v2(3*n+1)
+        for j in range(1, min(k, K)+1):
+            counts[j] += 1
+        n = T(n)
+    freqs = [counts[j]/Tsteps for j in range(1, K+1)]
+    ambient = [2**(-(j-1)) for j in range(1, K+1)]
+    surplus = sum(f - a for f, a in zip(freqs, ambient))
+    return freqs, ambient, surplus
+\end{lstlisting}
+\begin{remark}
+We emphasize: empirical checks serve only to illustrate how one measures the frequencies that appear in the theorem. They are \emph{not} evidence of contractivity and do not substitute for the surplus condition \eqref{eq:surplus}.
+\end{remark}
+
+\section{Optional: Koopman/Transfer Operator Viewpoint}
+Define the Koopman operator $\mathcal{U}$ on bounded functions $\varphi:\Odd\to\mathbb{R}$ by $(\mathcal{U}\varphi)(n)=\varphi(\Todd(n))$. Choosing $\varphi=\log$ and expanding $\log(3n+1)$ yields the drift identity \eqref{eq:drift}. This framing can aid in connecting drift to spectral questions on function spaces; we do not pursue a functional-analytic theory here.
+
+\section*{Checklist for Figures and Claims}
+\begin{itemize}
+  \item All figures from the visualization section are labeled \emph{heuristic only}. No analytic claim relies on them.
+  \item No $2$-adic contractivity statements are made.
+  \item The averaged-drift inequality uses the corrected factor $-\eta\,\log 2$ (no extraneous $1/2$).
+  \item Frequencies are compared against the ambient benchmark $2^{-(k-1)}$; cumulative surplus is the reported scalar.
+\end{itemize}
+
+\section*{Acknowledgments and Notes}
+This document merges a rigorous drift reduction with curated visuals/code from an earlier exploratory draft. All cross-topology language (Riemann sphere vs. $2$-adics) is kept purely illustrative.
+
+%----------------------------
+
+\nocite{*}
+\bibliographystyle{unsrt}
+\bibliography{references}
+
+\end{document}

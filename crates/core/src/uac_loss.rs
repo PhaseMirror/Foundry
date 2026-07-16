@@ -156,16 +156,22 @@ impl ArithmeticBinduAttractor {
         let rta_dist = state.rta_dist(&bindu);
         let l_dist = state.l_dist(&bindu);
 
-        // Compute Langlands penalty
+        // Compute Langlands penalty, falling back to a large finite penalty on error
         let repr = match GaloisRepresentation::with_goldilocks(self.target_class) {
             Ok(r) => r,
-            Err(_) => return f64::INFINITY,
+            Err(_) => {
+                // Use a large but finite penalty rather than Infinity
+                return rta_dist + l_dist + 1e6;
+            }
         };
 
         let pairing = LanglandsPairing::new(repr);
         let l_val = match pairing.special_value_at_one() {
             Ok(v) => v,
-            Err(_) => return f64::INFINITY,
+            Err(_) => {
+                // Large finite penalty on failure to compute L-value
+                return rta_dist + l_dist + 1e6;
+            }
         };
 
         let langlands_dist = (l_val - self.target_l_value).abs();
@@ -217,7 +223,8 @@ mod tests {
         let attractor = ArithmeticBinduAttractor::new();
         let state = State::new();
         let dist = attractor.distance(&state);
-        assert!(dist >= 0.0 || dist.is_infinite());
+        // Distance should be a finite non‑negative value
+        assert!(dist >= 0.0 && dist.is_finite(), "Distance should be finite and non‑negative");
     }
 
     #[test]

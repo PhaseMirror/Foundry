@@ -1,6 +1,6 @@
-import Core.position_aware.Core
+import Core.PARM
 
-namespace PARM
+namespace Core.PARM
 
 /--
   Theorem: Sealed state is strictly positive for non-empty lists of positive integers.
@@ -47,4 +47,4 @@ theorem sealed_state_pos (primes : List Nat) (h_not_empty : primes ≠ []) (hps 
       · intro x hx
         exact hps x (List.Mem.tail _ hx)
 
-end PARM
+end Core.PARM

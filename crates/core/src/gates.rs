@@ -162,6 +162,8 @@ pub fn gate_langlands(
         // Optional ZK verification
         if zk.enabled {
             if let Some(vk_json) = &zk.vk_json {
+                // Start timing ZK verification
+                let zk_start = std::time::Instant::now();
                 let public_inputs = LanglandsPublicInputs::new(
                     match class.class_id {
                         "1A" => 1,
@@ -176,13 +178,15 @@ pub fn gate_langlands(
                     0,
                     1_000_000,
                 );
-
                 if let Err(e) = verify_langlands_zk(&repr, b"", &public_inputs, vk_json) {
                     return Err(GateFailure::ZKVerificationError(
                         class.class_id.to_string(),
                         e.to_string(),
                     ));
                 }
+                // End timing and report
+                let zk_elapsed = zk_start.elapsed();
+                eprintln!("[PROFILE] ZK verification time: {:?}", zk_elapsed);
             }
         }
 

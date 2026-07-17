@@ -1,4 +1,4 @@
-# ADR-PML-014: Documented Lean theorems missing in the `goldilocks` subsystem (2 gaps)
+# ADR-PML-014: Documented Lean theorems missing in the `uac` subsystem (1 gaps)
 
 ## Status
 Proposed
@@ -10,9 +10,9 @@ urgency vs capacity
 `the-examiner`
 
 ## Dissonance Score
-- Impact = severity (4) x blast radius (2) = **8**
+- Impact = severity (4) x blast radius (1) = **4**
 - Tractability = **1.0**
-- **Score = 8.0**  (cluster rank 14 of 17)
+- **Score = 4.0**  (cluster rank 14 of 14)
 
 ## Context (stated intent vs implementation)
 The documented intent below is not reflected by the current mathematical Lean 4
@@ -20,12 +20,10 @@ implementation. This is a measured gap produced by the Phase Mirror operational
 loop.
 
 ### Stated intent (documents)
-  - docs/adr/ADR-086-Goldilocks-Finite-Field-Core-Primitive.md:82 — asserts `field_add_comm` exists / is verified
-  - docs/adr/ADR-086-Goldilocks-Finite-Field-Core-Primitive.md:88 — asserts `field_add_assoc` exists / is verified
+  - docs/adr/adopted/ADR_UAC_Enhancement_Plan.md:43 — asserts `lambda_adjustment_safe` exists / is verified
 
 ### Implementation reality (lean/)
-  - `field_add_comm` not found among 7997 lean declarations
-  - `field_add_assoc` not found among 7997 lean declarations
+  - `lambda_adjustment_safe` not found among 8218 lean declarations
 
 ### Manifested boundary
 Leaked (unmanifested): YES — gap is NOT manifested in `alp_sorry_manifest.json` (silent leak risk)
@@ -51,7 +49,7 @@ stub, per `alp_sorry_manifest.json`) backs it.
 - Dissonance score for this axis trends to 0 on subsequent loop runs.
 
 ## Actionable Levers
-1. Manifest the missing theorem(s) `field_add_comm`, `field_add_assoc` as gated `sorry` stubs under `lean/Core/` and register each in `alp_sorry_manifest.json` (run the loop with `--scaffold-proofs`).
+1. Manifest the missing theorem(s) `lambda_adjustment_safe` as gated `sorry` stubs under `lean/Core/` and register each in `alp_sorry_manifest.json` (run the loop with `--scaffold-proofs`).
 2. Add paired Rust/Kani stubs + governance tests in `crates/` per ADR-054 / ADR-045 hybrid boundary policy, so the gap is owned, not silent.
 3. File proof-engineering tickets sized by effort; close `sorry`s in priority order from the ranked loop index until this cluster's score trends to 0.
 4. Re-run `scripts/phase_mirror_loop.py` and confirm this tension's score decreases.

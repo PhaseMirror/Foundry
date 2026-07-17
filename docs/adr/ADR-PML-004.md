@@ -1,4 +1,4 @@
-# ADR-PML-004: Documented Lean theorems missing in the `moc` subsystem (24 gaps)
+# ADR-PML-004: Documented Lean theorems missing in the `bindu-rta` subsystem (15 gaps)
 
 ## Status
 Proposed
@@ -10,9 +10,9 @@ urgency vs capacity
 `the-examiner`
 
 ## Dissonance Score
-- Impact = severity (4) x blast radius (24) = **40**
+- Impact = severity (4) x blast radius (15) = **40**
 - Tractability = **1.0**
-- **Score = 40.0**  (cluster rank 4 of 17)
+- **Score = 40.0**  (cluster rank 4 of 14)
 
 ## Context (stated intent vs implementation)
 The documented intent below is not reflected by the current mathematical Lean 4
@@ -20,20 +20,20 @@ implementation. This is a measured gap produced by the Phase Mirror operational
 loop.
 
 ### Stated intent (documents)
-  - docs/MOC.md:30 — asserts `arta_gluing_consistency` exists / is verified
-  - docs/MOC.md:61 — asserts `operator_contractive` exists / is verified
-  - docs/adr/ADR-066-PIRTM-MOC-Compiler-Production-Readiness.md:103 — asserts `type_check_sound` exists / is verified
-  - docs/adr/ADR-066-PIRTM-MOC-Compiler-Production-Readiness.md:108 — asserts `WellTyped` exists / is verified
-  - docs/adr/ADR-068-MOC-CRMF-Contraction-Certificate-Production-Ratification.md:77 — asserts `issue_certificate` exists / is verified
-  - docs/adr/ADR-068-MOC-CRMF-Contraction-Certificate-Production-Ratification.md:89 — asserts `certificate_issuance_sound` exists / is verified
-  - docs/adr/ADR-068-MOC-CRMF-Contraction-Certificate-Production-Ratification.md:96 — asserts `prime_gated_certificate` exists / is verified
-  - docs/adr/ADR-068-MOC-CRMF-Contraction-Certificate-Production-Ratification.md:117 — asserts `activate_resonance` exists / is verified
+  - docs/adr/accepted/ADR-043-Rta-Morphism-and-Bindu.md:27 — asserts `fit_fixed_point_is_bindu` exists / is verified
+  - docs/adr/accepted/ADR-043-Rta-Morphism-and-Bindu.md:108 — asserts `resonance_score` exists / is verified
+  - docs/adr/accepted/ADR-043-Rta-Morphism-and-Bindu.md:109 — asserts `operator_norm` exists / is verified
+  - docs/adr/accepted/ADR-043-Rta-Morphism-and-Bindu.md:111 — asserts `contraction_holds` exists / is verified
+  - docs/adr/accepted/ADR-043-Rta-Morphism-and-Bindu.md:136 — asserts `fit_non_expansive` exists / is verified
+  - docs/adr/accepted/ADR-043-Rta-Morphism-and-Bindu.md:141 — asserts `fit_resonance_increases` exists / is verified
+  - docs/adr/accepted/ADR-043-Rta-Morphism-and-Bindu.md:146 — asserts `fit_fixed_point_convergence` exists / is verified
+  - docs/adr/accepted/ADR-043-Rta-Morphism-and-Bindu.md:157 — asserts `testState` exists / is verified
 
 ### Implementation reality (lean/)
-  - `arta_gluing_consistency` not found among 7997 lean declarations
-  - `operator_contractive` not found among 7997 lean declarations
-  - `type_check_sound` not found among 7997 lean declarations
-  - `WellTyped` not found among 7997 lean declarations
+  - `fit_fixed_point_is_bindu` not found among 8218 lean declarations
+  - `resonance_score` not found among 8218 lean declarations
+  - `operator_norm` not found among 8218 lean declarations
+  - `contraction_holds` not found among 8218 lean declarations
 
 ### Manifested boundary
 Leaked (unmanifested): YES — gap is NOT manifested in `alp_sorry_manifest.json` (silent leak risk)
@@ -59,7 +59,7 @@ stub, per `alp_sorry_manifest.json`) backs it.
 - Dissonance score for this axis trends to 0 on subsequent loop runs.
 
 ## Actionable Levers
-1. Manifest the missing theorem(s) `arta_gluing_consistency`, `operator_contractive`, `type_check_sound`, `issue_certificate`, `certificate_issuance_sound`, `prime_gated_certificate`, `activate_resonance`, `resonance_preserves_contraction`, `commutation_f`, `commute`, `commutation_respects_prime_grading`, `resonance_functional`, +7 more as gated `sorry` stubs under `lean/Core/` and register each in `alp_sorry_manifest.json` (run the loop with `--scaffold-proofs`).
+1. Manifest the missing theorem(s) `fit_fixed_point_is_bindu`, `resonance_score`, `operator_norm`, `contraction_holds`, `fit_non_expansive`, `fit_resonance_increases`, `fit_fixed_point_convergence`, `testState`, `lowResState`, `fittedState`, `badUpdate`, `finiteStates` as gated `sorry` stubs under `lean/Core/` and register each in `alp_sorry_manifest.json` (run the loop with `--scaffold-proofs`).
 2. Add paired Rust/Kani stubs + governance tests in `crates/` per ADR-054 / ADR-045 hybrid boundary policy, so the gap is owned, not silent.
 3. File proof-engineering tickets sized by effort; close `sorry`s in priority order from the ranked loop index until this cluster's score trends to 0.
 4. Re-run `scripts/phase_mirror_loop.py` and confirm this tension's score decreases.

@@ -1,4 +1,11 @@
 use serde::{Deserialize, Serialize};
+use blake3::Hasher;
+
+#[cfg(feature = "archivum")]
+use archivum::{WitnessLedger, MocSchemaProof};
+
+#[cfg(feature = "triple-lock")]
+pub mod triple_lock;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum MocOperator {
@@ -41,6 +48,8 @@ pub enum MocError {
     SequenceViolation { current: u64, last: u64 },
     #[error("invalid attestation")]
     InvalidAttestation,
+    #[error("archivum write failed: {0}")]
+    ArchivumError(String),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -56,6 +65,29 @@ pub struct VerifiedSchema {
     pub last_seq: u64,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MocSchemaWitness {
+    pub schema_hash: [u8; 32],
+    pub seq: u64,
+    pub timestamp: i64,
+}
+
+impl MocSchemaWitness {
+    pub fn new(verified: &VerifiedSchema) -> Self {
+        let mut hasher = Hasher::new();
+        hasher.update(&verified.schema.seq.to_le_bytes());
+        for p in &verified.schema.primes {
+            hasher.update(&p.to_le_bytes());
+        }
+        let hash = hasher.finalize();
+        Self {
+            schema_hash: hash.into(),
+            seq: verified.schema.seq,
+            timestamp: chrono::Utc::now().timestamp(),
+        }
+    }
+}
+
 pub struct MocEngine;
 
 impl MocEngine {
@@ -67,6 +99,38 @@ impl MocEngine {
             return Err(MocError::SequenceViolation { current: schema.seq, last: last_seq });
         }
         Ok(VerifiedSchema { schema: schema.clone(), last_seq })
+    }
+
+    pub fn verify_operator(&self, op: &MocOperator, schema: &VerifiedSchema) -> Result<(), MocError> {
+        if let Some(p) = op.prime_grading() {
+            if !schema.schema.primes.contains(&p) {
+                return Err(MocError::InvalidPrime(p));
+            }
+        }
+        Ok(())
+    }
+
+    pub fn verify_operator_word(&self, word: &OperatorWord, schema: &VerifiedSchema) -> Result<(), MocError> {
+        for op in &word.operators {
+            self.verify_operator(op, schema)?;
+        }
+        Ok(())
+    }
+
+    #[cfg(feature = "archivum")]
+    pub fn monitor_and_archive_schema(
+        &self,
+        schema: &Schema,
+        last_seq: u64,
+        ledger: &mut WitnessLedger,
+    ) -> Result<(VerifiedSchema, MocSchemaWitness), MocError> {
+        let verified = self.verify_schema(schema, last_seq)?;
+        let witness = MocSchemaWitness::new(&verified);
+        let proof = MocSchemaProof::new(witness.schema_hash, schema.seq);
+        ledger
+            .stamp_moc_schema_proof(&proof)
+            .map_err(|e| MocError::ArchivumError(e.to_string()))?;
+        Ok((verified, witness))
     }
 }
 
@@ -110,6 +174,27 @@ mod verification {
     use super::*;
 
     #[kani::proof]
+    fn proof_schema_validation() {
+        let engine = MocEngine;
+        let p: u64 = kani::any();
+        let schema = Schema {
+            primes: vec![2, 3],
+            seq: 2,
+            attestation: "AUTHORIZED_SCHEMA_SIG".to_string(),
+        };
+        let verified = engine.verify_schema(&schema, 1).unwrap();
+        
+        let op = MocOperator::Sp(p);
+        let res = engine.verify_operator(&op, &verified);
+        
+        if p == 2 || p == 3 {
+            kani::assert(res.is_ok(), "Permitted primes are accepted");
+        } else {
+            kani::assert(res.is_err(), "Unpermitted primes are rejected");
+        }
+    }
+
+    #[kani::proof]
     fn proof_commutation_sound() {
         let op1 = MocOperator::Sp(kani::any());
         let op2 = MocOperator::Sp(kani::any());
@@ -132,7 +217,6 @@ mod verification {
             prime_grade: 2,
         };
         let _ = braid(&word);
-        // If it returns, it terminates.
     }
 
     #[kani::proof]

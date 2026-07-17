@@ -3,13 +3,11 @@
   This file defines the core mathematical invariants for contractive operators.
 -/
 
-import Mathlib.Analysis.Calculus.FDeriv.Basic
-import Mathlib.Analysis.NormedSpace.Basic
+-- No Mathlib imports; core Lean 4 types and axioms are used.
 
 -- Placeholder for Lipschitz constant definition
-def is_contractive {E F : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
-  [NormedAddCommGroup F] [NormedSpace ℝ F] (f : E → F) (κ : ℝ) : Prop :=
-  κ < 1 ∧ LipschitzWith (nnreal.ofReal κ) f
+def is_contractive {E F : Type*} (f : E → F) (κ : Float) : Prop :=
+  κ < 1 ∧ ∀ (x y : E), dist (f x) (f y) ≤ κ * dist x y
 
 /-
   ADR 0003: Hierarchical Module Structure

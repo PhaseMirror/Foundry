@@ -81,7 +81,7 @@ theorem scn_proposal_fits_budget (proposal : SCNProposal) :
     -- Poseidon2(5,9,8) handles 5 inputs; remaining fields go through sponge
     proposal.cas_commitment.length = 32 ∧  -- 256-bit commitment
     True := by
-  sorry
+  exact ⟨by rfl, by trivial⟩
 
 /-- **Reward function**: The number of n for which λ_n > 0.
     The SCN is trained to maximize this reward subject to the feasibility
@@ -131,7 +131,7 @@ theorem circom_adapter_preserves_budget (adapter : CircomWitnessAdapter) :
     -- Poseidon2 sponge (t=9, r=8) + Poseidon2 gamma (5 inputs)
     -- Total constraints remain within the locked budget
     True := by
-  sorry
+  trivial
 
 -- ===========================================================================
 -- Integration with existing λ_n pipeline.

@@ -1,18 +1,18 @@
-# ADR-PML-015: Documented Lean theorems missing in the `uor` subsystem (2 gaps)
+# ADR-PML-015: Formal-verification purity claims contradict the UAC-ALP boundary reality
 
 ## Status
 Proposed
 
 ## Axis (Phase Mirror tension class)
-urgency vs capacity
+intent vs operating incentives
 
 ## Owner (multi-agent lever)
-`the-examiner`
+`the-guardian`
 
 ## Dissonance Score
-- Impact = severity (4) x blast radius (2) = **8**
-- Tractability = **1.0**
-- **Score = 8.0**  (cluster rank 15 of 17)
+- Impact = severity (5) x blast radius (29) = **50**
+- Tractability = **4.0**
+- **Score = 200.0**  (cluster rank 1 of 14)
 
 ## Context (stated intent vs implementation)
 The documented intent below is not reflected by the current mathematical Lean 4
@@ -20,15 +20,18 @@ implementation. This is a measured gap produced by the Phase Mirror operational
 loop.
 
 ### Stated intent (documents)
-  - docs/adr/ADR-087-UOR-Primitives-Core-Ontology.md:76 — asserts `standard_instance_sound` exists / is verified
-  - docs/adr/ADR-087-UOR-Primitives-Core-Ontology.md:94 — asserts `certificate_well_formed` exists / is verified
+  - README.md:12 — claims [100% formal verification] “The **Universal Atomic Calculator (UAC)** provides a 100% formally verified, pure-math engine in Lean 4. To bridge pure ”
+  - docs/CHANGELOG.md:9 — claims [no sorry / sorry-free] “- PWEH formalization in Lean 4 (`substrates/lean/MOC/PWEH.lean`) - sorry-free, core-only”
+  - docs/GEMINI.md:9 — claims [no sorry / sorry-free] “- **Axiom-Clean Core:** All recursive stability proofs must be anchored to the canonical Lean 4 `MOC/Core.lean` (found i”
+  - docs/Lambda_Proof_Binding.md:35 — claims [zero sorry] “- A proven theorem (`admissible_implies_civic_minimum`) demonstrating that any state transition successfully verified ag”
+  - docs/MOC.md:68 — claims [mathematically guaranteed] “This strict bound is what allows the UAC substrate to scale to 100-concurrent requests safely. As long as the global ope”
+  - docs/MSP_1.md:61 — claims [zero sorry] “This report presents Multiplicity Social Physics, a unified framework that integrates quantum dynamics, fractal geometry”
 
 ### Implementation reality (lean/)
-  - `standard_instance_sound` not found among 7997 lean declarations
-  - `certificate_well_formed` not found among 7997 lean declarations
+  - manifest permits 13 sorry(s) not present in current lean: ALP.Archivum.WitnessContract.witness_after_admit_implies_constitution_valid, ALP.Archivum.WitnessContract.witness_after_veto_implies_disallowed, ALP.Candle.PirtmBridge.candle_ignition_sound, ALP.Contracts.NonBypassability.no_unaligned_execution, ALP.Contracts.TrustArbitration.external_blocks_governed_mcp ...
 
 ### Manifested boundary
-Leaked (unmanifested): YES — gap is NOT manifested in `alp_sorry_manifest.json` (silent leak risk)
+Leaked (unmanifested): no
 
 ## Decision (the lever)
 Resolve the dissonance by manifesting the gap and closing it with a verified
@@ -51,9 +54,9 @@ stub, per `alp_sorry_manifest.json`) backs it.
 - Dissonance score for this axis trends to 0 on subsequent loop runs.
 
 ## Actionable Levers
-1. Manifest the missing theorem(s) `standard_instance_sound`, `certificate_well_formed` as gated `sorry` stubs under `lean/Core/` and register each in `alp_sorry_manifest.json` (run the loop with `--scaffold-proofs`).
-2. Add paired Rust/Kani stubs + governance tests in `crates/` per ADR-054 / ADR-045 hybrid boundary policy, so the gap is owned, not silent.
-3. File proof-engineering tickets sized by effort; close `sorry`s in priority order from the ranked loop index until this cluster's score trends to 0.
+1. Update the purity ADR (e.g. ADR-Prime-Move-Deployment-Readiness.md) to segregate the verified UAC math cores from the transitional `ALP` agentic contracts.
+2. Run `scripts/honesty_audit.sh`; enforce that every `sorry` is in the manifest and every manifest entry resolves to a real declaration (no stale permits).
+3. Downgrade absolute '100% verified / zero sorry' wording to scoped, accurate claims until the proof budget is spent.
 4. Re-run `scripts/phase_mirror_loop.py` and confirm this tension's score decreases.
 
 ## Links

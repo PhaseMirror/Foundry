@@ -12,7 +12,7 @@ intent vs operating incentives
 ## Dissonance Score
 - Impact = severity (3) x blast radius (13) = **30**
 - Tractability = **5.0**
-- **Score = 150.0**  (cluster rank 3 of 17)
+- **Score = 150.0**  (cluster rank 3 of 14)
 
 ## Context (stated intent vs implementation)
 The documented intent below is not reflected by the current mathematical Lean 4

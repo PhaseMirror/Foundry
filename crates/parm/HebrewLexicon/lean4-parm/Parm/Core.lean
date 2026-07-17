@@ -1,5 +1,4 @@
-import Mathlib.Data.Nat.Prime.Basic
-import Mathlib.Data.List.Basic
+-- No Mathlib imports; core Lean 4 Nat and List are used.
 
 -- Basic PARM Definitions
 
@@ -7,20 +6,16 @@ import Mathlib.Data.List.Basic
 -- We'll use a simple list for mapping or a function if possible.
 -- For now, let's define the prime mapping based on the PARM engine.
 
--- Simple function to find the n-th prime
+-- Simple function to find the next prime after p
 def next_prime (p : Nat) : Nat :=
   let rec find (n : Nat) : Nat :=
-    if Nat.Prime n then n else find (n + 1)
-  termination_by 100000 - n 
-  decreasing_by simp_wf; sorry
+    if n ≥ 2 && (∀ k < n, n % k ≠ 0) then n else find (n + 1)
   find (p + 1)
 
 def get_prime (n : Nat) : Nat :=
   let rec nth_prime (count : Nat) (p : Nat) : Nat :=
-    if count == n then p
+    if count = n then p
     else nth_prime (count + 1) (next_prime p)
-  termination_by n - count
-  decreasing_by simp_wf; sorry
   nth_prime 1 2
 
 -- Sealed state function
@@ -38,8 +33,6 @@ def sealed_state (primes : List Nat) : Nat :=
       | [last] => (last^2) * (v + last) -- Seal step
       | p :: ps => compute_v (p * (v + p)) ps -- Flow step
       | [] => v
-      termination_by l.length
-      
     compute_v v_seed ps
 
 -- Test

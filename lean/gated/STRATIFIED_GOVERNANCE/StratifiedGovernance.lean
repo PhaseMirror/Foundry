@@ -72,6 +72,33 @@ instance : LE ResourceBudget where
 theorem resource_budget_monotonic (s₁ s₂ : Stratum)
   (h : s₁ ≤ s₂) :
   ∀ b, b ∈ actualConsumption s₁ → b ≤ budgetForStratum s₂ := by
-  sorry
+  intro b hb
+  cases hb with
+  | mem_cons head tail =>
+    cases s₁ with
+    | S0 =>
+      cases s₂ with
+      | S0 => simp [budgetForStratum] at h ⊢; exact h
+      | S2 => simp [budgetForStratum]
+      | S4 => simp [budgetForStratum]
+      | S6 => simp [budgetForStratum]
+    | S2 =>
+      cases s₂ with
+      | S0 => simp [budgetForStratum] at h
+      | S2 => simp [budgetForStratum] at h ⊢; exact h
+      | S4 => simp [budgetForStratum]
+      | S6 => simp [budgetForStratum]
+    | S4 =>
+      cases s₂ with
+      | S0 => simp [budgetForStratum] at h
+      | S2 => simp [budgetForStratum] at h
+      | S4 => simp [budgetForStratum] at h ⊢; exact h
+      | S6 => simp [budgetForStratum]
+    | S6 =>
+      cases s₂ with
+      | S0 => simp [budgetForStratum] at h
+      | S2 => simp [budgetForStratum] at h
+      | S4 => simp [budgetForStratum] at h
+      | S6 => simp [budgetForStratum] at h ⊢; exact h
 
 end StratifiedGovernance

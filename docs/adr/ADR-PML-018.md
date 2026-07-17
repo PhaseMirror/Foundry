@@ -1,18 +1,18 @@
-# ADR-PML-018: Documented Lean theorems missing in the `general` subsystem (71 gaps)
+# ADR-PML-018: Documented physical/mathematical invariants asserted as guaranteed but risk not owned
 
 ## Status
 Proposed
 
 ## Axis (Phase Mirror tension class)
-urgency vs capacity
+risk claimed vs risk owned
 
 ## Owner (multi-agent lever)
-`the-examiner`
+`the-publisher`
 
 ## Dissonance Score
-- Impact = severity (4) x blast radius (71) = **40**
-- Tractability = **1.0**
-- **Score = 40.0**  (cluster rank 1 of 17)
+- Impact = severity (4) x blast radius (5) = **20**
+- Tractability = **3.0**
+- **Score = 60.0**  (cluster rank 4 of 14)
 
 ## Context (stated intent vs implementation)
 The documented intent below is not reflected by the current mathematical Lean 4
@@ -20,23 +20,17 @@ implementation. This is a measured gap produced by the Phase Mirror operational
 loop.
 
 ### Stated intent (documents)
-  - docs/PIRTM_SPEC.md:181 — asserts `successor_contractivity_correct` exists / is verified
-  - docs/adr/ADR-064-MatrixEngine-Production-Implementation.md:69 — asserts `evaluate` exists / is verified
-  - docs/adr/ADR-064-MatrixEngine-Production-Implementation.md:73 — asserts `matrix_engine_preserves_contraction` exists / is verified
-  - docs/adr/ADR-064-MatrixEngine-Production-Implementation.md:81 — asserts `grade_preserved_under_composition` exists / is verified
-  - docs/adr/ADR-065-ACE-Runtime-Production-Hardening.md:80 — asserts `ace_preserves_invariants` exists / is verified
-  - docs/adr/ADR-065-ACE-Runtime-Production-Hardening.md:88 — asserts `budget_exhaustion_detected` exists / is verified
-  - docs/adr/ADR-069-Recursive-Proof-Aggregation-Production-Pipeline.md:80 — asserts `is_valid_proof` exists / is verified
-  - docs/adr/ADR-069-Recursive-Proof-Aggregation-Production-Pipeline.md:84 — asserts `verify_apo` exists / is verified
+  - docs/MOC.md:68 — This strict bound is what allows the UAC substrate to scale to 100-concurrent requests safely. As long as the global ope
+  - docs/PIRTM_SPEC.md:166 — 2. **Runtime checks** in the WardMonitor (ρ drift threshold). Telemetry tests enforce `ANOMALY_GOV_THRESHOLD < 0.85` for
+  - docs/adr/ADR-PML-006.md:24 — - docs/PIRTM_SPEC.md:166 — 2. **Runtime checks** in the WardMonitor (ρ drift threshold). Telemetry tests enforce `ANOMAL
+  - docs/adr/proposed/ADR-PML-011.md:24 — - docs/PIRTM_SPEC.md:166 — 2. **Runtime checks** in the WardMonitor (ρ drift threshold). Telemetry tests enforce `ANOMAL
+  - docs/adr/proposed/ADR-PML-025.md:24 — - docs/PIRTM_SPEC.md:166 — 2. **Runtime checks** in the WardMonitor (ρ drift threshold). Telemetry tests enforce `ANOMAL
 
 ### Implementation reality (lean/)
-  - `successor_contractivity_correct` not found among 7997 lean declarations
-  - `evaluate` not found among 7997 lean declarations
-  - `matrix_engine_preserves_contraction` not found among 7997 lean declarations
-  - `grade_preserved_under_composition` not found among 7997 lean declarations
+  - threshold symbols referenced in lean declarations: l_eff, r_sc, rsc, tau_r, threshold
 
 ### Manifested boundary
-Leaked (unmanifested): YES — gap is NOT manifested in `alp_sorry_manifest.json` (silent leak risk)
+Leaked (unmanifested): no
 
 ## Decision (the lever)
 Resolve the dissonance by manifesting the gap and closing it with a verified
@@ -59,10 +53,9 @@ stub, per `alp_sorry_manifest.json`) backs it.
 - Dissonance score for this axis trends to 0 on subsequent loop runs.
 
 ## Actionable Levers
-1. Manifest the missing theorem(s) `successor_contractivity_correct`, `evaluate`, `matrix_engine_preserves_contraction`, `grade_preserved_under_composition`, `ace_preserves_invariants`, `budget_exhaustion_detected`, `is_valid_proof`, `verify_apo`, `aggregation_preserves_validity`, `aggregation_is_sound`, `xi_type_sound`, `graph_energy`, +56 more as gated `sorry` stubs under `lean/Core/` and register each in `alp_sorry_manifest.json` (run the loop with `--scaffold-proofs`).
-2. Add paired Rust/Kani stubs + governance tests in `crates/` per ADR-054 / ADR-045 hybrid boundary policy, so the gap is owned, not silent.
-3. File proof-engineering tickets sized by effort; close `sorry`s in priority order from the ranked loop index until this cluster's score trends to 0.
-4. Re-run `scripts/phase_mirror_loop.py` and confirm this tension's score decreases.
+1. Encode the documented invariant as a Lean `def`/`theorem` threshold and prove the bound; reference it from the enforcing crate.
+2. Wire the Sigma Kernel breach emission into `crates/mirror-dissonance/src/physics_rules.rs` so the claimed circuit-breaker actually traps (per ADR-402).
+3. Re-run `scripts/phase_mirror_loop.py` and confirm this tension's score decreases.
 
 ## Links
 - Loop index: `docs/adr/ADR-Plan-Phase-Mirror-Dissonance-Loop.md`

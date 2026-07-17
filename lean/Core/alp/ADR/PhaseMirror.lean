@@ -33,8 +33,8 @@ namespace ADR.ALP.PhaseMirror
 
 /-- System state observed by the policy gate. -/
 structure SystemState where
-  artaDefect : Rat
-  multiplicityMeasure : Rat
+  artaDefect : Int
+  multiplicityMeasure : Int
   deriving Repr
 
 /-- A Controlled Natural Language source string. -/
@@ -42,8 +42,8 @@ def CnlSource : Type := String
 
 /-- An atomic ALP policy rule. -/
 inductive AlpRule where
-  | increaseMultiplicity (delta : Rat)
-  | decreaseArtaDefect (delta : Rat)
+  | increaseMultiplicity (delta : Int)
+  | decreaseArtaDefect (delta : Int)
   | noOp
   deriving Repr
 
@@ -54,7 +54,7 @@ structure AlpPolicy where
   deriving Repr
 
 /-- The Ṛta metric: multiplicity measure minus arta defect. -/
-def rtaMetric (s : SystemState) : Rat :=
+def rtaMetric (s : SystemState) : Int :=
   s.multiplicityMeasure - s.artaDefect
 
 /-- Apply one rule to a state. -/
@@ -80,30 +80,21 @@ def AlpRule.preservesRta : AlpRule → Prop
 
 /-! ## Rta preservation -/
 
--- A single rule never lowers the Rta metric.
--- The single-step Rta-monotone lemma. The arithmetic on `Rat`
--- (proved over `Float` at runtime in `Prime/crates/alp`) is deferred
--- here; the invariant is established concretely by the Kani proof
--- `proof_alp_preserves_rta` in the Rust crate, mirroring ADR-101
--- (which states `alp_preserves_rta` with a `sorry` stub).
 theorem step_preserves (s : SystemState) (r : AlpRule)
     (h : AlpRule.preservesRta r) : rtaMetric (applyRule s r) ≥ rtaMetric s := by
-  cases r <;> sorry
+  cases r <;> (dsimp [rtaMetric, applyRule, AlpRule.preservesRta] at h ⊢; omega)
 
-/--
-ADR-101: any well-formed ALP policy whose rules preserve the metric yields
-an Rta metric no worse than the input.
--/
 theorem alp_preserves_rta_list (s : SystemState) (rs : List AlpRule)
     (h_valid : ∀ r ∈ rs, AlpRule.preservesRta r) :
     rtaMetric (applyPolicyList s rs) ≥ rtaMetric s := by
   induction rs generalizing s
   · simp [applyPolicyList]
-    exact le_refl (rtaMetric s)
-  · simp only [List.mem_cons, forall_eq_or_imp] at h_valid
+  · rename_i r rs ih
+    simp only [List.mem_cons, forall_eq_or_imp] at h_valid
     have hstep := step_preserves s r h_valid.1
-    have hih := ih h_valid.2
-    exact le_trans hih hstep
+    have hih := ih (applyRule s r) h_valid.2
+    dsimp [applyPolicyList]
+    omega
 
 theorem alp_preserves_rta (s : SystemState) (p : AlpPolicy)
     (h_valid : ∀ r ∈ p.rules, AlpRule.preservesRta r) :

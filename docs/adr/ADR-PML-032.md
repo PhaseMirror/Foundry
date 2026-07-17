@@ -1,18 +1,18 @@
-# ADR-PML-032: Documented Lean theorems missing in the `uor` subsystem (2 gaps)
+# ADR-PML-032: Declared control surfaces (circuit-breaker / veto / triple-lock) not provably wired to enforcement
 
 ## Status
 Proposed
 
 ## Axis (Phase Mirror tension class)
-urgency vs capacity
+control desired vs available
 
 ## Owner (multi-agent lever)
-`the-examiner`
+`the-guardian`
 
 ## Dissonance Score
-- Impact = severity (4) x blast radius (2) = **8**
+- Impact = severity (3) x blast radius (8) = **24**
 - Tractability = **1.0**
-- **Score = 8.0**  (cluster rank 15 of 17)
+- **Score = 24.0**  (cluster rank 4 of 11)
 
 ## Context (stated intent vs implementation)
 The documented intent below is not reflected by the current mathematical Lean 4
@@ -20,12 +20,18 @@ implementation. This is a measured gap produced by the Phase Mirror operational
 loop.
 
 ### Stated intent (documents)
-  - docs/adr/ADR-087-UOR-Primitives-Core-Ontology.md:76 — asserts `standard_instance_sound` exists / is verified
-  - docs/adr/ADR-087-UOR-Primitives-Core-Ontology.md:94 — asserts `certificate_well_formed` exists / is verified
+  - README.md
+  - docs/MSP_2.md
+  - docs/SECURITY.md
+  - docs/adr/ADR-PML-001.md
+  - docs/adr/ADR-PML-003.md
+  - docs/adr/ADR-PML-006.md
+  - docs/adr/ADR-PML-010.md
+  - docs/adr/ADR-PML-015.md
 
 ### Implementation reality (lean/)
-  - `standard_instance_sound` not found among 7997 lean declarations
-  - `certificate_well_formed` not found among 7997 lean declarations
+  - CertificationGate.lean exists but its linkage to documented veto/triple-lock is unproven
+  - see ADR-402-Phase-Mirror-Dissonance.md vs crates/mirror-dissonance/src/physics_rules.rs enforcement gap
 
 ### Manifested boundary
 Leaked (unmanifested): YES — gap is NOT manifested in `alp_sorry_manifest.json` (silent leak risk)
@@ -51,10 +57,9 @@ stub, per `alp_sorry_manifest.json`) backs it.
 - Dissonance score for this axis trends to 0 on subsequent loop runs.
 
 ## Actionable Levers
-1. Manifest the missing theorem(s) `standard_instance_sound`, `certificate_well_formed` as gated `sorry` stubs under `lean/Core/` and register each in `alp_sorry_manifest.json` (run the loop with `--scaffold-proofs`).
-2. Add paired Rust/Kani stubs + governance tests in `crates/` per ADR-054 / ADR-045 hybrid boundary policy, so the gap is owned, not silent.
-3. File proof-engineering tickets sized by effort; close `sorry`s in priority order from the ranked loop index until this cluster's score trends to 0.
-4. Re-run `scripts/phase_mirror_loop.py` and confirm this tension's score decreases.
+1. Add Lean proofs linking `CertificationGate` to the documented veto / triple-lock, or manifest the gap explicitly.
+2. Add an end-to-end governance test (guardian->examiner->publisher) asserting the control surface cannot be bypassed.
+3. Re-run `scripts/phase_mirror_loop.py` and confirm this tension's score decreases.
 
 ## Links
 - Loop index: `docs/adr/ADR-Plan-Phase-Mirror-Dissonance-Loop.md`

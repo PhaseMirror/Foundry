@@ -27,6 +27,7 @@ theorem scn_extended_feature_dimension :
     ∀ (A : OperatorMatrix) (target_gap : Float) (kt : KernelTelemetry) (eta : StieltjesEta) (N : Nat),
     (scnLambdaNFeatures A target_gap kt eta N).length = (baseSCNFeatures A target_gap).length + 5 + N := by
   intros
-  sorry
+  unfold scnLambdaNFeatures
+  simp
 
 end ACE_SCN_CSC

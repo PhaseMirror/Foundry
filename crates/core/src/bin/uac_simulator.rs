@@ -84,7 +84,10 @@ let zk_config = if zk_enabled {
 } else {
     LanglandsZKConfig::default()
 };
+let start = std::time::Instant::now();
 let gate_result = gate_langlands(&state, 1e-12, Some(zk_config));
+let zk_duration = start.elapsed();
+eprintln!("[PROFILE] ZK verification time: {:?}", zk_duration);
 match gate_result {
     Ok(_) => {
         println!("L3 Gate Status: ACCEPTED (Monster Identity Representation Anchored)");

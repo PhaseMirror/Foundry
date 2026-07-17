@@ -1,4 +1,4 @@
-# ADR-PML-007: Documented Lean theorems missing in the `sigma` subsystem (11 gaps)
+# ADR-PML-007: Documented Lean theorems missing in the `adr-scaffold` subsystem (8 gaps)
 
 ## Status
 Proposed
@@ -10,9 +10,9 @@ urgency vs capacity
 `the-examiner`
 
 ## Dissonance Score
-- Impact = severity (4) x blast radius (11) = **40**
+- Impact = severity (4) x blast radius (8) = **32**
 - Tractability = **1.0**
-- **Score = 40.0**  (cluster rank 7 of 17)
+- **Score = 32.0**  (cluster rank 7 of 14)
 
 ## Context (stated intent vs implementation)
 The documented intent below is not reflected by the current mathematical Lean 4
@@ -20,20 +20,20 @@ implementation. This is a measured gap produced by the Phase Mirror operational
 loop.
 
 ### Stated intent (documents)
-  - docs/adr/ADR-062-SigmaKernel-Production-Implementation.md:67 — asserts `SigmaKernelInvariant` exists / is verified
-  - docs/adr/ADR-062-SigmaKernel-Production-Implementation.md:70 — asserts `dissonanceLevel` exists / is verified
-  - docs/adr/ADR-062-SigmaKernel-Production-Implementation.md:77 — asserts `sigma_kernel_preserves_contraction` exists / is verified
-  - docs/adr/ADR-062-SigmaKernel-Production-Implementation.md:87 — asserts `dissonance_detects_drift` exists / is verified
-  - docs/adr/ADR-062-SigmaKernel-Production-Implementation.md:94 — asserts `no_spectral_explosion` exists / is verified
-  - docs/adr/ADR-073-Echo-Kernel-Production-Implementation.md:81 — asserts `send_message` exists / is verified
-  - docs/adr/ADR-073-Echo-Kernel-Production-Implementation.md:91 — asserts `echo_braid_preserves_contraction` exists / is verified
-  - docs/adr/ADR-073-Echo-Kernel-Production-Implementation.md:99 — asserts `echo_braid_no_cycles` exists / is verified
+  - docs/adr/accepted/ADR-057-LEAN4_ADR_SCAFFOLDING.md:112 — asserts `isValidTransition` exists / is verified
+  - docs/adr/accepted/ADR-057-LEAN4_ADR_SCAFFOLDING.md:121 — asserts `accepted_is_irreversible` exists / is verified
+  - docs/adr/accepted/ADR-057-LEAN4_ADR_SCAFFOLDING.md:131 — asserts `consequencesEntailed` exists / is verified
+  - docs/adr/accepted/ADR-057-LEAN4_ADR_SCAFFOLDING.md:145 — asserts `ADR_001_Riemann` exists / is verified
+  - docs/adr/adopted/ADR Prime Moves Scaffolding.md:64 — asserts `E_τ_star` exists / is verified
+  - docs/adr/adopted/ADR Prime Moves Scaffolding.md:110 — asserts `T_crit` exists / is verified
+  - docs/adr/adopted/ADR Prime Moves Scaffolding.md:113 — asserts `off_line_zero_impossible_above_critical_height` exists / is verified
+  - docs/adr/adopted/ADR Prime Moves Scaffolding.md:136 — asserts `RH_analytic_proof` exists / is verified
 
 ### Implementation reality (lean/)
-  - `SigmaKernelInvariant` not found among 7997 lean declarations
-  - `dissonanceLevel` not found among 7997 lean declarations
-  - `sigma_kernel_preserves_contraction` not found among 7997 lean declarations
-  - `dissonance_detects_drift` not found among 7997 lean declarations
+  - `isValidTransition` not found among 8218 lean declarations
+  - `accepted_is_irreversible` not found among 8218 lean declarations
+  - `consequencesEntailed` not found among 8218 lean declarations
+  - `ADR_001_Riemann` not found among 8218 lean declarations
 
 ### Manifested boundary
 Leaked (unmanifested): YES — gap is NOT manifested in `alp_sorry_manifest.json` (silent leak risk)
@@ -59,7 +59,7 @@ stub, per `alp_sorry_manifest.json`) backs it.
 - Dissonance score for this axis trends to 0 on subsequent loop runs.
 
 ## Actionable Levers
-1. Manifest the missing theorem(s) `dissonanceLevel`, `sigma_kernel_preserves_contraction`, `dissonance_detects_drift`, `no_spectral_explosion`, `send_message`, `echo_braid_preserves_contraction`, `echo_braid_no_cycles`, `lambda_hat_descent`, `coherence_emergence_contraction` as gated `sorry` stubs under `lean/Core/` and register each in `alp_sorry_manifest.json` (run the loop with `--scaffold-proofs`).
+1. Manifest the missing theorem(s) `isValidTransition`, `accepted_is_irreversible`, `consequencesEntailed`, `off_line_zero_impossible_above_critical_height` as gated `sorry` stubs under `lean/Core/` and register each in `alp_sorry_manifest.json` (run the loop with `--scaffold-proofs`).
 2. Add paired Rust/Kani stubs + governance tests in `crates/` per ADR-054 / ADR-045 hybrid boundary policy, so the gap is owned, not silent.
 3. File proof-engineering tickets sized by effort; close `sorry`s in priority order from the ranked loop index until this cluster's score trends to 0.
 4. Re-run `scripts/phase_mirror_loop.py` and confirm this tension's score decreases.

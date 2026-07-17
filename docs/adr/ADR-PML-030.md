@@ -1,18 +1,18 @@
-# ADR-PML-030: Documented Lean theorems missing in the `alp` subsystem (4 gaps)
+# ADR-PML-030: alp_sorry_manifest.json permits sorrys that are absent from the current lean tree (stale boundary)
 
 ## Status
 Proposed
 
 ## Axis (Phase Mirror tension class)
-urgency vs capacity
+intent vs operating incentives
 
 ## Owner (multi-agent lever)
-`the-examiner`
+`the-guardian`
 
 ## Dissonance Score
-- Impact = severity (4) x blast radius (4) = **16**
-- Tractability = **1.0**
-- **Score = 16.0**  (cluster rank 13 of 17)
+- Impact = severity (3) x blast radius (13) = **30**
+- Tractability = **5.0**
+- **Score = 150.0**  (cluster rank 2 of 11)
 
 ## Context (stated intent vs implementation)
 The documented intent below is not reflected by the current mathematical Lean 4
@@ -20,19 +20,13 @@ implementation. This is a measured gap produced by the Phase Mirror operational
 loop.
 
 ### Stated intent (documents)
-  - docs/adr/ADR-074-ALP-Verification-SDK-Production-Integration.md:72 — asserts `rta_metric` exists / is verified
-  - docs/adr/ADR-074-ALP-Verification-SDK-Production-Integration.md:86 — asserts `apply_policy` exists / is verified
-  - docs/adr/ADR-074-ALP-Verification-SDK-Production-Integration.md:95 — asserts `alp_preserves_rta` exists / is verified
-  - docs/adr/ADR-074-ALP-Verification-SDK-Production-Integration.md:102 — asserts `alp_no_contradiction` exists / is verified
+  - alp_sorry_manifest.json permits 13 sorry(s) not present in lean
 
 ### Implementation reality (lean/)
-  - `rta_metric` not found among 7997 lean declarations
-  - `apply_policy` not found among 7997 lean declarations
-  - `alp_preserves_rta` not found among 7997 lean declarations
-  - `alp_no_contradiction` not found among 7997 lean declarations
+  - stale permitted sorrys: ALP.Archivum.WitnessContract.witness_after_admit_implies_constitution_valid, ALP.Archivum.WitnessContract.witness_after_veto_implies_disallowed, ALP.Candle.PirtmBridge.candle_ignition_sound, ALP.Contracts.NonBypassability.no_unaligned_execution, ALP.Contracts.TrustArbitration.external_blocks_governed_mcp, ALP.Contracts.TrustArbitration.internal_admits_mcp ...
 
 ### Manifested boundary
-Leaked (unmanifested): YES — gap is NOT manifested in `alp_sorry_manifest.json` (silent leak risk)
+Leaked (unmanifested): no
 
 ## Decision (the lever)
 Resolve the dissonance by manifesting the gap and closing it with a verified
@@ -55,9 +49,9 @@ stub, per `alp_sorry_manifest.json`) backs it.
 - Dissonance score for this axis trends to 0 on subsequent loop runs.
 
 ## Actionable Levers
-1. Manifest the missing theorem(s) `rta_metric`, `apply_policy`, `alp_preserves_rta`, `alp_no_contradiction` as gated `sorry` stubs under `lean/Core/` and register each in `alp_sorry_manifest.json` (run the loop with `--scaffold-proofs`).
-2. Add paired Rust/Kani stubs + governance tests in `crates/` per ADR-054 / ADR-045 hybrid boundary policy, so the gap is owned, not silent.
-3. File proof-engineering tickets sized by effort; close `sorry`s in priority order from the ranked loop index until this cluster's score trends to 0.
+1. Update the purity ADR (e.g. ADR-Prime-Move-Deployment-Readiness.md) to segregate the verified UAC math cores from the transitional `ALP` agentic contracts.
+2. Run `scripts/honesty_audit.sh`; enforce that every `sorry` is in the manifest and every manifest entry resolves to a real declaration (no stale permits).
+3. Downgrade absolute '100% verified / zero sorry' wording to scoped, accurate claims until the proof budget is spent.
 4. Re-run `scripts/phase_mirror_loop.py` and confirm this tension's score decreases.
 
 ## Links

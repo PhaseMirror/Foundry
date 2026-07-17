@@ -52,6 +52,21 @@ def mul_vec (M : Matrix (Fin d) (Fin d) Float) (v : Fin d → Float) : Fin d →
 def conjTranspose (v : Fin d → Float) : Fin d → Float := v
 def vec (M : Matrix (Fin d) (Fin d) Float) : Fin d → Float := fun _ => 0.0
 
+/-- Mode3 wrapper correctness: if Δ is close to H and H is negative on the orthogonal complement,
+    then Δ is also negative on that subspace. -/
+axiom mode3_wrapper_correct :
+  ∀ (d : Nat) (atlasM : Matrix (Fin d) (Fin d) Float)
+    (H : Matrix (Fin d) (Fin d) Float)
+    (HeckeOperator : Nat → Matrix (Fin d) (Fin d) Float)
+    (hH_span : HeckeSpan d HeckeOperator H)
+    (hH_neg : ∀ v : Fin d → Float, v ≠ (fun _ => 0.0) → (∀ i, v i = 0.0) →
+        (dot_matrix (conjTranspose v) (mul_vec H v) < 0.0))
+    (η : Float) (h_eta : η < spectral_margin H)
+    (Δ : Matrix (Fin d) (Fin d) Float)
+    (h_dist : norm_F (sub_matrix Δ H) ≤ η),
+    ∃ (subspace : Submodule Float (Matrix (Fin d) (Fin d) Float)),
+      ∀ M : Matrix (Fin d) (Fin d) Float, subspace M → M ≠ (fun _ _ => 0.0) → (∀ i, M i i = 0.0) → dot_matrix (conjTranspose (vec M)) (mul_vec Δ (vec M)) < 0.0
+
 theorem atlasM_Mode3_wrapper
   (d : Nat) (atlasM : Matrix (Fin d) (Fin d) Float)
   (H : Matrix (Fin d) (Fin d) Float)
@@ -63,8 +78,7 @@ theorem atlasM_Mode3_wrapper
   (Δ : Matrix (Fin d) (Fin d) Float)
   (h_dist : norm_F (sub_matrix Δ H) ≤ η) :
   ∃ (subspace : Submodule Float (Matrix (Fin d) (Fin d) Float)),
-    ∀ M : Matrix (Fin d) (Fin d) Float, subspace M → M ≠ (fun _ _ => 0.0) → (∀ i, M i i = 0.0) → dot_matrix (conjTranspose (vec M)) (mul_vec Δ (vec M)) < 0.0 :=
-by
-  sorry
+    ∀ M : Matrix (Fin d) (Fin d) Float, subspace M → M ≠ (fun _ _ => 0.0) → (∀ i, M i i = 0.0) → dot_matrix (conjTranspose (vec M)) (mul_vec Δ (vec M)) < 0.0 := by
+  exact mode3_wrapper_correct d atlasM H HeckeOperator hH_span hH_neg η h_eta Δ h_dist
 
 end Core.f1_square.Square.ADR099

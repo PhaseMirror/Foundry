@@ -1,4 +1,4 @@
-# ADR-PML-008: Documented Lean theorems missing in the `adr-scaffold` subsystem (8 gaps)
+# ADR-PML-008: Documented Lean theorems missing in the `governance` subsystem (7 gaps)
 
 ## Status
 Proposed
@@ -10,9 +10,9 @@ urgency vs capacity
 `the-examiner`
 
 ## Dissonance Score
-- Impact = severity (4) x blast radius (8) = **32**
+- Impact = severity (4) x blast radius (7) = **28**
 - Tractability = **1.0**
-- **Score = 32.0**  (cluster rank 8 of 17)
+- **Score = 28.0**  (cluster rank 8 of 14)
 
 ## Context (stated intent vs implementation)
 The documented intent below is not reflected by the current mathematical Lean 4
@@ -20,20 +20,19 @@ implementation. This is a measured gap produced by the Phase Mirror operational
 loop.
 
 ### Stated intent (documents)
-  - docs/adr/ADR Prime Moves Scaffolding.md:64 — asserts `E_τ_star` exists / is verified
-  - docs/adr/ADR Prime Moves Scaffolding.md:110 — asserts `T_crit` exists / is verified
-  - docs/adr/ADR Prime Moves Scaffolding.md:113 — asserts `off_line_zero_impossible_above_critical_height` exists / is verified
-  - docs/adr/ADR Prime Moves Scaffolding.md:136 — asserts `RH_analytic_proof` exists / is verified
-  - docs/adr/ADR-057-LEAN4_ADR_SCAFFOLDING.md:112 — asserts `isValidTransition` exists / is verified
-  - docs/adr/ADR-057-LEAN4_ADR_SCAFFOLDING.md:121 — asserts `accepted_is_irreversible` exists / is verified
-  - docs/adr/ADR-057-LEAN4_ADR_SCAFFOLDING.md:131 — asserts `consequencesEntailed` exists / is verified
-  - docs/adr/ADR-057-LEAN4_ADR_SCAFFOLDING.md:145 — asserts `ADR_001_Riemann` exists / is verified
+  - docs/TRIPLE_LOCK_OVERVIEW.md:6 — asserts `semantic_trace_unique` exists / is verified
+  - docs/adr/accepted/ADR-077-PIRTM-Fock-Space-Constitutional-Contractivity.md:13 — asserts `FockTrunc` exists / is verified
+  - docs/adr/accepted/ADR-077-PIRTM-Fock-Space-Constitutional-Contractivity.md:14 — asserts `liftOperator` exists / is verified
+  - docs/adr/accepted/ADR-077-PIRTM-Fock-Space-Constitutional-Contractivity.md:77 — asserts `uniform_boundedness` exists / is verified
+  - docs/adr/accepted/ADR-077-PIRTM-Fock-Space-Constitutional-Contractivity.md:86 — asserts `global_lipschitz_contractivity` exists / is verified
+  - docs/adr/accepted/ADR_036_Phase_Mirror_Governance.md:42 — asserts `next_phase` exists / is verified
+  - docs/adr/accepted/ADR_036_Phase_Mirror_Governance.md:57 — asserts `no_bypass_validation` exists / is verified
 
 ### Implementation reality (lean/)
-  - `E_τ_star` not found among 7997 lean declarations
-  - `T_crit` not found among 7997 lean declarations
-  - `off_line_zero_impossible_above_critical_height` not found among 7997 lean declarations
-  - `RH_analytic_proof` not found among 7997 lean declarations
+  - `semantic_trace_unique` not found among 8218 lean declarations
+  - `FockTrunc` not found among 8218 lean declarations
+  - `liftOperator` not found among 8218 lean declarations
+  - `uniform_boundedness` not found among 8218 lean declarations
 
 ### Manifested boundary
 Leaked (unmanifested): YES — gap is NOT manifested in `alp_sorry_manifest.json` (silent leak risk)
@@ -59,7 +58,7 @@ stub, per `alp_sorry_manifest.json`) backs it.
 - Dissonance score for this axis trends to 0 on subsequent loop runs.
 
 ## Actionable Levers
-1. Manifest the missing theorem(s) `off_line_zero_impossible_above_critical_height`, `isValidTransition`, `accepted_is_irreversible`, `consequencesEntailed` as gated `sorry` stubs under `lean/Core/` and register each in `alp_sorry_manifest.json` (run the loop with `--scaffold-proofs`).
+1. Manifest the missing theorem(s) `semantic_trace_unique`, `liftOperator`, `uniform_boundedness`, `global_lipschitz_contractivity`, `next_phase`, `no_bypass_validation` as gated `sorry` stubs under `lean/Core/` and register each in `alp_sorry_manifest.json` (run the loop with `--scaffold-proofs`).
 2. Add paired Rust/Kani stubs + governance tests in `crates/` per ADR-054 / ADR-045 hybrid boundary policy, so the gap is owned, not silent.
 3. File proof-engineering tickets sized by effort; close `sorry`s in priority order from the ranked loop index until this cluster's score trends to 0.
 4. Re-run `scripts/phase_mirror_loop.py` and confirm this tension's score decreases.

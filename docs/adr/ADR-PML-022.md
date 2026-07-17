@@ -1,4 +1,4 @@
-# ADR-PML-022: Documented Lean theorems missing in the `bindu-rta` subsystem (15 gaps)
+# ADR-PML-022: Documented Lean theorems missing in the `adr-scaffold` subsystem (8 gaps)
 
 ## Status
 Proposed
@@ -10,9 +10,9 @@ urgency vs capacity
 `the-examiner`
 
 ## Dissonance Score
-- Impact = severity (4) x blast radius (15) = **40**
+- Impact = severity (4) x blast radius (8) = **32**
 - Tractability = **1.0**
-- **Score = 40.0**  (cluster rank 5 of 17)
+- **Score = 32.0**  (cluster rank 8 of 14)
 
 ## Context (stated intent vs implementation)
 The documented intent below is not reflected by the current mathematical Lean 4
@@ -20,20 +20,20 @@ implementation. This is a measured gap produced by the Phase Mirror operational
 loop.
 
 ### Stated intent (documents)
-  - docs/adr/ADR-043-Rta-Morphism-and-Bindu.md:26 — asserts `fit_fixed_point_is_bindu` exists / is verified
-  - docs/adr/ADR-043-Rta-Morphism-and-Bindu.md:107 — asserts `resonance_score` exists / is verified
-  - docs/adr/ADR-043-Rta-Morphism-and-Bindu.md:108 — asserts `operator_norm` exists / is verified
-  - docs/adr/ADR-043-Rta-Morphism-and-Bindu.md:110 — asserts `contraction_holds` exists / is verified
-  - docs/adr/ADR-043-Rta-Morphism-and-Bindu.md:135 — asserts `fit_non_expansive` exists / is verified
-  - docs/adr/ADR-043-Rta-Morphism-and-Bindu.md:140 — asserts `fit_resonance_increases` exists / is verified
-  - docs/adr/ADR-043-Rta-Morphism-and-Bindu.md:145 — asserts `fit_fixed_point_convergence` exists / is verified
-  - docs/adr/ADR-043-Rta-Morphism-and-Bindu.md:156 — asserts `testState` exists / is verified
+  - docs/adr/accepted/ADR-057-LEAN4_ADR_SCAFFOLDING.md:112 — asserts `isValidTransition` exists / is verified
+  - docs/adr/accepted/ADR-057-LEAN4_ADR_SCAFFOLDING.md:121 — asserts `accepted_is_irreversible` exists / is verified
+  - docs/adr/accepted/ADR-057-LEAN4_ADR_SCAFFOLDING.md:131 — asserts `consequencesEntailed` exists / is verified
+  - docs/adr/accepted/ADR-057-LEAN4_ADR_SCAFFOLDING.md:145 — asserts `ADR_001_Riemann` exists / is verified
+  - docs/adr/adopted/ADR Prime Moves Scaffolding.md:64 — asserts `E_τ_star` exists / is verified
+  - docs/adr/adopted/ADR Prime Moves Scaffolding.md:110 — asserts `T_crit` exists / is verified
+  - docs/adr/adopted/ADR Prime Moves Scaffolding.md:113 — asserts `off_line_zero_impossible_above_critical_height` exists / is verified
+  - docs/adr/adopted/ADR Prime Moves Scaffolding.md:136 — asserts `RH_analytic_proof` exists / is verified
 
 ### Implementation reality (lean/)
-  - `fit_fixed_point_is_bindu` not found among 7997 lean declarations
-  - `resonance_score` not found among 7997 lean declarations
-  - `operator_norm` not found among 7997 lean declarations
-  - `contraction_holds` not found among 7997 lean declarations
+  - `isValidTransition` not found among 8183 lean declarations
+  - `accepted_is_irreversible` not found among 8183 lean declarations
+  - `consequencesEntailed` not found among 8183 lean declarations
+  - `ADR_001_Riemann` not found among 8183 lean declarations
 
 ### Manifested boundary
 Leaked (unmanifested): YES — gap is NOT manifested in `alp_sorry_manifest.json` (silent leak risk)
@@ -59,7 +59,7 @@ stub, per `alp_sorry_manifest.json`) backs it.
 - Dissonance score for this axis trends to 0 on subsequent loop runs.
 
 ## Actionable Levers
-1. Manifest the missing theorem(s) `fit_fixed_point_is_bindu`, `resonance_score`, `operator_norm`, `contraction_holds`, `fit_non_expansive`, `fit_resonance_increases`, `fit_fixed_point_convergence`, `testState`, `lowResState`, `fittedState`, `badUpdate`, `finiteStates` as gated `sorry` stubs under `lean/Core/` and register each in `alp_sorry_manifest.json` (run the loop with `--scaffold-proofs`).
+1. Manifest the missing theorem(s) `isValidTransition`, `accepted_is_irreversible`, `consequencesEntailed`, `off_line_zero_impossible_above_critical_height` as gated `sorry` stubs under `lean/Core/` and register each in `alp_sorry_manifest.json` (run the loop with `--scaffold-proofs`).
 2. Add paired Rust/Kani stubs + governance tests in `crates/` per ADR-054 / ADR-045 hybrid boundary policy, so the gap is owned, not silent.
 3. File proof-engineering tickets sized by effort; close `sorry`s in priority order from the ranked loop index until this cluster's score trends to 0.
 4. Re-run `scripts/phase_mirror_loop.py` and confirm this tension's score decreases.

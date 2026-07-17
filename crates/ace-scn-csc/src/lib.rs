@@ -5,6 +5,12 @@ pub mod scn;
 
 pub use scn::*;
 
+pub mod conditioning;
+pub mod witness_binding;
+
+pub use conditioning::*;
+pub use witness_binding::*;
+
 /// Lemma 1 (Weyl via Frobenius): eigenvalue perturbations bounded by Frobenius norm.
 /// For symbolic verification, we test on a 2x2 Hermitian matrix.
 pub fn frobenius_norm(matrix: &[[f64; 2]; 2]) -> f64 {

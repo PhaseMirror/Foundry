@@ -1,6 +1,6 @@
--- import XI_FORMAL.StabilityDynamics
+import dynamics.XIFormal
 
-namespace XI_FORMAL
+namespace dynamics.XIFormal
 
 /-- 
   Discrete formulation of the spectral leakage constant Cf.
@@ -34,4 +34,4 @@ def satisfies_stability_invariant (K_hs_sq : Nat) (Cf_val : Nat) (N_max : Nat) :
   -- K_hs_sq * scale <= 6366 * Cf_val * N_max
   K_hs_sq * scale ≤ 6366 * Cf_val * N_max
 
-end XI_FORMAL
+end dynamics.XIFormal

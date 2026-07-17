@@ -1,4 +1,4 @@
-# ADR-PML-021: Documented Lean theorems missing in the `moc` subsystem (24 gaps)
+# ADR-PML-021: Documented Lean theorems missing in the `sigma` subsystem (14 gaps)
 
 ## Status
 Proposed
@@ -10,9 +10,9 @@ urgency vs capacity
 `the-examiner`
 
 ## Dissonance Score
-- Impact = severity (4) x blast radius (24) = **40**
+- Impact = severity (4) x blast radius (14) = **40**
 - Tractability = **1.0**
-- **Score = 40.0**  (cluster rank 4 of 17)
+- **Score = 40.0**  (cluster rank 7 of 14)
 
 ## Context (stated intent vs implementation)
 The documented intent below is not reflected by the current mathematical Lean 4
@@ -20,20 +20,20 @@ implementation. This is a measured gap produced by the Phase Mirror operational
 loop.
 
 ### Stated intent (documents)
-  - docs/MOC.md:30 — asserts `arta_gluing_consistency` exists / is verified
-  - docs/MOC.md:61 — asserts `operator_contractive` exists / is verified
-  - docs/adr/ADR-066-PIRTM-MOC-Compiler-Production-Readiness.md:103 — asserts `type_check_sound` exists / is verified
-  - docs/adr/ADR-066-PIRTM-MOC-Compiler-Production-Readiness.md:108 — asserts `WellTyped` exists / is verified
-  - docs/adr/ADR-068-MOC-CRMF-Contraction-Certificate-Production-Ratification.md:77 — asserts `issue_certificate` exists / is verified
-  - docs/adr/ADR-068-MOC-CRMF-Contraction-Certificate-Production-Ratification.md:89 — asserts `certificate_issuance_sound` exists / is verified
-  - docs/adr/ADR-068-MOC-CRMF-Contraction-Certificate-Production-Ratification.md:96 — asserts `prime_gated_certificate` exists / is verified
-  - docs/adr/ADR-068-MOC-CRMF-Contraction-Certificate-Production-Ratification.md:117 — asserts `activate_resonance` exists / is verified
+  - docs/adr/accepted/ADR-073-Echo-Kernel-Production-Implementation.md:81 — asserts `send_message` exists / is verified
+  - docs/adr/accepted/ADR-073-Echo-Kernel-Production-Implementation.md:91 — asserts `echo_braid_preserves_contraction` exists / is verified
+  - docs/adr/accepted/ADR-073-Echo-Kernel-Production-Implementation.md:99 — asserts `echo_braid_no_cycles` exists / is verified
+  - docs/adr/accepted/ADR-075-ORF-Coherence-Stratification-Kernel.md:74 — asserts `JensenShannonMetric` exists / is verified
+  - docs/adr/accepted/ADR-075-ORF-Coherence-Stratification-Kernel.md:82 — asserts `lambda_hat_descent` exists / is verified
+  - docs/adr/accepted/ADR-095-PhaseMirror-Kernel-Semantic-Authority.md:51 — asserts `authoritative_source` exists / is verified
+  - docs/adr/accepted/ADR-095-PhaseMirror-Kernel-Semantic-Authority.md:53 — asserts `kernel_authority_exclusive` exists / is verified
+  - docs/adr/accepted/ADR-095-PhaseMirror-Kernel-Semantic-Authority.md:62 — asserts `parity_mode_converges` exists / is verified
 
 ### Implementation reality (lean/)
-  - `arta_gluing_consistency` not found among 7997 lean declarations
-  - `operator_contractive` not found among 7997 lean declarations
-  - `type_check_sound` not found among 7997 lean declarations
-  - `WellTyped` not found among 7997 lean declarations
+  - `send_message` not found among 8183 lean declarations
+  - `echo_braid_preserves_contraction` not found among 8183 lean declarations
+  - `echo_braid_no_cycles` not found among 8183 lean declarations
+  - `JensenShannonMetric` not found among 8183 lean declarations
 
 ### Manifested boundary
 Leaked (unmanifested): YES — gap is NOT manifested in `alp_sorry_manifest.json` (silent leak risk)
@@ -59,7 +59,7 @@ stub, per `alp_sorry_manifest.json`) backs it.
 - Dissonance score for this axis trends to 0 on subsequent loop runs.
 
 ## Actionable Levers
-1. Manifest the missing theorem(s) `arta_gluing_consistency`, `operator_contractive`, `type_check_sound`, `issue_certificate`, `certificate_issuance_sound`, `prime_gated_certificate`, `activate_resonance`, `resonance_preserves_contraction`, `commutation_f`, `commute`, `commutation_respects_prime_grading`, `resonance_functional`, +7 more as gated `sorry` stubs under `lean/Core/` and register each in `alp_sorry_manifest.json` (run the loop with `--scaffold-proofs`).
+1. Manifest the missing theorem(s) `send_message`, `echo_braid_preserves_contraction`, `echo_braid_no_cycles`, `lambda_hat_descent`, `authoritative_source`, `kernel_authority_exclusive`, `parity_mode_converges`, `semantic_preservation`, `circom_witness_binding_preserves_budget`, `telemetry_vector`, `conditioning_increases_feature_dimension_by_telemetry`, `constraint_budget_lock`, +1 more as gated `sorry` stubs under `lean/Core/` and register each in `alp_sorry_manifest.json` (run the loop with `--scaffold-proofs`).
 2. Add paired Rust/Kani stubs + governance tests in `crates/` per ADR-054 / ADR-045 hybrid boundary policy, so the gap is owned, not silent.
 3. File proof-engineering tickets sized by effort; close `sorry`s in priority order from the ranked loop index until this cluster's score trends to 0.
 4. Re-run `scripts/phase_mirror_loop.py` and confirm this tension's score decreases.

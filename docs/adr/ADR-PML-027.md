@@ -1,4 +1,4 @@
-# ADR-PML-027: Documented Lean theorems missing in the `zmos` subsystem (8 gaps)
+# ADR-PML-027: Documented Lean theorems missing in the `goldilocks` subsystem (2 gaps)
 
 ## Status
 Proposed
@@ -10,9 +10,9 @@ urgency vs capacity
 `the-examiner`
 
 ## Dissonance Score
-- Impact = severity (4) x blast radius (8) = **32**
+- Impact = severity (4) x blast radius (2) = **8**
 - Tractability = **1.0**
-- **Score = 32.0**  (cluster rank 10 of 17)
+- **Score = 8.0**  (cluster rank 13 of 14)
 
 ## Context (stated intent vs implementation)
 The documented intent below is not reflected by the current mathematical Lean 4
@@ -20,20 +20,12 @@ implementation. This is a measured gap produced by the Phase Mirror operational
 loop.
 
 ### Stated intent (documents)
-  - docs/adr/ADR-061-ZMOS-Production-Implementation.md:55 — asserts `ffi_spectral_radius_equivalence` exists / is verified
-  - docs/adr/ADR-061-ZMOS-Production-Implementation.md:79 — asserts `runtime_spectral_bound_sound` exists / is verified
-  - docs/adr/ADR-061-ZMOS-Production-Implementation.md:99 — asserts `ZmosSupersedes` exists / is verified
-  - docs/adr/ADR-061-ZMOS-Production-Implementation.md:105 — asserts `zmos_family_acyclic` exists / is verified
-  - docs/adr/ADR-085-ZMOD-Multiplicity-Tensor-Core-Integration.md:68 — asserts `step_interaction` exists / is verified
-  - docs/adr/ADR-085-ZMOD-Multiplicity-Tensor-Core-Integration.md:72 — asserts `step_interaction_bounded` exists / is verified
-  - docs/adr/ADR-085-ZMOD-Multiplicity-Tensor-Core-Integration.md:86 — asserts `multiplicityTensor` exists / is verified
-  - docs/adr/ADR-085-ZMOD-Multiplicity-Tensor-Core-Integration.md:92 — asserts `multiplicityTensor_monotone` exists / is verified
+  - docs/adr/accepted/ADR-086-Goldilocks-Finite-Field-Core-Primitive.md:82 — asserts `field_add_comm` exists / is verified
+  - docs/adr/accepted/ADR-086-Goldilocks-Finite-Field-Core-Primitive.md:88 — asserts `field_add_assoc` exists / is verified
 
 ### Implementation reality (lean/)
-  - `ffi_spectral_radius_equivalence` not found among 7997 lean declarations
-  - `runtime_spectral_bound_sound` not found among 7997 lean declarations
-  - `ZmosSupersedes` not found among 7997 lean declarations
-  - `zmos_family_acyclic` not found among 7997 lean declarations
+  - `field_add_comm` not found among 8183 lean declarations
+  - `field_add_assoc` not found among 8183 lean declarations
 
 ### Manifested boundary
 Leaked (unmanifested): YES — gap is NOT manifested in `alp_sorry_manifest.json` (silent leak risk)
@@ -59,7 +51,7 @@ stub, per `alp_sorry_manifest.json`) backs it.
 - Dissonance score for this axis trends to 0 on subsequent loop runs.
 
 ## Actionable Levers
-1. Manifest the missing theorem(s) `ffi_spectral_radius_equivalence`, `runtime_spectral_bound_sound`, `zmos_family_acyclic`, `step_interaction`, `step_interaction_bounded`, `multiplicityTensor`, `multiplicityTensor_monotone` as gated `sorry` stubs under `lean/Core/` and register each in `alp_sorry_manifest.json` (run the loop with `--scaffold-proofs`).
+1. Manifest the missing theorem(s) `field_add_comm`, `field_add_assoc` as gated `sorry` stubs under `lean/Core/` and register each in `alp_sorry_manifest.json` (run the loop with `--scaffold-proofs`).
 2. Add paired Rust/Kani stubs + governance tests in `crates/` per ADR-054 / ADR-045 hybrid boundary policy, so the gap is owned, not silent.
 3. File proof-engineering tickets sized by effort; close `sorry`s in priority order from the ranked loop index until this cluster's score trends to 0.
 4. Re-run `scripts/phase_mirror_loop.py` and confirm this tension's score decreases.

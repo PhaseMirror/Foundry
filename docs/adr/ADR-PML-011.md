@@ -1,18 +1,18 @@
-# ADR-PML-011: Documented physical/mathematical invariants asserted as guaranteed but risk not owned
+# ADR-PML-011: Documented Lean theorems missing in the `sigma` subsystem (6 gaps)
 
 ## Status
 Proposed
 
 ## Axis (Phase Mirror tension class)
-risk claimed vs risk owned
+urgency vs capacity
 
 ## Owner (multi-agent lever)
-`the-publisher`
+`the-examiner`
 
 ## Dissonance Score
-- Impact = severity (4) x blast radius (2) = **8**
-- Tractability = **3.0**
-- **Score = 24.0**  (cluster rank 11 of 17)
+- Impact = severity (4) x blast radius (6) = **24**
+- Tractability = **1.0**
+- **Score = 24.0**  (cluster rank 11 of 14)
 
 ## Context (stated intent vs implementation)
 The documented intent below is not reflected by the current mathematical Lean 4
@@ -20,14 +20,21 @@ implementation. This is a measured gap produced by the Phase Mirror operational
 loop.
 
 ### Stated intent (documents)
-  - docs/MOC.md:68 — This strict bound is what allows the UAC substrate to scale to 100-concurrent requests safely. As long as the global ope
-  - docs/PIRTM_SPEC.md:166 — 2. **Runtime checks** in the WardMonitor (ρ drift threshold). Telemetry tests enforce `ANOMALY_GOV_THRESHOLD < 0.85` for
+  - docs/adr/accepted/ADR-073-Echo-Kernel-Production-Implementation.md:81 — asserts `send_message` exists / is verified
+  - docs/adr/accepted/ADR-073-Echo-Kernel-Production-Implementation.md:91 — asserts `echo_braid_preserves_contraction` exists / is verified
+  - docs/adr/accepted/ADR-073-Echo-Kernel-Production-Implementation.md:99 — asserts `echo_braid_no_cycles` exists / is verified
+  - docs/adr/accepted/ADR-075-ORF-Coherence-Stratification-Kernel.md:74 — asserts `JensenShannonMetric` exists / is verified
+  - docs/adr/accepted/ADR-075-ORF-Coherence-Stratification-Kernel.md:82 — asserts `lambda_hat_descent` exists / is verified
+  - docs/adr/accepted/ADR-097-SCN-CSC-Kernel-Metrics-Conditioning.md:159 — asserts `telemetry_vector` exists / is verified
 
 ### Implementation reality (lean/)
-  - threshold symbols referenced in lean declarations: l_eff, r_sc, rsc, tau_r, threshold
+  - `send_message` not found among 8218 lean declarations
+  - `echo_braid_preserves_contraction` not found among 8218 lean declarations
+  - `echo_braid_no_cycles` not found among 8218 lean declarations
+  - `JensenShannonMetric` not found among 8218 lean declarations
 
 ### Manifested boundary
-Leaked (unmanifested): no
+Leaked (unmanifested): YES — gap is NOT manifested in `alp_sorry_manifest.json` (silent leak risk)
 
 ## Decision (the lever)
 Resolve the dissonance by manifesting the gap and closing it with a verified
@@ -50,9 +57,10 @@ stub, per `alp_sorry_manifest.json`) backs it.
 - Dissonance score for this axis trends to 0 on subsequent loop runs.
 
 ## Actionable Levers
-1. Encode the documented invariant as a Lean `def`/`theorem` threshold and prove the bound; reference it from the enforcing crate.
-2. Wire the Sigma Kernel breach emission into `crates/mirror-dissonance/src/physics_rules.rs` so the claimed circuit-breaker actually traps (per ADR-402).
-3. Re-run `scripts/phase_mirror_loop.py` and confirm this tension's score decreases.
+1. Manifest the missing theorem(s) `send_message`, `echo_braid_preserves_contraction`, `echo_braid_no_cycles`, `lambda_hat_descent`, `telemetry_vector` as gated `sorry` stubs under `lean/Core/` and register each in `alp_sorry_manifest.json` (run the loop with `--scaffold-proofs`).
+2. Add paired Rust/Kani stubs + governance tests in `crates/` per ADR-054 / ADR-045 hybrid boundary policy, so the gap is owned, not silent.
+3. File proof-engineering tickets sized by effort; close `sorry`s in priority order from the ranked loop index until this cluster's score trends to 0.
+4. Re-run `scripts/phase_mirror_loop.py` and confirm this tension's score decreases.
 
 ## Links
 - Loop index: `docs/adr/ADR-Plan-Phase-Mirror-Dissonance-Loop.md`

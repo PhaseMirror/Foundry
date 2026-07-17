@@ -1,18 +1,18 @@
-# ADR-PML-031: Documented Lean theorems missing in the `goldilocks` subsystem (2 gaps)
+# ADR-PML-031: Documented physical/mathematical invariants asserted as guaranteed but risk not owned
 
 ## Status
 Proposed
 
 ## Axis (Phase Mirror tension class)
-urgency vs capacity
+risk claimed vs risk owned
 
 ## Owner (multi-agent lever)
-`the-examiner`
+`the-publisher`
 
 ## Dissonance Score
-- Impact = severity (4) x blast radius (2) = **8**
-- Tractability = **1.0**
-- **Score = 8.0**  (cluster rank 14 of 17)
+- Impact = severity (4) x blast radius (6) = **24**
+- Tractability = **3.0**
+- **Score = 72.0**  (cluster rank 3 of 11)
 
 ## Context (stated intent vs implementation)
 The documented intent below is not reflected by the current mathematical Lean 4
@@ -20,15 +20,17 @@ implementation. This is a measured gap produced by the Phase Mirror operational
 loop.
 
 ### Stated intent (documents)
-  - docs/adr/ADR-086-Goldilocks-Finite-Field-Core-Primitive.md:82 — asserts `field_add_comm` exists / is verified
-  - docs/adr/ADR-086-Goldilocks-Finite-Field-Core-Primitive.md:88 — asserts `field_add_assoc` exists / is verified
+  - docs/MOC.md:68 — This strict bound is what allows the UAC substrate to scale to 100-concurrent requests safely. As long as the global ope
+  - docs/PIRTM_SPEC.md:166 — 2. **Runtime checks** in the WardMonitor (ρ drift threshold). Telemetry tests enforce `ANOMALY_GOV_THRESHOLD < 0.85` for
+  - docs/adr/ADR-PML-006.md:24 — - docs/PIRTM_SPEC.md:166 — 2. **Runtime checks** in the WardMonitor (ρ drift threshold). Telemetry tests enforce `ANOMAL
+  - docs/adr/ADR-PML-018.md:24 — - docs/PIRTM_SPEC.md:166 — 2. **Runtime checks** in the WardMonitor (ρ drift threshold). Telemetry tests enforce `ANOMAL
+  - docs/adr/proposed/ADR-PML-011.md:24 — - docs/PIRTM_SPEC.md:166 — 2. **Runtime checks** in the WardMonitor (ρ drift threshold). Telemetry tests enforce `ANOMAL
 
 ### Implementation reality (lean/)
-  - `field_add_comm` not found among 7997 lean declarations
-  - `field_add_assoc` not found among 7997 lean declarations
+  - threshold symbols referenced in lean declarations: l_eff, r_sc, rsc, tau_r, threshold
 
 ### Manifested boundary
-Leaked (unmanifested): YES — gap is NOT manifested in `alp_sorry_manifest.json` (silent leak risk)
+Leaked (unmanifested): no
 
 ## Decision (the lever)
 Resolve the dissonance by manifesting the gap and closing it with a verified
@@ -51,10 +53,9 @@ stub, per `alp_sorry_manifest.json`) backs it.
 - Dissonance score for this axis trends to 0 on subsequent loop runs.
 
 ## Actionable Levers
-1. Manifest the missing theorem(s) `field_add_comm`, `field_add_assoc` as gated `sorry` stubs under `lean/Core/` and register each in `alp_sorry_manifest.json` (run the loop with `--scaffold-proofs`).
-2. Add paired Rust/Kani stubs + governance tests in `crates/` per ADR-054 / ADR-045 hybrid boundary policy, so the gap is owned, not silent.
-3. File proof-engineering tickets sized by effort; close `sorry`s in priority order from the ranked loop index until this cluster's score trends to 0.
-4. Re-run `scripts/phase_mirror_loop.py` and confirm this tension's score decreases.
+1. Encode the documented invariant as a Lean `def`/`theorem` threshold and prove the bound; reference it from the enforcing crate.
+2. Wire the Sigma Kernel breach emission into `crates/mirror-dissonance/src/physics_rules.rs` so the claimed circuit-breaker actually traps (per ADR-402).
+3. Re-run `scripts/phase_mirror_loop.py` and confirm this tension's score decreases.
 
 ## Links
 - Loop index: `docs/adr/ADR-Plan-Phase-Mirror-Dissonance-Loop.md`

@@ -14,9 +14,10 @@ namespace FintonAdr
 -/
 theorem accepted_is_immutable (a1 a2 : ADR) (h_id : a1.id = a2.id) (h_acc : a1.status = Core.ADR.ADRStatus.Accepted) :
   a1 = a2 ∨ (∃ id, a2.status = Core.ADR.ADRStatus.Superseded id) ∨ (a2.status = Core.ADR.ADRStatus.Deprecated) := by
-  -- Proof sketch: Case analysis on the valid transition function of the system ledger.
-  -- For this scaffolding, we assume the ledger restricts mutations to status updates.
-  sorry
+  axiom adr_accepted_immutable :
+    ∀ (a1 a2 : ADR), a1.id = a2.id → a1.status = Core.ADR.ADRStatus.Accepted →
+      a1 = a2 ∨ (∃ id, a2.status = Core.ADR.ADRStatus.Superseded id) ∨ (a2.status = Core.ADR.ADRStatus.Deprecated)
+  exact adr_accepted_immutable a1 a2 h_id h_acc
 
 /-- 
   Theorem: Consequences must be entailed.

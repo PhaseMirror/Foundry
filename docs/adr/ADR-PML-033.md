@@ -1,4 +1,4 @@
-# ADR-PML-033: Documented Lean theorems missing in the `roc` subsystem (1 gaps)
+# ADR-PML-033: Documented Lean theorems missing in the `adr-scaffold` subsystem (4 gaps)
 
 ## Status
 Proposed
@@ -10,9 +10,9 @@ urgency vs capacity
 `the-examiner`
 
 ## Dissonance Score
-- Impact = severity (4) x blast radius (1) = **4**
+- Impact = severity (4) x blast radius (4) = **16**
 - Tractability = **1.0**
-- **Score = 4.0**  (cluster rank 16 of 17)
+- **Score = 16.0**  (cluster rank 5 of 11)
 
 ## Context (stated intent vs implementation)
 The documented intent below is not reflected by the current mathematical Lean 4
@@ -20,10 +20,16 @@ implementation. This is a measured gap produced by the Phase Mirror operational
 loop.
 
 ### Stated intent (documents)
-  - docs/adr/ADR-092-ROC-Engine-Lyapunov-Spectral-Dynamics.md:99 — asserts `lyapunov_descent_global` exists / is verified
+  - docs/adr/accepted/ADR-057-LEAN4_ADR_SCAFFOLDING.md:145 — asserts `ADR_001_Riemann` exists / is verified
+  - docs/adr/adopted/ADR Prime Moves Scaffolding.md:64 — asserts `E_τ_star` exists / is verified
+  - docs/adr/adopted/ADR Prime Moves Scaffolding.md:110 — asserts `T_crit` exists / is verified
+  - docs/adr/adopted/ADR Prime Moves Scaffolding.md:136 — asserts `RH_analytic_proof` exists / is verified
 
 ### Implementation reality (lean/)
-  - `lyapunov_descent_global` not found among 7997 lean declarations
+  - `ADR_001_Riemann` not found among 8285 lean declarations
+  - `E_τ_star` not found among 8285 lean declarations
+  - `T_crit` not found among 8285 lean declarations
+  - `RH_analytic_proof` not found among 8285 lean declarations
 
 ### Manifested boundary
 Leaked (unmanifested): YES — gap is NOT manifested in `alp_sorry_manifest.json` (silent leak risk)
@@ -49,10 +55,9 @@ stub, per `alp_sorry_manifest.json`) backs it.
 - Dissonance score for this axis trends to 0 on subsequent loop runs.
 
 ## Actionable Levers
-1. Manifest the missing theorem(s) `lyapunov_descent_global` as gated `sorry` stubs under `lean/Core/` and register each in `alp_sorry_manifest.json` (run the loop with `--scaffold-proofs`).
-2. Add paired Rust/Kani stubs + governance tests in `crates/` per ADR-054 / ADR-045 hybrid boundary policy, so the gap is owned, not silent.
-3. File proof-engineering tickets sized by effort; close `sorry`s in priority order from the ranked loop index until this cluster's score trends to 0.
-4. Re-run `scripts/phase_mirror_loop.py` and confirm this tension's score decreases.
+1. Discharge the `sorry` in the existing `adr-scaffold` declaration; add a `lake build` regression test proving the theorem.
+2. Reconcile `alp_sorry_manifest.json`: remove the entry once the proof lands so the boundary shrinks.
+3. Re-run `scripts/phase_mirror_loop.py` and confirm this tension's score decreases.
 
 ## Links
 - Loop index: `docs/adr/ADR-Plan-Phase-Mirror-Dissonance-Loop.md`

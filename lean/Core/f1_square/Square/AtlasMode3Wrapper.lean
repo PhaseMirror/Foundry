@@ -21,9 +21,17 @@ def atlasM_mode3_wrapper (eta : Float) (h_eta : 0.0 ≤ eta) (h_small : eta < 5.
     AtlasMode3WrapperResult :=
   { projectedOperator := fun _ _ => 0.0
   , residualDistance := eta
-  , psd_on_positive_span := by sorry
-  , neg_on_ortho_diagonal := by sorry
-  , h_budget := by sorry
+  , psd_on_positive_span := by
+    intro v _
+    simp [quadraticForm]
+    exact le_rfl
+  , neg_on_ortho_diagonal := by
+    intro N v _
+    simp [quadraticForm]
+    exact le_rfl
+  , h_budget := by
+    simp [residualDistance]
+    exact le_of_lt h_small
   }
 
 end Core.f1_square.Square

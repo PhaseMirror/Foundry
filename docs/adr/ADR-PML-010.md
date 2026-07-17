@@ -12,7 +12,7 @@ control desired vs available
 ## Dissonance Score
 - Impact = severity (3) x blast radius (8) = **24**
 - Tractability = **1.0**
-- **Score = 24.0**  (cluster rank 10 of 17)
+- **Score = 24.0**  (cluster rank 10 of 14)
 
 ## Context (stated intent vs implementation)
 The documented intent below is not reflected by the current mathematical Lean 4
@@ -23,11 +23,11 @@ loop.
   - README.md
   - docs/MSP_2.md
   - docs/SECURITY.md
-  - docs/adr/ADR-062-SigmaKernel-Production-Implementation.md
-  - docs/adr/ADR-063-StratifiedGovernance-Production-Implementation.md
-  - docs/adr/ADR-065-ACE-Runtime-Production-Hardening.md
-  - docs/adr/ADR-067-Archivum-Immutable-Ledger-Production-Deployment.md
-  - docs/adr/ADR-068-MOC-CRMF-Contraction-Certificate-Production-Ratification.md
+  - docs/adr/accepted/ADR-062-SigmaKernel-Production-Implementation.md
+  - docs/adr/accepted/ADR-063-StratifiedGovernance-Production-Implementation.md
+  - docs/adr/accepted/ADR-065-ACE-Runtime-Production-Hardening.md
+  - docs/adr/accepted/ADR-067-Archivum-Immutable-Ledger-Production-Deployment.md
+  - docs/adr/accepted/ADR-068-MOC-CRMF-Contraction-Certificate-Production-Ratification.md
 
 ### Implementation reality (lean/)
   - CertificationGate.lean exists but its linkage to documented veto/triple-lock is unproven

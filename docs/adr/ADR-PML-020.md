@@ -1,18 +1,18 @@
-# ADR-PML-020: alp_sorry_manifest.json permits sorrys that are absent from the current lean tree (stale boundary)
+# ADR-PML-020: Documented Lean theorems missing in the `moc` subsystem (14 gaps)
 
 ## Status
 Proposed
 
 ## Axis (Phase Mirror tension class)
-intent vs operating incentives
+urgency vs capacity
 
 ## Owner (multi-agent lever)
-`the-guardian`
+`the-examiner`
 
 ## Dissonance Score
-- Impact = severity (3) x blast radius (13) = **30**
-- Tractability = **5.0**
-- **Score = 150.0**  (cluster rank 3 of 17)
+- Impact = severity (4) x blast radius (14) = **40**
+- Tractability = **1.0**
+- **Score = 40.0**  (cluster rank 6 of 14)
 
 ## Context (stated intent vs implementation)
 The documented intent below is not reflected by the current mathematical Lean 4
@@ -20,13 +20,23 @@ implementation. This is a measured gap produced by the Phase Mirror operational
 loop.
 
 ### Stated intent (documents)
-  - alp_sorry_manifest.json permits 13 sorry(s) not present in lean
+  - docs/MOC.md:30 — asserts `arta_gluing_consistency` exists / is verified
+  - docs/MOC.md:61 — asserts `operator_contractive` exists / is verified
+  - docs/adr/accepted/ADR-076-MOC-Operator-Calculus-Algebraic-Core.md:77 — asserts `commutation_f` exists / is verified
+  - docs/adr/accepted/ADR-076-MOC-Operator-Calculus-Algebraic-Core.md:80 — asserts `commute` exists / is verified
+  - docs/adr/accepted/ADR-076-MOC-Operator-Calculus-Algebraic-Core.md:109 — asserts `resonance_functional` exists / is verified
+  - docs/adr/accepted/ADR_037_MSP2_Lean4_Rust_Implementation.md:76 — asserts `ContextEntailsConsequence` exists / is verified
+  - docs/adr/accepted/ADR_037_MSP2_Lean4_Rust_Implementation.md:79 — asserts `ValidADREntailment` exists / is verified
+  - docs/adr/accepted/ADR_037_MSP2_Lean4_Rust_Implementation.md:103 — asserts `SedonaSpineADR` exists / is verified
 
 ### Implementation reality (lean/)
-  - stale permitted sorrys: ALP.Archivum.WitnessContract.witness_after_admit_implies_constitution_valid, ALP.Archivum.WitnessContract.witness_after_veto_implies_disallowed, ALP.Candle.PirtmBridge.candle_ignition_sound, ALP.Contracts.NonBypassability.no_unaligned_execution, ALP.Contracts.TrustArbitration.external_blocks_governed_mcp, ALP.Contracts.TrustArbitration.internal_admits_mcp ...
+  - `arta_gluing_consistency` not found among 8183 lean declarations
+  - `operator_contractive` not found among 8183 lean declarations
+  - `commutation_f` not found among 8183 lean declarations
+  - `commute` not found among 8183 lean declarations
 
 ### Manifested boundary
-Leaked (unmanifested): no
+Leaked (unmanifested): YES — gap is NOT manifested in `alp_sorry_manifest.json` (silent leak risk)
 
 ## Decision (the lever)
 Resolve the dissonance by manifesting the gap and closing it with a verified
@@ -49,9 +59,9 @@ stub, per `alp_sorry_manifest.json`) backs it.
 - Dissonance score for this axis trends to 0 on subsequent loop runs.
 
 ## Actionable Levers
-1. Update the purity ADR (e.g. ADR-Prime-Move-Deployment-Readiness.md) to segregate the verified UAC math cores from the transitional `ALP` agentic contracts.
-2. Run `scripts/honesty_audit.sh`; enforce that every `sorry` is in the manifest and every manifest entry resolves to a real declaration (no stale permits).
-3. Downgrade absolute '100% verified / zero sorry' wording to scoped, accurate claims until the proof budget is spent.
+1. Manifest the missing theorem(s) `arta_gluing_consistency`, `operator_contractive`, `commutation_f`, `commute`, `resonance_functional`, `sedona_entailment_valid`, `no_direct_bypass_validation`, `no_rollback_validation`, `authorize_phase2_transition`, `engine_source_of_truth` as gated `sorry` stubs under `lean/Core/` and register each in `alp_sorry_manifest.json` (run the loop with `--scaffold-proofs`).
+2. Add paired Rust/Kani stubs + governance tests in `crates/` per ADR-054 / ADR-045 hybrid boundary policy, so the gap is owned, not silent.
+3. File proof-engineering tickets sized by effort; close `sorry`s in priority order from the ranked loop index until this cluster's score trends to 0.
 4. Re-run `scripts/phase_mirror_loop.py` and confirm this tension's score decreases.
 
 ## Links

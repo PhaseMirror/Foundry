@@ -1,18 +1,18 @@
-# ADR-PML-025: Documented physical/mathematical invariants asserted as guaranteed but risk not owned
+# ADR-PML-025: Declared control surfaces (circuit-breaker / veto / triple-lock) not provably wired to enforcement
 
 ## Status
 Proposed
 
 ## Axis (Phase Mirror tension class)
-risk claimed vs risk owned
+control desired vs available
 
 ## Owner (multi-agent lever)
-`the-publisher`
+`the-guardian`
 
 ## Dissonance Score
-- Impact = severity (4) x blast radius (3) = **12**
-- Tractability = **3.0**
-- **Score = 36.0**  (cluster rank 8 of 17)
+- Impact = severity (3) x blast radius (8) = **24**
+- Tractability = **1.0**
+- **Score = 24.0**  (cluster rank 11 of 14)
 
 ## Context (stated intent vs implementation)
 The documented intent below is not reflected by the current mathematical Lean 4
@@ -20,15 +20,21 @@ implementation. This is a measured gap produced by the Phase Mirror operational
 loop.
 
 ### Stated intent (documents)
-  - docs/MOC.md:68 — This strict bound is what allows the UAC substrate to scale to 100-concurrent requests safely. As long as the global ope
-  - docs/PIRTM_SPEC.md:166 — 2. **Runtime checks** in the WardMonitor (ρ drift threshold). Telemetry tests enforce `ANOMALY_GOV_THRESHOLD < 0.85` for
-  - docs/adr/ADR-PML-011.md:24 — - docs/PIRTM_SPEC.md:166 — 2. **Runtime checks** in the WardMonitor (ρ drift threshold). Telemetry tests enforce `ANOMAL
+  - README.md
+  - docs/MSP_2.md
+  - docs/SECURITY.md
+  - docs/adr/ADR-PML-001.md
+  - docs/adr/ADR-PML-003.md
+  - docs/adr/ADR-PML-006.md
+  - docs/adr/ADR-PML-010.md
+  - docs/adr/accepted/ADR-062-SigmaKernel-Production-Implementation.md
 
 ### Implementation reality (lean/)
-  - threshold symbols referenced in lean declarations: l_eff, r_sc, rsc, tau_r, threshold
+  - CertificationGate.lean exists but its linkage to documented veto/triple-lock is unproven
+  - see ADR-402-Phase-Mirror-Dissonance.md vs crates/mirror-dissonance/src/physics_rules.rs enforcement gap
 
 ### Manifested boundary
-Leaked (unmanifested): no
+Leaked (unmanifested): YES — gap is NOT manifested in `alp_sorry_manifest.json` (silent leak risk)
 
 ## Decision (the lever)
 Resolve the dissonance by manifesting the gap and closing it with a verified
@@ -51,8 +57,8 @@ stub, per `alp_sorry_manifest.json`) backs it.
 - Dissonance score for this axis trends to 0 on subsequent loop runs.
 
 ## Actionable Levers
-1. Encode the documented invariant as a Lean `def`/`theorem` threshold and prove the bound; reference it from the enforcing crate.
-2. Wire the Sigma Kernel breach emission into `crates/mirror-dissonance/src/physics_rules.rs` so the claimed circuit-breaker actually traps (per ADR-402).
+1. Add Lean proofs linking `CertificationGate` to the documented veto / triple-lock, or manifest the gap explicitly.
+2. Add an end-to-end governance test (guardian->examiner->publisher) asserting the control surface cannot be bypassed.
 3. Re-run `scripts/phase_mirror_loop.py` and confirm this tension's score decreases.
 
 ## Links

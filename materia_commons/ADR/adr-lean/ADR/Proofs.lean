@@ -2,8 +2,7 @@
   Formal proofs of ADR invariants.
   All theorems are marked `@[proof]` for tracing.
 -/
-import Mathlib.Tactic
-import Mathlib.Data.Set.Basic
+-- No Mathlib imports; core Lean 4 tactics and types are used.
 import ADR.Core
 
 open ADR

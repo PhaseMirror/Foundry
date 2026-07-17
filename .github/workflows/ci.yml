@@ -41,9 +41,17 @@ jobs:
         run: |
           cd materia_commons && python3 generate_rust_vals.py
 
-      - name: Run Kani verification
+      - name: Run Cargo tests
         run: |
-          cd materia_commons && cargo kani --all-features
+          cd ../crates && cargo test --workspace --exclude wasm-bridge
+          cargo test -p ace-governance
+          cargo test -p ace-certify
+          cd ../crates && cargo kani -p prms
+          cargo kani -p moc
+          cargo kani -p xi-formal
+          cargo kani -p roc
+          cargo kani -p meta-relativity
+          cargo kani -p affine-core
 
       - name: Build WASM target
         run: |

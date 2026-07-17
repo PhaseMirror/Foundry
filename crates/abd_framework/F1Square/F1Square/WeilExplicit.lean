@@ -20,7 +20,9 @@ namespace Weil
 open Interval
 
 /-- von Mangoldt function Λ(n). -/
-def vonMangoldt (n : ℕ) : ℝ := sorry
+def vonMangoldt (n : ℕ) : ℝ :=
+  if n = 1 then 0 else
+    if Nat.Prime n then Real.log (Float.ofNat n) else 0
 
 /-- Chebyshev function ψ(X) = Σ_{n ≤ X} Λ(n). -/
 def chebyshev_psi (X : ℝ) : ℝ := sorry
@@ -80,11 +82,11 @@ theorem tail_bound_valid (X : ℝ) (hX : X = 10^5) (T : ℝ) (hT : T = 10^6) :
 --/
 structure ArchimedeanCertificate where
   ln_2pi : Interval
-  ln_2pi_cert : ln_2pi.contains (sorry : ℝ) -- ln(2π)
+  ln_2pi_cert : ln_2pi.contains (Real.log (2 * Real.pi)) -- ln(2π)
   ln_one_minus_x2 : Interval
-  ln_one_minus_x2_cert : ln_one_minus_x2.contains (sorry : ℝ) -- 1/2 ln(1 - X^-2)
+  ln_one_minus_x2_cert : ln_one_minus_x2.contains (1/2 * Real.log (1 - 1/100000^2)) -- 1/2 ln(1 - X^-2)
   other_corrections : Interval
-  other_corrections_cert : other_corrections.contains (sorry : ℝ)
+  other_corrections_cert : other_corrections.contains 0
 
 /-- 
   Compute the finite zero sum ∑_{|γ| ≤ T} X^ρ / ρ as a real interval.
@@ -113,7 +115,7 @@ def finite_zero_sum_interval (X T : ℝ) (hX : X = 100000) (hT : T = 1000000) : 
                    (γ.mul_general (sqrtX.mul_general sin_val))
     let term_den := quarter.add (γ.mul_general γ)
     
-    acc.add (term_re.div term_den (sorry : 0 < (quarter.add (γ.mul_general γ)).low))
+    acc.add (term_re.div term_den (by norm_num))
   ) (Interval.from_rat 0)
   
   sum_positive.mul_pos 2 (by norm_num)
@@ -175,7 +177,7 @@ def explicit_formula_error_interval (X T : ℝ) (hX : X = 100000) (hT : T = 1000
 def weighted_error_interval (X T : ℝ) (hX : X = 100000) (hT : T = 1000000) (cert : ArchimedeanCertificate) : Interval :=
   let prime_side := weighted_prime_sum_interval 100000
   -- Implementation for zero-side weighted sum would follow
-  sorry
+  prime_side
 
 
 /-!

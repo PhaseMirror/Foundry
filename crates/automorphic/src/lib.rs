@@ -1,10 +1,13 @@
 pub mod groups;
 pub mod spectra;
 pub mod unitary;
+pub mod graph_energetics;
+pub mod transformer;
 
 pub use groups::*;
 pub use spectra::*;
 pub use unitary::*;
+pub use graph_energetics::*;
 
 #[cfg(test)]
 mod tests {

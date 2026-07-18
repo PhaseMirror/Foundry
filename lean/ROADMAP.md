@@ -558,3 +558,12 @@ and however far the Sonine-projection frontier reaches). The bright line is perm
 de-hedged iff RH is proven, and it is not until it is. **v0.22.0 is the terminal release** — it ships
 when the crux closes or when the work is judged complete to publish, with no further releases planned
 beyond it.
+
+---
+
+## Stratified Governance (Phase Mirror)
+
+With the adoption of ADR-063, Stratified Governance becomes a core pillar of the Phase Mirror deployment model. 
+- **Strata (S0, S2, S4, S6)** define the operational depth levels, allocating computational resources and authority scopes.
+- Formal guarantees (`stratum_monotonicity`, `resource_budget_monotonic`) are mechanically verified in Lean 4 (`StratifiedGovernance.lean`).
+- Runtime enforcement acts via the Sedona Spine using `crates/strata` `StratumGuard` and `BudgetTracker`.

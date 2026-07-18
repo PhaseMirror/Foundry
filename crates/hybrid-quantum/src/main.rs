@@ -3,6 +3,7 @@ mod quantum;
 mod numerical;
 mod governance;
 mod utils;
+pub mod mqnn;
 
 use clap::{Parser, Subcommand};
 use crate::engine::PirtmEngine;

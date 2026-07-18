@@ -2,11 +2,11 @@
 --
 -- UOR Foundation — Cohomology individual constants.
 
-import UOR.Structures
+import Core.UOR
 import UOR.Individuals.Op
 import UOR.Individuals.Schema
 
-open UOR.Primitives
+open Core.UOR
 
 namespace UOR.Bridge.Cohomology
 

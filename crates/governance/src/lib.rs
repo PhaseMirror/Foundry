@@ -12,6 +12,7 @@ pub mod quorum;
 #[cfg(feature = "coupling")]
 pub mod coupling;
 
+pub mod ledger;
 pub use proof_anchor::*;
 pub use ledger::*;
 pub use constitution::*;

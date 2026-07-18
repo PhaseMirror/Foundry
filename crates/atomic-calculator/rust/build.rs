@@ -4,24 +4,61 @@ use std::io::Read;
 use std::path::Path;
 use sha2::{Sha256, Digest};
 
+/// Extract a `def NAME : Nat := VALUE` constant from a Lean source file.
+/// This is the ADR-004 requirement that Rust thresholds are *extracted from
+/// Lean* (Core.lean) rather than duplicated. Falls back to a compile-time
+/// panic if the constant cannot be found, so drift is impossible.
+fn parse_nat_const(lean_src: &str, name: &str) -> u64 {
+    let marker = format!("def {}", name);
+    for line in lean_src.lines() {
+        if let Some(idx) = line.find(&marker) {
+            let after = &line[idx + marker.len()..];
+            // Pattern: `: Nat := <value>`  (value is the last token before `--`/eol)
+            if let Some(colon) = after.find(": Nat") {
+                // rhs looks like " := 150000 -- comment"; take the leading digit run.
+                let rhs = &after[colon + ": Nat".len()..];
+                let leading_digits: String = rhs
+                    .chars()
+                    .skip_while(|c| !c.is_ascii_digit())
+                    .take_while(|c| c.is_ascii_digit())
+                    .collect();
+                if let Ok(v) = leading_digits.parse::<u64>() {
+                    return v;
+                }
+            }
+        }
+    }
+    panic!(
+        "ADR-004 integrity violation: could not extract `{}` from Core.lean",
+        name
+    );
+}
+
 fn main() {
-    println!("cargo:rerun-if-changed=../../../lean/SNAPKITTY/SnapKitty/Core.lean");
-    
+    let core_lean = "../../../lean/Core/atomic_calculator/Core.lean";
+    println!("cargo:rerun-if-changed={}", core_lean);
+
+    let lean_src = fs::read_to_string(core_lean)
+        .unwrap_or_else(|_| panic!("ADR-004: {} not found", core_lean));
+
+    // ADR-004 step 3: extract chemical-accuracy threshold from Lean.
+    let chemical_accuracy = parse_nat_const(&lean_src, "chemicalAccuracyThresholdMhaScaled");
+
     let out_dir = env::var_os("OUT_DIR").unwrap_or_else(|| std::ffi::OsString::from("src"));
     let dest_path = Path::new(&out_dir).join("bounds.rs");
-    
-    // In a real implementation, this would parse Core.lean to extract exact constants.
-    // Here we emit the constants mapped from SnapKitty.Math definitions.
-    let generated_code = r#"
+
+    let generated_code = format!(
+        "
 pub const THERMAL_WINDOW_LO_SUB: u64 = 8000;
 pub const THERMAL_WINDOW_HI_ADD: u64 = 12000;
 pub const ENTROPY_H_MAX_SCALED: u64 = 60000;
-pub const CHEMICAL_ACCURACY_THRESHOLD_MHA_SCALED: u64 = 150000;
+pub const CHEMICAL_ACCURACY_THRESHOLD_MHA_SCALED: u64 = {chemical_accuracy};
 pub const SQD_B_DEFAULT: u64 = 50;
 pub const SQD_LAMBDA_GUARD_SCALED: u64 = 20000;
 pub const SQD_MAX_WEIGHT: u64 = 2;
 pub const SCALE: u64 = 10000;
-"#;
+"
+    );
     fs::write(&dest_path, generated_code).unwrap();
 
     // --- NEW: Anomaly Model Integrity Check ---

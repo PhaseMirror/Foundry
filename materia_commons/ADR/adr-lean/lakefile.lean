@@ -5,8 +5,7 @@ package adrLean where
   name := "adrLean"
   srcDir := "ADR"
 
-require mathlib from git
-  "https://github.com/leanprover-community/mathlib4" @ "master"
+-- Mathlib removed to comply with axiom-clean mandate
 
 lean_lib ADR where
   roots := #[``ADR]

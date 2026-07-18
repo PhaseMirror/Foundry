@@ -75,10 +75,22 @@ async function main() {
       const msgHash = ethers.solidityPackedKeccak256(["bytes32", "uint64"], [digest, timestamp]);
       const signature = await wallet.signMessage(ethers.getBytes(msgHash));
       
+      // 3b. Sign the transaction payload with CRYSTALS-Dilithium
+      console.log("Signing payload with CRYSTALS-Dilithium...");
+      const dilithiumSkPath = process.env.DILITHIUM_SK_PATH || path.resolve(__dirname, "../dilithium.sk");
+      let dilithiumSignature = "";
+      try {
+        const cliPath = path.resolve(__dirname, "../../../crates/dilithium-signer/target/release/dilithium-signer");
+        dilithiumSignature = require('child_process').execSync(`${cliPath} sign --sk-path ${dilithiumSkPath} --msg-hex ${msgHash}`).toString().trim();
+        console.log("Dilithium signature generated successfully.");
+      } catch (e) {
+        console.warn("Failed to generate Dilithium signature (make sure dilithium.sk exists):", e.message);
+      }
+
       // 4. Submit to EVM AttestationRegistry
       console.log("Submitting to EVM AttestationRegistry...");
       
-      // registryContract.submitAttestation(...)
+      // registryContract.submitAttestation(..., signature, dilithiumSignature)
       
       console.log(`Attestation complete for session: ${payload.metadata.session_id}`);
       

@@ -31,26 +31,38 @@ impl AxiTelemetry {
     }
 }
 
+use ace::SecurityState;
+use bincode::Options;
+
 /// The immutable CRMF Request that will be anchored to the GitLedger
 pub struct CrmfRequest {
     pub telemetry: AxiTelemetry,
     pub zm_snapshot: Option<ZeroModeQuantities>,
+    pub security_state: SecurityState,
 }
 
 impl CrmfRequest {
-    /// Generates the LawfulRecursionHash to seal the telemetry.
+    /// Generates the LawfulRecursionHash to seal the telemetry and security state.
     /// (Using SHA-256 here to bootstrap the binding; ideally swapped for a ZK-friendly hash like Poseidon2 in full production)
     pub fn generate_lawful_recursion_hash(&self) -> String {
         let mut hasher = Sha256::new();
         
+        let bincode_opts = bincode::DefaultOptions::new()
+            .with_little_endian()
+            .with_fixint_encoding();
+            
+        let state_bytes = bincode_opts.serialize(&self.security_state)
+            .expect("SecurityState serialization must not fail");
+        hasher.update(&state_bytes);
+        
         // Bind the hardware fault bits
-        hasher.update(self.telemetry.raw_tdata.to_be_bytes());
-        hasher.update(self.telemetry.timestamp_ns.to_be_bytes());
+        hasher.update(self.telemetry.raw_tdata.to_le_bytes());
+        hasher.update(self.telemetry.timestamp_ns.to_le_bytes());
         
         // Bind the pre-halt state snapshot if available
         if let Some(zm) = &self.zm_snapshot {
-            hasher.update(zm.xi_magnitude.to_be_bytes());
-            hasher.update(zm.lipschitz_t.to_be_bytes());
+            hasher.update(zm.xi_magnitude.to_le_bytes());
+            hasher.update(zm.lipschitz_t.to_le_bytes());
             
             // Sort primes to ensure deterministic hashing
             let mut primes: Vec<_> = zm.prime_weights.keys().copied().collect();
@@ -58,19 +70,14 @@ impl CrmfRequest {
             
             for p in primes {
                 if let Some(w) = zm.prime_weights.get(&p) {
-                    hasher.update(p.to_be_bytes());
-                    hasher.update(w.to_be_bytes());
+                    hasher.update(p.to_le_bytes());
+                    hasher.update(w.to_le_bytes());
                 }
             }
         }
         
         let hash_bytes = hasher.finalize();
-        let mut hash_str = String::with_capacity(64);
-        for byte in hash_bytes {
-            use std::fmt::Write;
-            write!(&mut hash_str, "{:02x}", byte).unwrap();
-        }
-        hash_str
+        hex::encode(hash_bytes)
     }
 }
 
@@ -113,6 +120,10 @@ mod tests {
         let request = CrmfRequest {
             telemetry,
             zm_snapshot: Some(zm),
+            security_state: ace::SecurityState {
+                mode: ace::SecurityMode::Normal,
+                primitive_id: 1,
+            },
         };
 
         let hash = request.generate_lawful_recursion_hash();

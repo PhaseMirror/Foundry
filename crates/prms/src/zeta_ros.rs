@@ -48,3 +48,44 @@ impl AuditEngine {
         Ok(score)
     }
 }
+
+#[cfg(kani)]
+mod verification {
+    use super::*;
+    use crate::dae::TelemetryFrame;
+
+    #[kani::proof]
+    fn verify_zeta_ros_veto_soundness() {
+        let cond_number: f64 = kani::any();
+        
+        kani::assume(cond_number.is_finite());
+        kani::assume(cond_number >= 0.0);
+        
+        let frame = TelemetryFrame {
+            t: 0.0,
+            q1: 0.0, p1: 0.0, q2: 0.0, p2: 0.0,
+            kappa: 0.0, delta: 0.0, multiplicity: 1.0, damping: 0.0,
+            cond_number,
+        };
+        
+        let lineage = LineageMetrics {
+            data_age_seconds: 0.0,
+            maximum_allowed_age: 1.0,
+            non_zero_channels: 1,
+            total_channels: 1,
+            measurement_variance: 0.0,
+        };
+        
+        let budget = ComplianceBudget {
+            max_allowed_cond: 100.0,
+            p7_admissibility_threshold: 0.5,
+        };
+        
+        let result = AuditEngine::verify_step_lawfulness(&frame, &lineage, &budget, false);
+        
+        match result {
+            Err(reason) => kani::assert(reason == "FAIL-CLOSED: Cryptographic token mismatch on Path B audit.", "Must veto due to provenance mismatch"),
+            Ok(_) => kani::assert(false, "Should not pass if provenance is invalid"),
+        }
+    }
+}

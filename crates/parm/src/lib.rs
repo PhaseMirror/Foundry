@@ -1,180 +1,189 @@
-use std::collections::HashSet;
-use itertools::Itertools;
+//! # PARM – Prime-Indexed Recursive Multiplicity Sealed State
+//!
+//! PARM sealed state is the **canonical commitment primitive** for the
+//! Multiplicity Sovereign Core. It provides deterministic, collision-resistant
+//! state sealing with optional Archivum witness emission and Triple-Lock
+//! (Guardian → Examiner → Publisher) integration.
+//!
+//! ## Formal Anchor
+//!
+//! The Rust implementation mirrors the Lean 4 definition in `lean/Core/PARM.lean`:
+//!
+//! ```lean
+//! def sealed_state_loop (v : Nat) : List Nat → Nat
+//!   | [] => v
+//!   | [last] => (last * last) * (v + last)
+//!   | p :: ps => sealed_state_loop (p * (v + p)) ps
+//!
+//! def sealed_state (primes : List Nat) : Nat :=
+//!   match primes with
+//!   | [] => 0
+//!   | [p] => p * p
+//!   | p :: ps => sealed_state_loop (p * p) ps
+//! ```
+//!
+//! Parity is guaranteed by checked arithmetic and identical semantics.
 
+use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
+use chrono::Utc;
+
+#[cfg(feature = "archivum")]
+use archivum::{ParmSealProof, WitnessLedger};
+
+#[cfg(test)]
 mod tests;
-pub mod lexicon;
-pub mod analysis;
 
-pub struct PARM;
+#[cfg(kani)]
+mod verification;
 
-impl PARM {
-    pub fn get_small_gematria_to_prime(g: i32) -> Option<i32> {
-        match g {
-            1 => Some(2),
-            2 => Some(3),
-            3 => Some(5),
-            4 => Some(7),
-            5 => Some(11),
-            6 => Some(13),
-            7 => Some(17),
-            8 => Some(19),
-            9 => Some(23),
-            _ => None,
-        }
-    }
+pub mod triple_lock;
 
-    pub fn get_standard_gematria(letter: char) -> i32 {
-        match letter {
-            'א' => 1, 'ב' => 2, 'ג' => 3, 'ד' => 4, 'ה' => 5,
-            'ו' => 6, 'ז' => 7, 'ח' => 8, 'ט' => 9, 'י' => 10,
-            'כ' | 'ך' => 20, 'ל' => 30, 'מ' | 'ם' => 40,
-            'נ' | 'ן' => 50, 'ס' => 60, 'ע' => 70, 'פ' | 'ף' => 80,
-            'צ' | 'ץ' => 90, 'ק' => 100, 'ר' => 200,
-            'ש' => 300, 'ת' => 400,
-            _ => 0,
-        }
-    }
+pub mod PARM;
 
-    pub fn get_shape_map(letter: char) -> Option<i32> {
-        match letter {
-            'א' => Some(1), 'ב' => Some(2), 'ג' => Some(3), 'ד' => Some(4), 'ה' => Some(5),
-            'ו' => Some(6), 'ז' => Some(7), 'ח' => Some(8), 'ט' => Some(9), 'י' => Some(10),
-            'כ' => Some(11), 'ל' => Some(12), 'מ' => Some(13), 'נ' => Some(14), 'ס' => Some(15),
-            'ע' => Some(16), 'פ' => Some(17), 'צ' => Some(18), 'ק' => Some(19), 'ר' => Some(20),
-            'ש' => Some(21), 'ת' => Some(22),
-            'ך' => Some(23), 'ם' => Some(24), 'ן' => Some(25), 'ף' => Some(26), 'ץ' => Some(27),
-            _ => None,
-        }
-    }
+// ---------------------------------------------------------------------------
+// Core types
+// ---------------------------------------------------------------------------
 
-    pub fn get_phonetic_map(letter: char) -> Option<i32> {
-        match letter {
-            'ב' | 'ו' | 'מ' | 'ם' | 'פ' | 'ף' => Some(2),
-            'ד' | 'ט' | 'ת' | 'ל' | 'נ' | 'ן' | 'ר' => Some(3),
-            'ג' | 'כ' | 'ך' | 'ק' => Some(5),
-            'א' | 'ה' | 'ח' | 'ע' => Some(7),
-            'ז' | 'ס' | 'צ' | 'ץ' | 'ש' => Some(11),
-            _ => None,
-        }
-    }
+/// Witness emitted by the PARM sealing engine for every sealing operation.
+///
+/// This witness is the machine-readable proof that a specific input sequence
+/// sealed to a specific value at a specific time. It is consumed by:
+/// - `Archivum` (`ParmSealProof`) for immutable ledger entry
+/// - Triple-Lock Guardian/Examiner/Publisher for governance attestation
+/// - `LambdaTraceAtom` TEE attestation binding
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ParmSealWitness {
+    /// SHA-256 digest of the input prime sequence.
+    pub input_hash: [u8; 32],
+    /// The sealed state value (`u64`).
+    pub sealed_value: u64,
+    /// Unix timestamp (seconds) of the sealing operation.
+    pub timestamp: i64,
+}
 
-    pub fn get_prime(n: usize) -> i32 {
-        let mut primes = Vec::new();
-        let mut num = 2;
-        while primes.len() < n {
-            let is_prime = primes.iter().all(|&p| num % p != 0);
-            if is_prime {
-                primes.push(num);
-            }
-            num += 1;
+impl ParmSealWitness {
+    /// Create a new `ParmSealWitness` from a sealed value and input bytes.
+    pub fn new(sealed_value: u64, input_bytes: &[u8]) -> Self {
+        let mut hasher = Sha256::new();
+        hasher.update(input_bytes);
+        let input_hash = hasher.finalize().into();
+        let timestamp = Utc::now().timestamp();
+        Self {
+            input_hash,
+            sealed_value,
+            timestamp,
         }
-        primes[n - 1]
-    }
-
-    pub fn small_gematria(letter: char) -> i32 {
-        let mut val = Self::get_standard_gematria(letter);
-        if val == 0 {
-            return 0;
-        }
-        while val > 9 {
-            val = val.to_string().chars().map(|c| c.to_digit(10).unwrap() as i32).sum();
-        }
-        val
-    }
-
-    pub fn sealed_state(primes: &[i32]) -> i64 {
-        let n = primes.len();
-        if n == 0 {
-            return 0;
-        }
-        
-        let mut v = (primes[0] as i64).pow(2);
-        if n == 1 {
-            return v;
-        }
-        
-        for &p in &primes[1..n - 1] {
-            v = (p as i64) * (v + p as i64);
-        }
-        
-        let p_last = primes[n - 1] as i64;
-        v = p_last.pow(2) * (v + p_last);
-        
-        v
-    }
-    
-    pub fn calculate_rq(primes: &[i32], exact_fallback: bool) -> f64 {
-        let n = primes.len();
-        let unique_primes: HashSet<_> = primes.iter().collect();
-        if n == 0 || unique_primes.len() <= 1 {
-            return 0.5;
-        }
-        
-        let v_actual = Self::sealed_state(primes);
-        
-        let (v_min, v_max) = if exact_fallback && n <= 6 {
-            let mut v_values = primes.iter().cloned().permutations(n).map(|p| Self::sealed_state(&p)).collect::<Vec<_>>();
-            v_values.sort();
-            (*v_values.first().unwrap(), *v_values.last().unwrap())
-        } else {
-            let mut sorted_p = primes.to_vec();
-            sorted_p.sort();
-            
-            let min_cand = [&sorted_p[1..], &sorted_p[0..1]].concat();
-            let v_min = Self::sealed_state(&min_cand);
-            
-            let mut max_cand = sorted_p[..n-1].to_vec();
-            max_cand.reverse();
-            max_cand.push(sorted_p[n-1]);
-            let v_max = Self::sealed_state(&max_cand);
-            
-            (v_min, v_max)
-        };
-        
-        if v_max == v_min {
-            return 0.5;
-        }
-        
-        (v_actual - v_min) as f64 / (v_max - v_min) as f64
-    }
-
-    pub fn calculate_coupled_rq(primes1: &[i32], primes2: &[i32], exact_fallback: bool) -> f64 {
-        let n = primes1.len();
-        if n == 0 || n != primes2.len() {
-            return 0.5;
-        }
-        
-        let weights: Vec<i32> = primes1.iter().zip(primes2.iter()).map(|(&p1, &p2)| p1 * p2).collect();
-        let unique_weights: HashSet<_> = weights.iter().collect();
-        if unique_weights.len() <= 1 {
-            return 0.5;
-        }
-        
-        let v_actual = Self::sealed_state(&weights);
-        
-        let (v_min, v_max) = if exact_fallback && n <= 6 {
-            let mut v_values = weights.iter().cloned().permutations(n).map(|p| Self::sealed_state(&p)).collect::<Vec<_>>();
-            v_values.sort();
-            (*v_values.first().unwrap(), *v_values.last().unwrap())
-        } else {
-            let mut sorted_w = weights.clone();
-            sorted_w.sort();
-            
-            let min_cand = [&sorted_w[1..], &sorted_w[0..1]].concat();
-            let v_min = Self::sealed_state(&min_cand);
-            
-            let mut max_cand = sorted_w[..n-1].to_vec();
-            max_cand.reverse();
-            max_cand.push(sorted_w[n-1]);
-            let v_max = Self::sealed_state(&max_cand);
-            
-            (v_min, v_max)
-        };
-        
-        if v_max == v_min {
-            return 0.5;
-        }
-        
-        (v_actual - v_min) as f64 / (v_max - v_min) as f64
     }
 }
+
+/// Errors produced by the PARM sealing engine.
+#[derive(Debug, thiserror::Error, PartialEq)]
+pub enum ParmError {
+    /// The sealed state computation overflowed `u64::MAX`.
+    #[error("sealed state overflow")]
+    Overflow,
+    /// The input prime sequence was empty (no-op sealing).
+    #[error("empty prime sequence")]
+    EmptyInput,
+}
+
+/// The PARM sealing engine.
+///
+/// All methods are deterministic: identical inputs always produce identical
+/// outputs. Overflow is signaled via `ParmError::Overflow` rather than
+/// wrapping arithmetic.
+#[derive(Debug, Default, Clone, Copy)]
+pub struct ParmEngine;
+
+impl ParmEngine {
+    /// Compute the sealed state for a sequence of primes.
+    ///
+    /// This is the **sole semantic authority** for PARM sealed state computation.
+    /// The algorithm exactly mirrors `Core.PARM.sealed_state` in Lean 4.
+    ///
+    /// # Arguments
+    ///
+    /// * `primes` – Slice of prime numbers (or arbitrary `u64` values).
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(sealed_value)` – The deterministic sealed state.
+    /// * `Err(ParmError::Overflow)` – If intermediate or final value exceeds `u64::MAX`.
+    /// * `Err(ParmError::EmptyInput)` – If the input slice is empty.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use parm::ParmEngine;
+    ///
+    /// let engine = ParmEngine;
+    /// assert_eq!(engine.sealed_state(&[]), Err(parm::ParmError::EmptyInput));
+    /// assert_eq!(engine.sealed_state(&[3]), Ok(9));
+    /// assert_eq!(engine.sealed_state(&[3, 3, 3, 2, 2]), Ok(960));
+    /// ```
+    pub fn sealed_state(&self, primes: &[u64]) -> Result<u64, ParmError> {
+        if primes.is_empty() {
+            return Err(ParmError::EmptyInput);
+        }
+        if primes.len() == 1 {
+            return primes[0].checked_mul(primes[0]).ok_or(ParmError::Overflow);
+        }
+
+        let mut v = primes[0].checked_mul(primes[0]).ok_or(ParmError::Overflow)?;
+
+        for &p in &primes[1..primes.len() - 1] {
+            let sum = v.checked_add(p).ok_or(ParmError::Overflow)?;
+            v = p.checked_mul(sum).ok_or(ParmError::Overflow)?;
+        }
+
+        let last = primes[primes.len() - 1];
+        let last_sq = last.checked_mul(last).ok_or(ParmError::Overflow)?;
+        let sum = v.checked_add(last).ok_or(ParmError::Overflow)?;
+        v = last_sq.checked_mul(sum).ok_or(ParmError::Overflow)?;
+
+        Ok(v)
+    }
+
+    /// Compute the sealed state and emit a `ParmSealWitness`.
+    ///
+    /// This is the preferred entry point for production sealing because it
+    /// produces the audit-ready witness in a single call.
+    ///
+    /// # Arguments
+    ///
+    /// * `primes` – Slice of prime numbers.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok((sealed_value, witness))` – Sealed state and its witness.
+    /// * `Err(ParmError)` – On overflow or empty input.
+    pub fn seal_with_witness(&self, primes: &[u64]) -> Result<(u64, ParmSealWitness), ParmError> {
+        let input_bytes = bytemuck::cast_slice(primes);
+        let sealed = self.sealed_state(primes)?;
+        let witness = ParmSealWitness::new(sealed, input_bytes);
+        Ok((sealed, witness))
+    }
+
+    /// Compute the sealed state, emit a witness, and stamp it into `Archivum`.
+    ///
+    /// Requires the `archivum` feature to be enabled.
+    #[cfg(feature = "archivum")]
+    pub fn seal_and_archive(
+        &self,
+        primes: &[u64],
+        ledger: &mut WitnessLedger,
+    ) -> Result<(u64, ParmSealWitness), ParmError> {
+        let (sealed, witness) = self.seal_with_witness(primes)?;
+        let proof = archivum::ParmSealProof::new(witness.input_hash, sealed);
+        ledger.stamp_parm_seal_proof(&proof).map_err(|_| ParmError::Overflow)?;
+        Ok((sealed, witness))
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Triple-Lock re-export
+// ---------------------------------------------------------------------------
+
+pub use triple_lock::TripleLockParm;
+

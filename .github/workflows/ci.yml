@@ -1,54 +1,78 @@
-name: CI Pipeline
+# .github/workflows/ci.yml
+name: CI – Sedona Spine WASM + Kani + Artifact
 
 on:
   push:
-    branches: [main]
+    branches: [ "**" ]
   pull_request:
-    branches: [main]
+    branches: [ "**" ]
 
 jobs:
-  build:
+  build-and-test:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        rust: [stable]
+    defaults:
+      run:
+        working-directory: ${{ github.workspace }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Set up Rust (nightly for Kani)
+      - name: Install Rust toolchain
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: nightly
+          toolchain: stable
           profile: minimal
-          override: true
+          default: true
 
-      - name: Install Kani
-        run: |
-          curl -L https://github.com/model-checking/kani/releases/download/v0.14/kani-0.14-x86_64-unknown-linux-musl.tar.gz | tar xz
-          sudo mv kani /usr/local/bin/
+      - name: Add wasm32-unknown-unknown target
+        run: rustup target add wasm32-unknown-unknown
 
-      - name: Install Lean toolchain (lake)
-        run: |
-          curl -L https://raw.githubusercontent.com/leanprover/lean4/master/scripts/get-lean.sh | bash -s -- -y
+      - name: Cache Cargo registry
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-registry-
 
-      - name: Build Lean core
-        working-directory: /home/multiplicity/Multiplicity/PhaseMirror/Prime
-        run: |
-          lake build
+      - name: Cache Cargo build
+        uses: actions/cache@v3
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-build-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-build-
 
-      - name: Generate Rust vals
+      - name: Install wasm-bindgen-cli
+        run: cargo install wasm-bindgen-cli --version 0.2.126
+
+      - name: Build Sedona Spine (wasm32-unknown-unknown, release)
         run: |
-          cd materia_commons && python3 generate_rust_vals.py
+          cargo build \
+            --manifest-path lean/Core/prime_tensors/sedona_spine/Cargo.toml \
+            --target wasm32-unknown-unknown \
+            --release
+
+      - name: Generate WASM glue (wasm-bindgen)
+        run: |
+          wasm-bindgen \
+            --target web \
+            --out-dir models/legalese-scopist/pkg \
+            target/wasm32-unknown-unknown/release/sedona_spine.wasm
+
+      - name: Install Kani (static analyzer)
+        run: cargo install kani-cli --version 0.53.0 || true
 
       - name: Run Kani verification
         run: |
-          cd materia_commons && cargo kani --all-features
+          cargo kani --manifest-path models/legalese-scopist/Cargo.toml \
+            --target wasm32-unknown-unknown
 
-      - name: Build WASM target
-        run: |
-          cd materia_commons && cargo +nightly build --release --target wasm32-unknown-unknown
-
-      - name: Run example resolvent scan
-        run: |
-          cd materia_commons && cargo run --example resolvent_scan
+      - name: Upload WASM package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sedona_spine_pkg
+          path: models/legalese-scopist/pkg
+          retention-days: 30

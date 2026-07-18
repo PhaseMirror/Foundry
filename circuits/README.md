@@ -35,3 +35,9 @@ pnpm tsx scripts/build-circuits.mjs
 ```
 
 The build script will check for the PTau file and exit with an error if it's missing.
+
+## Compiled circuit invariants
+
+- **`langlandsCheck.circom`** — fully compiled Langlands/Euler-product verifier: **170 constraints** (142 non-linear + 28 linear), 250 wires, 19 public + 32 private inputs. Verified breakdown and known soundness gaps: [`LANGANDSCHECK_170_INVARIANT.md`](./LANGANDSCHECK_170_INVARIANT.md).
+- **`ace.circom`** — governance prototype: **133 constraints** (Poseidon2 hash replaced by a linear-sum stub). Targets the 5,087 architectural budget (see ADR-046); not yet reached. Phased integration plan: `docs/adr/proposed/ADR-103-Poseidon2-Integration-Roadmap.md`.
+- **`constraints.circom`** — budget-lock accounting stub asserting `total_cost === 5087`; compiles to 6 linear constraints.

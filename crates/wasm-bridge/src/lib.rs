@@ -9,6 +9,14 @@ pub struct StateTransition {
     pub l_eff: f64,
 }
 
+/// Represents a bridge between the continuous probability manifold and discrete SAT certification.
+#[derive(Serialize, Deserialize)]
+pub struct HybridProof {
+    pub probabilistic_tensor_hash: String,
+    pub sat_proof_hash: String,
+    pub witness_signature: String,
+}
+
 #[wasm_bindgen]
 pub struct WasmSigmaKernel {
     tau_r: f64,
@@ -71,5 +79,41 @@ impl WasmSigmaKernel {
 
         Ok(witness_json)
     }
+
+    /// Assembles a Quantum-Symbolic Hybrid Proof, binding probabilistic tensor state to a verified SAT constraint hash.
+    #[wasm_bindgen]
+    pub fn export_hybrid_proof(&self, tensor_state_json: &str, sat_proof_hash: &str, kernel_key: &str) -> Result<String, JsValue> {
+        let mut tensor_hasher = Sha256::new();
+        tensor_hasher.update(tensor_state_json.as_bytes());
+        let probabilistic_tensor_hash = hex::encode(tensor_hasher.finalize());
+
+        let mut signature_hasher = Sha256::new();
+        signature_hasher.update(probabilistic_tensor_hash.as_bytes());
+        signature_hasher.update(sat_proof_hash.as_bytes());
+        signature_hasher.update(kernel_key.as_bytes());
+        let witness_signature = hex::encode(signature_hasher.finalize());
+
+        let proof = HybridProof {
+            probabilistic_tensor_hash,
+            sat_proof_hash: sat_proof_hash.to_string(),
+            witness_signature,
+        };
+
+        Ok(serde_json::to_string(&proof).map_err(|e| JsValue::from_str(&e.to_string()))?)
+    }
 }
+
+#[wasm_bindgen]
+pub fn matrix_evaluate(kernel_json: &str, input_json: &str) -> Result<String, JsValue> {
+    let kernel: pirtm_stdlib::matrix_engine::TensorKernel = serde_json::from_str(kernel_json)
+        .map_err(|e| JsValue::from_str(&format!("Parse error kernel: {}", e)))?;
+    let input: pirtm_stdlib::matrix_engine::PrimeMonomialMatrix = serde_json::from_str(input_json)
+        .map_err(|e| JsValue::from_str(&format!("Parse error input: {}", e)))?;
+
+    match pirtm_stdlib::matrix_engine::evaluate(&kernel, &input) {
+        Ok(result) => Ok(serde_json::to_string(&result).unwrap()),
+        Err(e) => Err(JsValue::from_str(&e.to_string())),
+    }
+}
+
 pub mod fuzz_tests;

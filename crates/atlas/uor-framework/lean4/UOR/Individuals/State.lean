@@ -2,9 +2,9 @@
 --
 -- UOR Foundation — State individual constants.
 
-import UOR.Structures
+import Core.UOR.Structures
 
-open UOR.Primitives
+open Core.UOR
 
 namespace UOR.User.State
 

@@ -5,7 +5,7 @@ package genesis_ode where
   leanOptions := {}
   moreLeanArgs := #[]
 
-require mathlib from git "https://github.com/leanprover-community/mathlib4" @ "master"
+-- Mathlib removed to comply with axiom-clean mandate
 
 lean_lib GenesisOde where
   srcDir := "lean"

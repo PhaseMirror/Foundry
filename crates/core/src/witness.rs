@@ -23,6 +23,11 @@ pub struct CRMFWitness {
     pub arta_defect_before: f64,
     pub arta_defect_after: f64,
     pub rta_dist_to_bindu: f64,
+    pub l_dist_to_bindu: f64,
+
+    // Langlands fields
+    pub langlands_trace: std::collections::HashMap<String, f64>,
+    pub langlands_proof: Option<Vec<u8>>,
 }
 
 impl CRMFWitness {
@@ -37,6 +42,9 @@ impl CRMFWitness {
         arta_before: f64,
         arta_after: f64,
         rta_dist: f64,
+        l_dist: f64,
+        langlands_trace: std::collections::HashMap<String, f64>,
+        langlands_proof: Option<Vec<u8>>,
     ) -> Self {
         let input_hash = hex::encode(Sha256::digest(flatten_f64(input_params)));
         let output_params: Vec<f64> = input_params.iter().zip(delta_theta).map(|(a,b)| a+b).collect();
@@ -58,6 +66,9 @@ impl CRMFWitness {
             arta_defect_before: arta_before,
             arta_defect_after: arta_after,
             rta_dist_to_bindu: rta_dist,
+            l_dist_to_bindu: l_dist,
+            langlands_trace,
+            langlands_proof,
         }
     }
 

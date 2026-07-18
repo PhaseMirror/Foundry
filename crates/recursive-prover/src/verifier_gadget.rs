@@ -33,6 +33,12 @@ pub struct StarkVerifierGadget {
     pub pedersen: PedersenCommitment<32>,
 }
 
+impl Default for StarkVerifierGadget {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl StarkVerifierGadget {
     pub fn new() -> Self {
         let (p, _q, a, b) = get_pallas_params();
@@ -100,7 +106,7 @@ impl StarkVerifierGadget {
         // 2. Compute Aggregate Root (Keccak256 of all member roots)
         let mut hasher = Keccak256::new();
         for rpo in rpos {
-            hasher.update(&rpo.inner_root);
+            hasher.update(rpo.inner_root);
         }
         let aggregate_root: [u8; 32] = hasher.finalize().into();
 

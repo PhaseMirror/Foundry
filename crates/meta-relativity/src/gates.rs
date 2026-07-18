@@ -1,142 +1,142 @@
-//! Implementation of the five validation gates for CEQG-RG-Langevin.
-//! 
-//! Strictly conforms to MetaRelativityFormalized/Gates.lean
+use serde::{Deserialize, Serialize};
 
-use anyhow::{Result, anyhow};
+#[cfg(feature = "triple-lock")]
+pub mod triple_lock;
 
-/// A validation gate for the CEQG-RG-Langevin framework.
-pub trait ValidationGate {
-    fn name(&self) -> &str;
-    fn validate(&self) -> Result<()>;
+pub const SCALE: u64 = 10000;
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Gate1 { pub f_nl: u64, pub coupling_strength: u64 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Gate2 { pub theta_1: u64 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Gate3 { pub a: u64 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Gate4 { pub beta_lambda_8: u64, pub beta_lambda_6: u64, pub delta_c_ratio: u64 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Gate5 { pub g1: Gate1, pub g2: Gate2, pub g3: Gate3, pub g4: Gate4 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MetaRelativityWitness {
+    pub config_hash: [u8; 32],
+    pub all_gates_valid: bool,
+    pub timestamp: i64,
 }
 
-/// Gate 1: Micro-Macro Derivation
-pub struct Gate1 {
-    pub f_nl: f64,
-    pub coupling_strength: f64,
+#[derive(Debug, thiserror::Error)]
+pub enum MetaRelativityViolation {
+    #[error("Gate1 invalid: f_nl={f_nl} ≠ 0 or coupling={coupling} > 1000")]
+    Gate1Invalid { f_nl: u64, coupling: u64 },
+    #[error("Gate2 invalid: theta_1={theta_1} not near 20000")]
+    Gate2Invalid { theta_1: u64 },
+    #[error("Gate3 invalid: a={a} not in [200,500]*SCALE")]
+    Gate3Invalid { a: u64 },
+    #[error("Gate4 invalid: truncation hierarchy violated")]
+    Gate4Invalid,
+    #[error("archivum write failed: {0}")]
+    ArchivumError(String),
 }
 
-impl ValidationGate for Gate1 {
-    fn name(&self) -> &str { "Gate 1: Micro-Macro Derivation" }
-    fn validate(&self) -> Result<()> {
-        if self.f_nl != 0.0 {
-            return Err(anyhow!("Gate 1 requires exactly f_nl = 0"));
+pub struct MetaRelativityEngine;
+
+impl MetaRelativityEngine {
+    pub fn check_gate5(&self, g5: &Gate5) -> Result<MetaRelativityWitness, MetaRelativityViolation> {
+        if g5.g1.f_nl != 0 || g5.g1.coupling_strength > 1000 {
+            return Err(MetaRelativityViolation::Gate1Invalid { f_nl: g5.g1.f_nl, coupling: g5.g1.coupling_strength });
         }
-        if self.coupling_strength > 0.1 {
-            return Err(anyhow!("Coupling strength must be <= 0.1"));
+        let diff = if g5.g2.theta_1 >= 2 * SCALE { g5.g2.theta_1 - 2 * SCALE } else { 2 * SCALE - g5.g2.theta_1 };
+        if diff >= 4000 {
+            return Err(MetaRelativityViolation::Gate2Invalid { theta_1: g5.g2.theta_1 });
         }
-        Ok(())
-    }
-}
-
-/// Gate 2: RG-Prior Justification
-pub struct Gate2 {
-    pub theta_1: f64,
-}
-
-impl ValidationGate for Gate2 {
-    fn name(&self) -> &str { "Gate 2: RG-Prior Justification" }
-    fn validate(&self) -> Result<()> {
-        if (self.theta_1 - 2.0).abs() / 2.0 >= 0.20 {
-            return Err(anyhow!("Gate 2 invalid: deviation >= 0.20"));
+        if g5.g3.a < 200 * SCALE || g5.g3.a > 500 * SCALE {
+            return Err(MetaRelativityViolation::Gate3Invalid { a: g5.g3.a });
         }
-        Ok(())
-    }
-}
-
-/// Gate 3: Correlated Smoking Gun
-pub struct Gate3 {
-    pub c: f64,
-    pub n_ng: f64,
-    pub s_8: f64,
-    pub g_nl_0: f64,
-}
-
-impl Gate3 {
-    pub fn a(&self) -> f64 {
-        1.0 / (self.c * self.n_ng)
-    }
-
-    pub fn predict_gnl(&self, delta_s_8: f64) -> f64 {
-        self.g_nl_0 * (self.a() * (delta_s_8 / self.s_8)).exp()
-    }
-}
-
-impl ValidationGate for Gate3 {
-    fn name(&self) -> &str { "Gate 3: Correlated Smoking Gun" }
-    fn validate(&self) -> Result<()> {
-        let a = self.a();
-        if a < 200.0 || a > 500.0 {
-            return Err(anyhow!("Gate 3 invalid: a = {} not in [200, 500]", a));
+        if g5.g4.beta_lambda_8 * 100 >= g5.g4.beta_lambda_6 * 3 || g5.g4.delta_c_ratio >= 400 {
+            return Err(MetaRelativityViolation::Gate4Invalid);
         }
-        Ok(())
+        
+        #[cfg(kani)]
+        let config_hash = [0u8; 32];
+        #[cfg(not(kani))]
+        let config_hash = {
+            // Using a simple hash for demonstration
+            let mut h = [0u8; 32];
+            h[0] = 1;
+            h
+        };
+        
+        #[cfg(kani)]
+        let timestamp = 0;
+        #[cfg(not(kani))]
+        let timestamp = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_secs() as i64;
+            
+        Ok(MetaRelativityWitness {
+            config_hash,
+            all_gates_valid: true,
+            timestamp,
+        })
     }
 }
 
-/// Gate 4: Truncation Hierarchy
-pub struct Gate4 {
-    pub beta_lambda_8: f64,
-    pub beta_lambda_6: f64,
-    pub delta_c_ratio: f64,
-}
-
-impl ValidationGate for Gate4 {
-    fn name(&self) -> &str { "Gate 4: Truncation Hierarchy" }
-    fn validate(&self) -> Result<()> {
-        if (self.beta_lambda_8 / self.beta_lambda_6).abs() >= 0.03 {
-            return Err(anyhow!("Gate 4 invalid: |beta_lambda_8 / beta_lambda_6| >= 0.03"));
-        }
-        if self.delta_c_ratio >= 0.04 {
-            return Err(anyhow!("Gate 4 invalid: delta_c_ratio >= 0.04"));
-        }
-        Ok(())
-    }
-}
-
-/// Gate 5: Complete Causal Chain
-pub struct Gate5 {
-    pub g1: Gate1,
-    pub g2: Gate2,
-    pub g3: Gate3,
-    pub g4: Gate4,
-}
-
-impl ValidationGate for Gate5 {
-    fn name(&self) -> &str { "Gate 5: Complete Causal Chain" }
-    fn validate(&self) -> Result<()> {
-        self.g1.validate()?;
-        self.g2.validate()?;
-        self.g3.validate()?;
-        self.g4.validate()?;
-        Ok(())
-    }
-}
-
-#[cfg(test)]
-mod tests {
+#[cfg(kani)]
+mod verification {
     use super::*;
 
-    #[test]
-    fn test_gate1() {
-        let gate = Gate1 { f_nl: 0.0, coupling_strength: 0.05 };
-        assert!(gate.validate().is_ok());
+    #[kani::proof]
+    fn proof_gate1_bounds() {
+        let engine = MetaRelativityEngine;
+        let g1 = Gate1 {
+            f_nl: kani::any(),
+            coupling_strength: kani::any(),
+        };
+        let g5 = Gate5 {
+            g1,
+            g2: Gate2 { theta_1: 20000 },
+            g3: Gate3 { a: 3000000 },
+            g4: Gate4 { beta_lambda_8: 0, beta_lambda_6: 100, delta_c_ratio: 0 },
+        };
+        
+        let res = engine.check_gate5(&g5);
+        if g5.g1.coupling_strength > 1000 {
+            kani::assert(res.is_err(), "Rejects coupling > 1000");
+        }
     }
 
-    #[test]
-    fn test_gate2() {
-        let gate = Gate2 { theta_1: 1.8 };
-        assert!(gate.validate().is_ok());
-    }
-
-    #[test]
-    fn test_gate3() {
-        let gate = Gate3 { c: 0.2, n_ng: 0.01, s_8: 1.0, g_nl_0: 1.0 };
-        assert!(gate.validate().is_ok());
-    }
-
-    #[test]
-    fn test_gate4() {
-        let gate = Gate4 { beta_lambda_8: 0.001, beta_lambda_6: 0.1, delta_c_ratio: 0.02 };
-        assert!(gate.validate().is_ok());
+    #[kani::proof]
+    fn proof_gate5_implies_gates1_4() {
+        let engine = MetaRelativityEngine;
+        
+        let g5 = Gate5 {
+            g1: Gate1 { f_nl: kani::any(), coupling_strength: kani::any() },
+            g2: Gate2 { theta_1: kani::any() },
+            g3: Gate3 { a: kani::any() },
+            g4: Gate4 { beta_lambda_8: kani::any(), beta_lambda_6: kani::any(), delta_c_ratio: kani::any() },
+        };
+        
+        // Assume avoiding overflow in beta_lambda_8 * 100 and beta_lambda_6 * 3
+        kani::assume(g5.g4.beta_lambda_8 <= u64::MAX / 100);
+        kani::assume(g5.g4.beta_lambda_6 <= u64::MAX / 3);
+        
+        let res = engine.check_gate5(&g5);
+        
+        if res.is_ok() {
+            kani::assert(g5.g1.f_nl == 0, "Gate1 fnl must be 0");
+            kani::assert(g5.g1.coupling_strength <= 1000, "Gate1 coupling <= 1000");
+            
+            let diff = if g5.g2.theta_1 >= 2 * SCALE { g5.g2.theta_1 - 2 * SCALE } else { 2 * SCALE - g5.g2.theta_1 };
+            kani::assert(diff < 4000, "Gate2 theta_1 diff < 4000");
+            
+            kani::assert(g5.g3.a >= 200 * SCALE && g5.g3.a <= 500 * SCALE, "Gate3 a bounds");
+            
+            kani::assert(g5.g4.beta_lambda_8 * 100 < g5.g4.beta_lambda_6 * 3, "Gate4 beta ratio");
+            kani::assert(g5.g4.delta_c_ratio < 400, "Gate4 delta_c bounds");
+        }
     }
 }

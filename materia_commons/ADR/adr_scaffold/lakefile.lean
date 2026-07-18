@@ -8,7 +8,7 @@ package adr_scaffold {
   docDir := "docs"
 }
 
-require mathlib from git "https://github.com/leanprover-community/mathlib4.git" @ "master"
+-- Mathlib removed to comply with axiom-clean mandate
 
 lean_lib ADR {
   roots := #[`src/ADR]

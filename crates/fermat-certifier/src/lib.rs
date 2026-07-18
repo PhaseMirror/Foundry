@@ -2,6 +2,8 @@ use ndarray::{Array1, Array2};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+pub mod moc;
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AlgebraicCertificate {
     pub algebraic: bool,

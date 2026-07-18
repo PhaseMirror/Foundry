@@ -14,6 +14,4 @@ lean_exe «adr_export» where
 lean_exe «test_harness» where
   root := `Test.Harness
 
--- Optional dependency on mathlib for advanced tactics
-require mathlib from git
-  "https://github.com/leanprover-community/mathlib4.git" @ "master"
+-- Mathlib removed to comply with axiom-clean mandate

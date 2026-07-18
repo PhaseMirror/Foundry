@@ -2,11 +2,13 @@ pub mod constants;
 pub mod axis;
 pub mod operator;
 pub mod knot;
+pub mod nonparallelism;
 
 pub use constants::*;
 pub use axis::*;
 pub use operator::*;
 pub use knot::*;
+pub use nonparallelism::*;
 
 #[cfg(test)]
 mod tests {

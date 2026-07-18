@@ -2,12 +2,12 @@
 --
 -- v0.2.1 ergonomics surface — sealed wrappers, Certify typeclass, PipelineFailure inductive, and the UOR.Prelude re-exports. Every symbol traces to an ontology entity.
 
-import UOR.Primitives
-import UOR.Enums
+import Core.UOR
+import Core.UOR.Enums
 
 namespace UOR.Enforcement
 
-open UOR.Primitives
+open Core.UOR
 
 /-- Sealed marker class identifying foundation-produced types. The Lean counterpart of Rust's `OntologyTarget` trait. Implementations are emitted only for foundation certificate / witness shims, mirroring the Rust crate's prelude composition. -/
 class OntologyTarget (α : Type) : Prop where

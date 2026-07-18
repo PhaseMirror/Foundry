@@ -2,14 +2,14 @@
 --
 -- UOR Foundation — Proof individual constants.
 
-import UOR.Structures
-import UOR.Individuals.Cohomology
-import UOR.Individuals.Homology
-import UOR.Individuals.Observable
-import UOR.Individuals.Op
-import UOR.Individuals.Schema
+import Core.UOR.Structures
+import Core.UOR.Individuals.Cohomology
+import Core.UOR.Individuals.Homology
+import Core.UOR.Individuals.Observable
+import Core.UOR.Individuals.Op
+import Core.UOR.Individuals.Schema
 
-open UOR.Primitives
+open Core.UOR
 
 namespace UOR.Bridge.Proof
 

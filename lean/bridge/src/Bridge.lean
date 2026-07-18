@@ -1,11 +1,11 @@
-import MOC.Core
+import Core.Spine
 import Init.Data.String.Basic
 
 namespace Bridge
 
 /-- Translates the Lisp macro output to Lean OperatorWord -/
-def bridge_moc_108 : MOC.OperatorWord :=
-  MOC.OperatorWord.mk [ MOC.PrimeOp.sub 3 3, 
+def bridge_moc_108 : Core.Spine.OperatorWord :=
+  Core.Spine.OperatorWord.mk [ MOC.PrimeOp.sub 3 3, 
                         MOC.PrimeOp.sub 3 3, 
                         MOC.PrimeOp.sub 3 3, 
                         MOC.PrimeOp.sub 2 2, 

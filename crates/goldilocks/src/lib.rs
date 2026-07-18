@@ -114,6 +114,19 @@ pub struct PrimeWitness {
     pub witnesses: std::collections::HashMap<u8, PrimeVerificationLog>,
 }
 
+/// Witness for Goldilocks field operations.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GoldilocksWitness {
+    /// Operation name: "add", "sub", "mul", "inv".
+    pub op: String,
+    /// Left‑hand operand (canonical value).
+    pub lhs: u64,
+    /// Right‑hand operand (canonical). `None` for unary ops like `inv`.
+    pub rhs: Option<u64>,
+    /// Resulting field element (canonical).
+    pub result: u64,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PrimeVerificationLog {
     pub miller_rabin_log: Vec<u64>,
@@ -122,29 +135,59 @@ pub struct PrimeVerificationLog {
 }
 
 impl GoldilocksField {
+    // Internal witness storage (process‑wide).
+    #[cfg(not(test))]
+    fn emit_witness(w: GoldilocksWitness) {
+        use once_cell::sync::Lazy;
+        use std::sync::Mutex;
+        static WITNESSES: Lazy<Mutex<Vec<GoldilocksWitness>>> = Lazy::new(|| Mutex::new(Vec::new()));
+        let _ = WITNESSES.lock().map(|mut v| v.push(w));
+    }
 
-    /// Add two field elements
+    /// Add two field elements, emitting a witness.
     #[inline]
     pub fn add(&self, rhs: &Self) -> Self {
         let sum = self.0 as u128 + rhs.0 as u128;
-        Self(reduce128(sum))
+        let res = Self(reduce128(sum));
+        // Emit witness for addition
+        Self::emit_witness(GoldilocksWitness {
+            op: "add".to_string(),
+            lhs: self.0,
+            rhs: Some(rhs.0),
+            result: res.0,
+        });
+        res
     }
 
-    /// Subtract two field elements
+    /// Subtract two field elements, emitting a witness.
     #[inline]
     pub fn sub(&self, rhs: &Self) -> Self {
-        if self.0 >= rhs.0 {
+        let res = if self.0 >= rhs.0 {
             Self(self.0 - rhs.0)
         } else {
             Self(GOLDILOCKS_PRIME - (rhs.0 - self.0))
-        }
+        };
+        Self::emit_witness(GoldilocksWitness {
+            op: "sub".to_string(),
+            lhs: self.0,
+            rhs: Some(rhs.0),
+            result: res.0,
+        });
+        res
     }
 
-    /// Multiply two field elements
+    /// Multiply two field elements, emitting a witness.
     #[inline]
     pub fn mul(&self, rhs: &Self) -> Self {
         let prod = self.0 as u128 * rhs.0 as u128;
-        Self(reduce128(prod))
+        let res = Self(reduce128(prod));
+        Self::emit_witness(GoldilocksWitness {
+            op: "mul".to_string(),
+            lhs: self.0,
+            rhs: Some(rhs.0),
+            result: res.0,
+        });
+        res
     }
 
     /// Negate a field element
@@ -159,11 +202,19 @@ impl GoldilocksField {
 
     /// Compute multiplicative inverse using Fermat's little theorem
     /// a^(p-1) = 1 (mod p) => a^(p-2) = a^(-1) (mod p)
+    /// Emits a witness for the inversion.
     pub fn inverse(&self) -> Option<Self> {
         if self.0 == 0 {
             return None;
         }
-        Some(self.pow(GOLDILOCKS_PRIME - 2))
+        let inv = self.pow(GOLDILOCKS_PRIME - 2);
+        Self::emit_witness(GoldilocksWitness {
+            op: "inv".to_string(),
+            lhs: self.0,
+            rhs: None,
+            result: inv.0,
+        });
+        Some(inv)
     }
 
     /// Exponentiation by squaring
@@ -186,21 +237,18 @@ impl GoldilocksField {
 /// Reduce a 128-bit value modulo Goldilocks prime
 /// Uses the fact that p = 2^64 - 2^32 + 1
 #[inline]
+#[inline]
 fn reduce128(x: u128) -> u64 {
     let lo = x as u64;
     let hi = (x >> 64) as u64;
-    
+
     // x = hi * 2^64 + lo
     // Since 2^64 ≡ 2^32 - 1 (mod p), we have:
-    // x mod p = hi * (2^32 - 1) + lo mod p
-    let mut reduced = lo as u128 + hi as u128 * 0xFFFFFFFF;
-    
-    // May still need one more reduction
-    while reduced >= GOLDILOCKS_PRIME as u128 {
-        reduced -= GOLDILOCKS_PRIME as u128;
-    }
-    
-    reduced as u64
+    // x mod p = hi * (2^32 - 1) + lo (mod p)
+    let reduced = lo as u128 + hi as u128 * 0xFFFFFFFF;
+
+    // Reduce modulo p in a single step using the remainder operator.
+    (reduced % GOLDILOCKS_PRIME as u128) as u64
 }
 
 #[cfg(test)]
@@ -226,5 +274,54 @@ mod tests {
         let a = GoldilocksField::new(7);
         let inv = a.inverse().unwrap();
         assert_eq!(a.mul(&inv), GoldilocksField::ONE);
+    }
+}
+
+#[cfg(feature = "kani")]
+mod verification {
+    use super::*;
+
+    #[kani::proof]
+    fn proof_add_mod_p() {
+        let a: u64 = kani::any();
+        let b: u64 = kani::any();
+        kani::assume(a < GOLDILOCKS_PRIME && b < GOLDILOCKS_PRIME);
+        let fa = GoldilocksField(a);
+        let fb = GoldilocksField(b);
+        let res = fa.add(&fb);
+        kani::assert(res.0 < GOLDILOCKS_PRIME, "Add wrapping");
+    }
+
+    #[kani::proof]
+    fn proof_sub_mod_p() {
+        let a: u64 = kani::any();
+        let b: u64 = kani::any();
+        kani::assume(a < GOLDILOCKS_PRIME && b < GOLDILOCKS_PRIME);
+        let fa = GoldilocksField(a);
+        let fb = GoldilocksField(b);
+        let res = fa.sub(&fb);
+        kani::assert(res.0 < GOLDILOCKS_PRIME, "Sub wrapping");
+    }
+
+    #[kani::proof]
+    fn proof_mul_mod_p() {
+        let a: u64 = kani::any();
+        let b: u64 = kani::any();
+        kani::assume(a < GOLDILOCKS_PRIME && b < GOLDILOCKS_PRIME);
+        let fa = GoldilocksField(a);
+        let fb = GoldilocksField(b);
+        let res = fa.mul(&fb);
+        kani::assert(res.0 < GOLDILOCKS_PRIME, "Mul wrapping");
+    }
+
+    #[kani::proof]
+    fn proof_inv_mod_p() {
+        let a: u64 = kani::any();
+        kani::assume(a < GOLDILOCKS_PRIME && a != 0);
+        let fa = GoldilocksField(a);
+        let inv = fa.inverse().unwrap();
+        let prod = fa.mul(&inv);
+        // The product should be ONE modulo the prime.
+        kani::assert(prod.0 == GoldilocksField::ONE.0, "Inverse correctness");
     }
 }

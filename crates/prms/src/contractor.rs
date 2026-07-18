@@ -81,3 +81,25 @@ fn generate_prime_truncation(n: usize) -> Vec<u64> {
     }
     primes
 }
+
+#[cfg(kani)]
+mod verification {
+    use super::*;
+
+    #[kani::proof]
+    fn verify_contractor_critical_soundness() {
+        let cond: f64 = kani::any();
+        let max_b: f64 = kani::any();
+        
+        kani::assume(cond.is_finite() && max_b.is_finite());
+        kani::assume(cond >= 0.0 && max_b > 0.0);
+        
+        let config = ContractorConfig { lambda_m: 0.5, alpha: -2.0, max_p_index: 2 };
+        let contractor = MultiplicityContractor::new(config).unwrap();
+        
+        let status = contractor.evaluate_stability(cond, max_b);
+        if status == StabilityStatus::CriticalBoundaryViolation {
+            kani::assert(cond >= max_b, "Critical soundness: condition must be >= max_budget");
+        }
+    }
+}

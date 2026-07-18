@@ -2,9 +2,9 @@
 --
 -- UOR Foundation — Trace individual constants.
 
-import UOR.Structures
+import Core.UOR.Structures
 
-open UOR.Primitives
+open Core.UOR
 
 namespace UOR.Bridge.Trace
 

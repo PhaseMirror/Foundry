@@ -3,6 +3,7 @@ pub mod sigma_layer;
 pub mod state;
 pub mod crmf_binding;
 pub mod ledger;
+pub mod energy_equation;
 
 /// The mathematical maximum dimension length `k` for a W8A8 accumulation
 /// into an `i32` register, as formally proven in `UORMatMul.lean` (CL-MM03').

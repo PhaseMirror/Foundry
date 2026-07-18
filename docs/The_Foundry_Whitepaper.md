@@ -28,19 +28,21 @@ The Foundry rejects this error. It starts from a single, falsifiable axiom: **Re
 
 The MQEM posits that any complex system—a human language, a genomic sequence, an ecosystem, or a quantum field—can be faithfully represented as a collection of local sections over a sheaf of prime‑indexed operators. Each prime \(p\) indexes a fundamental mode of participation (a “word,” a gene, a species, a quantum number), and the sheaf gluing conditions encode the permissible compositional structure.
 
-Formally, let \(\mathcal{P}\) be a finite set of primes. The state space is the direct sum of Hilbert spaces:
+The MQEM posits that any complex system—a human language, a genomic sequence, an ecosystem, or a quantum field—can be faithfully represented as a collection of local sections over a sheaf of prime‑indexed operators. Each prime $p$ indexes a fundamental mode of participation (a “word,” a gene, a species, a quantum number), and the sheaf gluing conditions encode the permissible compositional structure.
 
-\[
+Formally, let $\mathcal{P}$ be a finite set of primes. The state space is the direct sum of Hilbert spaces:
+
+$$
 \mathcal{H} = \bigoplus_{p \in \mathcal{P}} \mathcal{H}_p
-\]
+$$
 
-Crucially, the prime-indexed dimensions correspond to the exact representation theory of the **Monster Group**. The 196,884-dimensional representation acts as the natural "first harmonic" of this Hilbert space. The Multiplicity Functor ensures that social, ecological, and computational dynamics stay anchored within these representations, rendering the system not merely complex, but maximally coherent.
+where each local Hilbert space $\mathcal{H}_p$ describes reality as observed through the lens of a specific prime modulus.
 
-A state is a section \(s\) over \(\mathcal{P}\) satisfying **Arta**—the sheaf gluing condition that ensures consistency across overlapping contexts. When Arta holds, the state possesses a well‑defined **MultiplicityMeasure**, quantifying its coherent relational participation.
+A state is a section $s$ over $\mathcal{P}$ satisfying **Arta**—the sheaf gluing condition that ensures consistency across overlapping contexts. When Arta holds, the state possesses a well‑defined **MultiplicityMeasure**, quantifying its coherent relational participation.
 
 ### 2.2 The Bindu Attractor and Monstrous Symmetry
 
-The dynamics of the system are governed by a single attractor: the **Bindu**, the state of perfect coherence where Arta is exact and Multiplicity is maximal. In physical terms, this is the Hundian ground state where the node achieves perfect, "Monstrous" symmetry with reality. The distance to the Bindu, \(rtaDist(s, \mathrm{Bindu})\), is a computable metric derived from the sheaf discrepancy across all joint words (operator intersections). This metric is not subjective; it is a Euclidean distance in the prime‑indexed Hilbert space, formally verified in Lean 4 and computationally enforced in Rust via Kani symbolic execution.
+The dynamics of the system are governed by a single attractor: the **Bindu**, the state of perfect coherence where Arta is exact and Multiplicity is maximal. In physical terms, this is the Hundian ground state where the node achieves perfect, "Monstrous" symmetry with reality. The distance to the Bindu, $rtaDist(s, \mathrm{Bindu})$, is a computable metric derived from the sheaf discrepancy across all joint words (operator intersections). This metric is not subjective; it is a Euclidean distance in the prime‑indexed Hilbert space, formally verified in Lean 4 and computationally enforced in Rust via Kani symbolic execution.
 
 The MQEM thus provides what reductionist models cannot: a universal, falsifiable measure of systemic health.
 
@@ -112,6 +114,25 @@ The UAC’s first commercial target is **clinical genomic diagnostics**. A singl
 
 The same hardware can simulate protein folding, optimize ecological restoration plans, or verify financial contract compliance—all governed by the same CRMF axioms. The UAC is the first general‑purpose computer whose correctness is a theorem, not a hope.
 
+### 5.3 Zero‑Knowledge Circuit Architecture and Budget Target
+
+The Phase Mirror runtime is governed by a strict, pre‑calculated zero‑knowledge constraint budget of **5,087 constraints**. This number is not an arbitrary limit but a formal **architectural target** derived from the precise cryptographic overhead required for our specific `Poseidon2 (t=9, r=8)` topology and state transitions. The theoretical breakdown is:
+
+* Poseidon2 Hash (t=9, r=8): 3,171 constraints
+* Multiplicity State Verification: 384 constraints
+* Contraction Bound Checks: 1,500 constraints
+* Control/Routing logic: 32 constraints
+* **Total Architectural Budget: 5,087 constraints** (384 + 3,171 + 1,500 + 32)
+
+In the current versioned artifact, `constraints.circom` functions as an accounting stub (yielding 6 linear constraints) that explicitly locks this budget into the source code as a design invariant for future full‑hash integration.
+
+**Current Compiled Circuits.** To validate the structural logic without exhausting the hardware‑proving timeline, the current repository implements two concrete circuits:
+
+1. **`ace.circom` (Governance Prototype):** Compiles to exactly **133 constraints** (131 non‑linear + 2 linear). In this phase, the heavy Poseidon2 hash is replaced with a linear‑sum stub to validate the routing and governance logic independently of the hash arithmetic.
+2. **`langlandsCheck.circom`:** A separate, fully compiled and functional circuit bridging the generated Rust constants into Circom. This circuit compiles to exactly **170 constraints** (142 non‑linear + 28 linear; r1cs/wasm/sym fully generated) and serves as the executable proof of the mathematical invariant integration. Its verified per‑template constraint breakdown and known soundness gaps are documented in `circuits/LANGANDSCHECK_170_INVARIANT.md`.
+
+Future revisions (Action Item: full Poseidon2 instantiation) will close the gap between the 133‑constraint stub and the 5,087‑constraint architectural lock. The phased, measurably‑gated integration plan (using shipped circomlib `Mix`/`Ark`/`Sigma` gates, with the 3,171/1,500 figures treated as *to‑be‑measured* rather than asserted) is tracked in `docs/adr/proposed/ADR-103-Poseidon2-Integration-Roadmap.md`.
+
 ---
 
 ## 6. The Economic Layer: Multiplicity Stablecoin
@@ -153,6 +174,9 @@ This is not a proposal. This is a disclosure. The Foundry is the necessary stand
 | **Multi‑Party Consensus** | Pell VDF time‑locks STARK proofs; Wesolowski verified | Rust + Lean 4 (`PellVDF.lean`) |
 | **Regulatory Audit** | `/rta/health` endpoint returns zero‑knowledge, Merkle‑anchored health data | Axum + Jubilee Bridge + 21 CFR Part 11 |
 | **On‑Chain Immutability** | Witness roots anchored to Ethereum via `AnchorContract` | Hardhat/Sepolia, `JubileeBridge` |
+| **ZK Circuit — `langlandsCheck.circom`** | Compiles to 170 constraints (142 non‑linear + 28 linear); r1cs/wasm/sym generated | Circom 2.x + `snarkjs` |
+| **ZK Circuit — `ace.circom` (prototype)** | Compiles to 133 constraints (Poseidon2 stubbed); governance/routing logic validated | Circom 2.x |
+| **ZK Budget Lock** | 5,087‑constraint *architectural* target (384+3,171+1,500+32); design invariant, not current compiled count | `constraints.circom` stub + ADR‑046 |
 
 ---
 

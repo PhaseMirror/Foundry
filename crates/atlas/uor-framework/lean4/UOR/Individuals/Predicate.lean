@@ -2,10 +2,10 @@
 --
 -- UOR Foundation — Predicate individual constants.
 
-import UOR.Structures
-import UOR.Individuals.State
+import Core.UOR.Structures
+import Core.UOR.Individuals.State
 
-open UOR.Primitives
+open Core.UOR
 
 namespace UOR.Kernel.Predicate
 

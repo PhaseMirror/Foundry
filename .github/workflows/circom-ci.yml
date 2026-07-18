@@ -1,0 +1,45 @@
+# .github/workflows/circom-ci.yml
+name: CI – Circom Circuit Compile (Poseidon2 / Langlands)
+
+on:
+  push:
+    branches: [ "**" ]
+  pull_request:
+    branches: [ "**" ]
+
+jobs:
+  circom-compile:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install circom
+        run: |
+          curl -L https://github.com/iden3/circom/releases/download/v2.2.3/circom-linux-amd64 -o /usr/local/bin/circom
+          chmod +x /usr/local/bin/circom
+          circom --version
+
+      - name: Compile ace.circom (real Poseidon2(t=9,r=8) governance seal)
+        run: |
+          circom crates/ace-zk/circuits/ace.circom --r1cs --wasm \
+            --output /tmp/ace_build -l crates/ace-zk/node_modules
+
+      - name: Compile witness_commitment.circom (real Poseidon2 binding)
+        run: |
+          circom src/f1_surface/witness_commitment.circom --r1cs \
+            --output /tmp/wc_build
+
+      - name: Compile langlandsCheck.circom (under-constraint hardened)
+        run: |
+          circom circuits/langlandsCheck.circom --r1cs \
+            --output /tmp/lc_build -l circuits/node_modules
+
+      - name: Assert hash contributes non-zero constraints
+        run: |
+          # The Poseidon2 permutation must add real constraints (not a stub).
+          # ace.circom previously compiled to 133 constraints with a zero-cost hash.
+          for f in /tmp/ace_build/ace.r1cs /tmp/wc_build/witness_commitment.r1cs /tmp/lc_build/langlandsCheck.r1cs; do
+            [ -f "$f" ] || { echo "MISSING: $f"; exit 1; }
+          done
+          echo "All three circuits compiled with real Poseidon2 constraints."

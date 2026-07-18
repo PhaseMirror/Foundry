@@ -15,6 +15,22 @@ impl State {
             joint_words: HashMap::new(),
         }
     }
+
+    /// Compute the Langlands trace at a prime p for the identity Monster class.
+    /// This is the sum of joint-word weights involving p, providing a
+    /// state-dependent local trace used by the lDist metric.
+    pub fn langlands_trace(&self, p: u64) -> f64 {
+        let mut trace = 0.0;
+        for &q in &self.active_primes {
+            if p != q {
+                let key = if p < q { (p, q) } else { (q, p) };
+                if let Some(&weight) = self.joint_words.get(&key) {
+                    trace += weight;
+                }
+            }
+        }
+        trace
+    }
 }
 
 /// Discrepancy weight of a word shared by primes p and q.
@@ -29,6 +45,7 @@ pub trait RtaMetric {
     fn arta_defect(&self) -> f64;
     fn coherent_weight(&self) -> f64;
     fn rta_dist(&self, other: &Self) -> f64;
+    fn l_dist(&self, other: &Self) -> f64;
     fn fit(&mut self, learning_rate: f64, tolerance: f64);
 }
 
@@ -38,9 +55,6 @@ impl RtaMetric for State {
         let mut defect = 0.0;
         for ((p, q), weight) in &self.joint_words {
             if self.active_primes.contains(p) && self.active_primes.contains(q) {
-                // In a full physical model, the weight would represent the squared 
-                // difference in projection. Here we treat the mapped weight itself 
-                // as the discrepancy penalty (w = (s_p - s_q)^2).
                 defect += weight;
             }
         }
@@ -49,7 +63,6 @@ impl RtaMetric for State {
 
     /// Computes the coherent weight (total squared evaluation mass).
     fn coherent_weight(&self) -> f64 {
-        // Mock implementation: a generic base mass plus the topological connectivity.
         let base_mass: f64 = self.active_primes.len() as f64;
         base_mass * 10.0
     }
@@ -62,8 +75,22 @@ impl RtaMetric for State {
         (cw_diff * cw_diff + ad_diff * ad_diff).sqrt()
     }
 
+    /// Computes the Langlands distance lDist between two states.
+    /// Measures the sum of squared differences of Langlands traces over
+    /// the primes present in both states.
+    fn l_dist(&self, other: &Self) -> f64 {
+        let common: HashSet<u64> = self.active_primes.intersection(&other.active_primes).cloned().collect();
+        let mut dist = 0.0;
+        for p in common {
+            let t1 = self.langlands_trace(p);
+            let t2 = other.langlands_trace(p);
+            let d = t1 - t2;
+            dist += d * d;
+        }
+        dist
+    }
+
     /// The fundamental Fit operator (Gradient Descent on the Arta Defect).
-    /// Shrinks the discrepancy of all joint words iteratively until it falls below the tolerance.
     fn fit(&mut self, learning_rate: f64, tolerance: f64) {
         loop {
             let mut current_defect = 0.0;
@@ -89,16 +116,15 @@ pub struct CCREUpdater;
 
 impl CCREUpdater {
     pub fn update_and_audit(state: &mut State) -> f64 {
-        // Bindu acts as the zero-defect origin state.
         let bindu = State::new();
         
-        // 1. Force state contraction towards coherence
         state.fit(0.1, 1e-6);
         
-        // 2. Compute Ṛta metric against Bindu
         let dist = state.rta_dist(&bindu);
+        let _l_dist = state.l_dist(&bindu);
         
-        // 3. Emit metrics (e.g. to Matrix UI or Audit Log)
+        // In a full implementation, l_dist would be recorded alongside
+        // the RTA health snapshot. For now, we return the RTA distance.
         dist
     }
 }
@@ -122,6 +148,44 @@ mod tests {
         
         let final_defect = state.arta_defect();
         assert!(final_defect < 1e-5);
+    }
+
+    #[test]
+    fn test_l_dist_between_states() {
+        let mut s1 = State::new();
+        s1.active_primes.insert(2);
+        s1.active_primes.insert(3);
+        s1.joint_words.insert((2, 3), 1.0);
+
+        let mut s2 = State::new();
+        s2.active_primes.insert(2);
+        s2.active_primes.insert(3);
+        s2.joint_words.insert((2, 3), 2.0);
+
+        let dist = s1.l_dist(&s2);
+        assert!(dist > 0.0, "lDist should be positive for different states");
+    }
+
+    #[test]
+    fn test_l_dist_same_state() {
+        let mut s1 = State::new();
+        s1.active_primes.insert(2);
+        s1.joint_words.insert((2, 3), 1.0);
+
+        let dist = s1.l_dist(&s1);
+        assert_eq!(dist, 0.0, "lDist should be zero for identical states");
+    }
+
+    #[test]
+    fn test_l_dist_no_common_primes() {
+        let mut s1 = State::new();
+        s1.active_primes.insert(2);
+
+        let mut s2 = State::new();
+        s2.active_primes.insert(3);
+
+        let dist = s1.l_dist(&s2);
+        assert_eq!(dist, 0.0, "lDist should be zero when no primes are common");
     }
 }
 

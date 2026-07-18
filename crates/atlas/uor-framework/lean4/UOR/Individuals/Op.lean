@@ -2,10 +2,10 @@
 --
 -- UOR Foundation — Op individual constants.
 
-import UOR.Structures
-import UOR.Individuals.Schema
+import Core.UOR.Structures
+import Core.UOR.Individuals.Schema
 
-open UOR.Primitives
+open Core.UOR
 
 namespace UOR.Kernel.Op
 

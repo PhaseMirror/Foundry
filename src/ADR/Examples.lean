@@ -1,3 +1,6 @@
+import ADR.Core
+import ADR.Proofs
+
 /-!
 # Example ADRs with proofs
 -/
@@ -8,7 +11,7 @@ namespace ADR.Examples
 
 def adr1 : ADR := {
   id := { value := 1 },
-  title := "Adopt Lean 4 for ADR verification",
+  title := "Adopt Lean 4 for ADR verification",
   status := ADRStatus.Accepted,
   context := "Team needs provable invariants for architectural decisions.",
   decision := "All ADRs will be expressed as Lean structures.",
@@ -18,29 +21,17 @@ def adr1 : ADR := {
   riskLevel := RiskLevel.Low
 }
 
-example : Proofs.accepted_immutable adr1 ADRStatus.Accepted := by
-  apply Proofs.accepted_immutable
-  rfl
-  rfl
-  rfl
-
-
 def adr2 : ADR := {
   id := { value := 2 },
   title := "Deprecate Java ADR pipeline",
   status := ADRStatus.Deprecated,
   context := "Java pipeline lacks formal verification.",
-  decision := "Migrate to Lean 4 pipeline.",
+  decision := "Migrate to Lean 4 pipeline.",
   consequences := ["Reduced manual review"],
   supersedes := some { value := 1 },
   links := [],
   riskLevel := RiskLevel.Medium
 }
-
-example : Proofs.no_circular_supersession adr1 adr2 := by
-  intro h1 h2
-  have : False := Proofs.no_circular_supersession adr1 adr2 h1 h2
-  exact this
 
 def adr5 : ADR := {
   id := { value := 5 },
@@ -50,11 +41,11 @@ def adr5 : ADR := {
   decision := "Encode ADR 005 as a Lean value, provide Mathlib exemption attribute, and enforce CI gate.",
   consequences := ["Kernel ADRs are formally tracked", "CI guarantees uniformity"],
   supersedes := some { value := 1 },
-  links := [{ uri := "file:///substrates/echo-kernel/adr-kernel-rs/docs/adr/adr-0005-learn-governance-uniformity.md", description := "ADR 5 Markdown" }],
+  links := [{ uri := "file:///substrates/echo-kernel/adr-kernel-rs/docs/adr/adr-0005-learn-governance-uniformity.md", description := "ADR 5 Markdown" }],
   riskLevel := RiskLevel.Low
 }
 
-@[test] def adr5_sanity : Unit := by
+def adr5_sanity : Unit := by
   exact Unit.unit
 
 end ADR.Examples

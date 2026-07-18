@@ -1,0 +1,63 @@
+name: Riemann Zeta CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'Prime/crates/riemann-zeta/**'
+      - 'Prime/lean/F1_SQUARE/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'Prime/crates/riemann-zeta/**'
+      - 'Prime/lean/F1_SQUARE/**'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        rust: [stable]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
+
+      - name: Install Kani
+        run: |
+          curl -L https://github.com/model-checking/kani/releases/download/v0.14/kani-0.14-x86_64-unknown-linux-musl.tar.gz | tar xz
+          sudo mv kani /usr/local/bin/
+
+      - name: Install Lean toolchain
+        run: |
+          curl -L https://raw.githubusercontent.com/leanprover/lean4/master/scripts/get-lean.sh | bash -s -- -y
+
+      - name: Build riemann-zeta crate
+        working-directory: /home/multiplicity/Multiplicity/PhaseMirror/Prime/crates/riemann-zeta
+        run: cargo build --verbose
+
+      - name: Run riemann-zeta tests
+        working-directory: /home/multiplicity/Multiplicity/PhaseMirror/Prime/crates/riemann-zeta
+        run: cargo test --verbose
+
+      - name: Run Kani verification
+        working-directory: /home/multiplicity/Multiplicity/PhaseMirror/Prime/crates/riemann-zeta
+        run: cargo kani --verbose
+
+      - name: Build Lean F1Square
+        working-directory: /home/multiplicity/Multiplicity/PhaseMirror/Prime
+        run: lake build F1Square
+
+      - name: Run Lean tests
+        working-directory: /home/multiplicity/Multiplicity/PhaseMirror/Prime
+        run: lake test
+
+      - name: Verify zero locations
+        working-directory: /home/multiplicity/Multiplicity/PhaseMirror/Prime/crates/riemann-zeta
+        run: cargo run --bin compute_zeros

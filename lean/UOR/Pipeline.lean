@@ -2,7 +2,7 @@
 --
 -- v0.2.1 Reduction Pipeline — Lean 4 counterpart of `foundation/src/pipeline.rs`. Backs the four resolver `Certify` instances with real fuel-bounded decision logic that reduces at elaboration so `by decide` assertions succeed without `()`, `partial def`, or `native_decide`.
 
-import UOR.Primitives
+import Core.UOR
 import UOR.Enforcement
 
 namespace UOR.Pipeline

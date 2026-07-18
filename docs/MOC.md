@@ -66,3 +66,35 @@ by
 ```
 
 This strict bound is what allows the UAC substrate to scale to 100-concurrent requests safely. As long as the global operator norm remains bounded, the `H(ρ)` entropy metric is mathematically guaranteed to stay $\le 6.0$. Telemetry tests additionally verify that transcendental operations maintain an `ANOMALY_GOV_THRESHOLD < 0.85`.
+
+## 5. Sigma Kernel Invariants
+
+Following ADR-062, the Multiplicity Operator Calculus integrates the formal Sigma Kernel to mechanicalize spectral safety. 
+The Sigma Kernel monitors every computational transition to prevent spectral explosion and dissonance, acting as the critical enforcement layer within the Sedona Spine. 
+
+For a spectral state $s$, the core invariant `SigmaKernelInvariant` is defined as:
+- $L_{\rm eff} < 1.0$ : The effective Lipschitz bound strictly enforces contractivity.
+- $\Delta R_{\rm sc} \le \tau_R$ : The resonance functional drift $\Delta R_{\rm sc}$ remains below the critical threshold $\tau_R$.
+
+These guarantees are formally verified in the `SigmaKernel.lean` module and actively enforced by the Rust runtime via `sigma_check()`. Any state transition violating these invariants immediately raises a `SigmaViolation` and is rejected by the Guardian lock.
+
+## 6. Stratified Governance
+
+Following ADR-063, the MOC operational backbone now enforces Stratified Governance. Operations are executed under rigid resource bounds and authority scopes strictly defined by Strata (e.g., S0, S2, S4, S6). 
+- Transitions between strata (`ValidStratumTransition`) are mechanically monotonic.
+- Compute, memory, and latency consumption are governed by `ResourceBudget`, ensuring no single transaction can trigger systemic exhaustion.
+These rules are verified via `StratifiedGovernance.lean` and runtime enforced via the `crates/strata` `BudgetTracker` and `StratumGuard`.
+
+## 7. Matrix Engine (ADR-064)
+
+The computational execution core of PIRTM, the Matrix Engine, guarantees formal contractivity on all tensor evaluations.
+- Operations are proven to enforce the Banach limit `c < 1.0` and preserve strict signature grading (`MatrixEngine.lean`).
+- Exact arithmetic execution guarantees exact translation from formal specs via the `pirtm-stdlib` Rust crate.
+- `MatrixEngineProof` artifacts are emitted and WASM-exposed logic ensures environment-agnostic integrity for Prime.
+
+## 8. MOC/CRMF Contraction Certificate Production Ratification (ADR-068)
+
+MOC operators and CRMF resonance terms are fully ratified for production via **ADR-068**. Every operation produces a verifiable `ContractionCertificate` asserting its spectral contractivity ($\lambda_p < 1$).
+- The mathematical foundations are codified in `Moc.lean` and `Crmf.lean`.
+- The Rust engine (`crates/fermat-certifier`) validates spectral bounds and emits cryptographic signatures, ensuring that certificates are non-forgeable.
+- An `Archivum` witness (`MocCertificateProof`) is emitted upon successful certificate generation and integrated into the ledger, fully binding the output to the TEE hardware quote.

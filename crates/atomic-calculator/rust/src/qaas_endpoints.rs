@@ -3,10 +3,9 @@
 //! Exposes the UAC MA-VQE Compiler and QCFI Orchestrator via secure APIs.
 //! Enforces Sedona Spine governance by routing all tasks through the ALP policy gate.
 
-use crate::bounds::CHEMICAL_ACCURACY_THRESHOLD_MHA_SCALED;
-use crate::ma_vqe_compiler::{jw_qudit_term, evaluate_branch, QuditGate, multiplicity_prune};
+use crate::ma_vqe_compiler::{compile_and_gate, evaluate_branch, QuditGate};
 use crate::ma_vqe::QuantumM;
-use crate::fpga_pulse::{FpgaOrchestrator, MicrowavePulse};
+use crate::fpga_pulse::FpgaOrchestrator;
 use crate::agent_contracts::{NarrativeAuditor, AgentTemplate, RiskLevel, H2ErrorWitness};
 
 /// Represents a QaaS Job Request for cluster simulation.
@@ -53,12 +52,11 @@ pub fn execute_simulation(request: SimulationRequest) -> Result<SimulationRespon
         return Err("Required qudits exceeds requested maximum.");
     }
 
-    // 3. MA-VQE Compilation
-    let mut logical_circuit = Vec::new();
-    for i in 1..=required_qudits { 
-        let mut term = jw_qudit_term(i, required_qudits, 16);
-        logical_circuit.append(&mut term);
-    }
+    // 3. MA-VQE Compilation (ALP-gated, minimal-depth)
+    let logical_circuit = match compile_and_gate(required_qudits, 16) {
+        Ok(c) => c,
+        Err(_) => return Err("ALP policy gate rejected FeMoco MA-VQE circuit."),
+    };
     
     // 4. Obtain Oracle Energy and Prune
     let energy_mha = calculate_fes_energy(&logical_circuit);

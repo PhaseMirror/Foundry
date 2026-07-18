@@ -37,6 +37,7 @@ pub struct ParameterState {
     pub momentum_buffer: Array1<Complex<f64>>,
     pub lambda_history: Vec<f64>,
     pub energy_history: Vec<Vec<f64>>,
+    pub energy_ema: Vec<f64>, // For state-dependent rank-1 mixing
 }
 
 pub struct DRMMOptimizer {
@@ -69,24 +70,35 @@ impl DRMMOptimizer {
         let (spectrum, padded_size, original_size) = self.transform.forward(flat_grad.view());
         let energies = compute_bin_energies(spectrum.view(), self.config.num_bins);
         
-        // _weighted_sum
+        // Ensure state exists so we can access energy_ema for dynamic mixing
+        let state = self.states.entry(param_id).or_insert_with(|| {
+            ParameterState {
+                lambda_ema: 1.0, // Placeholder, updated below
+                momentum_buffer: Array1::from_elem(spectrum.len(), Complex::new(0.0, 0.0)),
+                lambda_history: Vec::new(),
+                energy_history: Vec::new(),
+                energy_ema: vec![1.0; energies.len()], // Initialize with baseline 1.0
+            }
+        });
+        
+        // _weighted_sum (State-Dependent Rank-1 Mixing)
         let mut weighted_sum = 0.0;
         for (i, &energy) in energies.iter().enumerate() {
-            let weight = self.primes[i].powf(-self.config.alpha);
-            weighted_sum += energy * weight;
+            // Dynamic weight: static alpha polynomial * (instantaneous / historical)
+            let static_weight = self.primes[i].powf(-self.config.alpha);
+            let dynamic_factor = energy / (state.energy_ema[i] + self.config.eps);
+            let w_p = static_weight * dynamic_factor.sqrt(); // Soft rank-1 penalty scaling
+            
+            weighted_sum += energy * w_p;
+            
+            // Update historical EMA for this bin
+            state.energy_ema[i] = state.energy_ema[i] * self.config.ema_beta + energy * (1.0 - self.config.ema_beta);
         }
 
         let lambda_raw = (1.0 / (weighted_sum + self.config.eps).sqrt())
             .clamp(self.config.lambda_min, self.config.lambda_max);
 
-        let state = self.states.entry(param_id).or_insert_with(|| {
-            ParameterState {
-                lambda_ema: lambda_raw,
-                momentum_buffer: Array1::from_elem(spectrum.len(), Complex::new(0.0, 0.0)),
-                lambda_history: Vec::new(),
-                energy_history: Vec::new(),
-            }
-        });
+
 
         // EMA Update
         state.lambda_ema = state.lambda_ema * self.config.ema_beta + lambda_raw * (1.0 - self.config.ema_beta);

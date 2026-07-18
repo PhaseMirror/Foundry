@@ -123,6 +123,13 @@ mod tests {
     }
 }
 pub mod adaptive;
+pub mod galois;
+pub mod gates;
+pub mod langlands_zk;
 pub mod lambda_bridge;
 pub mod telemetry;
 pub mod types;
+pub mod uac_loss;
+pub mod r1cs_constants;
+pub mod telemetry_binding;
+pub mod tether_policy;

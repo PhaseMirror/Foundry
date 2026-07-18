@@ -130,4 +130,44 @@ mod tests {
 
         assert!(DualSignatureProtocol::verify(&witness, op_key, kernel_key).is_err());
     }
+
+    use proptest::prelude::*;
+
+    proptest! {
+        #[test]
+        fn fuzz_dual_signature_protocol(
+            transition_id in ".*",
+            timestamp in ".*",
+            metrics_hash in ".*",
+            op_key in ".*",
+            kernel_key in ".*"
+        ) {
+            let mut witness = UnifiedWitness::new(&transition_id, &timestamp, &metrics_hash);
+            
+            DualSignatureProtocol::sign_primary(&mut witness, &op_key);
+            DualSignatureProtocol::sign_secondary(&mut witness, &kernel_key);
+
+            prop_assert!(DualSignatureProtocol::verify(&witness, &op_key, &kernel_key).is_ok());
+        }
+
+        #[test]
+        fn fuzz_dual_signature_corruption(
+            transition_id in ".*",
+            timestamp in ".*",
+            metrics_hash in ".*",
+            op_key in ".*",
+            kernel_key in ".*",
+            corrupt_id in ".*"
+        ) {
+            let mut witness = UnifiedWitness::new(&transition_id, &timestamp, &metrics_hash);
+            
+            DualSignatureProtocol::sign_primary(&mut witness, &op_key);
+            DualSignatureProtocol::sign_secondary(&mut witness, &kernel_key);
+            
+            prop_assume!(corrupt_id != transition_id);
+            witness.transition_id = corrupt_id;
+
+            prop_assert!(DualSignatureProtocol::verify(&witness, &op_key, &kernel_key).is_err());
+        }
+    }
 }

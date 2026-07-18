@@ -1,2 +1,0 @@
-import META_RELATIVITY.Core
-import META_RELATIVITY.Theorems

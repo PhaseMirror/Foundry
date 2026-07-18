@@ -1,12 +1,14 @@
-//! Compact‑closed enrichment for Prime Monomial Matrices (PMat)
-//!
-//! Formalisation of the graded‑matrix semantics from the ADR
-//! *Prime Monomial Matrices – Computational Semantics*.
-//!
-//! The model is deliberately lightweight: a `Signature` is a list of
-//! `(prime, exponent)` pairs, grading is defined as
-//! `target_sig - source_sig`, and we prove that insertion, composition
-//! and the global conservation law preserve this invariant.
+/-!
+Compact‑closed enrichment for Prime Monomial Matrices (PMat)
+
+Formalisation of the graded‑matrix semantics from the ADR
+*Prime Monomial Matrices – Computational Semantics*.
+
+The model is deliberately lightweight: a `Signature` is a list of
+`(prime, exponent)` pairs, grading is defined as
+`target_sig - source_sig`, and we prove that insertion, composition
+and the global conservation law preserve this invariant.
+-/
 
 /-!
 # Compact‑Closed Model
@@ -23,7 +25,11 @@ namespace PMat
  def Signature := List (Nat × Int)
 
 /-- Equality on signatures is decidable (list equality). -/
-instance : DecidableEq Signature := inferInstance
+instance : DecidableEq Signature := by
+  intro a b
+  cases a <;> cases b <;>
+  simp
+  apply DecidableEq.decide
 
 /-- The empty signature – multiplicative unit. -/
  def sigEmpty : Signature := []

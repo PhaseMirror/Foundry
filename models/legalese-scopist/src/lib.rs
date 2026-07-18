@@ -1,6 +1,12 @@
 // The Rust Sedona Spine Engine Implementation
 // Memory layout strictly matches Lean 4 exports
 
+use wasm_bindgen::prelude::*;
+use serde::{Serialize, Deserialize};
+
+pub mod collatz;
+pub mod ace;
+
 #[repr(C)]
 pub struct GlobalHilbertSpace {
     pub data: *mut f64,
@@ -157,6 +163,135 @@ pub extern "C" fn compute_entropy(evals: *const [f64; 2]) -> f64 {
     entropy_term(l1) + entropy_term(l2)
 }
 
+// ---------------------------------------------------------
+// ESI Retention and Risk Logic (Sedona Spine Mandate)
+// ---------------------------------------------------------
+
+#[repr(C)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum RiskLevel {
+    Critical,
+    High,
+    Medium,
+}
+
+#[repr(C)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+pub struct EsiInputs {
+    pub spoliation_potential: f64, // 0.0 to 1.0
+    pub preservation_urgency: f64, // 0.0 to 1.0
+    pub volume_estimate_gb: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CompilationResult {
+    pub risk_level: RiskLevel,
+    pub is_stable: bool,
+    pub spectral_radius: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UnifiedWitness {
+    pub compilation_result: CompilationResult,
+    pub timestamp: u64,
+    // Typically this would hold a cryptographic signature or ledger anchor hash
+    pub signature: String, 
+}
+
+/// Maps ESI inputs into a 2x2 Hermitian matrix (Density Matrix format)
+/// We use spoliation and urgency to construct the operator bounds.
+pub fn map_esi_to_operator(inputs: &EsiInputs) -> [[f64; 2]; 2] {
+    // A simplified transformation mapping legal facts into the spectral space
+    let a = inputs.spoliation_potential * 2.0; 
+    let d = inputs.preservation_urgency * 2.0;
+    // Cross-terms represent compounding complexity
+    let b = if inputs.spoliation_potential >= 0.0 && inputs.preservation_urgency >= 0.0 {
+        (inputs.spoliation_potential * inputs.preservation_urgency).sqrt()
+    } else {
+        0.0 // Fallback if inputs are invalid/negative
+    };
+    
+    [[a, b], [b, d]]
+}
+
+/// Evaluates ESI risk, returning a Unified Witness.
+/// Adheres strictly to the Path of Integrity.
+pub fn evaluate_esi_risk(inputs: &EsiInputs, p_factor: u32, sigma: f64) -> UnifiedWitness {
+    let op = map_esi_to_operator(inputs);
+    
+    // Check stability mathematically
+    let is_stable = check_rg_condition(p_factor, sigma, &op as *const [[f64; 2]; 2]);
+    let rho = compute_spectral_radius(&op as *const [[f64; 2]; 2]);
+    
+    // Policy logic: If it violates mathematical stability, or if rho is high, it's Critical
+    let risk_level = if !is_stable {
+        RiskLevel::Critical
+    } else if rho > 1.5 {
+        RiskLevel::High
+    } else {
+        RiskLevel::Medium
+    };
+
+    let compilation_result = CompilationResult {
+        risk_level,
+        is_stable,
+        spectral_radius: rho,
+    };
+
+    UnifiedWitness {
+        compilation_result,
+        timestamp: 0, // Placeholder for actual time/block height
+        signature: String::from("SYSTEM_WITNESS_PROVISIONAL"), // Placeholder for ledger anchor
+    }
+}
+
+/// WASM SDK Entry Point
+/// This is the strictly enforced boundary for the Path of Integrity.
+#[wasm_bindgen]
+pub fn evaluate_esi_risk_wasm(inputs_val: JsValue, p_factor: u32, sigma: f64) -> Result<JsValue, JsValue> {
+    let inputs: EsiInputs = serde_wasm_bindgen::from_value(inputs_val)
+        .map_err(|e| JsValue::from_str(&format!("Invalid ESI inputs: {}", e)))?;
+        
+    let witness = evaluate_esi_risk(&inputs, p_factor, sigma);
+    
+    serde_wasm_bindgen::to_value(&witness)
+        .map_err(|e| JsValue::from_str(&format!("Failed to serialize witness: {}", e)))
+}
+
+/// WASM SDK Entry Point for ACE-bound risk evaluation
+#[wasm_bindgen]
+pub fn evaluate_esi_risk_with_ace_wasm(
+    inputs_val: JsValue, 
+    p_factor: u32, 
+    sigma: f64,
+    budget_val: JsValue,
+) -> Result<JsValue, JsValue> {
+    let inputs: EsiInputs = serde_wasm_bindgen::from_value(inputs_val)
+        .map_err(|e| JsValue::from_str(&format!("Invalid ESI inputs: {}", e)))?;
+        
+    let budget: ace::AceBudget = serde_wasm_bindgen::from_value(budget_val)
+        .map_err(|e| JsValue::from_str(&format!("Invalid ACE Budget: {}", e)))?;
+        
+    let envelope = ace::AceEnvelope::new(budget);
+    
+    let result = ace::evaluate_esi_risk_with_ace(&inputs, p_factor, sigma, envelope)
+        .map_err(|e| JsValue::from_str(&format!("ACE Execution Error: {}", e)))?;
+    
+    serde_wasm_bindgen::to_value(&result)
+        .map_err(|e| JsValue::from_str(&format!("Failed to serialize ACE result: {}", e)))
+}
+
+#[wasm_bindgen]
+pub fn process_collatz_chunk_wasm(start_str: String, chunk_size: u32) -> Result<JsValue, JsValue> {
+    let start: u128 = start_str.parse().map_err(|e| JsValue::from_str(&format!("Invalid start bound: {}", e)))?;
+    let end: u128 = start.saturating_add(chunk_size as u128).saturating_sub(1);
+
+    let result = collatz::verify_range(start, end);
+
+    serde_wasm_bindgen::to_value(&result)
+        .map_err(|e| JsValue::from_str(&format!("Failed to serialize result: {}", e)))
+}
+
 #[cfg(kani)]
 mod verification {
     use super::*;
@@ -296,6 +431,34 @@ mod verification {
         kani::assert(entropy <= 1.0, "Entropy of 2x2 system must not exceed ln(2)");
         kani::assert(entropy.is_finite(), "Entropy must remain finite");
         kani::assert(!entropy.is_nan(), "Entropy must not hit NaN");
+    }
+
+    #[kani::proof]
+    fn verify_esi_risk_evaluation_safety() {
+        let spoliation_potential: f64 = kani::any();
+        let preservation_urgency: f64 = kani::any();
+        let volume_estimate_gb: f64 = kani::any();
+
+        kani::assume(spoliation_potential >= 0.0 && spoliation_potential <= 1.0);
+        kani::assume(preservation_urgency >= 0.0 && preservation_urgency <= 1.0);
+        kani::assume(volume_estimate_gb >= 0.0 && volume_estimate_gb < 1_000_000.0);
+
+        let inputs = EsiInputs {
+            spoliation_potential,
+            preservation_urgency,
+            volume_estimate_gb,
+        };
+
+        let p: u32 = kani::any();
+        kani::assume(p == 2 || p == 3 || p == 5);
+
+        let sigma: f64 = kani::any();
+        kani::assume(sigma >= 1.5 && sigma <= 3.0);
+
+        let witness = evaluate_esi_risk(&inputs, p, sigma);
+        
+        kani::assert(witness.compilation_result.spectral_radius.is_finite(), "Spectral radius must be finite");
+        kani::assert(!witness.compilation_result.spectral_radius.is_nan(), "Spectral radius must not be NaN");
     }
 }
 

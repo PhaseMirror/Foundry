@@ -114,6 +114,27 @@ async fn get_rta_history(
     Json(history)
 }
 
+#[derive(Serialize)]
+pub struct LanglandsDistanceResponse {
+    pub operator_id: String,
+    pub l_dist_to_bindu: f64,
+    pub timestamp: u64,
+}
+
+async fn get_rta_langlands(
+    Path(operator_id): Path<String>,
+    State(state): State<Arc<AuditState>>,
+) -> Result<Json<LanglandsDistanceResponse>, StatusCode> {
+    let bridge = state.bridge.lock().await;
+    let health = bridge.get_current_rta_health(&operator_id)
+        .ok_or(StatusCode::NOT_FOUND)?;
+    Ok(Json(LanglandsDistanceResponse {
+        operator_id,
+        l_dist_to_bindu: health.l_dist_to_bindu,
+        timestamp: health.timestamp,
+    }))
+}
+
 pub fn audit_router(state: Arc<AuditState>) -> Router {
     Router::new()
         .route("/audit/v1/:operator_id/transitions", get(list_transitions))
@@ -121,5 +142,6 @@ pub fn audit_router(state: Arc<AuditState>) -> Router {
         .route("/audit/v1/:operator_id/export", axum::routing::post(export_audit_bundle))
         .route("/audit/v1/:operator_id/rta/health", get(get_rta_health))
         .route("/audit/v1/:operator_id/rta/history", get(get_rta_history))
+        .route("/audit/v1/:operator_id/rta/langlands", get(get_rta_langlands))
         .with_state(state)
 }

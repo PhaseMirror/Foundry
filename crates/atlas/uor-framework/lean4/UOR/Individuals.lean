@@ -2,20 +2,20 @@
 --
 -- UOR Foundation — individual constant namespaces (aggregator).
 
-import UOR.Individuals.Schema
-import UOR.Individuals.Op
-import UOR.Individuals.Resolver
-import UOR.Individuals.Type_
-import UOR.Individuals.Foundation
-import UOR.Individuals.Observable
-import UOR.Individuals.Homology
-import UOR.Individuals.Cohomology
-import UOR.Individuals.Proof
-import UOR.Individuals.Trace
-import UOR.Individuals.Morphism
-import UOR.Individuals.State
-import UOR.Individuals.Reduction
-import UOR.Individuals.Convergence
-import UOR.Individuals.Division
-import UOR.Individuals.Predicate
-import UOR.Individuals.Conformance_
+import Core.UOR.Individuals.Schema
+import Core.UOR.Individuals.Op
+import Core.UOR.Individuals.Resolver
+import Core.UOR.Individuals.Type_
+import Core.UOR.Individuals.Foundation
+import Core.UOR.Individuals.Observable
+import Core.UOR.Individuals.Homology
+import Core.UOR.Individuals.Cohomology
+import Core.UOR.Individuals.Proof
+import Core.UOR.Individuals.Trace
+import Core.UOR.Individuals.Morphism
+import Core.UOR.Individuals.State
+import Core.UOR.Individuals.Reduction
+import Core.UOR.Individuals.Convergence
+import Core.UOR.Individuals.Division
+import Core.UOR.Individuals.Predicate
+import Core.UOR.Individuals.Conformance_

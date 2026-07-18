@@ -74,3 +74,56 @@ pub fn enforce_sovereign_contractivity(
     Ok(())
 }
 
+#[cfg(kani)]
+mod verification {
+    use super::*;
+
+    struct MockMetric(f64);
+    impl MetricSpace for MockMetric {
+        fn distance(&self, other: &Self) -> f64 {
+            if self.0 >= other.0 { self.0 - other.0 } else { other.0 - self.0 }
+        }
+    }
+
+    #[kani::proof]
+    fn verify_enforce_contractivity_bound() {
+        let x: f64 = kani::any();
+        let y: f64 = kani::any();
+        let epsilon: f64 = kani::any();
+        
+        kani::assume(x.is_finite() && y.is_finite() && epsilon.is_finite());
+        kani::assume(epsilon > 0.0);
+        
+        let s1 = MockMetric(x);
+        let s2 = MockMetric(y);
+        
+        if enforce_contractivity(&s1, &s2, epsilon).is_ok() {
+            let dist = s1.distance(&s2);
+            kani::assert(dist < epsilon, "Distance must be strictly bounded by epsilon");
+        }
+    }
+
+    #[kani::proof]
+    fn verify_sovereign_contractivity() {
+        let q: f64 = kani::any();
+        let max_q: f64 = kani::any();
+        
+        kani::assume(q.is_finite() && max_q.is_finite());
+        kani::assume(max_q > 0.0);
+        
+        let atom = LambdaTraceAtom {
+            proof_digest: String::new(),
+            state_root_hash: String::new(),
+            timestamp: 0,
+            q,
+            tee_quote: Some(String::new()),
+            trajectory_id: "ACTIVE".to_string(),
+            protocol_v: 1,
+            signer_id: None,
+        };
+        
+        if enforce_sovereign_contractivity(&atom, "ACTIVE", max_q).is_ok() {
+            kani::assert(q < max_q, "Sovereign q must be bounded by max_q");
+        }
+    }
+}

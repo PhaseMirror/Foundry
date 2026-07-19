@@ -1,0 +1,35 @@
+name: Lean CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./lean/projects
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Lean toolchain
+        uses: leanprover/lean-toolchain@v1
+        with:
+          lean-version: "nightly"
+
+      - name: Cache Lake packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.elan
+          key: ${{ runner.os }}-elan-${{ hashFiles('**/lakefile.lean') }}
+          restore-keys: |
+            ${{ runner.os }}-elan-
+
+      - name: Run build script
+        run: |
+          chmod +x ../../build_all.sh
+          ../../build_all.sh

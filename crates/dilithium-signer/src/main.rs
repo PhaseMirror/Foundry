@@ -1,6 +1,5 @@
 use clap::{Parser, Subcommand};
-use pqcrypto_dilithium::dilithium5::*;
-use pqcrypto_traits::sign::{PublicKey, SecretKey, DetachedSignature};
+use dilithium_signer::{keygen, sign, verify};
 use std::fs;
 
 #[derive(Parser)]
@@ -41,7 +40,7 @@ enum Commands {
         /// The detached signature (in hex)
         #[arg(short, long)]
         sig_hex: String,
-    }
+    },
 }
 
 fn main() {
@@ -49,29 +48,25 @@ fn main() {
 
     match &cli.command {
         Commands::Keygen { sk_path, pk_path } => {
-            let (pk, sk) = keypair();
-            fs::write(pk_path, pk.as_bytes()).expect("Failed to write PK");
-            fs::write(sk_path, sk.as_bytes()).expect("Failed to write SK");
+            let (pk_bytes, sk_bytes) = keygen();
+            fs::write(pk_path, pk_bytes).expect("Failed to write PK");
+            fs::write(sk_path, sk_bytes).expect("Failed to write SK");
             println!("Keys generated successfully.");
         }
         Commands::Sign { sk_path, msg_hex } => {
             let sk_bytes = fs::read(sk_path).expect("Failed to read SK");
-            let sk = dilithium5_SecretKey::from_bytes(&sk_bytes).expect("Invalid SK bytes");
             let msg_bytes = hex::decode(msg_hex.trim_start_matches("0x")).expect("Invalid hex message");
-            let sig = detached_sign(&msg_bytes, &sk);
-            let sig_hex = hex::encode(sig.as_bytes());
+            let sig = sign(&sk_bytes, &msg_bytes);
+            let sig_hex = hex::encode(sig);
             println!("0x{}", sig_hex);
         }
         Commands::Verify { pk_path, msg_hex, sig_hex } => {
             let pk_bytes = fs::read(pk_path).expect("Failed to read PK");
-            let pk = dilithium5_PublicKey::from_bytes(&pk_bytes).expect("Invalid PK bytes");
             let msg_bytes = hex::decode(msg_hex.trim_start_matches("0x")).expect("Invalid hex message");
             let sig_bytes = hex::decode(sig_hex.trim_start_matches("0x")).expect("Invalid hex signature");
-            let sig = dilithium5_DetachedSignature::from_bytes(&sig_bytes).expect("Invalid signature bytes");
-            
-            match verify_detached_signature(&sig, &msg_bytes, &pk) {
-                Ok(_) => println!("Signature verified"),
-                Err(_) => println!("Signature invalid"),
+            match verify(&pk_bytes, &msg_bytes, &sig_bytes) {
+                Ok(()) => println!("Signature verified"),
+                Err(()) => println!("Signature invalid"),
             }
         }
     }

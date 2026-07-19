@@ -5,6 +5,7 @@ namespace ALP.Types
 inductive TrustLevel
   | Internal
   | External
+  deriving DecidableEq
 
 structure Action where
   id : String
@@ -15,5 +16,6 @@ structure Action where
 structure AdmissibilityReport where
   allowed : Bool
   reason : String
+  deriving DecidableEq
 
 end ALP.Types

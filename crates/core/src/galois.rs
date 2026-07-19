@@ -1,10 +1,10 @@
 //! # Galois Representations from Modular Forms (pirtm-rs / galois)
 //!
 //! Implements the Langlands correspondence for GL(2) in the computational
-//! setting: each McKay–Thompson series T_g gives rise to a compatible family
-//! of 2-dimensional ℓ-adic Galois representations
+//! setting: each McKay-Thompson series T_g gives rise to a compatible family
+//! of 2-dimensional l-adic Galois representations
 //!
-//!     ρ_{g,ℓ} : G_Q → GL_2(Q̄_ℓ)
+//! rho_{g,l} : G_Q -> GL_2(Q-bar_l)
 //!
 //! For a given Monster conjugacy class and a prime p, this module returns
 //! the trace and determinant of Frob_p using pre-computed tables or on-the-fly

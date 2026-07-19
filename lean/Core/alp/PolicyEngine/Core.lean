@@ -12,11 +12,17 @@ structure PolicyEngine where
   constitution : ALP.Constitution.ConstitutionModel
 
 def validate_action (pe : PolicyEngine) (a : Action) (t : TrustLevel) : AdmissibilityReport :=
-  let constitutionValid := ALP.Constitution.L0.validate pe.constitution
-  let allowed := match t with
-    | TrustLevel.Internal => constitutionValid
-    | TrustLevel.External => !a.mutating && a.server_binding.isNone && constitutionValid
-  { allowed := allowed,
-    reason := if allowed then "Admitted" else "Vetoed by constitutional policy" }
+  match ALP.Constitution.L0.validate pe.constitution, t with
+  | false, _ =>
+    { allowed := false, reason := "Vetoed by constitutional policy" }
+  | true, TrustLevel.Internal =>
+    { allowed := true, reason := "Admitted" }
+  | true, TrustLevel.External =>
+    if a.mutating then
+      { allowed := false, reason := "Mutating action blocked for external trust" }
+    else if a.server_binding.isSome then
+      { allowed := false, reason := "Server binding blocked for external trust" }
+    else
+      { allowed := true, reason := "Admitted" }
 
 end ALP.PolicyEngine

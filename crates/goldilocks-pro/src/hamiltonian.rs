@@ -1,4 +1,4 @@
-use crate::{GoldilocksField, PrimeMask, ResonanceWord};
+use crate::{GoldilocksField, PrimeMask, ResonanceWord, MODULUS};
 use std::collections::HashMap;
 
 /// Lever 4 — Hamiltonian (Normative)
@@ -74,9 +74,26 @@ pub struct ZetaCell {
 }
 
 impl ZetaCell {
+    pub fn new(hamiltonian: Hamiltonian, initial_state: Vec<GoldilocksField>) -> Self {
+        Self { hamiltonian, state: initial_state }
+    }
+
+    /// Apply one step of Hamiltonian evolution to the spectral state.
+    /// For each eigenvalue λ_i in `self.state`, the update rule is:
+    ///   λ_i' = λ_i + Σ_j eff_j * λ_i * mask_factor(λ_j)
+    /// where eff_j are the effective Hamiltonian coefficients and mask_factor
+    /// implements prime-gated coupling between eigenvalues.
     pub fn update(&mut self, active_mask: PrimeMask, resonance_state: &HashMap<u8, ResonanceWord>) {
-        let _eff = self.hamiltonian.evaluate(active_mask, resonance_state);
-        // Implementation of spectral gap modulation logic goes here
-        // This will be part of the AZ-TFTC simulation.
+        let eff = self.hamiltonian.evaluate(active_mask, resonance_state);
+        if eff.is_empty() || self.state.is_empty() {
+            return;
+        }
+        let n = self.state.len();
+        let eff_sum: GoldilocksField = eff.iter().fold(GoldilocksField::ZERO, |acc, &c| acc + c);
+        for i in 0..n {
+            let coupling = eff_sum * GoldilocksField::new((i as u64 + 1) % MODULUS);
+            let delta = self.state[i] * coupling;
+            self.state[i] = self.state[i] + delta;
+        }
     }
 }

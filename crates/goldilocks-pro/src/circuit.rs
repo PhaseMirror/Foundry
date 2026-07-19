@@ -65,13 +65,41 @@ impl PrimeResonanceAir {
     }
 }
 
-/// A placeholder for the Plonky3 proof bundle.
+/// Proof bundle containing a serialized proof and its public inputs.
 pub struct ProofBundle {
     pub proof: Vec<u8>,
     pub public_inputs: Vec<GoldilocksField>,
 }
 
+/// Trait for Plonky3-compatible proving and verification.
 pub trait ProverChip {
     fn prove(&self, inputs: &ConvergencePublicInputsPro) -> ProofBundle;
     fn verify(&self, bundle: &ProofBundle) -> bool;
+}
+
+/// Reference prover implementation that serializes public inputs as the proof
+/// and verifies by checking the proof is a valid encoding of the public inputs.
+/// This is a structural proof suitable for testing and development.
+pub struct ReferenceProverChip;
+
+impl ProverChip for ReferenceProverChip {
+    fn prove(&self, inputs: &ConvergencePublicInputsPro) -> ProofBundle {
+        let public = inputs.to_vec();
+        let mut proof = Vec::with_capacity(public.len() * 8);
+        for fe in &public {
+            proof.extend_from_slice(&fe.0.to_le_bytes());
+        }
+        ProofBundle { proof, public_inputs: public }
+    }
+
+    fn verify(&self, bundle: &ProofBundle) -> bool {
+        if bundle.public_inputs.is_empty() {
+            return false;
+        }
+        let mut expected = Vec::with_capacity(bundle.public_inputs.len() * 8);
+        for fe in &bundle.public_inputs {
+            expected.extend_from_slice(&fe.0.to_le_bytes());
+        }
+        bundle.proof == expected
+    }
 }

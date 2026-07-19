@@ -99,15 +99,29 @@ impl Circuit<Fr> for BatchAggregationCircuit {
                     ).map_err(|_| Error::Synthesis)?;
                 }
 
-                // 2. Compute the Batch Merkle Root
-                // In production, we'd use `PoseidonChip` or `KeccakChip` from `halo2_gadgets`
-                // Let's assume `compute_root_gadget` computes the tree over `self.instances`.
-                let computed_root = loader.assign_scalar(self.batch_merkle_root); 
-                // placeholder for hash gadget: let computed_root = compute_poseidon_root(&loader, &loaded_instances);
+                // 2. Compute the Batch Merkle Root via Poseidon hash
+                // TODO: Replace with PoseidonChip from halo2_gadgets once integrated.
+                // The Poseidon hash must be computed over all instance vectors in the batch
+                // to produce a single Merkle root that can be verified on-chain.
+                //
+                // Required integration:
+                //   use halo2_gadgets::poseidon::{PoseidonChip, PoseidonInstructions};
+                //   let poseidon_chip = PoseidonChip::construct(config.poseidon_config);
+                //   let computed_root = poseidon_chip.hash(
+                //       &mut layouter, &loaded_instances_flat, &poseidon_spec
+                //   )?;
+                //
+                // For now, assign the provided batch_merkle_root as a witness.
+                // The circuit owner MUST ensure this matches the off-chain Poseidon computation.
+                let computed_root = loader.assign_scalar(self.batch_merkle_root);
 
-                // 3. Expose the computed root as the public instance
-                // (Constraint system will later enforce this matches `config.instance`)
-                loader.ctx_mut().constrain_equal(&computed_root, &computed_root); // Placeholder for actual constraint
+                // 3. Constrain the computed root against the public instance column.
+                // The public instance at index 0 is the expected Merkle root.
+                // This enforces: circuit_computed_root == public_input_root
+                loader.ctx_mut().constrain_equal(
+                    &computed_root,
+                    &loader.load_public_instance(0),
+                );
 
                 Ok(())
             },

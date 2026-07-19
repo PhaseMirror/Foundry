@@ -135,7 +135,7 @@ pub struct PrimeVerificationLog {
 }
 
 impl GoldilocksField {
-    // Internal witness storage (process‑wide).
+    // Internal witness storage (process-wide).
     #[cfg(not(test))]
     fn emit_witness(w: GoldilocksWitness) {
         use once_cell::sync::Lazy;
@@ -143,6 +143,9 @@ impl GoldilocksField {
         static WITNESSES: Lazy<Mutex<Vec<GoldilocksWitness>>> = Lazy::new(|| Mutex::new(Vec::new()));
         let _ = WITNESSES.lock().map(|mut v| v.push(w));
     }
+
+    #[cfg(test)]
+    fn emit_witness(_w: GoldilocksWitness) {}
 
     /// Add two field elements, emitting a witness.
     #[inline]

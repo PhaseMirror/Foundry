@@ -180,6 +180,14 @@ pub struct PolicyInput {
 pub fn evaluate_preservation(json_input: &str) -> Result<String, anyhow::Error> {
     // Deserialize the JSON into PolicyInput
     let input: PolicyInput = serde_json::from_str(json_input)?;
+    // Derive trust level from the action's server binding BEFORE moving fields.
+    // If the binding references an "external" server, trust is External;
+    // otherwise default to Internal (the local governance boundary).
+    let trust = if input.server_binding.as_deref().map_or(false, |b| b.contains("external")) {
+        multiplicity_common::types::TrustLevel::External
+    } else {
+        multiplicity_common::types::TrustLevel::Internal
+    };
     // Build an Action that the PolicyEngine expects
     let action = Action {
         id: input.id,
@@ -187,9 +195,6 @@ pub fn evaluate_preservation(json_input: &str) -> Result<String, anyhow::Error> 
         mutating: input.mutating,
         server_binding: input.server_binding,
     };
-    // For now we use a placeholder TrustLevel (e.g., Internal). In the actual engine this
-    // would be derived from the constitution and policy configuration.
-    let trust = multiplicity_common::types::TrustLevel::Internal;
     // Call the engine (currently always allowed)
     let report = PolicyEngine::new((), None::<String>, ()).validate_action(&action, &trust)?;
     // Map the allowed flag to a simple risk level string.

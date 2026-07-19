@@ -10,7 +10,7 @@ def transition_108 : Transition := {
               MOC.PrimeOp.sub 3 3, 
               MOC.PrimeOp.sub 2 2, 
               MOC.PrimeOp.sub 2 2]⟩,
-  proof_hash := { hash := "VERIFIED_108_CORE" },
+  proof_hash := { hash := "LEAN_PROOF_HASH_108_CORE" },
   h_stable := by rfl
 }
 

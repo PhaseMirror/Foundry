@@ -34,12 +34,16 @@ use archivum::{ParmSealProof, WitnessLedger};
 #[cfg(test)]
 mod tests;
 
-#[cfg(kani)]
+#[cfg(feature = "kani")]
 mod verification;
 
 pub mod triple_lock;
 
-pub mod PARM;
+pub mod parm_module;
+pub use parm_module as PARM;
+
+pub mod analysis;
+pub mod lexicon;
 
 // ---------------------------------------------------------------------------
 // Core types
@@ -149,15 +153,6 @@ impl ParmEngine {
     ///
     /// This is the preferred entry point for production sealing because it
     /// produces the audit-ready witness in a single call.
-    ///
-    /// # Arguments
-    ///
-    /// * `primes` – Slice of prime numbers.
-    ///
-    /// # Returns
-    ///
-    /// * `Ok((sealed_value, witness))` – Sealed state and its witness.
-    /// * `Err(ParmError)` – On overflow or empty input.
     pub fn seal_with_witness(&self, primes: &[u64]) -> Result<(u64, ParmSealWitness), ParmError> {
         let input_bytes = bytemuck::cast_slice(primes);
         let sealed = self.sealed_state(primes)?;
@@ -186,4 +181,3 @@ impl ParmEngine {
 // ---------------------------------------------------------------------------
 
 pub use triple_lock::TripleLockParm;
-

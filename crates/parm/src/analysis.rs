@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::error::Error;
 use std::collections::HashMap;
-use crate::PARM;
+use crate::parm_module;
 use rand::prelude::*;
 use rand_distr::{Zipf, Distribution};
 
@@ -21,17 +21,17 @@ pub struct RootData {
 pub fn process_corpus(input_path: &str, output_path: &str) -> Result<(), Box<dyn Error>> {
     let mut rdr = csv::Reader::from_path(input_path)?;
     let mut wtr = csv::Writer::from_path(output_path)?;
-    
+
     for result in rdr.deserialize() {
         let record: HashMap<String, String> = result?;
         let root = record.get("root").ok_or("Missing root")?;
         let gloss = record.get("gloss").unwrap_or(&"".to_string()).clone();
-        
+
         let clean_root: String = root.chars().filter(|c| ('\u{05D0}'..='\u{05EA}').contains(c)).collect();
         if clean_root.is_empty() { continue; }
-        
+
         let analysis = analyze_word_rs(&clean_root);
-        
+
         let row = RootData {
             root: clean_root,
             gloss,
@@ -53,8 +53,8 @@ pub fn simulate_and_analyze(data: &mut [RootData]) -> Result<(), Box<dyn Error>>
     let n = data.len();
     if n == 0 { return Ok(()); }
 
-    let mut rng = rand::rng();
-    let zipf = Zipf::new(n as f64, 1.05)?;
+    let mut rng = rand::thread_rng();
+    let zipf = Zipf::new(n as u64, 1.05)?;
 
     let mut frequencies: Vec<i32> = (0..n).map(|_| zipf.sample(&mut rng) as i32).collect();
     frequencies.shuffle(&mut rng);
@@ -78,15 +78,15 @@ pub struct WordAnalysis {
 }
 
 pub fn analyze_word_rs(word: &str) -> WordAnalysis {
-    let shape_primes: Vec<i32> = word.chars().filter_map(|c| PARM::get_shape_map(c)).map(|p| PARM::get_prime(p as usize)).collect();
-    let num_primes: Vec<i32> = word.chars().filter_map(|c| {
-        let sg = PARM::small_gematria(c);
-        if sg > 0 { PARM::get_small_gematria_to_prime(sg) } else { None }
+    let shape_primes: Vec<u32> = word.chars().filter_map(|c| parm_module::get_shape_map(c)).map(|p| parm_module::get_prime(p as usize)).collect();
+    let num_primes: Vec<u32> = word.chars().filter_map(|c| {
+        let sg = parm_module::small_gematria(c);
+        if sg > 0 { parm_module::get_small_gematria_to_prime(sg) } else { None }
     }).collect();
-    
-    let rq_shape = PARM::calculate_rq(&shape_primes, false);
-    let rq_num = PARM::calculate_rq(&num_primes, false);
+
+    let rq_shape = parm_module::calculate_rq(&shape_primes, false);
+    let rq_num = parm_module::calculate_rq(&num_primes, false);
     let c_resonance = (rq_shape * rq_num).sqrt();
-    
+
     WordAnalysis { rq_shape, rq_num, c_resonance }
 }

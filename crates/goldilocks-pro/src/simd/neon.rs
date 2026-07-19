@@ -1,4 +1,5 @@
 use crate::GoldilocksField;
+use std::ops::{Add, Sub, Mul};
 
 #[cfg(target_arch = "aarch64")]
 use std::arch::aarch64::*;
@@ -37,12 +38,38 @@ pub fn vec_add(a: &[GoldilocksField], b: &[GoldilocksField], out: &mut [Goldiloc
 }
 
 pub fn vec_sub(a: &[GoldilocksField], b: &[GoldilocksField], out: &mut [GoldilocksField]) {
-    for i in 0..a.len() {
-        out[i] = a[i] - b[i];
+    assert_eq!(a.len(), b.len());
+    assert_eq!(a.len(), out.len());
+
+    #[allow(unused_mut)]
+    let mut i = 0;
+    #[cfg(target_arch = "aarch64")]
+    {
+        let mod_vec = unsafe { vdupq_n_u64(0xFFFF_FFFF_0000_0001) };
+        while i + 2 <= a.len() {
+            unsafe {
+                let va = vld1q_u64(a[i..].as_ptr() as *const u64);
+                let vb = vld1q_u64(b[i..].as_ptr() as *const u64);
+                let diff = vsubq_u64(va, vb);
+                // mask = a < b (unsigned) → need adjustment
+                let mask = vcltq_u64(va, vb);
+                let adjusted = vaddq_u64(diff, mod_vec);
+                let res = vbslq_u64(mask, adjusted, diff);
+                vst1q_u64(out[i..].as_mut_ptr() as *mut u64, res);
+            }
+            i += 2;
+        }
+    }
+
+    for j in i..a.len() {
+        out[j] = a[j] - b[j];
     }
 }
 
 pub fn vec_mul(a: &[GoldilocksField], b: &[GoldilocksField], out: &mut [GoldilocksField]) {
+    assert_eq!(a.len(), b.len());
+    assert_eq!(a.len(), out.len());
+
     for i in 0..a.len() {
         out[i] = a[i] * b[i];
     }

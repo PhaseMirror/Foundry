@@ -4,19 +4,39 @@ import Core.alp.Constitution.L0
 
 namespace ALP.PolicyEngine.Proofs
 
-axiom internal_valid_action_admitted :
-  ∀ (pe : ALP.PolicyEngine.PolicyEngine) (a : ALP.Types.Action),
-  ALP.Constitution.L0.validate pe.constitution = true →
-    (ALP.PolicyEngine.validate_action pe a ALP.Types.TrustLevel.Internal).allowed = true
+open ALP.PolicyEngine ALP.Types ALP.Constitution.L0
 
-axiom external_mutating_action_blocked :
-  ∀ (pe : ALP.PolicyEngine.PolicyEngine) (a : ALP.Types.Action),
-  a.mutating = true →
-    (ALP.PolicyEngine.validate_action pe a ALP.Types.TrustLevel.External).allowed = false
+theorem internal_valid_action_admitted (pe : PolicyEngine) (a : Action)
+    (h_const : validate pe.constitution = true) :
+    (validate_action pe a TrustLevel.Internal).allowed = true := by
+  unfold validate_action
+  split
+  · simp_all
+  · rfl
+  · simp_all
 
-axiom external_with_server_binding_blocked :
-  ∀ (pe : ALP.PolicyEngine.PolicyEngine) (a : ALP.Types.Action),
-  a.server_binding.isSome = true →
-    (ALP.PolicyEngine.validate_action pe a ALP.Types.TrustLevel.External).allowed = false
+theorem external_mutating_action_blocked (pe : PolicyEngine) (a : Action)
+    (h_mut : a.mutating = true) :
+    (validate_action pe a TrustLevel.External).allowed = false := by
+  unfold validate_action
+  split
+  · rfl
+  · next hc _ => simp_all
+  · next hc =>
+    split
+    · rfl
+    · simp_all
+
+theorem external_with_server_binding_blocked (pe : PolicyEngine) (a : Action)
+    (h_bind : a.server_binding.isSome = true) :
+    (validate_action pe a TrustLevel.External).allowed = false := by
+  unfold validate_action
+  split
+  · rfl
+  · next hc _ => simp_all
+  · next hc =>
+    split
+    · simp_all
+    · simp_all
 
 end ALP.PolicyEngine.Proofs

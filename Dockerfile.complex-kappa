@@ -1,0 +1,34 @@
+FROM ubuntu:22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV LEAN_VERSION=v4.32.0-rc1
+ENV KANI_VERSION=0.53.0
+
+RUN apt-get update && apt-get install -y \
+    curl \
+    git \
+    build-essential \
+    cmake \
+    libssl-dev \
+    zlib1g-dev \
+    pkg-config \
+    python3 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Lean 4
+RUN curl https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -sSf | sh -s -- -y --default-toolchain ${LEAN_VERSION} --no-modify-path
+ENV PATH="/root/.elan/bin:${PATH}"
+
+# Install Rust
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain nightly
+ENV PATH="/root/.cargo/bin:${PATH}"
+
+# Install Kani
+RUN cargo install kani-verifier --version ${KANI_VERSION}
+
+# Verify installations
+RUN lean --version && cargo --version && kani --version
+
+WORKDIR /workspace
+
+CMD ["bash"]

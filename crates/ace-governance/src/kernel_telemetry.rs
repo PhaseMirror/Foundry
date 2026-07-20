@@ -1,12 +1,21 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BeatSpectrumStats {
+    pub peak_frequencies: Vec<f64>,
+    pub mean_spacing: f64,
+    pub level_repulsion_dip: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct KernelTelemetry {
     pub xn_kernel: f64,
     pub wt_max_kernel: f64,
     pub protection_zeta: f64,
     pub is_valid_kernel: bool,
     pub telemetry_version: u32,
+    pub beat_spectrum_stats: BeatSpectrumStats,
+    pub gue_deviation: f64,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -49,7 +58,13 @@ pub mod zeno {
             wt_max_kernel: 0.0,
             protection_zeta: 0.0,
             is_valid_kernel: true,
-            telemetry_version: 1,
+            telemetry_version: 2,
+            beat_spectrum_stats: BeatSpectrumStats {
+                peak_frequencies: vec![],
+                mean_spacing: 0.0,
+                level_repulsion_dip: 0.0,
+            },
+            gue_deviation: 0.0,
         })
     }
 }

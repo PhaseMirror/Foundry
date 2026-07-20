@@ -59,3 +59,83 @@ mod tests {
         assert!((slope_ub - 0.02).abs() < f64::EPSILON);
     }
 }
+
+/// Nat-based certification definitions for Kani verification.
+/// Mirrors `lean/gated/META_RELATIVITY/Certification.lean` exactly.
+#[cfg(kani)]
+pub mod nat_certification {
+    pub const SCALE: u64 = 10000;
+
+    /// Certification check: gap_lb >= gamma_min.
+    pub fn certify_operator(gap_lb: u64, gamma_min: u64) -> bool {
+        gap_lb >= gamma_min
+    }
+
+    /// Spectral gap lower bound: all pairwise distances >= min_gap.
+    pub fn spectral_gap_lb(eigenvalues: &[u64], min_gap: u64) -> bool {
+        for i in 0..eigenvalues.len() {
+            for j in (i + 1)..eigenvalues.len() {
+                let diff = if eigenvalues[i] >= eigenvalues[j] {
+                    eigenvalues[i] - eigenvalues[j]
+                } else {
+                    eigenvalues[j] - eigenvalues[i]
+                };
+                if diff < min_gap {
+                    return false;
+                }
+            }
+        }
+        true
+    }
+}
+
+#[cfg(kani)]
+mod verification {
+    use super::nat_certification::*;
+
+    /// Symbolic proof: certify_operator(gap_lb, 0) always returns true.
+    #[kani::proof]
+    fn proof_certification_zero_threshold() {
+        let gap_lb: u64 = kani::any();
+        kani::assert(certify_operator(gap_lb, 0), "gamma_min=0 always passes");
+    }
+
+    /// Symbolic proof: certify_operator is sound — if gap_lb >= gamma_min, returns true.
+    #[kani::proof]
+    fn proof_certification_sound() {
+        let gap_lb: u64 = kani::any();
+        let gamma_min: u64 = kani::any();
+        kani::assume(gap_lb >= gamma_min);
+        kani::assert(certify_operator(gap_lb, gamma_min), "certify_operator sound");
+    }
+
+    /// Symbolic proof: certify_operator is complete — if true, gap_lb >= gamma_min.
+    #[kani::proof]
+    fn proof_certification_complete() {
+        let gap_lb: u64 = kani::any();
+        let gamma_min: u64 = kani::any();
+        kani::assume(certify_operator(gap_lb, gamma_min));
+        kani::assert(gap_lb >= gamma_min, "certify_operator complete");
+    }
+
+    /// Symbolic proof: spectral_gap_lb on single eigenvalue is trivially true.
+    #[kani::proof]
+    fn proof_spectral_gap_singleton() {
+        let e: u64 = kani::any();
+        let min_gap: u64 = kani::any();
+        kani::assert(spectral_gap_lb(&[e], min_gap), "singleton list has no pairs");
+    }
+
+    /// Symbolic proof: spectral_gap_lb rejects insufficient gaps.
+    #[kani::proof]
+    fn proof_spectral_gap_rejects_insufficient() {
+        let e1: u64 = kani::any();
+        let e2: u64 = kani::any();
+        let min_gap: u64 = kani::any();
+
+        let diff = if e1 >= e2 { e1 - e2 } else { e2 - e1 };
+        if diff < min_gap {
+            kani::assert(!spectral_gap_lb(&[e1, e2], min_gap), "rejects insufficient gap");
+        }
+    }
+}

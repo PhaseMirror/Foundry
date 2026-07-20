@@ -16,4 +16,11 @@ lean_lib GatedCore where
     `STRATIFIED_GOVERNANCE.StratifiedGovernance,
     `KNOT_IN_TIME.KnotInTime,
     `Ontoς.Ontoς,
+    `META_RELATIVITY.Core,
+    `META_RELATIVITY.Theorems,
+    `META_RELATIVITY.Operators,
+    `META_RELATIVITY.Invariants,
+    `META_RELATIVITY.Certification,
+    `META_RELATIVITY.Security,
+    `META_RELATIVITY.Integration,
   ]

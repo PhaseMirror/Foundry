@@ -190,4 +190,58 @@ mod verification {
             kani::assert(g5.g4.delta_c_ratio < 400, "Gate4 delta_c bounds");
         }
     }
+
+    /// Symbolic proof: Gate2 rejects any theta_1 outside [2*scale-4000, 2*scale+4000).
+    #[kani::proof]
+    fn proof_gate2_rejects_out_of_band() {
+        let theta_1: u64 = kani::any();
+        kani::assume(theta_1 <= u64::MAX - 2 * SCALE);
+
+        let diff = if theta_1 >= 2 * SCALE {
+            theta_1 - 2 * SCALE
+        } else {
+            2 * SCALE - theta_1
+        };
+
+        if diff >= 4000 {
+            let g5 = Gate5 {
+                g1: Gate1 { f_nl: 0, coupling_strength: 0 },
+                g2: Gate2 { theta_1 },
+                g3: Gate3 { a: 300 * SCALE },
+                g4: Gate4 {
+                    beta_lambda_8: 0,
+                    beta_lambda_6: 1,
+                    delta_c_ratio: 0,
+                },
+            };
+            let engine = MetaRelativityEngine;
+            let res = engine.check_gate5(&g5);
+            kani::assert(res.is_err(), "Gate2 rejects out-of-band theta_1");
+        }
+    }
+
+    /// Symbolic proof: Gate4 rejects beta_lambda_8 * 100 >= beta_lambda_6 * 3.
+    #[kani::proof]
+    fn proof_gate4_rejects_beta_violation() {
+        let beta_lambda_8: u64 = kani::any();
+        let beta_lambda_6: u64 = kani::any();
+        kani::assume(beta_lambda_8 <= u64::MAX / 100);
+        kani::assume(beta_lambda_6 <= u64::MAX / 3);
+
+        if beta_lambda_8 * 100 >= beta_lambda_6 * 3 {
+            let g5 = Gate5 {
+                g1: Gate1 { f_nl: 0, coupling_strength: 0 },
+                g2: Gate2 { theta_1: 2 * SCALE },
+                g3: Gate3 { a: 300 * SCALE },
+                g4: Gate4 {
+                    beta_lambda_8,
+                    beta_lambda_6,
+                    delta_c_ratio: 0,
+                },
+            };
+            let engine = MetaRelativityEngine;
+            let res = engine.check_gate5(&g5);
+            kani::assert(res.is_err(), "Gate4 rejects beta ratio violation");
+        }
+    }
 }

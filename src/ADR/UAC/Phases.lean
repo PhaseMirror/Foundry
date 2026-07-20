@@ -48,8 +48,8 @@ inductive ValidTransition : Phase → Phase → Prop where
   | cToD      : ValidTransition Phase.PhaseC Phase.PhaseD
 
 /-- Transition preserves ordering: target is strictly ahead of source. -/
-theorem transition_advances (from to : Phase) (h : ValidTransition from to) :
-    phaseOrder from < phaseOrder to := by
+theorem transition_advances (src tgt : Phase) (h : ValidTransition src tgt) :
+    phaseOrder src < phaseOrder tgt := by
   cases h with
   | initToA => simp [phaseOrder]
   | aToB    => simp [phaseOrder]

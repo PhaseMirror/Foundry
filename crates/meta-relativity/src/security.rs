@@ -52,3 +52,62 @@ mod tests {
         assert!(!is_dynamic_code_present("x + 1"));
     }
 }
+
+/// Symbolic verification for rollback safety.
+#[cfg(kani)]
+mod verification {
+    use super::*;
+
+    /// Symbolic proof: rollback on a non-empty golden set always returns Ok.
+    #[kani::proof]
+    fn proof_rollback_safe() {
+        let n: usize = kani::any();
+        kani::assume(n >= 1 && n <= 8);
+
+        let mut golden_set: Vec<u64> = Vec::new();
+        for _ in 0..n {
+            golden_set.push(kani::any());
+        }
+
+        let ctx = SecurityContext::new(golden_set, vec![]);
+        let result = ctx.rollback();
+        kani::assert(result.is_ok(), "rollback on non-empty golden set returns Ok");
+    }
+
+    /// Symbolic proof: rollback returns the last element of golden_set.
+    #[kani::proof]
+    fn proof_rollback_returns_last() {
+        let n: usize = kani::any();
+        kani::assume(n >= 1 && n <= 8);
+
+        let mut golden_set: Vec<u64> = Vec::new();
+        for _ in 0..n {
+            golden_set.push(kani::any());
+        }
+
+        let last_val = *golden_set.last().unwrap();
+        let ctx = SecurityContext::new(golden_set, vec![]);
+        let result = ctx.rollback().unwrap();
+        kani::assert(result == last_val, "rollback returns last golden-set value");
+    }
+
+    /// Symbolic proof: rollback on empty golden set returns Err.
+    #[kani::proof]
+    fn proof_rollback_empty_is_err() {
+        let ctx: SecurityContext<u64> = SecurityContext::new(vec![], vec![]);
+        let result = ctx.rollback();
+        kani::assert(result.is_err(), "rollback on empty golden set returns Err");
+    }
+
+    /// Symbolic proof: is_dynamic_code_present catches eval().
+    #[kani::proof]
+    fn proof_dynamic_code_detection() {
+        let s: &str = kani::any();
+        let patterns = ["eval(", "exec(", "import", "os.system", "subprocess"];
+        for pat in patterns {
+            if s.contains(pat) {
+                kani::assert(is_dynamic_code_present(s), "detects forbidden pattern");
+            }
+        }
+    }
+}

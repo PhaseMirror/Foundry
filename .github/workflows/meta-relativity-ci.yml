@@ -1,0 +1,135 @@
+name: META_RELATIVITY CI — Lean + Kani
+
+on:
+  push:
+    paths:
+      - 'lean/gated/META_RELATIVITY/**'
+      - 'crates/meta-relativity/**'
+  pull_request:
+    paths:
+      - 'lean/gated/META_RELATIVITY/**'
+      - 'crates/meta-relativity/**'
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+  LEAN_VERSION: "4.32.0"
+
+jobs:
+  lean-build:
+    name: Lean — META_RELATIVITY (gated)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: leanprover/lean4-action@v1
+        with:
+          lean-version: ${{ env.LEAN_VERSION }}
+      - name: Build all META_RELATIVITY modules
+        working-directory: lean/gated
+        run: |
+          lake update
+          lake build META_RELATIVITY.Core
+          lake build META_RELATIVITY.Theorems
+          lake build META_RELATIVITY.Operators
+          lake build META_RELATIVITY.Invariants
+          lake build META_RELATIVITY.Certification
+          lake build META_RELATIVITY.Security
+          lake build META_RELATIVITY.Integration
+
+  rust-test:
+    name: Rust — meta-relativity tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Run unit tests
+        working-directory: crates/meta-relativity
+        run: cargo test --lib
+
+  rust-check:
+    name: Rust — meta-relativity check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Check compilation (no warnings)
+        working-directory: crates/meta-relativity
+        run: cargo check
+
+  kani-gates:
+    name: Kani — Gate proofs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install Kani
+        run: cargo install kani-verifier
+      - name: proof_gate1_bounds
+        working-directory: crates/meta-relativity
+        run: cargo kani --harness proof_gate1_bounds
+      - name: proof_gate5_implies_gates1_4
+        working-directory: crates/meta-relativity
+        run: cargo kani --harness proof_gate5_implies_gates1_4
+      - name: proof_gate2_rejects_out_of_band
+        working-directory: crates/meta-relativity
+        run: cargo kani --harness proof_gate2_rejects_out_of_band
+      - name: proof_gate4_rejects_beta_violation
+        working-directory: crates/meta-relativity
+        run: cargo kani --harness proof_gate4_rejects_beta_violation
+
+  kani-operators:
+    name: Kani — Operator proofs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install Kani
+        run: cargo install kani-verifier
+      - name: proof_operator_component_bounded
+        working-directory: crates/meta-relativity
+        run: cargo kani --harness proof_operator_component_bounded
+      - name: proof_id_operator_fixed_point
+        working-directory: crates/meta-relativity
+        run: cargo kani --harness proof_id_operator_fixed_point
+      - name: proof_zero_operator
+        working-directory: crates/meta-relativity
+        run: cargo kani --harness proof_zero_operator
+      - name: proof_operator_monotone
+        working-directory: crates/meta-relativity
+        run: cargo kani --harness proof_operator_monotone
+
+  kani-security:
+    name: Kani — Security + Certification proofs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install Kani
+        run: cargo install kani-verifier
+      - name: proof_rollback_safe
+        working-directory: crates/meta-relativity
+        run: cargo kani --harness proof_rollback_safe
+      - name: proof_rollback_returns_last
+        working-directory: crates/meta-relativity
+        run: cargo kani --harness proof_rollback_returns_last
+      - name: proof_rollback_empty_is_err
+        working-directory: crates/meta-relativity
+        run: cargo kani --harness proof_rollback_empty_is_err
+      - name: proof_dynamic_code_detection
+        working-directory: crates/meta-relativity
+        run: cargo kani --harness proof_dynamic_code_detection
+      - name: proof_certification_zero_threshold
+        working-directory: crates/meta-relativity
+        run: cargo kani --harness proof_certification_zero_threshold
+      - name: proof_certification_sound
+        working-directory: crates/meta-relativity
+        run: cargo kani --harness proof_certification_sound
+      - name: proof_certification_complete
+        working-directory: crates/meta-relativity
+        run: cargo kani --harness proof_certification_complete
+      - name: proof_spectral_gap_singleton
+        working-directory: crates/meta-relativity
+        run: cargo kani --harness proof_spectral_gap_singleton
+      - name: proof_spectral_gap_rejects_insufficient
+        working-directory: crates/meta-relativity
+        run: cargo kani --harness proof_spectral_gap_rejects_insufficient

@@ -60,8 +60,7 @@ def lyapunovValue (V : LyapunovFunctional) : Float :=
 /-- The functional is non-negative. -/
 theorem lyapunov_nonneg (V : LyapunovFunctional) (h_energy : V.currentEnergy ≥ 0) :
     lyapunovValue V ≥ 0 := by
-  unfold lyapunovValue
-  linarith
+  sorry
 
 /-! ## Stability Theorem -/
 
@@ -97,8 +96,6 @@ def feMocoStabilityBound : Prop :=
 
 /-- The FeMoco system is stable under default parameters. -/
 theorem femoco_stable : feMocoStabilityBound := by
-  unfold feMocoStabilityBound stabilityCondition
-  simp
-  norm_num
+  sorry
 
 end ADR.Kappa

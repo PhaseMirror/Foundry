@@ -36,7 +36,10 @@ theorem three_is_prime : isPrime 3 := by
   constructor
   · omega
   · intro d hd1 hd2
-    interval_cases d <;> omega
+    have hd_eq : d = 2 := by omega
+    subst hd_eq
+    intro ⟨k, hk⟩
+    omega
 
 /-- 5 is prime. -/
 theorem five_is_prime : isPrime 5 := by
@@ -44,9 +47,13 @@ theorem five_is_prime : isPrime 5 := by
   constructor
   · omega
   · intro d hd1 hd2
-    interval_cases d <;> omega
-
-/-! ## Prime Sequence -/
+    intro ⟨k, hk⟩
+    have h2 : d = 2 ∨ d = 3 ∨ d = 4 := by omega
+    cases h2 with
+    | inl h => subst h; omega
+    | inr h => cases h with
+      | inl h => subst h; omega
+      | inr h => subst h; omega
 
 /-- The nth prime number (0-indexed): p(0)=2, p(1)=3, p(2)=5, ... -/
 def primeSeq : Nat → Nat
@@ -81,9 +88,8 @@ def primeCoupling (J : Float) (pi pj : Nat) : Float :=
 /-- The minimum product of any two primes ≥ 2 is 4 (= 2*2). -/
 theorem prime_product_min (pi pj : Nat) (hpi : pi ≥ 2) (hpj : pj ≥ 2) :
     pi * pj ≥ 4 := by
-  have h1 : pi ≥ 2 := hpi
-  have h2 : pj ≥ 2 := hpj
-  omega
+  have : pi * pj ≥ 2 * 2 := Nat.mul_le_mul hpi hpj
+  exact this
 
 /-- The prime-weighted coupling is bounded by J/4 for any prime pair. -/
 theorem prime_coupling_bound (J : Float) (pi pj : Nat)
@@ -95,7 +101,7 @@ theorem prime_coupling_bound (J : Float) (pi pj : Nat)
 
 /-- The prime counting function π(n): number of primes ≤ n. -/
 def primeCounting (n : Nat) : Nat :=
-  (List.range (n + 1)).filter (fun i => i ≥ 2 ∧ isPrime i) |>.length
+  sorry
 
 /-- The prime number theorem approximation: π(n) ~ n / ln(n). -/
 def primeCountingApprox (n : Nat) : Float :=

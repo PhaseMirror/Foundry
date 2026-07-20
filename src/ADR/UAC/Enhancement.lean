@@ -70,7 +70,7 @@ structure Enhancement where
 /-! ## Registry Operations -/
 
 /-- The enhancement registry is a list of enhancements. -/
-def EnhancementRegistry := List Enhancement
+abbrev EnhancementRegistry := List Enhancement
 
 /-- Look up an enhancement by ADR ID. -/
 def findEnhancement (reg : EnhancementRegistry) (id : ADRId) : Option Enhancement :=

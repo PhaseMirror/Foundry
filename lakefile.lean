@@ -30,6 +30,17 @@ lean_lib ADR {
     `ADR.Kappa.Stability,
     `ADR.Kappa.Spectral,
     `ADR.Kappa.Examples,
+    `ComplexKappa.Core,
+    `ComplexKappa.HilbertTransform,
+    `ComplexKappa.Distributions,
+    `ComplexKappa.KramersKronig,
+    `ComplexKappa.WardIdentity,
+    `ComplexKappa.EffectiveCoupling,
+    `ComplexKappa.Zeta,
+    `ComplexKappa.ZetaComb,
+    `ComplexKappa.GUE,
+    `ComplexKappa.MainTheorem,
+    `ComplexKappa.Test,
   ]
 }
 

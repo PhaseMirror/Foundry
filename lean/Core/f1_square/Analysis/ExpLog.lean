@@ -3319,7 +3319,7 @@ theorem qpow_mono_exp {η : Q} (hη0 : 0 ≤ η.num) (hηd : 0 < η.den) (hη1 :
 
 /-- `qpow ⟨c,1⟩ k = ⟨cᵏ,1⟩`. -/
 theorem qpow_const_nat (c : Int) : ∀ k, Qeq (qpow (⟨c, 1⟩ : Q) k) (⟨c ^ k, 1⟩ : Q)
-  | 0 => Qeq_refl _
+  | 0 => by show Qeq ⟨1, 1⟩ ⟨c ^ 0, 1⟩; unfold Qeq; simp [Int.pow_zero]
   | (k + 1) => by
     show Qeq (mul (⟨c, 1⟩ : Q) (qpow ⟨c, 1⟩ k)) ⟨c ^ (k + 1), 1⟩
     refine Qeq_trans (Qmul_den_pos Nat.one_pos Nat.one_pos)

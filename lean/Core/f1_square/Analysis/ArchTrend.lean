@@ -43,7 +43,7 @@ namespace UOR.Bridge.F1Square.Analysis
 def genArchTerm (n j : Nat) (hj : 2 ≤ j) : Real :=
   Rmul
     (ofQ ⟨(if j % 2 = 0 then (1 : Int) else -1) * (choose n j) * (2 ^ j - 1), 2 ^ j⟩
-      (Nat.pos_pow_of_pos j (by decide)))
+      (Nat.pow_pos (by decide)))
     (zeta j hj)
 
 /-- The archimedean tail `Σ_{i=2}^{j} (−1)ⁱ C(n,i)(1 − 2^{−i})ζ(i)` (empty for `j ≤ 1`). -/

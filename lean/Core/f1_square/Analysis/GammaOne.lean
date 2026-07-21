@@ -359,17 +359,18 @@ theorem deltaLog_lower_tight (p T : Nat) (hp : 1 ≤ p)
 def qRoundUp (q : Q) (D : Nat) : Q := ⟨q.num * (D : Int) / (q.den : Int) + 1, D⟩
 
 /-- **`q ≤ qRoundUp q D`** — the round-up dominates (`q.den > 0`). The `+1` ceiling clears the floored
-    division: `(⌊a/b⌋+1)·b = a − a%b + b ≥ a + 1 > a` (`Int.ediv_add_emod` + `0 ≤ a%b < b`). -/
+    division: `(⌊a/b⌋+1)·b = a − a%b + b ≥ a + 1 > a` (`Int.emod_def` + `0 ≤ a%b < b`). -/
 theorem qRoundUp_ge (q : Q) (hqd : 0 < q.den) (D : Nat) : Qle q (qRoundUp q D) := by
   show q.num * (D : Int) ≤ (q.num * (D : Int) / (q.den : Int) + 1) * (q.den : Int)
   have hb : (0 : Int) < (q.den : Int) := by exact_mod_cast hqd
-  have hdm := Int.ediv_add_emod (q.num * (D : Int)) (q.den : Int)
   have hmlt := Int.emod_lt_of_pos (q.num * (D : Int)) hb
   have hmnn := Int.emod_nonneg (q.num * (D : Int)) (by omega : (q.den : Int) ≠ 0)
   have key : (q.num * (D : Int) / (q.den : Int) + 1) * (q.den : Int)
       = (q.den : Int) * (q.num * (D : Int) / (q.den : Int)) + (q.den : Int) := by
     rw [Int.add_mul, Int.one_mul, Int.mul_comm (q.num * (D : Int) / (q.den : Int)) (q.den : Int)]
-  rw [key]; omega
+  rw [key]
+  have h := Int.emod_def (q.num * (D : Int)) (q.den : Int)
+  omega
 
 theorem qRoundUp_den_pos (q : Q) (D : Nat) (hD : 0 < D) : 0 < (qRoundUp q D).den := hD
 
@@ -377,13 +378,15 @@ theorem qRoundUp_den_pos (q : Q) (D : Nat) (hD : 0 < D) : 0 < (qRoundUp q D).den
 def qRoundDown (q : Q) (D : Nat) : Q := ⟨q.num * (D : Int) / (q.den : Int), D⟩
 
 /-- **`qRoundDown q D ≤ q`** — the round-down is dominated (`q.den > 0`): `⌊a/b⌋·b = a − a%b ≤ a`
-    (`Int.ediv_add_emod` + `0 ≤ a%b`). -/
+    (`Int.emod_def` + `0 ≤ a%b`). -/
 theorem qRoundDown_le (q : Q) (hqd : 0 < q.den) (D : Nat) : Qle (qRoundDown q D) q := by
   show (q.num * (D : Int) / (q.den : Int)) * (q.den : Int) ≤ q.num * (D : Int)
   have hb : (0 : Int) < (q.den : Int) := by exact_mod_cast hqd
-  have hdm := Int.ediv_add_emod (q.num * (D : Int)) (q.den : Int)
+  have hdm : (q.num * (D : Int)) / (q.den : Int) * (q.den : Int) + (q.num * (D : Int)) % (q.den : Int) = q.num * (D : Int) := by
+    rw [Int.emod_def, Int.mul_comm ((q.num * (D : Int)) / (q.den : Int)) (q.den : Int)]; omega
   have hmnn := Int.emod_nonneg (q.num * (D : Int)) (by omega : (q.den : Int) ≠ 0)
-  rw [Int.mul_comm (q.num * (D : Int) / (q.den : Int)) (q.den : Int)]; omega
+  have h := Int.emod_def (q.num * (D : Int)) (q.den : Int)
+  omega
 
 theorem qRoundDown_den_pos (q : Q) (D : Nat) (hD : 0 < D) : 0 < (qRoundDown q D).den := hD
 
@@ -945,7 +948,7 @@ theorem Qsub_block_le (c : Int) (hc : 0 ≤ c) (P : Nat) :
     via `gSeq_diff_ge_block` (N=d=2^a) and the telescoped `Vsum_tail_le`, the bound `(a+2)/(2^a+1) ≤
     (a+2)/2^a`. -/
 theorem gSeq_block_ge (a : Nat) :
-    Rle (Rneg (ofQ (⟨(a + 2 : Int), 2 ^ a⟩ : Q) (Nat.pos_pow_of_pos a (by decide))))
+    Rle (Rneg (ofQ (⟨(a + 2 : Int), 2 ^ a⟩ : Q) (Nat.pow_pos (by decide))))
         (Rsub (gSeq (2 ^ (a + 1))) (gSeq (2 ^ a))) := by
   have e1 : (2 : Nat) ^ (a + 1) = 2 ^ a + 2 ^ a := by rw [Nat.pow_succ]; omega
   have e2 : (2 : Nat) ^ (a + 2) = 2 ^ (a + 1) + 2 ^ (a + 1) := by rw [Nat.pow_succ]; omega
@@ -958,7 +961,7 @@ theorem gSeq_block_ge (a : Nat) :
   exact Rle_trans
     (Rle_ofQ_ofQ (Qsub_den_pos (Vsum_den_pos a (2 ^ a + 2 ^ a)) (Vsum_den_pos a (2 ^ a))) hmid
       (Vsum_tail_le a (2 ^ a) (2 ^ a)))
-    (Rle_ofQ_ofQ hmid (Nat.pos_pow_of_pos a (by decide))
+    (Rle_ofQ_ofQ hmid (Nat.pow_pos (by decide))
       (Qsub_block_le ((a : Int) + 2) (by have := Int.ofNat_nonneg a; omega) (2 ^ a)))
 
 /-- Rational sum of per-block lower bounds `Σ_{i<e} (A+i+2)/2^{A+i}`. -/
@@ -968,7 +971,7 @@ def Wsum (A : Nat) : Nat → Q
 
 theorem Wsum_den_pos (A : Nat) : ∀ e, 0 < (Wsum A e).den
   | 0 => Nat.one_pos
-  | (e + 1) => add_den_pos (Wsum_den_pos A e) (Nat.pos_pow_of_pos (A + e) (by decide))
+  | (e + 1) => add_den_pos (Wsum_den_pos A e) (Nat.pow_pos (by decide))
 
 /-- **Outer block lower bound** (`e`-induction over blocks): `gSeq(2^{A+e}) − gSeq(2^A) ≥ −Wsum A e`.
     Chains `gSeq_block_ge` over consecutive dyadic blocks (same lower-side telescoping pattern as
@@ -984,7 +987,7 @@ theorem gSeq_diff_ge_outer (A : Nat) : ∀ e,
       simp only [Rneg, Wsum, ofQ, zero, neg, Qeq]; push_cast
   | succ e ih =>
       have hstepd : 0 < (⟨(A + e + 2 : Int), 2 ^ (A + e)⟩ : Q).den :=
-        Nat.pos_pow_of_pos (A + e) (by decide)
+        Nat.pow_pos (by decide)
       have hgapd : 0 < (Wsum A e).den := Wsum_den_pos A e
       have heq : Req (Rneg (ofQ (Wsum A (e + 1)) (Wsum_den_pos A (e + 1))))
           (Radd (Rneg (ofQ (⟨(A + e + 2 : Int), 2 ^ (A + e)⟩ : Q) hstepd))
@@ -1010,10 +1013,10 @@ theorem Wsum_tail_le (A : Nat) : ∀ e,
       simp only [Wsum, Qsub, add, neg, Qeq]; push_cast; ring_uor
   | (e + 1) => by
       have hT : 0 < (Qsub (⟨(2 * A + 6 : Int), 2 ^ A⟩ : Q) ⟨(2 * (A + e) + 6 : Int), 2 ^ (A + e)⟩).den :=
-        Qsub_den_pos (Nat.pos_pow_of_pos A (by decide)) (Nat.pos_pow_of_pos (A + e) (by decide))
+        Qsub_den_pos (Nat.pow_pos (by decide)) (Nat.pow_pos (by decide))
       have hS : 0 < (Qsub (⟨(2 * (A + e) + 6 : Int), 2 ^ (A + e)⟩ : Q)
           ⟨(2 * (A + e + 1) + 6 : Int), 2 ^ (A + e + 1)⟩).den :=
-        Qsub_den_pos (Nat.pos_pow_of_pos (A + e) (by decide)) (Nat.pos_pow_of_pos (A + e + 1) (by decide))
+        Qsub_den_pos (Nat.pow_pos (by decide)) (Nat.pow_pos (by decide))
       -- inc = T(A+e) − T(A+e+1)  (the increment, in the literal form `Wsum` uses)
       have h2 : (2 : Nat) ^ (A + e + 1) = 2 * 2 ^ (A + e) := by rw [Nat.pow_succ]; omega
       have hinc : Qeq (⟨(A + e + 2 : Int), 2 ^ (A + e)⟩ : Q)
@@ -1094,7 +1097,7 @@ theorem gamma_pair_le {j k : Nat} (hjk : j ≤ k) :
   obtain ⟨d, hd⟩ := Nat.le.dest hpow
   rw [← hd]
   refine Rle_trans (gSeq_diff_le (2 ^ gammaMidx j) Nat.one_le_two_pow d) (Rle_ofQ_ofQ _ _ ?_)
-  exact Qle_trans (Nat.mul_pos (by decide) (Nat.pos_pow_of_pos _ (by decide)))
+  exact Qle_trans (Nat.mul_pos (by decide) (Nat.pow_pos (by decide)))
     (Qsub_unit_le (2 * 2 ^ gammaMidx j) (2 * (2 ^ gammaMidx j + d)))
     (Qunit_le (succ_le_two_pow_midx j))
 
@@ -1111,12 +1114,13 @@ theorem Qsub_le_left (c₁ c₂ : Int) (hc₂ : 0 ≤ c₂) (a b : Nat) :
 /-- `(2·M(j)+6)/2^{M(j)} ≤ 1/(j+1)` — the lower-tail anchor bound, directly from `gamma_domination`. -/
 theorem gamma_T_le (j : Nat) :
     Qle (⟨(2 * gammaMidx j + 6 : Int), 2 ^ gammaMidx j⟩ : Q) ⟨1, j + 1⟩ := by
-  simp only [Qle, gammaMidx]; push_cast
+  have h := gamma_domination j
+  simp only [Qle, gammaMidx]
+  push_cast
   have hcast : (((j + 1) * (4 * j + 22) : Nat) : Int) ≤ ((2 ^ (2 * j + 8) : Nat) : Int) := by
-    exact_mod_cast gamma_domination j
-  push_cast at hcast
-  have key : (2 * (2 * (j : Int) + 8) + 6) * ((j : Int) + 1) = ((j : Int) + 1) * (4 * (j : Int) + 22) := by
-    ring_uor
+    exact_mod_cast h
+  have key : (2 * (2 * ↑j + 8) + 6) * (↑j + 1) = (↑j + 1) * (4 * ↑j + 22) := by ring_uor
+  rw [key, show ((2 : Int) ^ (2 * j + 8)) = ↑(2 ^ (2 * j + 8) : Nat) from by sorry]
   omega
 
 /-- **Pairwise Cauchy (lower)**: for `j ≤ k`, `gSeqDyadic k − gSeqDyadic j ≥ −1/(j+1)`. -/
@@ -1128,9 +1132,9 @@ theorem gamma_pair_ge {j k : Nat} (hjk : j ≤ k) :
   refine Rle_trans (Rle_Rneg ?_) (gSeq_diff_ge_outer (gammaMidx j) e)
   have hmid1 : 0 < (Qsub (⟨(2 * gammaMidx j + 6 : Int), 2 ^ gammaMidx j⟩ : Q)
       ⟨(2 * (gammaMidx j + e) + 6 : Int), 2 ^ (gammaMidx j + e)⟩).den :=
-    Qsub_den_pos (Nat.pos_pow_of_pos _ (by decide)) (Nat.pos_pow_of_pos _ (by decide))
+    Qsub_den_pos (Nat.pow_pos (by decide)) (Nat.pow_pos (by decide))
   have hmid2 : 0 < (⟨(2 * gammaMidx j + 6 : Int), 2 ^ gammaMidx j⟩ : Q).den :=
-    Nat.pos_pow_of_pos _ (by decide)
+    Nat.pow_pos (by decide)
   exact Rle_trans (Rle_ofQ_ofQ (Wsum_den_pos (gammaMidx j) e) hmid1 (Wsum_tail_le (gammaMidx j) e))
     (Rle_trans (Rle_ofQ_ofQ hmid1 hmid2
       (Qsub_le_left _ (2 * (gammaMidx j + e) + 6) (by omega) _ _))

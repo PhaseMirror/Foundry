@@ -459,7 +459,9 @@ theorem Qmul_le_cancel_right {a b c : Q} (hcn : 0 < c.num) (hcd : 0 < c.den)
         = (b.num * (a.den : Int)) * (c.num * (c.den : Int)) := by ring_uor
     have hh : a.num * c.num * ((b.den : Int) * (c.den : Int))
         ≤ b.num * c.num * ((a.den : Int) * (c.den : Int)) := by
-      simpa only [mul, Qle] using h
+      unfold Qle mul at h
+      push_cast at h
+      simpa [Int.natCast_mul] using h
     rw [e1, e2] at hh; exact hh
   exact Int.le_of_mul_le_mul_right h' hc
 

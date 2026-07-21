@@ -29,7 +29,7 @@ namespace UOR.Bridge.F1Square.Analysis
 /-- The cast-mult bridge: `(|z| : ℤ) · (d : ℤ) = |z · d|` for `z : ℤ`, `d : ℕ`. -/
 private theorem natAbs_mul_cast (z : Int) (d : Nat) :
     (z.natAbs : Int) * (d : Int) = (((z * (d : Int)).natAbs : Nat) : Int) := by
-  rw [Int.natAbs_mul, Int.natAbs_ofNat]
+  rw [Int.natAbs_mul, Int.natAbs_natCast]
   push_cast
   rfl
 

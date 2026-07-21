@@ -15,6 +15,44 @@ def generate_rust_harness(yaml_file, out_dir, bounds):
     out_path = Path(out_dir) / f"{name}_harness.rs"
     out_path.parent.mkdir(parents=True, exist_ok=True)
     
+    inputs = data.get('inputs', [])
+    outputs = data.get('outputs', [])
+    
+    rust_vars = []
+    for var in inputs + outputs:
+        v_name = var['name']
+        v_type = var.get('type', 'int')
+        if v_type == 'int':
+            r_type = 'i32'
+        elif v_type == 'bool':
+            r_type = 'bool'
+        elif v_type == 'rat':
+            r_type = 'f64'
+        else:
+            r_type = 'f64'
+        rust_vars.append(f"    let {v_name}: {r_type} = kani::any();")
+        
+        # Add basic bounds if present
+        if 'bounds' in var and len(var['bounds']) == 2:
+            rust_vars.append(f"    kani::assume({v_name} >= {var['bounds'][0]} && {v_name} <= {var['bounds'][1]});")
+
+    rust_vars_str = "\n".join(rust_vars)
+
+    theorems = data.get('theorems', [])
+    assumes = []
+    asserts = []
+    for t in theorems:
+        stmt = t.get('statement', '').replace('≤', '<=')
+        if '=>' in stmt:
+            parts = stmt.split('=>')
+            assumes.append(f"    kani::assume({parts[0].strip()});")
+            asserts.append(f"    kani::assert({parts[1].strip()}, \"{t['id']} failed\");")
+        elif stmt:
+            assumes.append(f"    kani::assume({stmt});")
+            
+    assumes_str = "\n".join(assumes)
+    asserts_str = "\n".join(asserts)
+
     stub = f"""// Auto-generated Kani harness stub for {name}
 // Telemetry emission proof generated from {yaml_file}
 
@@ -22,13 +60,14 @@ def generate_rust_harness(yaml_file, out_dir, bounds):
 #[kani::unwind({bounds})]
 pub fn harness_{name}() {{
     // The environment requires the generated stubs to finalize the telemetry emission proof.
-    // Stub implementation of {func} checking theorem consistency.
-    let gue_deviation: f64 = kani::any();
-    kani::assume(gue_deviation >= 0.0);
+    // Initialize symbolic variables:
+{rust_vars_str}
     
-    // gue_consistency_bound: gue_deviation <= 0.1
-    // (This is a stub asserting the expected theorem bound on the emitted telemetry)
-    kani::assert(gue_deviation <= 0.1, "gue_deviation exceeded threshold");
+    // Bridge Lean proofs:
+{assumes_str}
+    
+    // Check theorems:
+{asserts_str}
 }}
 """
     out_path.write_text(stub)

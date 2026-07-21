@@ -1,0 +1,24 @@
+name: alpha_function
+version: 1.0.0-P2C
+description: |
+  Evaluates the Alpha Master function using Gauss-Laguerre quadrature for the 
+  integral path and adaptive series truncation.
+inputs:
+  - name: theta0_re
+    type: int
+    bounds: [1, 100]
+  - name: is_integral_path
+    type: bool
+outputs:
+  - name: alpha_val
+    type: int
+theorems:
+  - id: alpha_convergence_guard
+    statement: "theta0_re > 0 && is_integral_path == true => alpha_val >= 0"
+rust_implementation:
+  path: rust/src/kernels/alpha_function.rs
+  function: evaluate_alpha
+  kani_bound: 16
+lean_implementation:
+  path: lean/Core/AlphaFunction.lean
+  theorem: alpha_convergence_guard

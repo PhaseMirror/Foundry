@@ -522,7 +522,7 @@ theorem g3Seq_diff_ge_block (a N : Nat) : ∀ (d : Nat), N + d + 1 ≤ 2 ^ (a + 
 /-- **Per-block UPPER bound** `g₃(2^{a+1}) − g₃(2^a) ≤ 3(a+2)²/2^a`. -/
 theorem g3Seq_block_le (a : Nat) :
     Rle (Rsub (g3Seq (2 ^ (a + 1))) (g3Seq (2 ^ a)))
-        (ofQ (⟨3 * (((a : Int) + 2) * ((a : Int) + 2)), 2 ^ a⟩ : Q) (Nat.pos_pow_of_pos a (by decide))) := by
+        (ofQ (⟨3 * (((a : Int) + 2) * ((a : Int) + 2)), 2 ^ a⟩ : Q) (Nat.pow_pos (by decide))) := by
   have e1 : (2 : Nat) ^ (a + 1) = 2 ^ a + 2 ^ a := by rw [Nat.pow_succ]; omega
   have hp1 : 1 ≤ (2 : Nat) ^ a := Nat.one_le_two_pow
   have hcon : 2 ^ a + 2 ^ a + 1 ≤ 2 ^ (a + 2) := by
@@ -536,7 +536,7 @@ theorem g3Seq_block_le (a : Nat) :
   exact Rle_trans
     (Rle_ofQ_ofQ (Qsub_den_pos (Csum_den_pos _ (2 ^ a + 2 ^ a)) (Csum_den_pos _ (2 ^ a))) hmid
       (Csum_tail_le (3 * (((a : Int) + 2) * ((a : Int) + 2))) (2 ^ a) (2 ^ a)))
-    (Rle_ofQ_ofQ hmid (Nat.pos_pow_of_pos a (by decide))
+    (Rle_ofQ_ofQ hmid (Nat.pow_pos (by decide))
       (Qsub_block_le (3 * (((a : Int) + 2) * ((a : Int) + 2)))
         (Int.mul_nonneg (by decide) (Int.mul_nonneg (by have := Int.ofNat_nonneg a; omega)
           (by have := Int.ofNat_nonneg a; omega))) (2 ^ a)))
@@ -544,7 +544,7 @@ theorem g3Seq_block_le (a : Nat) :
 /-- **Per-block LOWER bound** `g₃(2^{a+1}) − g₃(2^a) ≥ −(a+2)³/2^a`. -/
 theorem g3Seq_block_ge (a : Nat) :
     Rle (Rneg (ofQ (⟨((a : Int) + 2) * ((a : Int) + 2) * ((a : Int) + 2), 2 ^ a⟩ : Q)
-          (Nat.pos_pow_of_pos a (by decide))))
+          (Nat.pow_pos (by decide))))
         (Rsub (g3Seq (2 ^ (a + 1))) (g3Seq (2 ^ a))) := by
   have e1 : (2 : Nat) ^ (a + 1) = 2 ^ a + 2 ^ a := by rw [Nat.pow_succ]; omega
   have hp1 : 1 ≤ (2 : Nat) ^ a := Nat.one_le_two_pow
@@ -559,7 +559,7 @@ theorem g3Seq_block_ge (a : Nat) :
   exact Rle_trans
     (Rle_ofQ_ofQ (Qsub_den_pos (Csum_den_pos _ (2 ^ a + 2 ^ a)) (Csum_den_pos _ (2 ^ a))) hmid
       (Csum_tail_le (((a : Int) + 2) * ((a : Int) + 2) * ((a : Int) + 2)) (2 ^ a) (2 ^ a)))
-    (Rle_ofQ_ofQ hmid (Nat.pos_pow_of_pos a (by decide))
+    (Rle_ofQ_ofQ hmid (Nat.pow_pos (by decide))
       (Qsub_block_le (((a : Int) + 2) * ((a : Int) + 2) * ((a : Int) + 2))
         (Int.mul_nonneg (Int.mul_nonneg (by have := Int.ofNat_nonneg a; omega)
           (by have := Int.ofNat_nonneg a; omega)) (by have := Int.ofNat_nonneg a; omega)) (2 ^ a)))
@@ -691,7 +691,7 @@ def WUsum3 (A : Nat) : Nat → Q
 
 theorem WUsum3_den_pos (A : Nat) : ∀ e, 0 < (WUsum3 A e).den
   | 0 => Nat.one_pos
-  | (e + 1) => add_den_pos (WUsum3_den_pos A e) (Nat.pos_pow_of_pos (A + e) (by decide))
+  | (e + 1) => add_den_pos (WUsum3_den_pos A e) (Nat.pow_pos (by decide))
 
 /-- Outer LOWER sum `Σ_{i<e} (A+i+2)³/2^{A+i}`. -/
 def WLsum3 (A : Nat) : Nat → Q
@@ -701,7 +701,7 @@ def WLsum3 (A : Nat) : Nat → Q
 
 theorem WLsum3_den_pos (A : Nat) : ∀ e, 0 < (WLsum3 A e).den
   | 0 => Nat.one_pos
-  | (e + 1) => add_den_pos (WLsum3_den_pos A e) (Nat.pos_pow_of_pos (A + e) (by decide))
+  | (e + 1) => add_den_pos (WLsum3_den_pos A e) (Nat.pow_pos (by decide))
 
 /-- **Outer UPPER bound**: `g₃(2^{A+e}) − g₃(2^A) ≤ WUsum3 A e`. -/
 theorem g3Seq_diff_le_outer (A : Nat) : ∀ e,
@@ -715,7 +715,7 @@ theorem g3Seq_diff_le_outer (A : Nat) : ∀ e,
       simp only [WUsum3, ofQ, zero, Qeq]
   | succ e ih =>
       have hstepd : 0 < (⟨3 * (((↑(A + e) : Int) + 2) * ((↑(A + e) : Int) + 2)), 2 ^ (A + e)⟩ : Q).den :=
-        Nat.pos_pow_of_pos (A + e) (by decide)
+        Nat.pow_pos (by decide)
       have hgapd : 0 < (WUsum3 A e).den := WUsum3_den_pos A e
       have heq : Req (ofQ (WUsum3 A (e + 1)) (WUsum3_den_pos A (e + 1)))
           (Radd (ofQ (⟨3 * (((↑(A + e) : Int) + 2) * ((↑(A + e) : Int) + 2)), 2 ^ (A + e)⟩ : Q) hstepd)
@@ -739,7 +739,7 @@ theorem g3Seq_diff_ge_outer (A : Nat) : ∀ e,
       simp only [Rneg, WLsum3, ofQ, zero, neg, Qeq]; push_cast
   | succ e ih =>
       have hstepd : 0 < (⟨((↑(A + e) : Int) + 2) * ((↑(A + e) : Int) + 2) * ((↑(A + e) : Int) + 2),
-          2 ^ (A + e)⟩ : Q).den := Nat.pos_pow_of_pos (A + e) (by decide)
+          2 ^ (A + e)⟩ : Q).den := Nat.pow_pos (by decide)
       have hgapd : 0 < (WLsum3 A e).den := WLsum3_den_pos A e
       have heq : Req (Rneg (ofQ (WLsum3 A (e + 1)) (WLsum3_den_pos A (e + 1))))
           (Radd (Rneg (ofQ (⟨((↑(A + e) : Int) + 2) * ((↑(A + e) : Int) + 2) * ((↑(A + e) : Int) + 2),
@@ -762,10 +762,10 @@ theorem WUsum3_tail_le (A : Nat) : ∀ e,
   | (e + 1) => by
       have hT : 0 < (Qsub (⟨(6 * A * A + 36 * A + 66 : Int), 2 ^ A⟩ : Q)
           ⟨(6 * (A + e) * (A + e) + 36 * (A + e) + 66 : Int), 2 ^ (A + e)⟩).den :=
-        Qsub_den_pos (Nat.pos_pow_of_pos A (by decide)) (Nat.pos_pow_of_pos (A + e) (by decide))
+        Qsub_den_pos (Nat.pow_pos (by decide)) (Nat.pow_pos (by decide))
       have hS : 0 < (Qsub (⟨(6 * (A + e) * (A + e) + 36 * (A + e) + 66 : Int), 2 ^ (A + e)⟩ : Q)
           ⟨(6 * (A + e + 1) * (A + e + 1) + 36 * (A + e + 1) + 66 : Int), 2 ^ (A + e + 1)⟩).den :=
-        Qsub_den_pos (Nat.pos_pow_of_pos (A + e) (by decide)) (Nat.pos_pow_of_pos (A + e + 1) (by decide))
+        Qsub_den_pos (Nat.pow_pos (by decide)) (Nat.pow_pos (by decide))
       have h2 : (2 : Nat) ^ (A + e + 1) = 2 * 2 ^ (A + e) := by rw [Nat.pow_succ]; omega
       have hinc : Qeq (⟨3 * (((↑(A + e) : Int) + 2) * ((↑(A + e) : Int) + 2)), 2 ^ (A + e)⟩ : Q)
           (Qsub (⟨(6 * (A + e) * (A + e) + 36 * (A + e) + 66 : Int), 2 ^ (A + e)⟩ : Q)
@@ -788,12 +788,12 @@ theorem WLsum3_tail_le (A : Nat) : ∀ e,
       have hT : 0 < (Qsub (⟨(2 * A * A * A + 18 * A * A + 66 * A + 102 : Int), 2 ^ A⟩ : Q)
           ⟨(2 * (A + e) * (A + e) * (A + e) + 18 * (A + e) * (A + e) + 66 * (A + e) + 102 : Int),
             2 ^ (A + e)⟩).den :=
-        Qsub_den_pos (Nat.pos_pow_of_pos A (by decide)) (Nat.pos_pow_of_pos (A + e) (by decide))
+        Qsub_den_pos (Nat.pow_pos (by decide)) (Nat.pow_pos (by decide))
       have hS : 0 < (Qsub (⟨(2 * (A + e) * (A + e) * (A + e) + 18 * (A + e) * (A + e)
             + 66 * (A + e) + 102 : Int), 2 ^ (A + e)⟩ : Q)
           ⟨(2 * (A + e + 1) * (A + e + 1) * (A + e + 1) + 18 * (A + e + 1) * (A + e + 1)
             + 66 * (A + e + 1) + 102 : Int), 2 ^ (A + e + 1)⟩).den :=
-        Qsub_den_pos (Nat.pos_pow_of_pos (A + e) (by decide)) (Nat.pos_pow_of_pos (A + e + 1) (by decide))
+        Qsub_den_pos (Nat.pow_pos (by decide)) (Nat.pow_pos (by decide))
       have h2 : (2 : Nat) ^ (A + e + 1) = 2 * 2 ^ (A + e) := by rw [Nat.pow_succ]; omega
       have hinc : Qeq (⟨((↑(A + e) : Int) + 2) * ((↑(A + e) : Int) + 2) * ((↑(A + e) : Int) + 2),
             2 ^ (A + e)⟩ : Q)
@@ -819,9 +819,9 @@ theorem g3_pair_le {j k : Nat} (hjk : j ≤ k) :
         2 ^ gamma3Midx j⟩ : Q)
       ⟨(6 * (gamma3Midx j + e) * (gamma3Midx j + e) + 36 * (gamma3Midx j + e) + 66 : Int),
         2 ^ (gamma3Midx j + e)⟩).den :=
-    Qsub_den_pos (Nat.pos_pow_of_pos _ (by decide)) (Nat.pos_pow_of_pos _ (by decide))
+    Qsub_den_pos (Nat.pow_pos (by decide)) (Nat.pow_pos (by decide))
   have hmid2 : 0 < (⟨(6 * gamma3Midx j * gamma3Midx j + 36 * gamma3Midx j + 66 : Int),
-      2 ^ gamma3Midx j⟩ : Q).den := Nat.pos_pow_of_pos _ (by decide)
+      2 ^ gamma3Midx j⟩ : Q).den := Nat.pow_pos (by decide)
   exact Rle_trans (Rle_ofQ_ofQ (WUsum3_den_pos _ _) hmid (WUsum3_tail_le (gamma3Midx j) e))
     (Rle_trans (Rle_ofQ_ofQ hmid hmid2 (Qsub_le_left _ _ (by
         have h : (0 : Int) ≤ (↑(gamma3Midx j) : Int) + (↑e : Int) := by
@@ -843,10 +843,10 @@ theorem g3_pair_ge {j k : Nat} (hjk : j ≤ k) :
       ⟨(2 * (gamma3Midx j + e) * (gamma3Midx j + e) * (gamma3Midx j + e)
         + 18 * (gamma3Midx j + e) * (gamma3Midx j + e) + 66 * (gamma3Midx j + e) + 102 : Int),
         2 ^ (gamma3Midx j + e)⟩).den :=
-    Qsub_den_pos (Nat.pos_pow_of_pos _ (by decide)) (Nat.pos_pow_of_pos _ (by decide))
+    Qsub_den_pos (Nat.pow_pos (by decide)) (Nat.pow_pos (by decide))
   have hmid2 : 0 < (⟨(2 * gamma3Midx j * gamma3Midx j * gamma3Midx j
       + 18 * gamma3Midx j * gamma3Midx j + 66 * gamma3Midx j + 102 : Int), 2 ^ gamma3Midx j⟩ : Q).den :=
-    Nat.pos_pow_of_pos _ (by decide)
+    Nat.pow_pos (by decide)
   exact Rle_trans (Rle_ofQ_ofQ (WLsum3_den_pos _ _) hmid (WLsum3_tail_le (gamma3Midx j) e))
     (Rle_trans (Rle_ofQ_ofQ hmid hmid2 (Qsub_le_left _ _ (by
         have h : (0 : Int) ≤ (↑(gamma3Midx j) : Int) + (↑e : Int) := by

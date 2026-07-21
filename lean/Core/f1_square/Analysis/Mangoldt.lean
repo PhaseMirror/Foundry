@@ -289,9 +289,11 @@ private theorem prime_dvd_mul_fuel {q : Nat} (hq2 : 2 ≤ q)
           rw [Nat.mul_assoc, Nat.mul_comm b (q / a), ← Nat.mul_assoc]
         rwa [hac] at h1
       have hdvd2 : q ∣ q % a * b := by
-        have hle : a * (q / a) * b ≤ q * b := by omega
-        have hsub : q * b - a * (q / a) * b = q % a * b := by omega
-        have hd := Nat.dvd_sub hle (Nat.dvd_mul_right q b) hdvd1
+        have hd : q ∣ q * b - a * (q / a) * b := Nat.dvd_sub (Nat.dvd_mul_right q b) hdvd1
+        have hsub : q * b - a * (q / a) * b = q % a * b := by
+          have h := Nat.div_add_mod q a
+          have : a * (q / a) + q % a = q := h
+          omega
         rwa [hsub] at hd
       rcases Nat.eq_zero_or_pos (q % a) with hz | hpos'
       · -- a ∣ q with 1 < a < q: impossible for a prime q
@@ -312,12 +314,14 @@ private theorem prime_dvd_mul_fuel {q : Nat} (hq2 : 2 ≤ q)
               rw [Nat.add_mul]
           _ = a * b := by rw [h0]
       have hdvd2 : q ∣ a % q * b := by
-        have hle : q * (a / q) * b ≤ a * b := by omega
         have hq1 : q ∣ q * (a / q) * b := by
           have h1 : q ∣ q * (a / q * b) := Nat.dvd_mul_right q (a / q * b)
           rwa [← Nat.mul_assoc] at h1
-        have hsub : a * b - q * (a / q) * b = a % q * b := by omega
-        have hd := Nat.dvd_sub hle hab hq1
+        have hd : q ∣ a * b - q * (a / q) * b := Nat.dvd_sub hab hq1
+        have hsub : a * b - q * (a / q) * b = a % q * b := by
+          have h := Nat.div_add_mod a q
+          have : q * (a / q) + a % q = a := h
+          omega
         rwa [hsub] at hd
       rcases ih (a % q) b (by omega) hdvd2 with h | h
       · -- q ∣ a % q ⟹ q ∣ a
@@ -362,7 +366,7 @@ private theorem p_dvd_pow_self {p : Nat} : ∀ k : Nat, 1 ≤ k → p ∣ p ^ k 
 
 private theorem two_le_pow {p : Nat} (hp2 : 2 ≤ p) {k : Nat} (hk : 1 ≤ k) : 2 ≤ p ^ k := by
   have h1 : p ≤ p ^ k :=
-    Nat.le_of_dvd (Nat.pos_pow_of_pos k (by omega)) (p_dvd_pow_self k hk)
+    Nat.le_of_dvd (Nat.pow_pos (by omega)) (p_dvd_pow_self k hk)
   omega
 
 /-- **`spf(pᵏ) = p`** for a prime `p` and `k ≥ 1`: the least prime factor of a prime power
@@ -407,7 +411,7 @@ private theorem le_two_pow_self : ∀ k : Nat, k ≤ 2 ^ k := by
   | zero => omega
   | succ j ih =>
     rw [Nat.pow_succ]
-    have h1 : 1 ≤ 2 ^ j := Nat.pos_pow_of_pos j (by omega)
+    have h1 : 1 ≤ 2 ^ j := Nat.pow_pos (by omega)
     omega
 
 /-- A prime power `pᵏ` (`k ≥ 1`) passes the prime-power test. -/

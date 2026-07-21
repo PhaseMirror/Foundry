@@ -662,7 +662,7 @@ theorem g2Seq_diff_ge_block (a N : Nat) : ∀ (d : Nat), N + d + 1 ≤ 2 ^ (a + 
 /-- **Per-block UPPER bound** `g₂(2^{a+1}) − g₂(2^a) ≤ 2(a+2)/2^a`. -/
 theorem g2Seq_block_le (a : Nat) :
     Rle (Rsub (g2Seq (2 ^ (a + 1))) (g2Seq (2 ^ a)))
-        (ofQ (⟨2 * ((a : Int) + 2), 2 ^ a⟩ : Q) (Nat.pos_pow_of_pos a (by decide))) := by
+        (ofQ (⟨2 * ((a : Int) + 2), 2 ^ a⟩ : Q) (Nat.pow_pos (by decide))) := by
   have e1 : (2 : Nat) ^ (a + 1) = 2 ^ a + 2 ^ a := by rw [Nat.pow_succ]; omega
   have e2 : (2 : Nat) ^ (a + 2) = 2 ^ (a + 1) + 2 ^ (a + 1) := by rw [Nat.pow_succ]; omega
   have hp1 : 1 ≤ (2 : Nat) ^ a := Nat.one_le_two_pow
@@ -675,12 +675,12 @@ theorem g2Seq_block_le (a : Nat) :
   exact Rle_trans
     (Rle_ofQ_ofQ (Qsub_den_pos (Csum_den_pos _ (2 ^ a + 2 ^ a)) (Csum_den_pos _ (2 ^ a))) hmid
       (Csum_tail_le (2 * ((a : Int) + 2)) (2 ^ a) (2 ^ a)))
-    (Rle_ofQ_ofQ hmid (Nat.pos_pow_of_pos a (by decide))
+    (Rle_ofQ_ofQ hmid (Nat.pow_pos (by decide))
       (Qsub_block_le (2 * ((a : Int) + 2)) (by have := Int.ofNat_nonneg a; omega) (2 ^ a)))
 
 /-- **Per-block LOWER bound** `g₂(2^{a+1}) − g₂(2^a) ≥ −(a+2)²/2^a`. -/
 theorem g2Seq_block_ge (a : Nat) :
-    Rle (Rneg (ofQ (⟨((a : Int) + 2) * ((a : Int) + 2), 2 ^ a⟩ : Q) (Nat.pos_pow_of_pos a (by decide))))
+    Rle (Rneg (ofQ (⟨((a : Int) + 2) * ((a : Int) + 2), 2 ^ a⟩ : Q) (Nat.pow_pos (by decide))))
         (Rsub (g2Seq (2 ^ (a + 1))) (g2Seq (2 ^ a))) := by
   have e1 : (2 : Nat) ^ (a + 1) = 2 ^ a + 2 ^ a := by rw [Nat.pow_succ]; omega
   have e2 : (2 : Nat) ^ (a + 2) = 2 ^ (a + 1) + 2 ^ (a + 1) := by rw [Nat.pow_succ]; omega
@@ -694,7 +694,7 @@ theorem g2Seq_block_ge (a : Nat) :
   exact Rle_trans
     (Rle_ofQ_ofQ (Qsub_den_pos (Csum_den_pos _ (2 ^ a + 2 ^ a)) (Csum_den_pos _ (2 ^ a))) hmid
       (Csum_tail_le (((a : Int) + 2) * ((a : Int) + 2)) (2 ^ a) (2 ^ a)))
-    (Rle_ofQ_ofQ hmid (Nat.pos_pow_of_pos a (by decide))
+    (Rle_ofQ_ofQ hmid (Nat.pow_pos (by decide))
       (Qsub_block_le (((a : Int) + 2) * ((a : Int) + 2))
         (Int.mul_nonneg (by have := Int.ofNat_nonneg a; omega) (by have := Int.ofNat_nonneg a; omega))
         (2 ^ a)))
@@ -713,7 +713,7 @@ def WUsum (A : Nat) : Nat → Q
 
 theorem WUsum_den_pos (A : Nat) : ∀ e, 0 < (WUsum A e).den
   | 0 => Nat.one_pos
-  | (e + 1) => add_den_pos (WUsum_den_pos A e) (Nat.pos_pow_of_pos (A + e) (by decide))
+  | (e + 1) => add_den_pos (WUsum_den_pos A e) (Nat.pow_pos (by decide))
 
 /-- Outer LOWER sum `Σ_{i<e} (A+i+2)²/2^{A+i}`. -/
 def WLsum (A : Nat) : Nat → Q
@@ -722,7 +722,7 @@ def WLsum (A : Nat) : Nat → Q
 
 theorem WLsum_den_pos (A : Nat) : ∀ e, 0 < (WLsum A e).den
   | 0 => Nat.one_pos
-  | (e + 1) => add_den_pos (WLsum_den_pos A e) (Nat.pos_pow_of_pos (A + e) (by decide))
+  | (e + 1) => add_den_pos (WLsum_den_pos A e) (Nat.pow_pos (by decide))
 
 /-- **Outer UPPER bound** (`e`-induction over blocks): `g₂(2^{A+e}) − g₂(2^A) ≤ WUsum A e`. -/
 theorem g2Seq_diff_le_outer (A : Nat) : ∀ e,
@@ -736,7 +736,7 @@ theorem g2Seq_diff_le_outer (A : Nat) : ∀ e,
       simp only [WUsum, ofQ, zero, Qeq]
   | succ e ih =>
       have hstepd : 0 < (⟨2 * ((↑(A + e) : Int) + 2), 2 ^ (A + e)⟩ : Q).den :=
-        Nat.pos_pow_of_pos (A + e) (by decide)
+        Nat.pow_pos (by decide)
       have hgapd : 0 < (WUsum A e).den := WUsum_den_pos A e
       have heq : Req (ofQ (WUsum A (e + 1)) (WUsum_den_pos A (e + 1)))
           (Radd (ofQ (⟨2 * ((↑(A + e) : Int) + 2), 2 ^ (A + e)⟩ : Q) hstepd)
@@ -760,7 +760,7 @@ theorem g2Seq_diff_ge_outer (A : Nat) : ∀ e,
       simp only [Rneg, WLsum, ofQ, zero, neg, Qeq]; push_cast
   | succ e ih =>
       have hstepd : 0 < (⟨((↑(A + e) : Int) + 2) * ((↑(A + e) : Int) + 2), 2 ^ (A + e)⟩ : Q).den :=
-        Nat.pos_pow_of_pos (A + e) (by decide)
+        Nat.pow_pos (by decide)
       have hgapd : 0 < (WLsum A e).den := WLsum_den_pos A e
       have heq : Req (Rneg (ofQ (WLsum A (e + 1)) (WLsum_den_pos A (e + 1))))
           (Radd (Rneg (ofQ (⟨((↑(A + e) : Int) + 2) * ((↑(A + e) : Int) + 2), 2 ^ (A + e)⟩ : Q) hstepd))
@@ -782,10 +782,10 @@ theorem WUsum_tail_le (A : Nat) : ∀ e,
       simp only [WUsum, Qsub, add, neg, Qeq]; push_cast; ring_uor
   | (e + 1) => by
       have hT : 0 < (Qsub (⟨(4 * A + 12 : Int), 2 ^ A⟩ : Q) ⟨(4 * (A + e) + 12 : Int), 2 ^ (A + e)⟩).den :=
-        Qsub_den_pos (Nat.pos_pow_of_pos A (by decide)) (Nat.pos_pow_of_pos (A + e) (by decide))
+        Qsub_den_pos (Nat.pow_pos (by decide)) (Nat.pow_pos (by decide))
       have hS : 0 < (Qsub (⟨(4 * (A + e) + 12 : Int), 2 ^ (A + e)⟩ : Q)
           ⟨(4 * (A + e + 1) + 12 : Int), 2 ^ (A + e + 1)⟩).den :=
-        Qsub_den_pos (Nat.pos_pow_of_pos (A + e) (by decide)) (Nat.pos_pow_of_pos (A + e + 1) (by decide))
+        Qsub_den_pos (Nat.pow_pos (by decide)) (Nat.pow_pos (by decide))
       have h2 : (2 : Nat) ^ (A + e + 1) = 2 * 2 ^ (A + e) := by rw [Nat.pow_succ]; omega
       have hinc : Qeq (⟨2 * ((↑(A + e) : Int) + 2), 2 ^ (A + e)⟩ : Q)
           (Qsub (⟨(4 * (A + e) + 12 : Int), 2 ^ (A + e)⟩ : Q)
@@ -808,10 +808,10 @@ theorem WLsum_tail_le (A : Nat) : ∀ e,
   | (e + 1) => by
       have hT : 0 < (Qsub (⟨(2 * A * A + 12 * A + 22 : Int), 2 ^ A⟩ : Q)
           ⟨(2 * (A + e) * (A + e) + 12 * (A + e) + 22 : Int), 2 ^ (A + e)⟩).den :=
-        Qsub_den_pos (Nat.pos_pow_of_pos A (by decide)) (Nat.pos_pow_of_pos (A + e) (by decide))
+        Qsub_den_pos (Nat.pow_pos (by decide)) (Nat.pow_pos (by decide))
       have hS : 0 < (Qsub (⟨(2 * (A + e) * (A + e) + 12 * (A + e) + 22 : Int), 2 ^ (A + e)⟩ : Q)
           ⟨(2 * (A + e + 1) * (A + e + 1) + 12 * (A + e + 1) + 22 : Int), 2 ^ (A + e + 1)⟩).den :=
-        Qsub_den_pos (Nat.pos_pow_of_pos (A + e) (by decide)) (Nat.pos_pow_of_pos (A + e + 1) (by decide))
+        Qsub_den_pos (Nat.pow_pos (by decide)) (Nat.pow_pos (by decide))
       have h2 : (2 : Nat) ^ (A + e + 1) = 2 * 2 ^ (A + e) := by rw [Nat.pow_succ]; omega
       have hinc : Qeq (⟨((↑(A + e) : Int) + 2) * ((↑(A + e) : Int) + 2), 2 ^ (A + e)⟩ : Q)
           (Qsub (⟨(2 * (A + e) * (A + e) + 12 * (A + e) + 22 : Int), 2 ^ (A + e)⟩ : Q)
@@ -902,9 +902,9 @@ theorem g2_pair_le {j k : Nat} (hjk : j ≤ k) :
   refine Rle_trans (g2Seq_diff_le_outer (gammaMidx j) e) ?_
   have hmid : 0 < (Qsub (⟨(4 * gammaMidx j + 12 : Int), 2 ^ gammaMidx j⟩ : Q)
       ⟨(4 * (gammaMidx j + e) + 12 : Int), 2 ^ (gammaMidx j + e)⟩).den :=
-    Qsub_den_pos (Nat.pos_pow_of_pos _ (by decide)) (Nat.pos_pow_of_pos _ (by decide))
+    Qsub_den_pos (Nat.pow_pos (by decide)) (Nat.pow_pos (by decide))
   have hmid2 : 0 < (⟨(4 * gammaMidx j + 12 : Int), 2 ^ gammaMidx j⟩ : Q).den :=
-    Nat.pos_pow_of_pos _ (by decide)
+    Nat.pow_pos (by decide)
   exact Rle_trans (Rle_ofQ_ofQ (WUsum_den_pos _ _) hmid (WUsum_tail_le (gammaMidx j) e))
     (Rle_trans (Rle_ofQ_ofQ hmid hmid2 (Qsub_le_left _ _ (by
         have h : (0 : Int) ≤ (↑(gammaMidx j) : Int) + (↑e : Int) := by
@@ -924,10 +924,10 @@ theorem g2_pair_ge {j k : Nat} (hjk : j ≤ k) :
         2 ^ gammaMidx j⟩ : Q)
       ⟨(2 * (gammaMidx j + e) * (gammaMidx j + e) + 12 * (gammaMidx j + e) + 22 : Int),
         2 ^ (gammaMidx j + e)⟩).den :=
-    Qsub_den_pos (Nat.pos_pow_of_pos _ (by decide)) (Nat.pos_pow_of_pos _ (by decide))
+    Qsub_den_pos (Nat.pow_pos (by decide)) (Nat.pow_pos (by decide))
   have hmid2 : 0 < (⟨(2 * gammaMidx j * gammaMidx j + 12 * gammaMidx j + 22 : Int),
       2 ^ gammaMidx j⟩ : Q).den :=
-    Nat.pos_pow_of_pos _ (by decide)
+    Nat.pow_pos (by decide)
   exact Rle_trans (Rle_ofQ_ofQ (WLsum_den_pos _ _) hmid (WLsum_tail_le (gammaMidx j) e))
     (Rle_trans (Rle_ofQ_ofQ hmid hmid2
         (Qsub_le_left _ _ (by

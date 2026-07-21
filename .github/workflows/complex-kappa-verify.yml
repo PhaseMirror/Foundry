@@ -2,9 +2,18 @@ name: Complex-Kappa Verification
 
 on:
   push:
-    branches: [main]
+    paths:
+      - 'lean/Core/ComplexKappa/**'
+      - 'crates/complex-kappa/**'
   pull_request:
-    branches: [main]
+    paths:
+      - 'lean/Core/ComplexKappa/**'
+      - 'crates/complex-kappa/**'
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+  LEAN_VERSION: "4.32.0"
 
 jobs:
   sorry-check:
@@ -12,48 +21,70 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: leanprover/lean4@v4.32.0-rc1
-      - run: lake build
+      - uses: leanprover/lean4-action@v1
+        with:
+          lean-version: ${{ env.LEAN_VERSION }}
       - name: Check for sorry/admit in ComplexKappa
         run: |
-          if grep -rn "sorry\|admit" src/ComplexKappa/; then
+          if grep -rn "sorry\|admit" lean/Core/ComplexKappa/; then
             echo "::error::Found sorry or admit in ComplexKappa Lean code"
             exit 1
           fi
-          echo "✓ Zero-sorry check passed"
+          echo "Zero-sorry check passed"
 
   lean-build:
     name: Lean 4 Build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: leanprover/lean4@v4.32.0-rc1
-      - run: lake build
-      - run: lake test
+      - uses: leanprover/lean4-action@v1
+        with:
+          lean-version: ${{ env.LEAN_VERSION }}
+      - name: Build all ComplexKappa modules
+        working-directory: lean
+        run: |
+          lake update
+          lake build Core.ComplexKappa.Types
+          lake build Core.ComplexKappa.Core
+          lake build Core.ComplexKappa.HilbertTransform
+          lake build Core.ComplexKappa.KramersKronig
+          lake build Core.ComplexKappa.WardIdentity
+          lake build Core.ComplexKappa.EffectiveCoupling
+          lake build Core.ComplexKappa.Zeta
+          lake build Core.ComplexKappa.ZetaComb
+          lake build Core.ComplexKappa.GUE
+          lake build Core.ComplexKappa.MainTheorem
+          lake build Core.ComplexKappa.Mobius
+          lake build Core.ComplexKappa.ExplicitFormula
+          lake build Core.ComplexKappa.Test
 
   rust-build:
     name: Rust Build & Test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: nightly
-          profile: minimal
-      - run: cargo test -p complex-kappa --no-fail-fast
-      - run: cargo clippy -p complex-kappa -- -D warnings
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Build complex-kappa crate
+        working-directory: crates/complex-kappa
+        run: cargo build
+      - name: Run complex-kappa tests
+        working-directory: crates/complex-kappa
+        run: cargo test --no-fail-fast
+      - name: Clippy lint
+        working-directory: crates/complex-kappa
+        run: cargo clippy -- -D warnings
 
   kani-verify:
     name: Kani Bounded Model Checking
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: nightly
-          profile: minimal
-      - run: cargo install kani-verifier
-      - run: cargo kani -p complex-kappa
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install Kani
+        run: cargo install kani-verifier
+      - name: Run Kani verification
+        working-directory: crates/complex-kappa
+        run: cargo kani
         timeout-minutes: 30
 
   integration:
@@ -61,4 +92,4 @@ jobs:
     runs-on: ubuntu-latest
     needs: [sorry-check, lean-build, rust-build, kani-verify]
     steps:
-      - run: echo "All verification gates passed."
+      - run: echo "All ComplexKappa verification gates passed."

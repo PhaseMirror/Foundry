@@ -121,7 +121,7 @@ theorem Qmul_add_right (a b c : Q) : Qeq (mul (add a b) c) (add (mul a c) (mul b
 theorem Qabs_Qeq {a b : Q} (h : Qeq a b) : Qeq (Qabs a) (Qabs b) := by
   unfold Qeq Qabs at *
   have hn : (a.num * (b.den : Int)).natAbs = (b.num * (a.den : Int)).natAbs := by rw [h]
-  rw [Int.natAbs_mul, Int.natAbs_mul, Int.natAbs_ofNat, Int.natAbs_ofNat] at hn
+  rw [Int.natAbs_mul, Int.natAbs_mul, Int.natAbs_natCast, Int.natAbs_natCast] at hn
   rw [← Int.natCast_mul, ← Int.natCast_mul, hn]
 
 /-- Transport `≤` along value-equality on the left (needs the replaced denominator positive). -/
@@ -193,9 +193,9 @@ theorem Qabs_add_le (a b : Q) : Qle (Qabs (add a b)) (add (Qabs a) (Qabs b)) := 
   have key : ((a.num * (b.den : Int) + b.num * (a.den : Int)).natAbs : Int)
       ≤ ((a.num.natAbs : Int) * (b.den : Int) + (b.num.natAbs : Int) * (a.den : Int)) := by
     have e1 : (a.num.natAbs : Int) * (b.den : Int) = ((a.num * (b.den : Int)).natAbs : Int) := by
-      rw [Int.natAbs_mul, Int.natAbs_ofNat, Int.natCast_mul]
+      rw [Int.natAbs_mul, Int.natAbs_natCast, Int.natCast_mul]
     have e2 : (b.num.natAbs : Int) * (a.den : Int) = ((b.num * (a.den : Int)).natAbs : Int) := by
-      rw [Int.natAbs_mul, Int.natAbs_ofNat, Int.natCast_mul]
+      rw [Int.natAbs_mul, Int.natAbs_natCast, Int.natCast_mul]
     rw [e1, e2]
     have := Int.natAbs_add_le (a.num * (b.den : Int)) (b.num * (a.den : Int))
     omega

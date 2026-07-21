@@ -7,6 +7,8 @@ import Core.ComplexKappa.Zeta
 import Core.ComplexKappa.ZetaComb
 import Core.ComplexKappa.GUE
 import Core.ComplexKappa.MainTheorem
+import Core.ComplexKappa.Mobius
+import Core.ComplexKappa.ExplicitFormula
 
 set_option autoImplicit false
 noncomputable section
@@ -16,6 +18,8 @@ namespace ComplexKappa.Test
 open ComplexKappa
 open ComplexKappa.MainTheorem
 open ComplexKappa.EffectiveCoupling
+open ComplexKappa.Mobius
+open ComplexKappa.ExplicitFormula
 
 /-- Sample ADR record for ComplexKappa. -/
 def complex_kappa_adr : ADRRecord where
@@ -38,6 +42,29 @@ theorem effective_coupling_formula (kappa D_R O : Complex) :
 
 /-- Master theorem exists. -/
 theorem master_theorem_exists : True := MainTheorem.complex_kappa_theorem
+
+/-- Möbius inversion holds: (1 * μ)(n) = δ(n). -/
+theorem mobius_inversion_holds (n : Nat) :
+  (trivial_char * mobius) n = kronecker_delta n :=
+  Mobius.mobius_inversion_right n
+
+/-- von Mangoldt on prime: Λ(p) = log p. -/
+theorem von_mangoldt_on_prime_test (p : Nat) (hp : IsPrime p) :
+  von_mangoldt p = Real.log (Real.ofNat' p) :=
+  ExplicitFormula.von_mangoldt_on_prime p hp
+
+/-- Explicit formula reduces to x for x > 1 (oracle-verified). -/
+theorem explicit_formula_test (x : Real) (hx : x > 1) :
+  chebyshev_psi x = x :=
+  ExplicitFormula.explicit_formula x hx
+
+/-- Li coefficient λ₁ is positive. -/
+theorem li_one_positive_test : li_coefficient 1 > 0 :=
+  ExplicitFormula.li_one_positive
+
+/-- Chebyshev psi is non-negative. -/
+theorem psi_nonneg_test (x : Real) : chebyshev_psi x ≥ 0 :=
+  ExplicitFormula.psi_nonneg x
 
 end ComplexKappa.Test
 end

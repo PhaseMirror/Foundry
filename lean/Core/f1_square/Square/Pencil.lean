@@ -76,7 +76,7 @@ theorem logN_pow_general (p : Nat) (hp : 1 ≤ p) (k : Nat) (hpk : 1 ≤ p ^ k) 
       rw [Rnsmul_zero]
       exact logN_one
   | succ k ih =>
-      have hpk' : 1 ≤ p ^ k := Nat.pos_pow_of_pos k (by omega)
+      have hpk' : 1 ≤ p ^ k := Nat.pow_pos (by omega)
       refine Req_trans (logN_eq_of_eq (Nat.pow_succ p k) hpk (one_le_mul hpk' hp)) ?_
       refine Req_trans (Req_symm (logN_mul_general (p ^ k) p hpk' hp
         (one_le_mul hpk' hp))) ?_

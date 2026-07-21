@@ -191,6 +191,6 @@ theorem add_zero (a : Q) : Qeq (add a ⟨0, 1⟩) a := by
 theorem add_neg (a : Q) : Qeq (add a (neg a)) ⟨0, 1⟩ := by
   unfold Qeq add neg
   simp [Int.mul_comm, Int.mul_neg]
-  exact Int.add_neg (a.num * ↑a.den)
+  omega
 
 end UOR.Bridge.F1Square.Analysis

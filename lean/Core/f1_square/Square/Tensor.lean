@@ -174,7 +174,7 @@ private theorem two_pow_lt {a c : Nat} (h : a < c) : 2 ^ a < 2 ^ c := by
       · have := ih h'; omega
       · have : a = c := by omega
         subst this
-        have : 1 ≤ 2 ^ a := Nat.pos_pow_of_pos a (by omega)
+        have : 1 ≤ 2 ^ a := Nat.pow_pos (by omega)
         omega
 
 private theorem two_pow_inj {a c : Nat} (h : (2 : Nat) ^ a = 2 ^ c) : a = c := by

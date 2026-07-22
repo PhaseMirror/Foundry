@@ -53,7 +53,7 @@ impl Hamiltonian {
 
         for term in &self.terms {
             // Prime gating: only include terms whose mask intersects with active_mask
-            let intersection = term.mask.and(active_mask);
+            let intersection = term.mask.and(&active_mask);
             if intersection == PrimeMask::EMPTY && term.mask != PrimeMask::EMPTY {
                 continue;
             }

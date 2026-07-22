@@ -7,6 +7,11 @@ package Prime where
 
 lean_lib Core where
   srcDir := "."
+  roots := #[`Core.F1, `Core.Spec.PartialUC, `Core.Spec.UniversalClosure, `Core.Spec.Completion, `Core.Spec.DefectAlgebra, `Core.Properties.AdjunctionProp, `Core.Properties.DefectProps, `Core.Properties.NNOProp, `Core.Ext.FFI]
+
+lean_lib FFI where
+  srcDir := "FFI"
+  defaultFacets := #[LeanLib.sharedFacet]
 
 lean_lib ADR where
   srcDir := "adr-governance"

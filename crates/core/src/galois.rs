@@ -16,12 +16,10 @@
 use thiserror::Error;
 
 // ---------------------------------------------------------------------------
-// Goldilocks prime constant
+// Goldilocks prime constant (canonical definition in `goldilocks` crate)
 // ---------------------------------------------------------------------------
 
-/// The Goldilocks prime: p = 2^64 - 2^32 + 1 = 18446744069414584321
-/// Used as the default ℓ-adic modulus for computational Galois representations.
-pub const GOLDILOCKS_PRIME: u64 = 0xFFFFFFFF00000001;
+pub use goldilocks::GOLDILOCKS_PRIME;
 
 // ---------------------------------------------------------------------------
 // Error types

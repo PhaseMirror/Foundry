@@ -11,7 +11,7 @@ pub mod scalar;
 pub mod simd;
 pub mod simulation;
 
-pub const MODULUS: u64 = 0xFFFF_FFFF_0000_0001;
+pub use goldilocks::GOLDILOCKS_PRIME as MODULUS;
 pub const SCALE_GOLDILOCKS: u64 = 1 << 40;
 
 pub use ace_air::*;

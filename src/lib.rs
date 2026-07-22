@@ -16,6 +16,9 @@ use num_traits::{One, Pow};
 use std::collections::HashMap;
 pub mod civic;
 pub mod pmat;
+pub mod completion;
+pub mod telemetry;
+pub mod physics;
 pub use pmat::{Entry, PrimeMonomialMatrix};
 /// A finitely‑supported signature mapping primes to integer exponents.
 #[derive(Debug, Clone, PartialEq, Eq)]

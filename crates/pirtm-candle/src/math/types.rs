@@ -1,54 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
-pub struct PrimeMask(pub u64);
-
-impl PrimeMask {
-    pub fn new(bits: u64) -> Self {
-        Self(bits)
-    }
-}
-
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
-pub struct ResonanceWord(pub u64);
-
-impl ResonanceWord {
-    pub fn pack(c: u8, payload: u64) -> Self {
-        Self((payload << 6) | (c as u64))
-    }
-}
-
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
-pub struct AtomicPrime(pub u64);
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct PirtmModulus(pub u64);
-
-impl PirtmModulus {
-    pub fn value(&self) -> u64 {
-        self.0
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SquarefreeComposite(pub u64);
-
-impl SquarefreeComposite {
-    pub fn new(n: u64) -> Result<Self, String> {
-        let mut temp = n;
-        let mut p = 2u64;
-        while p * p <= temp {
-            if temp % p == 0 {
-                temp /= p;
-                if temp % p == 0 {
-                    return Err(format!("{} is not squarefree (divisible by {}^2)", n, p));
-                }
-            }
-            p += 1;
-        }
-        Ok(Self(n))
-    }
-}
+pub use goldilocks::{AtomicPrime, PirtmModulus, PrimeMask, ResonanceWord, SquarefreeComposite};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StepInfo {

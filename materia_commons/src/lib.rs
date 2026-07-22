@@ -8,9 +8,9 @@ pub mod types;
 pub use constitution::{ConstitutionModel, ConstitutionViolation};
 pub use identity::{
     derive_membership_anchor_from_id_token, derive_membership_anchor_from_vc,
-    derive_uniqueness_anchor, resolve_issuer_for_vc, ExternalIssuerConfig,
-    IdentityOnboardingConfig, IssuerType, UniquenessAnchor, UniquenessAnchorInput,
-    ValidatedIdToken, VerifiedVerifiableCredential,
+    derive_uniqueness_anchor, resolve_issuer_for_id_token, resolve_issuer_for_vc,
+    ExternalIssuerConfig, IdentityOnboardingConfig, IssuerType, UniquenessAnchor,
+    UniquenessAnchorInput, ValidatedIdToken, VerifiedVerifiableCredential,
 };
 pub use ledger::GitLedger;
 pub use task::{Task, Workflow};

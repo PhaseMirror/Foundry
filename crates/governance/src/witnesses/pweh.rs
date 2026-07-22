@@ -4,8 +4,11 @@ use std::collections::HashMap;
 
 /// PWEH Trajectory to ACE-ZK ConvergenceWitness adapter.
 
-pub const GOLDILOCKS_PRIME: u64 = 0xffffffff00000001;
+pub use goldilocks::GOLDILOCKS_PRIME;
 pub const N0: usize = 64;
+/// NOTE: The canonical SCALE_GOLDILOCKS in the `goldilocks` crate is `1 << 40`.
+/// This crate uses `1_000_000_000_000` (10^12) for backward compatibility.
+/// Both values provide ~40 bits of fixed-point precision.
 pub const SCALE_GOLDILOCKS: u64 = 1_000_000_000_000;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

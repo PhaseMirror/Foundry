@@ -13,6 +13,10 @@ use serde::{Deserialize, Serialize};
 /// Goldilocks prime: 2^64 - 2^32 + 1 = 18446744069414584321
 pub const GOLDILOCKS_PRIME: u64 = 0xFFFFFFFF00000001;
 
+/// Canonical fixed-point scaling factor for Goldilocks field arithmetic.
+/// Used to convert floating-point values to u64 for field operations.
+pub const SCALE_GOLDILOCKS: u64 = 1 << 40;
+
 /// The first 64 prime numbers used for prime-gated indexing (P_64).
 pub const P_64: [u64; 64] = [
     2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97,
@@ -22,7 +26,7 @@ pub const P_64: [u64; 64] = [
 ];
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-pub struct GoldilocksField(u64);
+pub struct GoldilocksField(pub u64);
 
 impl GoldilocksField {
     pub const ZERO: Self = Self(0);
@@ -48,11 +52,32 @@ impl GoldilocksField {
 }
 
 /// A 64-bit prime mask where bit k is set if the k-th prime in P_64 is attached.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct PrimeMask(pub u64);
 
 impl PrimeMask {
     pub const EMPTY: Self = Self(0);
+
+    #[inline]
+    pub fn from_bit(k: u32) -> Self {
+        assert!(k < 64, "Local prime index must be < 64");
+        Self(1 << k)
+    }
+
+    #[inline]
+    pub fn is_set(&self, k: u32) -> bool {
+        assert!(k < 64, "Local prime index must be < 64");
+        (self.0 & (1 << k)) != 0
+    }
+
+    /// Alias for `is_set` with `usize` argument for backward compatibility.
+    #[inline]
+    pub fn is_prime_set(&self, k: usize) -> bool {
+        if k >= 64 {
+            return false;
+        }
+        (self.0 & (1 << k)) != 0
+    }
 
     #[inline]
     pub fn and(&self, other: &Self) -> Self {
@@ -70,11 +95,8 @@ impl PrimeMask {
     }
 
     #[inline]
-    pub fn is_prime_set(&self, k: usize) -> bool {
-        if k >= 64 {
-            return false;
-        }
-        (self.0 & (1 << k)) != 0
+    pub fn count_ones(&self) -> u32 {
+        self.0.count_ones()
     }
 
     #[inline]
@@ -83,12 +105,17 @@ impl PrimeMask {
     }
 }
 
-/// A 64-bit resonance word: bits 0-6 = class (0-95), bits 7-63 = 57-bit payload.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+/// A 64-bit resonance word: bits 0-6 = class (0-127), bits 7-63 = 57-bit payload.
+///
+/// NOTE: Some downstream crates (goldilocks-pro, c-pirtm, core, pirtm-candle) historically
+/// used a 6-bit class / 58-bit payload layout. The 7-bit layout here is the canonical
+/// version that can represent all 96 R96 resonance classes.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct ResonanceWord(pub u64);
 
 impl ResonanceWord {
     pub const NEUTRAL: Self = Self(0);
+    pub const Q29_29_SHIFT: u64 = 1 << 29;
 
     pub fn pack(class: u8, payload: u64) -> Self {
         assert!(class < 96, "Resonance class must be < 96");
@@ -102,9 +129,75 @@ impl ResonanceWord {
         (class, payload)
     }
 
+    /// Pack a floating point value into a Q29.29 fixed-point payload.
+    #[inline]
+    pub fn pack_q29_29(class: u8, val: f64) -> Self {
+        let payload = (val * (Self::Q29_29_SHIFT as f64)).round() as i64;
+        let payload = payload.clamp(-(1 << 56), (1 << 56) - 1);
+        let u_payload = (payload as u64) & ((1 << 57) - 1);
+        Self::pack(class, u_payload)
+    }
+
+    /// Unpack a Q29.29 fixed-point payload into a floating point value.
+    #[inline]
+    pub fn unpack_q29_29(&self) -> (u8, f64) {
+        let (c, payload) = self.unpack();
+        let mut val = payload;
+        if (val & (1 << 56)) != 0 {
+            val |= !((1 << 57) - 1);
+        }
+        let fval = (val as i64) as f64 / (Self::Q29_29_SHIFT as f64);
+        (c, fval)
+    }
+
+    #[inline]
+    pub fn class(&self) -> u8 {
+        (self.0 & 0x7F) as u8
+    }
+
+    #[inline]
+    pub fn payload(&self) -> u64 {
+        self.0 >> 7
+    }
+
     #[inline]
     pub fn to_field(&self) -> GoldilocksField {
         GoldilocksField::from_canonical(self.0)
+    }
+}
+
+/// An atomic prime number stored as a u64.
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+pub struct AtomicPrime(pub u64);
+
+/// A PIRTM modulus value.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PirtmModulus(pub u64);
+
+impl PirtmModulus {
+    pub fn value(&self) -> u64 {
+        self.0
+    }
+}
+
+/// A squarefree composite number (product of distinct primes).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SquarefreeComposite(pub u64);
+
+impl SquarefreeComposite {
+    pub fn new(n: u64) -> Result<Self, String> {
+        let mut temp = n;
+        let mut p = 2u64;
+        while p * p <= temp {
+            if temp % p == 0 {
+                temp /= p;
+                if temp % p == 0 {
+                    return Err(format!("{} is not squarefree (divisible by {}^2)", n, p));
+                }
+            }
+            p += 1;
+        }
+        Ok(Self(n))
     }
 }
 
@@ -239,9 +332,50 @@ impl GoldilocksField {
     }
 }
 
+impl std::ops::Add for GoldilocksField {
+    type Output = Self;
+    #[inline]
+    fn add(self, rhs: Self) -> Self {
+        let sum = self.0 as u128 + rhs.0 as u128;
+        Self(reduce128(sum))
+    }
+}
+
+impl std::ops::Sub for GoldilocksField {
+    type Output = Self;
+    #[inline]
+    fn sub(self, rhs: Self) -> Self {
+        if self.0 >= rhs.0 {
+            Self(self.0 - rhs.0)
+        } else {
+            Self(GOLDILOCKS_PRIME - (rhs.0 - self.0))
+        }
+    }
+}
+
+impl std::ops::Mul for GoldilocksField {
+    type Output = Self;
+    #[inline]
+    fn mul(self, rhs: Self) -> Self {
+        let prod = self.0 as u128 * rhs.0 as u128;
+        Self(reduce128(prod))
+    }
+}
+
+impl std::ops::Neg for GoldilocksField {
+    type Output = Self;
+    #[inline]
+    fn neg(self) -> Self {
+        if self.0 == 0 {
+            Self::ZERO
+        } else {
+            Self(GOLDILOCKS_PRIME - self.0)
+        }
+    }
+}
+
 /// Reduce a 128-bit value modulo Goldilocks prime
 /// Uses the fact that p = 2^64 - 2^32 + 1
-#[inline]
 #[inline]
 fn reduce128(x: u128) -> u64 {
     let lo = x as u64;

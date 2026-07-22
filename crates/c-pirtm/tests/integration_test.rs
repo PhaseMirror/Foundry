@@ -41,7 +41,7 @@ fn test_croflc_forward_pass() {
     
     // 4. Assemble CROFLC
     let model = CROFLC {
-        mask: PrimeMask::from_bit(2).or(PrimeMask::from_bit(3)),
+        mask: PrimeMask::from_bit(2).or(&PrimeMask::from_bit(3)),
         encoder,
         ops,
         projectors: HashMap::new(),

@@ -45,7 +45,7 @@ theorem prime_gated_certificate (op : MocOperator) (cert : ContractionCertificat
   · next h_lt =>
     injection h_issue with h'
     subst h'
-    exact ⟨cert.prime_gate, rfl⟩
+    exact ⟨op.prime_gate, rfl⟩
   · next h_ge =>
     injection h_issue
 

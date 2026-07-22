@@ -53,7 +53,7 @@ impl PrimeResonanceAir {
 
     pub fn verify(&self) -> bool {
         // Simplified verification: just check bit length and class
-        let class = (self.resonance_word & 0x3F) as u8;
+        let class = (self.resonance_word & 0x7F) as u8;
         if class >= 96 {
             return false;
         }

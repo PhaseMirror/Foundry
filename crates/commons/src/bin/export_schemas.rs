@@ -1,9 +1,9 @@
 use schemars::schema_for;
 use std::fs;
 use std::path::Path;
-use multiplicity_common::types::{ProposalRequest, ToolResponse, UnifiedWitness, McpRegistry, SignedAdmissionToken};
-use multiplicity_common::constitution::ConstitutionModel;
-use multiplicity_common::replication::ReplicationConfig;
+use multiplicity_common_types::types::{ProposalRequest, ToolResponse, UnifiedWitness, McpRegistry, SignedAdmissionToken};
+use multiplicity_common_types::constitution::ConstitutionModel;
+use multiplicity_common_types::replication::ReplicationConfig;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let out_dir = Path::new("packages/infra-config");

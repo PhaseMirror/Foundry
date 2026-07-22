@@ -64,6 +64,10 @@ pub struct UnifiedWitness {
     pub witness_hash: Option<String>,
     #[serde(default)]
     pub p_lineage: Option<String>,
+    #[serde(default)]
+    pub consensus_proof: Option<String>,
+    #[serde(default)]
+    pub threshold_met: Option<bool>,
 }
 
 impl UnifiedWitness {
@@ -109,6 +113,8 @@ impl UnifiedWitness {
             veto_status,
             witness_hash: None,
             p_lineage: None,
+            consensus_proof: None,
+            threshold_met: None,
         })
     }
 }

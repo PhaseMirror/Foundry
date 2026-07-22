@@ -1,0 +1,2 @@
+namespace F1Square.ArakelovHodge
+end F1Square.ArakelovHodge

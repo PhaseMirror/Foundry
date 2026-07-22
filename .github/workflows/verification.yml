@@ -1,0 +1,166 @@
+name: Verification
+
+on:
+  push:
+    branches: [ "**" ]
+  pull_request:
+    branches: [ "**" ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  rust-workspace-check:
+    name: Rust Workspace Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.85.0
+          components: rustfmt,clippy
+
+      - name: Cache Cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-registry-
+
+      - name: Cache Cargo build
+        uses: actions/cache@v4
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-build-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-build-
+
+      - name: Check workspace compiles
+        run: cargo check --workspace
+
+      - name: Clippy lint
+        run: cargo clippy --workspace -- -D warnings
+
+      - name: Format check
+        run: cargo fmt --all -- --check
+
+  wasm-kani:
+    name: WASM Build + Kani Verification
+    runs-on: ubuntu-latest
+    steps:
+      - uses: ./.github/workflows/ci.yml
+        with:
+          rust_toolchain: stable
+          wasm_target: wasm32-unknown-unknown
+
+  lean-verification:
+    name: Lean Verification
+    runs-on: ubuntu-latest
+    steps:
+      - uses: ./.github/workflows/lean-ci.yml
+        with:
+          lean_version: leanprover/lean4:v4.32.0-rc1
+
+  contract-compilation:
+    name: Contract Compilation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install solc
+        run: |
+          pip install solc-select
+          solc-select install 0.8.20
+          solc-select install 0.8.13
+          solc-select use 0.8.20
+          solc --version
+
+      - name: Compile Solidity contracts
+        run: |
+          set -e
+          CONTRACTS_DIR="contracts"
+          FAILED=0
+          for f in "$CONTRACTS_DIR"/*.sol; do
+            if [ -f "$f" ]; then
+              echo "Compiling $f"
+              if ! solc --combined-json abi,bin,metadata "$f" > /dev/null; then
+                echo "FAILED: $f"
+                FAILED=1
+              fi
+            fi
+          done
+          if [ "$FAILED" -eq 1 ]; then
+            echo "One or more Solidity contracts failed to compile"
+            exit 1
+          fi
+          echo "Contract compilation check complete"
+
+  python-verification:
+    name: Python Verification Scripts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install Python dependencies
+        run: |
+          pip install numpy pyyaml pytest
+
+      - name: Run PWEH integration test
+        run: python crates/tests/python/test_pweh_integration.py
+
+      - name: Run hypergraph tests
+        run: |
+          cd hypergraph && python -m pytest tests/ -v
+
+      - name: Run anomaly monitor test
+        run: python observability/test_anomaly_injector.py
+
+  verification-summary:
+    name: Verification Summary
+    runs-on: ubuntu-latest
+    needs: [rust-workspace-check, wasm-kani, lean-verification, contract-compilation, python-verification]
+    if: always()
+    steps:
+      - name: Check all jobs passed
+        run: |
+          echo "=== Verification Summary ==="
+          echo "Rust Workspace Check: ${{ needs.rust-workspace-check.result }}"
+          echo "WASM + Kani: ${{ needs.wasm-kani.result }}"
+          echo "Lean Verification: ${{ needs.lean-verification.result }}"
+          echo "Contract Compilation: ${{ needs.contract-compilation.result }}"
+          echo "Python Verification: ${{ needs.python-verification.result }}"
+          
+          FAILED=0
+          for job in rust-workspace-check wasm-kani lean-verification contract-compilation python-verification; do
+            result="${{ needs[$job].result }}"
+            if [ "$result" != "success" ]; then
+              echo "FAILED: $job ($result)"
+              FAILED=1
+            fi
+          done
+          
+          if [ "$FAILED" -eq 1 ]; then
+            echo "One or more verification jobs failed."
+            exit 1
+          fi
+          
+          echo "All verification jobs passed."

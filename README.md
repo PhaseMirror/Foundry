@@ -1,5 +1,7 @@
 # Prime — The Multiplicity Foundation
 
+![Verification](https://github.com/PhaseMirror/Prime/actions/workflows/verification.yml/badge.svg)
+
 The foundational monorepo for Phase Mirror. Contains the core Rust engine, Lean 4 formal verification layer (the F1 square research program), Solidity smart contracts, Circom zk-SNARK circuits, agent model definitions, and operational tooling. This is the mathematical and computational substrate from which the governance gateway in the parent workspace draws.
 
 ## Repository Structure

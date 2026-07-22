@@ -30,7 +30,7 @@ infix:70 " ⬝ " => mul
 /-- Matrix exponentiation -/
 @[simp] def matPow {n : Nat} (M : Matrix n) : Nat → Matrix n
   | 0 => identity n
-  | k+1 => M ⬝ matPow k
+  | k+1 => M ⬝ matPow M k
 
 -- Theorems are omitted; they can be reinstated once a proper Finset library is available.
 

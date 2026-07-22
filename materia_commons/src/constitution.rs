@@ -3,7 +3,7 @@ use std::fmt;
 use thiserror::Error;
 
 // --- Constants ---
-pub const LAMBDA_M_THRESHOLD: f64 = 0.3; // MTPI bound delta(t) <= 0.3
+pub const LAMBDA_M_THRESHOLD: f64 = 0.1; // MTPI bound delta(t) <= 0.1
 pub const CONTRACTIVITY_UPPER: f64 = 1.0;
 pub const CONTRACTIVITY_LOWER: f64 = 0.0;
 pub const CIRCUIT_BREAKER_THRESHOLD: u32 = 3;
@@ -102,6 +102,7 @@ impl ConstitutionModel {
         self.l0_5_lambda_m_compliant()?;
         self.l0_6_kill_switch_not_active()?;
         self.l0_7_circuit_breaker_not_tripped()?;
+        self.l0_8_proof_anchor_validation()?;
         self.l0_9_proof_anchor_recognized()?;
         self.l0_10_civic_state_preserved()?;
         Ok(())
@@ -300,6 +301,43 @@ impl ConstitutionModel {
         }
         Ok(())
     }
+
+    fn l0_8_proof_anchor_validation(&self) -> Result<(), ConstitutionViolation> {
+        if let Some(ref anchor) = self.proof_anchor {
+            if !validate_proof_anchor(anchor) {
+                return Err(ConstitutionViolation {
+                    invariant: L0Invariant::L0_8,
+                    detail: format!(
+                        "proof_anchor is malformed: {}. Must be 0x-prefixed with 64 hex characters.",
+                        anchor
+                    ),
+                });
+            }
+        } else {
+            // Absence is a warning, not a violation
+        }
+        Ok(())
+    }
+
+    pub fn constitutional_summary(&self) -> serde_json::Value {
+        serde_json::json!({
+            "status": "LAWFUL",
+            "state_norm": self.state_norm,
+            "drift_rate": self.drift_rate,
+            "contractivity_score": self.contractivity_score,
+            "critiques_passed": self.critique_results.len(),
+            "prime_gates_declared": self.prime_gates.len(),
+            "rollback_anchor_sha": self.rollback_anchor_sha,
+            "consecutive_failures": self.consecutive_failures,
+            "kill_switch_active": self.kill_switch_active,
+            "audit_warnings": self.audit_warnings,
+        })
+    }
+}
+
+fn validate_proof_anchor(anchor: &str) -> bool {
+    let s = anchor.strip_prefix("0x").unwrap_or(anchor);
+    s.len() == 64 && s.bytes().all(|b| b.is_ascii_hexdigit())
 }
 
 #[cfg(test)]

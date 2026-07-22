@@ -580,49 +580,7 @@ mod tests {
 // ---------------------------------------------------------------------------
 
 use std::collections::HashMap;
-// Assuming GoldilocksField is available or defined.
-// For Kani verification, we will mock it or import it properly.
-// use goldilocks_arithmetic_kernel::GoldilocksField;
-
-/// Placeholder for GoldilocksField if not yet imported
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct GoldilocksField(pub u64);
-
-impl GoldilocksField {
-    pub fn one() -> Self {
-        Self(1)
-    }
-    pub fn zero() -> Self {
-        Self(0)
-    }
-    pub fn from(v: u64) -> Self {
-        Self(v)
-    }
-    pub fn inverse(&self) -> Option<Self> {
-        Some(Self(1)) /* mock */
-    }
-    pub fn pow(&self, _exp: u64) -> Self {
-        Self(1) /* mock */
-    }
-}
-impl std::ops::Add for GoldilocksField {
-    type Output = Self;
-    fn add(self, _rhs: Self) -> Self::Output {
-        self
-    }
-}
-impl std::ops::Sub for GoldilocksField {
-    type Output = Self;
-    fn sub(self, _rhs: Self) -> Self::Output {
-        self
-    }
-}
-impl std::ops::Mul for GoldilocksField {
-    type Output = Self;
-    fn mul(self, _rhs: Self) -> Self::Output {
-        self
-    }
-}
+pub use goldilocks::GoldilocksField;
 
 /// Compute the truncated Euler product for a set of primes.
 ///
@@ -639,26 +597,24 @@ pub fn compute_euler_product(
     traces: &HashMap<u64, GoldilocksField>,
     determinants: &HashMap<u64, GoldilocksField>,
 ) -> GoldilocksField {
-    let one = GoldilocksField::one();
+    let one = GoldilocksField::ONE;
     let mut product = one;
 
     for &p in primes {
-        let p_fe = GoldilocksField::from(p); // p mod P
-        let p_inv = p_fe.inverse().expect("prime not zero"); // p^{-1}
-        let p_inv_s = p_inv.pow(s); // p^{-s}
-        let p_inv_2s = p_inv.pow(2 * s); // p^{-2s}
+        let p_fe = GoldilocksField::new(p);
+        let p_inv = p_fe.inverse().expect("prime not zero");
+        let p_inv_s = p_inv.pow(s);
+        let p_inv_2s = p_inv.pow(2 * s);
 
         let trace = traces.get(&p).copied().unwrap_or(one);
         let det = determinants.get(&p).copied().unwrap_or(one);
 
-        // denominator = 1 - trace * p^{-s} + det * p^{-2s}
-        let part1 = trace * p_inv_s;
-        let part2 = det * p_inv_2s;
-        let denom = one - part1 + part2;
+        let part1 = trace.mul(&p_inv_s);
+        let part2 = det.mul(&p_inv_2s);
+        let denom = one.sub(&part1).add(&part2);
 
-        // factor = 1 / denom
-        let factor = denom.inverse().expect("Euler factor non‑zero");
-        product = product * factor;
+        let factor = denom.inverse().expect("Euler factor non-zero");
+        product = product.mul(&factor);
     }
 
     product

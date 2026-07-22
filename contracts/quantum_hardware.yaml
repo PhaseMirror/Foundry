@@ -1,0 +1,105 @@
+# Quantum Hardware Specification Contract
+# Maps to Lean Examples/QuantumGate.lean and Rust src/quantum_backend.rs
+
+schema_version: "1.0.0"
+
+system:
+  name: "QuantumHardware"
+  version: "0.1.0"
+
+parameters:
+  - name: "num_qubits"
+    type: "u8"
+    max: 4
+    description: "Number of physical qubits (Kani BMC bound)"
+
+  - name: "rabi_frequency"
+    type: "[f64; MAX_QUBITS]"
+    description: "Rabi frequency per qubit (MHz)"
+
+  - name: "detuning"
+    type: "[f64; MAX_QUBITS]"
+    description: "Detuning per qubit (MHz)"
+
+  - name: "blockade_radius"
+    type: "f64"
+    description: "Rydberg blockade radius (μm)"
+
+  - name: "blockade_interaction"
+    type: "[[f64; MAX_QUBITS]; MAX_QUBITS]"
+    description: "Pairwise interaction matrix"
+
+  - name: "pulse_length_tolerance"
+    type: "f64"
+    default: 0.1
+    description: "Maximum tolerable pulse length error"
+
+  - name: "phase_tolerance"
+    type: "f64"
+    default: 0.1
+    description: "Maximum tolerable phase error"
+
+  - name: "leakage_rate"
+    type: "f64"
+    default: 0.01
+    description: "Qubit leakage rate per operation"
+
+  - name: "decoherence_rate"
+    type: "f64"
+    default: 100.0
+    description: "Decoherence rate (1/μs)"
+
+gates:
+  - name: "Identity"
+    params: []
+    active_qubits: 0
+
+  - name: "SingleQubitGate"
+    params: ["qubit: u8", "angle: f64", "axis: Axis"]
+    active_qubits: 1
+
+  - name: "TwoQubitGate"
+    params: ["control: u8", "target: u8", "gate_type: TwoQubitType"]
+    active_qubits: 2
+
+  - name: "RydbergPulse"
+    params: ["qubits: [u8; MAX_QUBITS]", "active: u8", "duration: f64", "detuning: f64"]
+    active_qubits: "variable"
+
+axes:
+  - name: "X"
+  - name: "Y"
+  - name: "Z"
+
+two_qubit_types:
+  - name: "CNOT"
+  - name: "CZ"
+  - name: "SWAP"
+
+defects:
+  - name: "associator"
+    metric: "frobenius_norm"
+    tolerance: 0.1
+    lean_type: "HasDefect.associator_defect"
+    rust_fn: "associator::associator_defect"
+
+  - name: "binary_residual"
+    metric: "interaction_strength"
+    threshold: 1.0
+    lean_type: "HasDefect.binary_residual"
+    rust_fn: "associator::binary_residual"
+
+verification:
+  kani:
+    bounds:
+      max_qubits: 4
+      max_terms: 32
+    harnesses:
+      - "verify_associator_bounded"
+      - "verify_blockade_enforced"
+      - "verify_fidelity_bound"
+    properties:
+      - "associator_defect >= 0"
+      - "binary_residual >= 0"
+      - "fidelity_bound <= 1.0"
+      - "rydberg_interaction ~ 1/r^6"

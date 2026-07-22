@@ -5,6 +5,10 @@ pub struct Workflow {
     pub name: String,
     pub tasks: Vec<Task>,
     pub trust: Option<crate::types::TrustLevel>,
+    #[serde(default)]
+    pub consensus_proof: Option<String>,
+    #[serde(default)]
+    pub threshold_met: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, schemars::JsonSchema)]

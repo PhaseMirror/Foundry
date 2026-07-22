@@ -1,10 +1,16 @@
 name: Lean CI
 
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+  workflow_call:
+    inputs:
+      lean_version:
+        required: false
+        type: string
+        default: v4.32.0
+      build_script:
+        required: false
+        type: string
+        default: build_all.sh
 
 jobs:
   build:
@@ -16,20 +22,21 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Lean toolchain
-        uses: leanprover/lean-toolchain@v1
-        with:
-          lean-version: "nightly"
+      - name: Install elan
+        run: |
+          curl -sSfL https://github.com/leanprover/elan/releases/download/v3.1.1/elan-x86_64-unknown-linux-gnu.tar.gz | tar xz
+          ./elan-init -y --default-toolchain leanprover/lean4:${{ inputs.lean_version }}
+          echo "$HOME/.elan/bin" >> $GITHUB_PATH
 
-      - name: Cache Lake packages
+      - name: Cache elan packages
         uses: actions/cache@v4
         with:
           path: ~/.elan
-          key: ${{ runner.os }}-elan-${{ hashFiles('**/lakefile.lean') }}
+          key: ${{ runner.os }}-elan-${{ inputs.lean_version }}-${{ hashFiles('**/lakefile.lean') }}
           restore-keys: |
-            ${{ runner.os }}-elan-
+            ${{ runner.os }}-elan-${{ inputs.lean_version }}-
 
       - name: Run build script
         run: |
-          chmod +x ../../build_all.sh
-          ../../build_all.sh
+          chmod +x ../../${{ inputs.build_script }}
+          ../../${{ inputs.build_script }}

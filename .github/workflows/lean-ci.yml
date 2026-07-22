@@ -1,16 +1,18 @@
 name: Lean 4 CI
 
 on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+  workflow_call:
+    inputs:
+      lean_version:
+        required: false
+        type: string
+        default: leanprover/lean4:v4.32.0-rc1
 
 jobs:
   build_and_test:
     name: Build and Test Lean
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -18,13 +20,32 @@ jobs:
       - name: Install elan
         run: |
           curl -sSfL https://github.com/leanprover/elan/releases/download/v3.1.1/elan-x86_64-unknown-linux-gnu.tar.gz | tar xz
-          ./elan-init -y --default-toolchain leanprover/lean4:v4.32.0-rc1
+          ./elan-init -y --default-toolchain ${{ inputs.lean_version }}
           echo "$HOME/.elan/bin" >> $GITHUB_PATH
 
-      - name: Build Project
+      - name: Cache elan packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.elan
+          key: ${{ runner.os }}-elan-${{ inputs.lean_version }}-${{ hashFiles('**/lakefile.lean') }}
+          restore-keys: |
+            ${{ runner.os }}-elan-${{ inputs.lean_version }}-
+
+      - name: Build Root Project
         working-directory: .
         run: lake build
 
-      - name: Run Tests
+      - name: Build Lean F1 Square
+        working-directory: lean
+        run: lake build
+
+      - name: Run Root Tests
         working-directory: .
         run: lake test
+
+      - name: Run Lean F1 Tests
+        working-directory: lean
+        run: lake test
+
+      - name: Run Honesty Audit
+        run: bash scripts/honesty_audit.sh

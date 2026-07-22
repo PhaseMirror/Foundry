@@ -93,19 +93,19 @@ structure ResonanceBound where
 
 -- ==== Formal Proof Obligations from ADR-090 ====
 
-@[proof]
+
 theorem base_schema_valid : baseSchema.attestation = "AUTHORIZED_SCHEMA_SIG" ∧ baseSchema.seq = 1 := by
   simp [baseSchema]
 
-@[proof]
+
 theorem valid_prime_permitted {last_seq : Nat} (vs : VerifiedSchema last_seq) [PermittedPrimes vs] (vp : ValidPrime vs) :
   vp.p ∈ vs.schema.primes := vp.mem
 
-@[proof]
+
 theorem operator_word_length {last_seq : Nat} (vs : VerifiedSchema last_seq) [PermittedPrimes vs] (w : OperatorWord vs) :
   w.ops.length ≥ 0 := by exact Nat.zero_le w.ops.length
 
-@[proof]
+
 theorem resonance_bound_sound (rb : ResonanceBound) : rb.r1 < 1.0 ∧ rb.r3 < 0.8 :=
   ⟨rb.h_r1, rb.h_r3⟩
 

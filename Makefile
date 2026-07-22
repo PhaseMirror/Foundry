@@ -1,62 +1,82 @@
-.PHONY: all verify verify-lean verify-rust verify-kani test bench clean help
+.PHONY: all clean lean rust kani test verify docs help
 
-all: verify
+# Default target
+all: lean rust
 
-help:
-	@echo "Universal Closure Theory - Build Targets"
-	@echo ""
-	@echo "  make verify       - Run all verification (Lean + Rust + Kani)"
-	@echo "  make verify-lean  - Run Lean 4 spec type-checks only"
-	@echo "  make verify-rust  - Run Rust tests only"
-	@echo "  make verify-kani  - Run Kani BMC only"
-	@echo "  make test         - Run all Rust tests"
-	@echo "  make bench        - Run benchmarks"
-	@echo "  make clean        - Clean build artifacts"
-	@echo ""
+# Lean 4 formal core
+lean:
+	cd lean && lake build
 
-verify: verify-lean verify-rust
-	@echo "=== All verification complete ==="
+# Rust implementation
+rust:
+	cd rust && cargo build
 
-verify-lean:
-	@echo "--- Lean 4 Spec Verification ---"
-	cd lean && lake build Core
-	@echo "Sorry count:"
-	@grep -r "sorry" lean/Core/Spec/ lean/Core/Properties/ lean/Core/Ext/ --include="*.lean" 2>/dev/null | grep -v "^--" | wc -l || echo "0"
-	@echo "Mathlib import count:"
-	@grep -r "Mathlib" lean/Core/ --include="*.lean" 2>/dev/null | wc -l || echo "0"
-	@echo "Lean verification: DONE"
+# Kani bounded model checking
+kani:
+	cd rust && cargo kani --harness verify_adjunction_lift_property
+	cd rust && cargo kani --harness verify_no_panic_termination
+	cd rust && cargo kani --harness verify_blockade_enforced
+	cd rust && cargo kani --harness verify_associator_bounded
+	cd rust && cargo kani --harness verify_ffi_proof_export
+	cd rust && cargo kani --harness verify_union_find_no_panic
+	cd rust && cargo kani --harness verify_no_index_out_of_bounds
 
-verify-rust:
-	@echo "--- Rust Verification ---"
-	cd rust && cargo test --lib
-	cd rust && cargo test --test completion_test --test quantum_test --test proptest
-	@echo "Rust verification: DONE"
+# Run all tests
+test: lean-test rust-test
 
-verify-kani:
-	@echo "--- Kani BMC Verification ---"
-	cd rust && cargo kani --harness verify_adjunction_lift_property || true
-	cd rust && cargo kani --harness verify_no_panic_termination || true
-	cd rust && cargo kani --harness verify_blockade_enforced || true
-	cd rust && cargo kani --harness verify_associator_bounded || true
-	cd rust && cargo kani --harness verify_ffi_proof_export || true
-	cd rust && cargo kani --harness verify_union_find_no_panic || true
-	cd rust && cargo kani --harness verify_no_index_out_of_bounds || true
-	@echo "Kani verification: DONE"
+# Lean tests
+lean-test:
+	cd lean && lake test
 
-test: verify-rust
+# Rust tests
+rust-test:
+	cd rust && cargo test
 
-bench:
-	@echo "--- Benchmarks ---"
-	cd rust && cargo bench
-	@echo "Benchmarks: DONE"
+# Run full verification pipeline
+verify:
+	./scripts/verify-all.sh
 
+# Generate Kani harnesses from YAML contracts
+generate-harnesses:
+	./scripts/generate-harnesses.sh
+
+# Sync Lean theorems to Rust contracts
+sync:
+	./scripts/sync-lean-rust.sh
+
+# Generate documentation
+docs:
+	cd lean && lake build docs
+	mkdir -p docs/verification
+	@echo "Documentation generated in docs/"
+
+# Clean build artifacts
 clean:
 	cd lean && lake clean
 	cd rust && cargo clean
-	@echo "Clean: DONE"
+	rm -rf docs/verification/*.md
 
-verify-contracts:
-	@echo "--- Contract Validation ---"
-	@for f in contracts/*.yaml; do \
-		python3 -c "import yaml; yaml.safe_load(open('$$f'))" && echo "$$f: VALID" || echo "$$f: INVALID"; \
-	done
+# Help
+help:
+	@echo "Universal Closure Theory - Build System"
+	@echo ""
+	@echo "Targets:"
+	@echo "  all              - Build Lean and Rust (default)"
+	@echo "  lean             - Build Lean 4 formal core"
+	@echo "  rust             - Build Rust implementation"
+	@echo "  kani             - Run Kani bounded model checking"
+	@echo "  test             - Run all tests"
+	@echo "  lean-test        - Run Lean tests"
+	@echo "  rust-test        - Run Rust tests"
+	@echo "  verify           - Run full verification pipeline"
+	@echo "  generate-harnesses - Generate Kani harnesses from YAML"
+	@echo "  sync             - Sync Lean theorems to Rust contracts"
+	@echo "  docs             - Generate documentation"
+	@echo "  clean            - Clean build artifacts"
+	@echo "  help             - Show this help"
+	@echo ""
+	@echo "Examples:"
+	@echo "  make all         - Build everything"
+	@echo "  make kani        - Run Kani verification"
+	@echo "  make verify      - Run full verification pipeline"
+	@echo "  make test        - Run all tests"

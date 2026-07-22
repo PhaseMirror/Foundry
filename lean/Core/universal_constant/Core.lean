@@ -25,4 +25,9 @@ structure JointSystem where
   h_contractive : rhoX + c2 < scale ∧ rhoLam + c1 < scale
   deriving Repr
 
+/-- Discrete update mapping -/
+def update (sys : JointSystem) (s : UMCState) : UMCState :=
+  { x := sys.rhoX * s.x + sys.c2 * s.lam,
+    lam := sys.rhoLam * s.lam + sys.c1 * s.x }
+
 end UMCPAROM

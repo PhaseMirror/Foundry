@@ -1,7 +1,7 @@
-import Core.Spec.PartialUC
-import Core.Spec.UniversalClosure
-import Core.Spec.Completion
-import Core.Spec.DefectAlgebra
+import Core.universal_closure.PartialUC
+import Core.universal_closure.UniversalClosure
+import Core.universal_closure.Completion
+import Core.universal_closure.DefectAlgebra
 import Core.Properties.AdjunctionProp
 import Core.Properties.DefectProps
 

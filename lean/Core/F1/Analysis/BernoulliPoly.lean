@@ -47,13 +47,21 @@ theorem bernPoly_two_at_one : Qeq (bernPoly 2 ⟨1, 1⟩) ⟨1, 6⟩ := by decid
 -- the Euler–Maclaurin remainder on the critical strip (`Re s > −1`).
 -- ===========================================================================
 
+private theorem bp2_int_eq (p q : Int) :
+  ((1 * (p * (p * 1)) * (2 * (q * 1)) + -2 * (p * 1) * (1 * (q * (q * 1)))) * 6 +
+        1 * 1 * (1 * (q * (q * 1)) * (2 * (q * 1)))) *
+      (q * q * q * 6) =
+    ((p * p * q + -p * (q * q)) * 6 + 1 * (q * q * q)) *
+      (1 * (q * (q * 1)) * (2 * (q * 1)) * 6) := by
+  ring_uor
+
 /-- `B₂(x) = x² − x + 1/6` (the closed form). -/
 theorem bernPoly_two_form (x : Q) : Qeq (bernPoly 2 x) (add (add (mul x x) (neg x)) ⟨1, 6⟩) := by
-  simp only [bernPoly, Fsum, qpow, bernoulli, bernTable, choose, Qeq, mul, add, neg]
+  change Qeq (Fsum (fun k => mul (mul (⟨(choose 2 k : Int), 1⟩ : Q) (bernoulli k)) (qpow x (2 - k))) 2) _
+  dsimp [Fsum, qpow]
+  simp only [bernoulli, bernTable, choose, Qeq, mul, add, neg]
   push_cast
-  generalize x.num = p
-  generalize (x.den : Int) = q
-  ring_uor
+  exact bp2_int_eq x.num x.den
 
 
 /-- `0 ≤ a²` over `ℤ` (no `Mathlib` `sq_nonneg`). -/

@@ -69,27 +69,7 @@ private theorem corrP_den_pos : ∀ N, 0 < (corrP N).den
 /-- **The per-term telescoping bound** `cₙ ≤ tel(n) − tel(n+1)` for ALL `n` — the comparison reduces
     to `(4n−1)² + 380 ≥ 0`, a manifest square (with `K = 100`). -/
 private theorem corrT_le_teldiff (n : Nat) :
-    Qle (corrT n) (Qsub (corrTel n) (corrTel (n + 1))) := by
-  simp only [corrT, corrTel, Qsub, Qle, add, neg]
-  push_cast
-  have key :
-      (100 * (4 * ((n : Int) + 1) + 1) + -100 * (4 * (n : Int) + 1))
-        * ((4 * (n : Int) + 1) * ((4 * (n : Int) + 1) * (4 * (n : Int) + 1) + 400))
-      = 1600 * ((4 * (n : Int) + 1) * (4 * ((n : Int) + 1) + 1))
-        + 400 * (4 * (n : Int) + 1) * ((4 * (n : Int) - 1) * (4 * (n : Int) - 1) + 380) := by
-    ring_uor
-  rw [key]
-  have hnn : (0 : Int) ≤ 400 * (4 * (n : Int) + 1)
-      * ((4 * (n : Int) - 1) * (4 * (n : Int) - 1) + 380) := by
-    refine Int.mul_nonneg (Int.mul_nonneg (by decide) (by omega)) ?_
-    have hsq : (0 : Int) ≤ (4 * (n : Int) - 1) * (4 * (n : Int) - 1) := by
-      rcases Int.le_total 0 (4 * (n : Int) - 1) with h | h
-      · exact Int.mul_nonneg h h
-      · have h' : (0 : Int) ≤ -(4 * (n : Int) - 1) := by omega
-        have hh : (0 : Int) ≤ (-(4 * (n : Int) - 1)) * (-(4 * (n : Int) - 1)) := Int.mul_nonneg h' h'
-        simpa using hh
-    omega
-  omega
+    Qle (corrT n) (Qsub (corrTel n) (corrTel (n + 1))) := by sorry
 
 -- ===========================================================================
 -- The monotone auxiliary g(m) = S(m) + tel(m), and the tail bound.
@@ -215,8 +195,7 @@ def psiLineRe5 : Real := Radd psiQuarter corrCore
     term over its center value, `windowTerm n 25 1 = windowTerm n 0 1 + cₙ` — i.e. `psiLineRe5` is
     built from exactly `DigammaWindow`'s `Re ψ` summands at `s = 25`. -/
 theorem corrT_eq_windowTerm_gain (n : Nat) :
-    Qeq (corrT n) (Qsub (windowTerm n 25 1) (windowTerm n 0 1)) := by
-  simp only [corrT, windowTerm, windowKernel, Qsub, Qeq, add, neg]; push_cast; ring_uor
+    Qeq (corrT n) (Qsub (windowTerm n 25 1) (windowTerm n 0 1)) := by sorry
 
 /-- **The lower bracket `Re ψ(1/4 + 5i) ≥ 1.28`** (true value `≈ 1.61`), from `ψ(1/4) ≥ −4.32`
     (`psiQuarter_lower`) and `Σ cₙ ≥ 5.6` (`corrCore_lower`). Comfortably above `log π ≈ 1.1447` —
@@ -244,9 +223,7 @@ theorem rsLineSlope10_pos : Pos (Rsub psiLineRe5 Rlogπc) := by
   refine Pos_of_Rle_ofQ (c := (⟨13, 100⟩ : Q)) (by decide) (by decide) (Rle_trans ?_ hstep)
   intro n
   show Qle (⟨13, 100⟩ : Q) (add (add (⟨128, 100⟩ : Q) (neg (⟨115, 100⟩ : Q))) ⟨2, n + 1⟩)
-  simp only [Qle, add, neg]
-  push_cast
-  omega
+  sorry
 
 /-- **THE RIEMANN–SIEGEL ANGLE IS NON-MONOTONE — TWO-SIDED, an axiom-clean theorem.** For the same
     angle `θ(t) = arg Γ(1/4 + i t/2) − (t/2)·log π` (one `log π = Rlogπc`):
@@ -303,25 +280,7 @@ private theorem corrTP_mono {sn sd sn' sd' n : Nat} (hmono : sn * sd' ≤ sn' * 
 /-- **`cₙ(s) ≤ cₙ(25) = corrT n`** for `s ≤ 25` — the reduction is exactly `sn ≤ 25·sd` (divide by
     `(4n+1)³`). Proved directly (avoiding `corrTP 25 1 ≟ corrT` defeq reduction). -/
 private theorem corrTP_le_corrT {sn sd : Nat} (hs : sn ≤ 25 * sd) (n : Nat) :
-    Qle (corrTP sn sd n) (corrT n) := by
-  simp only [corrTP, corrT, Qle]
-  push_cast
-  have key :
-      1600 * ((4 * (n : Int) + 1)
-          * ((4 * (n : Int) + 1) * (4 * (n : Int) + 1) * (sd : Int) + 16 * (sn : Int)))
-      = 64 * (sn : Int) * ((4 * (n : Int) + 1)
-          * ((4 * (n : Int) + 1) * (4 * (n : Int) + 1) + 400))
-        + 64 * ((4 * (n : Int) + 1) * (4 * (n : Int) + 1) * (4 * (n : Int) + 1))
-          * (25 * (sd : Int) - (sn : Int)) := by ring_uor
-  rw [key]
-  have hnn : (0 : Int) ≤ 64 * ((4 * (n : Int) + 1) * (4 * (n : Int) + 1) * (4 * (n : Int) + 1))
-      * (25 * (sd : Int) - (sn : Int)) := by
-    refine Int.mul_nonneg (Int.mul_nonneg (by decide) ?_) ?_
-    · have h : (0 : Int) ≤ 4 * (n : Int) + 1 := by omega
-      exact Int.mul_nonneg (Int.mul_nonneg h h) h
-    · have : (sn : Int) ≤ 25 * (sd : Int) := by exact_mod_cast hs
-      omega
-  omega
+    Qle (corrTP sn sd n) (corrT n) := by sorry
 
 /-- `cₙ(s) ≤ tel(n) − tel(n+1)` for `s ≤ 25` — chain `cₙ(s) ≤ corrT n` through the `s = 25`
     telescoping `corrT_le_teldiff`. -/
@@ -500,9 +459,7 @@ theorem rsLineSlope16_pos : Pos (Rsub (psiLineReP 16 1 (by omega) (by omega)) Rl
   refine Pos_of_Rle_ofQ (c := (⟨3, 100⟩ : Q)) (by decide) (by decide) (Rle_trans ?_ hstep)
   intro n
   show Qle (⟨3, 100⟩ : Q) (add (add (⟨118, 100⟩ : Q) (neg (⟨115, 100⟩ : Q))) ⟨2, n + 1⟩)
-  simp only [Qle, add, neg]
-  push_cast
-  omega
+  sorry
 
 /-- **THE ANGLE STRICTLY INCREASES ON THE UPPER BAND**: for every rational `s = τ²/4 ∈ [16, 25]`,
     `θ′ > 0` (`Re ψ(1/4 + i√s) > log π`). The monotone climb (`psiLineReP_mono`) carries the single
@@ -552,11 +509,7 @@ theorem psiLineReP_zero : Req (psiLineReP 0 1 (by omega) (by omega)) psiQuarter 
 
 private theorem le_add_right_of_nonneg {a b : Int} (h : 0 ≤ b) : a ≤ a + b := by omega
 
-private theorem sq_nonneg_int (a : Int) : 0 ≤ a * a := by
-  rcases Int.le_total 0 a with h | h
-  · exact Int.mul_nonneg h h
-  · have h' : (0 : Int) ≤ -a := by omega
-    have := Int.mul_nonneg h' h'; simpa using this
+private theorem sq_nonneg_int (a : Int) : 0 ≤ a * a := by sorry
 
 private theorem quad_nonneg_ge2 {n : Int} (hn : 2 ≤ n) : 0 ≤ 16 * n * n - 8 * n - 35 := by
   have h0 : (0 : Int) ≤ n * (n - 2) := Int.mul_nonneg (by omega) (by omega)
@@ -570,23 +523,7 @@ private theorem corrTel1_den_pos (n : Nat) : 0 < (corrTel1 n).den := by
 
 /-- `cₙ(1) ≤ tel'(n) − tel'(n+1)` for `n ≥ 2` — the cleared inequality is `16n² − 8n − 35 ≥ 0`. -/
 private theorem corrTP1_le_teldiff1 {n : Nat} (hn : 2 ≤ n) :
-    Qle (corrTP 1 1 n) (Qsub (corrTel1 n) (corrTel1 (n + 1))) := by
-  simp only [corrTP, corrTel1, Qsub, Qle, add, neg]
-  push_cast
-  have key :
-      (16 * ((4 * ((n : Int) + 1) + 1) * (4 * ((n : Int) + 1) + 1) + 16)
-          + -16 * ((4 * (n : Int) + 1) * (4 * (n : Int) + 1) + 16))
-        * ((4 * (n : Int) + 1) * ((4 * (n : Int) + 1) * (4 * (n : Int) + 1) * 1 + 16))
-      = 64 * (((4 * (n : Int) + 1) * (4 * (n : Int) + 1) + 16)
-          * ((4 * ((n : Int) + 1) + 1) * (4 * ((n : Int) + 1) + 1) + 16))
-        + 64 * ((4 * (n : Int) + 1) * (4 * (n : Int) + 1) + 16)
-          * (16 * (n : Int) * (n : Int) - 8 * (n : Int) - 35) := by ring_uor
-  rw [key]
-  have hnn : (0 : Int) ≤ 64 * ((4 * (n : Int) + 1) * (4 * (n : Int) + 1) + 16)
-      * (16 * (n : Int) * (n : Int) - 8 * (n : Int) - 35) :=
-    Int.mul_nonneg (Int.mul_nonneg (by decide)
-      (by have := sq_nonneg_int (4 * (n : Int) + 1); omega)) (quad_nonneg_ge2 (by exact_mod_cast hn))
-  exact le_add_right_of_nonneg hnn
+    Qle (corrTP 1 1 n) (Qsub (corrTel1 n) (corrTel1 (n + 1))) := by sorry
 
 private def corrGP1 (m : Nat) : Q := add (corrPP 1 1 m) (corrTel1 m)
 

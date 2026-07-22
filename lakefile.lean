@@ -40,6 +40,8 @@ lean_lib ADR {
     `ComplexKappa.ZetaComb,
     `ComplexKappa.GUE,
     `ComplexKappa.MainTheorem,
+    `ComplexKappa.CPTPIntertwiner,
+    `ComplexKappa.IsometryProofs,
     `ComplexKappa.Test,
   ]
 }

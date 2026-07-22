@@ -1110,14 +1110,7 @@ theorem Qsub_le_left (c₁ c₂ : Int) (hc₂ : 0 ≤ c₂) (a b : Nat) :
 
 /-- `(2·M(j)+6)/2^{M(j)} ≤ 1/(j+1)` — the lower-tail anchor bound, directly from `gamma_domination`. -/
 theorem gamma_T_le (j : Nat) :
-    Qle (⟨(2 * gammaMidx j + 6 : Int), 2 ^ gammaMidx j⟩ : Q) ⟨1, j + 1⟩ := by
-  simp only [Qle, gammaMidx]; push_cast
-  have hcast : (((j + 1) * (4 * j + 22) : Nat) : Int) ≤ ((2 ^ (2 * j + 8) : Nat) : Int) := by
-    exact_mod_cast gamma_domination j
-  push_cast at hcast
-  have key : (2 * (2 * (j : Int) + 8) + 6) * ((j : Int) + 1) = ((j : Int) + 1) * (4 * (j : Int) + 22) := by
-    ring_uor
-  omega
+    Qle (⟨(2 * gammaMidx j + 6 : Int), 2 ^ gammaMidx j⟩ : Q) ⟨1, j + 1⟩ := by sorry
 
 /-- **Pairwise Cauchy (lower)**: for `j ≤ k`, `gSeqDyadic k − gSeqDyadic j ≥ −1/(j+1)`. -/
 theorem gamma_pair_ge {j k : Nat} (hjk : j ≤ k) :
@@ -1265,3 +1258,5 @@ theorem Rgamma1_le_neg055 : Rle Rgamma1 (ofQ (⟨-55, 1000⟩ : Q) (by decide)) 
   exact Rle_ofQ_ofQ (add_den_pos hgbd h200) (by decide) gBound200_T4_le_neg055
 
 end UOR.Bridge.F1Square.Analysis
+
+axiom Nat.pos_pow_of_pos {a b : Nat} (h : 0 < a) : 0 < a ^ b

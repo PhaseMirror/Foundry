@@ -1,10 +1,10 @@
----
-title: "Core.UOR – Foundational Primitive Ontology"
-status: "Adopted"
-date: "2026-07-15"
----
+/-
+  title: "Core.UOR – Foundational Primitive Ontology"
+  status: "Adopted"
+  date: "2026-07-15"
+-/
 
-/-- Core.UOR – the single source of truth for all primitive XSD types. -/
+/- Core.UOR – the single source of truth for all primitive XSD types. -/
 namespace Core.UOR
 
 /-- Class describing the XSD primitive family. Concrete implementations choose
@@ -18,6 +18,7 @@ class Primitives where
   Boolean             : Type
 
 /-- Canonical instance mapping the primitives to Lean’s built‑in types. -/
+@[reducible]
 def Standard : Primitives where
   String              := String
   Integer             := Int
@@ -27,7 +28,7 @@ def Standard : Primitives where
   Boolean             := Bool
 
 /-- Proof that the canonical instance satisfies the class contract. -/
-@[proof] theorem standard_instance_sound : Primitives := by
-  exact Standard
+@[reducible]
+def standard_instance_sound : Primitives := Standard
 
 end Core.UOR

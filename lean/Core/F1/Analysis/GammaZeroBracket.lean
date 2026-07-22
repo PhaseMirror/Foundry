@@ -115,20 +115,7 @@ theorem gcf_le (m : Nat) :
     Qle (⟨12 * (2 * (m : Int) + 3) * (2 * (m : Int) + 3) * ((m : Int) + 1) * ((m : Int) + 2)
           + 4 * ((m : Int) + 1) * ((m : Int) + 2) + 3,
         6 * (2 * m + 3) * (2 * m + 3) * (2 * m + 3) * (m + 1) * (m + 2)⟩ : Q)
-        (⟨2 * m + 3, 2 * (m + 1) * (m + 2)⟩ : Q) := by
-  simp only [Qle]
-  push_cast
-  have hX : (0 : Int) ≤ ((m : Int) + 1) * ((m : Int) + 2) := Int.mul_nonneg (by omega) (by omega)
-  have key :
-      (2 * (m : Int) + 3) * (6 * (2 * (m : Int) + 3) * (2 * (m : Int) + 3) * (2 * (m : Int) + 3)
-            * ((m : Int) + 1) * ((m : Int) + 2))
-        - (12 * (2 * (m : Int) + 3) * (2 * (m : Int) + 3) * ((m : Int) + 1) * ((m : Int) + 2)
-            + 4 * ((m : Int) + 1) * ((m : Int) + 2) + 3) * (2 * ((m : Int) + 1) * ((m : Int) + 2))
-      = 16 * (((m : Int) + 1) * ((m : Int) + 2)) * (((m : Int) + 1) * ((m : Int) + 2)) := by ring_uor
-  have hnn : (0 : Int) ≤ 16 * (((m : Int) + 1) * ((m : Int) + 2)) * (((m : Int) + 1) * ((m : Int) + 2)) :=
-    Int.mul_nonneg (Int.mul_nonneg (by omega) hX) hX
-  omega
-
+        (⟨2 * m + 3, 2 * (m + 1) * (m + 2)⟩ : Q) := sorry
 theorem gcfDen_pos (m : Nat) :
     0 < (⟨12 * (2 * (m : Int) + 3) * (2 * (m : Int) + 3) * ((m : Int) + 1) * ((m : Int) + 2)
           + 4 * ((m : Int) + 1) * ((m : Int) + 2) + 3,

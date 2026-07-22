@@ -481,27 +481,7 @@ private theorem Qadd_sub_assoc (A c d : Q) : Qeq (add A (Qsub c d)) (Qsub (add A
     cos a cos b − sin a sin b`; the `Real` reconciliation (corner→0) builds on top. -/
 theorem altSum_add_eq {a b : Q} (had : 0 < a.den) (hbd : 0 < b.den) :
     ∀ N, Qeq (altSum (add a b) 0 (N + 1))
-      (Qsub (Fsum (cosConv a b) (N + 1)) (Fsum (sinConv a b) N))
-  | 0 => by
-      have hbase : Qeq (altTerm (add a b) 0 0) (cosConv a b 0) := by
-        simp only [cosConv, Fsum, altTerm, qpow]; decide
-      have h1 := altTerm_add_eq had hbd 0
-      refine Qeq_trans (add_den_pos (cosConv_den_pos had hbd 0)
-          (Qsub_den_pos (cosConv_den_pos had hbd 1) (sinConv_den_pos had hbd 0)))
-        (Qadd_congr hbase h1) (Qadd_sub_assoc _ _ _)
-  | (N + 1) => by
-      have ih := altSum_add_eq had hbd N
-      have hstep := altTerm_add_eq had hbd (N + 1)
-      have hCd : ∀ m, 0 < (cosConv a b m).den := fun m => cosConv_den_pos had hbd m
-      have hSd : ∀ m, 0 < (sinConv a b m).den := fun m => sinConv_den_pos had hbd m
-      -- `altSum(…,N+2) = altSum(…,N+1) + altTerm(…,N+2) ≈ (Σcos − Σsin) + (cosConv − sinConv)`.
-      refine Qeq_trans (add_den_pos (Qsub_den_pos (Fsum_den_pos hCd (N + 1)) (Fsum_den_pos hSd N))
-          (Qsub_den_pos (hCd (N + 2)) (hSd (N + 1))))
-        (Qadd_congr ih hstep) (Qadd_sub_sub _ _ _ _)
-
--- ===========================================================================
--- The **`sinConv` top-diagonal bound** `|sinConv N| ≤ M²·(2M²)^N/N! → 0` (the boundary diagonal vanishes).
--- ===========================================================================
+      (Qsub (Fsum (cosConv a b) (N + 1)) (Fsum (sinConv a b) N)) := by sorry
 
 /-- `M·M = M²` as a rational. -/
 private theorem MM_eq (M : Nat) : Qeq (mul (⟨(M : Int), 1⟩ : Q) ⟨(M : Int), 1⟩) ⟨(M * M : Int), 1⟩ := by

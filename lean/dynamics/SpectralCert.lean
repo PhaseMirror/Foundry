@@ -1,5 +1,4 @@
-import Mathlib.Data.Complex.Basic
-import Mathlib.Data.Real.Basic
+import Core.ComplexKappa.Types
 
 namespace dynamics.SpectralCert
 

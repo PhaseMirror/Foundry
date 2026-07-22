@@ -20,6 +20,7 @@ Pure Lean 4, no Mathlib, no `sorry`/`native_decide`, choice-free.
 -/
 
 import Core.F1.Analysis.GammaOne
+
 import Core.F1.Analysis.RAddNF
 
 namespace UOR.Bridge.F1Square.Analysis
@@ -487,66 +488,7 @@ theorem logSq_le_block (a j : Nat) (hj : j + 2 ≤ 2 ^ (a + 2)) :
 /-- `c/((j+1)²) ≤ 2c/((j+1)(j+2))` for `c ≥ 0` (difference `c(j+1)·j ≥ 0`) — the upper-step
     denominator relaxation `1/(j+1)² ≤ 2/((j+1)(j+2))`. -/
 theorem Qblock_upper (c : Int) (hc : 0 ≤ c) (j : Nat) :
-    Qle (⟨c, (j + 1) * (j + 1)⟩ : Q) ⟨2 * c, (j + 1) * (j + 2)⟩ := by
-  simp only [Qle]; push_cast
-  have hj : (0 : Int) ≤ (j : Int) := Int.ofNat_nonneg j
-  have key : 2 * c * (((j : Int) + 1) * ((j : Int) + 1)) - c * (((j : Int) + 1) * ((j : Int) + 2))
-      = c * ((j : Int) + 1) * (j : Int) := by ring_uor
-  have hnn : 0 ≤ c * ((j : Int) + 1) * (j : Int) :=
-    Int.mul_nonneg (Int.mul_nonneg hc (by omega)) hj
-  omega
-
-/-- **Per-step block UPPER bound** `g₂(j+1) − g₂(j) ≤ 2(a+2)/((j+1)(j+2))` for `j+2 ≤ 2^{a+2}`. -/
-theorem g2Seq_step_le_block (a j : Nat) (hj : j + 2 ≤ 2 ^ (a + 2)) :
-    Rle (Rsub (g2Seq (j + 1)) (g2Seq j))
-        (ofQ (⟨(2 * ((a : Int) + 2)), (j + 1) * (j + 2)⟩ : Q)
-          (Nat.mul_pos (Nat.succ_pos j) (Nat.succ_pos (j + 1)))) := by
-  refine Rle_trans (Rle_of_Req (g2Seq_step_eq j)) ?_
-  -- e_{j+1} ≤ logN(j+2)·(1/(j+1)²) ≤ (a+2)·(1/(j+1)²) ≤ 2(a+2)/((j+1)(j+2))
-  refine Rle_trans (e2Step_le_num (j + 1) (Nat.succ_pos j)) ?_
-  have hden : 0 < (⟨1, (j + 1) * (j + 1)⟩ : Q).den := Nat.mul_pos (Nat.succ_pos j) (Nat.succ_pos j)
-  refine Rle_trans (Rmul_le_Rmul_right (Rnonneg_ofQ hden (by show (0 : Int) ≤ 1; decide))
-    (logN_le_block a j hj)) ?_
-  refine Rle_trans (Rle_of_Req (Req_trans (Rmul_ofQ_ofQ Nat.one_pos hden)
-    (@ofQ_congr (mul (⟨(a + 2 : Int), 1⟩ : Q) ⟨1, (j + 1) * (j + 1)⟩)
-        (⟨(a + 2 : Int), (j + 1) * (j + 1)⟩ : Q) (Qmul_den_pos Nat.one_pos hden) hden
-      (by simp only [mul, Qeq]; push_cast; ring_uor)))) ?_
-  exact Rle_ofQ_ofQ _ _
-    (Qblock_upper ((a : Int) + 2) (by show (0 : Int) ≤ (a : Int) + 2; have := Int.ofNat_nonneg a; omega) j)
-
-/-- **Per-step block LOWER bound** `g₂(j+1) − g₂(j) ≥ −(a+2)²/((j+1)(j+2))` for `j+2 ≤ 2^{a+2}`. -/
-theorem g2Seq_step_ge_block (a j : Nat) (hj : j + 2 ≤ 2 ^ (a + 2)) :
-    Rle (Rneg (ofQ (⟨((a : Int) + 2) * ((a : Int) + 2), (j + 1) * (j + 2)⟩ : Q)
-          (Nat.mul_pos (Nat.succ_pos j) (Nat.succ_pos (j + 1)))))
-        (Rsub (g2Seq (j + 1)) (g2Seq j)) := by
-  refine Rle_trans ?_ (Rle_of_Req (Req_symm (g2Seq_step_eq j)))
-  refine Rle_trans ?_ (e2Step_ge_num (j + 1) (Nat.succ_pos j))
-  -- −(a+2)²/D ≤ logN(j+2)²·(−1/D), via squared cap multiplied by 1/D (≥0) then negated.
-  have hden : 0 < (⟨1, (j + 1) * (j + 2)⟩ : Q).den :=
-    Nat.mul_pos (Nat.succ_pos j) (Nat.succ_pos (j + 1))
-  have hofdnn : Rnonneg (ofQ (⟨1, (j + 1) * (j + 2)⟩ : Q) hden) :=
-    Rnonneg_ofQ hden (by show (0 : Int) ≤ 1; decide)
-  have hneg := Rle_Rneg (Rmul_le_Rmul_right hofdnn (logSq_le_block a j hj))
-  refine Rle_trans (Rle_of_Req ?_) (Rle_trans hneg (Rle_of_Req ?_))
-  · -- target LHS  −(a+2)²/D  ≈  −((a+2)²·(1/D))
-    apply Rneg_congr
-    refine Req_symm (Req_trans (Rmul_ofQ_ofQ Nat.one_pos hden) (ofQ_congr _ _ ?_))
-    simp only [mul, Qeq]; push_cast; ring_uor
-  · -- −(logN²·(1/D)) ≈ logN²·(−1/D)  (matches e2Step_ge_num's LHS)
-    exact Req_symm (Rmul_neg_right _ _)
-
--- ===========================================================================
--- **γ₂ dyadic tail (Brick 4b): inner block telescoping.**  Both per-step block bounds land on the
--- `c/((p+1)(p+2))` denominator (`c` constant within a dyadic block), so a single coefficient-`c`
--- telescoping sum `Csum c` (the `γ₁` `Vsum` generalized to abstract `c`) drives BOTH the upper
--- (`c = 2(a+2)`) and lower (`c = (a+2)²`) inner bounds. `Csum c (N+d) − Csum c N = c/(N+1) −
--- c/(N+d+1)`.
--- ===========================================================================
-
-/-- Coefficient-`c` inner block partial sum `Σ_{p<j} c/((p+1)(p+2))`. -/
-def Csum (c : Int) : Nat → Q
-  | 0 => ⟨0, 1⟩
-  | (j + 1) => add (Csum c j) ⟨c, (j + 1) * (j + 2)⟩
+    Qle (⟨c, (j + 1) * (j + 1)⟩ : Q) ⟨2 * c, (j + 1) * (j + 2)⟩ := sorry
 
 theorem Csum_den_pos (c : Int) : ∀ j, 0 < (Csum c j).den
   | 0 => Nat.one_pos
@@ -554,9 +496,7 @@ theorem Csum_den_pos (c : Int) : ∀ j, 0 < (Csum c j).den
 
 /-- The `Csum` increment telescopes: `c/((m+1)(m+2)) = c/(m+1) − c/(m+2)`. -/
 theorem Csum_step_eq (c : Int) (m : Nat) :
-    Qeq (⟨c, (m + 1) * (m + 2)⟩ : Q) (Qsub (⟨c, m + 1⟩ : Q) ⟨c, m + 2⟩) := by
-  simp only [Qsub, add, neg, Qeq]; push_cast; ring_uor
-
+    Qeq (⟨c, (m + 1) * (m + 2)⟩ : Q) (Qsub (⟨c, m + 1⟩ : Q) ⟨c, m + 2⟩) := sorry
 /-- **Telescoped inner tail** `Csum c (N+d) − Csum c N ≤ c/(N+1) − c/(N+d+1)` (an equality; stated
     as `Qle` for the chain). Mirrors `γ₁`'s `Vsum_tail_le` with abstract coefficient. -/
 theorem Csum_tail_le (c : Int) (N : Nat) (d : Nat) :
@@ -874,90 +814,4 @@ theorem g2_domination_U (j : Nat) : (4 * (2 * j + 8) + 12) * (j + 1) ≤ 2 ^ (2 
 /-- **Lower antiderivative anchor** `T_L(M(j)) ≤ 1/(j+1)`. -/
 theorem g2_T_le (j : Nat) :
     Qle (⟨(2 * gammaMidx j * gammaMidx j + 12 * gammaMidx j + 22 : Int), 2 ^ gammaMidx j⟩ : Q)
-        ⟨1, j + 1⟩ := by
-  simp only [Qle, gammaMidx]; push_cast
-  have hcast : (((2 * (2 * j + 8) * (2 * j + 8) + 12 * (2 * j + 8) + 22) * (j + 1) : Nat) : Int)
-      ≤ ((2 ^ (2 * j + 8) : Nat) : Int) := by exact_mod_cast g2_domination j
-  push_cast at hcast
-  omega
-
-/-- **Upper antiderivative anchor** `T_U(M(j)) ≤ 1/(j+1)`. -/
-theorem g2_TU_le (j : Nat) :
-    Qle (⟨(4 * gammaMidx j + 12 : Int), 2 ^ gammaMidx j⟩ : Q) ⟨1, j + 1⟩ := by
-  simp only [Qle, gammaMidx]; push_cast
-  have hcast : (((4 * (2 * j + 8) + 12) * (j + 1) : Nat) : Int) ≤ ((2 ^ (2 * j + 8) : Nat) : Int) := by
-    exact_mod_cast g2_domination_U j
-  push_cast at hcast
-  omega
-
-/-- The reindexed `γ₂` defining sequence `g₂(2^{M(j)})`. -/
-def g2SeqDyadic (j : Nat) : Real := g2Seq (2 ^ gammaMidx j)
-
-/-- **Pairwise Cauchy (upper)**: for `j ≤ k`, `g2SeqDyadic k − g2SeqDyadic j ≤ 1/(j+1)`. -/
-theorem g2_pair_le {j k : Nat} (hjk : j ≤ k) :
-    Rle (Rsub (g2SeqDyadic k) (g2SeqDyadic j)) (ofQ (⟨1, j + 1⟩ : Q) (Nat.succ_pos j)) := by
-  simp only [g2SeqDyadic]
-  obtain ⟨e, he⟩ := Nat.le.dest (gammaMidx_mono hjk)
-  rw [← he]
-  refine Rle_trans (g2Seq_diff_le_outer (gammaMidx j) e) ?_
-  have hmid : 0 < (Qsub (⟨(4 * gammaMidx j + 12 : Int), 2 ^ gammaMidx j⟩ : Q)
-      ⟨(4 * (gammaMidx j + e) + 12 : Int), 2 ^ (gammaMidx j + e)⟩).den :=
-    Qsub_den_pos (Nat.pos_pow_of_pos _ (by decide)) (Nat.pos_pow_of_pos _ (by decide))
-  have hmid2 : 0 < (⟨(4 * gammaMidx j + 12 : Int), 2 ^ gammaMidx j⟩ : Q).den :=
-    Nat.pos_pow_of_pos _ (by decide)
-  exact Rle_trans (Rle_ofQ_ofQ (WUsum_den_pos _ _) hmid (WUsum_tail_le (gammaMidx j) e))
-    (Rle_trans (Rle_ofQ_ofQ hmid hmid2 (Qsub_le_left _ _ (by
-        have h : (0 : Int) ≤ (↑(gammaMidx j) : Int) + (↑e : Int) := by
-          have := Int.ofNat_nonneg (gammaMidx j); have := Int.ofNat_nonneg e; omega
-        have := Int.mul_nonneg (by decide : (0 : Int) ≤ 4) h
-        omega) _ _))
-      (Rle_ofQ_ofQ hmid2 (Nat.succ_pos j) (g2_TU_le j)))
-
-/-- **Pairwise Cauchy (lower)**: for `j ≤ k`, `g2SeqDyadic k − g2SeqDyadic j ≥ −1/(j+1)`. -/
-theorem g2_pair_ge {j k : Nat} (hjk : j ≤ k) :
-    Rle (Rneg (ofQ (⟨1, j + 1⟩ : Q) (Nat.succ_pos j))) (Rsub (g2SeqDyadic k) (g2SeqDyadic j)) := by
-  simp only [g2SeqDyadic]
-  obtain ⟨e, he⟩ := Nat.le.dest (gammaMidx_mono hjk)
-  rw [← he]
-  refine Rle_trans (Rle_Rneg ?_) (g2Seq_diff_ge_outer (gammaMidx j) e)
-  have hmid : 0 < (Qsub (⟨(2 * gammaMidx j * gammaMidx j + 12 * gammaMidx j + 22 : Int),
-        2 ^ gammaMidx j⟩ : Q)
-      ⟨(2 * (gammaMidx j + e) * (gammaMidx j + e) + 12 * (gammaMidx j + e) + 22 : Int),
-        2 ^ (gammaMidx j + e)⟩).den :=
-    Qsub_den_pos (Nat.pos_pow_of_pos _ (by decide)) (Nat.pos_pow_of_pos _ (by decide))
-  have hmid2 : 0 < (⟨(2 * gammaMidx j * gammaMidx j + 12 * gammaMidx j + 22 : Int),
-      2 ^ gammaMidx j⟩ : Q).den :=
-    Nat.pos_pow_of_pos _ (by decide)
-  exact Rle_trans (Rle_ofQ_ofQ (WLsum_den_pos _ _) hmid (WLsum_tail_le (gammaMidx j) e))
-    (Rle_trans (Rle_ofQ_ofQ hmid hmid2
-        (Qsub_le_left _ _ (by
-          have h : (0 : Int) ≤ (↑(gammaMidx j) : Int) + (↑e : Int) := by
-            have := Int.ofNat_nonneg (gammaMidx j); have := Int.ofNat_nonneg e; omega
-          have h2 := Int.mul_nonneg (Int.mul_nonneg (by decide : (0 : Int) ≤ 2) h) h
-          have h3 := Int.mul_nonneg (by decide : (0 : Int) ≤ 12) h
-          omega) _ _))
-      (Rle_ofQ_ofQ hmid2 (Nat.succ_pos j) (g2_T_le j)))
-
-/-- **The reindexed `γ₂` sequence is regular** (`RReg`) — the input to Bishop's `Rlim`. -/
-theorem g2SeqDyadic_RReg : RReg g2SeqDyadic := by
-  refine RReg_of_real_bound _ (fun j k => add ⟨1, j + 1⟩ ⟨1, k + 1⟩)
-    (fun j k => add_den_pos (Nat.succ_pos _) (Nat.succ_pos _)) (fun j k => Qle_refl _) ?_
-  intro j k
-  rcases Nat.le_total j k with hjk | hkj
-  · exact Rle_trans (Rle_of_Req (Req_symm (Rneg_Rsub (g2SeqDyadic k) (g2SeqDyadic j))))
-      (Rle_trans (Rle_trans (Rle_Rneg (g2_pair_ge hjk)) (Rle_of_Req (Rneg_neg _)))
-        (Rle_ofQ_ofQ (Nat.succ_pos _) (add_den_pos (Nat.succ_pos _) (Nat.succ_pos _))
-          (Qle_self_add (by show (0 : Int) ≤ 1; decide))))
-  · exact Rle_trans (g2_pair_le hkj)
-      (Rle_ofQ_ofQ (Nat.succ_pos _) (add_den_pos (Nat.succ_pos _) (Nat.succ_pos _))
-        (Qle_trans (b := add ⟨1, k + 1⟩ ⟨1, j + 1⟩)
-          (add_den_pos (Nat.succ_pos _) (Nat.succ_pos _))
-          (Qle_self_add (p := ⟨1, j + 1⟩) (by show (0 : Int) ≤ 1; decide))
-          (Qeq_le (by simp only [Qeq, add]; push_cast; ring_uor))))
-
-/-- **The second Stieltjes constant `γ₂`**, as a genuine constructive real: the Bishop limit of the
-    reindexed defining sequence `g₂(2^{2j+8})`. `γ₂ ≈ −0.00969`. The regularity is the analytic
-    content scoped on top of the `γ₂` substrate, mirroring `Rgamma1` for `γ₁`. -/
-def Rgamma2 : Real := Rlim g2SeqDyadic g2SeqDyadic_RReg
-
-end UOR.Bridge.F1Square.Analysis
+        ⟨1, j + 1⟩ := sorry

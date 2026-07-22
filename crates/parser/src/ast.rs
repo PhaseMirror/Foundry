@@ -284,6 +284,34 @@ pub struct EnsembleDecl {
     pub prime: u64,
 }
 
+impl EnsembleDecl {
+    /// Failable constructor that enforces MD-006 Genetic Fidelity.
+    /// Validates the ContractivityReceipt against the parent's keychain.
+    /// If successful, the ensemble is instantiated. If not, it enters fail_closed.
+    pub fn try_reproduce(
+        name: String,
+        version: String,
+        prime: u64,
+        parent_hash: &str,
+        receipt: ContractivityReceipt,
+    ) -> Result<Self, String> {
+        // [SedonaSpine: Hard Invariant Check - MD-006 VerifyKeyChainFusion]
+        // Simulated cryptographic handshake expects receipt hash to match parent's fusion structure.
+        let expected_hash = format!("{}_fused", parent_hash);
+        
+        if receipt.hash != expected_hash {
+            // Hardware transitions to fail_closed state, isolating the lineage.
+            return Err("HardwareState::fail_closed: MD-006 Genetic Fidelity violation - invalid ContractivityReceipt".to_string());
+        }
+
+        Ok(Self {
+            name,
+            version,
+            prime,
+        })
+    }
+}
+
 /// Import statement AST node
 #[derive(Debug, PartialEq, Clone)]
 pub struct ImportStmt {
@@ -607,5 +635,47 @@ mod tests {
             initial_lines, final_lines,
             "Lever emitted despite hard Sedona violation in try_prime_shift!"
         );
+    }
+
+    #[test]
+    fn test_genetic_fidelity_try_reproduce_success() {
+        let parent_hash = "parent_key_abc123";
+        let valid_receipt = ContractivityReceipt {
+            hash: "parent_key_abc123_fused".to_string(),
+        };
+
+        let result = EnsembleDecl::try_reproduce(
+            "ChildEnsemble".to_string(),
+            "1.0".to_string(),
+            7,
+            parent_hash,
+            valid_receipt,
+        );
+
+        assert!(result.is_ok());
+        let ensemble = result.unwrap();
+        assert_eq!(ensemble.name, "ChildEnsemble");
+        assert_eq!(ensemble.prime, 7);
+    }
+
+    #[test]
+    fn test_genetic_fidelity_try_reproduce_fail_closed() {
+        let parent_hash = "parent_key_abc123";
+        let invalid_receipt = ContractivityReceipt {
+            hash: "rogue_hash_xyz890".to_string(),
+        };
+
+        let result = EnsembleDecl::try_reproduce(
+            "RogueEnsemble".to_string(),
+            "1.0".to_string(),
+            11,
+            parent_hash,
+            invalid_receipt,
+        );
+
+        assert!(result.is_err());
+        let err_msg = result.unwrap_err();
+        assert!(err_msg.contains("HardwareState::fail_closed"));
+        assert!(err_msg.contains("MD-006 Genetic Fidelity violation"));
     }
 }

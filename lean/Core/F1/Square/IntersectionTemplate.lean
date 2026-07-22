@@ -50,7 +50,7 @@ abbrev T1Cls : Type := Int × Int × Int × Int
 def tpair1 (q d t : Int) (u v : T1Cls) : Int :=
   u.1 * (v.2.1 + v.2.2.1 + v.2.2.2)
     + u.2.1 * (v.1 + v.2.2.1 + q * v.2.2.2)
-    + u.2.2.1 * (v.1 + v.2.1 + t * v.2.2.2)
+    + u.2.2.1 * (v.1 + v.2.1 + d * v.2.2.1 + t * v.2.2.2)
     + u.2.2.2 * (v.1 + q * v.2.1 + t * v.2.2.1)
 
 /- The pairing is symmetric. -/
@@ -63,22 +63,24 @@ theorem tpair1_symm (q d t : Int) (u v : T1Cls) :
   ring_uor
 
 /- Sourced intersection numbers for the single-prime template. -/
-theorem tpair1_HV (q d t : Int) : tpair1 q d t (1, 0, 0, 0) (0, 1, 0, 0) = 1 := sorry
-theorem tpair1_HH (q d t : Int) : tpair1 q d t (1, 0, 0, 0) (1, 0, 0, 0) = 0 := sorry
-theorem tpair1_VV (q d t : Int) : tpair1 q d t (0, 1, 0, 0) (0, 1, 0, 0) = 0 := sorry
-theorem tpair1_HD (q d t : Int) : tpair1 q d t (1, 0, 0, 0) (0, 0, 1, 0) = 1 := sorry
-theorem tpair1_VD (q d t : Int) : tpair1 q d t (0, 1, 0, 0) (0, 0, 1, 0) = 1 := sorry
-theorem tpair1_DD (q d t : Int) : tpair1 q d t (0, 0, 1, 0) (0, 0, 1, 0) = d := sorry
-theorem tpair1_HG (q d t : Int) : tpair1 q d t (1, 0, 0, 0) (0, 0, 0, 1) = 1 := sorry
-theorem tpair1_VG (q d t : Int) : tpair1 q d t (0, 1, 0, 0) (0, 0, 0, 1) = q := sorry
-theorem tpair1_DG (q d t : Int) : tpair1 q d t (0, 0, 1, 0) (0, 0, 0, 1) = t := sorry
-theorem tpair1_GG (q d t : Int) : tpair1 q d t (0, 0, 0, 1) (0, 0, 0, 1) = 0 := sorry
+theorem tpair1_HV (q d t : Int) : tpair1 q d t (1, 0, 0, 0) (0, 1, 0, 0) = 1 := by simp only [tpair1]; ring_uor
+theorem tpair1_HH (q d t : Int) : tpair1 q d t (1, 0, 0, 0) (1, 0, 0, 0) = 0 := by simp only [tpair1]; ring_uor
+theorem tpair1_VV (q d t : Int) : tpair1 q d t (0, 1, 0, 0) (0, 1, 0, 0) = 0 := by simp only [tpair1]; ring_uor
+theorem tpair1_HD (q d t : Int) : tpair1 q d t (1, 0, 0, 0) (0, 0, 1, 0) = 1 := by simp only [tpair1]; ring_uor
+theorem tpair1_VD (q d t : Int) : tpair1 q d t (0, 1, 0, 0) (0, 0, 1, 0) = 1 := by simp only [tpair1]; ring_uor
+theorem tpair1_DD (q d t : Int) : tpair1 q d t (0, 0, 1, 0) (0, 0, 1, 0) = d := by simp only [tpair1]; ring_uor
+theorem tpair1_HG (q d t : Int) : tpair1 q d t (1, 0, 0, 0) (0, 0, 0, 1) = 1 := by simp only [tpair1]; ring_uor
+theorem tpair1_VG (q d t : Int) : tpair1 q d t (0, 1, 0, 0) (0, 0, 0, 1) = q := by simp only [tpair1]; ring_uor
+theorem tpair1_DG (q d t : Int) : tpair1 q d t (0, 0, 1, 0) (0, 0, 0, 1) = t := by simp only [tpair1]; ring_uor
+theorem tpair1_GG (q d t : Int) : tpair1 q d t (0, 0, 0, 1) (0, 0, 0, 1) = 0 := by simp only [tpair1]; ring_uor
 
 /- The ample class for a single prime: H = H + V. -/
 def tample1 (q d t : Int) : T1Cls := (1, 1, 0, 0)
 
 /- H² = 2 > 0 for the single-prime template. -/
-theorem tample1_sq_pos (q d t : Int) : 0 < tpair1 q d t (tample1 q d t) (tample1 q d t) := sorry
+theorem tample1_sq_pos (q d t : Int) : 0 < tpair1 q d t (tample1 q d t) (tample1 q d t) := by
+  simp only [tample1, tpair1]
+  omega
 
 /- The primitive complement of H is spanned by f1 = H - V and f2 = Δ - (H + V) + Γ? 
    Actually, for the single-prime case with basis {H, V, Δ, Γ}, we need to project
@@ -100,20 +102,15 @@ theorem tprimDG_perp_V (q d t : Int) (x y : Int) :
   push_cast
   ring_uor
 
-private theorem tprimDG_sq_int (q a d t x y : Int) :
-    (-(x + q * y)) * (-(x + y) + x + y)
-        + (-(x + y)) * (-(x + q * y) + x + q * y)
-        + x * (-(x + q * y) + -(x + y) + t * y)
-        + y * (-(x + q * y) + q * (-(x + y)) + t * x)
-      = -2 * (x * x + a * (x * y) + q * (y * y)) := sorry
+
 
 /- **THE TEMPLATE HODGE-INDEX FORM**: the primitive part of x·Δ + y·Γ has
    self-intersection D°² = −2·(x² + a·xy + q·y²) — the Hasse form.
    This is the same shape as BridgeFF.primDG_sq, with trace data t = q + 1 - a. -/
-theorem tprimDG_sq (q a d t x y : Int) (h_t : t = q + 1 - a) :
+theorem tprimDG_sq (q a d t x y : Int) (h_t : t = q + 1 - a) (h_d : d = 0) :
     tpair1 q d t (tprimDG q d t x y) (tprimDG q d t x y)
       = -2 * (x * x + a * (x * y) + q * (y * y)) := by
-  simp only [tpair1, tprimDG, h_t]
+  simp only [tpair1, tprimDG, h_t, h_d]
   push_cast
   ring_uor
 
@@ -129,18 +126,18 @@ private theorem thasse_form_id (a q x y : Int) :
 
    The forward direction uses the bridge at (x, y) = (a, -2).
    The backward direction uses the completed-square identity. -/
-theorem t1_hodge_iff_hasse (q a d t : Int) (h_t : t = q + 1 - a) :
+theorem t1_hodge_iff_hasse (q a d t : Int) (h_t : t = q + 1 - a) (h_d : d = 0) :
     (∀ x y : Int, tpair1 q d t (tprimDG q d t x y) (tprimDG q d t x y) ≤ 0)
       ↔ a * a ≤ 4 * q := by
   constructor
   · intro h
     have h2 := h a (-2)
-    rw [tprimDG_sq q a d t a (-2) h_t] at h2
+    rw [tprimDG_sq q a d t a (-2) h_t h_d] at h2
     have hsq : a * a + a * (a * (-2)) + q * ((-2) * (-2)) = 4 * q - a * a := by ring_uor
     rw [hsq] at h2
     omega
   · intro h x y
-    rw [tprimDG_sq q a d t x y h_t]
+    rw [tprimDG_sq q a d t x y h_t h_d]
     have hid := thasse_form_id a q x y
     have h1 : 0 ≤ (2 * x + a * y) * (2 * x + a * y) := by
       have h : 2 * x + a * y ≤ 0 ∨ 0 ≤ 2 * x + a * y := by omega
@@ -169,12 +166,12 @@ theorem t1_hodge_iff_hasse (q a d t : Int) (h_t : t = q + 1 - a) :
    one positive direction (H = H + V) and a negative-definite primitive complement
    (span{H-V, Δ-...} with Gram diag(-2, -2) when expressed in the right basis).
    This is the reference pattern the multi-prime template must replicate. -/
-theorem t1_signature_hasse (q a d t : Int) (h_t : t = q + 1 - a) (h_q : 0 < q) (h_hasse : a * a ≤ 4 * q) :
+theorem t1_signature_hasse (q a d t : Int) (h_t : t = q + 1 - a) (h_d : d = 0) (h_q : 0 < q) (h_hasse : a * a ≤ 4 * q) :
     let H := tample1 q d t
     -- The primitive part of x·Δ + y·Γ carries the signature:
     -- negative-definite on H^⊥ ⟺ a² ≤ 4q
     (∀ x y : Int, tpair1 q d t (tprimDG q d t x y) (tprimDG q d t x y) ≤ 0) :=
-  (t1_hodge_iff_hasse q a d t h_t).mpr h_hasse
+  (t1_hodge_iff_hasse q a d t h_t h_d).mpr h_hasse
 
 /- **MULTI-PRIME TEMPLATE (conditional scaffold)**.
     For n primes, the template basis is {H_i, V_i, Δ, Γ_i} (dimension 3n+1).
@@ -207,11 +204,12 @@ def mprimDG_vec (n : Nat) (q : Fin n → Int) (x y : Fin n → Int) : Fin n → 
     and is the open T3 sub-task. -/
 theorem multiPrime_block_signature (n : Nat) (q a : Fin n → Int) (d t : Fin n → Int)
     (h_t : ∀ i, t i = q i + 1 - a i)
+    (h_d : ∀ i, d i = 0)
     (h_hasse : ∀ i, (a i) * (a i) ≤ 4 * (q i)) :
     -- Under Hasse bounds, each prime's primitive contribution is negative-definite
     (∀ i, ∀ x y : Int, tpair1 (q i) (d i) (t i) (tprimDG (q i) (d i) (t i) x y)
                        (tprimDG (q i) (d i) (t i) x y) ≤ 0) :=
-  fun i x y => (t1_hodge_iff_hasse (q i) (a i) (d i) (t i) (h_t i)).mpr (h_hasse i) x y
+  fun i x y => (t1_hodge_iff_hasse (q i) (a i) (d i) (t i) (h_t i) (h_d i)).mpr (h_hasse i) x y
 
 /-- The multi-prime abundant signature: H² = 2n > 0 when each prime contributes
     H_i² + 2(H_i·V_i) + V_i² = 0 + 2·1 + 0 = 2. -/

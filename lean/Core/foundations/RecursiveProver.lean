@@ -26,11 +26,19 @@ def verify_apo (apo : APO) : Bool :=
 theorem aggregation_preserves_validity (proofs : List RecursiveProof)
   (h_all_valid : ∀ p, p ∈ proofs → is_valid_proof p.inner_proof) :
   verify_apo { aggregated_proofs := proofs, root_hash := "" } := by
-  sorry
+  unfold verify_apo
+  rw [List.all_eq_true]
+  exact h_all_valid
 
 theorem aggregation_is_sound (proofs : List RecursiveProof)
   (h_invalid : ∃ p, p ∈ proofs ∧ ¬ is_valid_proof p.inner_proof) :
   ¬ verify_apo { aggregated_proofs := proofs, root_hash := "" } := by
-  sorry
+  unfold verify_apo
+  rw [List.all_eq_true]
+  intro h_all
+  match h_invalid with
+  | ⟨p, ⟨hp, h_not_valid⟩⟩ =>
+    have h_valid := h_all p hp
+    contradiction
 
 end Core.foundations.RecursiveProver

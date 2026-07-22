@@ -1,5 +1,5 @@
-import Core.Spec.DefectAlgebra
-import Core.Spec.UniversalClosure
+import Core.universal_closure.DefectAlgebra
+import Core.universal_closure.UniversalClosure
 
 /-!
 # Defect Properties — Specification Only

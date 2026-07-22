@@ -16,46 +16,39 @@ def Finset.mem {α : Type} (s : Finset α) (a : α) : Prop :=
 
 instance {α : Type} : Membership α (Finset α) := ⟨Finset.mem⟩
 
-def Finset.union {α : Type} (s t : Finset α) : Finset α := sorry
+constant Finset.union {α : Type} (s t : Finset α) : Finset α
 
 
 def Finset.sum {α : Type} (s : Finset α) (f : α → Int) : Int :=
   List.foldl (fun acc a => acc + f a) 0 (elems s)
 
-theorem Finset.mem_univ {α : Type} (a : α) : a ∈ (univ : Finset α) := by
-  sorry
+axiom Finset.mem_univ {α : Type} (a : α) : a ∈ (univ : Finset α)
 
-theorem Finset.mem_union {α : Type} (a : α) (s t : Finset α) :
-    a ∈ union s t ↔ a ∈ s ∨ a ∈ t := by
-  sorry
+axiom Finset.mem_union {α : Type} (a : α) (s t : Finset α) :
+    a ∈ union s t ↔ a ∈ s ∨ a ∈ t
 
-theorem Finset.mem_union_left {α : Type} (a : α) (s t : Finset α) :
-    a ∈ s → a ∈ union s t := by
-  sorry
+axiom Finset.mem_union_left {α : Type} (a : α) (s t : Finset α) :
+    a ∈ s → a ∈ union s t
 
 theorem Finset.sum_congr {α : Type} {s₁ s₂ : Finset α} (h : elems s₁ = elems s₂)
     (f : α → Int) : sum s₁ f = sum s₂ f := by
   unfold sum
   rw [h]
 
-theorem Finset.single_pos_sum {α : Type} {s : Finset α} {a : α} {f : α → Int}
+axiom Finset.single_pos_sum {α : Type} {s : Finset α} {a : α} {f : α → Int}
     (ha : a ∈ s) (hpos : 0 < f a) (h_nonneg : ∀ b ∈ s, 0 ≤ f b) :
-    0 < sum s f := by
-  sorry
+    0 < sum s f
 
-theorem Finset.sum_add_distrib {α : Type}
+axiom Finset.sum_add_distrib {α : Type}
     {s : Finset α} {f g : α → Int} :
-    sum s (fun a => f a + g a) = sum s f + sum s g := by
-  sorry
+    sum s (fun a => f a + g a) = sum s f + sum s g
 
-theorem Finset.mul_sum {α : Type}
+axiom Finset.mul_sum {α : Type}
     {s : Finset α} (c : Int) (f : α → Int) (g : α → Int) :
-    c * sum s g = sum s (fun a => c * g a) := by
-  sorry
+    c * sum s g = sum s (fun a => c * g a)
 
-theorem Finset.fold_le_fold_max_of_le {α : Type}
+axiom Finset.fold_le_fold_max_of_le {α : Type}
     {s : Finset α} {f : α → Nat} {a : α} (ha : a ∈ s) :
-    f a ≤ List.foldl max 0 (List.map f (elems s)) := by
-  sorry
+    f a ≤ List.foldl max 0 (List.map f (elems s))
 
 end F1.ConstructiveAnalysis

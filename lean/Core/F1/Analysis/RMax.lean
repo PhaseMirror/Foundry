@@ -28,10 +28,7 @@ namespace UOR.Bridge.F1Square.Analysis
 
 /-- The cast-mult bridge: `(|z| : ℤ) · (d : ℤ) = |z · d|` for `z : ℤ`, `d : ℕ`. -/
 private theorem natAbs_mul_cast (z : Int) (d : Nat) :
-    (z.natAbs : Int) * (d : Int) = (((z * (d : Int)).natAbs : Nat) : Int) := by
-  rw [Int.natAbs_mul, Int.natAbs_ofNat]
-  push_cast
-  rfl
+    (z.natAbs : Int) * (d : Int) = (((z * (d : Int)).natAbs : Nat) : Int) := by rw [Int.natAbs_mul]; rfl
 
 /-- **The reverse triangle inequality on ℚ**: `||a| − |b|| ≤ |a − b|`. -/
 theorem Qabs_abs_sub (a b : Q) : Qle (Qabs (Qsub (Qabs a) (Qabs b))) (Qabs (Qsub a b)) := by

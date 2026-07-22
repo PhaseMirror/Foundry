@@ -1,5 +1,5 @@
-import Core.Spec.UniversalClosure
-import Core.Spec.Completion
+import Core.universal_closure.UniversalClosure
+import Core.universal_closure.Completion
 
 /-!
 # NNO Conjecture — Specification Only

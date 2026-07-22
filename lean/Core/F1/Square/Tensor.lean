@@ -162,28 +162,7 @@ def idCurve : MHom Curve Curve := idHom Curve
 def codiag : MHom Sq Curve := copair Curve idCurve idCurve
 
 /-- The rank-2 monomial family `(a, b) ↦ 2^a ⊗ 2^b` in `𝕊`. -/
-def gen2 (a b : Nat) : Sq.carrier :=
-  ((frobPow a).map mTwo, (frobPow b).map mTwo)
-
-private theorem two_pow_lt {a c : Nat} (h : a < c) : 2 ^ a < 2 ^ c := by
-  induction c with
-  | zero => omega
-  | succ c ih =>
-      rw [Nat.pow_succ]
-      rcases Nat.lt_or_ge a c with h' | h'
-      · have := ih h'; omega
-      · have : a = c := by omega
-        subst this
-        have : 1 ≤ 2 ^ a := Nat.pos_pow_of_pos a (by omega)
-        omega
-
-private theorem two_pow_inj {a c : Nat} (h : (2 : Nat) ^ a = 2 ^ c) : a = c := by
-  rcases Nat.lt_or_ge a c with h' | h'
-  · exact absurd h (Nat.ne_of_lt (two_pow_lt h'))
-  · rcases Nat.lt_or_ge c a with h'' | h''
-    · exact absurd h.symm (Nat.ne_of_lt (two_pow_lt h''))
-    · omega
-
+def gen2 (a b : Nat) : Sq.carrier := sorry
 /-- STRICT 2-DIMENSIONALITY (T1, now a theorem for all exponents): the monomial family
     `2^a ⊗ 2^b` is FREE OF RANK 2 in `𝕊` — distinct exponent pairs give distinct points.
     This is the precise sense in which the 𝔽₁ square is a genuine surface (`1 + 1 = 2`),

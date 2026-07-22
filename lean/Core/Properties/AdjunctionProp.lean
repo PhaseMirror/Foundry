@@ -1,4 +1,4 @@
-import Core.Spec.Completion
+import Core.universal_closure.Completion
 
 /-!
 # Adjunction Property — Specification Only

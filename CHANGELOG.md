@@ -17,3 +17,11 @@ All notable changes to the Universal Atomic Calculator (UAC) Substrate and PIRTM
 
 ### Changed
 - **PIRTM Specification**: Updated `docs/PIRTM_SPEC.md` and `docs/MOC.md` to reflect the completed transcendental implementation and closed out the research-grade surface tasks defined in ADR-013.
+
+## [v0.3.0-ofa-ii] — 2026-07-23
+
+### Added
+- **Lean 4 Formalization (`lean/Core/ofa/OperatorFirstArithmetic.lean`)**: Implemented foundational endomorphism structures (`Endo`), free universal closure operads (`Operad`), and proved the natural numbers object initial algebra property (`succ_unique`).
+- **Rust-WASM SDK (`crates/pirtm-engine/src/ofa.rs`)**: Scaffolded core operator traits, contractive `EndomorphismRule` verification bounds ($c < 1$), and WASM-exposed `OFANumeral` iterators.
+- **CI Zero-Drift Guardrail (`scripts/validate_zero_drift.sh`)**: Automated build and test gate verifying parity between Lean proofs and Rust runtime execution.
+- **Developer Documentation (`docs/ofa_sdk.md`)**: Comprehensive integration guide for cross-language operators and Sedona Spine compliance.

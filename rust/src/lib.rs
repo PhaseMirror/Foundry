@@ -7,6 +7,7 @@ pub mod ffi;
 pub mod completion;
 pub mod telemetry;
 pub mod physics;
+pub mod control_surface;
 
 #[cfg(kani)]
 pub mod verification;

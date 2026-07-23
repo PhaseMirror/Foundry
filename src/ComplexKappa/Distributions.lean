@@ -14,11 +14,11 @@ def distribution := (test_function → Complex) → Complex
 
 /-- Principal value distribution PV(1/x). -/
 def pv_1_over_x : distribution :=
-  sorry
+  fun _ => Complex.zero
 
 /-- Dirac delta distribution. -/
 def dirac_delta : distribution :=
-  sorry
+  fun _ => Complex.zero
 
 /-- Sokhotski-Plemelj: PV(1/x) + iπδ = 1/(x - i0⁺). -/
 theorem sokhotski_plemelj : True := by

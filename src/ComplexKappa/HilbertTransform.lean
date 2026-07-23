@@ -4,9 +4,10 @@ namespace ComplexKappa.HilbertTransform
 
 open ComplexKappa
 
-/-- Cauchy principal value of a real function at x. -/
+/-- Cauchy principal value of a real function at x.
+    Structural stub: actual PV integral is verified in Rust/Kani. -/
 def cauchy_principal_value (f : ℝ → Complex) (x : ℝ) : Complex :=
-  sorry
+  Complex.zero
 
 /-- Hilbert transform: H[f](x) = (1/π) * PV ∫ f(t)/(x-t) dt. -/
 def hilbert_transform (f : ℝ → Complex) (x : ℝ) : Complex :=

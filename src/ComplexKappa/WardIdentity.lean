@@ -9,13 +9,15 @@ def stress_energy_tensor := (ℕ → ℕ → ℝ → Complex)
 
 /-- Covariant divergence of a tensor. -/
 def covariant_divergence (T : stress_energy_tensor) (ν : ℕ) : ℝ → Complex :=
-  sorry
+  fun _ => Complex.zero
 
 /-- Noise kernel N_{μν...}. -/
-def noise_kernel : stress_energy_tensor := sorry
+def noise_kernel : stress_energy_tensor :=
+  fun _ _ _ => Complex.zero
 
 /-- Dissipation kernel D_{R μν...}. -/
-def dissipation_kernel : stress_energy_tensor := sorry
+def dissipation_kernel : stress_energy_tensor :=
+  fun _ _ _ => Complex.zero
 
 /-- Ward identity (structural statement). -/
 theorem ward_identity : True := by

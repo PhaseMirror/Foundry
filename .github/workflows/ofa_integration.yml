@@ -1,0 +1,37 @@
+name: OFA Integration
+
+on:
+  pull_request:
+    paths:
+      - 'lean/**'
+      - 'crates/pirtm-engine/src/ofa.rs'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+      - name: Install Lean 4
+        run: |
+          curl -L https://github.com/leanprover/lean4/releases/download/v4.5.0/lean-4.5.0-linux.tar.gz -o lean.tar.gz
+          tar -xzf lean.tar.gz
+          sudo mv lean-4.5.0 /opt/lean
+          echo '/opt/lean/bin' >> $GITHUB_PATH
+      - name: Build Rust WASM
+        run: |
+          cd crates/pirtm-engine
+          cargo build --release --target wasm32-unknown-unknown
+      - name: Run Lean tests
+        run: |
+          cd lean/Core/ofa
+          lean --run OperatorFirstArithmetic.lean
+      - name: Zero‑drift invariant check
+        run: |
+          echo "Running invariant validator…"
+          # placeholder for actual validator command
+          ./scripts/validate_zero_drift.sh

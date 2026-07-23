@@ -14,6 +14,7 @@ lean_lib ADR {
     `ADR.Core,
     `ADR.Proofs,
     `ADR.Governance,
+    `ADR.ControlSurface,
     `ADR.Examples,
     `ADR.Resonance,
     `ADR.PhaseMirror,

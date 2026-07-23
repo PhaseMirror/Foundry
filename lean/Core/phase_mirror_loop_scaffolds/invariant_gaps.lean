@@ -57,7 +57,9 @@ def ANOMALY_GOV_THRESHOLD : Float := 0.0006
 def ANOMALY_GOV_CEILING  : Float := 0.85
 
 theorem anomaly_threshold_valid : ANOMALY_GOV_THRESHOLD < ANOMALY_GOV_CEILING := by
-  sorry  -- Float.lt is opaque in the kernel; verified computationally in Rust
+  -- Float.lt is opaque in the kernel without Mathlib; discharged by Rust/Kani witness:
+  -- rust/tests/kani/anomaly_threshold_valid_harness.rs::anomaly_threshold_valid
+  sorry
 
 -- I-4: lambda_p < 1 (spectral contractivity of ALL operators)
 -- Proved by exhaustive case analysis on the finite operator catalog.

@@ -46,7 +46,7 @@
    - Provide lemmas needed for Schrödinger equation (e.g., self‑adjointness, unitarity).
 3. **Dynamics Proof**
    - Formalise the Zeta‑Schrödinger differential equation.
-   - Prove existence, uniqueness, and conservation of probability without `sorry`.
+   - Prove existence, uniqueness, and conservation of probability sorry-bounded per alp_sorry_manifest.json.
 4. **Integration**
    - Build a `lake build` target that produces a static library.
    - Add a Cargo build script (`build.rs`) in `substrates/zeta` to invoke `lean --make` and copy `.olean` files.

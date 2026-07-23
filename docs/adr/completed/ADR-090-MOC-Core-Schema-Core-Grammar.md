@@ -1,7 +1,7 @@
 # ADR-090: MOC Core Schema and Verified Operators as Core Grammar
 
 ## Status
-**Adopted**
+**Partially Implemented** — MOC Core Schema defined; `Init` ghost theorem referenced in docs but not implemented in lean/. Reclassified 2026-07-23 per ADR-PML-DISRESOLVE-001.
 
 ## Context
 The `Prime/lean/MOC_CORE/src/MOC_Core.lean` module defines the **MOC (Multiplicity Operator Calculus) Core Schema**:

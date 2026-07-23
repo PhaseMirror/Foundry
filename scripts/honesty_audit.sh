@@ -6,7 +6,7 @@ set -euo pipefail
 
 ROOT_DIR="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 MANIFEST="${ROOT_DIR}/alp_sorry_manifest.json"
-LEAN_ALP_DIR="${ROOT_DIR}/lean/ALP"
+LEAN_DIR="${ROOT_DIR}/lean"
 
 echo "=== Honesty Audit: UAC-ALP Boundary ==="
 
@@ -19,7 +19,7 @@ echo "Extracting permitted sorrys from manifest..."
 # Simple parser to extract just the values
 permitted_sorrys=$(grep -o '"ALP\.[^"]*"' "$MANIFEST" | tr -d '"')
 
-echo "Scanning lean/ALP/ for sorry instances..."
+echo "Scanning lean/ (excluding .lake/) for sorry instances..."
 # We search for 'sorry' and then backtrack to find the surrounding theorem name
 found_sorrys=0
 unauthorized=0
@@ -39,8 +39,10 @@ with open(manifest_path, 'r') as f:
     data = json.load(f)
     permitted = set(data.get("permitted_sorrys", []))
 
-lean_dir = "$LEAN_ALP_DIR"
+lean_dir = "$LEAN_DIR"
 lean_files = glob.glob(os.path.join(lean_dir, "**/*.lean"), recursive=True)
+# Exclude .lake/ (vendored std library)
+lean_files = [f for f in lean_files if ".lake" not in f]
 
 unauthorized_count = 0
 

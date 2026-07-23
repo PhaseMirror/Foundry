@@ -32,7 +32,7 @@ The production lock has been successfully implemented, establishing L0 invariant
 | Invariant | Enforcement | Status |
 |:---|:---|:---|
 | **No Mathlib** | CI rejects imports | ✅ ACTIVE |
-| **No `sorry`** | CI rejects proof gaps | ✅ ACTIVE |
+| **Sorry-Bounded** | 53 sorry-bearing declarations per `alp_sorry_manifest.json` | ✅ ACTIVE |
 | **Concurrency Bound** | FeMoco load test gates | ⏳ PENDING |
 | **Feature Flag** | CI rejects `unstable_uc_theory=true` | ✅ ACTIVE |
 

@@ -2,9 +2,9 @@
 
 ## Executive Summary
 
-The Universal Closure Theory (UCT) framework implements a production-grade formal verification pipeline using Lean 4 for specification and Kani for bounded model checking. The architecture follows a "Kani-first" approach where Lean defines pure specifications (zero sorry, zero Mathlib) and Kani discharges all proofs via bounded model checking.
+The Universal Closure Theory (UCT) framework implements a production-grade formal verification pipeline using Lean 4 for specification and Kani for bounded model checking. The architecture follows a "Kani-first" approach where Lean defines pure specifications (sorry-bounded, zero Mathlib) and Kani discharges resolved proofs via bounded model checking.
 
-**Current Status: 7/7 Kani harnesses passing, 0 sorry, 0 panic**
+**Current Status: 7/7 Kani harnesses passing, 53 sorry-bounded (tracked in alp_sorry_manifest.json), 0 panic**
 
 ---
 
@@ -18,7 +18,7 @@ The Universal Closure Theory (UCT) framework implements a production-grade forma
 │  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐  │
 │  │   Lean 4     │    │     Kani     │    │    Rust      │  │
 │  │   Spec       │◄──►│    BMC       │◄──►│   Impl       │  │
-│  │ (zero sorry) │    │ (primary)    │    │ (0 panic)    │  │
+│  │(sorry-bounded)│    │ (primary)    │    │ (0 panic)    │  │
 │  └──────────────┘    └──────────────┘    └──────────────┘  │
 │         │                    │                    │           │
 │         ▼                    ▼                    ▼           │
@@ -31,7 +31,7 @@ The Universal Closure Theory (UCT) framework implements a production-grade forma
 
 ## Lean Specification Status
 
-### Core Spec Files (Zero Sorry, Zero Mathlib)
+### Core Spec Files (Sorry-Bounded, Zero Mathlib)
 
 | File | Role | Status | Notes |
 |------|------|--------|-------|
@@ -94,7 +94,7 @@ The Universal Closure Theory (UCT) framework implements a production-grade forma
 ## Verification Metrics
 
 ### Lean Metrics
-- **Sorry count**: 0 (all proofs are axiomatic via Kani)
+- **Sorry count**: 53 (sorry-bounded; tracked in `alp_sorry_manifest.json`)
 - **Mathlib imports**: 0 (pure Lean 4 only)
 - **Type-check errors**: 0
 - **Theorem count**: 4 theorems (3 axiomatic, 1 conjecture)

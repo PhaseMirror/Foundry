@@ -1,8 +1,15 @@
 namespace ADR
 
 structure ADRId where
-  value : Nat
+  value        : Nat
+  namespaceStr : String := ""
   deriving Repr, DecidableEq, Inhabited
+
+def ADRId.legacy (value : Nat) : ADRId := ⟨value, ""⟩
+def ADRId.canonical (ns : String) (value : Nat) : ADRId := ⟨value, ns⟩
+def ADRId.pretty (id : ADRId) : String :=
+  if id.namespaceStr = "" then "ADR-" ++ toString id.value
+  else "ADR-" ++ id.namespaceStr ++ "-" ++ toString id.value
 
 inductive RiskLevel where
   | Critical | High | Medium | Low

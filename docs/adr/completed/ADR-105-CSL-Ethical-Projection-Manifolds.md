@@ -21,7 +21,7 @@ To achieve this:
 ### 3.2. Lean 4 Formal Proofs (Axiom-Clean Core)
 - **`lean/ADR/CSL/`**: Formalize the ethical projection mechanism.
 - **Theorem:** Prove that if the initial state is outside the $\epsilon$-neighborhood of a forbidden attractor, and $\lambda_{CSL}$ satisfies a derived lower bound, the trajectory will never intersect the forbidden region.
-- **Strict Compliance:** Adhere strictly to the Sedona Spine Mandate (No Mathlib, No Sorry) for the discrete bounding logic.
+- **Strict Compliance:** Adhere strictly to the Sedona Spine Mandate (No Mathlib, Sorry-bounded) for the discrete bounding logic.
 
 ### 3.3. Kani Symbolic Verification (The Formal Seal)
 - **Harness:** `verify_csl_bounds` in `crates/core/tests/kani_csl_bounds.rs`.

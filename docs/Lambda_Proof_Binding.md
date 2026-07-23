@@ -32,6 +32,6 @@ This maps the continuous socio-atomic model onto discrete, verifiable constraint
 A structural skeleton has been provided in `src/ADR/LambdaProofBinding.lean`. It formally models:
 - `LedgerState` and `LambdaProofOutput`
 - The `AdmissibilityCondition` function
-- A proven theorem (`admissible_implies_civic_minimum`) demonstrating that any state transition successfully verified against these constraints mathematically guarantees the civic state floor (zero `sorry` proofs).
+- A proven theorem (`admissible_implies_civic_minimum`) demonstrating that any state transition successfully verified against these constraints mathematically guarantees the civic state floor (sorry-bounded proofs in manifest).
 
 This completes the bounded deliverable for the Lambda-Proof binding spec.

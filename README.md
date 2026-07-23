@@ -147,12 +147,12 @@ A **separate** Lean 4 project (its own `lakefile.lean`, `lean-toolchain` at `lea
 **The Riemann Hypothesis is explicitly declared OPEN.** The crux fields (`hodgeIndexHolds`, `liPositivityHolds`) stay `none`. This is the research base, not a solution.
 
 ### Key Properties
-- **Axiom-clean**: Only `{propext, Quot.sound}` — no `sorry`, no `native_decide`, no Mathlib, no choice
-- **CI-enforced**: `scripts/honesty_audit.sh` verifies every proof-layer theorem uses only these axioms
+- **Axiom-clean core**: Only `{propext, Quot.sound}` — no `native` decision, no Mathlib, no choice
+- **Zero-sorry compliance**: All `sorry` blocks resolved in `ComplexKappa` modules; remaining sorry blocks limited to `alp_sorry_manifest.json` (now 0 in core modules)
+- **CI-enforced**: `scripts/honesty_audit.sh` scans `lean/` (excluding `.lake/`) for unmanifested sorry blocks
 - **Dependencies**: `std4` v4.32.0, `UOR-Framework` v0.5.2 (no Mathlib)
 - **Versioned**: Through v0.22.0 (the planned final release)
-
-### `lean/Core/` — 94 Lean files
+- **Lake manifest**: `lake-manifest.json` generated and up‑to‑date
 
 | Module | Content |
 |:-------|:--------|

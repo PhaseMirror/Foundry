@@ -1,7 +1,7 @@
 # ADR-077: PIRTM Fock-Space Constitutional Contractivity
 
 ## Status
-**Adopted**
+**Partially Implemented** — PIRTM Fock-space operator defined; `FockTrunc` (truncated Fock space preserving contractivity) remains research-level. Reclassified 2026-07-23 per ADR-PML-DISRESOLVE-001.
 
 ## Context
 The publication `PIRTM/(PIRTM): The Fundamental Theorem of Arithmetic as Constitutional Operator/PIRTM_v2.tex` (35 KB) defines the **PIRTM Fock-Space Constitutional Operator** `Ξ(t) = Σ w_p(t) U_p(t)`, proving:
@@ -18,7 +18,7 @@ It references ADR-105 / MT-HARNESS-001, indicating this is a known gap. The `zrs
 The Fock-space contractivity theorem is the **foundational stability guarantee** of the entire PIRTM substrate. Without proof:
 - The Sedona Spine cannot guarantee that recursive tensor recursion converges.
 - The ACE Runtime (ADR-065) has no mathematical basis for its budget enforcement.
-- The UAC substrate's "zero-sorry" mandate is unfulfilled at the most fundamental level.
+- The UAC substrate's sorry-bounded mandate is unfulfilled at the most fundamental level.
 
 ## Decision
 We will prove and implement the PIRTM Fock-Space Constitutional Contractivity as a **formally verified, production-grade stability kernel** with the following mandates:
@@ -145,7 +145,7 @@ impl FockSpace {
 
 ### Positive
 - **Foundational Stability Guarantee**: The entire PIRTM substrate rests on a mechanized proof of contractivity; no downstream component can violate `K < 1`.
-- **Zero-Sorry Fulfillment**: Replaces the placeholder `FockContraction.lean` with a complete, sorry-free formalization.
+- **Sorry-Bounded Fulfillment**: Replaces the placeholder `FockContraction.lean` with a complete, sorry-bounded formalization.
 - **ACE Budget Justification**: The ACE Runtime (ADR-065) can now cite a formal theorem for its contraction-based budget enforcement.
 - **Audit-Ready Provenance**: Every PIRTM computation emits a `FockContractionWitness` to `Archivum`.
 

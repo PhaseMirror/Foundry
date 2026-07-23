@@ -17,7 +17,9 @@ This module builds the real substrate — the term `(ln k)/k`, the partial sum `
   • **`g` is regular** (the tail `Σ_{k>M} |d_k| ≤ (ln M + 1)/M` via the integral-comparison telescoping
     of `(ln k)/k²`), so `γ₁ := Rlim g` is a genuine constructive real.
 
-Pure Lean 4, no Mathlib, no `sorry`/`native_decide`, choice-free.
+Pure Lean 4, no Mathlib, no `native_decide`, choice-free.
+NOTE: 1 sorry block remains (rational bound) — tracked in
+`alp_sorry_manifest.json`.
 -/
 
 import Core.F1.Analysis.RealPow

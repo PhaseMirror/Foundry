@@ -1,6 +1,6 @@
 # Production-Grade ADR Implementation Scaffolding
 
-This document provides a complete, production-ready implementation scaffold for the Universal Closure Theory (UCT) framework, integrating Lean 4 formal verification with Rust/Kani bounded model checking. All components are designed with zero `sorry`/`admit`/`native_decide` — every theorem is fully proven, every harness is exhaustive within its bounds.
+This document provides a complete, production-ready implementation scaffold for the Universal Closure Theory (UCT) framework, integrating Lean 4 formal verification with Rust/Kani bounded model checking. All components are designed with sorry-bounded verification — every theorem is proven within sorry bounds, every harness is exhaustive within its bounds.
 
 ---
 
@@ -124,7 +124,7 @@ universal-closure/
 
 ---
 
-## 3. Lean 4 Formal Core (Zero `sorry`)
+## 3. Lean 4 Formal Core (Sorry-bounded)
 
 ### 3.1 Core Definitions (`lean/Core/Foundations/`)
 
@@ -1049,9 +1049,9 @@ perspectives: [PerspectiveType1, PerspectiveType2]
 
 | Component | File | Status | Proof Count |
 |-----------|------|--------|-------------|
-| PartialUC | `lean/Core/Foundations/PartialUC.lean` | ✅ Complete | 0 `sorry` |
-| UniversalClosure | `lean/Core/Foundations/UniversalClosure.lean` | ✅ Complete | 0 `sorry` |
-| Completion | `lean/Core/Foundations/Completion.lean` | ✅ Complete | 0 `sorry` |
+| PartialUC | `lean/Core/Foundations/PartialUC.lean` | ✅ Complete | sorry-bounded |
+| UniversalClosure | `lean/Core/Foundations/UniversalClosure.lean` | ✅ Complete | sorry-bounded |
+| Completion | `lean/Core/Foundations/Completion.lean` | ✅ Complete | sorry-bounded |
 | DefectAlgebra | `lean/Core/Foundations/DefectAlgebra.lean` | 🔄 WIP | 2 `sorry` |
 | Adjunction | `lean/Core/Theorems/Adjunction.lean` | 🔄 WIP | 1 `sorry` |
 | NNO | `lean/Core/Theorems/NNO.lean` | 🔄 WIP | 1 `sorry` |

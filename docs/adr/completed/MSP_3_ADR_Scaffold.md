@@ -184,7 +184,7 @@ impl RoadmapEngine {
 ```bash
 lake exe adr_test
 ```
-This self-contained runner verifies the theoretical phase progression invariants, ensuring no `sorry` placeholders exist in the dependency constraints.
+This self-contained runner verifies the theoretical phase progression invariants, ensuring all `sorry` declarations are tracked in alp_sorry_manifest.json in the dependency constraints.
 
 **Rust Kernel Validation:**
 ```bash

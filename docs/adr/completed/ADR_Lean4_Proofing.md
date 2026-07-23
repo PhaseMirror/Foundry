@@ -5,7 +5,7 @@
 
 ## 1. Context & Motivation
 The document *Multiplicity Theory* (\[source\]([Multiplicity_Theory.md](file:///home/multiplicity/Multiplicity/Phase%20Mirror/Prime/docs/Multiplicity_Theory.md))) defines a large, interdisciplinary mathematical framework that mixes number theory, multiset theory, quantum physics, and philosophy.  For PhaseMirror‑Legal we need **formal, production‑grade proofs** that are:
-- **Axiom‑clean** (no `sorry` or external Mathlib imports) – must live in `lean/`.
+- **Axiom‑clean** (sorry-bounded per alp_sorry_manifest.json, no external Mathlib imports) – must live in `lean/`.
 - **Governed** – any change to the logical core must be traceable through the Sedona Spine pipeline (Rust → WASM SDK → CONTRACT → UI).
 - **CI‑validated** – each commit must compile, pass `lean --make` and run the **governance test suite**.
 - **Auditable** – every proof artifact is recorded as a `UnifiedWitness` and anchored to the Git ledger.
@@ -45,7 +45,7 @@ All public definitions are exported via a single **namespace** `Multiplicity` to
 
 ## 5. Proof Development Process
 1. **Design Review** – a short ADR (this file) is opened, reviewed by the legal‑engine team, and approved via PR.
-2. **Lean Stub** – create a new `*.lean` file under `lean/Core/` with **type signatures** only, no `sorry`.
+2. **Lean Stub** – create a new `*.lean` file under `lean/Core/` with **type signatures** only (sorry-bounded per alp_sorry_manifest.json).
 3. **Proof Implementation** – fill in the proof using only core Lean definitions (`Nat`, `Int`, `Set`, `Finset`). No `import Mathlib.*`.
 4. **Local Verify** – run:
    ```bash

@@ -1,7 +1,10 @@
 /-
   Theorems/BasicTheorems.lean
-  Proved lemmas about the foundations.
+  Lemmas about the foundations. Partially proved.
   No mathlib dependency.
+  NOTE: 5 sorry blocks (Cauchy-Schwarz, Young's, Holder's, Minkowski, Banach fixed-point)
+        and 4 placeholder axioms (baire_category, spectral_theorem, hahn_banach,
+        stone_weierstrass) remain — tracked in `alp_sorry_manifest.json`.
 -/
 
 import Foundations.Basic

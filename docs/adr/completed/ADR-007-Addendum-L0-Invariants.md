@@ -26,7 +26,7 @@ All Lean 4 specifications must import `Init` and `Std` only. `Mathlib` is explic
 - Lean's `Init` and `Std` libraries provide sufficient foundations for our specifications
 - Kani BMC provides bit-precise verification without external dependencies
 
-### 2. No `sorry`
+### 2. Sorry-Bounded
 
 Any `sorry`/`admit` in the `Core/Spec/` directory blocks CI deployment. Proofs are discharged via Kani BMC harnesses (FFI-imported tokens).
 
@@ -100,7 +100,7 @@ The following conditions **block** ADR-008 (UC category expansion):
 ## Impact on Existing Work
 
 ### What Remains Unchanged
-- All existing Lean proofs (zero sorry, zero Mathlib)
+- All existing Lean proofs (sorry-bounded, zero Mathlib)
 - All existing Kani harnesses (7/7 passing)
 - All existing ADR contracts (4/4 valid)
 - All existing Rust implementation (zero panic)

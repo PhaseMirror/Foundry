@@ -41,7 +41,7 @@ The production lock has been successfully implemented, establishing L0 invariant
 **Location**: `.github/workflows/verify.yml`
 
 - Lean check: Reject Mathlib imports
-- Lean check: Reject `sorry`
+- Lean check: sorry-bounded per `alp_sorry_manifest.json`
 - Kani check: Run concurrency harness
 - Rust check: Production build with `--no-default-features`
 - Contract validation: YAML schema check
@@ -51,14 +51,14 @@ The production lock has been successfully implemented, establishing L0 invariant
 **Location**: `scripts/validate_concurrency.py`
 
 - Unit tests for all acceptance gates
-- CI integration tests (no Mathlib, no sorry, no panic)
+- CI integration tests (no Mathlib, sorry-bounded per `alp_sorry_manifest.json`, no panic)
 - Attestation report generation
 - Command-line validation script
 
 ### 6. ADR-007 Addendum
 **Location**: `docs/adr/completed/ADR-007-Addendum-L0-Invariants.md`
 
-- L0 invariants (No Mathlib, No sorry, Concurrency bound)
+- L0 invariants (No Mathlib, Sorry-bounded per `alp_sorry_manifest.json`, Concurrency bound)
 - Blocking conditions for ADR-008
 - Unblocking sequence (7-day timeline)
 - Impact on existing work
@@ -70,7 +70,7 @@ The production lock has been successfully implemented, establishing L0 invariant
 | Invariant | Enforcement | Status |
 |:---|:---|:---|
 | **No Mathlib** | CI rejects imports | ✅ ACTIVE |
-| **No `sorry`** | CI rejects proof gaps | ✅ ACTIVE |
+| **Sorry-Bounded** | 53 sorry-bearing declarations per `alp_sorry_manifest.json` | ✅ ACTIVE |
 | **Concurrency Bound** | FeMoco load test gates | ⏳ PENDING |
 | **Feature Flag** | CI rejects `unstable_uc_theory=true` | ✅ ACTIVE |
 
@@ -131,7 +131,7 @@ python3 scripts/validate_concurrency.py
 grep -r "import Mathlib" lean/ --include="*.lean"
 
 # Check for sorry
-grep -r "sorry" lean/ --include="*.lean" | grep -v "no sorry"
+grep -r "sorry" lean/ --include="*.lean" | grep -v "sorry-bounded"
 ```
 
 ---

@@ -100,13 +100,14 @@ namespace ADR.Examples
 open ADR.Core
 open ADR.Transitions
 
-def SystemState_Phase1 : RoadmapState := {
-  current_phase := Phase.Foundation
-  milestones_met := ["Sedona Spine Initialized", "Lean 4 Axioms Defined"]
-}
-
-theorem authorize_phase2_transition : ValidProgression Phase.Foundation Phase.Validation :=
-  ValidProgression.p1_to_p2
+-- NOTE: Illustrative scaffolding, not a real implementation.
+-- def SystemState_Phase1 : RoadmapState := {
+--   current_phase := Phase.Foundation
+--   milestones_met := ["Sedona Spine Initialized", "Lean 4 Axioms Defined"]
+-- }
+--
+-- theorem authorize_phase2_transition : ValidProgression Phase.Foundation Phase.Validation :=
+--   ValidProgression.p1_to_p2
 
 end ADR.Examples
 ```

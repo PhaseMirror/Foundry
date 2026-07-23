@@ -53,5 +53,5 @@ congruence rules until fixpoint.
 
 ## Verification
 
-- **Lean**: 5 theorems proven (zero sorry)
+- **Lean**: 5 theorems proven (sorry-bounded; see `alp_sorry_manifest.json`)
 - **Kani**: 3 harnesses (composition, congruence, termination)

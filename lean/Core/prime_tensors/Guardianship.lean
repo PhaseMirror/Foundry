@@ -30,14 +30,16 @@ def publisher_seals_to_worm (w : UnifiedWitness) : Prop :=
 /-- 
   Theorem: triple_lock_audit_knot01.
   Proves the integrity of the Guardian/Examiner/Publisher loop for Knot-Time-01.
+  If all three guardians approve and the witness has a valid pi_native_hash,
+  the triple-lock is engaged and the witness is audit-knot compliant.
 --/
 theorem triple_lock_audit_knot01 (w : UnifiedWitness) :
   w.prime_index = 1000000033 →
   guardian_detects_drift w → 
   examiner_verifies w → 
   publisher_seals_to_worm w →
-  True := by
-  intro _ h_g h_e h_p
-  trivial
+  w.status == "PASS" ∧ !w.pi_native_hash.isEmpty := by
+  intro _ hg _ hp
+  exact ⟨hg, hp⟩
 
 end PIRTM.Guardianship

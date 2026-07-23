@@ -13,7 +13,7 @@ We do not trust tests; we trust theorems. The entire execution cycle is formally
 - **`valid_commands_contract`**: Proves that all admissible English sentences strictly contract the execution state space ($c < 1.0$).
 - **`valid_commands_resonate`**: Guarantees that admissible sequences maintain structural coherence ($R_{sc} \ge 1.0$).
 - **`deploy_transitions_state` & `revoke_is_inverse`**: Proves that execution state changes are entirely deterministic and precisely invertible.
-- **Axiom-Clean Core**: The proofs rely on zero unproven assumptions (`sorry`-free), verified down to the lowest combinatorial foundations of the Hodge Index Theorem.
+- **Axiom-Clean Core**: The core proofs rely on minimal unproven assumptions (`sorry`-bounded in `alp_sorry_manifest.json`), verified down to the combinatorial foundations of the Hodge Index Theorem.
 
 ## 3. Cryptographic Consensus (Apex Goldilocks STARKs)
 For infrastructure spanning multiple stakeholders, local determinism is not enough. The Phase Mirror introduces a Zero-Knowledge Governance (ZKG) layer:

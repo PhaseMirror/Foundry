@@ -1,6 +1,8 @@
 import Lake
 open Lake DSL
 
+require std from git "https://github.com/leanprover/std4" @ "v4.32.0"
+
 package "ADR-Scaffold" {
   srcDir := "src"
   testDriver := "test"
@@ -11,6 +13,7 @@ lean_lib ADR {
   roots := #[
     `ADR.Core,
     `ADR.Proofs,
+    `ADR.Governance,
     `ADR.Examples,
     `ADR.Resonance,
     `ADR.PhaseMirror,

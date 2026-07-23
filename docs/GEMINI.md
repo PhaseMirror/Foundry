@@ -6,7 +6,7 @@ The **Sedona Spine** (Rust Engine + WASM SDK) is the **sole mandatory source of 
 ### Governance Rules:
 - **Zero Drift:** No agent, UI component, or backend service may independently calculate preservation risk levels or retention durations. 
 - **Path of Integrity:** All ESI-related decisions MUST route through the path: `Engine (Rust)` → `CompilationResult` → `UnifiedWitness` → `Ledger Anchor` → `UI/Agent`.
-- **Axiom-Clean Core:** All recursive stability proofs must be anchored to the canonical Lean 4 `MOC/Core.lean` (found in `lean/`) and satisfy the axiom-clean mandate (No Mathlib, No Sorry).
+- **Axiom-Clean Core:** All recursive stability proofs must be anchored to the canonical Lean 4 `MOC/Core.lean` (found in `lean/`) and satisfy the axiom-clean mandate (No Mathlib, Sorry-bounded per manifest).
 - **Structural Segregation:**
     - `lean/`: Canonical, axiom-clean lawful core.
     - `lean/legacy/`: Exploratory/theatrical modules dependent on Mathlib (Non-binding, non-production).

@@ -1,7 +1,7 @@
 # ADR-061: ZMOS (Zeta-Multiplicity Operator System) Production Implementation
 
 ## Status
-**Adopted**
+**Partially Implemented** — ZMOS axiom-based formalization exists; `ZmosSupersedes` acyclicity proven but full operator algebra verification pending. Reclassified 2026-07-23 per ADR-PML-DISRESOLVE-001.
 
 ## Context
 The `Prime/lean/ZMOS/Zmos.lean` module provides a substantive Lean 4 formalization of the Zeta-Multiplicity Operator System, including operator algebra over prime-graded Hilbert spaces, spectral radius bounds, RG renormalization conditions, and a C-ABI FFI bridge to the Rust Sedona Spine Engine (`@[extern "get_dimension_rs"]`). 

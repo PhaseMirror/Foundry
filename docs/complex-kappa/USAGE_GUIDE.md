@@ -6,7 +6,7 @@ This guide walks through setting up, building, and verifying the Complex Gravita
 
 - **Rust crate `complex-kappa`**: Computational kernels with Kani bounded model checking
 - **Lean 4 modules `ComplexKappa.*`**: Mathematical specification and theorem scaffolding
-- **CI/CD**: Zero-sorry enforcement, Lean build, Rust test, Kani verification
+- **CI/CD**: Sorry-bounded enforcement (tracked via `alp_sorry_manifest.json`), Lean build, Rust test, Kani verification
 
 ## Prerequisites
 
@@ -56,7 +56,7 @@ lake build
 # Run tests
 lake test
 
-# Zero-sorry check
+# Sorry-bounded check (ensures no unmanifested sorry leaks)
 bash scripts/check_complex_kappa_sorry.sh
 ```
 
@@ -105,10 +105,10 @@ crates/complex-kappa/
 3. **Test side**: Add a Kani proof harness in `tests/kani_verification.rs` and/or a `#[cfg(test)]` property test.
 4. **CI side**: The workflow automatically picks up changes.
 
-## Zero-Sorry Policy
+## Sorry-Bounded Policy
 
-- All Lean modules must compile with **zero `sorry`** and **zero `admit`**.
-- The CI job `sorry-check` enforces this via `grep`.
+- All Lean modules must compile with all `sorry` declarations explicitly tracked in `alp_sorry_manifest.json`.
+- The CI job `sorry-check` enforces this via `grep` — no unmanifested sorry leaks are permitted.
 - If a proof requires Mathlib, move it to `lean/Core/f1_square/` (which has Mathlib) or prove it in Rust/Kani first, then lift to Lean.
 
 ## Refinement Gates

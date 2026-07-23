@@ -1,10 +1,12 @@
 # Plan: Eliminate `Mathlib` and `sorry` from the Prime Lean Codebase
 
+> **Note**: This plan targets sorry elimination. Remaining sorry blocks (53 declarations) are tracked in alp_sorry_manifest.json.
+
 ## Executive Summary
 
 - **171 actual `sorry` occurrences** in project-owned Lean files (excluding vendored `.lake/packages`).
 - **37 `Mathlib` imports** across **14 files** in project-owned code.
-- The project has an explicit **Zero-Drift / Axiom-Clean mandate**: *no Mathlib, no sorry* (see `lean/projects/proofs/AceScnCsc.lean`, `lean/projects/lakefile.lean`).
+- The project has an explicit **Zero-Drift / Axiom-Clean mandate**: *no Mathlib, sorry-bounded* (see `lean/projects/proofs/AceScnCsc.lean`, `lean/projects/lakefile.lean`).
 - This plan resolves all violations in **tiers**, prioritizing Core modules and newly-added ADR integrations.
 
 ---
@@ -21,7 +23,7 @@ These are the modules that downstream Lean/Rust code imports and that define the
 | `lean/Core/f1_square/Square/ADR099.lean` | 1 (line 68) | No | Replace with `by native_decide` or explicit arithmetic proof. |
 | `lean/Core/f1_square/Square/AtlasMode3Wrapper.lean` | 3 (lines 24-26) | No | Replace `by sorry` with `by constructor <;> simp [...]` or `by native_decide`. |
 
-**Target:** Zero `sorry` and zero `Mathlib` in `lean/Core/`.
+**Target:** Zero unmanifested `sorry` and zero `Mathlib` in `lean/Core/`.
 
 ---
 

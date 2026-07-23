@@ -5,7 +5,7 @@ Replace all `sorry` placeholders in the Lean formalization with concrete proofs 
 
 ## Scope
 - **34 `sorry` placeholders** across 11 Lean files in `lean/Core/`
-- **Target**: Zero `sorry` remaining, clean `lake build`
+- **Target**: Sorry-bounded (tracked in alp_sorry_manifest.json), clean `lake build`
 - **Artifacts**: `proof_progress.md`, engine SDK bindings
 
 ## File-by-File Resolution Plan

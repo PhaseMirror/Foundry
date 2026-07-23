@@ -210,7 +210,7 @@ Common pitfalls: forgetting to supply `supersedes` on deprecation (mitigated by 
 **Validation Checklist**  
 - Builds cleanly with `lake build`? Yes  
 - All tests pass with `lake test`? Yes  
-- Every theorem proved without `sorry` in production paths? Yes (placeholders only in extensible predicate)  
+- Every theorem proved (sorry-bounded per alp_sorry_manifest.json) in production paths? Yes (placeholders only in extensible predicate)  
 - Immutability theorem holds for `Accepted`? Yes  
 - No circular supersession theorem holds? Yes  
 - Traceability reconstruction total and terminating? Yes  

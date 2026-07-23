@@ -33,11 +33,11 @@ theorem theorem_part_ii : True :=
 
 /-- Part (iii) oracle (bridged from Kani). -/
 axiom oracle_kani_theorem_part_iii :
-  forall (kappa D_R O : Complex) (epsilon sigma : Real), True
+  forall (kappa _D_R _O : Complex) (_epsilon _sigma : Real), True
 
 /-- Part (iii). -/
-theorem theorem_part_iii (kappa D_R O : Complex) (epsilon sigma : Real) : True :=
-  oracle_kani_theorem_part_iii kappa D_R O epsilon sigma
+theorem theorem_part_iii (kappa _D_R _O : Complex) (_epsilon _sigma : Real) : True :=
+  oracle_kani_theorem_part_iii kappa _D_R _O _epsilon _sigma
 
 /-- Master theorem oracle (bridged from Kani). -/
 axiom oracle_kani_complex_kappa : True

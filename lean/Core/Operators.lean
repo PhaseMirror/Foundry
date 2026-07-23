@@ -4,8 +4,9 @@ Licensed under Prime Materia Open Commons and Bound Works License v1.0.
 
 Root import file for the Multiplicity Operator library.
 
-TIER 1 — Axiom-clean (zero sorry, zero axioms beyond {propext, Quot.sound}):
+TIER 1 — Axiom-clean (zero sorry in code, zero axioms beyond {propext, Quot.sound}):
   All modules below build with pure core Lean 4 + std4 only.
+  NOTE: docstring claims verified by scan on 2026-07-22.
 
 TIER 3 — Mathlib-dependent (sorry-gated for PDE/analysis axioms):
   FloerDifferential: 4 axiom-gated propositions (PDE derivative, tensor

@@ -62,10 +62,10 @@ theorem operator_contractive (p : Prime) (S : MultiplicityState) :
   norm (apply_operator (Ap p) S) ≤ lambda p * norm S :=
 by
   -- Formal proof that guarantees the spectral radius remains < 1
-  sorry_free_proof
+  sorry -- manifested in alp_sorry_manifest.json
 ```
 
-This strict bound is what allows the UAC substrate to scale to 100-concurrent requests safely. As long as the global operator norm remains bounded, the `H(ρ)` entropy metric is mathematically guaranteed to stay $\le 6.0$. Telemetry tests additionally verify that transcendental operations maintain an `ANOMALY_GOV_THRESHOLD < 0.85`.
+This strict bound is what allows the UAC substrate to scale to 100-concurrent requests safely. As long as the global operator norm remains bounded, the `H(ρ)` entropy metric is intended to stay $\le 6.0$ (formal proof pending — tracked in alp_sorry_manifest.json). Telemetry tests additionally verify that transcendental operations maintain an `ANOMALY_GOV_THRESHOLD < 0.85`.
 
 ## 5. Sigma Kernel Invariants
 

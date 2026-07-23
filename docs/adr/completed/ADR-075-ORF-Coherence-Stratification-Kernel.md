@@ -1,7 +1,7 @@
 # ADR-075: ORF Coherence & 13+1 Stratification Kernel
 
 ## Status
-**Adopted**
+**Partially Implemented** — ORF framework defined; `JensenShannonMetric` KL/JS divergence implemented in scaffold but not lifted to production ORF module. Reclassified 2026-07-23 per ADR-PML-DISRESOLVE-001.
 
 ## Context
 The publication `publications/Ontological Recursive Fractality/main.tex` (47 KB) defines the **Ontological Recursive Fractality (ORF)** framework, which provides the cross-cutting coherence and governance invariants for the Multiplicity Sovereign Core. ORF introduces:

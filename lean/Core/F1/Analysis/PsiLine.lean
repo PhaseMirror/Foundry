@@ -28,8 +28,9 @@ DECREASES through the center and INCREASES out on the line — non-monotone, two
 theorem. This is exactly the bounded-negative-band structure Burnol / Connes–Consani must work
 around; it is the obstruction, sharpened, NOT a route through it. Crux fields stay `none`.
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
-`scripts/honesty_audit.sh`.
+Pure Lean 4 core, no Mathlib, no `native_decide`, choice-free.
+NOTE: 7 sorry blocks remain (telescoping bounds, correction estimates) — tracked in
+`alp_sorry_manifest.json`.
 -/
 
 import Core.F1.Analysis.PsiQuarter

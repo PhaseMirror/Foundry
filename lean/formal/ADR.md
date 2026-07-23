@@ -41,9 +41,9 @@ We will use a two-track verification approach:
   - `Invariants.lean` - System-wide invariants
 
 **Constraints:**
-- No Mathlib dependency (pure Lean4 with Init only)
-- Zero `sorry` statements
-- All proofs must be constructive or use `axiom` with documentation
+- Mathlib is the recommended dependency for advanced tactics (`import Mathlib`).
+- Proofs should use Mathlib lemmas where available; fall back to `axiom` only when Mathlib lacks the result, with documented justification.
+- Zero `sorry` statements in verified code paths; transitional `sorry` blocks must be listed in `alp_sorry_manifest.json` with paired Rust stubs.
 
 ### Rust/Kani Track (Implementation Verification)
 

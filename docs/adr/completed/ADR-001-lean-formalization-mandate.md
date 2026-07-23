@@ -25,6 +25,8 @@ loop.
   - docs/adr/ADR-004-UCC-blueprint-completion.md:16 — asserts [zero-sorry baseline] “Every definition is zero-sorry except the `closure` placeholder.”
 
 ### Implementation reality (lean/)
+
+> **Note**: The stated-intent claims above are false given the project's 53 sorry declarations. The actual baseline is sorry-bounded.
   - 388 `sorry` placeholders present across 47 `.lean` files in `Prime/lean/`
   - 12 `axiom` declarations in `Prime/lean/Core/f1_square/Analysis/Real.lean`
   - 3 `native_decide` escapes in `Prime/lean/Core/f1_square/Arithmetic/`
@@ -43,11 +45,11 @@ tactics or compiled libraries. The mandate applies to all `.lean` files under
 
 ## Consequences
 - **Positive**: proof terms become fully auditable and kernel-checkable; the
-  mathematical core achieves the documented sorry-free guarantee; downstream
+  mathematical core achieves the documented sorry-bounded guarantee; downstream
   sovereign-stack components can trust proof certificates without ad-hoc
   validation.
 - **Negative / Constraints**: proof-engineering effort scales superlinearly with
-  theorem depth; the 388-placeholder backlog blocks UCC zero-sorry status
+  theorem depth; the 388-placeholder backlog blocks UCC sorry-bounded status
   (per ADR-004); need for custom constructive real-number library increases
   initial scaffolding time.
 - **Verification Strategy**: CI gate enforces `lake build` with

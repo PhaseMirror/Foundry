@@ -109,7 +109,7 @@ With this module, the data flow for **Track A (Biological Validation)** is mathe
 1. **Raw Input:** E. coli K-12 codon usage frequencies enter as a 64-element float array.
 2. **Spectral Extraction:** `fwht_in_place` transforms these frequencies into an epistatic contrast spectrum (extracting multi-way biological correlations).
 3. **Prime Projection:** `project_codon_to_multiplicity` binds these continuous coefficients to the strict `PrimeLabel` system.
-4. **Contractive VQE:** This `MultiplicitySpace` is fed directly into the `ContractiveFit` operator we built previously, ensuring that any optimization on the E. coli genome data is mathematically guaranteed to converge ($L_{\Phi} < 1$).
+4. **Contractive VQE:** This `MultiplicitySpace` is fed directly into the `ContractiveFit` operator we built previously, ensuring that any optimization on the E. coli genome data is intended to converge ($L_{\Phi} < 1$; formal proof pending).
 5. **Governance Anchor:** The `events.jsonl` traces from the optimization loop are digested into the `CRMFRequest` and finally backed by the Lean 4 ADR scaffolding you just completed.
 
 The pipeline from *Biological Sensor* $\rightarrow$ *Spectral Tensor* $\rightarrow$ *Zero-Knowledge Proof* is now fully instantiated in code.

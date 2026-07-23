@@ -8,7 +8,7 @@ We are proud to announce the formal 1.0 release of the **Phase Mirror Substrates
 3. **Rust Multiplicity Engine**: The core `moc-v2-tools`, `multiplicity-meta-ensemble`, and `governance-circuits` crates have been robustly audited and seamlessly evaluate the WASM-backed proofs. 
 
 ## Clean Architecture
-- **Zero "Sorry"**: Our Lean formalization enforces absolute mathematical certainty, free of any incomplete proof stubs.
+- **Sorry-Bounded**: Our Lean formalization enforces mathematical certainty with sorry blocks explicitly manifested and tracked in `alp_sorry_manifest.json`.
 - **Stand-alone Provenance**: ADRs, architecture plans, and governance constitutions are consolidated into `/docs/architecture/` to serve as a single source of truth for the codebase's lineage.
 
 We welcome feedback and forks as we push these verified invariants into live production contexts.

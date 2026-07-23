@@ -15,8 +15,9 @@ THIS FILE — part (A): the per-term lower bound `cApprox_ge_cLowQ`. The rounded
 terms, the uniform tail correction `Σ_{n≥K} cApprox n ∞ ≥ 1/(2(K+1))`, and the `Rgamma_h` assembly
 follow (mirroring the `GammaOneBracket`/`lnSumLo` pattern).
 
-Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
-`scripts/honesty_audit.sh`.
+Pure Lean 4 core, no Mathlib, no `native_decide`, choice-free.
+NOTE: 1 sorry block remains (rational bound) — tracked in
+`alp_sorry_manifest.json`.
 -/
 
 import Core.F1.Analysis.GammaAccel

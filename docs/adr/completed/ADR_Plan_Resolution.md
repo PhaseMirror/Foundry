@@ -6,7 +6,7 @@ An audit of the `Prime` codebase was conducted using the **Phase Mirror methodol
 ## 2. Identified Dissonances
 
 ### Dissonance A: Formal Verification Purity Gap (Lean Layer)
-* **Claim (`ADR-Prime-Move-Deployment-Readiness.md`)**: The core mathematical layer in Lean 4 has achieved "100% formal verification with absolutely zero reliance on external approximations (`mathlib`) or unproven axioms (`sorry`)." 
+* **Claim (`ADR-Prime-Move-Deployment-Readiness.md`)**: The core mathematical layer in Lean 4 has achieved "sorry-bounded formal verification with absolutely zero reliance on external approximations (`mathlib`) or unproven axioms (`sorry`)." 
 * **Stack Reality**: While some pure mathematical models (like `F1Square.lean`) may adhere to this, the agentic and policy components within `lean/ALP/` extensively use `import Mathlib` and contain numerous `sorry` blocks (e.g., `WitnessContract.lean`, `PolicyEngine/Proofs.lean`, `PirtmBridge.lean`). The CI pipeline even explicitly allows `sorry` in `ALP/` if accompanied by a Rust stub.
 * **Impact**: The claim of a universally pure, axiom-free deployment readiness is false, posing a governance risk.
 

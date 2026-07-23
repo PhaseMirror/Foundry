@@ -6,7 +6,7 @@ All notable changes to the PIRTM compiler are documented in this file.
 
 ### Added
 - PWEH integration test (`substrates/tests/python/test_pweh_integration.py`) with 3x3 tensor numerical verification
-- PWEH formalization in Lean 4 (`substrates/lean/MOC/PWEH.lean`) - sorry-free, core-only
+- PWEH formalization in Lean 4 (`lean/Core/moc/PWEH.lean`) - sorry-bounded per alp_sorry_manifest.json, core-only
 - CI workflow (`.github/workflows/pirtm_ci.yml`) with Python/NumPy integration
 
 ### Fixed

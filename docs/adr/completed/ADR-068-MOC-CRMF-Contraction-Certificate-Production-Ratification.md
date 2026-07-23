@@ -1,7 +1,7 @@
 # ADR-068: MOC/CRMF Contraction Certificate Production Ratification
 
 ## Status
-**Adopted**
+**Partially Implemented** — Lean formalizations exist (`contraction_certificate`, `resonance_stability_coupling`) but end-to-end pipeline to Archivum unverified. Reclassified 2026-07-23 per ADR-PML-DISRESOLVE-001.
 
 ## Context
 The Multiplicity Operator Calculus (MOC) and Certified Resonant Multiplicity Fields (CRMF) are the **sovereign-domain mathematical engines** of the Multiplicity framework. Per `Prime/crates/README.md`:

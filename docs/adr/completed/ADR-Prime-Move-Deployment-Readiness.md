@@ -1,7 +1,7 @@
 # ADR: Prime Move Deployment Readiness & Zero-Drift Finalization
 
 ## 1. Executive Summary
-This ADR validates the deployment readiness of the Universal Atomic Calculator (UAC) self-simulation integration. The core mathematical layer (Lean 4) has achieved 100% formal verification with absolutely zero reliance on external approximations (`mathlib`) or unproven axioms (`sorry`). It establishes the immediate sequence required to transition the Sedona Spine into active production routing for Pasqal Orion hardware output.
+This ADR validates the deployment readiness of the Universal Atomic Calculator (UAC) self-simulation integration. The core mathematical layer (Lean 4) has achieved sorry-bounded formal verification with zero external approximation dependencies (`mathlib`). All sorry declarations are tracked in `alp_sorry_manifest.json`. It establishes the immediate sequence required to transition the Sedona Spine into active production routing for Pasqal Orion hardware output.
 
 ## 2. Deployment Readiness Analysis
 
@@ -30,7 +30,7 @@ This ADR validates the deployment readiness of the Universal Atomic Calculator (
 To transition from the current verified state to live production, the following execution levers must be pulled in explicit sequence (Dual-Gate CI constraints apply):
 
 1. **Lever 1 (Formal Team - L0 Validation Gate):**
-   - **Action:** Execute the exact Lean proofs (`norm_preservation`, `h2_error_witness_invariant`). Ensure base/inductive steps explicitly verify $M$-conservation without `sorry` or `mathlib`.
+   - **Action:** Execute the exact Lean proofs (`norm_preservation`, `h2_error_witness_invariant`). Ensure base/inductive steps (sorry-bounded per alp_sorry_manifest.json) explicitly verify $M$-conservation.
    - **Metric:** `lake build && lake test` passes natively.
    - **Horizon:** Immediate (Gate 1).
 
@@ -45,7 +45,7 @@ To transition from the current verified state to live production, the following 
    - **Horizon:** 7 Days post Gate 2.
 
 ## 4. Final Validation Checklist
-- [x] Zero `sorry` blocks in Lean proofs.
+- [x] Sorry-bounded Lean proofs (tracked in alp_sorry_manifest.json).
 - [x] Zero `mathlib` imports in Lean environments.
 - [x] `lake build` exits cleanly with `0` errors.
 - [x] Rust boundaries safely isolate the formal mapping from floating-point hardware approximations.

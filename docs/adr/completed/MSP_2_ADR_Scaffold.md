@@ -18,7 +18,7 @@ ADR_System_Rust_Lean/
 ├── ADR/
 │   ├── Core.lean         # Core inductive types & ADR structures
 │   ├── Axioms.lean       # Formalized axioms from MSP_2.md (Axiom 1-9)
-│   ├── Proofs.lean       # Formal proofs (Theorem 1-10) with zero 'sorry'
+│   ├── Proofs.lean       # Formal proofs (Theorem 1-10) with sorry-bounded
 │   ├── Examples.lean     # Example ADRs for ESI retention & litigation
 │   ├── Test.lean         # Runnable test harness for Lean 4
 │   └── Export.lean       # Exporter for markdown/HTML ADR generation
@@ -161,7 +161,7 @@ impl EsiEngine {
 ```bash
 lake exe adr_test
 ```
-This self-contained runner verifies the theoretical invariants, ensuring no `sorry` placeholders exist in the mathematical constraints.
+This self-contained runner verifies the theoretical invariants, ensuring all `sorry` declarations are tracked in alp_sorry_manifest.json in the mathematical constraints.
 
 **Rust Kernel Validation:**
 ```bash

@@ -1,4 +1,4 @@
-name: Production Verification (No-Mathlib/No-Sorry)
+name: Production Verification (No-Mathlib/No-Sorry + ADR Governance)
 on: [push, pull_request]
 
 jobs:
@@ -23,13 +23,57 @@ jobs:
       - name: Build Lean
         run: lake build
 
+  adr_governance_check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: pip install pyyaml
+      - name: Run Phase Mirror Loop with ValidADR validation
+        run: |
+          python scripts/phase_mirror_loop.py --root . --dry-run --strict-validation
+      - name: Check for re-entrant accepted ADRs
+        run: |
+          python scripts/phase_mirror_loop.py --root . --dry-run | grep -i "re-entrant" && exit 1 || echo "No re-entrant ADRs detected"
+      - name: Validate sorry manifest debt ledger
+        run: |
+          python -c "
+          import json, sys
+          from datetime import date
+          try:
+            with open('lean/alp_sorry_manifest.json') as f:
+              data = json.load(f)
+            entries = data.get('entries', [])
+            today = date.today().isoformat()
+            overdue = [e for e in entries if e.get('deadline', '') < today]
+            if overdue:
+              print(f'ERROR: {len(overdue)} overdue sorry debt entries')
+              sys.exit(1)
+            print(f'Sorry manifest: {len(entries)} entries, 0 overdue')
+          except Exception as e:
+            print(f'ERROR: {e}')
+            sys.exit(1)
+          "
+
   kani_check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Setup Rust/Kani
         uses: model-checking/kani-github-action@v1
-      - name: Run Concurrency Harness
+      - name: Run ADR Status Transition Harness
         run: |
           cd rust
-          cargo kani --harness verify_concurrency_harness
+          cargo kani --harness adr_status_transition_harness
+      - name: Run ADR Supersession Acyclic Harness
+        run: |
+          cd rust
+          cargo kani --harness adr_supersession_acyclic_harness
+      - name: Run ADR Consequence Entailment Harness
+        run: |
+          cd rust
+          cargo kani --harness adr_consequence_entailment_harness

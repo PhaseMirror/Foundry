@@ -13,19 +13,6 @@ lean_lib FFI where
   srcDir := "FFI"
   defaultFacets := #[LeanLib.sharedFacet]
 
-lean_lib ADR where
-  srcDir := "Core"
-  roots := #[
-    `ADR.Core,
-    `ADR.Logics,
-    `ADR.Proofs,
-    `ADR.History,
-    `ADR.Governance,
-    `ADR.Examples,
-    `ADR.Export,
-    `ADR.Test
-  ]
-
 lean_lib UOR where
   srcDir := "Core/moc"
   roots := #[`UOR.Enforcement, `UOR.Enums, `UOR.Examples, `UOR.Individuals, `UOR.Pipeline, `UOR.Prelude, `UOR.Primitives, `UOR.Structures, `UOR.Test, `UOR.UORMatMul]
@@ -39,9 +26,3 @@ lean_exe PrimeWasm where
 lean_exe RiemannZetaTests where
   srcDir := "Core/f1_square"
   exeName := "RiemannZetaTests"
-
-@[test_driver]
-lean_exe adr_test {
-  srcDir := "Core"
-  root := `ADR.Test
-}

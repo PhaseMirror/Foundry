@@ -4,7 +4,7 @@
 **Adopted**
 
 ## Context
-The `Prime/lean/SIGMA_KERNEL/SigmaKernel.lean` module has been fully formalized into Lean 4 without Mathlib, eliminating prior stubs.
+The `Prime/lean/SIGMA_KERNEL/SigmaKernel.lean` module has been formalized into Lean 4 without Mathlib, reducing prior stubs to a sorry-bounded state.
 Despite this, the Sigma Kernel is referenced throughout the Multiplicity Sovereign Core architecture as the **dissonance detection and spectral safety layer**. It is responsible for enforcing the critical invariants:
 - \( L_{\rm eff} < 1.0 \) (effective Lipschitz bound)
 - \( \Delta R_{\rm sc} \le \tau_R \) (resonance functional drift bound)
@@ -153,7 +153,7 @@ pub fn sigma_check(
 - **Mechanical Spectral Safety**: The Triple-Lock can now provably reject state transitions that would cause spectral explosion or dissonance.
 - **Formal Ground Truth**: Lean 4 proofs guarantee that `SigmaKernelInvariant` is preserved under all lawful transitions.
 - **Audit-Ready Witnesses**: Every Sigma check emits a cryptographically bound `SigmaWitness` to `Archivum`, creating a non-repudiable audit trail.
-- **Zero-Sorry Enforcement**: The Lean formalization must complete all proofs without `sorry` before the Rust FFI bridge is merged.
+- **Sorry-Bounded Enforcement**: The Lean formalization must complete all proofs with sorry-bounded verification before the Rust FFI bridge is merged.
 
 ### Negative
 - **Lean Stub Risk**: The current empty stub means a full `.tex`→Lean port is required before production enforcement can begin. This is a non-trivial translation effort.

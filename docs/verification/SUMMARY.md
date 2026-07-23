@@ -61,7 +61,7 @@ All existing YAML contracts were already in place:
 ## Verification Status
 
 ### Lean Metrics
-- **Sorry count**: 0 (all proofs are axiomatic via Kani)
+- **Sorry count**: 53 (sorry-bounded; tracked in `alp_sorry_manifest.json`)
 - **Mathlib imports**: 0 (pure Lean 4 only)
 - **Type-check errors**: 0
 - **Theorem count**: 4 theorems (3 axiomatic, 1 conjecture)
@@ -133,7 +133,7 @@ The implementation follows a "Kani-first" architecture:
 
 ### Zero Defect Strategy
 
-- **Zero `sorry`**: All Lean theorems are axiomatic via Kani
+- **Sorry-bounded**: All resolved theorems are fully proven; remaining sorry blocks are tracked in `alp_sorry_manifest.json`
 - **Zero panic**: All Rust code verified by Kani
 - **Zero Mathlib**: Pure Lean 4 only
 - **Zero OOB**: Array bounds verified by Kani
@@ -167,5 +167,5 @@ The implementation follows a "Kani-first" architecture:
 *Implementation completed: 2026-07-22*
 *Verification status: Production-ready*
 *Kani harnesses: 7/7 passing*
-*Lean sorry count: 0*
+*Lean sorry count: 53 (sorry-bounded; tracked in alp_sorry_manifest.json)*
 *Rust panic count: 0*

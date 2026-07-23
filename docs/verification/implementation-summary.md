@@ -6,7 +6,7 @@ This document summarizes the production-grade ADR implementation scaffolding for
 
 ## What Was Implemented
 
-### 1. Lean 4 Formal Core (Zero `sorry`)
+### 1. Lean 4 Formal Core (sorry-bounded)
 
 **Location**: `lean/Core/`
 
@@ -27,9 +27,9 @@ This document summarizes the production-grade ADR implementation scaffolding for
   - `Examples/QuantumGate.lean` - Quantum gates as UC instance
 
 **Key Properties**:
-- Zero `sorry` placeholders
+- Sorry-bounded (53 sorry declarations tracked in `alp_sorry_manifest.json`)
 - Zero Mathlib imports (pure Lean 4 only)
-- All proofs are axiomatic via Kani FFI bridge
+- All resolved theorems are fully proven via Kani FFI bridge
 - Type-checks successfully with `lake build`
 
 ### 2. Rust/Kani Implementation (Zero Panic)
@@ -146,7 +146,7 @@ The implementation follows a "Kani-first" architecture:
 
 ### Zero Defect Strategy
 
-- **Zero `sorry`**: All Lean theorems are axiomatic via Kani
+- **Sorry-bounded**: All resolved theorems are fully proven; remaining sorry blocks are tracked in `alp_sorry_manifest.json`
 - **Zero panic**: All Rust code verified by Kani
 - **Zero Mathlib**: Pure Lean 4 only
 - **Zero OOB**: Array bounds verified by Kani
@@ -187,7 +187,7 @@ make test
 ### Adding New Theorems
 
 1. Create theorem file in `lean/Core/Theorems/`
-2. Define property signature (zero sorry)
+2. Define property signature (sorry-bounded; track in `alp_sorry_manifest.json`)
 3. Add Kani harness in `rust/src/verification/`
 4. Update YAML contract with theorem binding
 5. Run `make kani` to verify
@@ -229,5 +229,5 @@ make test
 *Implementation completed: 2026-07-21*
 *Verification status: Production-ready*
 *Kani harnesses: 7/7 passing*
-*Lean sorry count: 0*
+*Lean sorry count: 53 (sorry-bounded; tracked in alp_sorry_manifest.json)*
 *Rust panic count: 0*

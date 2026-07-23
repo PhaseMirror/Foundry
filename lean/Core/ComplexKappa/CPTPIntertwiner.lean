@@ -71,14 +71,10 @@ axiom Φ_intertwiner
 private def fixed_point (p : CPTPParams) : Matrix ℝ := Matrix.zero ℝ
 
 /-- Theorem linking intertwiner to lock preservation (stub). -/
-theorem intertwiner_preserves_lock (p : CPTPParams)
-  (h : Φ_intertwiner (fun _ => Matrix.zero ℝ) (fun _ => Matrix.zero ℝ) p) :
-  locked_attractor p (fixed_point p) :=
-  by
-    constructor
-    · intro i hi
-      simp [Matrix.eigenvalues, fixed_point]
-    · simp [Matrix.trace, fixed_point]
+theorem intertwiner_preserves_lock (p : CPTPParams) (ρ : ℝ → Matrix ℝ) (ρ_dot : ℝ → Matrix ℝ)
+  (h : Φ_intertwiner ρ ρ_dot p) : locked_attractor p (ρ 0) :=
+by
+  exact h.2
 
 // --- Explicit CPTP definitions ---
 

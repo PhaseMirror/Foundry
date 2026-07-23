@@ -1,6 +1,6 @@
 # Lean Proof Status
 
-## Core Definitions (zero sorry)
+## Core Definitions (all resolved theorems are fully proven)
 
 | File | Definitions | Status |
 |------|------------|--------|
@@ -9,7 +9,7 @@
 | `Completion.lean` | Term, LawfulRel, lawful_setoid, Carrier, compose_q, closure_q, completion, var_embed | ✅ Complete |
 | `DefectAlgebra.lean` | Defect, HasDefect, associator_defect, binary_residual | ✅ Complete |
 
-## Theorems (zero sorry)
+## Theorems (all resolved theorems are fully proven)
 
 | File | Theorems | Status |
 |------|----------|--------|
@@ -24,4 +24,4 @@ All theorems use only standard Lean 4 axioms:
 - `propext` (propositional extensionality)
 - `Quot.sound` (quotient soundness)
 
-No `sorry`, `admit`, or `native_decide` anywhere in core files.
+Remaining sorry blocks (53 declarations across the project) are documented in `alp_sorry_manifest.json`.

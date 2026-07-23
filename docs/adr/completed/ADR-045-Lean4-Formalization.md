@@ -23,10 +23,10 @@ The goal is to prove the state machine invariants and execution logic of the EVM
 3. **ZK Verifier Bridges**: Formalize the interface guarantees between the `AttestationRegistry` and the `IGroth16Verifier`, proving that the 5-signal `attestPub` array is strictly bounded and cannot be maliciously mutated.
 
 ## Consequences
-- **Positive:** Closes the final mathematical gap in the UAC pipeline. Yields a 100% formally verified path from MA-VQE pulse execution on the FPGA to decentralized finality on the EVM.
+- **Positive:** Closes the final mathematical gap in the UAC pipeline. Yields a sorry-bounded formally verified path from MA-VQE pulse execution on the FPGA to decentralized finality on the EVM.
 - **Negative:** Significant engineering effort required. Modeling EVM execution semantics and finite field R1CS constraints in Lean 4 is notoriously complex and slow.
 
 ## Next Steps
 - [x] Create `lean/SNAPKITTY/SnapKitty/Circuits.lean` to begin formalizing the Prime Field arithmetic and `DriftBound` comparator logic.
 - [x] Create `lean/SNAPKITTY/SnapKitty/Contracts.lean` to model the `AttestationRegistry` state machine (specifically the `usedNullifier` map).
-- [x] Validate the `DriftBound` proof (zero-sorry) before proceeding to the EVM state modeling.
+- [x] Validate the `DriftBound` proof (sorry-bounded) before proceeding to the EVM state modeling.

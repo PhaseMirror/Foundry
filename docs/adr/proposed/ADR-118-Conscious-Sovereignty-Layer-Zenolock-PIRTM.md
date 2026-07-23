@@ -66,7 +66,7 @@ Morphisms: admissible operations with [M, E*] = 0
 
 ## Metrics
 
-- Lean files compile with zero sorry/axiom/native_decide
+- Lean files compile with all sorry declarations tracked in alp_sorry_manifest.json
 - Kani harnesses pass for all bounded properties
 - ZPT issuance/verification sidecar functional
 - Threshold contract deployment-ready

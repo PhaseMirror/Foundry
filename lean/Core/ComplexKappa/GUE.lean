@@ -16,10 +16,10 @@ def zeros_follow_gue : Prop := True
 def all_beat_frequencies (N : Nat) : List Real := []
 
 axiom oracle_kani_beat_spectrum_gue :
-  forall (N : Nat) (h_gue : zeros_follow_gue) (u : Real), True
+  forall (N : Nat) (_h_gue : zeros_follow_gue) (u : Real), True
 
-theorem beat_spectrum_gue (N : Nat) (h_gue : zeros_follow_gue) (u : Real) : True :=
-  oracle_kani_beat_spectrum_gue N h_gue u
+theorem beat_spectrum_gue (N : Nat) (_h_gue : zeros_follow_gue) (u : Real) : True :=
+  oracle_kani_beat_spectrum_gue N _h_gue u
 
 end ComplexKappa.GUE
 end

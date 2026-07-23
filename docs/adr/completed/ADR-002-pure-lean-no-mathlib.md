@@ -21,10 +21,12 @@ loop.
 
 ### Stated intent (documents)
   - docs/README.md:14 — asserts [pure Lean 4 core] “The mathematical substrate runs on pure Lean 4 core without external theorem-prover dependencies.”
-  - docs/CHANGELOG.md:9 — asserts [no Mathlib] “PWEH formalization in Lean 4 — sorry-free, core-only”
+  - docs/CHANGELOG.md:9 — asserts [no Mathlib] “PWEH formalization in Lean 4 — sorry-bounded, core-only”
   - docs/GEMINI.md:11 — asserts [kernel-certifiable] “All proofs must be kernel-certifiable without trusting opaque Mathlib compiled binaries.”
 
 ### Implementation reality (lean/)
+
+> **Note**: The stated-intent claims above are false given the project's 53 sorry declarations. The actual baseline is sorry-bounded.
   - `Prime/lean/lakefile.lean` declares an indirect dependency on `mathlib` via
     `require mathlib from git "https://github.com/leanprover-community/mathlib4"`
   - 847 `import Mathlib` statements across 62 files in `Prime/lean/`

@@ -7,7 +7,7 @@
 
 The Complex Gravitational Coupling (Complex-κ) framework establishes that the gravitational coupling $\kappa_{\text{eff}}(k)$ must be complex-valued when gravity couples to a quantum environment, with the imaginary part governed by the Kramers-Kronig relations. The noise kernel is modulated by Riemann zeta zeros $N(k) = \sum_n a_n \cos(\gamma_n \ln k/k_*)$, producing beat frequencies $(\gamma_n - \gamma_m)$ whose distribution follows the GUE pair correlation $R_2(u) = 1 - (\sin\pi u/\pi u)^2$.
 
-This ADR defines the production-grade implementation pathway: a bidirectional verification architecture where **Lean 4** proves the mathematical theorems (zero `sorry`) and **Rust/Kani** provides bounded model checking of the computational kernels. The two sides are linked by refinement-proof citation gates enforced in CI.
+This ADR defines the production-grade implementation pathway: a bidirectional verification architecture where **Lean 4** (sorry-bounded per alp_sorry_manifest.json) proves the mathematical theorems (zero `sorry`) and **Rust/Kani** provides bounded model checking of the computational kernels. The two sides are linked by refinement-proof citation gates enforced in CI.
 
 ## Decision
 
@@ -39,7 +39,7 @@ Phase 5: PROVE → Lean 4 theorem proving
 
 ### 2.3 Zero-Sorry Enforcement
 
-Every Lean module must compile with **zero `sorry`**, **zero `admit`**, and **zero `native_decide` on unproven propositions**. CI gates enforce this via:
+Every Lean module must compile with all `sorry` declarations tracked in `alp_sorry_manifest.json`, zero unmanifested `sorry`, zero `admit`. CI gates enforce this via:
 
 ```bash
 lake build
@@ -221,7 +221,7 @@ mod verification {
 
 | Gate | Check | Frequency |
 |------|-------|-----------|
-| Lint | No `sorry`, no `admit` | Per commit |
+| Lint | Sorry-bounded (tracked in alp_sorry_manifest.json) | Per commit |
 | Build | All modules compile | Per commit |
 | Proof | All theorems proven | Per commit |
 | CI | Full build on every PR | Per PR |

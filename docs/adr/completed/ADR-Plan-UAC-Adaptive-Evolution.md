@@ -22,7 +22,7 @@ and is gated by CI checks that enforce system invariants.
 
 | **Constraint** | **Enforcement** |
 | :--- | :--- |
-| **Zero-`sorry` boundary** | All new Lean4 theorems must compile without `sorry` or be listed in `alp_sorry_manifest.json` with a paired Rust stub and governance test. CI rejects unmanifested `sorry`. |
+| **Sorry-bounded boundary** | All new Lean4 theorems must be listed in `alp_sorry_manifest.json` with a paired Rust stub and governance test. CI rejects unmanifested `sorry`. |
 | **100-qudit hard boundary** | No active space, circuit, or proof may exceed the (20,20) FeMoco-equivalent CAS envelope. CI rejects any PR that introduces a larger space. |
 | **Attestation completeness** | Every production run must be coverable by a verifiable ZK attestation (single Groth16 per run OR batched STARK). The sidecar must attest every run; no omission allowed. |
 | **Governance traceability** | Every autonomous action (proof patch, scheduler shift, anomaly flag) must be reconstructible from the WORM ledger + manifest. The system logs all decisions with a trace ID and links to the originating proof or model version. |
@@ -91,7 +91,7 @@ and is gated by CI checks that enforce system invariants.
   when discharged.
 - **CI Enforcement**: Every PR must pass:
   - `cargo test --workspace --release`
-  - `lake build` with zero unmanifested `sorry`
+  - `lake build` with all `sorry` declarations tracked in alp_sorry_manifest.json
   - `scripts/verify_manifest.py` to check the sorry manifest is up‑to‑date.
   - `scripts/check_boundary.py` to enforce 100‑qudit limit.
 - **WORM Audit**: All autonomous decisions must log a structured event with:

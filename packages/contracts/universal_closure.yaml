@@ -1,0 +1,57 @@
+# Universal Closure Theory - Core Contract
+# Maps to Lean Core/Foundations/ and Rust src/
+
+schema_version: "1.0.0"
+
+system:
+  name: "UniversalClosure"
+  version: "0.1.0"
+
+components:
+  - name: "PartialSystem"
+    lean: "PartialUC"
+    rust: "PartialSystem"
+    properties:
+      - "compose_p: X × X ⇀ X"
+      - "closure_p: X ⇀ X"
+
+  - name: "UniversalClosure"
+    lean: "UC"
+    rust: "UnionFind"
+    properties:
+      - "compose: X × X → X"
+      - "closure: X → X"
+
+  - name: "Completion"
+    lean: "Completion.completion"
+    rust: "complete"
+    properties:
+      - "C ⊣ U"  # Adjunction
+      - "monotone_defect: μ(closure(x)) ≤ μ(x)"
+
+theorems:
+  - name: "Adjunction"
+    lean: "completion_adjunction"
+    rust_harness: "verify_composition_preserved"
+    proof_status: "in_progress"
+
+  - name: "NNO_Representation"
+    lean: "free_one_generator_is_nno"
+    proof_status: "conjecture"
+
+  - name: "CompositionalDefect"
+    lean: "compositional_defect"
+    rust_harness: "verify_associator_bounded"
+    proof_status: "in_progress"
+
+verification:
+  kani:
+    bounds:
+      max_terms: 32
+      max_qubits: 3
+    harnesses:
+      - "verify_composition_preserved"
+      - "verify_congruence_closure"
+      - "verify_termination"
+      - "verify_associator_bounded"
+      - "verify_blockade_enforced"

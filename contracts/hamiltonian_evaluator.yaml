@@ -1,0 +1,47 @@
+name: hamiltonian_evaluator
+version: 1.0.0-P2C-Sealed
+description: |
+  Constructs the full many‑body Hamiltonian for a sequence of gate operations on a neutral‑atom array.
+  The Hamiltonian is a 2^n × 2^n Hermitian matrix with zero trace.
+  Properties verified:
+  - Hermiticity: H = H^†
+  - Trace preservation: Tr(H) = 0
+  - Associator defect bound: ||H_{x∘y∘z} - H_{x∘(y∘z)}||_F ≤ tolerance
+
+inputs:
+  - name: sequence
+    type: list of GateOperation
+    bounds: [0, 8]          # max 8 gates for Kani BMC
+  - name: hardware
+    type: HardwareSpec
+    bounds: [2, 8]          # 2‑8 qubits
+
+outputs:
+  - name: hamiltonian
+    type: matrix of f64
+    properties:
+      - hermitian: true
+      - trace: 0
+      - dimension: 2^n
+
+theorems:
+  - id: hamiltonian_hermitian
+    statement: "∀ seq, hw, is_hermitian (hamiltonian seq hw)"
+  - id: hamiltonian_trace
+    statement: "∀ seq, hw, trace (hamiltonian seq hw) = 0"
+  - id: associator_defect_bound
+    statement: "∀ seq1 seq2, lawful seq1 seq2 → associator_defect seq1 seq2 ≤ tolerance"
+
+lean_implementation:
+  path: lean/F1/Physics/Hamiltonian.lean
+  theorem: hamiltonian_hermitian
+  theorem: hamiltonian_trace
+  theorem: associator_defect_bound
+
+rust_implementation:
+  path: rust/src/physics/hamiltonian.rs
+  function: hamiltonian
+  kani_bound: 8
+
+telemetry:
+  export: "PWEH_Hash_Chain"

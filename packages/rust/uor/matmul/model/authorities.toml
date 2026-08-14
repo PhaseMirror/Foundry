@@ -1,0 +1,97 @@
+# model/authorities.toml --- what this repository cites and does not re-derive
+# (§12, N2, R4).
+#
+# An authority tells the implementation what identity to realize. It is cited
+# the way an instruction-set manual is cited: never re-derived here, never
+# vendored, and never gated on. `CM-03` fails the build if a `some-true` claim
+# names an authority that has no row in this file.
+#
+# `citation` is what a third party needs to find the source. `checksum` is over
+# the committed artifact in `oracles/` where one exists; an authority that is a
+# document rather than an artifact records `checksum = "none"` and says why, so
+# that a missing checksum is a stated fact rather than an omission.
+
+spec = "uor-matmul/1"
+
+[[authority]]
+id = "CL-MM01"
+name = "codec invariance"
+citation = "UorMatMul.lean, UOR-Foundation, upstream. Theorem CL-MM01."
+checksum = "none"
+checksum_reason = """the formalization is upstream and is cited, not vendored
+(N2). This repository contains no proof development and pins no proof artifact;
+what it pins is its own behaviour against the identity."""
+statement = """the accumulation does not depend on the codec: two coded matrices
+with equal decoded streams produce equal products."""
+realized_by = ["CK-01", "CK-02", "CK-05"]
+
+[[authority]]
+id = "CL-MM02"
+name = "scalar equals block"
+citation = "UorMatMul.lean, UOR-Foundation, upstream. Lemma `scalar_eq_block`."
+checksum = "none"
+checksum_reason = "cited upstream, not vendored (N2)"
+statement = "a scalar codec is the block codec of its singletons"
+realized_by = ["CK-01"]
+
+[[authority]]
+id = "CL-MM03"
+name = "transcode composition"
+citation = "UorMatMul.lean, UOR-Foundation, upstream. Lemma `transcode_decode`."
+checksum = "none"
+checksum_reason = "cited upstream, not vendored (N2)"
+statement = "the composite of two codecs is a codec with the composed decode"
+realized_by = ["CK-04"]
+
+[[authority]]
+id = "CL-MM04"
+name = "bound theorems for arbitrary (B, cap)"
+citation = "UorMatMul.lean, UOR-Foundation, upstream. Bound theorems."
+checksum = "none"
+checksum_reason = "cited upstream, not vendored (N2)"
+statement = """all bound theorems hold for arbitrary (B, cap), with W8A8 as the
+single instantiation (B, cap) = (127, 2^31 - 1)."""
+realized_by = ["CS-07", "CD-09", "CU-02"]
+
+[[authority]]
+id = "IEEE-754-2019"
+name = "binary32 and binary64 interchange formats"
+citation = "IEEE Std 754-2019, clause 3.4 (formats) and clause 6 (infinity, NaN)."
+checksum = "none"
+checksum_reason = "a published standard, referenced by clause rather than copied"
+statement = """a finite IEEE 754 value is a bit pattern naming an exact dyadic
+rational; NaN and infinity propagate by the clause 6 rules."""
+realized_by = ["CT-03", "CU-04"]
+
+[[authority]]
+id = "RING-HOM-2W"
+name = "reduction modulo 2^w is a ring homomorphism"
+citation = """Elementary. Z -> Z/2^w is a ring homomorphism, so reducing a sum
+once at the end equals reducing at every step."""
+checksum = "none"
+checksum_reason = "an elementary fact, stated rather than sourced"
+statement = """`EncodeMode::Wrapping` into a w-bit output reproduces a classical
+wrapping accumulator's bytes exactly, at every depth, including depths where
+that accumulator has wrapped many times. This is why the integer oracles agree
+byte for byte over the whole corpus with no exempted region (§3.4)."""
+realized_by = ["CX-01", "CX-02", "CX-03", "CX-04", "CX-10"]
+
+[[authority]]
+id = "INTEL-VNNI"
+name = "VPDPBUSD and VPDPWSSD semantics"
+citation = "Intel Intrinsics Guide, `_mm512_dpbusd_epi32`, `_mm512_dpwssd_epi32`."
+checksum = "none"
+checksum_reason = "a vendor reference, cited by intrinsic name"
+statement = """vpdpbusd multiplies unsigned bytes by signed bytes and accumulates
+into i32; vpdpwssd multiplies signed words. The per-step magnitudes that follow
+are what `model/constants.toml`'s narrow thresholds are derived from."""
+realized_by = ["CB-03", "CU-03"]
+
+[[authority]]
+id = "UOR-ADDR-1"
+name = "kappa addressing"
+citation = "UOR-Foundation/uor-addr-1 v0.1.0, `uor_addr_1::address`."
+checksum = "Cargo.lock"
+checksum_reason = "a crates.io dependency; the resolved version is the pin"
+statement = "JCS-RFC8785 + NFC then SHA-256 over the canonical manifest"
+realized_by = ["CK-05"]

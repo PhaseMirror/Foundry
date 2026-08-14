@@ -1,0 +1,90 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Unified MOC IR",
+  "description": "Unified IR schema for Multiplicity Operator Calculus, ensuring identical interpretation across backends.",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "string"
+    },
+    "word": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Operator"
+      },
+      "description": "The sequence of normalized operators."
+    },
+    "constraints": {
+      "type": "object",
+      "properties": {
+        "sparsity_bound": {
+          "type": "integer",
+          "maximum": 12
+        },
+        "ramanujan_bound": {
+          "type": "object",
+          "properties": {
+            "satisfied": { "type": "boolean" },
+            "eigenvalue_bound": { "type": "number" },
+            "support_size": { "type": "integer" }
+          },
+          "required": ["satisfied", "eigenvalue_bound", "support_size"]
+        },
+        "deligne_justification": {
+          "type": "string"
+        },
+        "etale_realization": {
+          "type": "object",
+          "properties": {
+            "weight": { "type": "integer" },
+            "purity_bound": { "type": "string" }
+          },
+          "required": ["weight", "purity_bound"]
+        },
+        "eichler_shimura_realization": {
+          "type": "object",
+          "properties": {
+            "level": { "type": "integer" },
+            "weight": { "type": "integer", "const": 2 },
+            "newform_label": { "type": "string" }
+          },
+          "required": ["level", "weight", "newform_label"]
+        },
+        "modular_abelian_variety": {
+          "type": "object",
+          "properties": {
+            "newform_label": { "type": "string" },
+            "cm_field": { "type": "string" }
+          },
+          "required": ["newform_label"]
+        }
+      },
+      "required": ["sparsity_bound", "ramanujan_bound"]
+    }
+  },
+  "required": ["version", "word", "constraints"],
+  "definitions": {
+    "Operator": {
+      "type": "object",
+      "properties": {
+        "op_type": {
+          "type": "string",
+          "enum": ["S", "B", "H", "H_INV"]
+        },
+        "indices": {
+          "type": "array",
+          "items": { "type": "integer" }
+        },
+        "sign": {
+          "type": "integer",
+          "enum": [1, -1]
+        },
+        "ap_coefficient": {
+          "type": "integer",
+          "description": "The Trace(Frob_p) coefficient (a_p) for Eichler-Shimura realizations."
+        }
+      },
+      "required": ["op_type"]
+    }
+  }
+}

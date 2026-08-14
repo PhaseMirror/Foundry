@@ -1,0 +1,24 @@
+name: zeta_phi_pi
+version: 1.0.0-P2C
+description: |
+  Zeta Phi Pi cognitive scaling invariant check.
+inputs:
+  - name: time_steps
+    type: int
+    bounds: [101, 200]
+  - name: initial_lambda
+    type: int
+    bounds: [1, 100]
+outputs:
+  - name: pci_error
+    type: int
+theorems:
+  - id: golden_ratio_attractor
+    statement: "time_steps > 100 && initial_lambda > 0 => pci_error <= 1"
+rust_implementation:
+  path: rust/src/kernels/zeta_phi_pi.rs
+  function: compute_pci
+  kani_bound: 16
+lean_implementation:
+  path: lean/Core/ZetaPhiPi.lean
+  theorem: golden_ratio_attractor

@@ -1,0 +1,50 @@
+tools:
+  - name: get_governance_adr
+    description: "Fetch the contents of a specific governance ADR by its ID."
+    inputs:
+      - adr_id
+    action: "export PHASE_MIRROR_HQ_ROOT=\".\" && python3 -c \"from mcp_server.domains.governance.tools import get_governance_adr; import json; print(json.dumps(get_governance_adr('{adr_id}')))\""
+  - name: list_governance_adrs
+    description: "List all available governance ADRs."
+    inputs: []
+    action: "export PHASE_MIRROR_HQ_ROOT=\".\" && python3 -c \"from mcp_server.domains.governance.tools import list_governance_adrs; import json; print(json.dumps(list_governance_adrs()))\""
+  - name: query_constitution
+    description: "Query the system constitution."
+    inputs: []
+    action: "export PHASE_MIRROR_HQ_ROOT=\".\" && python3 -c \"from mcp_server.domains.governance.tools import query_constitution; import json; print(json.dumps({'content': query_constitution()}))\""
+  - name: run_pirtm_call
+    description: "Execute a PIRTM (Policy-Integrated Runtime Model) call."
+    inputs:
+      - input_expr
+    action: "export PHASE_MIRROR_HQ_ROOT=\".\" && python3 -c \"from mcp_server.domains.pirtm.tools import run_pirtm_call; import json; print(json.dumps(run_pirtm_call('{input_expr}')))\""
+  - name: agios_get_state
+    description: "Get the current state of AGIOS."
+    inputs: []
+    action: "export AGIOS_ROOT=\".\" && python3 -c \"from mcp_server.domains.agios.tools import agios_get_state; import json; print(json.dumps(agios_get_state()))\""
+  - name: agios_constitution_check
+    description: "Check an action against the AGIOS constitution."
+    inputs:
+      - action
+    action: "export AGIOS_ROOT=\".\" && python3 -c \"from mcp_server.domains.agios.tools import agios_constitution_check; import json; print(json.dumps(agios_constitution_check('{action}')))\""
+  - name: execute_lever
+    description: "Execute a system lever within a specified scope."
+    inputs:
+      - lever_id
+      - scope
+    action: "python3 -c \"from mcp_server.domains.daemon.tools import execute_lever; import json; print(json.dumps(execute_lever('{lever_id}', '{scope}')))\""
+  - name: list_adrs
+    description: "List architecture decision records (copilot)."
+    inputs: []
+    action: "python3 extensions/phasemirror/mcp_server/domains/governance/commander_copilot.py list_adrs '{payload}'"
+  - name: check_drift
+    description: "Check system state for policy drift."
+    inputs: []
+    action: "python3 extensions/phasemirror/mcp_server/domains/governance/commander_copilot.py check_drift '{payload}'"
+  - name: precision_question
+    description: "Ask a precision question to the copilot."
+    inputs: []
+    action: "python3 extensions/phasemirror/mcp_server/domains/governance/commander_copilot.py precision_question '{payload}'"
+  - name: propose_lever
+    description: "Propose the execution of a lever to the copilot."
+    inputs: []
+    action: "python3 extensions/phasemirror/mcp_server/domains/governance/commander_copilot.py propose_lever '{payload}'"

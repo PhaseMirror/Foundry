@@ -1,0 +1,42 @@
+# Operator Atlas: Tier IV Healthcare Declaration
+# This profile defines the maximum geometric and semantic strictness for FDA-compliant Clinical AI Operators.
+
+operator_id: "Xi_Clinical"
+tier: "IV"
+domain: "healthcare.clinical_diagnostics"
+
+# The Universal Multiplicity Constant / Rta Configuration
+rta_metric:
+  enabled: true
+  # Maximum allowed Euclidean distance from the Bindu (zero-defect coherence attractor)
+  # Any candidate exceeding this distance is hard-rejected by the CCRE gate.
+  max_rta_dist_to_bindu: 0.05
+  # The maximum allowable semantic discrepancy (sheaf overlap failure) before candidate clamping.
+  max_arta_defect: 1e-4
+  # Enforce gradient descent (Fit operator) to auto-minimize defect before candidate acceptance.
+  run_fit_on_update: true
+  # Threshold for Fit operator termination.
+  fit_tolerance: 1e-6
+
+# CRMF (Contractive Resonance Mapping Framework) Bounds
+crmf_bounds:
+  # The strict Lipschitz bound on the neural network Jacobian to guarantee bounded resonance.
+  max_lipschitz_constant: 0.98
+  # Minimum margin required below the critical safety threshold (gamma).
+  safety_margin: 0.02
+  # Required contraction bound (must be < 1.0 to ensure exponential convergence to Bindu).
+  target_contraction_bound: 0.99
+
+# Sentinel Gate Config
+sentinel_gates:
+  - L0_08_PrimeOneForbidden
+  - L1_TopologicalConnectivity
+  - L2_SemanticCoherence
+
+# Audit Tracing
+audit_config:
+  emit_crmf_witness: true
+  anchor_to_blockchain: true
+  frequency: "per_transition"
+  # Ensures FDA regulators can query /rta/health and /rta/history natively
+  expose_rta_endpoints: true

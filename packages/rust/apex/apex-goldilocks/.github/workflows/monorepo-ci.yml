@@ -1,0 +1,41 @@
+name: Monorepo CI
+
+on:
+  push:
+    branches:
+      - Multiplicity
+  pull_request:
+    branches:
+      - Multiplicity
+
+jobs:
+  detect-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine changed directories
+        id: changed
+        run: |
+          echo "CHANGED_DIRS<<EOF" >> $GITHUB_OUTPUT
+          git fetch --no-tags --prune --depth=1 origin ${{ github.base_ref || 'Multiplicity' }}
+          git diff --name-only HEAD origin/${{ github.base_ref || 'Multiplicity' }} | cut -d/ -f1 | sort -u
+          git diff --name-only HEAD origin/${{ github.base_ref || 'Multiplicity' }} | awk -F/ '{print $1"/"$2}' | sort -u
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Run tests for atlas
+        if: contains(steps.changed.outputs.CHANGED_DIRS, 'atlas') || github.event_name == 'push'
+        run: |
+          cd atlas
+          # replace with your build/test commands
+          echo "Running atlas tests"
+          # npm ci && npm test || true
+
+      - name: Run tests for hologram
+        if: contains(steps.changed.outputs.CHANGED_DIRS, 'hologram') || github.event_name == 'push'
+        run: |
+          cd hologram
+          echo "Running hologram tests"

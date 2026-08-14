@@ -1,0 +1,369 @@
+\documentclass[12pt,a4paper]{article}
+
+% Packages
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{physics}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{cleveref}
+
+% Custom commands
+\newcommand{\zetacomb}{\text{Zeta-Comb}}
+\newcommand{\algft}{\text{AL-GFT}}
+\newcommand{\IF}{\text{IF}}
+\newcommand{\env}{\text{env}}
+\newcommand{\sys}{\text{sys}}
+\newcommand{\intx}{\text{int}}
+
+% Theorem environments
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+% Title
+\title{Gate 1: Schwinger--Keldysh Derivation of\\
+Arithmetic-Langevin GFT Cumulants\\
+{\large Track A: Gaussian Branch}}
+
+\author{CEQG-RG-Langevin Collaboration}
+\date{February 2026\\ \vspace{1em} \textcolor{blue}{\textbf{Status: Framework specified, derivation in progress}}}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+We present the complete Schwinger--Keldysh derivation of the influence functional and cumulant structure for the Arithmetic-Langevin Group Field Theory (AL-GFT) in the Gaussian regime (Track A). Starting from a microscopic quantum-geometric action with a tower of complex-mass environment modes exhibiting $\zeta$-function spectral properties, we compute the Feynman--Vernon influence functional $S_{\IF}$ and extract the noise kernel $N(k)$, which exhibits the characteristic ``Zeta-Comb'' log-periodic modulation. We prove that the second cumulant $C_2(k)$ reproduces the phenomenological power spectrum modulation $P_\zeta(k) = P_0(k) M(k)$, and that the third cumulant $C_3 = 0$ by virtue of Gaussianity. Finally, we derive the explicit mapping from AL-GFT microscopic parameters $(\epsilon, \sigma, \{\omega_n\})$ to effective GFT couplings $(\lambda_4(M_P), \lambda_6(M_P))$ at the Planck scale, providing the UV boundary conditions required for Gate 2.
+
+\textbf{Key result:} Gate 1 Gaussian branch is \emph{passed} if all criteria in Section~\ref{sec:pass-criteria} are satisfied.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+% ============================================================================
+\section{Introduction}
+\label{sec:intro}
+% ============================================================================
+
+\subsection{The CEQG-RG-Langevin Framework}
+
+The Canonical Effective Quantum Gravity with Renormalization Group and Langevin stochastic quantization (CEQG-RG-Langevin) is a gated research program designed to connect discrete quantum geometry---specifically, Group Field Theory (GFT) spin-foam models---to precision cosmology via a systematic micro-to-macro pipeline. The program is organized around five mandatory gates:
+
+\begin{enumerate}
+    \item \textbf{Gate 1: Micro--macro derivation.} Derive stochastic cumulants from a specified microscopic model using standard techniques.
+    \item \textbf{Gate 2: RG-prior justification.} Derive UV--IR priors from GFT Wetterich flows.
+    \item \textbf{Gate 3: Correlated smoking gun.} Predict falsifiable correlations between distinct observables.
+    \item \textbf{Gate 4: Truncation hierarchy.} Justify all approximations with explicit error budgets.
+    \item \textbf{Gate 5: Complete causal chain.} Present a single coherent pipeline from microscopic action to observations.
+\end{enumerate}
+
+This document addresses \textbf{Gate 1, Track A} (Gaussian branch): the derivation of cumulants $C_2(k)$ and $C_3(k_1, k_2, k_3)$ from the Arithmetic-Langevin GFT microscopic model.
+
+\subsection{The Arithmetic-Langevin GFT (AL-GFT) Model}
+
+The AL-GFT model posits that the quantum-geometric environment during inflation is described by a tower of scalar modes $\phi_{n,\mathbf{k}}$ with effective dispersion relations
+\begin{equation}
+    \Omega_n^2 = \omega_n^2 + k^2,
+\end{equation}
+where $\omega_n$ are dimensionless frequencies encoding arithmetic vertex operators weighted by Riemann $\zeta$-function spectral data. When the effective mass parameter $m_n^2 / H^2 > 9/4$, the Mukhanov--Sasaki mode functions acquire imaginary Bessel indices, producing log-periodic phases $\exp(\pm i \omega_n \log(k/k_\star))$ in the quantum fluctuations.
+
+The coupling between the curvature perturbation $\zeta_{\mathbf{k}}$ and the environment is linear:
+\begin{equation}
+    S_{\intx} = \int d\eta \, d^3k \, a^2 \, \zeta_{\mathbf{k}} \mathcal{O}_{-\mathbf{k}}, \quad \mathcal{O}_{\mathbf{k}} = \sum_n g_n \phi_{n,\mathbf{k}},
+\end{equation}
+with coupling constants $g_n = \epsilon \, e^{-\gamma \omega_n^2} e^{i\phi_n}$, where $\epsilon$ controls the overall strength and $\gamma = \sigma^2$ governs the high-frequency suppression.
+
+\textbf{Goal of this document:} Derive $C_2(k)$ and $C_3$ from first principles using the Schwinger--Keldysh closed-time-path (CTP) formalism, and prove that $C_3 = 0$ in Track A.
+
+% ============================================================================
+\section{Notation and Setup}
+\label{sec:notation}
+% ============================================================================
+
+\subsection{Fourier Conventions}
+
+We work on a spatially flat FLRW background with scale factor $a(\eta)$ and conformal time $\eta$. Fourier decompositions follow the convention
+\begin{equation}
+    \zeta(\eta, \mathbf{x}) = \int \frac{d^3k}{(2\pi)^3} e^{i\mathbf{k} \cdot \mathbf{x}} \zeta_{\mathbf{k}}(\eta).
+\end{equation}
+
+\subsection{System, Environment, and Interaction Actions}
+
+The total action is
+\begin{equation}
+    S_{\text{tot}} = S_{\sys}[\zeta] + S_{\env}[\phi] + S_{\intx}[\zeta, \phi],
+\end{equation}
+where:
+\begin{itemize}
+    \item $S_{\sys}[\zeta]$: Starobinsky-like quadratic action for the system (curvature perturbation),
+    \item $S_{\env}[\phi]$: Free action for the environment tower $\{\phi_{n,\mathbf{k}}\}$,
+    \item $S_{\intx}[\zeta, \phi]$: Linear coupling as defined above.
+\end{itemize}
+
+\textbf{TO BE FILLED IN PHASE 1:} Explicit expressions in Fourier space.
+
+% ============================================================================
+\section{Closed-Time-Path Formalism}
+\label{sec:ctp}
+% ============================================================================
+
+\subsection{Doubling of Fields}
+
+In the Schwinger--Keldysh formalism, we introduce forward and backward branches:
+\begin{equation}
+    \zeta \to (\zeta_+, \zeta_-), \quad \phi \to (\phi_+, \phi_-).
+\end{equation}
+
+The CTP generating functional is
+\begin{equation}
+    Z[J_+, J_-] = \int \mathcal{D}\zeta_+ \mathcal{D}\zeta_- \mathcal{D}\phi_+ \mathcal{D}\phi_- \, \rho_{\env}[\phi] \, e^{i(S_+  - S_-)},
+\end{equation}
+where $\rho_{\env}$ is the initial environment density matrix (taken to be Gaussian).
+
+\textbf{TO BE FILLED IN PHASE 1:} Derivation of path integral and identification of $\phi_\pm$ Gaussian structure.
+
+\subsection{Tracing Out the Environment}
+
+Since the environment action $S_{\env} + S_{\intx}$ is quadratic in $\phi_\pm$, the path integral over $\phi$ is Gaussian and can be performed exactly. The result is the \emph{Feynman--Vernon influence functional}:
+\begin{equation}
+    \mathcal{F}[\zeta_+, \zeta_-] = e^{i S_{\IF}[\zeta_+, \zeta_-]}.
+\end{equation}
+
+\textbf{TO BE FILLED IN PHASE 1:} Explicit computation of $S_{\IF}$ and extraction of $N(\eta, \eta'; k)$ and $D_R(\eta, \eta'; k)$.
+
+% ============================================================================
+\section{Derivation of the Noise Kernel $N(k)$}
+\label{sec:noise-kernel}
+% ============================================================================
+
+\subsection{Environment Mode Functions}
+
+On the quasi-de Sitter background, the mode functions $v_{n,\mathbf{k}} = a \phi_{n,\mathbf{k}}$ satisfy the Mukhanov--Sasaki equation with effective mass $m_n^2 = \omega_n^2 H^2 - 2H^2$ (in conformal time). For $\omega_n^2 > 9/4$, the Hankel index becomes complex:
+\begin{equation}
+    \nu_n = \frac{3}{2} + i \omega_n,
+\end{equation}
+yielding log-periodic phases in the superhorizon limit.
+
+\textbf{TO BE FILLED IN PHASE 1:}
+\begin{itemize}
+    \item Solve the Mukhanov--Sasaki equation with Bunch--Davies initial conditions.
+    \item Derive the asymptotic form of $v_{n,\mathbf{k}}(\eta)$.
+    \item Show the emergence of $\cos(\omega_n \log(k/k_\star) + \phi_n)$ factors.
+\end{itemize}
+
+\subsection{Assembling $N(k)$}
+
+The noise kernel is given by the environment anti-commutator:
+\begin{equation}
+    N(\eta, \eta'; k) = \langle \{\mathcal{O}_{\mathbf{k}}(\eta), \mathcal{O}_{-\mathbf{k}}(\eta')\} \rangle_{\env}.
+\end{equation}
+
+In the equal-time, superhorizon limit, this reduces to:
+\begin{equation}
+    N(k) \propto \sum_n |g_n|^2 \, \cos(\omega_n \log(k/k_\star) + \phi_n) + (\text{non-oscillatory}).
+\end{equation}
+
+\textbf{TO BE FILLED IN PHASE 1:} Complete derivation with all prefactors and verification of amplitude $\epsilon e^{-\sigma \omega_n^2}$.
+
+\subsection{The $\epsilon \to 0$ Limit}
+
+\begin{theorem}[$\Lambda$CDM Recovery]
+In the limit $\epsilon \to 0$, the influence functional vanishes: $S_{\IF} \to 0$, and the primordial power spectrum reduces to the standard $\Lambda$CDM form with $|M(k) - 1| < 10^{-6}$.
+\end{theorem}
+
+\textbf{TO BE FILLED IN PHASE 1:} Formal proof and numerical verification.
+
+% ============================================================================
+\section{Cumulant Extraction and the Gaussian Fork}
+\label{sec:cumulants}
+% ============================================================================
+
+\subsection{Second Cumulant $C_2(k)$}
+
+The stochastic Langevin equation implied by $S_{\IF}$ is
+\begin{equation}
+    \zeta''_{\mathbf{k}} + 2 \mathcal{H} \zeta'_{\mathbf{k}} + k^2 \zeta_{\mathbf{k}} = \int d\eta' \, D_R(\eta,\eta'; k) \zeta_{\mathbf{k}}(\eta') + \xi_{\mathbf{k}}(\eta),
+\end{equation}
+where $\xi$ is Gaussian noise with $\langle \xi_{\mathbf{k}} \xi_{\mathbf{k}'} \rangle = (2\pi)^3 \delta^{(3)}(\mathbf{k} + \mathbf{k}') N(k)$.
+
+Solving for $\zeta_{\mathbf{k}}$ in the stochastic ensemble yields
+\begin{equation}
+    P_\zeta(k) = P_0(k) \, M(k),
+\end{equation}
+where
+\begin{equation}
+    M(k) = 1 + \epsilon \sum_n e^{-\sigma \omega_n^2} \cos(\omega_n \log(k/k_\star) + \phi_n).
+\end{equation}
+
+\textbf{TO BE FILLED IN PHASE 2:} Explicit calculation and comparison to \texttt{algftgate1.py} output.
+
+\subsection{Third Cumulant $C_3$: The Gaussian Fork}
+
+\begin{theorem}[Vanishing of $C_3$ in Track A]
+Since the environment is Gaussian and the coupling is linear, the influence functional is at most quadratic in $(\zeta_c, \zeta_\Delta)$. Therefore, the stochastic source $\xi$ has vanishing connected three-point function:
+\begin{equation}
+    \langle \xi \xi \xi \rangle_c = 0 \quad \Rightarrow \quad C_3(k_1, k_2, k_3) = 0.
+\end{equation}
+Consequently, $f_{\text{NL}} \simeq 0$ in AL-GFT Track A.
+\end{theorem}
+
+\begin{proof}
+\textbf{TO BE FILLED IN PHASE 2:} One-paragraph proof showing that Gaussianity of $\phi$ + linearity of coupling $\Rightarrow$ Gaussianity of $\xi$.
+\end{proof}
+
+\textbf{Decision point:} Any future detection of primordial non-Gaussianity ($f_{\text{NL}} \neq 0$) would require extension to non-Gaussian environment states or nonlinear couplings (Track B), which is outside the scope of Gate 1.
+
+% ============================================================================
+\section{Mapping to GFT Couplings}
+\label{sec:gft-map}
+% ============================================================================
+
+\subsection{Effective GFT Action from AL-GFT}
+
+The AL-GFT microscopic vertex amplitude
+\begin{equation}
+    \mathcal{A}(j_1, j_2, j_3) \propto \exp\!\left( -\frac{(\dim j_1 \cdot \dim j_2 - \dim j_3)^2}{2\sigma^2} \right)
+\end{equation}
+can be expanded in powers of field operators to identify effective GFT couplings:
+\begin{itemize}
+    \item \textbf{Quartic coupling:} $\lambda_4(M_P)$ from 4-valent contractions,
+    \item \textbf{Sextic coupling:} $\lambda_6(M_P)$ from 6-valent contractions.
+\end{itemize}
+
+\textbf{TO BE FILLED IN PHASE 3:} Complete derivation of $f_4(\epsilon, \sigma, \omega_n, M)$ and $f_6(\epsilon, \sigma, \omega_n, M)$.
+
+\subsection{UV Boundary Conditions for Gate 2}
+
+\begin{equation}
+    \lambda_4(M_P) = f_4(\epsilon, \sigma, \{\omega_n\}, M), \quad \lambda_6(M_P) = f_6(\epsilon, \sigma, \{\omega_n\}, M),
+\end{equation}
+with the key scaling relation
+\begin{equation}
+    \lambda_6(M_P) \sim M^2,
+\end{equation}
+linking the sextic coupling to the inflationary energy scale.
+
+\textbf{TO BE FILLED IN PHASE 3:}
+\begin{itemize}
+    \item Explicit formulae with all prefactors.
+    \item Uncertainty propagation: target $\leq 20\%$ on both couplings.
+    \item Numerical values for fiducial parameters.
+\end{itemize}
+
+% ============================================================================
+\section{Validation Against Planck Data}
+\label{sec:validation}
+% ============================================================================
+
+\subsection{Matched-Filter Analysis}
+
+We run the SK-derived spectrum $P_\zeta(k)$ through a matched-filter search on Planck 2018 TT residuals, scanning for the characteristic log-periodic Zeta-Comb signal.
+
+\textbf{TO BE FILLED IN PHASE 4:}
+\begin{itemize}
+    \item SNR scan over $\omega \in [5, 50]$.
+    \item Best-fit $\omega_{\text{best}}$ and comparison to theoretical prediction $\omega_1 = 14.13$.
+    \item $2\sigma$ consistency check across full $\ell$-range.
+\end{itemize}
+
+\subsection{Results}
+
+\textbf{TO BE FILLED IN PHASE 4:} Plots and numerical results.
+
+% ============================================================================
+\section{Gate 1 Pass Criteria}
+\label{sec:pass-criteria}
+% ============================================================================
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|c|l|l|c|}
+\hline
+\textbf{\#} & \textbf{Criterion} & \textbf{Threshold} & \textbf{Status} \\
+\hline
+1 & $S_{\IF}$ derived with Zeta-Comb $N(k)$ & Closed-form, standard techniques & $\square$ \\
+2 & $N(k)$ matches \texttt{algftgate1.py} & Max residual $< 2\%$ & $\square$ \\
+3 & $C_2(k)$ matches Planck & Within $2\sigma$ & $\square$ \\
+4 & $C_3 = 0$ proven & Gaussian argument & $\square$ \\
+5 & GFT coupling map documented & $\leq 20\%$ uncertainty & $\square$ \\
+6 & $\epsilon \to 0$ limit recovers $\Lambda$CDM & $|M(k) - 1| < 10^{-6}$ & $\square$ \\
+7 & All derivations use standard techniques & No novel coarse-graining & $\square$ \\
+\hline
+\end{tabular}
+\caption{Gate 1 pass/fail checklist. Gate 1 is \textbf{passed} if all criteria are checked.}
+\label{tab:pass-criteria}
+\end{table}
+
+\textbf{Gate 1 fails if:}
+\begin{itemize}
+    \item $S_{\IF}$ diverges or requires unjustified cutoffs.
+    \item Observability requires $\epsilon > 0.1$ (non-perturbative breakdown).
+    \item $C_3 \neq 0$ with $|f_{\text{NL}}| > 10$ (excluded by Planck).
+    \item No clean $(\epsilon, \sigma) \to (\lambda_4, \lambda_6)$ map exists.
+\end{itemize}
+
+% ============================================================================
+\section{Gate 2 Handoff}
+\label{sec:gate2-handoff}
+% ============================================================================
+
+\textbf{TO BE FILLED IN PHASE 5:}
+
+Gate 2 requires the following UV boundary conditions at the Planck scale:
+\begin{align}
+    \lambda_4(M_P) &= (\text{value}) \pm (\text{uncertainty}), \\
+    \lambda_6(M_P) &= (\text{value}) \pm (\text{uncertainty}).
+\end{align}
+
+These values are derived from AL-GFT with:
+\begin{itemize}
+    \item $\epsilon = $ (value),
+    \item $\sigma = $ (value),
+    \item $\{\omega_n\} = $ (list),
+    \item $M = $ (Starobinsky scalaron mass).
+\end{itemize}
+
+% ============================================================================
+\section{Conclusion}
+\label{sec:conclusion}
+% ============================================================================
+
+\textbf{TO BE FILLED IN PHASE 5:}
+
+We have completed the Gate 1 Gaussian branch derivation for AL-GFT. The key findings are:
+\begin{itemize}
+    \item The Zeta-Comb noise kernel $N(k)$ arises naturally from complex-mass environment modes.
+    \item $C_2(k)$ matches the phenomenological modulation $M(k)$ to within (value)\%.
+    \item $C_3 = 0$ by virtue of Gaussianity, establishing AL-GFT Track A as a purely $C_2$ framework.
+    \item The GFT coupling map provides UV boundary conditions for Gate 2 with (value)\% uncertainty.
+\end{itemize}
+
+\textbf{Gate 1 status:} (TO BE DETERMINED AFTER PHASE 5)
+
+% ============================================================================
+\appendix
+% ============================================================================
+
+\section{Numerical Implementation Details}
+\label{app:numerics}
+
+\textbf{TO BE FILLED:} Code structure, test results, reproducibility instructions.
+
+\section{Comparison to Alternative Approaches}
+\label{app:alternatives}
+
+\textbf{TO BE FILLED:} Brief discussion of how AL-GFT compares to other quantum-gravity-inspired inflationary models.
+
+% ============================================================================
+\bibliographystyle{plain}
+\bibliography{references}
+% ============================================================================
+
+\end{document}

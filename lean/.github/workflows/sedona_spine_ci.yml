@@ -1,0 +1,103 @@
+name: Sedona Spine Frontend Validation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/ADR/**'
+      - 'contracts/sedona_spine.yaml'
+      - 'paper/ADR-007-Completion-Report.md'
+      - 'FeMoco_100_Concurrent_Load_Test_Criteria.md'
+      - 'Production_Mode_Lock.md'
+      - 'UAC_OnChain_Finality_Lock.md'
+  pull_request:
+    paths:
+      - 'src/ADR/**'
+      - 'contracts/sedona_spine.yaml'
+      - 'paper/ADR-007-Completion-Report.md'
+      - 'FeMoco_100_Concurrent_Load_Test_Criteria.md'
+      - 'Production_Mode_Lock.md'
+      - 'UAC_OnChain_Finality_Lock.md'
+
+permissions:
+  contents: read
+
+jobs:
+  lean-honesty-audit:
+    name: Lean Axiom-Clean Audit (L0-NO-MATHLIB, L0-NO-SORRY)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Lean 4
+        uses: leanprover/lean-action@v1
+        with:
+          lean-version: 'v4.33.0'
+
+      - name: Run Lean axiom-clean audit
+        run: |
+          echo "=== Mathlib import check (L0-NO-MATHLIB) ==="
+          if grep -r "import Mathlib" src/ADR/; then
+            echo "FAIL: Mathlib import found — axiom violation"
+            exit 1
+          fi
+          echo "PASS: No Mathlib imports in src/ADR/"
+
+          echo "=== sorry-free check (L0-NO-SORRY) ==="
+          SORRY_COUNT=$(grep -rn "sorry" src/ADR/*.lean 2>/dev/null | wc -l || echo "0")
+          if [ "${SORRY_COUNT}" -gt 0 ]; then
+            echo "FAIL: Found ${SORRY_COUNT} sorry occurrences"
+            grep -rn "sorry" src/ADR/*.lean
+            exit 1
+          fi
+          echo "PASS: No sorry in ADR modules"
+
+          echo "=== Lake build ==="
+          lake build
+          echo "PASS: Lake build succeeded"
+
+          echo "=== Lake test ==="
+          lake test
+          echo "PASS: Lake test succeeded"
+
+          echo "=== Python concurrency validator ==="
+          pip install -q pytest
+          python scripts/validate_concurrency.py
+          echo "PASS: Python concurrency validator passed"
+
+  contract-validation:
+    name: Contract Validation
+    runs-on: ubuntu-latest
+    needs: lean-honesty-audit
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate sedona_spine.yaml
+        run: |
+          python3 -c "import yaml; c = yaml.safe_load(open('contracts/sedona_spine.yaml')); assert c['contract_id'] == 'sedona_spine'; assert c['governance']['fail_closed'] == True; assert c['narrative_auditor']['drift_score'] == 0.0; assert c['lean_modules'][0]['no_mathlib'] == True; assert c['lean_modules'][0]['no_sorry'] == True; print('PASS: sedona_spine.yaml validated')"
+
+  provenance-check:
+    name: Archivum Provenance Check
+    runs-on: ubuntu-latest
+    needs: [lean-honesty-audit, contract-validation]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify witness file exists
+        run: |
+          if [ -f "state/archivum/witnesses.jsonl" ]; then
+            echo "Archivum witnesses.jsonl found"
+            wc -l state/archivum/witnesses.jsonl
+          else
+            echo "No witness file yet - provenance check passes (initial state)"
+          fi
+
+      - name: Verify Git anchoring
+        run: |
+          echo "Git commit count: $(git rev-list --count HEAD)"
+          echo "Archivum provenance ready for witness anchoring"

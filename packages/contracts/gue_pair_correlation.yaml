@@ -1,0 +1,24 @@
+name: gue_pair_correlation
+version: 1.0.0-P2C-Sealed
+description: |
+  Computes the empirical pair correlation of the beat frequencies and compares
+  to the GUE prediction R₂(u)=1-(sin πu / πu)².
+inputs:
+  - name: gamma_list
+    type: list of rat
+    bounds: [1, 32]   # length fixed
+outputs:
+  - name: level_repulsion_dip
+    type: rat
+  - name: gue_deviation
+    type: rat
+theorems:
+  - id: gue_consistency_bound
+    statement: "gue_deviation ≤ 0.1"
+rust_implementation:
+  path: rust/src/kernels/gue_pair_correlation.rs
+  function: compute_gue_deviation
+  kani_bound: 32
+lean_implementation:
+  path: lean/ComplexKappa/GUE/PairCorrelation.lean
+  theorem: gue_deviation_bounded

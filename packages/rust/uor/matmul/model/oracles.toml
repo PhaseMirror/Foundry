@@ -1,0 +1,187 @@
+# model/oracles.toml --- the oracle registry (R11, §3.3-oracles).
+#
+# Every external claim is bound to a committed artifact in `oracles/`, with
+# provenance and checksum. `xtask verify-oracles` fails if a row here has no
+# artifact, or if the artifact's checksum disagrees.
+#
+# All oracles are dev-dependencies of `uor-matmul-validate` only. The shipped
+# crates depend on none of them.
+#
+# `exactness` is the load-bearing column (§3.4):
+#   exact    --- the oracle is exact for this case, so it must return our bytes
+#                exactly; a mismatch is a bug in one of the two libraries.
+#   inexact  --- the oracle is not exact for this case, so it cannot be
+#                expected to. The harness records `oracle_inexact` with the
+#                measured deviation from our exact value. That status never
+#                fails the gate and always appears in the report.
+
+spec = "uor-matmul/1"
+
+[[oracle]]
+id = "CX-01"
+crate = "ndarray"
+feature = "ref-ndarray"
+element = "i32"
+entry = "Array2::dot, linalg::general_mat_mul"
+exactness = "exact"
+independent = true
+honesty = "build"
+note = """i32 satisfies LinalgScalar; ndarray dispatches integer types to its
+generic kernel, not to matrixmultiply. Verified at implementation time and the
+resolved version is pinned in Cargo.lock."""
+
+[[oracle]]
+id = "CX-02"
+crate = "nalgebra"
+feature = "ref-nalgebra"
+element = "i32"
+entry = "DMatrix<i32> multiplication, gemm"
+exactness = "exact"
+independent = true
+honesty = "build"
+note = "independent implementation lineage from ndarray"
+
+[[oracle]]
+id = "CX-03"
+crate = "ndarray"
+feature = "ref-ndarray"
+element = "i32"
+entry = "widened i8 inputs vs our i8 x i8 -> i32 kernel"
+exactness = "exact"
+independent = true
+honesty = "build"
+note = "the load-bearing W8A8 external check"
+
+[[oracle]]
+id = "CX-04"
+crate = "nalgebra"
+feature = "ref-nalgebra"
+element = "i32"
+entry = "widened i4 / E8 decoded weights vs our coded kernels"
+exactness = "exact"
+independent = true
+honesty = "build"
+note = "ties CL-MM01 to an outside witness"
+
+[[oracle]]
+id = "CX-05"
+crate = "matrixmultiply"
+feature = "ref-matrixmultiply"
+element = "f32"
+entry = "sgemm"
+exactness = "inexact"
+independent = true
+honesty = "open"
+note = """agreement where the oracle is exact; elsewhere its deviation from our
+exact value is measured, not matched (N1)."""
+
+[[oracle]]
+id = "CX-06"
+crate = "faer"
+feature = "ref-faer"
+element = "f32"
+entry = "matmul"
+exactness = "inexact"
+independent = true
+honesty = "open"
+note = "independent lineage from matrixmultiply; same treatment"
+
+[[oracle]]
+id = "CX-07"
+crate = "ndarray"
+feature = "ref-ndarray"
+element = "f32"
+entry = "general_mat_mul (which routes to matrixmultiply)"
+exactness = "inexact"
+independent = false
+honesty = "open"
+note = "not independent of CX-05; recorded as such"
+
+[[oracle]]
+id = "CX-08"
+crate = "gemm"
+feature = "ref-gemm"
+element = "f32"
+entry = "crate entry point"
+exactness = "inexact"
+independent = true
+optional = true
+honesty = "open"
+
+[[oracle]]
+id = "CX-09"
+crate = "matrixmultiply"
+feature = "ref-matrixmultiply"
+element = "f64"
+entry = "dgemm"
+exactness = "inexact"
+independent = true
+honesty = "open"
+
+[[oracle]]
+id = "CX-10"
+crate = "numpy"
+feature = "none"
+element = "i64"
+entry = "numpy.matmul, out of process"
+exactness = "exact"
+independent = true
+honesty = "build"
+note = """Not a Rust crate, which is the point (D-1): it settles lineage
+independence by construction. Its outputs are generated once by
+oracles/numpy/generate.py, committed to oracles/numpy/ with a per-file
+SHA-256, and compared like any other oracle. int64 accumulation wraps exactly
+where a two's complement accumulator does, so the comparison is byte equality
+with no exempted region."""
+
+# --------------------------------------------------------------------------
+# Cited authorities. These are not crates and are not executed. They are cited
+# the way an instruction-set manual is cited: they tell the implementation what
+# identity to realize, and they are never re-derived, vendored, or gated on
+# (§12, N2).
+# --------------------------------------------------------------------------
+
+[[authority]]
+id = "CL-MM01"
+name = "codec invariance"
+source = "UorMatMul.lean, upstream"
+honesty = "some-true"
+statement = """the accumulation does not depend on the codec: two coded
+matrices with equal decoded streams produce equal products."""
+
+[[authority]]
+id = "CL-MM02"
+name = "scalar equals block"
+source = "UorMatMul.lean, upstream (scalar_eq_block)"
+honesty = "some-true"
+statement = "a scalar codec is the block codec of its singletons"
+
+[[authority]]
+id = "CL-MM03"
+name = "transcode composition"
+source = "UorMatMul.lean, upstream (transcode_decode)"
+honesty = "some-true"
+statement = "the composite of two codecs is a codec with the composed decode"
+
+[[authority]]
+id = "CL-MM04"
+name = "bound theorems for arbitrary (B, cap)"
+source = "UorMatMul.lean, upstream"
+honesty = "some-true"
+statement = """all bound theorems are proved for arbitrary (B, cap), with W8A8
+as the single instantiation (B, cap) = (127, 2^31 - 1)."""
+
+[[authority]]
+id = "IEEE-754-2019"
+name = "binary32 / binary64 interchange formats"
+source = "IEEE 754-2019 clause 3.4"
+honesty = "some-true"
+statement = """a finite IEEE 754 value is a bit pattern naming an exact dyadic
+rational; NaN and infinity propagate by the clause 6 rules."""
+
+[[authority]]
+id = "uor-addr-1"
+name = "kappa addressing"
+source = "UOR-Foundation/uor-addr"
+honesty = "some-true"
+statement = "JCS-RFC8785 + NFC then SHA-256 over the canonical manifest"

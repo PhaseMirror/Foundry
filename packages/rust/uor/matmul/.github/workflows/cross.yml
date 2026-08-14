@@ -1,0 +1,70 @@
+# CA-02, CB-04, CD-06: the axes one machine cannot cover.
+#
+# The corpus digest must be the same number on every target. `MAX_K_BITS` is
+# declared rather than probed precisely so that this is a comparison of one
+# function against itself.
+name: cross
+
+on:
+  push: { branches: [main] }
+  pull_request:
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  aarch64:
+    name: CB-04, aarch64 NEON and dotprod
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      # Runs natively, so `is_aarch64_feature_detected!` reports the real host
+      # and the NEON kernels are actually exercised rather than merely compiled.
+      - run: cargo test --workspace
+      - name: CA-02, the corpus digest on aarch64
+        run: cargo test -p uor-matmul-conformance --test environment
+
+  big-endian:
+    name: CD-06, big-endian
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: taiki-e/install-action@cross
+      # s390x is big-endian. The serialized output is explicitly little-endian,
+      # so this is the target that would catch a native-endian slip.
+      - run: cross test -p uor-matmul-core -p uor-matmul-codec --target s390x-unknown-linux-gnu
+
+  embedded:
+    name: CA-03, no allocator symbol
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: rustup target add thumbv7em-none-eabihf
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo build -p uor-matmul --no-default-features --release --target thumbv7em-none-eabihf
+      - run: cargo test -p uor-matmul-conformance --test environment no_allocator
+
+  wasm:
+    name: CB-05, wasm with and without SIMD128
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: rustup target add wasm32-unknown-unknown wasm32-wasip1
+      - uses: taiki-e/install-action@wasmtime
+      - uses: Swatinem/rust-cache@v2
+      # Both configurations, because CB-05 is the claim that they agree.
+      - run: cargo build -p uor-matmul --no-default-features --target wasm32-unknown-unknown
+      - name: SIMD128 on
+        run: cargo build -p uor-matmul --no-default-features --target wasm32-unknown-unknown
+        env:
+          RUSTFLAGS: -C target-feature=+simd128
+      - name: run the suite under wasmtime
+        run: cargo test -p uor-matmul-core -p uor-matmul-codec --target wasm32-wasip1
+        env:
+          CARGO_TARGET_WASM32_WASIP1_RUNNER: wasmtime

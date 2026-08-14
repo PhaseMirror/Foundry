@@ -1,0 +1,347 @@
+\documentclass[11pt]{article}
+
+% --- Packages ---
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amsthm,amssymb,mathtools}
+\usepackage{bm}
+\usepackage{enumitem}
+\usepackage{microtype}
+\usepackage{hyperref}
+\usepackage[capitalise]{cleveref}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{float}
+
+% --- Hyperref setup ---
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  citecolor=teal,
+  urlcolor=magenta,
+  pdfauthor={IFMD},
+  pdftitle={The Multiplicity Constant $\Lambda_m$: Certified PGF Formulation with Global and Local Spectral Certificates},
+}
+
+% --- Theorem environments ---
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{assumption}[theorem]{Assumption}
+\newtheorem{remark}[theorem]{Remark}
+
+% --- Listings (Python) ---
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codered}{rgb}{0.7,0.1,0.1}
+\definecolor{codeblue}{rgb}{0.12,0.12,0.7}
+\lstdefinestyle{py}{
+  language=Python,
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{codeblue}\bfseries,
+  commentstyle=\color{codegray},
+  stringstyle=\color{codered},
+  showstringspaces=false,
+  frame=single,
+  framerule=0.3pt,
+  breaklines=true,
+  columns=fullflexible
+}
+
+% --- Macros ---
+\newcommand{\A}{\mathcal{A}}
+\newcommand{\Sig}{\mathrm{Sig}}
+\newcommand{\Mfun}{M_{\mathrm{fun}}}
+\newcommand{\Mint}{M_{\mathrm{int}}}
+\newcommand{\Mhat}{\widehat{M}}
+\newcommand{\Lcrit}{\Lambda_{\mathrm{crit}}}
+\newcommand{\Lglob}{\Lambda_{\mathrm{glob}}}
+\newcommand{\Lm}{\Lambda_m}
+\newcommand{\norm}[1]{\left\lVert #1\right\rVert}
+\newcommand{\abs}[1]{\left\lvert #1\right\rvert}
+\newcommand{\ip}[2]{\left\langle #1,\,#2\right\rangle}
+\usepackage{lastpage,fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{Preprint - PrimeAI Enhanced Template}
+\fancyfoot[C]{\scriptsize Multiplicity Theory © 2024 Ryan Van Gelder - Citizen Gardens \\ Licensed Under MIT and CC BY-NC-SA 4.0.}
+\fancyfoot[R]{Page \thepage\ of \pageref{LastPage}}
+\renewcommand{\footrule}{\hrule height 2pt \vspace{2mm}}
+
+\begin{document}
+\begin{titlepage}
+    \centering
+
+    {\Huge\bfseries The Multiplicity Constant $\Lm$ \par}
+    \vspace{0.5cm}
+    {\LARGE\bfseries Certified PGF Formulation with Global and Local Spectral Certificates}\\
+  \vspace{2cm}
+    {\LARGE\itshape Ryan O. Van Gelder \par}
+    \vspace{1cm}
+    {\Large\bfseries Citizen Gardens} \\
+    \vspace{0.5cm}
+    \Large{Institute for Mathematical Discovery} \\ 
+    \vspace{0.5cm}
+    {\normalsize \today \par}
+
+ \vfill
+
+    {\bfseries Abstract \par}
+    \vspace{0.5em}
+    \begin{minipage}{0.85\textwidth}
+        \small
+We fold the PGF separation-of-concerns into a rigorous formulation of the multiplicity constant $\Lm$ for prime-weighted recursions. The structural $M$-objects remain functorial and type-preserving, while $\Lm$ is purely analytic and provides certified contraction. We define a critical boundary $\Lcrit=1/\rho(S)$, a certified global choice $\Lglob(\gamma)=\gamma/\norm{S}$ with $0<\gamma<1$, a Rayleigh-based local gate $\Lm_{\mathrm{loc}}(\gamma;T)=\gamma/r(T)$, and a hybrid policy $\min\{\Lglob,\Lm_{\mathrm{loc}}\}$. We supply precise diagonal/non-normal cases, infinite-prime boundedness criteria, convergence/error bounds, and production-ready Python.
+
+ \end{minipage}
+\end{titlepage}
+\newpage
+
+\tableofcontents
+
+\section{Introduction and Separation-of-Concerns}
+Let $\A=\bigoplus_{p\in P_N}\A_p$ be a prime-graded algebra and consider the affine recursion
+\begin{equation}\label{eq:rec}
+  T_{t+1}=\Lm\,S\,T_t+F,\qquad S:=\sum_{p\in P_N} p^{\alpha_p} P_p.
+\end{equation}
+We enforce a clean split:
+\begin{itemize}[leftmargin=*,nosep]
+  \item \textbf{Structural layer (PGF $M$-objects):} $\Mfun$ (monoidal functor into $\mathbb{Q}^\times$), $\Mint$ (integer exponents), $\Mhat(T,p)$ (sector probability), and the diagonal signature gauge. \emph{These never act as real-analytic gains.}
+  \item \textbf{Analytic layer:} $\Lm$ is a real scalar controlling contraction in \eqref{eq:rec}. Certificates use operator norms and Rayleigh quotients.
+\end{itemize}
+
+\section{Assumptions and Basic Spectral Objects}
+\begin{assumption}[Spaces, norms, projectors]\label{ass:spaces}
+We work on a Banach space with submultiplicative norm $\norm{\cdot}$ and induced operator norm (Hilbert structure when Rayleigh quotients are used). Projectors satisfy $P_p^2=P_p$ and are bounded with $\norm{P_p}=1$. We distinguish:
+\begin{enumerate}[leftmargin=*,nosep]
+  \item \textbf{Orthogonal resolution (Hilbert):} $P_pP_q=\delta_{pq}P_p$ and $\sum_{p\in P_N}P_p=I$.
+  \item \textbf{General case:} bounded projectors, not necessarily orthogonal or commuting.
+\end{enumerate}
+\end{assumption}
+
+\begin{definition}[Critical and certified scales]\label{def:scales}
+Let $S=\sum_{p}p^{\alpha_p}P_p$. Define the \emph{critical boundary} and the \emph{certified global} scale
+\[
+\Lcrit:=\frac{1}{\rho(S)},\qquad
+\boxed{\ \Lglob(\gamma):=\frac{\gamma}{\norm{S}}\ },\quad 0<\gamma<1.
+\]
+Thus $\norm{\Lglob(\gamma)S}\le\gamma<1$.
+\end{definition}
+
+\begin{remark}[Diagonal spectrum in the orthogonal case]\label{rem:diag}
+Under orthogonal resolution, $S$ is self-adjoint positive with $\sigma(S)=\{p^{\alpha_p}\}_p$ and $\norm{S}=\rho(S)=\max_p p^{\alpha_p}$.
+\end{remark}
+
+\section{Local Rayleigh Gate and Hybrid Policy}
+When a Hilbert structure is available, define the Rayleigh average
+\begin{equation}\label{eq:rayleigh}
+  r(T):=\frac{\ip{T}{S\,T}}{\norm{T}^2}=\sum_{p\in P_N}\Mhat(T,p)\,p^{\alpha_p}.
+\end{equation}
+\begin{definition}[Local and hybrid scales]\label{def:localhybrid}
+For $\gamma\in(0,1)$ and $r(T)>0$,
+\[
+\boxed{\ \Lm_{\mathrm{loc}}(\gamma;T):=\frac{\gamma}{r(T)}\ },\qquad
+\boxed{\ \Lm^{\mathrm{hyb}}(T):=\min\big\{\Lglob(\gamma),\,\Lm_{\mathrm{loc}}(\gamma;T)\big\}\ }.
+\]
+If $S$ may be non-normal, set $S_{\mathrm{sym}}=(S+S^\*)/2$ in \eqref{eq:rayleigh} and keep $\Lglob$ as the hard fence.
+\end{definition}
+
+\section{Stability and Error Bounds}
+\begin{theorem}[Global certified stability]\label{thm:global}
+With $0<\gamma<1$ and $\Lm=\Lglob(\gamma)$, $\Phi(T):=\Lm S T+F$ is a contraction with constant $c=\norm{\Lm S}\le\gamma<1$. Hence a unique fixed point $T_\infty=(I-\Lm S)^{-1}F$ and the bounds
+\[
+\norm{T_t-T_\infty}\le \gamma^t \norm{T_0-T_\infty},\qquad \norm{T_\infty}\le \frac{\norm{F}}{1-\gamma}.
+\]
+\end{theorem}
+\begin{proof}
+By submultiplicativity, $\norm{\Phi(T)-\Phi(T')}=\norm{\Lm S(T-T')}\le \norm{\Lm S}\,\norm{T-T'}\le\gamma\norm{T-T'}$. Banach's fixed-point theorem applies.
+\end{proof}
+
+\begin{lemma}[Local Rayleigh gate]\label{lem:local}
+If $r(T)$ is given by \eqref{eq:rayleigh} and $\Lm_{\mathrm{loc}}(\gamma;T)=\gamma/r(T)$, then $\norm{(\Lm_{\mathrm{loc}}S)T}=\gamma\norm{T}$ (for self-adjoint $S$), providing a directional contraction at $T$.
+\end{lemma}
+
+\begin{proposition}[Hybrid safety]\label{prop:hybrid}
+With $\Lm^{\mathrm{hyb}}(T)=\min\{\Lglob(\gamma),\Lm_{\mathrm{loc}}(\gamma;T)\}$ and $r(T)>0$, we have $\norm{\Lm^{\mathrm{hyb}}(T)S}\le\gamma$, i.e.\ strict contractivity is maintained and the local gate never exceeds the global fence.
+\end{proposition}
+
+\section{Diagonal and General Operator Cases}
+\begin{proposition}[Diagonal (orthogonal) case]\label{prop:diag}
+Under orthogonal resolution (\cref{ass:spaces}), $\norm{S}=\max_p p^{\alpha_p}$ and
+\[
+\boxed{\ \Lm^{\mathrm{diag}}(\gamma)=\frac{\gamma}{\max_{p} p^{\alpha_p}}\ }.
+\]
+\end{proposition}
+
+\begin{proposition}[General (possibly non-normal) case]\label{prop:general}
+For arbitrary bounded projectors, the certified choice $\Lm=\gamma/\norm{S}$ guarantees $\norm{\Lm S}\le\gamma<1$. If a local gate is used, compute $r(T)$ with $S_{\mathrm{sym}}$.
+\end{proposition}
+
+\section{Infinite Prime Families: Boundedness Criterion}
+\begin{proposition}[Boundedness for $|P_N|=\infty$]\label{prop:infinite}
+Assume an orthogonal resolution with $\sum_{p\in P_N}P_p=I$ and $S=\sum_p p^{\alpha_p}P_p$. Then $S$ is bounded iff $\sup_p p^{\alpha_p}<\infty$. Equivalently, if primes are unbounded, this holds exactly when $\limsup_{p\to\infty}\alpha_p\le 0$. In that case $\norm{S}=\sup_p p^{\alpha_p}$.
+\end{proposition}
+\begin{proof}
+$S$ is diagonal in the $P_p$-basis with eigenvalues $p^{\alpha_p}$. Thus $\norm{S}=\sup_p p^{\alpha_p}$. Boundedness is equivalent to finiteness of the supremum.
+\end{proof}
+
+\section{PGF Structural Layer (for context only)}
+We recall the structural objects, used for certification but \emph{not} as gains:
+\begin{itemize}[leftmargin=*,nosep]
+  \item $\Mfun:\Sig\to\mathbb{Q}^{\times}$ (monoidal functor),
+  \item $\Mint(X,p)=e(p)$ (integer exponents),
+  \item $\Mhat(T,p)$ (sector probabilities; $\sum_p \Mhat(T,p)=1$),
+  \item diagonal signature gauge acting on signature kets.
+\end{itemize}
+Their analytic footprint in $\Lm$ is solely through $r(T)=\sum_p \Mhat(T,p) p^{\alpha_p}$.
+
+\section{Implementation: Certified Algorithms}
+\subsection{Diagonal fast-path and one-sided norm estimate}
+\begin{lstlisting}[style=py,caption={Diagonal fast-path and safe upper-bound on $\|S\|$},label={lst:diagub}]
+def lambda_global_diag(primes, alpha, gamma=0.9):
+    smax = max((p ** alpha.get(p, 0.0)) for p in primes)
+    if smax <= 0:
+        raise ValueError("Diagonal S requires positive weights.")
+    return gamma / smax
+
+def upper_bound_norm(apply_S, dim, iters=50, probes=8, seed=0):
+    """
+    One-sided upper bound for ||S||_2.
+    Never underestimates; safe for certification.
+    """
+    import numpy as np
+    rng = np.random.default_rng(seed)
+    ub = 0.0
+    for _ in range(probes):
+        x = rng.standard_normal(dim); x /= np.linalg.norm(x)
+        for _ in range(iters):
+            y = apply_S(x); n = np.linalg.norm(y)
+            if n == 0: break
+            x = y / max(n, 1e-300)
+        ub = max(ub, np.linalg.norm(apply_S(x)))
+    return max(ub, 1e-12)
+\end{lstlisting}
+
+\subsection{Local gate, hybrid policy, and certified update}
+\begin{lstlisting}[style=py,caption={Local Rayleigh gate, hybrid selection, certified update},label={lst:localhyb}]
+import numpy as np
+
+def lambda_local_gamma(T, primes, alpha, framework, gamma=0.9, eps=1e-12):
+    """Rayleigh-average local scale: Λ_loc(γ;T) = γ / r(T)."""
+    r = 0.0
+    for p in primes:
+        w = framework.sector_weight(T, p)  # = M-hat(T,p), in [0,1], sum to 1
+        r += w * (p ** alpha.get(p, 0.0))
+    if not np.isfinite(r) or r <= eps:
+        return None
+    return gamma / r
+
+def lambda_hybrid(T, lambda_global, local_fn=None, hard_cap=None):
+    """Hybrid Λ: min{Λ_global, Λ_loc(T)} with optional hard cap."""
+    vals = [lambda_global]
+    if local_fn is not None:
+        lc = local_fn(T)
+        if lc is not None:
+            vals.append(lc)
+    v = min(vals)
+    return min(v, hard_cap) if hard_cap is not None else v
+
+def certified_update(T, F, primes, alpha, projectors, framework, Lambda_global,
+                     local_fn=None, hard_cap=None):
+    """One Λ-certified step: T_{t+1} = Λ S T_t + F with PGF structural checks."""
+    # Build S as a function
+    def apply_S(x):
+        out = framework.zero_element()
+        for p in primes:
+            out += (p ** alpha.get(p, 0.0)) * projectors[p](x)
+        return out
+
+    # Choose Λ via hybrid policy
+    Lambda = lambda_hybrid(T, Lambda_global, local_fn=local_fn, hard_cap=hard_cap)
+
+    # Apply update
+    T_next = framework.zero_element()
+    for p in primes:
+        T_next += Lambda * (p ** alpha.get(p, 0.0)) * projectors[p](T)
+    T_next += F
+
+    # Optional structural checks
+    if hasattr(framework, "prime_conservation_check"):
+        assert framework.prime_conservation_check(T, T_next)
+    if hasattr(framework, "stability_gate"):
+        assert framework.stability_gate(T_next)
+
+    return T_next
+\end{lstlisting}
+
+\subsection{Global $\Lm$ via norm of $S$}
+\begin{lstlisting}[style=py,caption={Global Λ via induced norm (one-sided upper bound)},label={lst:global}]
+def compute_Lambda_global(primes, alpha, projectors, framework, gamma=0.9,
+                          dim=None, use_diagonal=False):
+    """
+    Returns Λ_global(γ) = γ / ||S|| with a safe (upper-bounding) estimate of ||S||,
+    or exact diagonal fast-path if use_diagonal is True.
+    """
+    if use_diagonal:
+        return lambda_global_diag(primes, alpha, gamma=gamma)
+
+    def apply_S(x):
+        out = framework.zero_element_like(x)
+        for p in primes:
+            out += (p ** alpha.get(p, 0.0)) * projectors[p](x)
+        return out
+
+    if dim is None:
+        raise ValueError("Need 'dim' for norm estimation or use 'use_diagonal=True'.")
+
+    ub = upper_bound_norm(apply_S, dim=dim, iters=50, probes=8)
+    return gamma / ub
+\end{lstlisting}
+
+\subsection{End-to-end skeleton}
+\begin{lstlisting}[style=py,caption={Minimal end-to-end usage},label={lst:e2e}]
+# Given: framework, projectors (dict p->callable), primes (iterable), alpha (dict), T, F
+
+# 1) Global certified Λ
+Lambda_global = compute_Lambda_global(
+    primes, alpha, projectors, framework, gamma=0.9, dim=T.size, use_diagonal=False
+)
+
+# 2) Optional local Rayleigh gate
+local_fn = lambda TT: lambda_local_gamma(TT, primes, alpha, framework, gamma=0.9)
+
+# 3) One certified step (with an optional hard cap)
+T_next = certified_update(
+    T, F, primes, alpha, projectors, framework,
+    Lambda_global=Lambda_global, local_fn=local_fn, hard_cap=None
+)
+\end{lstlisting}
+
+\section{Golden-Ratio Anecdote (Made Precise)}
+If at a fixed point $T_\infty$ the Rayleigh average satisfies $r(T_\infty)\approx\varphi^{-1}$ (with $\varphi$ the golden ratio), then the \emph{largest certified local} value at that state is
+\[
+\Lm_{\mathrm{loc}}^{\star}(\gamma;T_\infty)=\frac{\gamma}{r(T_\infty)}\approx \gamma\,\varphi.
+\]
+This is a contingent spectral feature of $S$ and the stationary sector weights $\Mhat(T_\infty,\cdot)$, not a universal constant.
+
+\section{Practical Guidelines}
+\begin{enumerate}[leftmargin=*,label=G\arabic*.]
+\item \textbf{Use $\gamma$.} Production uses $\Lm=\Lglob(\gamma)$ with $0<\gamma<1$; $\Lcrit$ is the non-certified boundary.
+\item \textbf{Diagonal fast-path.} If $P_p$ form an orthogonal resolution, compute $\norm{S}=\max_p p^{\alpha_p}$ exactly.
+\item \textbf{Local gate is directional.} Use $\Lm_{\mathrm{loc}}(\gamma;T)$ to tighten steps; keep $\Lglob$ as a fence.
+\item \textbf{Infinite primes.} Ensure $\sup_p p^{\alpha_p}<\infty$ (equivalently $\limsup \alpha_p\le 0$ for unbounded primes) for bounded $S$.
+\item \textbf{Keep $M$ structural.} $\Mfun,\Mint,\Mhat$ certify structure; only $r(T)$ feeds analytics.
+\end{enumerate}
+
+\section*{Summary}
+$\Lm$ is the analytic contraction scalar for prime-weighted recursions. The certified global policy $\Lglob(\gamma)=\gamma/\norm{S}$ and the Rayleigh local gate $\Lm_{\mathrm{loc}}(\gamma;T)=\gamma/r(T)$ combine as a hybrid $\min\{\Lglob,\Lm_{\mathrm{loc}}\}$ that is globally safe and locally tight. Structural PGF objects remain functorial and type-pure.
+
+\nocite{*}
+\bibliographystyle{unsrt}
+\bibliography{references}
+
+\end{document}

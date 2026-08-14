@@ -1,0 +1,318 @@
+
+
+\documentclass[12pt]{article}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{physics}
+\usepackage{bm}
+
+\title{AL-GFT Gate 1 Track A: \\ Schwinger-Keldysh Derivation of the Zeta-Comb Noise Kernel}
+\author{Ryan O. van Gelder}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\begin{abstract}
+This article presents a gated research framework for Completing Einstein's Quantum Gravity (CEQG) by integrating Renormalization Group (RG) running, Langevin stochastic gravity, spin-foam microfoundations, and Group Field Theory (GFT) cumulant flows. The framework is designed for modular falsifiability, with five mandatory validation gates that enforce a rigorous chain from microscopic dynamics to cosmological observables, anchored to 2024–2026 data from DESI, Planck, and GWTC-4.0. Gate 1 is implemented via the Arithmetic-Langevin GFT (AL-GFT) Gaussian branch, which derives an explicitly Gaussian Zeta-Comb noise kernel producing log-periodic oscillations in the primordial power spectrum, while predicting vanishing primordial bispectrum \(f_{\mathrm{NL}} \simeq 0\) at this level. Subsequent gates use AL-GFT-derived UV data as boundary conditions for GFT Wetterich flows, yielding RG-based priors for late-time running and correlated predictions for power-spectrum features and large-scale-structure observables, rather than generic scale-dependent non-Gaussianity. The resulting framework emphasizes transparent pass/fail criteria over monolithic claims, providing a concrete route to testing quantum-gravity-induced structure in cosmology with current and near-future surveys.
+\end{abstract}
+\section{System + Environment Definition (Fourier space for $\zeta_{\bm{k}}(\eta)$ on FLRW)}
+
+\subsection{System Action (Quadratic in $\zeta$)}
+Following the Starobinsky-like form:
+\begin{equation}
+S_{\text{sys}}[\zeta] = \frac{1}{2}\int d\eta \, d^3k \; a^2(\eta)\left[|\zeta'_{\bm{k}}|^2 - c_s^2 k^2 |\zeta_{\bm{k}}|^2\right].
+\label{eq:sys_action}
+\end{equation}
+This defines the free evolution of the curvature perturbation $\zeta$, matching the conventions used in the AL-GFT primordial spectrum code.
+
+\subsection{Environment: Tower of Multiplicity Modes}
+We introduce a discrete tower of environment modes $\phi_{n,\bm{k}}(\eta)$, labeled by an index $n$ that will encode the prime/zeta structure. Each mode has a simple quadratic action:
+\begin{equation}
+S_{\text{env}}[\phi] = \frac{1}{2}\int d\eta \, d^3k \sum_{n=1}^{\infty} \left[|\phi'_{n,\bm{k}}|^2 - \Omega_n^2(k,\eta)\,|\phi_{n,\bm{k}}|^2\right].
+\label{eq:env_action}
+\end{equation}
+The dispersion $\Omega_n(k,\eta)$ can be chosen later to incorporate GFT-inspired physics; for the minimal Track A, we may take it to be simple (e.g., $\Omega_n^2 = \omega_n^2 + k^2$).
+
+\subsection{Interaction (Linear, Gaussian Track A)}
+The system and environment are coupled linearly. Define a collective environment operator:
+\begin{equation}
+\mathcal{O}_{\bm{k}}(\eta) \equiv \sum_{n=1}^{\infty} g_n \phi_{n,\bm{k}}(\eta),
+\end{equation}
+where the coupling constants $g_n$ will carry the arithmetic information (prime weights, zeta phases). The interaction action is then:
+\begin{equation}
+S_{\text{int}}[\zeta,\phi] = \int d\eta\, d^3k \; a^2(\eta)\, \zeta_{\bm{k}}(\eta)\, \mathcal{O}_{-\bm{k}}(\eta).
+\label{eq:int_action}
+\end{equation}
+This form ensures the total action $S_{\text{tot}} = S_{\text{sys}} + S_{\text{env}} + S_{\text{int}}$ is at most quadratic in $\phi$, making the path integral over $\phi$ exactly solvable (Gaussian).
+
+\subsection{Initial Environment State}
+We choose a Gaussian initial density matrix for the environment, with a spectrum weighted by the prime/zeta structure:
+\begin{equation}
+\rho_{\text{env}} \propto \exp\left(-\sum_{n,\bm{k}} \beta_n\, |\phi_{n,\bm{k}}|^2\right), \quad \beta_n \sim \epsilon \, w_n,
+\label{eq:env_state}
+\end{equation}
+where $\epsilon$ is the multiplicity coupling strength and $w_n$ encodes the arithmetic weights (e.g., built from the von Mangoldt function or directly from the imaginary parts $\omega_n$ of Riemann zeta zeros). The specific choice of $w_n$ will be detailed in Section~\ref{sec:zeta_comb}.
+
+\section{Closed-Time-Path (CTP) Generating Functional}
+
+\subsection{Field Doubling}
+On the closed time path, we introduce two copies of each field: $\zeta_+$, $\zeta_-$ (for the forward and backward branches) and similarly $\phi_+$, $\phi_-$.
+
+\subsection{Path Integral}
+The CTP generating functional is:
+\begin{align}
+Z[J_+,J_-] = \int &\mathcal{D}\zeta_+ \mathcal{D}\zeta_- \mathcal{D}\phi_+ \mathcal{D}\phi_- \; \nonumber \\
+&\exp\Big(i S_{\text{tot}}[\zeta_+,\phi_+] - i S_{\text{tot}}[\zeta_-,\phi_-] + i\int J_+ \zeta_+ - i\int J_- \zeta_- \Big) \, \rho_{\text{env}}[\phi_+,\phi_-].
+\label{eq:ctp_genfunc}
+\end{align}
+The integral over $\phi_\pm$ is Gaussian because $S_{\text{env}} + S_{\text{int}}$ is quadratic in $\phi$. Performing this integral yields the influence functional.
+
+\subsection{Influence Functional}
+Define the influence functional $\mathcal{F}[\zeta_+,\zeta_-]$ via:
+\begin{equation}
+\mathcal{F}[\zeta_+,\zeta_-] \equiv e^{i S_{\text{IF}}[\zeta_+,\zeta_-]} = \int \mathcal{D}\phi_+ \mathcal{D}\phi_- \; e^{i (S_{\text{env+int}}[\zeta_+,\phi_+] - S_{\text{env+int}}[\zeta_-,\phi_-])} \rho_{\text{env}}[\phi_+,\phi_-].
+\label{eq:influence_func}
+\end{equation}
+The influence action $S_{\text{IF}}$ captures the effect of the environment on the system.
+
+\subsection{Resulting Effective Theory for $\zeta$}
+After integrating out the environment, the generating functional becomes:
+\begin{equation}
+Z[J_+,J_-] = \int \mathcal{D}\zeta_+ \mathcal{D}\zeta_- \; \exp\Big(i S_{\text{sys}}[\zeta_+] - i S_{\text{sys}}[\zeta_-] + i S_{\text{IF}}[\zeta_+,\zeta_-] + i\int J_+ \zeta_+ - i\int J_- \zeta_- \Big).
+\label{eq:effective_genfunc}
+\end{equation}
+
+\section{Standard Form of the Influence Action for a Linear Coupling to a Gaussian Environment}
+
+For our setup, the influence action takes the well-known Feynman-Vernon form. Introducing the average and difference variables:
+\begin{equation}
+\zeta_c = \frac{\zeta_+ + \zeta_-}{2}, \quad \zeta_\Delta = \zeta_+ - \zeta_-,
+\end{equation}
+the influence action is:
+\begin{equation}
+S_{\text{IF}}[\zeta_c, \zeta_\Delta] = \int d\eta d\eta' d^3k \left[ \zeta_\Delta(\eta,\bm{k}) D_R(\eta,\eta';k) \zeta_c(\eta',\bm{k}) + \frac{i}{2}\, \zeta_\Delta(\eta,\bm{k}) N(\eta,\eta';k) \zeta_\Delta(\eta',\bm{k}) \right].
+\label{eq:IF_form}
+\end{equation}
+Here:
+\begin{itemize}
+    \item $D_R(\eta,\eta';k)$ is the dissipation kernel (real and retarded).
+    \item $N(\eta,\eta';k)$ is the **noise kernel** (real, symmetric, and positive semi-definite).
+\end{itemize}
+
+\subsection{Kernels in Terms of Environment Correlators}
+For our collective operator $\mathcal{O}_{\bm{k}} = \sum_n g_n \phi_{n,\bm{k}}$, and given the Gaussian initial state $\rho_{\text{env}}$, the kernels are:
+\begin{align}
+N(\eta,\eta';k) &= \frac{1}{2}\left\langle \left\{\mathcal{O}_{\bm{k}}(\eta), \mathcal{O}_{-\bm{k}}(\eta')\right\} \right\rangle_{\rho_{\text{env}}}, \label{eq:noise_kernel_def} \\
+D_R(\eta,\eta';k) &= i \theta(\eta-\eta') \left\langle \left[\mathcal{O}_{\bm{k}}(\eta), \mathcal{O}_{-\bm{k}}(\eta')\right] \right\rangle_{\rho_{\text{env}}}. \label{eq:dissipation_kernel_def}
+\end{align}
+The brackets $\langle \cdot \rangle_{\rho_{\text{env}}}$ denote expectation values with respect to the initial environment state.
+
+\section{Imprinting the Zeta-Comb: Analytic Derivation of $N(k)$}
+\label{sec:zeta_comb}
+
+\subsection{Choice of Couplings $g_n$}
+To encode the arithmetic structure, we follow the prescription from the AL-GFT code and set:
+\begin{equation}
+g_n = \epsilon \, e^{-\gamma \omega_n^2} e^{i \phi_n}, \quad \text{for } n = 1, 2, \dots,
+\end{equation}
+where:
+\begin{itemize}
+    \item $\omega_n$ are the imaginary parts of the first $N$ non-trivial Riemann zeta zeros (e.g., $\omega_1 = 14.1347$, $\omega_2 = 21.0220$, \dots).
+    \item $\phi_n = \arg \zeta(1/2 + i \omega_n)$ are the corresponding phases.
+    \item $\epsilon$ is the overall multiplicity coupling strength.
+    \item $\gamma \sim 1/\sigma^2$ provides a Gaussian damping from the soft resonance width $\sigma$.
+\end{itemize}
+
+\subsection{Noise Kernel Calculation}
+We need to compute the anti-commutator in Eq.~(\ref{eq:noise_kernel_def}). For simplicity in this minimal Track A, we make two standard approximations:
+1.  The environment modes $\phi_{n,\bm{k}}$ are taken as independent harmonic oscillators.
+2.  Their two-point functions, in the inflationary background, lead to phase factors $\exp(\pm i \omega_n \log(k/k_\star))$ after a Fourier transform to momentum space. This is a standard result for mode functions on a quasi-de Sitter background, mapping conformal time to $\log k$.
+
+Under these approximations, the equal-time noise spectrum $N(k) \equiv \int d(\eta-\eta')\, e^{ik(\eta-\eta')} N(\eta,\eta';k)$ becomes:
+\begin{equation}
+N(k) \propto \sum_{n} |g_n|^2 \cos\left(\omega_n \log(k/k_\star) + \phi_n\right) + \text{(non-oscillatory terms)}.
+\label{eq:Nk_intermediate}
+\end{equation}
+The constant of proportionality is fixed by matching the standard scale-invariant spectrum in the $\epsilon \to 0$ limit.
+
+\subsection{Final Zeta-Comb Modulation $M(k)$}
+The primordial power spectrum $P_\zeta(k)$ is related to the noise kernel via the Green function of the system. For a weakly coupled environment, the dominant effect is a multiplicative modulation of the standard spectrum. The result matches the form implemented numerically:
+\begin{equation}
+P_\zeta(k) = P_0(k) \times M(k),
+\label{eq:Pzeta_final}
+\end{equation}
+with
+\begin{equation}
+M(k) = 1 + 2\epsilon \sum_{n=1}^{N} \frac{e^{-\gamma \omega_n^2}}{\omega_n^2} \cos\left(\omega_n \log(k/k_\star) + \phi_n\right) + \mathcal{O}(\epsilon^2).
+\label{eq:Mk_final}
+\end{equation}
+Here $P_0(k)$ is the standard power spectrum (e.g., from Starobinsky inflation), and the factor $1/\omega_n^2$ arises naturally from the mode function normalization.
+
+\subsection{Check of the $\epsilon \to 0$ Limit}
+As $\epsilon \to 0$, all $g_n \to 0$, the environment decouples, $S_{\text{IF}} \to 0$, and we recover the closed system result $P_\zeta(k) = P_0(k)$. The corrections are of order $\epsilon^2$, ensuring consistency with the $\Lambda$CDM limit at the required precision (e.g., $< 10^{-6}$ level).
+
+\section{The Gaussian Fork: Vanishing $C_3$ for AL-GFT Track A}
+
+\subsection{Why $C_3 = 0$}
+Because the environment is Gaussian and the interaction $S_{\text{int}}$ is strictly linear in both $\zeta$ and $\mathcal{O}$, the influence action $S_{\text{IF}}$ contains terms at most quadratic in $\zeta_c$ and $\zeta_\Delta$ (see Eq.~(\ref{eq:IF_form})). This implies that the equivalent stochastic (Langevin) equation for $\zeta$ will have a Gaussian noise source $\xi$ with:
+\begin{align}
+\langle \xi \rangle &= 0, \\
+\langle \xi(\eta,\bm{k}) \xi(\eta',\bm{k}') \rangle &\propto \delta(\bm{k}+\bm{k}') N(\eta,\eta';k), \\
+\langle \xi \xi \xi \rangle_c &= 0.
+\end{align}
+Consequently, all connected correlation functions of $\zeta$ beyond the two-point function vanish: $C_3(k_1,k_2,k_3) = 0$.
+
+\subsection{Implications for Gate 1}
+The AL-GFT Track A derivation thus explicitly satisfies the Gate 1 requirement to compute $C_3$: it is zero by construction, given our choices of a Gaussian environment and linear coupling. This is a clear, falsifiable prediction: any detection of primordial non-Gaussianity ($f_{\text{NL}} \neq 0$) would rule out this minimal Gaussian branch of AL-GFT and point toward the need for non-linear couplings or a non-Gaussian initial state (Track B).
+
+\section{Mode Functions for the Environment Tower on Quasi-de Sitter}
+
+In this section we make explicit the mode functions for the environment fields
+\(\phi_{n,\bm{k}}(\eta)\) on an approximately de Sitter background and show how they
+generate logarithmic phase dependence \(\propto \exp(\pm i \omega_n \log(k/k_\star))\)
+in the noise kernel. This provides the bridge between the microscopic AL-GFT
+construction and the Zeta-Comb modulation implemented numerically in
+\texttt{algftgate1.py}.
+
+\subsection{Background and Canonical Normalization}
+
+We assume an inflationary background that is well approximated by quasi-de Sitter
+expansion in conformal time \(\eta\):
+\begin{equation}
+a(\eta) \simeq -\frac{1}{H\eta}, 
+\quad \eta < 0,
+\label{eq:quasi_dS_scale_factor}
+\end{equation}
+with \(H\) approximately constant over the range of scales of interest.
+For each environment mode \(\phi_{n,\bm{k}}(\eta)\) we define the canonically
+normalized variable
+\begin{equation}
+v_{n,\bm{k}}(\eta) \equiv a(\eta)\,\phi_{n,\bm{k}}(\eta).
+\end{equation}
+The quadratic action \eqref{eq:env_action} then leads to the standard Mukhanov–Sasaki–type
+equation
+\begin{equation}
+v_{n,\bm{k}}''(\eta) + \left[k^2 + a^2(\eta)\,m_n^2 - \frac{a''(\eta)}{a(\eta)}\right]
+v_{n,\bm{k}}(\eta) = 0,
+\label{eq:v_mode_eq_general}
+\end{equation}
+where \(m_n\) is an effective mass for the \(n\)-th environment mode, to be specified
+below.
+
+For exact de Sitter, \(a''/a = 2/\eta^2\), so the mode equation becomes
+\begin{equation}
+v_{n,\bm{k}}''(\eta) + \left[k^2 + \frac{m_n^2}{H^2 \eta^2} - \frac{2}{\eta^2}\right]
+v_{n,\bm{k}}(\eta) = 0.
+\label{eq:v_mode_eq_dS}
+\end{equation}
+This has Hankel-function solutions.
+
+\subsection{Hankel Function Solutions and Index \(\nu_n\)}
+
+Equation \eqref{eq:v_mode_eq_dS} can be written in the canonical Bessel form
+\begin{equation}
+v_{n,\bm{k}}''(\eta) + \left[k^2 - \frac{\nu_n^2 - 1/4}{\eta^2}\right] v_{n,\bm{k}}(\eta)
+= 0,
+\label{eq:v_mode_eq_Bessel}
+\end{equation}
+with
+\begin{equation}
+\nu_n^2 - \frac{1}{4} = 2 - \frac{m_n^2}{H^2}
+\quad\Rightarrow\quad
+\nu_n = \sqrt{\frac{9}{4} - \frac{m_n^2}{H^2}}.
+\end{equation}
+The Bunch–Davies vacuum selects the positive-frequency solution at early times
+(\(k|\eta| \to \infty\)), giving
+\begin{equation}
+v_{n,\bm{k}}(\eta) = \frac{\sqrt{\pi}}{2} e^{i(\nu_n + 1/2)\pi/2}
+\sqrt{-\eta}\, H^{(1)}_{\nu_n}(-k\eta),
+\label{eq:v_mode_solution}
+\end{equation}
+where \(H^{(1)}_{\nu_n}\) is a Hankel function of the first kind.
+
+The physical field is then
+\begin{equation}
+\phi_{n,\bm{k}}(\eta) = \frac{v_{n,\bm{k}}(\eta)}{a(\eta)} =
+-\frac{H\sqrt{\pi}}{2} e^{i(\nu_n + 1/2)\pi/2}
+(-\eta)^{3/2} H^{(1)}_{\nu_n}(-k\eta).
+\label{eq:phi_mode_solution}
+\end{equation}
+
+\subsection{Asymptotics and Logarithmic Phase Structure}
+
+The Zeta-Comb modulation in the AL-GFT code is built from terms
+\(\cos(\omega_n \log(k/k_\star) + \phi_n)\), where \(\omega_n\) are imaginary
+parts of Riemann zeta zeros and \(\phi_n\) are their phases. In the inflationary
+context, logarithmic dependence on \(k\) naturally arises from the combination of
+Hankel-function phases and the time of horizon crossing.
+
+For modes evaluated near horizon crossing, we have \(-k\eta_\star \sim 1\),
+so \(\eta_\star \sim -1/k\). Substituting into \eqref{eq:phi_mode_solution}:
+\begin{equation}
+\phi_{n,\bm{k}}(\eta_\star) \propto H\, k^{-3/2}
+\, H^{(1)}_{\nu_n}(1)\, e^{i(\nu_n + 1/2)\pi/2}.
+\label{eq:phi_horizon_crossing}
+\end{equation}
+If we now choose the effective index \(\nu_n\) to carry an imaginary part
+proportional to the zeta zero,
+\begin{equation}
+\nu_n = \frac{3}{2} + i \frac{\omega_n}{\alpha},
+\label{eq:nu_with_imag_part}
+\end{equation}
+for some dimensionless constant \(\alpha\) of order unity, then the phase
+of \(\phi_{n,\bm{k}}(\eta_\star)\) contains a term
+\begin{equation}
+\exp\left[i\, \text{Im}(\nu_n)\, \log(-\eta_\star)\right]
+\;\sim\;
+\exp\left[-\,\frac{\omega_n}{\alpha}\, \log k\right]
+= k^{-\omega_n/\alpha}.
+\end{equation}
+Combining this with the explicit \(k^{-3/2}\) and any additional
+logarithmic running from quasi-de Sitter corrections leads to factors of the form
+\(\exp\left(\pm i\, \omega_n \log(k/k_\star)\right)\) after suitable rescalings and
+choice of \(\alpha\) and \(k_\star\).
+
+In the minimal phenomenological realization used in \texttt{algftgate1.py},
+this structure is encoded directly into the couplings \(g_n\) and the residual
+\(k\)-dependence of the environment correlators. The present calculation shows
+how such logarithmic phases can arise dynamically from a tower of modes with
+complex \(\nu_n\).
+
+\subsection{Approximate Mode Functions and Effective Phase}
+
+For practical purposes in this Gate 1 Track A derivation, we do not need the
+full exact Hankel function dependence. It is sufficient to adopt an effective
+parameterization in which each environment mode contributes a term
+\begin{equation}
+\phi_{n,\bm{k}}(\eta) \sim A_n(k)\,
+\exp\left[i\, \omega_n \log\left(\frac{k}{k_\star}\right) + i\varphi_n\right],
+\label{eq:phi_effective_log}
+\end{equation}
+where \(A_n(k)\) is a slowly varying amplitude (absorbing the Hankel magnitude
+and any residual power-law running), and \(\varphi_n\) is a constant phase
+related to \(\arg \zeta(1/2 + i\omega_n)\). This is precisely the structure
+assumed in the numerical implementation:
+\begin{equation}
+M(k) = 1 + \sum_n \epsilon\, \frac{e^{-\gamma \omega_n^2}}{\omega_n^2}
+\cos\left(\omega_n \log\left(\frac{k}{k_\star}\right) + \phi_n\right),
+\end{equation}
+with \(\gamma \sim 1/\sigma^2\) set by the resonance width \(\sigma\).
+
+The role of the mode-function derivation is therefore to justify that:
+\begin{enumerate}
+  \item Logarithmic \(k\)-dependence of the phase is natural in a quasi-de Sitter
+        background with a tower of modes characterized by complex indices
+        \(\nu_n\) tied to \(\omega_n\).
+  \item The slowly varying amplitude \(A_n(k)\) can be treated as approximately
+        constant over the \(k\)-range of interest, consistent with the weak
+        modulation assumption in AL-GFT.
+\end{enumerate}
+A more detailed treatment (beyond minimal Track A) would fix \(\alpha\),
+compute \(A_n(k)\) from first principles, and match directly to the microscopic
+GFT couplings; here we focus on establishing the plausibility and consistency
+of the effective phase structure used to derive the Zeta-Comb noise kernel.
+
+
+
+
+\end{document}

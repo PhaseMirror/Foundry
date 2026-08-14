@@ -1,0 +1,59 @@
+name: Dual-Gate CI (Rust-L0 Invariants + ADR Concurrency Attestation)
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  lean-formal-verification:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Lean 4
+        uses: leanprover/lean-action@v1
+        with:
+          lean-version: leanprover/lean4:v4.33.0
+      - name: L0-NO-MATHLIB check
+        run: |
+          if grep -r "import Mathlib" src/ADR/; then
+            echo "FAIL: Mathlib import found"
+            exit 1
+          fi
+          echo "PASS: No Mathlib imports"
+      - name: L0-NO-SORRY check
+        run: |
+          SORRY_COUNT=$(grep -rn "sorry" src/ADR/*.lean 2>/dev/null | wc -l || echo "0")
+          if [ "${SORRY_COUNT}" -gt 0 ]; then
+            echo "FAIL: Found ${SORRY_COUNT} sorry occurrences"
+            exit 1
+          fi
+          echo "PASS: No sorry in ADR modules"
+      - name: Verify L0 Invariants (Zero-drift)
+        run: |
+          lake build
+          lake test
+
+  rust-read-only-facts-audit:
+    runs-on: ubuntu-latest
+    needs: lean-formal-verification
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Cargo Test (Phase Mirror Negation Audit on Prime Encoded Signatures)
+        run: |
+          cargo test --manifest-path substrates/atomic-calculator/rust/Cargo.toml test_phase_mirror_negation_observational
+
+  concurrency-attestation:
+    runs-on: ubuntu-latest
+    needs: [lean-formal-verification, rust-read-only-facts-audit]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Python
+        uses: actions/setup-python@v5
+      - name: Validate FeMoco concurrency bounds
+        run: |
+          python scripts/validate_concurrency.py
+          echo "PASS: FeMoco concurrency bounds attested"

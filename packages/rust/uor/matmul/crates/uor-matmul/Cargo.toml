@@ -1,0 +1,31 @@
+[package]
+name = "uor-matmul"
+description = "Exact matmul on coded operands: decode, accumulate exactly, encode once. no_std, zero heap, total on every representable input."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+authors.workspace = true
+keywords.workspace = true
+categories.workspace = true
+readme = "../../README.md"
+
+[dependencies]
+uor-matmul-core = { workspace = true }
+uor-matmul-codec = { workspace = true }
+uor-matmul-gemm = { workspace = true }
+uor-matmul-kernels = { workspace = true }
+
+[features]
+default = []
+# `std` buys exactly two things: runtime CPU feature detection and
+# `core::error::Error` impls. Nothing in the numerical path changes when it is
+# off, which is what CA-02 asserts by comparing bytes across targets.
+std = ["uor-matmul-kernels/std"]
+# Content addressing for weight artifacts.
+kappa = ["uor-matmul-codec/kappa"]
+
+[lints]
+workspace = true

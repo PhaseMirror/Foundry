@@ -1,0 +1,48 @@
+name: union_find_completion
+version: 1.0.0-P2C-Sealed
+description: |
+  Completes a partial system of gates to the smallest congruence relation that respects
+  lawful composition. The completion is:
+  - Sound: only lawfully composable terms are equated.
+  - Complete: all lawfully composable terms are equated.
+  - Congruent: if x ≡ y and u ≡ v, then x∘u ≡ y∘v.
+
+  The lawfulness check is defined by the CPTP generator and associator defect.
+
+inputs:
+  - name: partial_system
+    type: PartialSystem
+    bounds: [1, 32]          # up to 32 variables
+  - name: hardware
+    type: HardwareSpec
+    bounds: [2, 8]           # up to 8 qubits
+
+outputs:
+  - name: union_find
+    type: UnionFind
+    properties:
+      - sound: true
+      - complete: true
+      - congruent: true
+
+theorems:
+  - id: completion_sound
+    statement: "∀ x y, x ≡ y → lawful_composition x y"
+  - id: completion_complete
+    statement: "∀ x y, lawful_composition x y → x ≡ y"
+  - id: completion_congruent
+    statement: "∀ x y u v, x ≡ y ∧ u ≡ v → x∘u ≡ y∘v"
+
+lean_implementation:
+  path: lean/F1/Completion/UnionFind.lean
+  theorem: completion_sound
+  theorem: completion_complete
+  theorem: completion_congruent
+
+rust_implementation:
+  path: rust/src/completion.rs
+  function: complete
+  kani_bound: 32
+
+telemetry:
+  export: "PWEH_Hash_Chain"

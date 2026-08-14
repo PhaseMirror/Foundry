@@ -1,0 +1,25 @@
+quarantine_channel_5:
+  enabled: true
+  shadow_run:
+    active: true
+    handoff_mode: "dry_run"   # Valid values: "dry_run" | "live"
+  
+  handoff_targets:
+    - type: "staging_dashboard"
+      endpoint: "http://staging-collector:8080/api/v1/ingest"
+      auth_token: "${STAGING_INGEST_TOKEN}"
+    - type: "local_log"
+      file_path: "/var/log/p5_quarantine/sealed_events.ndjson"
+
+  telemetry:
+    contraction_metric:
+      collect_percentile: true
+      alert_on_spike: true
+      spike_threshold_percentile: 99.5
+    rights_delta_distribution:
+      enabled: true
+      export_to: "/var/log/p5_quarantine/delta_distribution.csv"
+
+  crmf_client:
+    attestation_mode: "sign_only"   # Signs payload but does not transmit to external registry
+    local_verification: true

@@ -1,0 +1,59 @@
+[workspace]
+resolver = "2"
+members = ["crates/*", "xtask"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+# The AVX-512 VNNI intrinsics stabilized in 1.89, and the kernels crate uses
+# them directly. Declaring anything lower would be a version the workspace
+# cannot actually build on.
+rust-version = "1.89"
+license = "Apache-2.0"
+repository = "https://github.com/UOR-Foundation/matmul"
+homepage = "https://github.com/UOR-Foundation/matmul"
+authors = ["UOR Foundation"]
+keywords = ["matmul", "gemm", "quantization", "no-std", "exact"]
+categories = ["mathematics", "no-std", "science"]
+
+[workspace.dependencies]
+uor-matmul-core = { version = "0.1.0", path = "crates/uor-matmul-core", default-features = false }
+uor-matmul-codec = { version = "0.1.0", path = "crates/uor-matmul-codec", default-features = false }
+uor-matmul-float = { version = "0.1.0", path = "crates/uor-matmul-float", default-features = false }
+uor-matmul-kernels = { version = "0.1.0", path = "crates/uor-matmul-kernels", default-features = false }
+uor-matmul-gemm = { version = "0.1.0", path = "crates/uor-matmul-gemm", default-features = false }
+uor-matmul-model = { version = "0.1.0", path = "crates/uor-matmul-model" }
+bytemuck = { version = "1", default-features = false, features = ["derive"] }
+
+[workspace.lints.rust]
+missing_docs = "deny"
+unsafe_op_in_unsafe_fn = "deny"
+
+[workspace.lints.clippy]
+undocumented_unsafe_blocks = "deny"
+missing_safety_doc = "deny"
+# R5: wrapping arithmetic is written explicitly, never left to profile-dependent
+# overflow behaviour, so debug and release binaries are the same function. The
+# lint is denied at module scope where an accumulation lives (see
+# `uor-matmul-core/src/acc.rs`); denying it workspace-wide would only teach
+# everyone to `#[allow]` it.
+arithmetic_side_effects = "allow"
+# R7 applies to the crates that ship. `uor-matmul-model`, `uor-matmul-validate`,
+# and `xtask` are build-time and CI infrastructure and may use the heap freely;
+# the shipped crates re-enable this lint with a crate-level `deny`, which is
+# where it means something.
+disallowed_types = "allow"
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+overflow-checks = false
+
+# CT-02: the whole corpus runs in a build where every accumulator operation is
+# checked and any overflow panics. The accumulator width is derived so that this
+# is unreachable; the profile exists to witness that, not to guard it.
+[profile.checked]
+inherits = "release"
+overflow-checks = true
+debug-assertions = true

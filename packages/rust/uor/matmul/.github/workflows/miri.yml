@@ -1,0 +1,24 @@
+# The portable kernel and the codecs under Miri.
+#
+# `uor-matmul-kernels` is the only crate with `unsafe`, and its portable module
+# is the one Miri can run: the SIMD modules use intrinsics Miri does not model.
+# That is the right split --- the SIMD kernels are validated by differential
+# testing against the portable one, which is validated here.
+name: miri
+
+on:
+  push: { branches: [main] }
+  pull_request:
+  schedule: [{ cron: "0 4 * * 1" }]
+
+jobs:
+  miri:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@nightly
+        with: { components: miri }
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo miri test -p uor-matmul-core -p uor-matmul-codec -p uor-matmul-gemm
+        env:
+          MIRIFLAGS: -Zmiri-strict-provenance

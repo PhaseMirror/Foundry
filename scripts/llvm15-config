@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# llvm15-config — hermetic LLVM 15 wrapper for mlir-sys builds
+# Seals the LLVM 15 toolchain path per ADR-001 Production Build
+
+set -euo pipefail
+
+PREFIX="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.ci/llvm15_prefix" && pwd)"
+
+export MLIR_SYS_150_PREFIX="${PREFIX}"
+export LLVM_CONFIG_PATH="${PREFIX}/bin/llvm-config"
+export PATH="${PREFIX}/bin:${PATH}"
+
+# Verify version on invocation
+"${PREFIX}/bin/llvm-config" --version || {
+  echo "ERROR: llvm-config not found at ${PREFIX}/bin/llvm-config" >&2
+  echo "The LLVM 15 prefix has not been provisioned." >&2
+  echo "Run: ./scripts/setup-llvm15-prefix.sh" >&2
+  exit 1
+}
+
+exec "$@"

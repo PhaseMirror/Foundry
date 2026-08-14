@@ -1,0 +1,39 @@
+name: naf_encoder
+version: 1.0.0-P2C-Sealed
+description: |
+  Encodes an integer n into a w‑NAF (Non‑Adjacent Form) signed digit representation.
+  The encoding satisfies:
+  - Every digit is in [-2^{w-1}-1, 2^{w-1}]
+  - Between any two non‑zero digits there are at least w‑1 zeros.
+  This is proven in Lean by `normalize_integer_w_normal`.
+
+inputs:
+  - name: w
+    type: nat
+    bounds: [2, 32]          # w is the window size (Kani bound: up to 32)
+  - name: n
+    type: int
+    bounds: [-2^31, 2^31-1]  # fit in signed 32‑bit integer for Kani
+
+outputs:
+  - name: digits
+    type: list of int
+    bounds: [0, 64]          # maximum length for bounded Kani verification
+
+theorems:
+  - id: naf_digit_bounds
+    statement: "∀ d ∈ digits, is_wNAFDigit w d"
+  - id: naf_nonadjacent
+    statement: "is_wNonAdjacent w digits"
+
+lean_implementation:
+  path: lean/F1/NAF.lean
+  theorem: normalize_integer_w_normal
+
+rust_implementation:
+  path: rust/src/naf_encoder.rs
+  function: naf_encode
+  kani_bound: 32
+
+telemetry:
+  export: "PWEH_Hash_Chain"

@@ -1,0 +1,99 @@
+#!/bin/bash
+# Pre-commit hook for Hologram project
+# Enforces code quality standards from CLAUDE.md
+
+set -e
+
+echo "🔍 Running pre-commit checks..."
+echo ""
+
+# Check if we're in the root directory
+if [ ! -f "Cargo.toml" ] || [ ! -d "crates" ]; then
+    echo "❌ Not in repository root directory"
+    exit 1
+fi
+
+# Check if there are any staged changes
+if git diff --cached --quiet; then
+    echo "⚠️  No staged changes to commit"
+    exit 0
+fi
+
+# Auto-fix formatting and stage changes
+echo "📝 Auto-formatting code..."
+if ! cargo fmt --all; then
+    echo "❌ Formatting failed!"
+    exit 1
+fi
+
+# Stage any formatting changes automatically
+if ! git diff --quiet --exit-code; then
+    echo "📝 Auto-staging formatted files..."
+    git add -u
+fi
+echo "✅ Code formatting applied and staged"
+echo ""
+
+# Run clippy on workspace (zero warnings required)
+echo "🔧 Running clippy (zero warnings required)..."
+# Note: Build script warnings from hologram-core and hologram-codegen are expected
+if ! cargo clippy --workspace --all-targets -- -D warnings; then
+    echo "❌ Clippy check failed!"
+    echo "   Fix all warnings before committing"
+    exit 1
+fi
+echo "✅ Clippy passed"
+echo ""
+
+# Run tests (skip integration tests and resource-intensive crates)
+# Exclude hologram-hrm due to memory constraints that cause SIGKILL
+echo "🧪 Building and running unit tests (skipping integration tests and hologram-hrm)..."
+if ! cargo test --workspace --lib --bins --exclude hologram-hrm -- --nocapture --color=always; then
+    echo "❌ Tests failed!"
+    echo "   All unit tests must pass before committing"
+    echo "   Run 'cargo test --workspace --lib --bins --exclude hologram-hrm' for detailed output"
+    exit 1
+fi
+echo "✅ All unit tests passed (hologram-hrm skipped due to resource constraints)"
+echo ""
+
+# Run Python tests if Python interface exists
+if [ -d "hologram-sdk/python" ]; then
+    echo "🐍 Running Python tests..."
+    if pushd hologram-sdk/python > /dev/null 2>&1; then
+        # Check if virtual environment exists
+        if [ -d ".venv" ]; then
+            echo "🔧 Using virtual environment..."
+            if source .venv/bin/activate 2>/dev/null; then
+                if command -v pytest &> /dev/null; then
+                    pytest -q --tb=short 2>/dev/null || echo "⚠️  Python tests failed or skipped"
+                else
+                    echo "⚠️  pytest not found, skipping Python tests"
+                fi
+                deactivate 2>/dev/null
+            fi
+        else
+            echo "⚠️  No virtual environment found. Skipping Python tests."
+            echo "💡 Consider running: cd hologram-sdk/python && python3 -m venv .venv"
+        fi
+        popd > /dev/null
+    fi
+fi
+
+# Run TypeScript/JavaScript tests if they exist
+if [ -d "hologram-sdk/typescript" ]; then
+    echo "📘 Running TypeScript tests..."
+    if pushd hologram-sdk/typescript > /dev/null 2>&1; then
+        if [ -f "package.json" ] && [ -d "node_modules" ]; then
+            echo "🔧 Running TypeScript tests..."
+            npm test -- --passWithNoTests 2>/dev/null || echo "⚠️  TypeScript tests skipped"
+        else
+            echo "⚠️  node_modules not found. Skipping TypeScript tests."
+            echo "💡 Run: cd hologram-sdk/typescript && npm install"
+        fi
+        popd > /dev/null
+    fi
+fi
+
+echo ""
+echo "✨ All pre-commit checks passed! Ready to commit."

@@ -1,0 +1,82 @@
+# Completion Adjunction Contract (Kani-first)
+
+schema_version: "1.0.0"
+
+system:
+  name: "CompletionAdjunction"
+  version: "0.2.0"
+
+architecture:
+  principle: "Lean = spec, Kani = proof"
+  lean_role: "Pure definitions + property signatures (zero sorry)"
+  kani_role: "Bounded model checking (primary proof engine)"
+  ffi_role: "Export Kani results to Lean as trusted axioms"
+
+lean_spec:
+  files:
+    - "lean/Core/Spec/PartialUC.lean"
+    - "lean/Core/Spec/UniversalClosure.lean"
+    - "lean/Core/Spec/Completion.lean"
+    - "lean/Core/Spec/DefectAlgebra.lean"
+  properties:
+    - "lean/Core/Properties/AdjunctionProp.lean"
+    - "lean/Core/Properties/DefectProps.lean"
+    - "lean/Core/Properties/NNOProp.lean"
+  ffi:
+    - "lean/Core/Ext/FFI.lean"
+
+components:
+  - name: "TermAlgebra"
+    lean: "Completion.Term"
+    rust: "Term"
+    type: "definition"
+
+  - name: "LawfulCongruence"
+    lean: "Completion.LawfulRel"
+    rust: "UnionFind (implicit)"
+    type: "definition"
+
+  - name: "QuotientCompletion"
+    lean: "Completion.Carrier"
+    rust: "UnionFind equivalence classes"
+    type: "definition"
+
+  - name: "AdjunctionProperty"
+    lean: "AdjunctionProperty"
+    rust: "is_congruence_closed + preserves_defined_ops"
+    type: "property_signature"
+
+kani_harnesses:
+  - name: "verify_adjunction_lift_property"
+    property: "completion satisfies free-forgetful adjunction"
+    status: "PASSED"
+  - name: "verify_no_panic_termination"
+    property: "complete() terminates without panic"
+    status: "PASSED"
+  - name: "verify_blockade_enforced"
+    property: "Rydberg blockade prevents unlawful compositions"
+    status: "PASSED"
+  - name: "verify_associator_bounded"
+    property: "associator defect is non-negative and bounded"
+    status: "PASSED"
+  - name: "verify_ffi_proof_export"
+    property: "FFI export function is safe and returns valid proof"
+    status: "PASSED"
+  - name: "verify_union_find_no_panic"
+    property: "Union-Find operations never panic"
+    status: "PASSED"
+  - name: "verify_no_index_out_of_bounds"
+    property: "array indices always within bounds"
+    status: "PASSED"
+
+bounds:
+  max_vars: 4
+  max_terms: 32
+  max_qubits: 3
+  kani_unwind: 1025
+
+proof_status:
+  lean: "axiomatic (FFI to Kani)"
+  kani: "PASSED (7/7 harnesses)"
+  sorry_count: 0
+  panic_count: 0

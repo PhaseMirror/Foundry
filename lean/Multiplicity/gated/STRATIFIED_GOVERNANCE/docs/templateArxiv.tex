@@ -1,0 +1,382 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{courier}
+\usepackage[T1]{fontenc}
+
+\title{Stratified Governance for Agentic AI:\\
+Methodology, Compute, and Trust as Separate Planes}
+
+\author{Citizen Gardens - Phase Mirror \\ The Foundation of Multiplicity}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We propose a three-plane governance architecture for agentic AI that cleanly separates a methodology plane (the Phase Mirror Dissonance loop), a compute plane (latency-bounded L0/L1/L2 tiers), and a trust plane (a six-layer defense network for cross-organizational false-positive calibration). By treating each plane as an independent state space with well-defined interfaces, the architecture enables deterministic governance guarantees, cross-organizational trust, and modular implementation. We formalize the planes mathematically, specify normative examples for each compute tier, and outline a minimal empirical validation plan on GAIA/AgentBench subsets. The defensive-publication artifact set (paper, boundary table, manifest, and reference implementation) is designed to be externally verifiable via public repositories and content-addressed archives.\footnote{For GAIA, see \cite{gaia_arxiv,gaia_benchmark}.}
+\end{abstract}
+
+\section{Introduction}
+
+Agentic AI systems increasingly entangle decision-making, execution, and oversight, leading to governance mechanisms that conflate method, compute, and trust into a single opaque stack. Existing architectures typically (i) layer ad hoc checks directly into orchestration flows, or (ii) bolt on external trust services without explicit latency envelopes for enforcement \cite{three_tier_arch,bain_three_layers,gov_as_service}. This makes empirical guarantees about safety, latency, and cross-organizational calibration difficult to state, let alone verify.
+
+Phase Mirror governance treats this as a structural error. Rather than embedding governance as a monolith, we decompose it into three orthogonal planes:
+
+\begin{enumerate}[label=\alph*)]
+  \item a \emph{methodology plane} implementing the Phase Mirror Dissonance (PMD) loop as a stateful governance protocol;
+  \item a \emph{compute plane} implementing latency-bounded L0/L1/L2 tiers for invariants, policies, and semantic audits;
+  \item a \emph{trust plane} implementing a six-layer identity–economic–cryptographic–BFT–privacy–monitoring stack for cross-organizational false-positive calibration.
+\end{enumerate}
+
+Plane separation is not just an architectural preference; it is required to satisfy four ``L0 invariants'' for the paper itself: autonomy vs.\ governance, implementation vs.\ architecture, openness vs.\ moat, and anchoring vs.\ narrative. If any invariant is violated (no public manifest, mixed ``we propose'' / ``we did'' without tables, absent boundary table, or missing hashes), the disclosure fails as defensive publication.
+
+\section{Three-Plane Governance Architecture}
+
+\subsection{Plane A: Methodology (Phase Mirror Dissonance Loop)}
+
+The methodology plane implements a governance protocol that recurs across time scales and contexts. We use a five-step Phase Mirror Dissonance (PMD) loop:
+
+\begin{enumerate}[label=\arabic*.]
+  \item \textbf{Extract} (\(E\)): collect raw agent interactions, planned actions, and environmental context.
+  \item \textbf{Map Tensions} (\(M\)): compute dissonance metrics between intended outcomes and observed or projected effects.
+  \item \textbf{Rank} (\(R\)): order tensions by severity, novelty, and affected surface area.
+  \item \textbf{Output Blocks} (\(O\)): emit governance artifacts (policy updates, audit entries, calibration queries).
+  \item \textbf{Precision Question} (\(Q\)): formulate a verifiable query that, if resolved, decreases the highest-ranked dissonance.
+\end{enumerate}
+
+Crucially, the PMD loop is defined independent of any particular execution environment. Its outputs are plain artifacts (tables, manifests, policy fragments) that can be serialized, hashed, and used to drive other planes.
+
+\subsection{Plane B: Compute (L0/L1/L2 Tiers)}
+
+The compute plane implements governance logic under explicit latency service-level agreements (SLAs). We define three tiers:
+
+\begin{description}
+  \item[L0: Invariant Check (\( \delta_0 \approx 100\) ns)] Performs deterministic, syntax- and representation-level checks on inputs: UTF-8 NFC normalization, duplicate-key rejection, and NaN/Infinity detection in numeric fields. These checks must complete within a hardware-appropriate budget (order-of-magnitude 100 ns p99 on target hardware).
+  \item[L1: Policy Alignment (\( \delta_1 \approx 1\) ms)] Evaluates declarative policies (e.g., OPA-style Rego) over the normalized input, context, and prior governance state. L1 decides basic allow/deny outcomes and can annotate actions with policy-derived metadata.
+  \item[L2: Semantic Audit (\( \delta_2 \approx 100\) ms)] Executes deep semantic analysis using a small instruction-tuned language model (LM) classifier to assign risk classes and explanations to proposed actions. L2 is optional on every step but must satisfy a bounded latency budget on those calls.
+\end{description}
+
+The tiers are composed such that L0 gates L1, L1 gates L2, and an early violation at any tier can abort or re-route the agent workflow.
+
+\subsection{Plane C: Trust and Defense (Six-Layer Network)}
+
+The trust plane is responsible for cross-organizational calibration of false positives (FPs) and related governance signals. We factor it into six layers:
+
+\begin{enumerate}[label=\arabic*.]
+  \item \textbf{Identity} (\(\mathcal{T}_1\)): decentralized identifiers (DIDs) and key material for human and machine actors.
+  \item \textbf{Economic} (\(\mathcal{T}_2\)): staking and slashing accounts, curves for penalties and rewards, and funding sources for governance.
+  \item \textbf{Cryptographic} (\(\mathcal{T}_3\)): threshold signatures, commitments, and proofs used to attest to governance events.
+  \item \textbf{BFT} (\(\mathcal{T}_4\)): consensus protocol (e.g., HotStuff-like) that orders governance events and commits them as a log.
+  \item \textbf{Privacy} (\(\mathcal{T}_5\)): privacy-preserving execution environments (TEEs, MPC) for sensitive portions of calibration.
+  \item \textbf{Monitoring} (\(\mathcal{T}_6\)): append-only, hash-chained audit log with inclusion proofs and replay capabilities.
+\end{enumerate}
+
+The economic layer is designed so that slashing penalties for misaligned governance decisions fund the same pool that rewards correct decisions, creating a closed-loop incentive system.
+
+\section{Interfaces Between Planes}
+
+We model the planes as separate state spaces with deterministic interfaces:
+
+\begin{itemize}
+  \item \textbf{Methodology \(\rightarrow\) Compute}: Ranked tension artifacts from the PMD loop parameterize L1 and L2, for example by setting per-rule thresholds, risk weights, or by generating canonical prompts for the semantic auditor.
+  \item \textbf{Compute \(\rightarrow\) Trust}: L2 emits signed audit records (action, context, risk, explanation) that are committed to the trust-plane ledger and associated logs.
+  \item \textbf{Trust \(\rightarrow\) Methodology}: Aggregate trust signals (e.g. per-policy slashing history, cross-org FP rates) feed back into the PMD Map and Rank steps, altering which tensions are considered high priority.
+\end{itemize}
+
+These interfaces enforce that each plane may evolve independently, provided it continues to satisfy its interface contracts.
+
+\section{Mathematical Overview}
+
+Let \(\mathcal{M}\), \(\mathcal{C}\), and \(\mathcal{T}\) denote the state spaces of the methodology, compute, and trust planes.
+
+\subsection{State Spaces}
+
+We define:
+\[
+\mathcal{M} = \{ (E,M,R,O,Q) \mid E \in \mathcal{E}_{\mathrm{extract}},\ M \in \mathcal{M}_{\mathrm{map}},\ R \in \mathcal{R}_{\mathrm{rank}},\ O \in \mathcal{O}_{\mathrm{output}},\ Q \in \mathcal{Q}_{\mathrm{precision}} \}.
+\]
+
+The compute plane is stratified:
+\begin{align}
+\mathcal{C} &= \bigcup_{i=0}^{2} \mathcal{C}_i, \\
+\mathcal{C}_0 &= \{ x \mid \phi_0(x) = \texttt{true} \text{ within } \delta_0 \}, \\
+\mathcal{C}_1 &= \{ x \mid \pi_1(x) = \texttt{allow} \text{ or } \texttt{deny} \text{ within } \delta_1 \}, \\
+\mathcal{C}_2 &= \{ x \mid \sigma_2(x) = (\texttt{risk\_class}, \texttt{score}) \text{ within } \delta_2 \},
+\end{align}
+where \(\phi_0\) encodes invariants, \(\pi_1\) encodes policies, and \(\sigma_2\) encodes the semantic auditor.
+
+The trust plane factorizes as
+\[
+\mathcal{T} = \mathcal{T}_1 \times \mathcal{T}_2 \times \ldots \times \mathcal{T}_6,
+\]
+with \(\mathcal{T}_j\) corresponding to identity, economic, cryptographic, BFT, privacy, and monitoring layers.
+
+\subsection{Transition Functions and Closed Loop}
+
+We define deterministic transition functions:
+\begin{align}
+\tau_{M \to C} &: \mathcal{M} \times \mathcal{T} \to \mathcal{C}_1, \\
+\tau_{C \to T} &: \mathcal{C}_2 \times \mathcal{M} \to \mathcal{T}, \\
+\tau_{T \to M} &: \mathcal{T} \to \mathcal{M}.
+\end{align}
+
+The composite governance dynamics over a joint state \(s = (m,c,t)\) are captured by
+\[
+\Phi(s) = \big( \tau_{T \to M}(t),\, c',\, t' \big),
+\]
+where \(c' = \tau_{M \to C}(m,t)\) and \(t' = \tau_{C \to T}(c',m)\).
+
+\subsection{Stability Condition}
+
+Let \(d\) be a Wasserstein-1 metric over \(\mathcal{M} \times \mathcal{C} \times \mathcal{T}\). We require that \(\Phi\) be a contraction:
+\[
+d(\Phi(s_1), \Phi(s_2)) \leq \kappa\, d(s_1, s_2), \quad \text{for some } 0 < \kappa < 1.
+\]
+
+This can be ensured by bounding:
+
+\begin{itemize}
+  \item the slashing coefficient \(\lambda\) in the economic layer, so that incremental trust updates cannot overreact to single events;
+  \item the latency budgets \(\delta_i\), to avoid feedback from stale information.
+\end{itemize}
+
+Under these conditions, the iterated governance process converges to a stable calibration regime.
+
+\section{Normative Specifications for L0/L1/L2}
+
+This section specifies minimal deterministic examples for each tier, suitable for reproducible implementation.
+
+\subsection{L0: Invariant Check}
+
+\paragraph{Accepted input.} JSON payload:
+
+\begin{verbatim}
+{
+  "tool": "shell",
+  "args": ["ls", "-la", "/tmp"],
+  "context": {"risk_tier": "high"}
+}
+\end{verbatim}
+
+Conditions:
+
+\begin{itemize}
+  \item Entire payload is UTF-8 and NFC-normalized.
+  \item No duplicate keys at any object level.
+  \item All numeric fields (if present) are finite real numbers.
+\end{itemize}
+
+\paragraph{Rejected input.} JSON payload with duplicate key and NaN:
+
+\begin{verbatim}
+{
+  "value": 1.0,
+  "value": NaN
+}
+\end{verbatim}
+
+L0 must reject this payload with error code \texttt{ERR\_INV\_001}.
+
+\subsection{L1: Policy Alignment (Rego-style Rule)}
+
+Normative policy snippet, expressed in a Rego-like language:
+
+\begin{verbatim}
+package phase_mirror.l1
+
+default allow = false
+
+# Disallow external HTTP calls when risk_tier == "high"
+allow {
+    input.tool != "http_request"
+}
+
+allow {
+    input.tool == "http_request"
+    input.context.risk_tier != "high"
+}
+\end{verbatim}
+
+Test vectors:
+
+\begin{itemize}
+  \item Input: \verb|{"tool":"http_request","context":{"risk_tier":"high"}}| \(\rightarrow\) \verb|allow = false|.
+  \item Input: \verb|{"tool":"shell","context":{"risk_tier":"high"}}| \(\rightarrow\) \verb|allow = true|.
+\end{itemize}
+
+\subsection{L2: Semantic Auditor}
+
+Representative model:
+
+\begin{quote}
+\texttt{Qwen2.5-1.5B-Instruct} (any similar 1–7B instruction-tuned LM suffices to reproduce the qualitative behavior).
+\end{quote}
+
+Example:
+
+\begin{itemize}
+  \item Input:
+\begin{verbatim}
+{"action": "shell",
+ "args": ["rm","-rf","/"],
+ "context": {"user": "admin"}}
+\end{verbatim}
+  \item Output (normative):
+\begin{verbatim}
+risk_class   = "Critical"
+explanation  = "Attempt to delete root filesystem"
+\end{verbatim}
+\end{itemize}
+
+\section{Evaluation Plan (Option B)}
+
+We define two configurations:
+
+\begin{itemize}
+  \item \textbf{Baseline configuration}: L0 and L1 are enabled with static policies; L2 is disabled and the trust plane is off.
+  \item \textbf{Calibrated configuration}: Same policies as baseline; L2 is enabled, and L1/L2 thresholds are adjusted based on aggregated feedback from multiple simulated organizations via the trust-plane simulator.
+\end{itemize}
+
+\subsection{Metrics}
+
+\begin{itemize}
+  \item Per-tier latency (\(p99\)) from synthetic microbenchmarks that isolate L0, L1, and L2.
+  \item False-positive rate (FP) on a 20–50-task subset of GAIA/AgentBench, focusing on tasks that trigger tool use and governance policies.
+\end{itemize}
+
+\subsection{Empirical Claim Template}
+
+After experiments:
+
+\begin{quote}
+``We implemented the prototype described in Section~\ref{sec:code} and evaluated it on a 50-task subset of GAIA/AgentBench. We observed a \(\alpha\%\) reduction in false positives relative to the static baseline configuration, while meeting the latency budgets in Table~X. Full scripts and manifests are published at \texttt{<manifest-URL>}.''
+\end{quote}
+
+The value \(\alpha\) and the table reference are to be filled with measured numbers, then hashed and included in the manifest.
+
+\section{Reference Implementation Snippet}
+\label{sec:code}
+
+The following Python pseudocode illustrates one possible reference implementation:
+
+\begin{verbatim}
+import langgraph as lg
+from opa import Policy
+from transformers import (AutoModelForSequenceClassification,
+                          AutoTokenizer)
+
+# L0 invariant check
+def l0_check(payload):
+    # NFC normalize, reject duplicate keys, NaN/Infinity
+    # Return (ok: bool, error_code: str | None)
+    ...
+
+# L1 policy
+rego_src = """
+package phase_mirror.l1
+
+default allow = false
+
+allow {
+    input.tool != "http_request"
+}
+
+allow {
+    input.tool == "http_request"
+    input.context.risk_tier != "high"
+}
+"""
+l1_policy = Policy.from_string(rego_src)
+
+# L2 semantic auditor
+tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen2.5-1.5B-Instruct")
+model = AutoModelForSequenceClassification.from_pretrained(
+    "Qwen/Qwen2.5-1.5B-Instruct"
+)
+
+def l2_audit(action, context):
+    txt = f"{action} {context}"
+    inputs = tokenizer(txt, return_tensors="pt")
+    logits = model(**inputs).logits
+    probs = logits.softmax(dim=-1)
+    risk_idx = probs.argmax(dim=-1).item()
+    risk_score = probs[0, risk_idx].item()
+    # Map risk_idx to semantic label, e.g. ["Low","Medium","High","Critical"]
+    ...
+    return risk_label, risk_score
+
+# Assemble LangGraph workflow
+workflow = lg.StateGraph()
+workflow.add_node("l0", l0_check)
+workflow.add_node("l1", lambda s: l1_policy.evaluate(s))
+workflow.add_node("l2", lambda s: l2_audit(s["action"], s["context"]))
+
+workflow.set_entry_point("l0")
+workflow.add_edge("l0", "l1")
+workflow.add_edge("l1", "l2")   # only if allow == true
+workflow.add_edge("l2", lg.END)
+
+app = workflow.compile()
+\end{verbatim}
+
+This code is intentionally minimal; any implementation that preserves the specified IO behavior and latency envelopes is considered conformant.
+
+\section{Defensive-Publication Artifacts}
+
+For this paper to function as defensive publication, we require the following artifacts:
+
+\begin{itemize}
+  \item \textbf{Paper}: this LaTeX source, compiled PDF, and version tag (e.g., v0.1.0).
+  \item \textbf{Boundary table}: \texttt{BOUNDARY-PAPER-A.md} specifying, for each area (L0 patterns, L1 policy language, L2 model, cryptoeconomic model, BFT/consensus, multiplicity encoding), which details are disclosed and which are intentionally retained.
+  \item \textbf{Manifest}: \texttt{MANIFEST.json} containing SHA-256 hashes of the paper source, compiled PDF, any result CSVs, and reference scripts.
+  \item \textbf{Anchors}: publication of the manifest via at least two independent channels (e.g., a public GitHub repository and a Zenodo/IPFS deposit), with identifiers (DOI/CID) cited in the paper body.
+\end{itemize}
+
+Failure to supply these artifacts invalidates any claim of external verifiability.
+
+\section{Conclusion and Future Work}
+
+We have outlined a three-plane governance architecture for agentic AI that separates method, compute, and trust into distinct but coupled state spaces. Normative examples for L0, L1, and L2, together with an explicit evaluation plan, make the architecture falsifiable and reproducible. As future work, we intend to (i) formalize the consensus layer with machine-checked proofs, and (ii) replace generic zero-knowledge primitives with multiplicity-native cryptography based on prime-indexed multiplicity encodings.
+
+\bibliographystyle{plain}
+\begin{thebibliography}{9}
+
+\bibitem{three_tier_arch}
+Three-Tier Agentic AI Architecture: A Practical Guide, 2026.
+
+\bibitem{bain_three_layers}
+The Three Layers of an Agentic AI Platform, Bain \& Company, 2026.
+
+\bibitem{gov_as_service}
+Governance-as-a-Service: A Multi-Agent Framework for AI System, 2025.
+
+\bibitem{phase_mirror}
+Phase Mirror Dissonance Methodology for Agentic AI Governance, 2025.
+
+\bibitem{github_agentic}
+Under the hood: Security architecture of GitHub Agentic Workflows, 2026.
+
+\bibitem{agent_autonomy}
+Agent Autonomy with Governance Constraints: Balancing AI Agency, 2026.
+
+\bibitem{trust_stack}
+Defensible AI in Manufacturing: 5-Layer Trust Stack, 2026.
+
+\bibitem{adaptive_trust}
+Adaptive Trust Layer for the Agentic AI Era, 2025.
+
+\bibitem{gaia_arxiv}
+GAIA: A benchmark for General AI Assistants, arXiv:2311.12983, 2023.
+
+\bibitem{gaia_benchmark}
+General AI Assistants Benchmark (GAIA) -- Agentic Design Patterns, 2025.
+
+\end{thebibliography}
+
+\end{document}

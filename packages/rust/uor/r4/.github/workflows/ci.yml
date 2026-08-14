@@ -1,0 +1,196 @@
+name: ci
+
+# Quality gates per docs/r4_graph_compiler_implementation_plan.md §13 (issue #58).
+# Covers: fmt, clippy (-D warnings), tests (nextest + doc), allocation-freedom,
+# no_std ladder, deterministic rebuild, κ-reproduction, dependency audit, fuzz smoke.
+#
+# Dependencies on the UOR standards (uor-addr, UOR-Framework) are pinned git
+# dependencies in Cargo.toml (rev-locked), so a plain checkout of this repo
+# builds; no extra repository checkouts are needed.
+# NOTE: κ-reproduction is macOS-pinned per decision D2 (libm-sensitive teacher
+# logprobs); on Linux it is expected to skip (checkpoint download is best-effort)
+# or fail on platform drift — the canonical deterministic compile mode (Phase 2)
+# is what makes it a true cross-platform gate.
+#
+# GATE C REGRESSION: The Gate C trend is tracked per commit on a small corpus
+# slice. It fails if top-1 drops > 2 points or bits/token worsens > 0.1 vs the
+# pinned record in `scripts/check_gate_c_regression.py`. The trend JSON is
+# uploaded as a `gate-c-trend` artifact.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  merge_group:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  gates:
+    name: fmt / clippy / tests / no_std / κ
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust (stable)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: cargo-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
+          restore-keys: cargo-${{ runner.os }}-
+
+      - name: Claim-wording gate (docs/formal_vocabulary.md §2.1, issue #123)
+        run: python3 scripts/check_claim_wording.py
+
+      - name: Inference contract machine-code & dependency audit (issue #160)
+        run: cargo test -p uor-r4-proof-model --lib inference_audit
+
+      - name: cargo fmt --check
+        run: cargo fmt --check
+
+      - name: cargo clippy (-D warnings)
+        run: cargo clippy --workspace --all-targets --all-features -- -D warnings
+
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@cargo-nextest
+
+      - name: cargo nextest run --workspace
+        run: cargo nextest run --workspace -E 'not binary(bdd)'
+
+      - name: cucumber BDD suite (own runner, not nextest-compatible)
+        run: cargo test --test bdd
+
+      - name: cargo test --doc
+        run: cargo test --doc --workspace
+
+      - name: no_std ladder (graph-format)
+        run: |
+          cargo check -p uor-r4-graph-format --no-default-features
+          cargo check -p uor-r4-graph-format --no-default-features --features alloc
+
+      - name: Deterministic rebuild (Gate E slice)
+        run: cargo test -p uor-r4-core --test deterministic_rebuild_test -- --nocapture
+
+      - name: Cache κ checkpoint (stories15M)
+        uses: actions/cache@v4
+        with:
+          path: /tmp/ref
+          key: kappa-checkpoint-stories15m-v1
+
+      - name: Download κ checkpoint if not cached
+        run: |
+          if [ ! -f /tmp/ref/out/model.bin ]; then
+            curl -sL -o /tmp/run.com https://github.com/trholding/llama2.c/releases/download/experimental/run.com
+            cd /tmp && unzip -o run.com out/model.bin tokenizer.bin -d ref
+          fi
+          ls -la /tmp/ref/out/model.bin
+
+      - name: κ-reproduction (macOS-pinned baseline; informational on Linux)
+        run: TLESS_CHECKPOINT=/tmp/ref/out/model.bin cargo test -p uor-r4-core --release --test kappa_reproduction -- --ignored
+        continue-on-error: true
+
+      - name: Gate C trend tracking (Issue #77)
+        run: |
+          cargo run --release --bin r4 -- transformerless score \
+            --corpus-meta crates/uor-r4-core/tests/fixtures/c_meta.bin \
+            --corpus-recs crates/uor-r4-core/tests/fixtures/c_recs.bin \
+            --artifacts crates/uor-r4-core/tests/fixtures/tless_artifacts.bin \
+            --out trend_output
+          ./scripts/check_gate_c_regression.py trend_output/score_report.json
+
+      - name: Upload Gate C trend JSON
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gate-c-trend
+          path: trend_output/score_report.json
+
+  wasm:
+    name: wasm-pack build (dashboard facade, deploy.yml parity)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust (stable) + wasm32 target
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          target: wasm32-unknown-unknown
+      - name: Install wasm-pack
+        run: cargo install wasm-pack --locked
+      - name: wasm-pack build --target web
+        run: wasm-pack build --target web
+
+  gate-c-trend:
+    name: Gate C trend alarm
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust (stable)
+        uses: dtolnay/rust-toolchain@stable
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: cargo-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
+          restore-keys: cargo-${{ runner.os }}-
+      - name: Gate C trend check vs pinned record
+        run: bash scripts/gate_c_trend.sh
+      - name: Upload trend artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gate-c-trend-${{ github.sha }}
+          path: /tmp/gate_c_trend.jsonl
+          retention-days: 90
+
+  audit:
+    name: cargo audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: rustsec/audit-check@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  fuzz-smoke:
+    name: fuzz smoke (nightly libfuzzer)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust (nightly)
+        uses: dtolnay/rust-toolchain@nightly
+
+      - name: Install cargo-fuzz
+        run: cargo install cargo-fuzz --locked
+
+      - name: Cache fuzz build
+        uses: actions/cache@v4
+        with:
+          path: crates/uor-r4-graph-format/fuzz/target
+          key: fuzz-${{ runner.os }}-${{ hashFiles('crates/uor-r4-graph-format/fuzz/Cargo.toml') }}
+          restore-keys: fuzz-${{ runner.os }}-
+
+      - name: fuzz parse_arbitrary (60s)
+        working-directory: crates/uor-r4-graph-format
+        run: cargo fuzz run parse_arbitrary -- -max_total_time=60 -print_final_stats=1
+
+      - name: fuzz mutate_valid (60s)
+        working-directory: crates/uor-r4-graph-format
+        run: cargo fuzz run mutate_valid -- -max_total_time=60 -print_final_stats=1

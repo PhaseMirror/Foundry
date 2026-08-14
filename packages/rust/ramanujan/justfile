@@ -1,0 +1,25 @@
+# justfile for mirror-dissonance orchestration
+
+build:
+	cargo build
+
+test:
+	cargo test
+
+validate:
+	@echo "Running governance validation..."
+	cargo test --test governance_tests
+
+compile:
+	@echo "Compiling workflow into unified IR..."
+	cargo build --release
+
+pscmd-compose action:
+	@if [ "{{action}}" = "validate" ]; then \
+		just validate; \
+	elif [ "{{action}}" = "compile" ]; then \
+		just compile; \
+	else \
+		echo "Unknown action. Use 'validate' or 'compile'."; \
+		exit 1; \
+	fi

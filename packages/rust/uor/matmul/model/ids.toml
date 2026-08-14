@@ -1,0 +1,438 @@
+# model/ids.toml --- the conformance ID register (§2.1).
+#
+# Every ID the plan names, in one place, so that nothing is referenced without
+# being defined. `CONFORMANCE.md` is generated from this file. A test whose name
+# ends in an ID not listed here fails `check-model`, and an ID listed here with
+# no scenario and no test fails it too (CM-02).
+#
+# `level` is the UTQC honesty level (R4):
+#   some-true  a fact reproduced from an authority; not established here
+#   build      constructed here and validated against its oracle
+#   open       measured and reported, never asserted
+#
+# Every row here has a scenario in `features/` and a test whose name ends in the
+# ID (R9, R15, CM-02). There is no "pending" state: a capability that is not
+# built does not get a row, and every row in this file is built.
+
+spec = "uor-matmul/1"
+
+
+[[id]]
+id = "CS-01"
+level = "build"
+suite = "structural"
+statement = """`C <- alpha*A*B + beta*C` with A `m x k`, B `k x n`, C `m x n`"""
+
+[[id]]
+id = "CS-02"
+level = "build"
+suite = "structural"
+statement = """A and B strides are arbitrary: negative, zero, and non-contiguous all give the defined result"""
+
+[[id]]
+id = "CS-03"
+level = "build"
+suite = "structural"
+statement = """Output strides that alias are rejected at `Triple::new` and nowhere else"""
+
+[[id]]
+id = "CS-04"
+level = "build"
+suite = "structural"
+statement = """`beta == 0` overwrites C without reading it, so uninitialized or NaN-filled C is admissible"""
+
+[[id]]
+id = "CS-05"
+level = "build"
+suite = "structural"
+statement = """The raw-pointer entry points are signature-identical to `matrixmultiply` and produce the same bytes as the safe API on the same inputs"""
+
+[[id]]
+id = "CS-06"
+level = "build"
+suite = "structural"
+statement = """`m`, `n`, `k` that are not multiples of `MR`, `NR`, or `K_GROUP` take the same path and give the same result"""
+
+[[id]]
+id = "CS-07"
+level = "build"
+suite = "structural"
+statement = """The generated `133144` pin equals `k_max(127, i32::MAX)` recomputed at test time"""
+
+[[id]]
+id = "CT-01"
+level = "build"
+suite = "totality"
+statement = """No representable input errors or panics: fuzzed shapes, strides, magnitudes, and depths, under a checked-arithmetic build"""
+
+[[id]]
+id = "CT-02"
+level = "build"
+suite = "totality"
+statement = """No accumulation overflows: the whole corpus under checked arithmetic, zero overflow events"""
+
+[[id]]
+id = "CT-03"
+level = "build"
+suite = "totality"
+statement = """Non-finite float codes propagate by the IEEE rules and never error"""
+
+[[id]]
+id = "CT-04"
+level = "build"
+suite = "totality"
+statement = """Zero, one, and prime dimensions take the same path as any other, and a zero-extent view constructs rather than erroring"""
+
+[[id]]
+id = "CT-05"
+level = "build"
+suite = "totality"
+statement = """The two reportable conditions --- a non-conformant shape and an output whose strides map two coordinates onto one cell --- are the only ones, and both are decided at view construction before any arithmetic is named"""
+
+[[id]]
+id = "CT-06"
+level = "build"
+suite = "totality"
+statement = """A super-massive product --- operands past the last level of cache, a depth past every lane's capacity, and an extent past every block --- is exact, on every traversal the offer admits"""
+
+[[id]]
+id = "CD-01"
+level = "build"
+suite = "determinism"
+statement = """Backend choice does not change output bytes"""
+
+[[id]]
+id = "CD-02"
+level = "build"
+suite = "determinism"
+statement = """Tile count and completion order do not change output bytes, over `{1,2,3,5,8,64,m*n}` and shuffled orders"""
+
+[[id]]
+id = "CD-03"
+level = "build"
+suite = "determinism"
+statement = """Every partial sum stays inside the accumulator, measured by `dot_instrumented`, never inferred"""
+
+[[id]]
+id = "CD-04"
+level = "build"
+suite = "determinism"
+statement = """Traversal and blocking preset do not change output bytes, including deliberately bad presets"""
+
+[[id]]
+id = "CD-05"
+level = "build"
+suite = "determinism"
+statement = """Encode mode is the only thing that changes the output bytes for a fixed accumulation"""
+
+[[id]]
+id = "CD-06"
+level = "build"
+suite = "determinism"
+statement = """Big-endian and little-endian targets agree on the serialized output"""
+
+[[id]]
+id = "CD-07"
+level = "build"
+suite = "determinism"
+statement = """Splitting the operand stream at any index sums the parts"""
+
+[[id]]
+id = "CD-08"
+level = "build"
+suite = "determinism"
+statement = """Two tiles reduce in either order"""
+
+[[id]]
+id = "CD-09"
+level = "build"
+suite = "determinism"
+statement = """The narrow-register tile path agrees with `dot_wide`"""
+
+[[id]]
+id = "CD-10"
+level = "build"
+suite = "determinism"
+statement = """`Scratch::None`, one byte, `suggested_scratch - 1`, `suggested_scratch`, and ten times it all give the same bytes"""
+
+[[id]]
+id = "CD-11"
+level = "build"
+suite = "determinism"
+statement = """Forcing a wider accumulator than necessary changes nothing but the room"""
+
+[[id]]
+id = "CD-12"
+level = "build"
+suite = "determinism"
+statement = """Collapsing equal rows of A cannot change a byte, at every degeneracy and every offer"""
+
+[[id]]
+id = "CB-01"
+level = "build"
+suite = "backends"
+statement = """Portable equals `dot_ref` on the whole corpus"""
+
+[[id]]
+id = "CB-02"
+level = "build"
+suite = "backends"
+statement = """AVX2 equals portable"""
+
+[[id]]
+id = "CB-03"
+level = "build"
+suite = "backends"
+statement = """AVX-512 VNNI equals portable, on all three of its sequences"""
+
+[[id]]
+id = "CB-04"
+level = "build"
+suite = "backends"
+statement = """NEON and NEON dotprod equal portable"""
+
+[[id]]
+id = "CB-05"
+level = "build"
+suite = "backends"
+statement = """wasm SIMD128 equals portable, and SIMD128-off equals SIMD128-on"""
+
+[[id]]
+id = "CB-06"
+level = "build"
+suite = "backends"
+statement = """Every reduce sequence --- lanes on `k` rather than on the output --- equals its own reference, at every declared panel width, and a shape narrower than a tile takes it and produces the same bytes"""
+
+[[id]]
+id = "CB-07"
+level = "build"
+suite = "backends"
+statement = """Every sequence is exact at the extremes of the alphabet it declares, and selection never offers one outside its declared alphabet"""
+
+[[id]]
+id = "CU-01"
+level = "build"
+suite = "purity"
+statement = """No float add, subtract, multiply, or FMA opcode appears in any shipped kernel's disassembly, on any target"""
+
+[[id]]
+id = "CU-02"
+level = "build"
+suite = "purity"
+statement = """The instrumented count of narrow-path tiles matches `fits_narrow` exactly, so no tile takes an unintended path"""
+
+[[id]]
+id = "CU-03"
+level = "build"
+suite = "purity"
+statement = """Every instruction sequence agrees at depths straddling its own threshold"""
+
+[[id]]
+id = "CU-04"
+level = "build"
+suite = "purity"
+statement = """Float accumulation is order-independent: shuffled tiles and every backend agree bit for bit, including on catastrophic-cancellation cases"""
+
+[[id]]
+id = "CU-05"
+level = "build"
+suite = "purity"
+statement = """There is exactly one accumulation path per element family, asserted by `audit-purity` over the call graph"""
+
+[[id]]
+id = "CK-01"
+level = "build"
+suite = "codec"
+statement = """Two codecs with equal decodes give equal output bytes"""
+
+[[id]]
+id = "CK-02"
+level = "build"
+suite = "codec"
+statement = """Codec-invariance holds when both operands are coded"""
+
+[[id]]
+id = "CK-03"
+level = "build"
+suite = "codec"
+statement = """The packed panels themselves are byte-equal across codecs that decode equally"""
+
+[[id]]
+id = "CK-04"
+level = "build"
+suite = "codec"
+statement = """A transcoded stream equals the composite codec"""
+
+[[id]]
+id = "CK-05"
+level = "build"
+suite = "codec"
+statement = """Two `CodedMatrix` values with different kappa labels and equal decodes give equal output bytes"""
+
+[[id]]
+id = "CK-06"
+level = "build"
+suite = "codec"
+statement = """A run codec's returned counts sum to the declared row width on every row"""
+
+[[id]]
+id = "CX-01"
+level = "build"
+suite = "cross-library"
+statement = """`ndarray` `i32`, byte-identical over the whole corpus under `EncodeMode::Wrapping`"""
+
+[[id]]
+id = "CX-02"
+level = "build"
+suite = "cross-library"
+statement = """`nalgebra` `i32`, likewise"""
+
+[[id]]
+id = "CX-03"
+level = "build"
+suite = "cross-library"
+statement = """`ndarray` `i32` against our `i8` kernels on widened inputs"""
+
+[[id]]
+id = "CX-04"
+level = "build"
+suite = "cross-library"
+statement = """`nalgebra` `i32` against our coded kernels on decoded weights"""
+
+[[id]]
+id = "CX-05"
+level = "open"
+suite = "cross-library"
+statement = """`matrixmultiply` `sgemm`: deviation from our exact value, in ulps"""
+
+[[id]]
+id = "CX-06"
+level = "open"
+suite = "cross-library"
+statement = """`faer` `f32`: likewise"""
+
+[[id]]
+id = "CX-07"
+level = "open"
+suite = "cross-library"
+statement = """`ndarray` `f32`: likewise, recorded as not independent of `CX-05`"""
+
+[[id]]
+id = "CX-08"
+level = "open"
+suite = "cross-library"
+statement = """`gemm` crate `f32`: likewise"""
+
+[[id]]
+id = "CX-09"
+level = "open"
+suite = "cross-library"
+statement = """`matrixmultiply` `dgemm`: likewise at f64"""
+
+[[id]]
+id = "CX-10"
+level = "build"
+suite = "cross-library"
+statement = """NumPy `int64` out of process, byte-identical"""
+
+[[id]]
+id = "CA-01"
+level = "build"
+suite = "environment"
+statement = """Zero allocations during any call, on every hosted target"""
+
+[[id]]
+id = "CA-02"
+level = "build"
+suite = "environment"
+statement = """Identical bytes on `thumbv7em-none-eabihf` and both wasm targets as on x86-64"""
+
+[[id]]
+id = "CA-03"
+level = "build"
+suite = "environment"
+statement = """No shipped crate links an allocator symbol on a `no_std` target"""
+
+[[id]]
+id = "CP-01"
+level = "build"
+suite = "property"
+statement = """The randomized differential suite at the sample size derived in `ANALYSIS.md`, seeds recorded"""
+
+[[id]]
+id = "CK-08"
+level = "build"
+suite = "codec"
+statement = """The canonical manifest is byte-stable: keys in lexicographic order, no insignificant whitespace, a short buffer reports the need, and a malformed digest is rejected"""
+
+[[id]]
+id = "CG-01"
+level = "open"
+suite = "scaling"
+statement = """Arithmetic scaling exponent, this library and every oracle"""
+
+[[id]]
+id = "CG-02"
+level = "open"
+suite = "scaling"
+statement = """Per-axis scaling exponents for `m`, `n`, `k` separately"""
+
+[[id]]
+id = "CG-03"
+level = "open"
+suite = "scaling"
+statement = """Residency scaling: bytes of weight storage touched, per codec, against every oracle"""
+
+[[id]]
+id = "CG-04"
+level = "open"
+suite = "scaling"
+statement = """Working-set scaling, `suggested_scratch` against each oracle's measured internal allocation"""
+
+[[id]]
+id = "CG-05"
+level = "open"
+suite = "scaling"
+statement = """Allocation count and peak bytes: zero here, whatever the oracle does there"""
+
+[[id]]
+id = "CG-06"
+level = "open"
+suite = "scaling"
+statement = """Parallel speedup against tile count, with byte-equality asserted inside the timed harness"""
+
+[[id]]
+id = "CG-08"
+level = "open"
+suite = "scaling"
+statement = """Sustained throughput on super-massive input, reported per pass, against every oracle that finishes"""
+
+[[id]]
+id = "CG-09"
+level = "open"
+suite = "scaling"
+statement = """Throughput against the degeneracy of the operand, including the price of looking when there is none"""
+
+[[id]]
+id = "CG-07"
+level = "open"
+suite = "scaling"
+statement = """Small-shape latency, where a heavyweight prologue costs more than an asymptote"""
+
+[[id]]
+id = "CM-01"
+level = "build"
+suite = "model"
+statement = """The generated Rust consts equal `model/constants.toml`"""
+
+[[id]]
+id = "CM-02"
+level = "build"
+suite = "model"
+statement = """Every ID in `model/ids.toml` has a scenario and a test, and every test's ID is in the register"""
+
+[[id]]
+id = "CM-03"
+level = "build"
+suite = "model"
+statement = """Every `some-true` claim has a row in `model/authorities.toml` with a citation"""

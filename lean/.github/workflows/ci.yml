@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: lake build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Installs the toolchain from `lean-toolchain`, resolves the pinned `uor`
+      # dependency from `lake-manifest.json`, and runs `lake build`.
+      - name: Build Lean library
+        uses: leanprover/lean-action@v1
+        with:
+          build-args: "F1Square"
+
+      # Mechanized-honesty gate: the genuine-proof layer must be axiom-clean —
+      # no `sorry` (sorryAx), no `native_decide` (Lean.ofReduceBool), no stray axioms.
+      # `#print axioms` is authoritative; see scripts/honesty_audit.sh.
+      - name: Mechanized-honesty audit
+        run: bash scripts/honesty_audit.sh

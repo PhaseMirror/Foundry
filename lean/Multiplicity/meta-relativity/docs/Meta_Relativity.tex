@@ -1,0 +1,511 @@
+\documentclass[10pt]{article}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{mathrsfs}
+\usepackage{geometry}
+\geometry{margin=1in}
+
+\newtheorem{axiom}{Axiom}
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{remark}[theorem]{Remark}
+
+\DeclareMathOperator{\ess}{ess}
+\DeclareMathOperator{\Fix}{Fix}
+\DeclareMathOperator{\Ran}{Ran}
+\newcommand{\PP}{\mathbb{P}}
+\newcommand{\RR}{\mathbb{R}}
+\newcommand{\CC}{\mathbb{C}}
+\newcommand{\HH}{\mathcal{H}}
+\newcommand{\UU}{\mathcal{U}}
+\newcommand{\CSL}{\text{CSL}}
+
+\title{Meta-Relativity \\ A Rigorous Framework with Certified Spectral Bounds}
+\author{Ryan O. Van Gelder}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+We present a mathematically rigorous framework called \emph{Meta-Relativity} that combines arithmetic structure with functional analysis through explicit bounded self-adjoint operator constructions. The theory is built on prime-gated Hilbert spaces $\ell^2(\mathbb{P}) \otimes L^2(\mathbb{R}) \otimes \mathbb{C}^d$ and provides certified spectral bounds, evolution stability, and frame-covariant invariants. All results are proven under checkable hypotheses with explicit certification protocols.
+\end{abstract}
+
+\section{Introduction}
+
+Meta-Relativity provides a mathematical framework where physical systems are modeled through operators on tensor products involving prime number spaces. The key innovation is the synthesis of:
+\begin{itemize}
+    \item \textbf{Arithmetic structure} via the prime sector $\ell^2(\mathbb{P})$
+    \item \textbf{Temporal analysis} via $L^2(\mathbb{R})$ with Fourier multipliers  
+    \item \textbf{Internal dynamics} via finite-dimensional matrix algebras
+    \item \textbf{Certification machinery} via explicit spectral bounds
+\end{itemize}
+
+This article consolidates previous developments into a self-contained mathematical theory with complete proofs and implementation guidelines.
+
+\subsection{Axiomatic Foundation}
+
+\begin{axiom}[Mathematical Onticity]
+Physical systems correspond to operators and states in an ambient Hilbert space structure.
+\end{axiom}
+
+\begin{axiom}[Frame-Covariance] 
+Physical predictions are invariant under lawful frame transformations that preserve constitutional invariants.
+\end{axiom}
+
+\begin{axiom}[Prime-Gated Modeling]
+The ambient Hilbert space includes a prime sector $\ell^2(\mathbb{P})$ to encode arithmetic structure.
+\end{axiom}
+
+\begin{axiom}[Bounded Recursive Evolution]
+Internal dynamics are governed by bounded self-adjoint operators with explicit norm constraints.
+\end{axiom}
+
+\subsection{Ambient Spaces and Frames}
+
+\begin{definition}[Ambient Hilbert Space]
+Let $\PP$ be the set of primes and $d \in \mathbb{N}$. Define:
+\[
+\HH := \ell^2(\PP) \otimes L^2(\RR) \otimes \CC^d
+\]
+\end{definition}
+
+\begin{definition}[Frame]
+A \emph{frame} $F = (\HH, \mathcal{O}, \rho)$ consists of:
+\begin{itemize}
+    \item Hilbert space $\HH$ as above
+    \item Observable algebra $\mathcal{O}$ of bounded self-adjoint operators on $\HH$  
+    \item Representation $\rho$ mapping physical quantities to $\mathcal{O}$
+\end{itemize}
+\end{definition}
+
+\begin{definition}[Lawful Subspace]
+The lawful subspace $\HH_{\text{lawful}} \subset \HH$ consists of vectors:
+\[
+\psi = \sum_{p \in \PP} e_p \otimes \psi_p \otimes x_p
+\]
+with $\lim_{N\to\infty} \sum_{p \leq p_N} \|\psi_p\|^2 = \|\psi\|^2$ and $x_p \in \Fix(\Xi)$ for all $p$.
+\end{definition}
+
+\section{Universal Spectral Operator}
+
+\subsection{Hypotheses}
+
+\begin{definition}[Prime Diagonal]
+Fix $\sigma \geq 0$. Define $D_\sigma$ on $\ell^2(\PP)$ by:
+\[
+(D_\sigma e_p) := p^{-\sigma} e_p
+\]
+\end{definition}
+
+\begin{definition}[Windowed Off-Diagonal]
+Choose $\alpha > \frac{1}{2}$ and bounded even real $h \in L^\infty(\RR)$. Define symmetric matrix:
+\[
+K_{pp} = 0,\quad K_{pq} = h(\log p - \log q) p^{-\alpha} q^{-\alpha} \ (p \ne q)
+\]
+\end{definition}
+
+\begin{definition}[Time Sieve]
+Pick $a_0 \in \RR$, $\{a_p\} \in \ell^1(\PP)$. Define multiplier and operator:
+\[
+m(\omega) = a_0 + \sum_p a_p \cos(\omega \log p),\quad C = \mathcal{F}^{-1} M_m \mathcal{F}
+\]
+\end{definition}
+
+\begin{definition}[Internal Block]
+Let $\Xi = \Xi^* \in \CC^{d\times d}$ with $\|\Xi\| \leq 1$.
+\end{definition}
+
+\begin{definition}[Tensor Lifts]
+\[
+X_\sigma := (D_\sigma + K) \otimes I \otimes I,\quad 
+C_{\text{lift}} := I \otimes C \otimes I,\quad 
+\Xi_{\text{lift}} := I \otimes I \otimes \Xi
+\]
+\end{definition}
+
+\begin{definition}[Universal Spectral Operator]
+\[
+\UU := X_\sigma + C_{\text{lift}} + \Xi_{\text{lift}}
+\]
+\end{definition}
+
+\subsection{Spectral Properties}
+
+\begin{theorem}[Hilbert-Schmidt Threshold]
+For $\alpha > \frac{1}{2}$, $K$ is Hilbert-Schmidt with:
+\[
+\|K\|_{\text{HS}}^2 \leq \|h\|_\infty^2 \left(\sum_p p^{-2\alpha}\right)^2 < \infty
+\]
+\end{theorem}
+
+\begin{proof}
+Direct computation:
+\[
+\|K\|_{\text{HS}}^2 = \sum_{p \ne q} |h(\log p - \log q)|^2 p^{-2\alpha} q^{-2\alpha} \leq \|h\|_\infty^2 \left(\sum_p p^{-2\alpha}\right)^2
+\]
+Convergence follows from $\alpha > \frac{1}{2}$.
+\end{proof}
+
+\begin{theorem}[Bounded Self-Adjointness]
+$\UU$ is bounded self-adjoint with:
+\[
+\|\UU\| \leq 1 + \|h\|_\infty\left(\sum_p p^{-2\alpha}\right) + |a_0| + \sum_p |a_p| + 1
+\]
+\end{theorem}
+
+\begin{proof}
+Each component is bounded self-adjoint: $D_\sigma$ (diagonal), $K$ (symmetric Hilbert-Schmidt), $C$ (Fourier multiplier with real symbol), $\Xi$ (self-adjoint matrix). The norm bound follows from triangle inequality and previous lemmas.
+\end{proof}
+
+\subsection{Essential Spectrum of the Kronecker–Sum Generator}\label{sec:essential-spectrum}
+
+Let \(\mathcal H := \ell^2(\mathbb P)\otimes L^2(\mathbb R)\otimes \mathbb C^d\).
+On \(\ell^2(\mathbb P)\) define
+\[
+D_\sigma := \mathrm{diag}(p^{-\sigma})_{p\in\mathbb P},\qquad \sigma\ge 0,
+\]
+and let \(K\) be Hilbert–Schmidt (hence compact) on \(\ell^2(\mathbb P)\).
+Set \(A := D_\sigma + K\) on \(\ell^2(\mathbb P)\).
+On \(L^2(\mathbb R)\), let \(B:=C=\mathcal F^{-1}M_m\mathcal F\) be the Fourier multiplier with real, essentially bounded symbol \(m\in L^\infty(\mathbb R)\).
+On \(\mathbb C^d\), let \(E:=\Xi\) be bounded self-adjoint.
+
+Lift these to \(\mathcal H\) by
+\[
+\mathbf A := A\otimes I\otimes I,\qquad
+\mathbf B := I\otimes B\otimes I,\qquad
+\mathbf E := I\otimes I\otimes E,
+\]
+and define the universal spectral operator
+\[
+\mathcal U := \mathbf A + \mathbf B + \mathbf E .
+\]
+
+\begin{lemma}[Strong commutativity of lifted factors]\label{lem:strong-comm}
+The operators \(\mathbf A,\mathbf B,\mathbf E\) are bounded, self-adjoint, and strongly commute. In particular,
+\[
+[\mathbf A,\mathbf B]=[\mathbf A,\mathbf E]=[\mathbf B,\mathbf E]=0,
+\quad\text{i.e.}\quad
+[A\otimes I\otimes I,\, I\otimes B\otimes I]=0,\ \text{etc.}
+\]
+\end{lemma}
+
+\begin{proof}
+Each factor acts nontrivially on a distinct tensor leg; e.g.,
+\((A\otimes I\otimes I)(I\otimes B\otimes I)=A\otimes B\otimes I
+=(I\otimes B\otimes I)(A\otimes I\otimes I)\).
+Boundedness and self-adjointness are inherited from the factors.
+Strong commutativity follows because all spectral projections of one factor commute with the others.
+\end{proof}
+
+\begin{theorem}[Essential spectrum of the Kronecker–sum form; corrected Theorem 12]\label{thm:ess-12}
+With \(A,B,E\) as above and \(\mathcal U=\mathbf A+\mathbf B+\mathbf E\),
+\begin{align*}
+\sigma(\mathcal U) &= \sigma(A)+\sigma(B)+\sigma(E),\\
+\sigma_{\mathrm{ess}}(\mathcal U) &=
+\big(\sigma_{\mathrm{ess}}(A)+\sigma(B)\big)+\sigma(E)\ \cup\
+\big(\sigma(A)+\sigma_{\mathrm{ess}}(B)\big)+\sigma(E).
+\end{align*}
+In particular, since \(K\) is compact,
+\(\sigma_{\mathrm{ess}}(A)=\sigma_{\mathrm{ess}}(D_\sigma)=\{0\}\);
+and for the Fourier multiplier \(B\),
+\(\sigma_{\mathrm{ess}}(B)=\operatorname{ess\,ran}(m)\).
+Hence
+\[
+\sigma_{\mathrm{ess}}(\mathcal U)=\sigma(A)+\operatorname{ess\,ran}(m)+\sigma(E).
+\]
+\end{theorem}
+
+\begin{proof}[Proof sketch]
+By Lemma~\ref{lem:strong-comm}, \(\mathbf A,\mathbf B,\mathbf E\) strongly commute, so the joint functional calculus for commuting self-adjoint tuples applies.
+Therefore the spectrum of \(\mathbf A+\mathbf B+\mathbf E\) is the Minkowski sum of the individual spectra, yielding the first identity.
+For the essential spectrum, use the standard formula for commuting Kronecker–sum components:
+\(\sigma_{\mathrm{ess}}(T\dotplus S)=\big(\sigma_{\mathrm{ess}}(T)+\sigma(S)\big)\cup\big(\sigma(T)+\sigma_{\mathrm{ess}}(S)\big)\),
+applied twice (first to \(\mathbf A+\mathbf B\), then add \(\mathbf E\) which acts on a finite-dimensional leg and thus shifts by \(\sigma(E)\)).
+Compactness of \(K\) gives \(\sigma_{\mathrm{ess}}(A)=\sigma_{\mathrm{ess}}(D_\sigma)=\{0\}\) because \(p^{-\sigma}\to 0\) as \(p\to\infty\), so the only limit point is \(0\).
+For a Fourier multiplier \(B\), \(\sigma_{\mathrm{ess}}(B)=\operatorname{ess\,ran}(m)\).
+Combining these yields the claimed formula.
+\end{proof}
+
+\begin{corollary}[When is \(0\in\sigma_{\mathrm{ess}}(\mathcal U)\)?]\label{cor:zero-in-ess}
+We have \(0\in\sigma_{\mathrm{ess}}(\mathcal U)\) iff there exist
+\(a\in\sigma(A)\), \(c\in\operatorname{ess\,ran}(m)\), and \(\xi\in\sigma(E)\)
+such that \(a+c+\xi=0\).
+\end{corollary}
+
+\begin{remark}
+The earlier claim that \(\,0\in\sigma_{\mathrm{ess}}(\mathcal U)\) for all \(\sigma>0\) is generally false; it depends on \(\operatorname{ess\,ran}(m)\) and \(\sigma(E)\).
+\end{remark}
+\section{Evolution and Certification}
+
+\subsection{Unitary Evolution}
+
+\begin{theorem}[Stone Generation]
+$i\UU$ generates a strongly continuous unitary group:
+\[
+U(t) = e^{it\UU},\quad \|U(t)\| = 1,\quad \|U(t) - I\| \leq |t|\,\|\UU\|
+\]
+\end{theorem}
+
+\begin{proof}
+$\UU$ bounded self-adjoint implies $i\UU$ skew-adjoint. Stone's theorem gives unitary group. The bound follows from power series expansion.
+\end{proof}
+
+\subsection{Spectral Certification Framework}
+
+Consider perturbed operator:
+\[
+\UU(\theta) = \UU_0 + \sum_p w_p B_p(\theta)
+\]
+with assumptions:
+\begin{itemize}
+    \item $\|B_p(\theta)\| \leq b_p$ (uniform bound)
+    \item $\|\partial_\theta B_p(\theta)\| \leq L_p$ (Lipschitz bound)  
+    \item $\|w\|_1 = \sum_p |w_p| \leq B$ (perturbation budget)
+\end{itemize}
+
+\begin{theorem}[Certification Bounds]
+For target spectral band $S$ with unperturbed gap $\delta_S$:
+\begin{align*}
+\text{GapLB}(w) &\geq \inf_\theta \left[\delta_S(\theta) - 2\sum_p |w_p| b_p\right] \\
+\text{SlopeUB}(w) &\leq \sum_p |w_p| L_p
+\end{align*}
+\end{theorem}
+
+\begin{proof}
+Gap bound follows from Weyl's spectral inclusion theorem: eigenvalues move at most $\|\sum_p w_p B_p(\theta)\| \leq \sum_p |w_p| b_p$. Slope bound follows from Lipschitz continuity and chain rule.
+\end{proof}
+
+\subsection{Dissipative Alternatives and Contraction Semigroups}\label{sec:dissipative}
+
+We present two safe versions of the dissipative alternative. Throughout,
+\(\mathcal U=\mathbf A+\mathbf B+\mathbf E\) with \(\mathbf A,\mathbf B,\mathbf E\) as in Section~\ref{sec:essential-spectrum}.
+
+\begin{theorem}[Positivity-certified generator; corrected Theorem 15(a)]\label{thm:15a}
+Assume:
+\begin{enumerate}
+\item \(\alpha>\frac12\) and \(h:\mathbb R\to\mathbb R\) is continuous positive-definite.
+Define the full Gram operator \(K\) on \(\ell^2(\mathbb P)\) by
+\[
+K_{pq}:=p^{-\alpha}q^{-\alpha}\,h(\log p-\log q)\quad(\text{including }p=q).
+\]
+Then \(K\ge 0\) and \(K\) is Hilbert–Schmidt.
+\item \(m(\omega)\ge 0\) for a.e.\ \(\omega\in\mathbb R\).
+A sufficient, easily verifiable condition is
+\[
+a_0 \ \ge\ \sum_{p}|a_p|
+\quad\Longrightarrow\quad
+m(\omega)=a_0+\sum_p a_p\cos(\omega\log p)\ \ge\ 0\quad\forall\,\omega.
+\]
+(Equivalently, one may parametrize \(m=|g|^2\) with \(g\in L^\infty\).)
+\item \(E=\Xi\ge 0\) and \(\sigma\ge 0\) (so \(D_\sigma\ge 0\)).
+\end{enumerate}
+Then \(\mathcal U\ge 0\) is bounded self-adjoint, and
+\[
+\mathcal A:=-\mathcal U
+\]
+generates a uniformly continuous contraction semigroup \(e^{t\mathcal A}=e^{-t\mathcal U}\) on \(\mathcal H\).
+\end{theorem}
+
+\begin{proof}
+Positive-definiteness of \(h\) implies the Gram matrix \((h(\log p-\log q))_{p,q}\) is PSD; conjugation by the diagonal \(W=\mathrm{diag}(p^{-\alpha})\) preserves PSD, so \(K=W(\,\cdot\,)W\ge 0\).
+Since \(\sum_p p^{-2\alpha}<\infty\) for \(\alpha>\frac12\), \(K\) is Hilbert–Schmidt.
+The bound on \(m\) yields \(B=\mathcal F^{-1}M_m\mathcal F\ge 0\).
+Hence \(\mathbf A,\mathbf B,\mathbf E\) are PSD and strongly commute; their sum \(\mathcal U\) is PSD.
+Therefore \(-\mathcal U\) is dissipative and (being bounded self-adjoint) maximally dissipative; \(e^{-t\mathcal U}\) is a contraction semigroup.
+\end{proof}
+
+\begin{theorem}[ACE-style dominance; corrected Theorem 15(b)]\label{thm:15b}
+Let
+\[
+\gamma := \operatorname*{ess\,inf}_{\omega\in\mathbb R} m(\omega)\ +\ \lambda_{\min}(E)\,.
+\]
+If \(\gamma \ge \|A\|\) (equivalently \(\mathbf B+\mathbf E \succeq \|A\|\,I\) on \(\mathcal H\)),
+then \(\mathcal U \succeq 0\) and \(\mathcal A=-\mathcal U\) generates a uniformly continuous contraction semigroup.
+\end{theorem}
+
+\begin{proof}
+For any \(\Psi\in\mathcal H\),
+\[
+\langle \Psi,\mathcal U \Psi\rangle
+= \langle \Psi,\mathbf A \Psi\rangle
+ + \langle \Psi,\mathbf B \Psi\rangle
+ + \langle \Psi,\mathbf E \Psi\rangle
+\ \ge\ -\|A\|\,\|\Psi\|^2 + \gamma \|\Psi\|^2
+= (\gamma-\|A\|)\,\|\Psi\|^2 \ge 0.
+\]
+Thus \(\mathcal U\succeq 0\).
+Bounded self-adjoint positivity implies \(-\mathcal U\) is maximally dissipative and generates a contraction semigroup.
+\end{proof}
+
+\begin{remark}
+The zero-diagonal variant of \(K\) used earlier need not be PSD even when \(h\) is positive-definite; retaining the diagonal (as in Theorem~\ref{thm:15a}) or enforcing the dominance condition (Theorem~\ref{thm:15b}) resolves this.
+\end{remark}
+
+\begin{example}[Concrete parameters]
+Let \(\alpha=0.8\), \(h(t)=e^{-t^2}\). Then \(K\) is Hilbert–Schmidt and PSD.
+Choose \(a_p=0.4\,p^{-2}\) and \(a_0=0.3\); then \(a_0\ge\sum_p|a_p|\) and \(m(\omega)\ge 0\).
+With any PSD \(E\) (e.g.\ \(E=0\)), Theorem~\ref{thm:15a} applies.
+\end{example}
+
+\subsection{Frame-Covariant Invariants}
+
+\begin{definition}[Frame Transformation]
+A \emph{lawful frame transformation} is a unitary $U: \HH \to \HH$ preserving:
+\begin{itemize}
+    \item Prime sector structure: $U(\ell^2(\PP) \otimes \cdot) = \ell^2(\PP) \otimes \cdot$
+    \item Lawfulness conditions
+    \item Spectral invariants of $\UU$
+\end{itemize}
+\end{definition}
+
+\begin{theorem}[Spectral Invariance]
+Under lawful frame transformations, the following are invariant:
+\begin{itemize}
+    \item Essential spectrum $\sigma_{\ess}(\UU)$
+    \item Spectral gaps and band structure  
+    \item Multiplicities of discrete eigenvalues
+    \item Certification bounds GapLB and SlopeUB
+\end{itemize}
+\end{theorem}
+
+\begin{proof}
+Unitary equivalence preserves spectrum and multiplicities. Certification bounds depend only on spectral data and norms, which are unitarily invariant.
+\end{proof}
+
+\section{Implementation and Examples}
+
+\subsection{Parameter Specifications}
+
+\begin{definition}[Conservative Settings]
+\begin{itemize}
+    \item $\sigma = 1$, $\alpha = 1.5$ (HS guarantee)
+    \item $h \equiv 0$ (diagonal only)
+    \item $a_0 = 0$, fast-decaying $\{a_p\}$
+    \item $\Xi$ diagonal with spectrum in $[-1,1]$
+\end{itemize}
+\end{definition}
+
+\begin{definition}[Structured Settings] 
+\begin{itemize}
+    \item $\sigma \in [0,1]$, $\alpha \in (1,2]$
+    \item $h(t) = (\varphi * \Re\zeta(\frac12 + i\cdot))(t)$ with even Schwartz $\varphi$
+    \item $\{a_p\} \in \ell^1$ with explicit decay
+\end{itemize}
+\end{definition}
+
+\subsection{Certification Protocol}
+
+\begin{enumerate}
+    \item \textbf{Verify HS condition:} Check $\alpha > \frac12$, compute $\|K\|_{\text{HS}}$
+    \item \textbf{Check multiplier norm:} Verify $\|C\| \leq |a_0| + \sum_p |a_p|$  
+    \item \textbf{Compute certification bounds:} Evaluate GapLB and SlopeUB for parameter ranges
+    \item \textbf{Enforce lawfulness:} Restrict to $\HH_{\text{lawful}}$ for evolution
+\end{enumerate}
+
+\subsection{Example Certification}
+
+For finite prime set $P_N = \{p_1, \dots, p_N\}$ with constant bounds:
+\[
+\text{GapLB} \geq \delta_S - 2bB,\quad \text{SlopeUB} \leq LB
+\]
+Given target gap $\delta_{\text{target}}$, require $B < \frac{\delta_S - \delta_{\text{target}}}{2b}$.
+
+\section{Conclusion}
+
+We have presented a complete mathematical framework for Meta-Relativity with:
+\begin{itemize}
+    \item \textbf{Ontologically clear} construction based on bounded self-adjoint blocks
+    \item \textbf{Explicit certification} via computable gap/slope budgets  
+    \item \textbf{Frame-covariant} invariants through spectral quantities
+    \item \textbf{Multiple regimes} (unitary evolution, contraction semigroups)
+    \item \textbf{Implementation-ready} specifications and safety bounds
+\end{itemize}
+
+All claims are mathematically rigorous under stated hypotheses, providing a solid foundation for further development and physical applications.
+
+\appendix
+% LaTeX Appendix Section: Guardrails for Integrating Meta‑Relativity into IFMD
+
+
+\item \textbf{Monitoring and audit.}\label{g:audit}
+For every invocation, log \((\gamma_{\min}, \varepsilon, \tau)\) together with realized norms, step sizes, and triggered guards. Retain for \(T\) days and make queryable by release ID.
+
+
+\item \textbf{Fail-safe defaults and rollback.}\label{g:rollback}
+On any certificate failure or monitoring anomaly, revert to the baseline certified operator \(X\). Maintain a signed golden set and a one-click rollback.
+
+
+\item \textbf{Performance envelopes.}\label{g:perf}
+Enforce time/memory ceilings for certification and execution; precompute reusable bounds offline.
+\emph{Acceptance:} worst-case certification time \(\le t_{\max}\) and memory \(\le m_{\max}\).
+
+
+\item \textbf{Security boundaries.}\label{g:sec}
+Disallow dynamic code injection in channel definitions; restrict to a whitelisted operator family. All MR artifacts execute in a sandbox with read-only corpora.
+
+
+\item \textbf{Human oversight.}\label{g:human}
+Escalate to human review when margins are within \(\delta\) of thresholds for \(N\) consecutive runs, or when novel prime signatures are introduced.
+\end{enumerate}
+
+
+\subsection*{Indexing \/ Cross-linking (Informative)}
+Map \(U=X_\sigma + C_{\mathrm{lift}} + \Xi_{\mathrm{lift}}\) to the ACE-controlled form \(X + \sum_{p} w_p B_p\). Persist \((b_p,L_p)\) for certificate reuse and link entries to the PETC signature registry and ACE certificate store.
+
+
+\subsection*{Verification Checklist (Complete per Release)}
+\newcommand{\boxempty}{\(\square\)}
+\begin{enumerate}[label=\boxempty\, C\arabic*., leftmargin=3.2em]
+\item \textbf{GapLB:} computed and \(\gamma\ge\gamma_{\min}\). Artifacts attached.
+\item \textbf{SlopeUB:} contraction margin \(\varepsilon>0\) certified. Runtime bound logged.
+\item \textbf{Budgeting:} \(\sum_p |w_p|\le\tau\) and \(\|B_p\|\le b_p\), \(\mathrm{Lip}(B_p)\le L_p\) verified.
+\item \textbf{PETC:} prime signatures validated; multiplicity/conservation checks passed.
+\item \textbf{Ingest tests:} HS domain \/ boundedness \/ normality; multiplier; gap\/slope; lawfulness.
+\item \textbf{Monitoring hooks:} telemetry for \((\gamma_{\min},\varepsilon,\tau)\) in place.
+\item \textbf{Rollback:} golden set present; roll-forward\/back tested.
+\item \textbf{Provenance:} hashes, versions, seeds, and dependency locks recorded.
+\item \textbf{Security:} sandbox and whitelist active; no dynamic codepaths.
+\item \textbf{Oversight:} thresholds \(\delta,N\) set; escalation route documented.
+\end{enumerate}
+
+
+\subsection*{Metadata Template (Copy into Release Notes)}
+\begin{tabular}{@{}ll@{}}
+\textbf{Artifact} & Meta‑Relativity Operator Stack (MR) \\
+\textbf{DocID} & MR-IFMD-APPX-\textit{YYYYMMDD} \\
+\textbf{Source Hash} & \texttt{<git-commit-or-file-hash>} \\
+\textbf{Version} & \texttt{vX.Y.Z} \\
+\textbf{ACE Budget} & \(\tau=\texttt{<value>}\) \\
+\textbf{Gap Target} & \(\gamma_{\min}=\texttt{<value>}\) \\
+\textbf{Contraction} & \(\varepsilon=\texttt{<value>}\) \\
+\textbf{Bounds} & \(b_p=\texttt{<list>}\), \(L_p=\texttt{<list>}\) \\
+\textbf{PETC Signatures} & \texttt{<registry-refs>} \\
+\textbf{Reviewers} & \texttt{<names\/sign-offs>} \\
+\textbf{Seeds} & \texttt{<rng-seeds>} \\
+\textbf{Env} & \texttt{<platform\/deps lockfile>} \\
+\end{tabular}
+
+
+\subsection*{Operational Pseudocode (Informative)}
+% This uses simple math notation to avoid extra packages; adapt to algorithm2e if desired.
+\noindent\textbf{Pipeline:}
+\begin{align*}
+&\text{Input: MR artifact, budgets } (\tau, b_p, L_p),\; \gamma_{\min},\; \varepsilon.\\
+&1.\; \text{Ingest tests }\Rightarrow \text{ pass else quarantine}.\\
+&2.\; \text{Compute GapLB, SlopeUB under } (\tau, b_p, L_p).\\
+&3.\; \text{If } \gamma\!<\!\gamma_{\min} \text{ or } \|U_{\mathrm{ACE}}\|\!>\!1-\varepsilon:\; \text{abort and rollback}.\\
+&4.\; \text{Apply } U_{\mathrm{ACE}} = \Pi_{\mathrm{safe}} U \Pi_{\mathrm{safe}} \text{ with monitoring}.\\
+&5.\; \text{Log certificates and telemetry; enable oversight triggers}.
+\end{align*}
+
+
+\subsection*{Change Control}
+This section is versioned. Any modification requires a new DocID, reviewer sign-offs, and regeneration of certification artifacts. Deployments referencing this appendix must pin the exact DocID.
+\nocite{*}
+\bibliographystyle{unsrt}
+\bibliography{references}
+\end{document}

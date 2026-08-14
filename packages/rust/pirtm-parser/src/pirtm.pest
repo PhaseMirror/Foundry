@@ -1,0 +1,12 @@
+WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
+
+ident = @{ ("_" | ASCII_ALPHANUMERIC)+ }
+integer = @{ ASCII_DIGIT+ }
+float = @{ integer ~ "." ~ integer }
+version = { integer ~ "." ~ integer ~ ("." ~ integer )? }
+ensemble_path = { ident ~ ("-" ~ ident)* }
+item_path = { ident ~ ("::" ~ ident)* }
+program = { SOI ~ (ensemble_decl | import_stmt | statement)* ~ EOI }
+ensemble_decl = { "ensemble" ~ WHITESPACE+ ~ ident ~ WHITESPACE* ~ version }
+import_stmt = { "use" ~ WHITESPACE+ ~ ensemble_path ~ ("::" ~ item_path)? ~ (WHITESPACE+ "as" ~ WHITESPACE+ ident)? ~ (WHITESPACE+ "with" ~ WHITESPACE+ "spectral_budget" ~ WHITESPACE* "=" ~ WHITESPACE* float)? ~ ";" }
+statement = _{ /* existing statement rules can be added here */ }

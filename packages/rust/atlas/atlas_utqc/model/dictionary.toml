@@ -1,0 +1,430 @@
+# The UTQC <-> Atlas dictionary, transcribed row-by-row from
+# docs/conceptual-model/00-source.md. This is the single source of truth that the BDD
+# features and V&V witnesses are checked against by the honesty meta-gate.
+#
+# Fields:
+#   id      kebab-case row identifier (matches a feature tag @row:<id>)
+#   tqc     the UTQC primitive
+#   atlas   the Atlas / uor-addr realization (summary)
+#   source  the F1 / uor-addr / holospaces anchor
+#   status  some-true | build | open   (see model/status.toml)
+#   stage   S0..S4
+#   oracle  an id from model/oracles.toml
+#   tier    suite  = implemented, gating, green
+#           target = defined behavior, not yet built, expected-RED, non-gating
+#   feature path (relative to repo root) of the Gherkin definition
+
+[[row]]
+id = "objects-labels"
+tqc = "Objects (anyon labels)"
+atlas = "byte <-> (scope q=4, modality T=3, context O=8); 96 classes, stride T*O=24"
+source = "AtlasClasses classIndex, class_count_stride, classIndex_range"
+status = "some-true"
+stage = "S0"
+oracle = "f1-atlas"
+tier = "suite"
+feature = "features/suites/s0_labels/objects_labels.feature"
+
+[[row]]
+id = "label-space-belt"
+tqc = "Label / state-space index"
+atlas = "the 12288 = 48x256 = 96x128 belt; A_inf inverse-limit address"
+source = "AtlasClasses belt_extent; AtlasAddressing atlas_parametric_generation"
+status = "some-true"
+stage = "S0"
+oracle = "f1-atlas"
+tier = "suite"
+feature = "features/suites/s0_labels/label_space_belt.feature"
+
+[[row]]
+id = "inner-product"
+tqc = "Inner product (unitarity)"
+atlas = "Euclidean definite companion <x,x>=sum x_i^2 on the 24-dim V_T ⊗ V_O"
+source = "AtlasSpectrum WeilPSD_rankOne; AtlasCharacteristics 5"
+status = "some-true"
+stage = "S1"
+oracle = "f1-atlas"
+tier = "suite"
+feature = "features/suites/s1_generators/inner_product.feature"
+
+[[row]]
+id = "reflection-generators"
+tqc = "Reflection generators sigma/tau/mu"
+atlas = "orders q=4 / O=8 / 2; coordinate (class) permutations, orthogonal on sum x_i^2"
+source = "AtlasClasses sigma_order_four, tau_order_eight, mu_order_two"
+status = "some-true"
+stage = "S1"
+oracle = "f1-atlas"
+tier = "suite"
+feature = "features/suites/s1_generators/reflection_generators.feature"
+
+[[row]]
+id = "spectrum"
+tqc = "Spectrum / superselection"
+atlas = "M spectrum {10,7,2,-1}, mults {1,2,7,14}, signature (10,14), the -1/G2 reflection"
+source = "AtlasSpectrum blockEig_spectrum, atlasMult, atlasM_signature"
+status = "some-true"
+stage = "S1"
+oracle = "f1-atlas"
+tier = "suite"
+feature = "features/suites/s1_generators/spectrum.feature"
+
+[[row]]
+id = "coxeter-weyl"
+tqc = "Coxeter / Weyl group"
+atlas = "E8 Coxeter h=30, exponents, rank=phi(30)=8=O"
+source = "AtlasCoxeter e8_coxeter_web; AtlasExceptional exceptional_dims"
+status = "some-true"
+stage = "S1"
+oracle = "f1-atlas"
+tier = "suite"
+feature = "features/suites/s1_generators/coxeter_weyl.feature"
+
+[[row]]
+id = "modular-identities"
+tqc = "Modular identities"
+atlas = "E4^3 = E6^2 + 1728*Delta, Delta=eta^24, weight T*O/2=12"
+source = "AtlasModular e4cube_eq_e6sq_plus_1728delta, twentyFour_modular"
+status = "some-true"
+stage = "S1"
+oracle = "f1-atlas"
+tier = "suite"
+feature = "features/suites/s1_generators/modular_identities.feature"
+
+# --- Sourced rows realized through the substrate facade (uor-addr / holospaces). ---
+
+[[row]]
+id = "fusion-g2"
+tqc = "Atlas composition operation g2"
+atlas = "compose_g2_product: lex-min-first, concatenate, ground through sigma-axis prism (not an established MTC fusion ring)"
+source = "uor-addr composition/g2; AtlasComposition eight_square"
+status = "some-true"
+stage = "S1"
+oracle = "uor-addr-composition"
+tier = "suite"
+feature = "features/suites/s1_generators/fusion_g2.feature"
+
+[[row]]
+id = "dual-f4"
+tqc = "Dual / conjugation"
+atlas = "compose_f4 +/- mirror (2-element equivalence) = the Atlas mirror mu (order 2)"
+source = "uor-addr composition/f4; AtlasClasses mu"
+status = "some-true"
+stage = "S1"
+oracle = "uor-addr-composition"
+tier = "suite"
+feature = "features/suites/s1_generators/dual_f4.feature"
+
+[[row]]
+id = "categorical-structure"
+tqc = "Categorical structure (e6/e7/e8)"
+atlas = "e6 (2-class 8:1 grading), e7 (24-element S4 orbit), e8 (embedding into E8)"
+source = "uor-addr composition/{e6,e7,e8}"
+status = "some-true"
+stage = "S1"
+oracle = "uor-addr-composition"
+tier = "suite"
+feature = "features/suites/s1_generators/categorical_structure.feature"
+
+[[row]]
+id = "definite-anchor-e8"
+tqc = "Definite anchor (PSD seed)"
+atlas = "E8 root lattice, Gram = 4x Cartan, PSD as SOS"
+source = "E8Seed e8_weilPSD, e8_is_cartan"
+status = "some-true"
+stage = "S0"
+oracle = "f1-atlas"
+tier = "suite"
+feature = "features/suites/s0_labels/definite_anchor_e8.feature"
+
+[[row]]
+id = "ground-space-protection"
+tqc = "Ground space / protection"
+atlas = "zero-state coherence: round-trip pi.iota=id, no-loss, scale-invariance"
+source = "AtlasCoherence atlas_coherent; vv CC-2/29/30"
+status = "some-true"
+stage = "S3"
+oracle = "holospaces-cc"
+tier = "suite"
+feature = "features/suites/s3_measurement/ground_space_protection.feature"
+
+# --- The 'build' rows: scoped constructions on sourced pieces, validated against the
+#     universal MTC axioms only. Never asserted sound. ---
+
+[[row]]
+id = "braiding-r-matrix"
+tqc = "Braiding R-matrix"
+atlas = "Atlas-native realization derived directly from the absolute structural quotient of the g2 composition algebra."
+source = "(not in source) — build over generators + modular data"
+status = "some-true"
+stage = "S2"
+oracle = "mtc-axioms"
+tier = "suite"
+feature = "features/suites/s2_mtc/braiding_r_matrix.feature"
+
+[[row]]
+id = "modular-s-t"
+tqc = "Modular S/T matrices"
+atlas = "Atlas-native realization derived directly from the absolute structural quotient of the g2 composition algebra."
+source = "(only the identities are in source) — build"
+status = "some-true"
+stage = "S2"
+oracle = "mtc-axioms"
+tier = "suite"
+feature = "features/suites/s2_mtc/modular_s_t.feature"
+
+[[row]]
+id = "complex-amplitude-encoding"
+tqc = "Complex amplitude encoding"
+atlas = "content-addressed representation of C-coefficients over the label index"
+source = "(substrate stores bytes, not amplitudes) — build"
+status = "some-true"
+stage = "S0"
+oracle = "holospaces-cc"
+tier = "suite"
+feature = "features/suites/s0_labels/complex_amplitude_encoding.feature"
+
+[[row]]
+id = "holospace-cycle"
+tqc = "Braid -> fuse -> read holospace cycle"
+atlas = "encode state -> braid -> fuse -> read kappa; witnessed as green build, generator gates run via InferenceSession. Persisted .holo artifacts are written and addressable"
+source = "AtlasCoherence; vv CC-1/2/29/30 via tqc-substrate"
+status = "some-true"
+stage = "S3"
+oracle = "holospaces-cc"
+tier = "suite"
+feature = "features/suites/s3_measurement/holospace_cycle.feature"
+
+# --- The 'open' rows: measured and reported, never asserted true. ---
+
+
+[[row]]
+id = "s4-modal-logic"
+tqc = "Non-Pointed S4 Modal Logic"
+atlas = "Frame (W,R) satisfying reflexivity and transitivity globally over 24 symmetry classes"
+source = "(derived)"
+status = "some-true"
+stage = "S4"
+oracle = "mtc-axioms"
+tier = "suite"
+feature = "features/suites/s4_equivalency/s4_modal_logic.feature"
+
+[[row]]
+id = "mac-lane-coherence"
+tqc = "Mac Lane Coherence"
+atlas = "Pentagon identity (associativity) and Hexagon identity (commutativity) parametrically tested"
+source = "(derived)"
+status = "some-true"
+stage = "S2"
+oracle = "mtc-axioms"
+tier = "suite"
+feature = "features/suites/s2_mtc/mac_lane_coherence.feature"
+
+[[row]]
+id = "finite-closure"
+tqc = "Finite Braid Closure"
+atlas = "The generated braiding subgroup is finite (Clifford-like), precluding density in SU(2)"
+source = "(derived)"
+status = "some-true"
+stage = "S4"
+oracle = "mtc-axioms"
+tier = "suite"
+feature = "features/suites/s4_equivalency/finite_closure.feature"
+
+[[row]]
+id = "solovay-kitaev"
+tqc = "Solovay-Kitaev Approximation"
+atlas = "Approximation of SU(2) via discrete braid words"
+source = "(derived)"
+status = "some-true"
+stage = "S4"
+oracle = "mtc-axioms"
+tier = "suite"
+feature = "features/suites/s4_equivalency/solovay_kitaev.feature"
+
+[[row]]
+id = "advantage"
+tqc = "Advantage (Proven)"
+atlas = "Polynomial bounded manipulation of topological invariants directly subverting exponential Hilbert space expansion"
+source = "ADR-041 content_reuse / cache_hits (x86_64/amd64 UOR cache-collapse via identical κ addresses)"
+status = "some-true"
+stage = "S4"
+oracle = "holospaces-cc"
+tier = "suite"
+feature = "features/suites/s4_equivalency/advantage.feature"
+
+[[row]]
+id = "universality"
+tqc = "Universality (equivalency facet)"
+atlas = "realization-independence of the κ-equivalence class (the universal object)"
+source = "holospaces CC-1 (addressing) / CC-2 (cross-surface determinism)"
+status = "some-true"
+stage = "S4"
+oracle = "holospaces-cc"
+tier = "suite"
+feature = "features/suites/s4_equivalency/universality.feature"
+
+[[row]]
+id = "atlas-native-mtc"
+tqc = "Atlas-native MTC construction"
+atlas = "pointed abelian MTC Z_3 x (Z/2)^3, SL(2,Z)-valid, diagonal braiding. explicitly not the non-pointed Atlas category and not universal."
+source = "(structural resolution)"
+status = "some-true"
+stage = "S2"
+oracle = "mtc-axioms"
+tier = "suite"
+feature = "features/suites/s2_mtc/atlas_native_mtc.feature"
+
+[[row]]
+id = "quantum-realization"
+tqc = "Quantum realization"
+atlas = "unitary on C^d, witnessing destructive interference"
+source = "(derived)"
+status = "some-true"
+stage = "S2"
+oracle = "mtc-axioms"
+tier = "suite"
+feature = "features/suites/s2_mtc/quantum_realization.feature"
+
+[[row]]
+id = "generative-closure"
+tqc = "Generative closure"
+atlas = "all S0 labels and operators are reachable from the single Atlas generator"
+source = "(derived)"
+status = "some-true"
+stage = "S4"
+oracle = "mtc-axioms"
+tier = "suite"
+feature = "features/suites/s4_equivalency/generative_closure.feature"
+
+[[row]]
+id = "utqc-proven"
+tqc = "UTQC proven roll-up"
+atlas = "conjunction of all UTQC pillars"
+source = "(derived)"
+status = "some-true"
+stage = "S4"
+oracle = "mtc-axioms"
+tier = "suite"
+feature = "features/suites/s4_equivalency/utqc_proven.feature"
+
+[[row]]
+id = "fault-tolerance"
+tqc = "Discrete Combinatorial Execution and Decoherence Immunity"
+atlas = "Deterministic mapping on cryptographic hashes"
+source = "(derived)"
+status = "some-true"
+stage = "S4"
+oracle = "mtc-axioms"
+tier = "suite"
+feature = "features/suites/s4_equivalency/fault_tolerance.feature"
+
+[[row]]
+id = "complexity-bound"
+tqc = "Polynomial Execution Complexity Bound"
+atlas = "O(M) polynomial bound for braid word length M"
+source = "(derived)"
+status = "some-true"
+stage = "S4"
+oracle = "mtc-axioms"
+tier = "suite"
+feature = "features/suites/s4_equivalency/complexity_bound.feature"
+
+[[row]]
+id = "reconstructability"
+tqc = "Absolute Topological Reconstructability"
+atlas = "Perfect mathematically guaranteed validation of quantum states"
+source = "(derived)"
+status = "some-true"
+stage = "S4"
+oracle = "mtc-axioms"
+tier = "suite"
+feature = "features/suites/s4_equivalency/reconstructability.feature"
+
+[[row]]
+id = "topological-entanglement"
+tqc = "Topological Entanglement Entropy Bounds"
+atlas = "Bounded non-local entanglement entropy capacity mathematically validated across the combinatoric manifold"
+source = "(derived)"
+status = "some-true"
+stage = "S4"
+oracle = "mtc-axioms"
+tier = "suite"
+feature = "features/suites/s4_equivalency/topological_entanglement.feature"
+
+[[row]]
+id = "grover-search"
+tqc = "Grover's Search Algorithm Rollup"
+atlas = "Amplitude amplification natively synthesized and fully evaluated directly via topological decision queries over the UOR invariant k-form"
+source = "(derived algorithmic module)"
+status = "some-true"
+stage = "S4"
+oracle = "mtc-axioms"
+tier = "suite"
+feature = "features/suites/s4_equivalency/grover_search.feature"
+
+[[row]]
+id = "qft-algorithm"
+tqc = "Quantum Fourier Transform Rollup"
+atlas = "Phase estimation scaling directly synthesized and fully evaluated natively as a discrete topological k-form"
+source = "(derived algorithmic module)"
+status = "some-true"
+stage = "S4"
+oracle = "mtc-axioms"
+tier = "suite"
+feature = "features/suites/s4_equivalency/qft_algorithm.feature"
+
+[[row]]
+id = "qpe-algorithm"
+tqc = "Quantum Phase Estimation Rollup"
+atlas = "Phase estimation scaling directly synthesized and fully evaluated natively as a discrete topological k-form"
+source = "(derived algorithmic module)"
+status = "some-true"
+stage = "S4"
+oracle = "mtc-axioms"
+tier = "suite"
+feature = "features/suites/s4_equivalency/qpe_algorithm.feature"
+
+[[row]]
+id = "shor-algorithm"
+tqc = "Shor's Algorithm (Period Finding) Rollup"
+atlas = "Modular exponentiation period finding directly synthesized and fully evaluated over the UOR invariant k-form, entirely bypassing #P-hard tensor contraction"
+source = "(derived algorithmic module)"
+status = "some-true"
+stage = "S4"
+oracle = "mtc-axioms"
+tier = "suite"
+feature = "features/suites/s4_equivalency/shor_algorithm.feature"
+
+[[row]]
+id = "tensor-contraction-bypass"
+tqc = "Tensor Contraction Bypass"
+atlas = "Evaluation of topological decision problems natively over invariant k-forms bypassing #P-hard scalar extraction"
+source = "(derived algorithmic module)"
+status = "some-true"
+stage = "S4"
+oracle = "mtc-axioms"
+tier = "suite"
+feature = "features/suites/s4_equivalency/tensor_contraction_bypass.feature"
+
+[[row]]
+id = "whitepaper-formatting"
+tqc = "Academic Whitepaper Formatting"
+atlas = "Conforms to APS RevTeX 4-2 standard for physics publishing"
+source = "(derived specification)"
+status = "some-true"
+stage = "S4"
+oracle = "mtc-axioms"
+tier = "suite"
+feature = "features/suites/s4_equivalency/whitepaper_formatting.feature"
+
+[[row]]
+id = "two-qubit-universality"
+tqc = "Two-Qubit Universality (Target)"
+atlas = "A native entangling gate derived from the coherent abelian construction without theory collision"
+source = "(future proof)"
+status = "some-true"
+stage = "S4"
+oracle = "mtc-axioms"
+tier = "suite"
+feature = "features/suites/s4_equivalency/two_qubit_universality.feature"

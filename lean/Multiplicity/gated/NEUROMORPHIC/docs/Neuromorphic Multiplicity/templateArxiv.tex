@@ -1,0 +1,375 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,amsfonts}
+\usepackage{mathtools}
+\usepackage{bm}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{microtype}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+
+\title{Neuromorphic AGI, Multiplicity Theory, and the Universal Multiplicity Equation:\\
+From Descriptive PDE to Operator Generator and Executable Simulator}
+\author{Citizen Gardens \\ \\ The Foundation of Multiplicity}
+\date{April 3, 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This report synthesizes developments around Multiplicity Theory, Neuromorphic Artificial General Intelligence (AGI), and the Universal Multiplicity Equation (UME). The original neuromorphic AGI preprint presents a time-dependent multiplicity equation as a unifying dynamical law for cognitive state evolution, integrating prime-based encoding, recursive feedback, tensor interactions, diffusion, and stochasticity. Here we upgrade that formulation in three directions: (1) we re-cast the UME from a descriptive partial differential equation into a generator of a semigroup on a multiplicity Hilbert space; (2) we formalize prime indices as labels for irreducible operator families acting on this space; and (3) we provide a concrete PyTorch-style architecture (the MultiplicityCell) together with an experiment design to test a prime-factor transfer law across composite tasks. The report concludes with recommendations for next-step experiments and validation pathways.
+\end{abstract}
+
+\tableofcontents
+
+\section{Executive Summary}
+
+\subsection{Starting point: neuromorphic UME}
+
+The neuromorphic AGI preprint introduces a Universal Multiplicity Equation of the form
+\begin{equation}
+\frac{\partial \psi_k(t)}{\partial t}
+= \alpha_k(t)\psi_k
++ \beta_k(t)\int_0^t I_k(\tau)\,d\tau
++ \gamma_k(t)\sum_{j,l} T_{kjl}\psi_j\psi_l
++ \lambda_k(t)\nabla^2\psi_k
++ \eta_k(t)\psi_k^n
++ \xi_k(t),
+\label{eq:UME-coordinate}
+\end{equation}
+with explicit dimensional analysis and characteristic scales ensuring that each term matches the dimensions of the left-hand side.\footnote{All references to the neuromorphic AGI preprint and its equations are drawn from the attached document.} This equation is presented as a framework for cognitive state evolution in neuromorphic AGI, combining:
+\begin{itemize}[nosep]
+\item Growth or decay via coefficients $\alpha_k$,
+\item Memory integrals via $\beta_k$ and $I_k$,
+\item Tensor-mediated coupling via $T_{kjl}$,
+\item Diffusion via $\lambda_k\nabla^2$,
+\item Nonlinear self-interaction via $\eta_k\psi_k^n$,
+\item Stochasticity via $\xi_k$.
+\end{itemize}
+
+The preprint further incorporates quantum-inspired structure via prime-encoded superpositions, tensorial entanglement, and geometric feedback terms using Berry curvature and the Fubini--Study metric.
+
+\subsection{Conceptual upgrade}
+
+We reinterpret \eqref{eq:UME-coordinate} not merely as a PDE written in components, but as the coordinate representation of an operator equation
+\begin{equation}
+\frac{d\Psi}{dt} = \mathcal{L}_{\mathrm{mult}}[\Psi],
+\end{equation}
+where $\Psi$ is a state in a (possibly infinite-dimensional) multiplicity Hilbert space $\mathcal{H}$, and $\mathcal{L}_{\mathrm{mult}}$ is a generator of a strongly continuous semigroup (or group, when unitary) incorporating distinct operator contributions.
+
+A schematic operator decomposition is
+\begin{equation}
+\mathcal{L}_{\mathrm{mult}}
+=
+\Xi(t) + \Lambda_m(t) + \mathcal{T} + \mathcal{D} + \mathcal{N} + \mathcal{S},
+\end{equation}
+where:
+\begin{itemize}[nosep]
+\item $\Xi(t)$ encodes prime evolution,
+\item $\Lambda_m(t)$ is a multiplicity-scalar operator,
+\item $\mathcal{T}$ is a tensor coupling operator,
+\item $\mathcal{D}$ is a diffusion operator,
+\item $\mathcal{N}$ is a nonlinear operator,
+\item $\mathcal{S}$ is a stochastic term.
+\end{itemize}
+
+Prime indices are elevated from static labels to indices of irreducible operator families $\{\hat{O}_p\}$. Composite cognition is modeled as operator words $W = \prod_p \hat{O}_p^{k_p}$ acting on $\Psi$. Ethics is upgraded from a linear update rule to a geometric constraint manifold $\mathcal{E}\subset\mathcal{H}$ defined by a fairness functional $F[\Psi]\ge \varepsilon$.
+
+\subsection{Executable upgrade}
+
+We then construct a concrete MultiplicityCell in PyTorch that discretizes the dynamics
+\[
+\Psi_{t+1} = \Psi_t + \Delta t\,\mathcal{L}_{\mathrm{mult}}(\Psi_t)
+\]
+over a discrete multiplicity axis representing prime-encoded basis states. The cell includes:
+\begin{enumerate}[nosep]
+\item A diagonal prime-evolution operator,
+\item A nonlinear multiplicity-scalar operator,
+\item A tensor-like mixing operator across prime indices,
+\item A discrete Laplacian as diffusion operator,
+\item Nonlinear self-interaction,
+\item Optional ethical projection and geometric regularization via Fubini--Study curvature penalties.
+\end{enumerate}
+
+On top of this cell, we design a multi-task experiment to test a prime-factor transfer law across tasks, where transfer performance is predicted to scale with the normalized overlap of their activated prime sets.
+
+\section{From Coordinate UME to Operator Generator}
+
+\subsection{Multiplicity Hilbert space}
+
+We introduce a multiplicity Hilbert space $\mathcal{H}$ which, in one simple realization, could be
+\[
+\mathcal{H} \cong \ell^2(\mathbb{P}) \otimes \mathcal{K},
+\]
+where:
+\begin{itemize}[nosep]
+\item $\ell^2(\mathbb{P})$ is the square-summable space over primes, with canonical basis $\{\lvert p_k\rangle\}$,
+\item $\mathcal{K}$ is a feature space (for example $L^2(\Omega)$ over a spatial domain $\Omega$, or $\mathbb{C}^d$ for finite feature vectors).
+\end{itemize}
+
+A general state can then be written as
+\[
+\Psi = \sum_{k} \psi_k \otimes \lvert p_k\rangle,
+\]
+with $\psi_k \in \mathcal{K}$ corresponding to the component associated with prime $p_k$.
+
+\subsection{Operator decomposition of $\mathcal{L}_{\mathrm{mult}}$}
+
+We define $\mathcal{L}_{\mathrm{mult}}$ as an operator (possibly time-dependent) on $\mathcal{H}$, decomposed schematically as
+\begin{equation}
+\mathcal{L}_{\mathrm{mult}}
+=
+\Xi(t) + \Lambda_m(t) + \mathcal{T} + \mathcal{D} + \mathcal{N} + \mathcal{S}.
+\end{equation}
+
+\paragraph{Prime evolution operator $\Xi(t)$}
+
+We let
+\[
+\Xi(t) = \sum_{k} \alpha_k(t)\, \mathbb{I} \otimes \lvert p_k\rangle\langle p_k\rvert,
+\]
+which acts diagonally on the prime index, matching the growth or decay term $\alpha_k(t)\psi_k$.
+
+\paragraph{Multiplicity-scalar operator $\Lambda_m(t)$}
+
+This is a nonlinear or linear operator acting within each prime block, for example
+\[
+\Lambda_m(t)[\Psi] = \sum_k \Lambda^{(k)}_m(t)\psi_k \otimes \lvert p_k\rangle,
+\]
+where $\Lambda_m^{(k)}(t)$ may be realized as a small neural network or MLP on the feature space $\mathcal{K}$.
+
+\paragraph{Tensor coupling operator $\mathcal{T}$}
+
+We interpret the $T_{kjl}$ tensor as defining an operator-valued quadratic form:
+\begin{equation}
+\mathcal{T}[\Psi] = \sum_{k,j,l} T_{kjl}\,(\psi_j,\psi_l)\otimes \lvert p_k\rangle,
+\end{equation}
+where $(\psi_j,\psi_l)$ is a suitable bilinear combination (for example pointwise product or another bilinear map). In a low-rank factorization,
+\[
+T_{kjl} = \sum_{r=1}^R U_{kr}V_{jr}W_{lr},
+\]
+leading to efficient tensor network implementations.
+
+\paragraph{Diffusion operator $\mathcal{D}$}
+
+We let
+\[
+\mathcal{D} = \sum_k \lambda_k(t) \Delta \otimes \lvert p_k\rangle\langle p_k\rvert,
+\]
+where $\Delta$ is a Laplacian on $\mathcal{K}$ (spatial, graph, or otherwise). On a discrete prime axis, we may also consider a Laplacian in the prime index itself.
+
+\paragraph{Nonlinear operator $\mathcal{N}$}
+
+The nonlinear self-interaction term $\eta_k(t)\psi_k^n$ is captured as
+\[
+\mathcal{N}[\Psi] = \sum_k \eta_k(t)\, f_n(\psi_k)\otimes \lvert p_k\rangle,
+\]
+where $f_n$ denotes a power or general nonlinear map.
+
+\paragraph{Stochastic term $\mathcal{S}$}
+
+The stochastic term $\xi_k(t)$ is modeled as noise:
+\[
+\mathcal{S}[\Psi,t] = \Xi_{\mathrm{noise}}(t),
+\]
+with $\Xi_{\mathrm{noise}}(t)$ a stochastic process in $\mathcal{H}$.
+
+\subsection{Prime operators and composite cognition}
+
+Instead of treating primes as mere labels, we introduce a family of operators $\{\hat{O}_p\}$ on $\mathcal{H}$, each associated with a prime $p$. Composite cognition is then an operator word
+\[
+W = \prod_p \hat{O}_p^{k_p},
+\]
+acting on $\Psi$. A task or cognitive transformation can be represented as such an operator word, or as a word in a noncommutative algebra generated by the $\hat{O}_p$.
+
+\subsection{Ethics as constraint manifold}
+
+We upgrade the discrete ethical update rule
+\[
+M(t+1) = \alpha M(t) + \beta R(t)
+\]
+to a geometric constraint:
+\begin{equation}
+\Psi(t)\in\mathcal{E}\subset\mathcal{H},
+\end{equation}
+with
+\[
+\mathcal{E} = \{\Psi\in\mathcal{H} \mid F[\Psi] \geq \varepsilon\},
+\]
+where $F$ is a fairness or lawfulness functional. The dynamics are then restricted to $\mathcal{E}$ either by
+\begin{itemize}[nosep]
+\item projected evolution, $\Psi_{t+1} = \Pi_{\mathcal{E}}\big(\Psi_t + \Delta t\,\mathcal{L}_{\mathrm{mult}}(\Psi_t)\big)$, or
+\item penalization in a variational functional, for example,
+\[
+\mathcal{F}[\Psi] = E[\Psi] + R[\Psi] + C[\Psi] + \lambda_{\mathcal{E}}\max(0,\varepsilon - F[\Psi]).
+\]
+\end{itemize}
+
+\subsection{Quantum geometry via Fubini--Study distance}
+
+On the projective Hilbert space $\mathbb{P}(\mathcal{H})$, the Fubini--Study distance between normalized states $\Psi_1,\Psi_2$ is
+\[
+d_{\mathrm{FS}}(\Psi_1,\Psi_2)
+=
+\arccos\big(|\langle \Psi_1,\Psi_2\rangle|\big).
+\]
+A curvature penalty can be introduced over trajectories $\Psi(t)$ by integrating or summing discrete Fubini--Study distances between successive states.
+
+\section{Variational Learning and Prime-Factor Transfer Law}
+
+\subsection{Variational viewpoint}
+
+We treat learning as a constrained variational problem:
+\begin{equation}
+\Psi^\ast = \arg\min_{\Psi \in \mathcal{E}} \mathcal{F}[\Psi],
+\end{equation}
+where
+\begin{equation}
+\mathcal{F} = E[\Psi] + R[\Psi] + C[\Psi],
+\end{equation}
+and $E[\Psi]$ is a stability or energy functional, $R[\Psi]$ is task loss, and $C[\Psi]$ is a curvature or geometry penalty.
+
+\subsection{Prime-factor transfer law}
+
+Let each task $T_i$ be associated with a subset $P_i$ of prime indices. Define
+\[
+\mathrm{Overlap}(i,j) = \frac{|P_i\cap P_j|}{|P_i\cup P_j|}.
+\]
+The prime-factor transfer law posits
+\begin{equation}
+\mathrm{Transfer}(T_i\to T_j)
+\approx
+a\,\mathrm{Overlap}(i,j) + b
+\end{equation}
+for constants $a>0$, $b$, where transfer is measured via zero-shot performance, few-shot sample efficiency, or reduction in loss after a fixed adaptation budget.
+
+\section{Discrete Simulator: MultiplicityCell}
+
+\subsection{Architecture}
+
+We discretize the UME dynamics over time with step size $\Delta t$, on a finite-dimensional approximation of $\mathcal{H}$ given by tensors of shape
+\[
+\text{batch} \times \text{feature-dim} \times \text{multiplicity-dim}.
+\]
+Here, the multiplicity dimension indexes prime basis states.
+
+A PyTorch-style definition of one time-step of the dynamics is:
+
+\begin{verbatim}
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+class MultiplicityCell(nn.Module):
+    def __init__(self, feature_dim, multiplicity_dim,
+                 hidden_dim, delta_t=0.1, nonlinear_order=3):
+        super().__init__()
+        self.feature_dim = feature_dim
+        self.multiplicity_dim = multiplicity_dim
+        self.hidden_dim = hidden_dim
+        self.delta_t = delta_t
+        self.nonlinear_order = nonlinear_order
+
+        self.alpha = nn.Parameter(torch.randn(multiplicity_dim) * 0.1)
+
+        self.scalar_net = nn.Sequential(
+            nn.Linear(feature_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, feature_dim)
+        )
+
+        self.mixing_matrix = nn.Parameter(
+            torch.randn(multiplicity_dim, multiplicity_dim) * 0.1
+        )
+        self.coupling_proj = nn.Linear(feature_dim, feature_dim)
+
+        self.lambda_diff = nn.Parameter(torch.randn(multiplicity_dim) * 0.1)
+        self.register_buffer("laplacian",
+                             self._compute_laplacian(multiplicity_dim))
+
+        self.nonlinear_eta = nn.Parameter(torch.randn(multiplicity_dim) * 0.01)
+
+        self.ethical_projection = None
+
+    def _compute_laplacian(self, n):
+        L = torch.diag(torch.full((n,), -2.0))
+        for i in range(n - 1):
+            L[i, i + 1] = 1.0
+            L[i + 1, i] = 1.0
+        return L
+
+    def forward(self, psi, external_input=None):
+        batch_size = psi.size(0)
+
+        term1 = self.alpha.view(1, 1, -1) * psi
+
+        psi_flat = psi.permute(0, 2, 1).reshape(-1, self.feature_dim)
+        scalar_out = self.scalar_net(psi_flat)
+        term2 = scalar_out.reshape(batch_size, self.multiplicity_dim,
+                                   self.feature_dim).permute(0, 2, 1)
+
+        mixed = torch.einsum('kj, bfj -> bfk', self.mixing_matrix, psi)
+        term3 = self.coupling_proj(mixed.permute(0, 2, 1)).permute(0, 2, 1)
+
+        lap_psi = torch.einsum('kj, bfj -> bfk', self.laplacian, psi)
+        term4 = self.lambda_diff.view(1, 1, -1) * lap_psi
+
+        term5 = self.nonlinear_eta.view(1, 1, -1) * (psi ** self.nonlinear_order)
+
+        if external_input is None:
+            noise = torch.randn_like(psi) * 0.01
+        else:
+            noise = external_input
+
+        L_mult = term1 + term2 + term3 + term4 + term5 + noise
+
+        psi_next = psi + self.delta_t * L_mult
+
+        if self.ethical_projection is not None:
+            psi_next = self.ethical_projection(psi_next)
+
+        return psi_next
+\end{verbatim}
+
+\subsection{Geometric regularization}
+
+A discrete Fubini--Study proxy and curvature penalty can be implemented as:
+
+\begin{verbatim}
+def compute_fs_distance(psi1, psi2):
+    b = psi1.size(0)
+    v1 = psi1.view(b, -1)
+    v2 = psi2.view(b, -1)
+    v1 = F.normalize(v1, dim=1)
+    v2 = F.normalize(v2, dim=1)
+    overlap = torch.abs(torch.sum(v1 * v2, dim=1))
+    overlap = torch.clamp(overlap, -0.999, 0.999)
+    return torch.acos(overlap)
+
+def curvature_penalty(psi_seq):
+    total = 0.0
+    for t in range(len(psi_seq) - 1):
+        dist = compute_fs_distance(psi_seq[t], psi_seq[t + 1])
+        total += dist.mean()
+    return total
+\end{verbatim}
+
+\section{Outlook}
+
+We have:
+\begin{itemize}[nosep]
+\item Recast the neuromorphic UME as an operator-generator framework on multiplicity space.
+\item Clarified primes as indices of operator families and compositional modes.
+\item Upgraded the ethical component to a constraint manifold.
+\item Instantiated a concrete MultiplicityCell architecture that discretizes the UME.
+\item Sketched an experiment to test a prime-factor transfer law across tasks with controlled prime-support overlap.
+\end{itemize}
+
+Implementing and running the associated experiments is the next step to turn this conceptual unification into empirically grounded, falsifiable claims.
+
+\nocite{*}
+\bibliographystyle{plainnat}
+\bibliography{references} 
+\end{document}

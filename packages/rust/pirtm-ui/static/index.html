@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Phase Mirror · Live Operator</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0a0a0a;
+      color: #00ff88;
+      font-family: 'Courier New', Courier, monospace;
+      height: 100vh;
+      display: flex;
+      overflow: hidden;
+    }
+    /* Main terminal panel */
+    .terminal {
+      flex: 3;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid #00ff8822;
+    }
+    .log {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 0.9rem;
+      line-height: 1.4;
+    }
+    .log .entry {
+      margin-bottom: 0.4rem;
+      border-left: 2px solid transparent;
+      padding-left: 0.8rem;
+    }
+    .log .user-input { color: #ffffff; border-left-color: #ffaa00; }
+    .log .compiled { color: #00ccff; border-left-color: #00ccff; }
+    .log .invariant-pass { color: #00ff88; border-left-color: #00ff88; }
+    .log .invariant-fail { color: #ff5555; border-left-color: #ff5555; }
+    .log .exec-start { color: #ffaa00; border-left-color: #ffaa00; }
+    .log .exec-success { color: #00ff88; border-left-color: #00ff88; }
+    .log .exec-failure { color: #ff5555; border-left-color: #ff5555; }
+    .log .retraction { color: #cc88ff; border-left-color: #cc88ff; }
+    .log .rollback { color: #cc88ff; border-left-color: #cc88ff; }
+    .input-bar {
+      display: flex;
+      padding: 1rem;
+      border-top: 1px solid #00ff8822;
+      background: #0d0d0d;
+    }
+    .input-bar input {
+      flex: 1;
+      background: transparent;
+      border: 1px solid #00ff8844;
+      color: #fff;
+      padding: 0.6rem 1rem;
+      font-family: inherit;
+      font-size: 1rem;
+      outline: none;
+    }
+    .input-bar button {
+      background: #00ff8822;
+      border: 1px solid #00ff88;
+      color: #00ff88;
+      padding: 0 1.4rem;
+      margin-left: 0.5rem;
+      cursor: pointer;
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+    /* Dashboard panel */
+    .dashboard {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 1.5rem;
+      gap: 2rem;
+    }
+    .gauge-container {
+      text-align: center;
+    }
+    .gauge-label {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: #00ff8899;
+      margin-bottom: 0.5rem;
+    }
+    .gauge-value {
+      font-size: 2.2rem;
+      font-weight: bold;
+      margin: 0.5rem 0;
+      transition: color 0.3s;
+    }
+    .gauge-ring {
+      position: relative;
+      width: 100px;
+      height: 100px;
+      margin: 0 auto;
+    }
+    svg {
+      transform: rotate(-90deg);
+    }
+    .ring-bg {
+      fill: none;
+      stroke: #00ff8822;
+      stroke-width: 6;
+    }
+    .ring-fill {
+      fill: none;
+      stroke: #00ff88;
+      stroke-width: 6;
+      stroke-linecap: round;
+      transition: stroke-dashoffset 0.4s;
+    }
+    .status-badge {
+      padding: 0.5rem 1rem;
+      border: 1px solid #00ff8844;
+      text-align: center;
+      font-size: 0.8rem;
+      letter-spacing: 2px;
+    }
+    .footer {
+      margin-top: auto;
+      font-size: 0.7rem;
+      color: #00ff8855;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="terminal">
+    <div class="log" id="log"></div>
+    <div class="input-bar">
+      <input type="text" id="cmdInput" placeholder="Type a CNL command...">
+      <button id="sendBtn">SEND</button>
+    </div>
+  </div>
+  <div class="dashboard">
+    <div class="gauge-container">
+      <div class="gauge-label">Contraction Bound (c)</div>
+      <div class="gauge-value" id="cValue">--</div>
+      <div class="gauge-ring">
+        <svg width="100" height="100" viewBox="0 0 100 100">
+          <circle class="ring-bg" cx="50" cy="50" r="42"/>
+          <circle class="ring-fill" id="cRing" cx="50" cy="50" r="42"
+                  stroke-dasharray="263.89" stroke-dashoffset="263.89"/>
+        </svg>
+      </div>
+    </div>
+    <div class="gauge-container">
+      <div class="gauge-label">Resonance Tension (R_sc)</div>
+      <div class="gauge-value" id="rscValue">--</div>
+      <div class="gauge-ring">
+        <svg width="100" height="100" viewBox="0 0 100 100">
+          <circle class="ring-bg" cx="50" cy="50" r="42"/>
+          <circle class="ring-fill" id="rscRing" cx="50" cy="50" r="42"
+                  stroke-dasharray="263.89" stroke-dashoffset="263.89"/>
+        </svg>
+      </div>
+    </div>
+    <div class="status-badge" id="statusBadge">⚫ IDLE</div>
+    <div class="footer">Phase Mirror · Operator Stream</div>
+  </div>
+
+  <script>
+    const log = document.getElementById('log');
+    const cmdInput = document.getElementById('cmdInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const cValueEl = document.getElementById('cValue');
+    const rscValueEl = document.getElementById('rscValue');
+    const cRing = document.getElementById('cRing');
+    const rscRing = document.getElementById('rscRing');
+    const statusBadge = document.getElementById('statusBadge');
+
+    const CIRCUMFERENCE = 2 * Math.PI * 42; // ≈263.89
+
+    function appendLog(entry, className) {
+      const div = document.createElement('div');
+      div.className = `entry ${className}`;
+      const time = new Date().toLocaleTimeString();
+      div.textContent = `[${time}] ${entry}`;
+      log.appendChild(div);
+      log.scrollTop = log.scrollHeight;
+    }
+
+    function updateGauge(value, ring, valueEl, max = 10) {
+      valueEl.textContent = value.toFixed(4);
+      const ratio = Math.min(value / max, 1.0);
+      const offset = CIRCUMFERENCE * (1 - ratio);
+      ring.setAttribute('stroke-dashoffset', offset);
+      // color gradient
+      ring.style.stroke = ratio > 0.8 ? '#ff5555' : ratio > 0.5 ? '#ffaa00' : '#00ff88';
+    }
+
+    function setStatus(text, color) {
+      statusBadge.textContent = text;
+      statusBadge.style.color = color;
+      statusBadge.style.borderColor = color;
+    }
+
+    // Connect to operator WebSocket
+    const ws = new WebSocket('ws://localhost:3030/ws');
+
+    ws.onopen = () => {
+      appendLog('🔌 Connected to Phase Mirror operator', 'compiled');
+      setStatus('🔵 CONNECTED', '#00ccff');
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        switch (data.type) {
+          case 'user_input':
+            appendLog(`🗣️ User: ${data.text}`, 'user-input');
+            setStatus('🟡 PROCESSING', '#ffaa00');
+            break;
+          case 'compiled':
+            appendLog(`📐 Compiled MOCWord | c = ${data.c.toFixed(4)} | Rsc = ${data.rsc.toFixed(4)}`, 'compiled');
+            updateGauge(data.c, cRing, cValueEl, 1.0);
+            updateGauge(data.rsc, rscRing, rscValueEl, 10); // adjust max as needed
+            break;
+          case 'invariant_pass':
+            appendLog(`✅ Invariant Pass: ${data.message}`, 'invariant-pass');
+            setStatus('🟢 SAFE', '#00ff88');
+            break;
+          case 'invariant_fail':
+            appendLog(`❌ Invariant Fail: ${data.diagnostic}`, 'invariant-fail');
+            appendLog(`💡 Suggestion: ${data.suggestion}`, 'invariant-fail');
+            setStatus('🔴 VIOLATION', '#ff5555');
+            break;
+          case 'execution_start':
+            appendLog(`⚙️ Execution start: ${data.action}`, 'exec-start');
+            setStatus('🟡 EXECUTING', '#ffaa00');
+            break;
+          case 'execution_success':
+            appendLog(`🏆 Execution OK: ${data.message} (ID: ${data.action_id})`, 'exec-success');
+            setStatus('🟢 DEPLOYED', '#00ff88');
+            break;
+          case 'execution_failure':
+            appendLog(`💥 Execution Failed: ${data.error}`, 'exec-failure');
+            setStatus('🔴 FAILED', '#ff5555');
+            break;
+          case 'retraction':
+            appendLog(`🔄 Retraction: ${data.message}`, 'retraction');
+            setStatus('🟣 RETRACTING', '#cc88ff');
+            break;
+          case 'rollback':
+            appendLog(`🔙 Rollback: ${data.action_id} → ${data.result}`, 'rollback');
+            setStatus('🟣 ROLLED BACK', '#cc88ff');
+            break;
+          default:
+            appendLog(`❓ Unknown event: ${JSON.stringify(data)}`, '');
+        }
+      } catch (e) {
+        appendLog(`⚠️ Parse error: ${e.message}`, 'invariant-fail');
+      }
+    };
+
+    ws.onerror = () => {
+      appendLog('🚨 WebSocket error', 'invariant-fail');
+      setStatus('⚫ ERROR', '#ff5555');
+    };
+
+    ws.onclose = () => {
+      appendLog('🔌 Disconnected', 'invariant-fail');
+      setStatus('⚫ OFFLINE', '#888888');
+    };
+
+    // Send command via WebSocket? (operator doesn't accept input, but we can send a placeholder)
+    // Or we could keep the input bar for future use; for now just notify.
+    sendBtn.addEventListener('click', () => {
+      const cmd = cmdInput.value.trim();
+      if (cmd) {
+        appendLog(`📤 Sent (manual): ${cmd}`, 'user-input');
+        // Optionally send to operator if it supports, else just show
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: 'user_command', text: cmd }));
+        }
+        cmdInput.value = '';
+      }
+    });
+
+    cmdInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') sendBtn.click();
+    });
+  </script>
+</body>
+</html>

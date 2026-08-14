@@ -1,0 +1,795 @@
+\documentclass[11pt]{article}
+
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{enumitem}
+\usepackage{tikz}
+\geometry{margin=1in}
+
+\title{Z-CHAOS: Zeta-Based Quantum Algorithms in Multiplicity Spaces\\
+\large A Defensive Publication and Conceptual Prior Art Report}
+\author{Citizen Gardens \\ The Foundation of Multiplicity}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This document records and systematizes a speculative but structured family of ideas for quantum algorithms and quantum information primitives driven by the Riemann zeta function and its nontrivial zeros. It serves as a defensive publication: we lay out key concepts, mathematical constructions, and algorithmic templates that connect zeta zeros, quantum chaos, and prime-based multiplicity spaces for quantum computation. The goal is to fix these ideas in the public record as prior art, not to claim rigorous performance guarantees. The constructions include: (i) a multiplicity-space Hilbert space for prime-exponent encodings; (ii) zeta-log-derivative phase gates that act diagonally in multiplicity space; and (iii) a Quantum Zeta Search Algorithm (QZSA) template that interleaves Grover-type oracles with zeta-driven diffusion. We explicitly distinguish established mathematics, constructive proposals, and open conjectures.
+\end{abstract}
+\newpage
+\tableofcontents
+
+\section{Executive Summary}
+\label{sec:executive-summary}
+
+\subsection{Objective}
+
+The core idea of Z-CHAOS is to develop a class of quantum algorithms and information primitives that exploit the spectral and multiplicative structure of the Riemann zeta function \(\zeta(s)\), especially its nontrivial zeros on the critical strip, to guide quantum state evolution, search, and error correction.\,[file:1] The program uses three linked pillars: (1) the connection between zeta zeros and spectral statistics of quantum chaotic systems; (2) the multiplicative structure of the integers and prime number distributions; and (3) a multiplicity-space formulation where quantum states are labeled by prime exponent vectors.\,[file:1]
+
+\subsection{High-level Contributions}
+
+This defensive publication captures the following conceptual and technical contributions:
+
+\begin{itemize}[leftmargin=*]
+    \item A \textbf{multiplicity-space Hilbert space} \(\mathcal{H}_{\mathcal{M}}\) where basis states correspond to finite prime-exponent vectors \(\mathbf{m} = (m_2, m_3, m_5, \dots)\), representing integers \(n = \prod_p p^{m_p}\).\,[file:1]
+    \item A family of \textbf{zeta phase gates} \(Z_\zeta(s)\) that act diagonally on multiplicity-space basis states with phases derived from the logarithmic derivative \(\zeta'(s)/\zeta(s)\), which encodes prime structure via the von Mangoldt function.\,[file:1]
+    \item An explicit \textbf{Quantum Zeta Search Algorithm} (QZSA) template that augments Grover-like search with zeta-driven diffusion steps in multiplicity space; the aim is to explore conjectured advantages on structured search spaces organized by prime factorization or multiplicity patterns.\,[file:1]
+    \item A \textbf{layered epistemic structure} for claims: separating (A) established mathematics, (B) constructive proposals, and (C) open conjectures about performance and robustness.\,[file:1]
+    \item Initial sketches for \textbf{zeta-informed quantum error correction} and \textbf{cryptographic primitives}, where code structure and unpredictability are tied to prime multiplicities and zeta zero statistics.\,[file:1]
+\end{itemize}
+
+These ideas are documented here to establish prior art for any future patents or proprietary claims on zeta-based quantum algorithms and related multiplicity-space constructions.
+
+\subsection{Scope and Disclaimer}
+
+This document is not a fully rigorous complexity-theoretic treatment. In particular:
+
+\begin{itemize}[leftmargin=*]
+    \item We do not claim proven speedups over Grover's optimal \(\Theta(\sqrt{N})\) scaling for unstructured search; our proposals target \emph{structured} spaces where prime-factor patterns are relevant.\,[file:1]
+    \item We do not claim that the zeta phase gates can be evaluated exactly at arbitrary large heights \(t\) without incurring significant classical cost.\,[file:1]
+    \item We respect standard quantum mechanics: all proposed dynamics are unitary and linear; any use of ``nonlinear'' or ``chaotic'' is understood in the spectral/statistical sense, not as a literal violation of linearity.\,[file:1]
+\end{itemize}
+
+The aim is to make the space of possibilities clear, not to oversell current results.
+
+\section{Mathematical Framework}
+\label{sec:math-framework}
+
+\subsection{Riemann Zeta Function and its Zeros (Level A)}
+
+We recall standard definitions and facts (Level A: established mathematics). The Riemann zeta function is defined for \(\Re(s) > 1\) by the absolutely convergent Dirichlet series\,[file:1]
+\[
+\zeta(s) = \sum_{n=1}^{\infty} \frac{1}{n^s}, \quad \Re(s) > 1,
+\]
+and admits analytic continuation (except for a simple pole at \(s = 1\)) to the complex plane.\,[file:1] Its nontrivial zeros lie in the \emph{critical strip} \(0 < \Re(s) < 1\).\,[file:1]
+
+The famous Euler product connects \(\zeta(s)\) to primes:
+\[
+\zeta(s) = \prod_{p\ \text{prime}} \frac{1}{1 - p^{-s}}, \quad \Re(s) > 1.
+\]
+The logarithmic derivative is
+\[
+\frac{\zeta'(s)}{\zeta(s)} = - \sum_{n=1}^{\infty} \frac{\Lambda(n)}{n^s},
+\]
+where \(\Lambda(n)\) is the von Mangoldt function.\,[file:1]
+
+The Montgomery--Odlyzko law and related results show that the statistics of the nontrivial zeros (under suitable scaling) match those of eigenvalues of large random matrices from the Gaussian Unitary Ensemble (GUE), connecting zeta zeros to quantum chaotic systems.\,[file:1] This motivates interpreting zeta zeros as a ``spectrum'' for certain hypothetical quantum Hamiltonians.
+
+\subsection{Quantum Chaos and Spectral Statistics (Level A/B)}
+
+In quantum chaos, the energy-level statistics of classically chaotic systems are well-approximated by random matrix ensembles such as GUE; conversely, integrable systems tend to show Poissonian statistics.\,[file:1] The observed match between zeta zero statistics and GUE suggests an analogy between the nontrivial zeros and eigenvalues of a quantum chaotic Hamiltonian \(H\).\,[file:1]
+
+This has motivated conjectures (e.g., Berry--Keating) that there exists a self-adjoint operator whose spectrum corresponds to nontrivial zeros of \(\zeta(s)\), although no such explicit operator is yet universally accepted.\,[file:1] For our purposes, we adopt the following stance:
+
+\begin{itemize}[leftmargin=*]
+    \item \emph{Level A/B}: It is mathematically consistent with current evidence to treat the set of nontrivial zeros as possessing spectral statistics akin to a quantum chaotic Hamiltonian. We do not assume the explicit existence of a Hamiltonian with exactly that spectrum but use this as a guiding heuristic.\,[file:1]
+\end{itemize}
+
+\subsection{Multiplicity Space and Prime-Exponent Encoding (Level B)}
+
+We now introduce the multiplicity-space Hilbert space central to our constructions (Level B: constructive proposal).
+
+\subsubsection{Multiplicity Space \(\mathcal{M}\)}
+
+Define the multiplicity space
+\[
+\mathcal{M} := \left\{ \mathbf{m} = (m_2, m_3, m_5, \dots) \,\middle|\, m_p \in \mathbb{N}_0,\ \text{only finitely many } m_p \neq 0 \right\}.
+\]
+Each \(\mathbf{m} \in \mathcal{M}\) corresponds to a unique positive integer
+\[
+n(\mathbf{m}) := \prod_{p} p^{m_p}.
+\]
+We define a Hilbert space \(\mathcal{H}_{\mathcal{M}}\) with orthonormal basis
+\[
+\{ \lvert \mathbf{m} \rangle : \mathbf{m} \in \mathcal{M} \}.
+\]
+This is a natural realization of a ``multiplicity space'' in the sense of Multiplicity Theory: states are configurations of prime-labeled multiplicities rather than bare integers.\,[file:1]
+
+\subsubsection{Prime-Based Quantum Registers}
+
+A quantum register of \(k\) logical qubits can be embedded into a finite subspace of \(\mathcal{H}_{\mathcal{M}}\) by fixing a finite set of primes and bounding exponents.\,[file:1] For example, we may choose primes \(p_1, \dots, p_r\) and restrict to multiplicities \(m_{p_j} \in \{0,1\}\), representing binary bits; more generally, higher exponents encode qudits or structured data. This embedding allows us to exploit number-theoretic structure (e.g., divisibility, prime distributions) at the level of the Hilbert space itself.\,[file:1]
+
+\subsection{Zeta-Log-Derivative Phase Gates (Level B)}
+
+We propose a canonical family of unitary gates \(Z_\zeta(s)\) acting diagonally in the multiplicity basis, with phases derived from the logarithmic derivative of \(\zeta(s)\).\,[file:1]
+
+\subsubsection{Definition of \(Z_\zeta(s)\)}
+
+Fix a complex parameter \(s = \sigma + i t\) with \(\Re(s) = \sigma > 1\) (for absolute convergence) or use analytic continuation where appropriate.\,[file:1] Define
+\[
+Z_\zeta(s)\, \lvert \mathbf{m} \rangle := \exp\big(i\, \Phi_s(\mathbf{m})\big)\, \lvert \mathbf{m} \rangle,
+\]
+with
+\[
+\Phi_s(\mathbf{m}) := \gamma\, \frac{\zeta'(s)}{\zeta(s)} \log n(\mathbf{m}),
+\]
+and \(\gamma \in \mathbb{R}\) a fixed scaling constant.\,[file:1] Since \(\log n(\mathbf{m}) = \sum_p m_p \log p\), we obtain
+\[
+\Phi_s(\mathbf{m}) = \gamma\, \frac{\zeta'(s)}{\zeta(s)} \sum_{p} m_p \log p.
+\]
+
+\paragraph{Properties.} 
+
+\begin{itemize}[leftmargin=*]
+    \item \(Z_\zeta(s)\) is unitary whenever \(\Phi_s(\mathbf{m})\) is real modulo \(2\pi\), which can be enforced by choosing \(\gamma\) and restricting to appropriate regions or taking real parts as needed.
+    \item The phase is additive over primes: for \(\mathbf{m} = \mathbf{m}^{(1)} + \mathbf{m}^{(2)}\),
+    \[
+    \Phi_s(\mathbf{m}) = \Phi_s(\mathbf{m}^{(1)}) + \Phi_s(\mathbf{m}^{(2)}),
+    \]
+    reflecting multiplicativity of \(n(\mathbf{m})\). This realizes the ``recursive stability'' of prime-labeled multiplicity spaces emphasized in Multiplicity Theory.\,[file:1]
+    \item Conceptually, \(Z_\zeta(s)\) uses a global spectral quantity \(\zeta'(s)/\zeta(s)\) to generate phase patterns that are sensitive to the multiplicative structure of each basis state.\,[file:1]
+\end{itemize}
+
+\subsubsection{Approximation and Truncation}
+
+Exact evaluation of \(\zeta'(s)/\zeta(s)\) for large \(|t|\) may be computationally expensive.\,[file:1] In practice, implementations would use truncated series or Euler product approximations, or precomputed tabulations for specific \(s\) values, particularly in toy models or small-scale simulations.\,[file:1] This is consistent with the defensive nature of this publication: we describe the operator class, not an optimized numerical scheme.
+
+\subsection{Zeta-Based Basis States (Level B/C)}
+
+In the original Z-CHAOS conception, one writes
+\[
+\lvert \psi(t) \rangle = \sum_i \alpha_i \lvert \zeta_i \rangle e^{i \theta_i(t)},
+\]
+where \(\lvert \zeta_i \rangle\) are states ``corresponding'' to the nontrivial zeros of \(\zeta(s)\) and \(\theta_i(t)\) are zeta-driven phases.\,[file:1] To make this more concrete, we clarify:
+
+\begin{itemize}[leftmargin=*]
+    \item \emph{Level B (constructive embedding):} We can define a family of unitaries that map computational basis states \(\lvert \mathbf{m} \rangle\) to superpositions labeled by an indexing of zeta zeros, but such an embedding is not canonical and we do not fix one here.
+    \item \emph{Level C (conjectural spectral embedding):} If a Hamiltonian \(H_\zeta\) existed with eigenvalues corresponding to zeta zeros and eigenstates \(\lvert \zeta_i \rangle\), then time evolution \(e^{-i H_\zeta t}\) would implement zeta-zero-based dynamics directly. This remains conjectural and is part of the speculative layer.
+\end{itemize}
+
+In this publication we favor the multiplicity basis and diagonal gates like \(Z_\zeta(s)\) as the more concrete Level B construction.
+
+\section{Quantum Zeta Search Algorithm (QZSA)}
+\label{sec:QZSA}
+
+\subsection{Conceptual Overview (Level B/C)}
+
+The Quantum Zeta Search Algorithm (QZSA) is a Grover-like search procedure that interleaves standard oracle and diffusion steps with zeta phase gates acting in multiplicity space.\,[file:1] The informal intuition is that zeta-induced phases can induce ``chaotically structured'' interference patterns, potentially enhancing exploration of search spaces with prime-factorization-related structure.\,[file:1]
+
+We emphasize:
+
+\begin{itemize}[leftmargin=*]
+    \item QZSA does \emph{not} claim to beat Grover's optimal \(\Theta(\sqrt{N})\) scaling for arbitrary unstructured search; any claimed advantage is restricted to structured instances and currently sits at Level C (conjectural).\,[file:1]
+\end{itemize}
+
+\subsection{Hilbert Space and Problem Instance}
+
+Let \(S \subset \mathcal{M}\) be a finite set of multiplicity vectors corresponding to a search space of integers (or structured objects) with particular prime-exponent patterns.\,[file:1] Define the Hilbert subspace
+\[
+\mathcal{H}_S := \text{span}\{ \lvert \mathbf{m} \rangle : \mathbf{m} \in S \}.
+\]
+Let \(M \subset S\) be the subset of \emph{marked} configurations (solutions). The goal is to find an element of \(M\) given oracle access.
+
+We assume an oracle \(O_\omega\) acting as
+\[
+O_\omega \lvert \mathbf{m} \rangle =
+\begin{cases}
+- \lvert \mathbf{m} \rangle, & \mathbf{m} \in M,\\
+\ \ \lvert \mathbf{m} \rangle, & \mathbf{m} \notin M.
+\end{cases}
+\]
+
+\subsection{Algorithm Template}
+
+\subsubsection{Initialization}
+
+Prepare the uniform superposition over \(S\):
+\[
+\lvert \psi_0 \rangle := \frac{1}{\sqrt{|S|}} \sum_{\mathbf{m} \in S} \lvert \mathbf{m} \rangle.
+\]
+
+\subsubsection{Zeta-Augmented Iteration}
+
+Define the standard Grover diffusion operator on \(\mathcal{H}_S\):
+\[
+D := 2 \lvert \psi_0 \rangle \langle \psi_0 \rvert - I_S,
+\]
+where \(I_S\) is the identity on \(\mathcal{H}_S\).
+
+Choose a sequence of complex parameters \(\{ s_k \}_{k=1}^T\) (e.g., along the critical line or in some region of interest), and associated zeta phase gates \(Z_\zeta(s_k)\) acting diagonally in the \(\lvert \mathbf{m} \rangle\) basis as in Section~\ref{sec:math-framework}.\,[file:1]
+
+One iteration of QZSA at step \(k\) is:
+\[
+G_k := D \cdot Z_\zeta(s_k) \cdot O_\omega.
+\]
+After \(T\) iterations, the state is
+\[
+\lvert \psi_T \rangle = G_T G_{T-1} \cdots G_1 \lvert \psi_0 \rangle.
+\]
+
+\subsection{Conjectured Advantages (Level C)}
+
+The speculative claim is:
+
+\begin{itemize}[leftmargin=*]
+    \item For search spaces where marked states have distinct prime-multiplicity profiles (e.g., specific factor patterns or multiplicative symmetries), and with an appropriate choice of the schedule \(\{ s_k \}\), the interleaved \(Z_\zeta(s_k)\) gates may reduce destructive interference among marked-state amplitudes and enhance constructive interference, leading to faster amplitude concentration on \(M\) than vanilla Grover on such structured spaces.\,[file:1]
+    \item This could manifest as an improvement in constant factors or, in optimistic scenarios, a polylogarithmic improvement in oracle query count for specific structured families (e.g., hidden subgroup-like problems over multiplicative groups).\,[file:1]
+\end{itemize}
+
+We explicitly label this as Level C: conjectural and subject to empirical and analytic verification.
+
+\subsection{Toy-Model Implementation Sketch}
+
+To support future simulations, we give a simple pseudocode-style representation and then a concrete code snippet in Python-like pseudocode (Section~\ref{sec:code-snippet}). For toy tests, one can restrict to small \(S\) (e.g., integers up to \(N \le 2^{10}\)), use precomputed approximate values of \(\zeta'(s)/\zeta(s)\) for a limited set of \(s_k\), and simulate the resulting unitary matrices classically.\,[file:1]
+
+\section{Zeta Phases in Multiplicity Space}
+\label{sec:zeta-multiplicity}
+
+This section formalizes the idea that zeta-derived operators act as multiplicity-preserving transformations in a prime-exponent space, aligning with Multiplicity Theory's emphasis on recursively stable prime-labeled interactions.\,[file:1]
+
+\subsection{Multiplicity Space as a Prime-Indexed Configuration Space}
+
+As in Section~\ref{sec:math-framework}, \(\mathcal{M}\) encodes configurations of prime multiplicities. Each \(\mathbf{m}\) is a finite configuration of local ``prime sites'' with integer occupancy \(m_p\).\,[file:1] The map \(\mathbf{m} \mapsto n(\mathbf{m})\) is multiplicative:
+\[
+n(\mathbf{m}^{(1)} + \mathbf{m}^{(2)}) = n(\mathbf{m}^{(1)}) \cdot n(\mathbf{m}^{(2)}).
+\]
+
+\subsection{Zeta Phase Gates as Multiplicity-Preserving Operators}
+
+The zeta phase gate \(Z_\zeta(s)\) from Section~\ref{sec:math-framework} respects the multiplicative structure:
+
+\begin{align*}
+    \Phi_s(\mathbf{m}) &= \gamma\,\frac{\zeta'(s)}{\zeta(s)} \log n(\mathbf{m}) \\
+    &= \gamma\,\frac{\zeta'(s)}{\zeta(s)} \sum_p m_p \log p \\
+    &= \sum_p \left( \gamma\,\frac{\zeta'(s)}{\zeta(s)} \log p \right) m_p.
+\end{align*}
+
+Thus, the phase contribution from \(\mathbf{m}\) is a sum of independent contributions from each prime \(p\) weighted by its multiplicity \(m_p\).\,[file:1] This yields:
+
+\begin{itemize}[leftmargin=*]
+    \item \emph{Additivity across primes:} \(Z_\zeta(s)\) can be viewed as a product of commuting local phase gates \(Z_{\zeta,p}(s)\) acting on each ``prime site'' \(p\).
+    \item \emph{Recursive stability:} Any coarse-graining or restriction to a subset of primes preserves the structural form of the operator; it is compatible with recursive decomposition across scales, aligning with Multiplicity Theory's ``feedback loops across scales.''\,[file:1]
+\end{itemize}
+
+\subsection{Interpretation as a Chaotic-but-Structured Diffusion}
+
+When the parameters \(s\) are chosen along the critical line or in regions where \(\zeta'(s)/\zeta(s)\) exhibits complex behavior, the phases \(\Phi_s(\mathbf{m})\) can vary sensitively with \(\mathbf{m}\).\,[file:1] From a spectral standpoint, this can induce interference patterns that are ``chaotic'' in the sense of irregular spacing and quasi-random phase differences, yet remain constrained by the underlying prime multiplicity structure.
+
+This is precisely the duality Z-CHAOS aims to exploit:
+
+\begin{itemize}[leftmargin=*]
+    \item \emph{Chaos:} Irregular, complex phase patterns that resemble those seen in quantum chaotic spectra.
+    \item \emph{Structure:} The phases are not arbitrary; they are generated by a prime-factorization-aware operator, preserving multiplicity invariants.
+\end{itemize}
+
+\section{Quantum Error Correction and Cryptography (Sketches)}
+\label{sec:qec-crypto}
+
+\subsection{Error Correction Sketch (Level C)}
+
+The original Z-CHAOS text suggested using zeta functions to enhance quantum error correction by encoding information into prime-number-related states and applying zeta-driven phase corrections.\,[file:1] At the current stage, this remains at Level C (design speculation). We record the following high-level proposals:
+
+\begin{itemize}[leftmargin=*]
+    \item Define stabilizer generators that act on prime-indexed qubits, where each stabilizer corresponds to constraints on subsets of primes (e.g., parity of certain multiplicities).\,[file:1]
+    \item Use zeta phase gates \(Z_\zeta(s)\) or related operators to encode syndrome information in phases that are sensitive to prime multiplicity patterns of error locations.\,[file:1]
+    \item Investigate whether such codes exhibit enhanced resilience for noise models that naturally couple to multiplicative structure (e.g., errors correlated with integer-valued control parameters).
+\end{itemize}
+
+Concrete code families with parameters \([[n,k,d]]\), threshold estimates, and decoding algorithms are left for future work.
+
+\subsection{Cryptographic Sketch (Level C)}
+
+For cryptography, the key idea is to use zeta-induced quasi-random phase patterns and complex multiplicity-based encodings as sources of structured but unpredictable behavior.\,[file:1] Possible directions include:
+
+\begin{itemize}[leftmargin=*]
+    \item Key distribution schemes where keys index sequences of zeta phase parameters \(\{s_k\}\) and prime subsets, making eavesdropping difficult without knowledge of both prime structure and zeta-phase schedule.\,[file:1]
+    \item Pseudorandom unitary families generated by alternating simple Clifford operations with \(Z_\zeta(s_k)\) gates, forming ensembles that may be hard to distinguish from Haar-random unitaries for certain adversaries.\,[file:1]
+\end{itemize}
+
+Again, these ideas are recorded as prior art at the level of conceptual sketches.
+
+\section{Complexity, Limitations, and Claim Levels}
+\label{sec:complexity}
+
+\subsection{Grover Optimality and Structured Search}
+
+Standard results show that Grover's algorithm is optimal for unstructured search in the black-box model, up to constant factors: any quantum algorithm requires \(\Omega(\sqrt{N})\) oracle queries to find a marked item in a search space of size \(N\).\,[file:1] Our constructions do not evade this result for arbitrary oracles; any claimed advantage must leverage structure that the oracle and zeta-phase dynamics can exploit.
+
+Accordingly:
+
+\begin{itemize}[leftmargin=*]
+    \item We restrict conjectured advantages of QZSA to structured search spaces with prime-multiplicity correlations, and even there we only hypothesize possible improvements.\,[file:1]
+\end{itemize}
+
+\subsection{Cost of Zeta Evaluations}
+
+Evaluating \(\zeta'(s)/\zeta(s)\) at large heights \(t\) on the critical line is computationally nontrivial.\,[file:1] Naively, using such evaluations at each iteration of a quantum algorithm could simply shift complexity into classical preprocessing. In a practical implementation:
+
+\begin{itemize}[leftmargin=*]
+    \item One might pre-tabulate zeta-related values for a fixed set of \(s_k\) and treat them as part of the problem-independent algorithm design.\,[file:1]
+    \item Toy models can focus on small \(S\) and bounded \(|t|\), where numerical evaluation is tractable.\,[file:1]
+\end{itemize}
+
+\subsection{Levels of Claim}
+
+We summarize our epistemic levels:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Level A (facts):} Standard definitions and properties of \(\zeta(s)\), its Euler product, logarithmic derivative, and known connections to GUE statistics in the sense of Montgomery--Odlyzko.\,[file:1]
+    \item \textbf{Level B (constructions):} The multiplicity-space Hilbert space, prime-exponent encodings, and the definition of zeta phase gates \(Z_\zeta(s)\) acting diagonally in this basis; the QZSA template as a well-defined unitary circuit family.\,[file:1]
+    \item \textbf{Level C (conjectures):} Any claimed algorithmic speedups beyond known bounds, advantages for specific structured problem families, and proposed QEC/cryptographic benefits.\,[file:1]
+\end{itemize}
+
+This separation itself is part of the contribution, ensuring that speculative claims are not conflated with rigorous facts.
+
+\section{Illustrative Code Snippet}
+\label{sec:code-snippet}
+
+The following Python-like pseudocode illustrates how one might simulate a toy instance of QZSA on a small multiplicity space using a classical linear algebra library. It is not optimized and is intended only as a conceptual reference.
+
+\subsection*{Python-like Pseudocode}
+
+\begin{verbatim}
+import numpy as np
+
+def integer_from_m(m_vec, primes):
+    """Compute n(m) = prod p_i^{m_i} for a finite list of primes."""
+    n = 1
+    for exp, p in zip(m_vec, primes):
+        n *= p ** exp
+    return n
+
+def zeta_log_derivative(s, trunc=1000):
+    """
+    Approximate zeta'(s)/zeta(s) using a truncated sum:
+    -sum_{n=1}^trunc Lambda(n) n^{-s}.
+    In practice, use a better numerical method; this is just illustrative.
+    """
+    def von_mangoldt(n):
+        # Very naive implementation: returns log p if n = p^k, else 0
+        k = 2
+        while k * k <= n:
+            if n % k == 0:
+                # Check if n is pure power of k
+                m = n
+                while m % k == 0:
+                    m //= k
+                if m == 1:
+                    return np.log(k)
+                else:
+                    return 0.0
+            k += 1
+        # n is prime or 1
+        if n > 1:
+            return np.log(n)
+        return 0.0
+    
+    val = 0.0 + 0.0j
+    for n in range(1, trunc + 1):
+        val -= von_mangoldt(n) * (n ** (-s))
+    return val
+
+def zeta_phase_gate(s, S, primes, gamma=1.0):
+    """
+    Construct the diagonal unitary Z_zeta(s) on the subspace spanned by S,
+    where S is a list of multiplicity vectors m.
+    """
+    dim = len(S)
+    diag = np.zeros(dim, dtype=complex)
+    zld = zeta_log_derivative(s)
+    for i, m_vec in enumerate(S):
+        n = integer_from_m(m_vec, primes)
+        phi = gamma * zld * np.log(n)
+        # Use the real part to ensure a unit modulus phase here
+        diag[i] = np.exp(1j * np.real(phi))
+    return np.diag(diag)
+
+def grover_diffusion(S):
+    """Grover diffusion operator on the uniform superposition over S."""
+    dim = len(S)
+    H = np.ones((dim, dim), dtype=complex) / dim
+    return 2 * H - np.eye(dim, dtype=complex)
+
+def oracle_operator(S, marked_indices):
+    """Oracle that flips the phase of marked basis states."""
+    dim = len(S)
+    diag = np.ones(dim, dtype=complex)
+    for idx in marked_indices:
+        diag[idx] = -1.0
+    return np.diag(diag)
+
+# Example usage for a small toy space:
+primes = [2, 3, 5]
+S = [
+    (0, 0, 0),  # 1
+    (1, 0, 0),  # 2
+    (0, 1, 0),  # 3
+    (0, 0, 1)   # 5
+]
+marked_indices = [2]  # mark the state corresponding to 3
+
+dim = len(S)
+psi = np.ones(dim, dtype=complex) / np.sqrt(dim)
+O = oracle_operator(S, marked_indices)
+D = grover_diffusion(S)
+
+T = 5
+for k in range(1, T + 1):
+    s_k = 0.5 + 1j * k  # illustrative choice
+    Z = zeta_phase_gate(s_k, S, primes, gamma=0.1)
+    G_k = D @ Z @ O
+    psi = G_k @ psi
+    # Optionally normalize (should remain normalized up to numerical error)
+    psi = psi / np.linalg.norm(psi)
+
+print("Final amplitudes:", psi)
+\end{verbatim}
+
+This snippet makes explicit:
+
+\begin{itemize}[leftmargin=*]
+    \item The multiplicity-space representation (\texttt{S} as a list of exponent vectors).\,[file:1]
+    \item The zeta-log-derivative-based phase gate as a diagonal matrix \(Z_\zeta(s)\).\,[file:1]
+    \item The QZSA iteration \(G_k = D \cdot Z_\zeta(s_k) \cdot O_\omega\) in an explicit matrix form.\,[file:1]
+\end{itemize}
+
+\section{Conclusion}
+
+We have documented a coherent cluster of ideas around zeta-based quantum algorithms in prime multiplicity spaces, including explicit gate definitions and algorithm templates, and we have clearly labeled which parts are established, constructive, or conjectural.\,[file:1] This should serve as a robust prior art reference for future developments in zeta-driven quantum computation, Multiplicity-Theoretic quantum models, and associated error correction and cryptographic schemes.\,[file:1]
+
+\appendix
+\section*{Mathematical Appendix}
+
+\renewcommand{\thesection}{A.\arabic{section}}
+\setcounter{section}{0}
+
+This appendix collects formal definitions, basic properties, and operator norm bounds for the main constructions introduced in the article, with an emphasis on the multiplicity-space Hilbert space and the zeta-log-derivative phase gates. Throughout, we work in finite-dimensional truncations of the full multiplicity space when necessary to ensure that all operators are bounded and represented by finite matrices. The constructions are based on the framework summarized in the main text and the original Z-CHAOS document.\,[file:1]
+
+\section{Multiplicity-Space Hilbert Space}
+
+\subsection{Definition and Basic Properties}
+
+Let \(\mathcal{P}\) denote the set of prime numbers. Define the \emph{multiplicity space}
+\[
+\mathcal{M} := \left\{ \mathbf{m} = (m_p)_{p \in \mathcal{P}} \,\middle|\, m_p \in \mathbb{N}_0,\ \text{only finitely many } m_p \neq 0 \right\}.
+\]
+Each \(\mathbf{m} \in \mathcal{M}\) corresponds to a unique positive integer
+\begin{equation}
+    n(\mathbf{m}) := \prod_{p \in \mathcal{P}} p^{m_p}.
+\end{equation}
+We define the Hilbert space
+\begin{equation}
+    \mathcal{H}_{\mathcal{M}} := \ell^2(\mathcal{M}) = \left\{ \psi: \mathcal{M} \to \mathbb{C} \,\middle|\, \sum_{\mathbf{m} \in \mathcal{M}} |\psi(\mathbf{m})|^2 < \infty \right\}
+\end{equation}
+with inner product
+\begin{equation}
+    \langle \psi, \phi \rangle := \sum_{\mathbf{m} \in \mathcal{M}} \overline{\psi(\mathbf{m})}\,\phi(\mathbf{m}).
+\end{equation}
+The canonical orthonormal basis is \(\{ \lvert \mathbf{m} \rangle : \mathbf{m} \in \mathcal{M} \}\), where \(\lvert \mathbf{m} \rangle\) is the function that is \(1\) at \(\mathbf{m}\) and \(0\) elsewhere.\,[file:1]
+
+\begin{lemma}[Orthonormality]
+For \(\mathbf{m}, \mathbf{m}' \in \mathcal{M}\),
+\[
+\langle \mathbf{m} \mid \mathbf{m}' \rangle =
+\begin{cases}
+1, & \mathbf{m} = \mathbf{m}',\\[2pt]
+0, & \mathbf{m} \neq \mathbf{m}'.
+\end{cases}
+\]
+\end{lemma}
+
+\begin{proof}
+Immediate from the definition of the basis vectors as point masses in \(\ell^2(\mathcal{M})\).\,[file:1]
+\end{proof}
+
+\subsection{Finite Truncations}
+
+For algorithmic purposes, we restrict to finite subsets of primes and bounded multiplicities.
+
+\begin{definition}[Finite Truncation]
+Let \(P = \{p_1, \dots, p_r\}\) be a finite set of primes and let \(K \in \mathbb{N}\). Define
+\[
+\mathcal{M}_{P,K} := \left\{ \mathbf{m} = (m_{p_1},\dots,m_{p_r}) \,\middle|\, m_{p_j} \in \{0,1,\dots,K\} \right\},
+\]
+and \(\mathcal{H}_{P,K} := \ell^2(\mathcal{M}_{P,K})\) with the induced basis \(\{\lvert \mathbf{m} \rangle : \mathbf{m} \in \mathcal{M}_{P,K}\}\).\,[file:1]
+\end{definition}
+
+In this finite-dimensional setting, all linear operators on \(\mathcal{H}_{P,K}\) are bounded.
+
+\section{Zeta-Log-Derivative Phase Gates}
+
+\subsection{Definitions}
+
+We briefly recall standard notions related to the Riemann zeta function \(\zeta(s)\).\,[file:1]
+
+\begin{definition}[Riemann Zeta Function]
+For \(\Re(s) > 1\),
+\begin{equation}
+    \zeta(s) = \sum_{n=1}^{\infty} \frac{1}{n^s} = \prod_{p \in \mathcal{P}} \frac{1}{1 - p^{-s}}.
+\end{equation}
+\end{definition}
+
+The logarithmic derivative of \(\zeta(s)\) admits the Dirichlet series expansion
+\begin{equation}
+    \frac{\zeta'(s)}{\zeta(s)} = - \sum_{n=1}^{\infty} \frac{\Lambda(n)}{n^s}, \quad \Re(s) > 1,
+\end{equation}
+where \(\Lambda(n)\) is the von Mangoldt function.\,[file:1]
+
+We now define the phase function associated with multiplicity vectors.
+
+\begin{definition}[Phase Function \(\Phi_s\)]
+Fix \(s \in \mathbb{C}\) with \(\Re(s) > 1\), and a real constant \(\gamma \in \mathbb{R}\). For \(\mathbf{m} \in \mathcal{M}\) such that \(n(\mathbf{m})\) is well-defined and finite, set
+\begin{equation}
+    \Phi_s(\mathbf{m}) := \gamma\, \frac{\zeta'(s)}{\zeta(s)}\,\log n(\mathbf{m}),
+\end{equation}
+where \(\log n(\mathbf{m}) = \sum_{p} m_p \log p\).\,[file:1]
+\end{definition}
+
+\begin{definition}[Zeta Phase Gate \(Z_\zeta(s)\)]
+On \(\mathcal{H}_{\mathcal{M}}\), define \(Z_\zeta(s)\) by its action on the basis:
+\begin{equation}
+    Z_\zeta(s)\,\lvert \mathbf{m} \rangle := e^{i\,\mathrm{Re}(\Phi_s(\mathbf{m}))}\,\lvert \mathbf{m} \rangle.
+\end{equation}
+On the finite-dimensional subspace \(\mathcal{H}_{P,K}\), this defines a diagonal matrix with diagonal entries of unit modulus.\,[file:1]
+\end{definition}
+
+\subsection{Unitarity and Norm Bounds}
+
+\begin{lemma}[Unitarity on \(\mathcal{H}_{P,K}\)]
+For fixed \(s\) and \(\gamma\), the operator \(Z_\zeta(s)\) restricted to \(\mathcal{H}_{P,K}\) is unitary.
+\end{lemma}
+
+\begin{proof}
+In the \(\{\lvert \mathbf{m} \rangle\}\) basis for \(\mathcal{H}_{P,K}\), the matrix of \(Z_\zeta(s)\) is diagonal with entries \(e^{i\,\mathrm{Re}(\Phi_s(\mathbf{m}))}\).\,[file:1] Each entry has modulus \(1\). Thus \(Z_\zeta(s)\) is a diagonal unitary matrix, and hence unitary. Formally,
+\[
+Z_\zeta(s)^\dagger Z_\zeta(s) \lvert \mathbf{m} \rangle
+= \overline{e^{i\,\mathrm{Re}(\Phi_s(\mathbf{m}))}}\, e^{i\,\mathrm{Re}(\Phi_s(\mathbf{m}))}\, \lvert \mathbf{m} \rangle
+= \lvert \mathbf{m} \rangle,
+\]
+and similarly \(Z_\zeta(s) Z_\zeta(s)^\dagger = I\). Therefore \(Z_\zeta(s)\) is unitary.\,[file:1]
+\end{proof}
+
+\begin{corollary}[Operator Norm]
+On \(\mathcal{H}_{P,K}\), the operator norm of \(Z_\zeta(s)\) satisfies
+\[
+\|Z_\zeta(s)\| = 1.
+\]
+\end{corollary}
+
+\begin{proof}
+For a unitary operator \(U\), the operator norm \(\|U\|\) equals \(1\). This follows from \(\|U\psi\| = \|\psi\|\) for all \(\psi\).\,[file:1]
+\end{proof}
+
+\subsection{Additivity Across Primes}
+
+\begin{lemma}[Additivity of \(\Phi_s\)]
+Let \(\mathbf{m}, \mathbf{m}^{(1)}, \mathbf{m}^{(2)} \in \mathcal{M}\) satisfy \(\mathbf{m} = \mathbf{m}^{(1)} + \mathbf{m}^{(2)}\) coordinatewise. Then
+\[
+\Phi_s(\mathbf{m}) = \Phi_s(\mathbf{m}^{(1)}) + \Phi_s(\mathbf{m}^{(2)}).
+\]
+\end{lemma}
+
+\begin{proof}
+We have
+\begin{align*}
+\Phi_s(\mathbf{m}) &= \gamma\,\frac{\zeta'(s)}{\zeta(s)}\,\log n(\mathbf{m}),\\
+\log n(\mathbf{m}) &= \sum_p (m^{(1)}_p + m^{(2)}_p)\log p \\
+&= \sum_p m^{(1)}_p \log p + \sum_p m^{(2)}_p \log p = \log n(\mathbf{m}^{(1)}) + \log n(\mathbf{m}^{(2)}).
+\end{align*}
+Thus
+\[
+\Phi_s(\mathbf{m}) = \gamma\,\frac{\zeta'(s)}{\zeta(s)}\,\left(\log n(\mathbf{m}^{(1)}) + \log n(\mathbf{m}^{(2)})\right)
+= \Phi_s(\mathbf{m}^{(1)}) + \Phi_s(\mathbf{m}^{(2)}),
+\]
+as claimed.\,[file:1]
+\end{proof}
+
+\begin{corollary}[Decomposition into Local Prime Gates]
+On \(\mathcal{H}_{P,K}\), the operator \(Z_\zeta(s)\) can be written as a product of commuting local phase gates
+\[
+Z_\zeta(s) = \prod_{p \in P} Z_{\zeta,p}(s),
+\]
+where each \(Z_{\zeta,p}(s)\) acts as
+\[
+Z_{\zeta,p}(s)\,\lvert \mathbf{m} \rangle = \exp\!\left(i\,\gamma\,\frac{\zeta'(s)}{\zeta(s)}\, m_p \log p \right)\,\lvert \mathbf{m} \rangle.
+\]
+\end{corollary}
+
+\begin{proof}
+By the previous lemma, the total phase \(\Phi_s(\mathbf{m})\) is a sum of prime-wise contributions. Because all \(Z_{\zeta,p}(s)\) are diagonal and hence commute, their product yields the full diagonal operator with diagonal entries \(e^{i\,\mathrm{Re}(\Phi_s(\mathbf{m}))}\).\,[file:1]
+\end{proof}
+
+\section{Grover Diffusion Operator and QZSA Iteration}
+
+\subsection{Grover Diffusion on a Finite Subspace}
+
+Let \(S \subset \mathcal{M}_{P,K}\) be a finite search space with \(|S| = N\). Let \(\mathcal{H}_S := \text{span}\{\lvert \mathbf{m} \rangle : \mathbf{m} \in S\}\).\,[file:1]
+
+\begin{definition}[Uniform State]
+Define the uniform superposition over \(S\):
+\begin{equation}
+    \lvert \psi_0 \rangle := \frac{1}{\sqrt{N}} \sum_{\mathbf{m} \in S} \lvert \mathbf{m} \rangle.
+\end{equation}
+\end{definition}
+
+\begin{definition}[Grover Diffusion Operator]
+The Grover diffusion operator \(D: \mathcal{H}_S \to \mathcal{H}_S\) is defined by
+\begin{equation}
+    D := 2 \lvert \psi_0 \rangle \langle \psi_0 \rvert - I_S,
+\end{equation}
+where \(I_S\) is the identity on \(\mathcal{H}_S\).\,[file:1]
+\end{definition}
+
+\begin{lemma}[Unitarity of \(D\)]
+The operator \(D\) is unitary on \(\mathcal{H}_S\).
+\end{lemma}
+
+\begin{proof}
+Let \(P := \lvert \psi_0 \rangle \langle \psi_0 \rvert\). Then \(P\) is a rank-one projector, satisfying \(P^2 = P\) and \(P^\dagger = P\). We have
+\[
+D = 2P - I_S.
+\]
+Compute
+\[
+D^2 = (2P - I_S)^2 = 4P^2 - 4P + I_S = 4P - 4P + I_S = I_S.
+\]
+Hence \(D^{-1} = D\) and \(D^\dagger = D\). Therefore \(D\) is unitary.\,[file:1]
+\end{proof}
+
+\begin{corollary}[Operator Norm of \(D\)]
+We have
+\[
+\|D\| = 1.
+\]
+\end{corollary}
+
+\begin{proof}
+Since \(D\) is unitary, its operator norm equals \(1\).\,[file:1]
+\end{proof}
+
+\subsection{Oracle Operator}
+
+Let \(M \subset S\) denote the set of marked indices (solutions). Define the oracle \(O_\omega: \mathcal{H}_S \to \mathcal{H}_S\) by
+\begin{equation}
+    O_\omega \lvert \mathbf{m} \rangle =
+    \begin{cases}
+        - \lvert \mathbf{m} \rangle, & \mathbf{m} \in M,\\[2pt]
+        \ \ \lvert \mathbf{m} \rangle, & \mathbf{m} \notin M.
+    \end{cases}
+\end{equation}
+
+\begin{lemma}[Unitarity of \(O_\omega\)]
+The oracle \(O_\omega\) is unitary and satisfies \(\|O_\omega\| = 1\).
+\end{lemma}
+
+\begin{proof}
+In the \(\{\lvert \mathbf{m} \rangle\}\) basis, \(O_\omega\) is diagonal with entries \(\pm 1\). Thus \(O_\omega^\dagger = O_\omega\) and \(O_\omega^2 = I_S\). Hence it is unitary with operator norm 1.\,[file:1]
+\end{proof}
+
+\subsection{QZSA Iteration Operator}
+
+For a sequence \(\{s_k\}_{k=1}^T\), define \(Z_k := Z_\zeta(s_k)|_{\mathcal{H}_S}\). The \(k\)-th QZSA iteration operator is
+\begin{equation}
+    G_k := D \cdot Z_k \cdot O_\omega.
+\end{equation}
+
+\begin{proposition}[Unitarity and Norm of \(G_k\)]
+For each \(k\), \(G_k\) is unitary on \(\mathcal{H}_S\) and satisfies \(\|G_k\| = 1\).
+\end{proposition}
+
+\begin{proof}
+Each factor \(D\), \(Z_k\), and \(O_\omega\) is unitary on \(\mathcal{H}_S\).\,[file:1] The product of unitary operators is unitary. Hence \(G_k\) is unitary, and as a unitary operator its norm is 1.\,[file:1]
+\end{proof}
+
+\begin{corollary}[Norm of Composite QZSA Evolution]
+Let
+\[
+U_T := G_T G_{T-1} \cdots G_1.
+\]
+Then \(U_T\) is unitary and \(\|U_T\| = 1\).
+\end{corollary}
+
+\begin{proof}
+Product of unitaries is unitary; the operator norm of a unitary is 1.\,[file:1]
+\end{proof}
+
+\section{Stability Under Perturbations of Zeta Parameters}
+
+Because the zeta phase gates \(Z_\zeta(s)\) depend on a complex parameter \(s\), it is natural to ask how sensitive the evolution is to small perturbations in \(s\). We provide a simple Lipschitz-type bound at the level of the diagonal phases.
+
+\subsection{Phase Sensitivity}
+
+Let \(s, s' \in \mathbb{C}\) be such that \(\zeta'(s)/\zeta(s)\) and \(\zeta'(s')/\zeta(s')\) are well-defined (and bounded) and let \(\Delta := s' - s\). Define \(\Phi_s\) and \(\Phi_{s'}\) as before.
+
+\begin{lemma}[Pointwise Phase Difference Bound]
+For any \(\mathbf{m} \in \mathcal{M}_{P,K}\),
+\[
+\left| \mathrm{Re}\,\Phi_{s'}(\mathbf{m}) - \mathrm{Re}\,\Phi_s(\mathbf{m}) \right|
+\leq |\gamma|\,\left| \frac{\zeta'(s')}{\zeta(s')} - \frac{\zeta'(s)}{\zeta(s)} \right| \,\log n(\mathbf{m}).
+\]
+\end{lemma}
+
+\begin{proof}
+By definition,
+\[
+\Phi_{s'}(\mathbf{m}) - \Phi_s(\mathbf{m}) = \gamma \left( \frac{\zeta'(s')}{\zeta(s')} - \frac{\zeta'(s)}{\zeta(s)} \right) \log n(\mathbf{m}).
+\]
+Taking real parts and absolute values yields the stated inequality.\,[file:1]
+\end{proof}
+
+\subsection{Operator Norm Bound for Phase Perturbations}
+
+Let \(Z_\zeta(s)\) and \(Z_\zeta(s')\) be the corresponding phase gates on \(\mathcal{H}_{P,K}\). In the \(\{\lvert \mathbf{m} \rangle\}\) basis, we have
+\[
+Z_\zeta(s)\,\lvert \mathbf{m} \rangle = e^{i\theta_s(\mathbf{m})} \lvert \mathbf{m} \rangle,\quad
+Z_\zeta(s')\,\lvert \mathbf{m} \rangle = e^{i\theta_{s'}(\mathbf{m})} \lvert \mathbf{m} \rangle,
+\]
+where \(\theta_s(\mathbf{m}) = \mathrm{Re}\,\Phi_s(\mathbf{m})\) and similarly for \(\theta_{s'}.\)[file:1]
+
+\begin{proposition}[Operator Norm Difference]
+On \(\mathcal{H}_{P,K}\),
+\[
+\| Z_\zeta(s') - Z_\zeta(s) \| \leq \max_{\mathbf{m} \in \mathcal{M}_{P,K}} \left| e^{i\theta_{s'}(\mathbf{m})} - e^{i\theta_s(\mathbf{m})} \right|.
+\]
+Moreover,
+\[
+\left| e^{i\theta_{s'}(\mathbf{m})} - e^{i\theta_s(\mathbf{m})} \right| \leq \left| \theta_{s'}(\mathbf{m}) - \theta_s(\mathbf{m}) \right|.
+\]
+\end{proposition}
+
+\begin{proof}
+For diagonal matrices \(A = \mathrm{diag}(a_{\mathbf{m}})\) and \(B = \mathrm{diag}(b_{\mathbf{m}})\), the operator norm satisfies
+\[
+\|A - B\| = \max_{\mathbf{m}} |a_{\mathbf{m}} - b_{\mathbf{m}}|.
+\]
+Here, \(a_{\mathbf{m}} = e^{i\theta_{s'}(\mathbf{m})}\) and \(b_{\mathbf{m}} = e^{i\theta_s(\mathbf{m})}\), so
+\[
+\| Z_\zeta(s') - Z_\zeta(s) \| = \max_{\mathbf{m}} \left| e^{i\theta_{s'}(\mathbf{m})} - e^{i\theta_s(\mathbf{m})} \right|.
+\]
+The inequality \(|e^{ix} - e^{iy}| \leq |x - y|\) for real \(x,y\) follows from the mean value theorem applied to the function \(f(t) = e^{it}\), whose derivative has unit modulus. Thus the result holds.\,[file:1]
+\end{proof}
+
+Combining this with the phase difference bound gives
+\begin{equation}
+\| Z_\zeta(s') - Z_\zeta(s) \| \leq |\gamma|\,\left| \frac{\zeta'(s')}{\zeta(s')} - \frac{\zeta'(s)}{\zeta(s)} \right| \,\max_{\mathbf{m} \in \mathcal{M}_{P,K}} \log n(\mathbf{m}),
+\end{equation}
+providing a simple upper bound on the sensitivity of the zeta phase gate to changes in \(s\) in a finite truncation.\,[file:1]
+
+\section{Summary of Operator Norm Bounds}
+
+For ease of reference, we collect the main norm bounds proved above.
+
+\begin{itemize}[leftmargin=*]
+    \item On any finite truncation \(\mathcal{H}_{P,K}\):
+    \[
+    \| Z_\zeta(s) \| = 1,\quad \|D\| = 1,\quad \|O_\omega\| = 1,\quad \|G_k\| = 1,\quad \|U_T\| = 1,
+    \]
+    where \(G_k = D Z_\zeta(s_k) O_\omega\) and \(U_T = G_T \cdots G_1\).\,[file:1]
+    \item For any two parameters \(s,s'\) with well-defined \(\zeta'/\zeta\),
+    \[
+    \| Z_\zeta(s') - Z_\zeta(s) \| 
+    \leq |\gamma|\,\left| \frac{\zeta'(s')}{\zeta(s')} - \frac{\zeta'(s)}{\zeta(s)} \right| \,\max_{\mathbf{m} \in \mathcal{M}_{P,K}} \log n(\mathbf{m}),
+    \]
+    on \(\mathcal{H}_{P,K}\).\,[file:1]
+\end{itemize}
+
+These results guarantee that the zeta-based operators introduced in the main text are well-behaved (unitary, norm \(1\), and continuously dependent on their parameters) within the finite-dimensional multiplicity-space models considered there.\,[file:1]
+
+\nocite{*}
+\bibliographystyle{unsrt}  
+\bibliography{references}  
+
+
+\end{document}

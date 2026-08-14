@@ -1,0 +1,98 @@
+# model/widths.toml --- derived accumulator widths (§3.2, §3.3, §5.3).
+#
+# There is no ladder, no policy, no promotion, and no k_max in the public API.
+# The accumulator width is a compile-time function of the element type alone,
+# sized against the largest k the machine can address, so that overflow is
+# unreachable for every input the machine can represent.
+#
+#   acc_bits(E) = 1                        sign
+#               + MAX_K_BITS               log2 of the largest reduction depth
+#                                          any addressable machine can present
+#               + 2 * (E::BITS - 1)        the two magnitudes
+#               + log2(product_terms)      one more bit for a complex element,
+#                                          whose real part sums two products
+#
+# MAX_K_BITS is declared in model/constants.toml rather than probed from the
+# host, so this table is the same table on every target. CM-01 checks each
+# `bits` below against the const fn.
+
+spec = "uor-matmul/1"
+
+[[width]]
+element = "i8"
+bits = 79
+accumulator = "i128"
+acc_bits = 128
+bytes = 16
+
+[[width]]
+element = "i16"
+bits = 95
+accumulator = "i128"
+acc_bits = 128
+bytes = 16
+
+[[width]]
+element = "i32"
+bits = 127
+accumulator = "i128"
+acc_bits = 128
+bytes = 16
+
+[[width]]
+element = "i64"
+bits = 191
+accumulator = "Limbs<3>"
+acc_bits = 192
+bytes = 24
+
+# The complex rows carry one more bit than their scalar counterparts, for the
+# two element-products the real part sums. They resolve to the same accumulator,
+# which is the point: a complex alphabet needs no new machinery.
+
+[[width]]
+element = "Complex<i32>"
+bits = 128
+accumulator = "i128"
+acc_bits = 128
+bytes = 16
+
+[[width]]
+element = "Complex<i64>"
+bits = 192
+accumulator = "Limbs<3>"
+acc_bits = 192
+bytes = 24
+
+# --------------------------------------------------------------------------
+# Complete accumulators (§3.3). An IEEE 754 value is a bit pattern naming an
+# exact dyadic rational; that is a codec. The accumulator spans the entire
+# product exponent range, so every add is exact and no ordering can perturb it.
+# The library never executes a float addition (CU-01).
+# --------------------------------------------------------------------------
+
+[[complete]]
+element = "f32"
+min_product_exp = -298 # 2 * -149, the product of two minimal subnormals
+max_product_exp = 256  # 2 * 128
+span_bits = 554
+guard_bits = 64 # log2 of the largest k the machine can address
+sign_bits = 1
+total_bits = 619
+limbs = 10
+bytes = 80
+
+[[complete]]
+element = "f64"
+min_product_exp = -2148 # 2 * -1074
+max_product_exp = 2048  # 2 * 1024
+span_bits = 4196
+guard_bits = 64
+sign_bits = 1
+total_bits = 4261
+limbs = 67
+bytes = 536
+
+# The engineering cost is real and is not hidden: a 536-byte accumulator per
+# output element makes a large register-blocked tile expensive on a small
+# target. The mitigation is a traversal choice, not a method choice (D-12).

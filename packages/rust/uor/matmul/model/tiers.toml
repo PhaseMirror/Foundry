@@ -1,0 +1,86 @@
+# model/tiers.toml --- the codec tiers (§6.2).
+#
+# Every row is an *instantiation* of the one `Codec` trait, not a special case.
+# A tier contributes no arithmetic: it names a decode, and the accumulation
+# downstream of it is the same accumulation for every row in this table. That
+# is CL-MM01 in table form, and CK-02 is the test that says it.
+
+spec = "uor-matmul/1"
+
+[[tier]]
+id = "Identity"
+rust = "Identity"
+code = "E"
+block = 1
+table = "none"
+note = "zero-sized; decoding is a validated copy"
+honesty = "build"
+
+[[tier]]
+id = "Grid"
+rust = "Grid<'a, E, Bd, N>"
+code = "index"
+block = 1
+table = "borrowed [Alphabet<E, Bd>; N]"
+note = "any lookup codec of any code width; the 16-entry i4 grid is Grid<16>"
+honesty = "build"
+
+[[tier]]
+id = "Packed"
+rust = "Packed<'a, C, P>"
+code = "u8"
+block = "P * C::BLOCK"
+table = "delegated to C"
+note = "unpacks P sub-codes from one stored byte, then defers to C. Low sub-code first (normative, pinned by case `nibble-order`)."
+honesty = "build"
+
+[[tier]]
+id = "Book"
+rust = "Book<'a, E, Bd, N, BLK>"
+code = "index"
+block = "BLK"
+table = "borrowed [[Alphabet<E, Bd>; BLK]; N]"
+note = "any codebook; E8 is Book<256, 8>"
+honesty = "build"
+
+[[tier]]
+id = "Offset"
+rust = "Offset<C>"
+code = "C::Code"
+block = "C::BLOCK"
+table = "delegated to C"
+note = "d(c) - z: asymmetric quantization as a codec composition, not a feature"
+honesty = "build"
+
+[[tier]]
+id = "Runs"
+rust = "Runs<'a, C>"
+code = "run entry"
+block = "run length"
+table = "delegated to C"
+note = "sparse storage as a codec. The arithmetic stays dense and no sparse-specific speedup is claimed; the benefit is residency and CG-03 measures it like any other codec's (D-16)."
+honesty = "build"
+
+[[tier]]
+id = "Transcode"
+rust = "Transcode<C1, C2>"
+code = "C1::Code"
+block = "C2::BLOCK"
+table = "delegated"
+note = "the upstream transcode_decode composite"
+honesty = "build"
+
+# --------------------------------------------------------------------------
+# Codebooks. A codebook is data, borrowed from the caller, never owned and
+# never learned here. No quality claim is attached to any row (N3).
+# --------------------------------------------------------------------------
+
+[[codebook]]
+id = "E8"
+entries = 256
+block = 8
+element = "i8"
+bytes = 2048
+source = "constructed"
+honesty = "build"
+quality_claim = "none (N3): VQ quality is measured per (model, codebook) and reported open, never asserted"

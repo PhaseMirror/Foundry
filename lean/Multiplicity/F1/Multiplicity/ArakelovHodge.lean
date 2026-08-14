@@ -1,0 +1,2 @@
+namespace Multiplicity.F1Square.ArakelovHodge
+end Multiplicity.F1Square.ArakelovHodge

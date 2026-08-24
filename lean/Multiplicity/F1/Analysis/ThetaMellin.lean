@@ -14,8 +14,8 @@ Mellin object — it consumes the entire analytic profile of `ψ` built in the t
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Analysis.ThetaLipschitzFn
-import Multiplicity.F1Square.Analysis.IntegralLocal
+import Multiplicity.F1.Analysis.ThetaLipschitzFn
+import Multiplicity.F1.Analysis.IntegralLocal
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

@@ -28,8 +28,8 @@ is RH). The crux fields stay `none`.
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; `by decide`.
 -/
 
-import Multiplicity.F1Square.Tropical.Spectrum
-import Multiplicity.F1Square.Tropical.Signature
+import Multiplicity.F1.Tropical.Spectrum
+import Multiplicity.F1.Tropical.Signature
 
 namespace Multiplicity.UOR.Bridge.F1Square.Tropical
 

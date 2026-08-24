@@ -12,7 +12,7 @@ additivity `CargLower(zw) = Carg z + CargLower w` (`CargLower_add`) reflects `Ca
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
-import Multiplicity.F1Square.Analysis.ComplexArgUpperAdd
+import Multiplicity.F1.Analysis.ComplexArgUpperAdd
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

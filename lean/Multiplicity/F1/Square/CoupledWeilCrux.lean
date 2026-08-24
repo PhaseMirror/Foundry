@@ -29,8 +29,8 @@ IS RH (Weil 1952; Bombieri–Lagarias 1999). Crux fields stay `none`.
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
-import Multiplicity.F1Square.Square.CoupledWeilKernel
-import Multiplicity.F1Square.Square.Pairing
+import Multiplicity.F1.Square.CoupledWeilKernel
+import Multiplicity.F1.Square.Pairing
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

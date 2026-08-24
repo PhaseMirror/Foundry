@@ -23,7 +23,8 @@ the von Mangoldt function and not merely a table agreeing at sampled points — 
 Pure Lean 4, no Mathlib, no `sorry`/`native_decide`, choice-free.
 -/
 
-import Multiplicity.F1Square.Analysis.RealPow
+import Multiplicity.F1.Analysis.RealPow
+import Multiplicity.F1.CoreCompat
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

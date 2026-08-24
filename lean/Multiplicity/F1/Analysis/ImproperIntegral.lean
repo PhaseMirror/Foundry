@@ -15,8 +15,8 @@ audit-visible hypothesis rather than an axiom.
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Analysis.IntervalIntegral
-import Multiplicity.F1Square.Analysis.ThetaFunction
+import Multiplicity.F1.Analysis.IntervalIntegral
+import Multiplicity.F1.Analysis.ThetaFunction
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

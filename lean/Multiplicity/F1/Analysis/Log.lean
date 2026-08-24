@@ -10,8 +10,9 @@ bound) — the foundation for `artanh` and hence `log`.
 Pure Lean 4, no Mathlib, no `sorry`.
 -/
 
-import Multiplicity.F1Square.Analysis.CosSin
-import Multiplicity.F1Square.Analysis.Inv
+import Multiplicity.F1.Analysis.CosSin
+import Multiplicity.F1.Analysis.Inv
+import Multiplicity.F1.CoreCompat
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 
@@ -397,7 +398,9 @@ theorem qpow_half_value : ∀ m, qpow (⟨1, 2⟩ : Q) m = ⟨1, npow 2 m⟩
   | 0 => rfl
   | (m + 1) => by
       show mul (⟨1, 2⟩ : Q) (qpow (⟨1, 2⟩ : Q) m) = ⟨1, npow 2 (m + 1)⟩
-      rw [qpow_half_value m]; rfl
+      rw [qpow_half_value m]
+      have h2 : (2 : Nat) * npow 2 m = npow 2 (m + 1) := (npow_succ 2 m).symm
+      exact congrArg (fun n => (⟨(1 : Int), n⟩ : Q)) h2
 
 /-- For `0 ≤ ρ ≤ 1/2`: `ρᵐ ≤ 1/(m+1)`. -/
 theorem qpow_half_le {ρ : Q} (hρ0 : 0 ≤ ρ.num) (hρd : 0 < ρ.den) (hρ12 : Qle ρ ⟨1, 2⟩) (m : Nat) :
@@ -459,7 +462,9 @@ theorem Qmul_le_cancel_right {a b c : Q} (hcn : 0 < c.num) (hcd : 0 < c.den)
         = (b.num * (a.den : Int)) * (c.num * (c.den : Int)) := by ring_uor
     have hh : a.num * c.num * ((b.den : Int) * (c.den : Int))
         ≤ b.num * c.num * ((a.den : Int) * (c.den : Int)) := by
-      simpa only [mul, Qle] using h
+      unfold Qle mul at h
+      rw [Int.natCast_mul] at h
+      exact h
     rw [e1, e2] at hh; exact hh
   exact Int.le_of_mul_le_mul_right h' hc
 

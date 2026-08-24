@@ -30,9 +30,9 @@ Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited b
 `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Square.AngleGramDiagonal
-import Multiplicity.F1Square.Square.Forced
-import Multiplicity.F1Square.Analysis.DyadicIntegral
+import Multiplicity.F1.Square.AngleGramDiagonal
+import Multiplicity.F1.Square.Forced
+import Multiplicity.F1.Analysis.DyadicIntegral
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

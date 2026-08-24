@@ -29,9 +29,9 @@ Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited b
 `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Square.TestAlgebra
-import Multiplicity.F1Square.Analysis.ThetaMellinPow
-import Multiplicity.F1Square.Analysis.ClampedInv
+import Multiplicity.F1.Square.TestAlgebra
+import Multiplicity.F1.Analysis.ThetaMellinPow
+import Multiplicity.F1.Analysis.ClampedInv
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

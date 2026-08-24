@@ -34,10 +34,10 @@ Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited b
 `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Square.DyadicDense
-import Multiplicity.F1Square.Analysis.ThetaLipschitz
-import Multiplicity.F1Square.Analysis.SqrtRealSq
-import Multiplicity.F1Square.Analysis.Pi
+import Multiplicity.F1.Square.DyadicDense
+import Multiplicity.F1.Analysis.ThetaLipschitz
+import Multiplicity.F1.Analysis.SqrtRealSq
+import Multiplicity.F1.Analysis.Pi
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

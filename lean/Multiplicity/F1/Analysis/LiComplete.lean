@@ -54,8 +54,8 @@ built slices, never asserted beyond them.
 Pure Lean 4 core, no Mathlib, no `sorry`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Analysis.LiTwo
-import Multiplicity.F1Square.Li
+import Multiplicity.F1.Analysis.LiTwo
+import Multiplicity.F1.Li
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

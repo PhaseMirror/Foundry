@@ -31,11 +31,12 @@ Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited b
 `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Square.MellinHatCovariance
-import Multiplicity.F1Square.Square.MellinHatUniform1
-import Multiplicity.F1Square.Square.PartialCommonRefine
-import Multiplicity.F1Square.Square.PartialCoarseRefine
-import Multiplicity.F1Square.Square.ImproperScheduleIndep
+import Multiplicity.F1.Square.MellinHatCovariance
+import Multiplicity.F1.Square.MellinHatUniform1
+import Multiplicity.F1.Square.PartialCommonRefine
+import Multiplicity.F1.Square.PartialCoarseRefine
+import Multiplicity.F1.Square.ImproperScheduleIndep
+import Multiplicity.F1.CoreCompat
 
 set_option maxHeartbeats 4000000
 

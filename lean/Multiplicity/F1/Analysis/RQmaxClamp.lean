@@ -15,10 +15,10 @@ envelope `RrpowPos_abs_lipschitz_natB` wants.
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Analysis.QOrder
-import Multiplicity.F1Square.Analysis.ROrder
-import Multiplicity.F1Square.Analysis.Real
-import Multiplicity.F1Square.Analysis.RMax
+import Multiplicity.F1.Analysis.QOrder
+import Multiplicity.F1.Analysis.ROrder
+import Multiplicity.F1.Analysis.Real
+import Multiplicity.F1.Analysis.RMax
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

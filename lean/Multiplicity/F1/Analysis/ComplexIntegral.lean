@@ -11,9 +11,9 @@ Poisson/modular seam, positivity) is downstream and unchanged.
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Analysis.IntervalIntegral
-import Multiplicity.F1Square.Analysis.ImproperIntegral
-import Multiplicity.F1Square.Analysis.Complex
+import Multiplicity.F1.Analysis.IntervalIntegral
+import Multiplicity.F1.Analysis.ImproperIntegral
+import Multiplicity.F1.Analysis.Complex
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

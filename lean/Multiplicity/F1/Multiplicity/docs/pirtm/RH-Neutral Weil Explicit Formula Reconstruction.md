@@ -6,7 +6,7 @@ LeverOwnerMetricHorizonMap Weil reconstruction \+ KS to RSL/CVKYou (Architecture
 
 \*\*Primary:\*\* governance/ADR-0xx-L0-Substrate-Requirements-and-Digital-Twin-Integration.md — add RH-neutral explicit formula section (band-limited reconstruction as prime-indexed spectral witness; KS on gaps bound to CVK \+ RSL gating; ties to Sedona Spine operator-words and twin-loop). Reference v0.19.0.  
 \*\*Core:\*\* pirtm/core/cvk/ — extend convergence\_test.py with band-limited Weil reconstruction (L=20), KS on gap statistics, resonance-gain (β/γ), Aubrey 56-config prime-mapping gate.  
-\*\*Contracts/Harness:\*\* contracts/rsl\_snapkitty\_binding.md \+ pirtm/core/rsl\_v5.py — include explicit formula as RSL spectral transition proxy; extend twin-loop with KS-validated drift certificates.  
+\*\*Contracts/Harness:\*\* pirtm/core/rsl\_v5.py — include explicit formula as RSL spectral transition proxy; extend twin-loop with KS-validated drift certificates.  
 \*\*Defensive Pub:\*\* defensive\_pubs/unified\_contraction\_suite\_v0.1.pdf — compiled with reconstruction code, error tables, KS results, RH-neutral claims, and provenance anchors.  
 \*\*Spine:\*\* sedona-spine/grammar/ — Tree-sitter rules updated with successor predicate \+ M(S) functor bound to CVK contraction.  
 \*\*Precision Question\*\*  

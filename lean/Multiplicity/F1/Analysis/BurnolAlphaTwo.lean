@@ -22,9 +22,9 @@ Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited b
 `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Analysis.BurnolAlpha
-import Multiplicity.F1Square.Analysis.PsiLine
-import Multiplicity.F1Square.Analysis.EtaVariation
+import Multiplicity.F1.Analysis.BurnolAlpha
+import Multiplicity.F1.Analysis.PsiLine
+import Multiplicity.F1.Analysis.EtaVariation
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

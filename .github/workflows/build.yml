@@ -1,0 +1,78 @@
+# Build & Axiom Audit — verified modules only.
+#
+# elan reads `lean-toolchain` (currently leanprover/lean4:v4.33.0-rc1) from the
+# repo, so no toolchain version is duplicated here. The sorry-scan and axiom
+# audit deliberately cover only PhaseMirror-governed modules (Care.lean, ADR/):
+# the pre-existing Prime/* and lean/Multiplicity/dynamics/* files contain
+# upstream sorries outside this scaffolding's scope.
+
+name: Build & Axiom Audit
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: lake build + sorry scan + axiom audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install elan (toolchain pinned by lean-toolchain)
+        run: |
+          curl -sSfL https://github.com/leanprover/elan/releases/latest/download/elan-init.sh | sh -s -- -y --no-modify-path
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+
+      - name: Build all default targets
+        run: lake build
+
+      - name: Scan governed modules for sorry tactics
+        run: |
+          # Anchored to tactic position so prose like "zero `sorry`" in
+          # docstrings does not trigger it. The axiom-audit step below is the
+          # authoritative detector (any real sorry surfaces as sorryAx).
+          if grep -rnE '^[[:space:]]*(sorry|first[[:space:]]+\|[[:space:]]*sorry)' Care.lean ADR/; then
+            echo "::error::sorry tactic found in governed modules"
+            exit 1
+          fi
+
+      - name: Axiom audit (must be propext / Quot.sound at most)
+        run: |
+          cat > /tmp/axaudit.lean <<'EOF'
+          import Care
+          import ADR.Theorems.CareViability
+          #print axioms PhaseMirror.Care.multiplicity_bounded
+          #print axioms PhaseMirror.Care.affinity_le_scale
+          #print axioms PhaseMirror.CareViability.rMeanPass_iff_avg
+          #print axioms PhaseMirror.CareViability.viableE_iff_some_pos
+          #print axioms PhaseMirror.CareViability.cap_of_sixths
+          #print axioms PhaseMirror.CareViability.viable_circle_prevents_burnout
+          #print axioms PhaseMirror.CareViability.averaging_blind_spot
+          #print axioms PhaseMirror.CareViability.circle_multiplicity_bounded
+          #print axioms PhaseMirror.CareViability.cap_violation_possible
+          #print axioms PhaseMirror.CareViability.each_implies_mean
+          #print axioms PhaseMirror.CareViability.mean_does_not_imply_each
+          #print axioms PhaseMirror.CareViability.viable_circle_prevents_burnout_v2
+          #print axioms PhaseMirror.CareViability.audit_v2_sound_wrt_v1
+          EOF
+          lake env lean /tmp/axaudit.lean > /tmp/axaudit.out
+          cat /tmp/axaudit.out
+          if grep -q 'sorryAx' /tmp/axaudit.out; then
+            echo "::error::sorryAx dependency detected"
+            exit 1
+          fi
+          for thm in multiplicity_bounded affinity_le_scale rMeanPass_iff_avg \
+                     viableE_iff_some_pos cap_of_sixths \
+                     viable_circle_prevents_burnout averaging_blind_spot \
+                     circle_multiplicity_bounded cap_violation_possible \
+                     each_implies_mean mean_does_not_imply_each \
+                     viable_circle_prevents_burnout_v2 audit_v2_sound_wrt_v1; do
+            if ! grep -q "$thm' \(depends on axioms\|does not depend\)" /tmp/axaudit.out; then
+              echo "::error::missing axiom-audit line for $thm"
+              exit 1
+            fi
+          done

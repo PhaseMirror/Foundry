@@ -18,8 +18,8 @@ The capstone `Rmul_y_Rdiv` (`y·(x/y) ≈ x`) is pure `Rmul` algebra over `Rmul_
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Analysis.RealDiv
-import Multiplicity.F1Square.Analysis.QOrder
+import Multiplicity.F1.Analysis.RealDiv
+import Multiplicity.F1.Analysis.QOrder
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

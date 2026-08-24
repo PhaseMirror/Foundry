@@ -14,7 +14,8 @@ absolute exp-domination beats the Leibniz remainder, which needs a monotonicity 
 Pure Lean 4, no Mathlib, no `sorry`.
 -/
 
-import Multiplicity.F1Square.Analysis.ExpReal
+import Multiplicity.F1.Analysis.ExpReal
+import Multiplicity.F1.CoreCompat
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

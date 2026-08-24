@@ -28,7 +28,7 @@ import Multiplicity.F1.Analysis.RingTac
 import Multiplicity.F1.Analysis.Mangoldt
 import Multiplicity.F1.Analysis.Real
 
-namespace Multiplicity.F1Square.WeilBridge
+namespace Multiplicity.F1.WeilBridge
 
 /-- The von Mangoldt weight at prime p. -/
 def vonMangoldtWeight (p : Nat) : Real :=
@@ -99,4 +99,4 @@ theorem primes_two_three_decisive :
     vonMangoldtWeight 2 > 0 ∧ vonMangoldtWeight 3 > 0 :=
   ⟨RlogPos (logN 2 (by omega)), RlogPos (logN 3 (by decide))⟩
 
-end Multiplicity.F1Square.WeilBridge
+end Multiplicity.F1.WeilBridge

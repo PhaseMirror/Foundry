@@ -40,10 +40,10 @@ Group B; the crux fields stay `none`.
 Pure Lean 4 core, no Mathlib, no `sorry`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Square.Spectral
-import Multiplicity.F1Square.Square.Cohomology
-import Multiplicity.F1Square.Square.Polarized
-import Multiplicity.F1Square.Analysis.GenuineLi
+import Multiplicity.F1.Square.Spectral
+import Multiplicity.F1.Square.Cohomology
+import Multiplicity.F1.Square.Polarized
+import Multiplicity.F1.Analysis.GenuineLi
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

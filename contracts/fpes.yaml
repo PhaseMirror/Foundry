@@ -1,0 +1,151 @@
+# fpes.yaml — Falsification-Preserving Experiment Selection (FPES) CONTRACT
+# ADR-0029: FPES Production Implementation (docs/ADR-0029-The FPES.md)
+#
+# Provable-contracts seven-phase pipeline: Extract → Specify → Scaffold →
+# Implement → Falsify → Verify → Prove.
+#
+# Layer split (ADR-0029 § Decision, Alternatives Considered):
+#   - Lean 4 (core, NO mathlib) proves the unbounded combinatorial contract:
+#     `∀ c ∈ Classes, |{p ∈ Paths : p ↝ c}| ≥ 1` and its preservation under
+#     representative contraction. mathlib is deliberately kept OUT of the core;
+#     real-valued statements (operator norm over ℝ, IEEE-754 edge cases) are
+#     pushed to the Rust/Kani layer where they are verified for bounded inputs.
+#   - Kani model-checks the Rust implementation for |Paths| ≤ N=8,
+#     |Classes| ≤ N=8 (ADR-0029 § Decision driver 2, § Consequences).
+#   - build.rs / scripts/fpes-gate.sh refuse to produce a binary if any proof
+#     obligation is unfulfilled (ADR-0029 § Decision driver 5, § Decision 5).
+
+contract_id: fpes
+version: "0.1.0"
+created_at: "2026-08-15"
+domain: "Formal Verification Infrastructure"
+decision_id: "ADR-FPES-001"
+adr_doc: "docs/ADR-0029-The FPES.md"
+
+governance:
+  owner: "Phase Mirror"
+  governor: "the-examiner"
+  fail_closed: true
+  no_sorry: true
+  no_mathlib_in_core: true
+  kani_bound_n: 8
+  local_runtime: true
+
+# The computational bound shared by every Kani harness (ADR-0029 §3):
+# symbolic HypothesisSpace up to size N, N ≤ 8 so that `make kani-full`
+# completes in developer time.
+bounds:
+  max_paths: 8
+  max_classes: 8
+  unwind: 9
+
+# Lean core module constraints (L0-NO-MATHLIB, L0-NO-SORRY). Any `import
+# Mathlib` or residual `sorry` in these modules is a CI-blocking violation.
+lean_modules:
+  - name: Multiplicity.FPES.Core
+    path: lean/Multiplicity/FPES/Core.lean
+    no_mathlib: true
+    no_sorry: true
+  - name: Multiplicity.FPES.Proofs
+    path: lean/Multiplicity/FPES/Proofs.lean
+    no_mathlib: true
+    no_sorry: true
+  - name: Multiplicity.FPES.Examples
+    path: lean/Multiplicity/FPES/Examples.lean
+    no_mathlib: true
+    no_sorry: true
+  - name: Multiplicity.FPES.Test
+    path: lean/Multiplicity/FPES/Test.lean
+    no_mathlib: true
+    no_sorry: true
+
+# Rust/Kani layer: harnesses model-check the Rust FPES kernel. The in-crate
+# fixed-array model (`Multiplicity/kani/src/proofs/fpes.rs`) is a placeholder
+# for the production `multiplicity-core` kernel; `stub_float_on_transcendentals`
+# is the mandated strategy because Kani cannot model `f32::exp`/`f64::ln`
+# bit-exactly (ADR-0029 § Consequences Negative, third bullet).
+rust_harness_modules:
+  - name: fpes
+    path: lean/Multiplicity/kani/src/proofs/fpes.rs
+    cfg: kani
+
+proof_obligations:
+  - id: FPES-MULTIPLICITY-001
+    type: invariant
+    property: "Path multiplicity m(path) > 0 for all equivalence classes"
+    formal: "∀ c ∈ Classes, |{p ∈ Paths : p ↝ c}| ≥ 1"
+    lean:
+      theorem: Multiplicity.FPES.Proofs.multiplicity_nonzero
+      status: proved
+      proof_sketch: |
+        Straight from the `ClassesNonempty H` hypothesis: `h c hc` with
+        `hc : c ∈ H.classes`. FPES-CORE invariant, machine-checked, no sorry.
+    kani_harnesses:
+      - id: KANI-FPES-001
+        obligation: FPES-MULTIPLICITY-001
+        property: "multiplicity_count() returns >= 1 for every class, |Paths| ≤ 8"
+        bound: 8
+        strategy: fixed_array_model
+        rust_fn: kani_fpes_001_multiplicity_nonzero
+
+  - id: FPES-SURVIVAL-002
+    type: invariant
+    property: "Representative contraction preserves falsification power: every
+      class that was nonempty retains at least one path"
+    formal: "∀ c ∈ Classes, |{p ∈ Paths : p ↝ c}| ≥ 1 →
+             |{p' ∈ c(H).Paths : p' ↝ c}| ≥ 1"
+    lean:
+      theorem: Multiplicity.FPES.Proofs.representatives_falsification_preserving
+      status: proved
+      proof_sketch: |
+        `firstPath_some_of_count_pos` extracts a representative for every
+        nonempty class; `repsGo_mem` places it in `contractToRepresentatives H`;
+        `countInClass_pos_of_mem` witnesses multiplicity ≥ 1. ADR-0029 §2
+        `multiplicity_preserved_under_contraction` is a corollary
+        (`contraction_survival`).
+    kani_harnesses:
+      - id: KANI-FPES-002
+        obligation: FPES-SURVIVAL-002
+        property: "contraction_operator() keeps multiplicity_count() >= 1 per
+          class, |Paths| ≤ 8"
+        bound: 8
+        strategy: fixed_array_model
+        rust_fn: kani_fpes_002_contraction_preserves_multiplicity
+
+  - id: FPES-NO-SORRY-003
+    type: meta
+    property: "No `sorry`/`admit`/bare `axiom` in the FPES Lean core"
+    formal: "build gate: grep -rE '^(sorry|admit)$|^axiom ' lean/Multiplicity/FPES/ must be empty"
+    lean:
+      theorem: "enforced by scripts/fpes-gate.sh step 1"
+      status: enforced
+    kani_harnesses: []
+
+  - id: FPES-NO-MATHLIB-004
+    type: meta
+    property: "mathlib stays OUT of the FPES core; real-norm statements are
+      verified in the Rust/Kani layer instead"
+    formal: "build gate: grep -rE '^import Mathlib' lean/Multiplicity/FPES/ must be empty"
+    lean:
+      theorem: "enforced by scripts/fpes-gate.sh step 0"
+      status: enforced
+    kani_harnesses: []
+
+  - id: FPES-CONFLICT-005
+    type: governance
+    property: "Concurrent proposals that select different representatives for
+      the same class are detected as conflicts"
+    formal: "Conflicting H P Q c := P.select H c ≠ none ∧ Q.select H c ≠ none
+             ∧ P.select H c ≠ Q.select H c; both_select_agree proves
+             ¬ Conflicting → selection order is irrelevant"
+    lean:
+      theorem: Multiplicity.FPES.Proofs.both_select_agree
+      status: proved
+    kani_harnesses: []
+
+verification_command:
+  lean: "lake build Multiplicity.FPES.Core Multiplicity.FPES.Proofs Multiplicity.FPES.Examples Multiplicity.FPES.Test"
+  lean_test: "lake test"
+  kani: "cd lean/Multiplicity/kani && cargo kani --harness kani_fpes_001_multiplicity_nonzero --unwind 9 && cargo kani --harness kani_fpes_002_contraction_preserves_multiplicity --unwind 9"
+  gate: "./scripts/fpes-gate.sh"
+  full: "make kani-full"

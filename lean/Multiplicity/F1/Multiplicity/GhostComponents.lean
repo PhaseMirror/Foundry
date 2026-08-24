@@ -22,7 +22,7 @@ import Multiplicity.F1.Analysis.RingTac
 import Multiplicity.F1.Analysis.Mangoldt
 import Multiplicity.F1.Analysis.Real
 
-namespace Multiplicity.F1Square.GhostComponents
+namespace Multiplicity.F1.GhostComponents
 
 /-- The Möbius function μ(n) for n ≥ 1. Used for ghost component weight refinement. -/
 def mobius (n : Nat) : Int :=
@@ -181,4 +181,4 @@ theorem unitary_axis_condition (n : Nat) (q : Fin n → Int) (a : Fin n → Int)
 def global_ghost_form (n : Nat) (q : Fin n → Int) (a : Fin n → Int) (s : Real) : Real :=
   ghost_weight_prime 2 + ghost_weight_prime 3 + archimedean_ghost_weight s
 
-end Multiplicity.F1Square.GhostComponents
+end Multiplicity.F1.GhostComponents

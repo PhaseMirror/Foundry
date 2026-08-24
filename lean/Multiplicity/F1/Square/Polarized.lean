@@ -32,8 +32,8 @@ own derived lattice (`squarePolarized`), not the product-of-curves analogy —
 Pure Lean 4 core, no Mathlib, no `sorry`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Square.Lattice
-import Multiplicity.F1Square.Crux
+import Multiplicity.F1.Square.Lattice
+import Multiplicity.F1.Crux
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

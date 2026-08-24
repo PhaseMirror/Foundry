@@ -16,8 +16,8 @@ shared symmetrizing step.
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Analysis.RrpowBounds
-import Multiplicity.F1Square.Analysis.RabsLemmas
+import Multiplicity.F1.Analysis.RrpowBounds
+import Multiplicity.F1.Analysis.RabsLemmas
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

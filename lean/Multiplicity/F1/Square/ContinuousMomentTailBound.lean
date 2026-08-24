@@ -28,9 +28,9 @@ Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited b
 `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Square.ContinuousMomentClamp
-import Multiplicity.F1Square.Square.IntegralTailBound
-import Multiplicity.F1Square.Analysis.IntegralCertIrrel
+import Multiplicity.F1.Square.ContinuousMomentClamp
+import Multiplicity.F1.Square.IntegralTailBound
+import Multiplicity.F1.Analysis.IntegralCertIrrel
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

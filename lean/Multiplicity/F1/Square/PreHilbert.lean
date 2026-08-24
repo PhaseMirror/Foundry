@@ -27,9 +27,9 @@ Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited b
 `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Square.WeilPSD
-import Multiplicity.F1Square.Analysis.CosSinBound
-import Multiplicity.F1Square.Analysis.RMulNF
+import Multiplicity.F1.Square.WeilPSD
+import Multiplicity.F1.Analysis.CosSinBound
+import Multiplicity.F1.Analysis.RMulNF
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

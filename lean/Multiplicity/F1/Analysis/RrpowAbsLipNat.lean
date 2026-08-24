@@ -14,7 +14,7 @@ integer `N ≥ 1`, K-free — the uniformly-constant Mellin-integrand base-Lipsc
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Analysis.LogDiffBoundGen
+import Multiplicity.F1.Analysis.LogDiffBoundGen
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

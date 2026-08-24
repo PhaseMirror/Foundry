@@ -18,7 +18,8 @@ functional's test class needs. The three evaluation lemmas are the tent calculus
 Pure Lean 4 core, no Mathlib, no `sorry`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Analysis.RealPow
+import Multiplicity.F1.Analysis.RealPow
+import Multiplicity.F1.CoreCompat
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

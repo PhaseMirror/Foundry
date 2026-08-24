@@ -30,10 +30,10 @@ Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited b
 `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Square.MomentQuadratic
-import Multiplicity.F1Square.Square.MomentEnergyDetect
-import Multiplicity.F1Square.Square.CoSupportEnergy
-import Multiplicity.F1Square.Analysis.SqrtRealCmp
+import Multiplicity.F1.Square.MomentQuadratic
+import Multiplicity.F1.Square.MomentEnergyDetect
+import Multiplicity.F1.Square.CoSupportEnergy
+import Multiplicity.F1.Analysis.SqrtRealCmp
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

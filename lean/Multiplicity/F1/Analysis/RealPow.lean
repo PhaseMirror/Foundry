@@ -16,10 +16,10 @@ and the exp monotonicity (next commit) is what makes `Σ n^{-s}` summable.
 Pure Lean 4, no Mathlib, no `sorry`/`native_decide`, choice-free.
 -/
 
-import Multiplicity.F1Square.Analysis.ExpLog
-import Multiplicity.F1Square.Analysis.Pow
-import Multiplicity.F1Square.Analysis.GammaAccel
-import Multiplicity.F1Square.Analysis.CosSinBound
+import Multiplicity.F1.Analysis.ExpLog
+import Multiplicity.F1.Analysis.Pow
+import Multiplicity.F1.Analysis.GammaAccel
+import Multiplicity.F1.Analysis.CosSinBound
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

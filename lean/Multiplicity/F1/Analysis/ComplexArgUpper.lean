@@ -17,11 +17,11 @@ a continuity lift).
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
-import Multiplicity.F1Square.Analysis.ComplexArg
-import Multiplicity.F1Square.Analysis.TanPiQuarter
-import Multiplicity.F1Square.Analysis.RArctanValue
-import Multiplicity.F1Square.Analysis.RArctanCongr
-import Multiplicity.F1Square.Analysis.Reflection
+import Multiplicity.F1.Analysis.ComplexArg
+import Multiplicity.F1.Analysis.TanPiQuarter
+import Multiplicity.F1.Analysis.RArctanValue
+import Multiplicity.F1.Analysis.RArctanCongr
+import Multiplicity.F1.Analysis.Reflection
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

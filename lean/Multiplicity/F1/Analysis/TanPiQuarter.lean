@@ -24,7 +24,7 @@ bricks; this file supplies their `π/2` anchors. Consistency with the Machin `Rp
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
-import Multiplicity.F1Square.Analysis.ArctanTan
+import Multiplicity.F1.Analysis.ArctanTan
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

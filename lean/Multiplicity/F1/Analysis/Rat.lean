@@ -19,7 +19,7 @@ exact-bounded objects. Each brick makes more of the analytic half statable and c
 crux (proving `λₙ ≥ 0 ∀n` / the Hodge index on 𝕊 is RH).
 -/
 
-import Multiplicity.F1Square.Analysis.RingNF
+import Multiplicity.F1.Analysis.RingNF
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 
@@ -189,6 +189,6 @@ theorem add_zero (a : Q) : Qeq (add a ⟨0, 1⟩) a := by
 
 /-- `a + (−a) = 0` on ℚ (value-level), for ALL rationals: the additive inverse law. -/
 theorem add_neg (a : Q) : Qeq (add a (neg a)) ⟨0, 1⟩ := by
-  unfold Qeq add neg; simp; omega
+  unfold Qeq add neg; simp only [Int.neg_mul]; omega
 
 end Multiplicity.UOR.Bridge.F1Square.Analysis

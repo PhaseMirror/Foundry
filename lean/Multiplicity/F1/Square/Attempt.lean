@@ -77,7 +77,7 @@ recorded above is where the wall genuinely is, not a declaration that it cannot 
 Pure Lean 4 core, no Mathlib, no `sorry`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Square.Spectral
+import Multiplicity.F1.Square.Spectral
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

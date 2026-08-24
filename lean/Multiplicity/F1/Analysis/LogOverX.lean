@@ -18,11 +18,11 @@ Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited b
 `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Analysis.LogSqStep
-import Multiplicity.F1Square.Analysis.LogPointVal
-import Multiplicity.F1Square.Analysis.HarmonicLogC
-import Multiplicity.F1Square.Analysis.RmulLipschitz
-import Multiplicity.F1Square.Analysis.RartanhBounds
+import Multiplicity.F1.Analysis.LogSqStep
+import Multiplicity.F1.Analysis.LogPointVal
+import Multiplicity.F1.Analysis.HarmonicLogC
+import Multiplicity.F1.Analysis.RmulLipschitz
+import Multiplicity.F1.Analysis.RartanhBounds
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

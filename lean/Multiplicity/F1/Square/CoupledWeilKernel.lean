@@ -47,8 +47,8 @@ pattern, and the crux stays `none` throughout.
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
-import Multiplicity.F1Square.Square.SelfAdjoint
-import Multiplicity.F1Square.Analysis.Mangoldt
+import Multiplicity.F1.Square.SelfAdjoint
+import Multiplicity.F1.Analysis.Mangoldt
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

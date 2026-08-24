@@ -411,3 +411,19 @@ def adr_pml_055_state_anchor : ADR := {
   supersedes := none
   links := []
 }
+
+def adr_029_fpes : ADR := {
+  id := "ADR-0029"
+  title := "FPES Production Implementation"
+  status := ADRStatus.Proposed
+  context := "FPES (Falsification-Preserving Experiment Selection) formalizes hypothesis-space pruning that must never reduce falsification power. The formal layer must be machine-checked: the Lean kernel rejects incomplete proofs (no sorry), mathlib is kept out of the core, and real-norm statements (operator_norm < 1) are verified in the Rust/Kani layer for bounded inputs (|Paths| ≤ 8)."
+  decision := "Implement FPES as a three-layer contract: (1) a spec-first YAML contract (contracts/fpes.yaml); (2) a core-Lean 4 model (lean/Multiplicity/FPES) proving FPES-MULTIPLICITY-001 (every equivalence class has at least one path) and FPES-SURVIVAL-002 (representative contraction preserves falsification power), carried by proof-carrying Certificate terms; (3) Kani-verified Rust mirrors bounded at N=8. A proof-carrying acceptance gate (scripts/fpes-gate.sh, make kani-full) refuses to build if any obligation is unmet."
+  consequences := ["Lean core stays mathlib-free; ℝ-norm hypotheses are deferred to the Kani layer", "Every viable hypothesis space admits a machine-checked Certificate; defective spaces are un-typeable", "Concurrent selection proposals that disagree on a class are flagged as conflicts (FPES-CONFLICT-005)", "make kani-full gates the production binary on the bounded FPES harnesses", "This ADR is Proposed; it becomes immutable only when formally Accepted"]
+  supersedes := none
+  links := [
+    { url := "docs/ADR-0029-The FPES.md", description := "Full text of ADR-0029" },
+    { url := "lean/Multiplicity/FPES/Proofs.lean", description := "Machine-checked FPES theorems (FPES-MULTIPLICITY-001, FPES-SURVIVAL-002, FPES-CONFLICT-005)" },
+    { url := "contracts/fpes.yaml", description := "FPES provable-contracts contract" },
+    { url := "scripts/fpes-gate.sh", description := "Proof-carrying acceptance gate" }
+  ]
+}

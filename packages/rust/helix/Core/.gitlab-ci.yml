@@ -1,0 +1,38 @@
+stages:
+  - validate
+  - physics-gate
+  - constitutional
+
+default:
+  tags: []
+
+validate:structure:
+  stage: validate
+  script:
+    - python --version
+    - python -c "import os; assert os.path.exists('research/physics-gate/checksums/slope_ub_result.json')"
+    - python -c "import os; assert os.path.exists('governance/L0-ABSURDITY-001_Anti-Maximizer-Axiom.json')"
+    - python -c "import os; assert os.path.exists('research/physics-gate/checksums/ryan_countersignature_2026-03-28.json')"
+    - echo "All governance artifacts present"
+
+validate:gate-artifacts:
+  stage: validate
+  script:
+    - python scripts/ci/validate_gates.py
+
+physics:phase5:
+  stage: physics-gate
+  script:
+    - python research/physics-gate/run_phase5.py
+  artifacts:
+    paths:
+      - checksums/slope_ub_result.json
+    expire_in: 30 days
+  rules:
+    - changes:
+        - research/physics-gate/**/*
+
+constitutional:guardian-smoke:
+  stage: constitutional
+  script:
+    - python scripts/ci/guardian_smoke.py

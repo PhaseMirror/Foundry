@@ -6,7 +6,7 @@ The foundational monorepo for Phase Mirror. Contains the core Rust engine, Lean 
 
 ### The Bounded Architecture Boundary
 
-The Foundry is explicitly designed to be a **heavily isolated, bounded sub-module**. It is restricted exclusively to formal mathematical proofs, mathematically-bound Rust verification engines, and core cryptography. 
+This `Prime/` directory is explicitly designed to be a **heavily isolated, bounded sub-module**. It is restricted exclusively to formal mathematical proofs, mathematically-bound Rust verification engines, and core cryptography. 
 
 It intentionally **does not** contain UI frameworks, orchestration layers, general packaging logic, or outer-loop agent orchestrators. Those concerns live in the `PhaseMirror/` root directory, which acts as the **Master Orchestrator** wrapping this mathematical core. Any non-mathematical deployments, UI code, or broad orchestrators should be pushed up to the root.
 
@@ -147,7 +147,7 @@ The `src/` directory also contains Lean 4 modules (`src/ADR/`, `src/Analytic/`, 
 | Crate | Purpose |
 |:------|:--------|
 | `commander-cli/` | PhaseSpace Commander CLI |
-| `echo-kernel/` | EchoBraid Neurodiverse Dynamics |
+| `echo-kernel/` | Echo kernel |
 | `digital-twin/` | Digital twin |
 | `hybrid-quantum/` | Hybrid quantum computing |
 | `prime-quantum/` | Prime quantum |

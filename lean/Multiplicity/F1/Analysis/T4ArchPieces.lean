@@ -19,7 +19,7 @@ Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited b
 `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Analysis.T4PoleBPieces
+import Multiplicity.F1.Analysis.T4PoleBPieces
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

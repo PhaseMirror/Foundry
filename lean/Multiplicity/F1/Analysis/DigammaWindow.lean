@@ -35,8 +35,8 @@ Parameterized by `s = τ²/4` as a non-negative rational `sn/sd` (`sn sd : ℕ`,
 Pure Lean 4 core, no Mathlib, no `sorry`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Analysis.Rat
-import Multiplicity.F1Square.Analysis.QOrder
+import Multiplicity.F1.Analysis.Rat
+import Multiplicity.F1.Analysis.QOrder
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

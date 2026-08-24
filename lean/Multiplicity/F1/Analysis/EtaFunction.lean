@@ -17,7 +17,7 @@ via the complex reciprocal `Cinv` (built in `ComplexInv`). This module builds th
 Pure Lean 4, no Mathlib, no `sorry`/`native_decide`, choice-free.
 -/
 
-import Multiplicity.F1Square.Analysis.EulerMaclaurin
+import Multiplicity.F1.Analysis.EulerMaclaurin
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

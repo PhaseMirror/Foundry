@@ -39,9 +39,10 @@ nothing here bears on it. These are structure theorems, not positivity theorems.
 Pure Lean 4 core, no Mathlib, no `sorry`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Square.Divisors
-import Multiplicity.F1Square.Tropical.Signature
-import Multiplicity.F1Square.Analysis.Mangoldt
+import Multiplicity.F1.Square.Divisors
+import Multiplicity.F1.Tropical.Signature
+import Multiplicity.F1.Analysis.Mangoldt
+import Multiplicity.F1.CoreCompat
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

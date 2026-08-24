@@ -18,8 +18,8 @@ cheap `hre` congruence `ClogConj` uses (`|z̄|² = |z|²`, `cnormSq_Cconj`, off 
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
-import Multiplicity.F1Square.Analysis.ComplexLogUpper
-import Multiplicity.F1Square.Analysis.ComplexArgLower
+import Multiplicity.F1.Analysis.ComplexLogUpper
+import Multiplicity.F1.Analysis.ComplexArgLower
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

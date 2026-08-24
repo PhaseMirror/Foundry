@@ -16,6 +16,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Host toolchain sanity check
+        run: |
+          echo "=== Host C toolchain pre-build check ==="
+          command -v gcc >/dev/null 2>&1 && gcc --version | head -1 || { echo "FAIL: gcc not found"; exit 1; }
+          command -v ld >/dev/null 2>&1 && ld --version | head -1 || { echo "FAIL: ld not found"; exit 1; }
+          find /lib /usr/lib -name "libc.so.6" 2>/dev/null | head -1 | grep -q . || { echo "FAIL: libc.so.6 not found"; exit 1; }
+          find /lib /usr/lib -name "libm.so.6" 2>/dev/null | head -1 | grep -q . || { echo "FAIL: libm.so.6 not found"; exit 1; }
+          echo "PASS: gcc, ld, libc.so.6, libm.so.6 present"
+
       # Installs the toolchain from `lean-toolchain`, resolves the pinned `uor`
       # dependency from `lake-manifest.json`, and runs `lake build`.
       - name: Build Lean library

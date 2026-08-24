@@ -10,7 +10,7 @@ The Qudit-Classical Feedback Interface (QCFI) requires real-time bidirectional f
 We will deploy a tightly coupled FPGA-based control system collocated with the QPU to handle QCFI logic natively.
 1. The primary hardware backend is standardized to **Infleqtion ($^{133}$Cs, $d=16$)** to leverage the maximum qudit manifold space for HSEC buffer allocation.
 2. The Rust SDK will implement a hardware pulse calibration layer (`fpga_pulse.rs`) that safely bridges the MA-VQE logical instructions to FPGA microwave pulse outputs.
-3. HSEC calibration will occur directly on the FPGA edge node before evaluating mid-circuit states against the SnapKitty $S(\rho) \leq H_{\max}$ bound.
+3. HSEC calibration will occur directly on the FPGA edge node before evaluating mid-circuit states against the $S(\rho) \leq H_{\max}$ entropy bound.
 4. All bindings will continue to route through the Sedona Spine ALP policy gates, ensuring no agent can independently alter calibration thresholds.
 
 ## Consequences

@@ -9,8 +9,8 @@ Euler–Maclaurin remainder `R_K(s,N)`). Built on the Bernoulli numbers `bernoul
 Pure Lean 4, no Mathlib, no `sorry`/`native_decide`, choice-free.
 -/
 
-import Multiplicity.F1Square.Analysis.Bernoulli
-import Multiplicity.F1Square.Analysis.ExpGen
+import Multiplicity.F1.Analysis.Bernoulli
+import Multiplicity.F1.Analysis.ExpGen
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

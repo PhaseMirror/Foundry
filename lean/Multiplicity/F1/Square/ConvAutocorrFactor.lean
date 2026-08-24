@@ -32,8 +32,9 @@ Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited b
 `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Square.ConvMellinHatFactor
-import Multiplicity.F1Square.Square.SelfDualMomentSymmetry
+import Multiplicity.F1.Square.ConvMellinHatFactor
+import Multiplicity.F1.Square.SelfDualMomentSymmetry
+import Multiplicity.F1.CoreCompat
 
 set_option maxHeartbeats 4000000
 

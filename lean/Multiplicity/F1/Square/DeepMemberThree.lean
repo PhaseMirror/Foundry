@@ -32,8 +32,8 @@ Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited b
 `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Square.HilbertGram
-import Multiplicity.F1Square.Square.DeepMember
+import Multiplicity.F1.Square.HilbertGram
+import Multiplicity.F1.Square.DeepMember
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

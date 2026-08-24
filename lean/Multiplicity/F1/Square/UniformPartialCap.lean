@@ -30,11 +30,11 @@ Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited b
 `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Square.RescheduleFinite
-import Multiplicity.F1Square.Square.ScaledTwistedTail
-import Multiplicity.F1Square.Square.CompactMomentDilate
-import Multiplicity.F1Square.Square.IntervalSplitAtCap
-import Multiplicity.F1Square.Square.RationalWindowDilate
+import Multiplicity.F1.Square.RescheduleFinite
+import Multiplicity.F1.Square.ScaledTwistedTail
+import Multiplicity.F1.Square.CompactMomentDilate
+import Multiplicity.F1.Square.IntervalSplitAtCap
+import Multiplicity.F1.Square.RationalWindowDilate
 
 set_option maxHeartbeats 4000000
 

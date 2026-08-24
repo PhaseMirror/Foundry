@@ -11,7 +11,7 @@ Means are kept exact as `(sum, length)` pairs (the cycle profile); equality of p
 decidable comparison used here — exact rational means (`Analysis/Rat.lean`) give the same verdicts.
 -/
 
-import Multiplicity.F1Square.Tropical.Closure
+import Multiplicity.F1.Tropical.Closure
 
 namespace Multiplicity.UOR.Bridge.F1Square.Tropical
 

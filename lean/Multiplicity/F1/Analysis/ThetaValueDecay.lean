@@ -17,7 +17,7 @@ comparison `(m+1)m ≤ (m+1)(m+1)` factors out `m+1` (`Nat.mul_le_mul`), staying
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Analysis.ThetaDecay
+import Multiplicity.F1.Analysis.ThetaDecay
 
 set_option maxHeartbeats 1000000
 

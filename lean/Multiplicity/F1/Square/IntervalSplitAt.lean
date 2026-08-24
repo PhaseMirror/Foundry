@@ -31,8 +31,8 @@ Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited b
 `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Square.IntegralSplit
-import Multiplicity.F1Square.Square.IntegralCS
+import Multiplicity.F1.Square.IntegralSplit
+import Multiplicity.F1.Square.IntegralCS
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

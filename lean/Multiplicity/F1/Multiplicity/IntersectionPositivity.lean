@@ -1,4 +1,4 @@
-namespace Multiplicity.F1Square.Tropical.IntersectionPositivity
+namespace Multiplicity.F1.Tropical.IntersectionPositivity
 
 /--
   Determinant of two 2D integer vectors.
@@ -62,4 +62,4 @@ def concreteTropicalIntersectionPositivity : TropicalIntersectionPositivity Weig
   { mult := stableIntersectionMult
   , mult_nonneg := stableIntersectionMult_nonneg }
 
-end Multiplicity.F1Square.Tropical.IntersectionPositivity
+end Multiplicity.F1.Tropical.IntersectionPositivity

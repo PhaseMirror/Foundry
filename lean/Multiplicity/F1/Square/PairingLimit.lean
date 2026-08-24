@@ -29,10 +29,10 @@ Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited b
 `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Square.Parallelogram
-import Multiplicity.F1Square.Analysis.SqrtRealCmp
-import Multiplicity.F1Square.Analysis.ComplexZeta
-import Multiplicity.F1Square.Analysis.IntegralCertIrrel
+import Multiplicity.F1.Square.Parallelogram
+import Multiplicity.F1.Analysis.SqrtRealCmp
+import Multiplicity.F1.Analysis.ComplexZeta
+import Multiplicity.F1.Analysis.IntegralCertIrrel
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

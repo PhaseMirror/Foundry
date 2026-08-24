@@ -15,7 +15,7 @@ reduction: `B₀ = 1`, `B₁ = −1/2`, `B₂ = 1/6`, `B₃ = 0`, `B₄ = −1/3
 Pure Lean 4, no Mathlib, no `sorry`/`native_decide`, choice-free.
 -/
 
-import Multiplicity.F1Square.Analysis.Binomial
+import Multiplicity.F1.Analysis.Binomial
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

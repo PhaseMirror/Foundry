@@ -1,6 +1,11 @@
 pub mod pde_rnn;
 pub mod smm;
 pub mod ffi_bridge;
+pub mod fpes_bridge;
+pub mod fpes_contract;
+pub mod word_love;
+pub mod word_love_bridge;
+pub mod word_love_contract;
 
 #[cfg(test)]
 mod tests {

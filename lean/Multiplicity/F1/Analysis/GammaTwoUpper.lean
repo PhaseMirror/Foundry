@@ -21,7 +21,8 @@ The only new ingredient is `(ln p)² ≤ 4p` (`logSq_le_self4`): with `M = L/2`,
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Analysis.GammaThreeBracket
+import Multiplicity.F1.Analysis.GammaThreeBracket
+import Multiplicity.F1.CoreCompat
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

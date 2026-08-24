@@ -24,8 +24,8 @@ Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited b
 `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Square.MomentPairingNeg
-import Multiplicity.F1Square.Analysis.RAddNF
+import Multiplicity.F1.Square.MomentPairingNeg
+import Multiplicity.F1.Analysis.RAddNF
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

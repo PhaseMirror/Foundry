@@ -62,8 +62,8 @@ state both faces.) This module pins that boundary HONESTLY.
 Pure Lean 4, no Mathlib, no `sorry`.
 -/
 
-import Multiplicity.F1Square.Analysis.ExactBounded
-import Multiplicity.F1Square.Analysis.ROrder
+import Multiplicity.F1.Analysis.ExactBounded
+import Multiplicity.F1.Analysis.ROrder
 
 namespace Multiplicity.UOR.Bridge.F1Square.Li
 

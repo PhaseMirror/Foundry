@@ -15,9 +15,9 @@ next layer.
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Analysis.RSum
-import Multiplicity.F1Square.Analysis.ComplexPow
-import Multiplicity.F1Square.Analysis.RealPow
+import Multiplicity.F1.Analysis.RSum
+import Multiplicity.F1.Analysis.ComplexPow
+import Multiplicity.F1.Analysis.RealPow
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

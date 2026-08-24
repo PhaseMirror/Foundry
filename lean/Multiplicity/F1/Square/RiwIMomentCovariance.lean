@@ -32,12 +32,12 @@ Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited b
 `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Square.RiwILimit
-import Multiplicity.F1Square.Square.RiwSeqMoment
-import Multiplicity.F1Square.Square.MomentCovLip
-import Multiplicity.F1Square.Square.DilateTestBridge
-import Multiplicity.F1Square.Analysis.CovRateQ
-import Multiplicity.F1Square.Analysis.RealPow
+import Multiplicity.F1.Square.RiwILimit
+import Multiplicity.F1.Square.RiwSeqMoment
+import Multiplicity.F1.Square.MomentCovLip
+import Multiplicity.F1.Square.DilateTestBridge
+import Multiplicity.F1.Analysis.CovRateQ
+import Multiplicity.F1.Analysis.RealPow
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

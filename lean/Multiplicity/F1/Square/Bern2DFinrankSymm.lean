@@ -28,10 +28,10 @@ Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited b
 `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Square.Bern2DOperator
-import Multiplicity.F1Square.Square.Bern2DInnerClose
-import Multiplicity.F1Square.Square.SelfAdjoint
-import Multiplicity.F1Square.Square.WeilPSD
+import Multiplicity.F1.Square.Bern2DOperator
+import Multiplicity.F1.Square.Bern2DInnerClose
+import Multiplicity.F1.Square.SelfAdjoint
+import Multiplicity.F1.Square.WeilPSD
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

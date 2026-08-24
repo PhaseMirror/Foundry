@@ -26,9 +26,9 @@ Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited b
 `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Square.BernsteinDeviationTransfer
-import Multiplicity.F1Square.Square.BernsteinDevBound
-import Multiplicity.F1Square.Square.MomentDeterminacy
+import Multiplicity.F1.Square.BernsteinDeviationTransfer
+import Multiplicity.F1.Square.BernsteinDevBound
+import Multiplicity.F1.Square.MomentDeterminacy
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

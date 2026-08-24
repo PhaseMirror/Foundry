@@ -7,8 +7,8 @@ squared modulus directly from the `Cexp` modulus identity (`Cexp_normSq`, itself
 Pure Lean 4, no Mathlib, no `sorry`/`native_decide`, choice-free.
 -/
 
-import Multiplicity.F1Square.Analysis.ComplexMod
-import Multiplicity.F1Square.Analysis.Log
+import Multiplicity.F1.Analysis.ComplexMod
+import Multiplicity.F1.Analysis.Log
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

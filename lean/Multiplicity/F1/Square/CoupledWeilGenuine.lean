@@ -27,8 +27,8 @@ nothing. Crux fields stay `none`.
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
-import Multiplicity.F1Square.Square.CoupledWeilKernel
-import Multiplicity.F1Square.Square.AtlasCruxSynthesis
+import Multiplicity.F1.Square.CoupledWeilKernel
+import Multiplicity.F1.Square.AtlasCruxSynthesis
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

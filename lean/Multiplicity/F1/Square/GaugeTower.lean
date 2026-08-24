@@ -31,7 +31,7 @@ Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited b
 `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Square.E8Seed
+import Multiplicity.F1.Square.E8Seed
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

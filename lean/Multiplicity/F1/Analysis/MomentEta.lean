@@ -25,8 +25,8 @@ Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited b
 The crux fields stay `none`; RH is open.
 -/
 
-import Multiplicity.F1Square.Analysis.ComplexBinomial
-import Multiplicity.F1Square.Analysis.GenuineLi
+import Multiplicity.F1.Analysis.ComplexBinomial
+import Multiplicity.F1.Analysis.GenuineLi
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

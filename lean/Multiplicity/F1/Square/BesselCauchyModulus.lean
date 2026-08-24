@@ -27,8 +27,8 @@ arbitrary sequences, NOT positivity. Step 4 (band-coupling positivity) is RH; th
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
-import Multiplicity.F1Square.Square.BesselSeqDist
-import Multiplicity.F1Square.Square.MomentRealize
+import Multiplicity.F1.Square.BesselSeqDist
+import Multiplicity.F1.Square.MomentRealize
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

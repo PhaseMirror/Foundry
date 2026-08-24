@@ -23,7 +23,7 @@ We will enforce SQD signatures as mandatory provenance fields across the UAC pip
 - **Negative**: Adds measurement overhead to the FPGA edge node to compute Pauli features for Q-SQD, slightly reducing total QaaS throughput.
 
 ## Next Steps
-1. Formalize SQD structures and constants in `lean/SNAPKITTY/SnapKitty/SQD.lean`.
+1. Formalize SQD structures and constants in `lean/Multiplicity/universal_atomic/SQD.lean`.
 2. Implement `sqd.rs` matching the V1.0 reference schemas.
 3. Wire Q-SQD and C-SQD generation into `fpga_pulse.rs`.
 4. Update `qaas_endpoints.rs` and `agent_contracts.rs` (`NarrativeAuditor`) to mandate SQD validation.

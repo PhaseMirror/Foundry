@@ -22,6 +22,7 @@ macro_rules! log_deser_detail {
 }
 
 /// Log successful threshold load from Lean export.
+#[macro_export]
 macro_rules! log_threshold_load {
     ($status:literal, $source:expr) => {{
         let atlas_sig = (10, 14);
@@ -54,6 +55,7 @@ macro_rules! log_governed_transition {
 }
 
 /// Log a dissonance trap with full context.
+#[macro_export]
 macro_rules! log_dissonance_trap {
     ($transition_id:expr, $breach_type:expr, $details:expr) => {{
         tracing::event!(
@@ -69,6 +71,7 @@ macro_rules! log_dissonance_trap {
 }
 
 /// Log validation failure against Lean invariants.
+#[macro_export]
 macro_rules! log_validation_failure {
     ($field:expr, $value:expr, $bound:expr) => {{
         tracing::event!(
@@ -82,6 +85,7 @@ macro_rules! log_validation_failure {
 }
 
 /// Convenience macro for quick error logging (used in DeserError paths).
+#[macro_export]
 macro_rules! log_error {
     ($err:expr, $($field:tt)*) => {{
         tracing::error!(

@@ -12,11 +12,11 @@ for a concrete numeral `B` (every integration window `[m+1,m+2]` has `B = m+2`).
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Analysis.RdivBounds
-import Multiplicity.F1Square.Analysis.RadiusGen
-import Multiplicity.F1Square.Analysis.RartanhBounds
-import Multiplicity.F1Square.Analysis.LogDiffBound
-import Multiplicity.F1Square.Analysis.RrpowAbsLip
+import Multiplicity.F1.Analysis.RdivBounds
+import Multiplicity.F1.Analysis.RadiusGen
+import Multiplicity.F1.Analysis.RartanhBounds
+import Multiplicity.F1.Analysis.LogDiffBound
+import Multiplicity.F1.Analysis.RrpowAbsLip
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

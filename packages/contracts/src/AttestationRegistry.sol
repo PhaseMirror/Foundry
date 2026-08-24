@@ -16,7 +16,7 @@ interface IGroth16Verifier {
 contract AttestationRegistry {
     IGroth16Verifier public immutable verifier;
 
-    // The WORM (Write-Once-Read-Many) Audit Trail for L0 Scope Bounds
+    // The immutable CRMF Audit Trail for L0 Scope Bounds
     struct Attestation {
         uint256 timestamp;
         uint256 kaniProofHash;
@@ -44,7 +44,7 @@ contract AttestationRegistry {
         uint256 kaniProofHash,
         uint256 maxDrift
     ) external {
-        // Prevent replay attacks (WORM policy)
+        // Prevent replay attacks (CRMF seal-uniqueness policy)
         require(registry[crmfValiditySeal].timestamp == 0, "CRMF Seal already registered");
 
         // The public signals array expected by the snarkjs verifier

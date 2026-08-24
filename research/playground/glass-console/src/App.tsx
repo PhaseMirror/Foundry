@@ -83,7 +83,7 @@ const GlassConsole = () => {
             </a>
             <a href="#" className="nav-item">
               <Database size={18} />
-              WORM Registry
+              Attestation Registry
             </a>
           </nav>
 

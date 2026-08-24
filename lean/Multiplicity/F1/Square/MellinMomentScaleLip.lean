@@ -24,10 +24,10 @@ Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited b
 `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Analysis.DilateTestR
-import Multiplicity.F1Square.Square.TestAlgebra
-import Multiplicity.F1Square.Square.MulConvRLip
-import Multiplicity.F1Square.Analysis.IntegralLocal
+import Multiplicity.F1.Analysis.DilateTestR
+import Multiplicity.F1.Square.TestAlgebra
+import Multiplicity.F1.Square.MulConvRLip
+import Multiplicity.F1.Analysis.IntegralLocal
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

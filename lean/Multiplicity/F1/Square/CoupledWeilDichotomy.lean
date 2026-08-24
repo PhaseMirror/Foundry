@@ -20,8 +20,8 @@ dichotomy` (which is the same shape for the diagonal skeleton `multForm`). Crux 
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
-import Multiplicity.F1Square.Square.CoupledWeilIndefinite
-import Multiplicity.F1Square.Square.CoupledWeilSonine
+import Multiplicity.F1.Square.CoupledWeilIndefinite
+import Multiplicity.F1.Square.CoupledWeilSonine
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

@@ -28,9 +28,9 @@ and is not expected. A concrete general-infrastructure lever, NOT a discharge. C
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
-import Multiplicity.F1Square.Square.DiagDominant
-import Multiplicity.F1Square.Square.CoupledWeilCrux
-import Multiplicity.F1Square.Square.CoupledWeilOperator
+import Multiplicity.F1.Square.DiagDominant
+import Multiplicity.F1.Square.CoupledWeilCrux
+import Multiplicity.F1.Square.CoupledWeilOperator
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

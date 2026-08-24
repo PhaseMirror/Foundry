@@ -12,11 +12,11 @@ Building on the value-level identity `sin(arctan t) = t·cos(arctan t)`
 All RH-*independent* (the `arctan`-addition substrate feeding `arg(zw) = arg z + arg w`); crux
 fields stay `none`, RH open.
 -/
-import Multiplicity.F1Square.Analysis.ArctanODE
-import Multiplicity.F1Square.Analysis.RMulNF
-import Multiplicity.F1Square.Analysis.ArtanhAdd
-import Multiplicity.F1Square.Analysis.GammaTwoBracket
-import Multiplicity.F1Square.Analysis.RealDiv
+import Multiplicity.F1.Analysis.ArctanODE
+import Multiplicity.F1.Analysis.RMulNF
+import Multiplicity.F1.Analysis.ArtanhAdd
+import Multiplicity.F1.Analysis.GammaTwoBracket
+import Multiplicity.F1.Analysis.RealDiv
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

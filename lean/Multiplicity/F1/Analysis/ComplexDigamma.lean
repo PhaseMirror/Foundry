@@ -17,9 +17,9 @@ increments through the generic `RReg_of_real_bound` convergence engine.
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
-import Multiplicity.F1Square.Analysis.ComplexInv
-import Multiplicity.F1Square.Analysis.Gamma
-import Multiplicity.F1Square.Analysis.ComplexPowGen
+import Multiplicity.F1.Analysis.ComplexInv
+import Multiplicity.F1.Analysis.Gamma
+import Multiplicity.F1.Analysis.ComplexPowGen
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

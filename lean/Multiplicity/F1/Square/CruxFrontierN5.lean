@@ -27,8 +27,8 @@ Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited b
 `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Square.LefschetzCoupling
-import Multiplicity.F1Square.Analysis.LambdaFive
+import Multiplicity.F1.Square.LefschetzCoupling
+import Multiplicity.F1.Analysis.LambdaFive
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

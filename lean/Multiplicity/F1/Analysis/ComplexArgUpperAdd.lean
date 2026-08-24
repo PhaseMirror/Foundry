@@ -18,8 +18,8 @@ cancellation `Rdiv_mul_cancel`/`Rmul_right_cancel` — no `Rinv_congr` needed) a
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
-import Multiplicity.F1Square.Analysis.ComplexArgUpper
-import Multiplicity.F1Square.Analysis.ComplexArgAdd
+import Multiplicity.F1.Analysis.ComplexArgUpper
+import Multiplicity.F1.Analysis.ComplexArgAdd
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

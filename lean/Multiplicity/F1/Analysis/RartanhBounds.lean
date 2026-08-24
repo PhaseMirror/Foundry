@@ -16,11 +16,11 @@ modulus the `RrpowPos` Lipschitz / general `t^{σ−1}` Mellin integrand needs.
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Analysis.RealPow
-import Multiplicity.F1Square.Analysis.RexpLogRat
-import Multiplicity.F1Square.Analysis.ArctanODE
-import Multiplicity.F1Square.Analysis.ClampOne
-import Multiplicity.F1Square.Analysis.RlogMulPos
+import Multiplicity.F1.Analysis.RealPow
+import Multiplicity.F1.Analysis.RexpLogRat
+import Multiplicity.F1.Analysis.ArctanODE
+import Multiplicity.F1.Analysis.ClampOne
+import Multiplicity.F1.Analysis.RlogMulPos
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

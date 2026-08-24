@@ -32,7 +32,8 @@ the Hodge-index crux (T5 = RH) is untouched — see `Square/Polarized.lean` and 
 Pure Lean 4 core, no Mathlib, no `sorry`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Square.Monoid
+import Multiplicity.F1.Square.Monoid
+import Multiplicity.F1.CoreCompat
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

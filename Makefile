@@ -1,4 +1,4 @@
-.PHONY: all clean lean rust kani test verify docs help
+.PHONY: all clean lean rust kani test verify docs help fpes-gate fpes-test kani-full
 
 # Default target
 all: lean rust
@@ -36,6 +36,19 @@ rust-test:
 verify:
 	./scripts/verify-all.sh
 
+# ADR-0029: FPES escape-proof gate (Lean kernel + sorry/mathlib audits + Kani)
+fpes-gate:
+	./scripts/fpes-gate.sh
+
+# ADR-0029: run the FPES Lean test harness directly
+fpes-test:
+	cd lean && lake test
+
+# ADR-0029: full Kani suite for the FPES kernel (bounded, N <= 8)
+kani-full:
+	cd lean/Multiplicity/kani && cargo kani --harness kani_fpes_001_multiplicity_nonzero --unwind 9
+	cd lean/Multiplicity/kani && cargo kani --harness kani_fpes_002_contraction_preserves_multiplicity --unwind 9
+
 # Generate Kani harnesses from YAML contracts
 generate-harnesses:
 	./scripts/generate-harnesses.sh
@@ -69,6 +82,9 @@ help:
 	@echo "  lean-test        - Run Lean tests"
 	@echo "  rust-test        - Run Rust tests"
 	@echo "  verify           - Run full verification pipeline"
+	@echo "  fpes-gate        - ADR-0029 escape-proof FPES gate"
+	@echo "  fpes-test        - Run the FPES Lean test harness"
+	@echo "  kani-full        - ADR-0029 full FPES Kani suite (N <= 8)"
 	@echo "  generate-harnesses - Generate Kani harnesses from YAML"
 	@echo "  sync             - Sync Lean theorems to Rust contracts"
 	@echo "  docs             - Generate documentation"

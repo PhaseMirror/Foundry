@@ -18,7 +18,7 @@ Lean core has no `Nat.factorial` (it is Mathlib), so factorial is built from scr
 Pure Lean 4, no Mathlib, no `sorry`.
 -/
 
-import Multiplicity.F1Square.Analysis.Complete
+import Multiplicity.F1.Analysis.Complete
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

@@ -6,7 +6,7 @@ open F1Square.Governance.GeneticFidelity
 open UOR.Bridge.F1Square.Tropical
 open UOR.Bridge.F1Square.Template
 
-namespace Multiplicity.F1Square.Governance.ConcreteHooks
+namespace Multiplicity.F1.Governance.ConcreteHooks
 
 def kappaToFidelity (m : List Int) : Nat :=
   m.length + m.foldl (fun acc x => acc + x.natAbs) 0
@@ -81,4 +81,4 @@ def currentConcreteStatus : ConcreteHooksStatus := {}
 
 def concreteHooksRollup : Option Bool := currentConcreteStatus.tropicalHookWiredToKappa
 
-end Multiplicity.F1Square.Governance.ConcreteHooks
+end Multiplicity.F1.Governance.ConcreteHooks

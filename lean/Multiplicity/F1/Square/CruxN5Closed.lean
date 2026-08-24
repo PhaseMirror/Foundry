@@ -10,8 +10,8 @@ This conquers ONE more coefficient of `atlas_crux_localization`'s `∀ n, coupli
 close the crux (that is the uniform `∀ n`, = RH). Axiom-clean; crux fields stay `none`.
 -/
 
-import Multiplicity.F1Square.Analysis.LambdaFivePos
-import Multiplicity.F1Square.Square.CruxFrontierN5
+import Multiplicity.F1.Analysis.LambdaFivePos
+import Multiplicity.F1.Square.CruxFrontierN5
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

@@ -10,7 +10,7 @@ strongly-connected graph (R16). Min-plus is the same construction with `(min, +)
 Pure Lean 4, no Mathlib, no `sorry`.
 -/
 
-import Multiplicity.F1Square.Tropical.Spectrum
+import Multiplicity.F1.Tropical.Spectrum
 
 namespace Multiplicity.UOR.Bridge.F1Square.Tropical
 

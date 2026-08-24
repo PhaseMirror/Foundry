@@ -12,8 +12,8 @@ argument additivity `CargUpper_add` (`ComplexArgUpperAdd.lean`).
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
-import Multiplicity.F1Square.Analysis.ComplexLogUpper
-import Multiplicity.F1Square.Analysis.ComplexArgUpperAdd
+import Multiplicity.F1.Analysis.ComplexLogUpper
+import Multiplicity.F1.Analysis.ComplexArgUpperAdd
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

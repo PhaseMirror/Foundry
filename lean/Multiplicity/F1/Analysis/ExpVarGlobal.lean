@@ -13,8 +13,8 @@ Jacobi-theta Lipschitz bound on `[1, ∞)` that the Mellin integrand requires.
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Analysis.EtaVariation
-import Multiplicity.F1Square.Analysis.RealCompare
+import Multiplicity.F1.Analysis.EtaVariation
+import Multiplicity.F1.Analysis.RealCompare
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

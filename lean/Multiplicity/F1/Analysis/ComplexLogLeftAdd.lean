@@ -12,8 +12,8 @@ modulus witnesses are named `mnâ€¦` to avoid clashing with `CargLeft_add`'s `(âˆ
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
-import Multiplicity.F1Square.Analysis.ComplexLogLeft
-import Multiplicity.F1Square.Analysis.ComplexArgLeftAdd
+import Multiplicity.F1.Analysis.ComplexLogLeft
+import Multiplicity.F1.Analysis.ComplexArgLeftAdd
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

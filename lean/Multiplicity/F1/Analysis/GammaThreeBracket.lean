@@ -20,8 +20,9 @@ assembly follow.
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free.
 -/
 
-import Multiplicity.F1Square.Analysis.GammaThree
-import Multiplicity.F1Square.Analysis.GammaTwoBracket
+import Multiplicity.F1.Analysis.GammaThree
+import Multiplicity.F1.Analysis.GammaTwoBracket
+import Multiplicity.F1.CoreCompat
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

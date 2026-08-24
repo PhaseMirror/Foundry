@@ -16,8 +16,9 @@ pair, and inversion remain open; no coupling; step 4 is RH. The crux fields stay
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free.
 -/
 
-import Multiplicity.F1Square.Square.TestAlgebra
-import Multiplicity.F1Square.Analysis.IntegralEval
+import Multiplicity.F1.Square.TestAlgebra
+import Multiplicity.F1.Analysis.IntegralEval
+import Multiplicity.F1.CoreCompat
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

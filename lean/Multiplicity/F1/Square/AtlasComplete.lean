@@ -35,13 +35,13 @@ Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited b
 `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Square.AtlasCalculus
-import Multiplicity.F1Square.Square.AtlasComposition
-import Multiplicity.F1Square.Square.AtlasTopology
-import Multiplicity.F1Square.Square.AtlasModular
-import Multiplicity.F1Square.Square.AtlasExceptional
-import Multiplicity.F1Square.Square.AtlasCoherence
-import Multiplicity.F1Square.Square.AtlasCruxSynthesis
+import Multiplicity.F1.Square.AtlasCalculus
+import Multiplicity.F1.Square.AtlasComposition
+import Multiplicity.F1.Square.AtlasTopology
+import Multiplicity.F1.Square.AtlasModular
+import Multiplicity.F1.Square.AtlasExceptional
+import Multiplicity.F1.Square.AtlasCoherence
+import Multiplicity.F1.Square.AtlasCruxSynthesis
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

@@ -1,0 +1,29 @@
+services:
+  watchtower:
+    image: python:3.11-slim
+    working_dir: /app
+    volumes:
+      - ./identity:/app
+      - ./agents:/app/agents
+    command: sh -c "pip install . && streamlit run dashboard.py"
+    ports:
+      - "8501:8501"
+    networks:
+      - helix-net
+      - helix_default
+
+  hgl-compiler:
+    image: python:3.11-alpine
+    working_dir: /app
+    volumes:
+      - ./hgl:/app
+    command: python3 cli/hglc/hglc.py --help
+    networks:
+      - helix-net
+
+networks:
+  helix-net:
+    driver: bridge
+
+  helix_default:
+    external: true

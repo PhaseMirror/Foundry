@@ -16,8 +16,8 @@ Two honest connective results (pure Lean 4, no Mathlib, no `sorry`):
     The theorem quantifies over all samples — that universal quantifier IS the vacuity.
 -/
 
-import Multiplicity.F1Square.Mechanism
-import Multiplicity.F1Square.Template
+import Multiplicity.F1.Mechanism
+import Multiplicity.F1.Template
 
 namespace Multiplicity.UOR.Bridge.F1Square.Bridge
 

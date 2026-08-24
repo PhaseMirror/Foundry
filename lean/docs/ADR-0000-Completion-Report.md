@@ -99,6 +99,7 @@ Prime/
 │   ├── zeta_comb.yaml                   # Contractive upper bounds
 │   ├── universal_closure.yaml           # Associator defect tolerances
 │   └── sedona_spine.yaml                # Sedona Spine CONTRACT (NEW)
+├── Circuits_Lean_Progress.md             # UAC Circuits sorry-free progress (drift_bound_no_overflow)
 ├── FeMoco_100_Concurrent_Load_Test_Criteria.md  # Locked acceptance gates (NEW)
 ├── Production_Mode_Lock.md              # Concurrency decision record (NEW)
 ├── UAC_OnChain_Finality_Lock.md         # Finality lock record (NEW)
@@ -130,6 +131,7 @@ Prime/
 | `paper/ADR-007-Completion-Report.md` | This report: extends ADR-007 with L0-preserving concurrency clauses. |
 | `contracts/sedona_spine.yaml` | Sedona Spine CONTRACT: Lean/Rust module parity, zero-drift, no-Mathlib, no-sorry. |
 | `FeMoco_100_Concurrent_Load_Test_Criteria.md` | Locked acceptance gates for 100-request load test. |
+| `Circuits_Lean_Progress.md` | UAC Circuits sorry-free progress: `drift_bound_no_overflow` closed via `omega`. |
 | `Production_Mode_Lock.md` | Records the concurrency-first decision and owner accountability. |
 | `UAC_OnChain_Finality_Lock.md` | Records finality lock for UAC on-chain attestation. |
 
@@ -590,7 +592,7 @@ lake build Lean.ADR.ExportAll && ./build/bin/lean-adr-exportall
 ## Validation Checklist
 
 | # | Check | Status |
-|---|-------|--------|
+||---|-------|--------|
 | 1 | `lake build` succeeds without errors | Yes |
 | 2 | `lake test` passes all 11 test cases | Yes |
 | 3 | No `import Mathlib` in `src/ADR/*.lean` | Yes |
@@ -611,3 +613,5 @@ lake build Lean.ADR.ExportAll && ./build/bin/lean-adr-exportall
 | 18 | No external runtime dependencies beyond Lake + Batteries | Yes |
 | 19 | All proofs are `sorry`-free and use only basic tactics | Yes |
 | 20 | Documentation is complete and copy-paste ready | Yes |
+| 21 | `Circuits_Lean_Progress.md` documents `drift_bound_no_overflow` sorry-free closure via `omega` | Yes |
+| 22 | CI pre-build check verifies `gcc`, `ld`, `libc.so.6`, `libm.so.6` presence | Yes |

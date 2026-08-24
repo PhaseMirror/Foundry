@@ -21,7 +21,7 @@ width-comparison completion, NO factorization, NO positivity, NO determinacy, NO
 Pure Lean 4 core, no Mathlib, no sorry/native_decide, choice-free; audited by scripts/honesty_audit.sh.
 -/
 
-import Multiplicity.F1Square.Square.UniformPartialCap
+import Multiplicity.F1.Square.UniformPartialCap
 
 set_option maxHeartbeats 4000000
 

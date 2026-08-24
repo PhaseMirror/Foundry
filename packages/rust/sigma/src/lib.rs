@@ -6,8 +6,8 @@ use std::sync::Arc;
 use thiserror::Error;
 use tracing::{info, Level};
 
-#[macro_use]
-mod logging;
+pub mod logging;
+pub mod pikernel;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct StateTransition {

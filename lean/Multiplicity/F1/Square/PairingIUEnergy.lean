@@ -27,7 +27,7 @@ explicit `List.Perm` constructors / `RsumL_cancel_anywhere`) — never `decide` 
 whose `Decidable` instance pulls `Classical.choice`.  Axiom-audited to `{propext, Quot.sound}` by
 `scripts/honesty_audit.sh`.
 -/
-import Multiplicity.F1Square.Square.L2Complete
+import Multiplicity.F1.Square.L2Complete
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

@@ -11,7 +11,7 @@ is routed around the "`RReg` not closed under `+`" obstruction via `Rlim_le_Rlim
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Analysis.ThetaLipschitz
+import Multiplicity.F1.Analysis.ThetaLipschitz
 
 set_option maxHeartbeats 1000000
 

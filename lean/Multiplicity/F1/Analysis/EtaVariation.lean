@@ -8,11 +8,12 @@ law `Cexp_add`: `n⁻ˢ = e^{−s·log n}` (`cpowNeg`), and `log(n+1) = log n + 
 Pure Lean 4, no Mathlib, no `sorry`/`native_decide`, choice-free.
 -/
 
-import Multiplicity.F1Square.Analysis.EulerMaclaurin
-import Multiplicity.F1Square.Analysis.ComplexExpAdd
-import Multiplicity.F1Square.Analysis.ComplexZeta
-import Multiplicity.F1Square.Analysis.GammaOne
-import Multiplicity.F1Square.Analysis.EtaFunction
+import Multiplicity.F1.Analysis.EulerMaclaurin
+import Multiplicity.F1.Analysis.ComplexExpAdd
+import Multiplicity.F1.Analysis.ComplexZeta
+import Multiplicity.F1.Analysis.GammaOne
+import Multiplicity.F1.Analysis.EtaFunction
+import Multiplicity.F1.CoreCompat
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

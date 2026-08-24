@@ -26,10 +26,10 @@ Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited b
 `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Analysis.ImproperIntegral
-import Multiplicity.F1Square.Analysis.RlimProps
-import Multiplicity.F1Square.Square.IntervalTelescope
-import Multiplicity.F1Square.Square.IntervalMinorant
+import Multiplicity.F1.Analysis.ImproperIntegral
+import Multiplicity.F1.Analysis.RlimProps
+import Multiplicity.F1.Square.IntervalTelescope
+import Multiplicity.F1.Square.IntervalMinorant
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

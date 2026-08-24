@@ -7,7 +7,7 @@ F1 square — Track 1, item 3 substrate: **`genSum` distribution over a constant
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Analysis.ImproperIntegral
+import Multiplicity.F1.Analysis.ImproperIntegral
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

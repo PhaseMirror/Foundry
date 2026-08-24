@@ -33,7 +33,7 @@ derivation `E² = 0`, `Δ² = 0` (never an assumption).
 Pure Lean 4 core, no Mathlib, no `sorry`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Square.Tensor
+import Multiplicity.F1.Square.Tensor
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 
@@ -75,11 +75,14 @@ theorem vFiber_inter_hFiber (a b : Nat) (ha : 1 ≤ a) (hb : 1 ≤ b) (z : SqPt)
   cases z with
   | mk z1 z2 =>
     constructor
-    · intro ⟨h1, h2⟩
+    · intro hhv
+      have h1 := hhv.1
+      have h2 := hhv.2
       have e1 : z1.val = a := h1
       have e2 : z2.val = b := h2
       rw [show z1 = (⟨a, ha⟩ : MPos) from Subtype.ext e1,
         show z2 = (⟨b, hb⟩ : MPos) from Subtype.ext e2]
+      rfl
     · intro h
       cases h
       exact ⟨rfl, rfl⟩
@@ -88,13 +91,17 @@ theorem vFiber_inter_hFiber (a b : Nat) (ha : 1 ≤ a) (hb : 1 ≤ b) (z : SqPt)
     (With `vFiber_translate`, derives the self-intersection `E₁² = 0`.) -/
 theorem vFiber_disjoint (a a' : Nat) (h : a ≠ a') (z : SqPt) :
     ¬(vFiber a z ∧ vFiber a' z) := by
-  intro ⟨h1, h2⟩
+  intro hhv
+  have h1 := hhv.1
+  have h2 := hhv.2
   exact h (h1 ▸ h2 ▸ rfl)
 
 /-- MOVING COUNT 0 — the horizontal ruling: `H_b ∩ H_b' = ∅` for `b ≠ b'`. -/
 theorem hFiber_disjoint (b b' : Nat) (h : b ≠ b') (z : SqPt) :
     ¬(hFiber b z ∧ hFiber b' z) := by
-  intro ⟨h1, h2⟩
+  intro hhv
+  have h1 := hhv.1
+  have h2 := hhv.2
   exact h (h1 ▸ h2 ▸ rfl)
 
 /-- TRANSVERSE COUNT 1 — the diagonal meets each vertical fiber in one point:
@@ -104,11 +111,14 @@ theorem diag_inter_vFiber (a : Nat) (ha : 1 ≤ a) (z : SqPt) :
   cases z with
   | mk z1 z2 =>
     constructor
-    · intro ⟨h1, h2⟩
+    · intro hhv
+      have h1 := hhv.1
+      have h2 := hhv.2
       have e1 : z1.val = z2.val := h1
       have e2 : z1.val = a := h2
       rw [show z1 = (⟨a, ha⟩ : MPos) from Subtype.ext e2,
         show z2 = (⟨a, ha⟩ : MPos) from Subtype.ext (show z2.val = a by omega)]
+      rfl
     · intro h
       cases h
       exact ⟨rfl, rfl⟩
@@ -120,11 +130,14 @@ theorem diag_inter_hFiber (b : Nat) (hb : 1 ≤ b) (z : SqPt) :
   cases z with
   | mk z1 z2 =>
     constructor
-    · intro ⟨h1, h2⟩
+    · intro hhv
+      have h1 := hhv.1
+      have h2 := hhv.2
       have e1 : z1.val = z2.val := h1
       have e2 : z2.val = b := h2
       rw [show z1 = (⟨b, hb⟩ : MPos) from Subtype.ext (show z1.val = b by omega),
         show z2 = (⟨b, hb⟩ : MPos) from Subtype.ext e2]
+      rfl
     · intro h
       cases h
       exact ⟨rfl, rfl⟩
@@ -138,12 +151,15 @@ theorem graph_inter_vFiber (n a : Nat) (hn : 1 ≤ n) (ha : 1 ≤ a) (z : SqPt) 
   cases z with
   | mk z1 z2 =>
     constructor
-    · intro ⟨h1, h2⟩
+    · intro hhv
+      have h1 := hhv.1
+      have h2 := hhv.2
       have e1 : z2.val = n * z1.val := h1
       have e2 : z1.val = a := h2
       rw [e2] at e1
       rw [show z1 = (⟨a, ha⟩ : MPos) from Subtype.ext e2,
         show z2 = (⟨n * a, one_le_mul hn ha⟩ : MPos) from Subtype.ext e1]
+      rfl
     · intro h
       cases h
       exact ⟨rfl, rfl⟩
@@ -158,13 +174,16 @@ theorem graph_inter_hFiber (n a : Nat) (hn : 1 ≤ n) (ha : 1 ≤ a) (z : SqPt) 
   cases z with
   | mk z1 z2 =>
     constructor
-    · intro ⟨h1, h2⟩
+    · intro hhv
+      have h1 := hhv.1
+      have h2 := hhv.2
       have e1 : z2.val = n * z1.val := h1
       have e2 : z2.val = n * a := h2
       have e3 : z1.val = a :=
         Nat.eq_of_mul_eq_mul_left (show 0 < n by omega) (e1.symm.trans e2)
       rw [show z1 = (⟨a, ha⟩ : MPos) from Subtype.ext e3,
         show z2 = (⟨n * a, one_le_mul hn ha⟩ : MPos) from Subtype.ext e2]
+      rfl
     · intro h
       cases h
       exact ⟨rfl, rfl⟩
@@ -177,7 +196,9 @@ theorem graph_inter_hFiber (n a : Nat) (hn : 1 ≤ n) (ha : 1 ≤ a) (z : SqPt) 
     (`|det((1,1),(0,1))| = 1`, the R13 rule), realized by the divisible family. -/
 theorem graph_inter_hFiber_empty (n b : Nat) (h : ¬ n ∣ b) (z : SqPt) :
     ¬(graph n z ∧ hFiber b z) := by
-  intro ⟨h1, h2⟩
+  intro hhv
+  have h1 := hhv.1
+  have h2 := hhv.2
   have e1 : z.2.val = n * z.1.val := h1
   have e2 : z.2.val = b := h2
   exact h ⟨z.1.val, e2.symm.trans e1⟩
@@ -190,7 +211,9 @@ theorem graph_inter_hFiber_empty (n b : Nat) (h : ¬ n ∣ b) (z : SqPt) :
     along its own pencil. -/
 theorem diag_inter_graph_empty (n : Nat) (hn : 2 ≤ n) (z : SqPt) :
     ¬(diag z ∧ graph n z) := by
-  intro ⟨h1, h2⟩
+  intro hhv
+  have h1 := hhv.1
+  have h2 := hhv.2
   have hd : z.1.val = z.2.val := h1
   have hg : z.2.val = n * z.1.val := h2
   have hz1 : 1 ≤ z.1.val := z.1.property
@@ -202,7 +225,9 @@ theorem diag_inter_graph_empty (n : Nat) (hn : 2 ≤ n) (z : SqPt) :
     `graph_translate_diag` this derives `Γ_n² = 0`. -/
 theorem graph_disjoint (n m : Nat) (h : n ≠ m) (z : SqPt) :
     ¬(graph n z ∧ graph m z) := by
-  intro ⟨h1, h2⟩
+  intro hhv
+  have h1 := hhv.1
+  have h2 := hhv.2
   have hg1 : z.2.val = n * z.1.val := h1
   have hg2 : z.2.val = m * z.1.val := h2
   have hz1 : 1 ≤ z.1.val := z.1.property
@@ -219,11 +244,13 @@ theorem graph_translate_diag (n : Nat) (hn : 1 ≤ n) (z : SqPt) :
     refine ⟨(z.1, z.1), rfl, ?_⟩
     cases z with
     | mk z1 z2 => exact congrArg (Prod.mk z1) (Subtype.ext hg)
-  · intro ⟨w, hw, hz⟩
-    have hd : w.1.val = w.2.val := hw
-    subst hz
-    show n * w.2.val = n * w.1.val
-    rw [hd]
+  · intro hhv
+    match hhv with
+    | ⟨w, hw, hz⟩ =>
+      have hd : w.1.val = w.2.val := hw
+      subst hz
+      show n * w.2.val = n * w.1.val
+      rw [hd]
 
 /-- The vertical ruling is a single TRANSLATION CLASS: `V_{k·a} = (mScale k × id)(V_a)` —
     any two vertical fibers are translates (up to the directed divisibility of the monoid).
@@ -244,11 +271,13 @@ theorem vFiber_translate (k a : Nat) (hk : 1 ≤ k) (z : SqPt) :
     refine ⟨((⟨a, ha⟩ : MPos), z.2), rfl, ?_⟩
     cases z with
     | mk z1 z2 => exact congrArg (fun t => (t, z2)) (Subtype.ext hv)
-  · intro ⟨w, hw, hz⟩
-    have hv : w.1.val = a := hw
-    subst hz
-    show k * w.1.val = k * a
-    rw [hv]
+  · intro hhv
+    match hhv with
+    | ⟨w, hw, hz⟩ =>
+      have hv : w.1.val = a := hw
+      subst hz
+      show k * w.1.val = k * a
+      rw [hv]
 
 /-- Every vertical fiber is a translate of the UNIT fiber `V₁` — the vertical ruling is
     one translation pencil through `V₁` (the `a = 1` instance of `vFiber_translate`),
@@ -276,10 +305,12 @@ theorem hFiber_translate (k b : Nat) (hk : 1 ≤ k) (z : SqPt) :
     refine ⟨(z.1, (⟨b, hb⟩ : MPos)), rfl, ?_⟩
     cases z with
     | mk z1 z2 => exact congrArg (Prod.mk z1) (Subtype.ext hv)
-  · intro ⟨w, hw, hz⟩
-    have hv : w.2.val = b := hw
-    subst hz
-    show k * w.2.val = k * b
-    rw [hv]
+  · intro hhv
+    match hhv with
+    | ⟨w, hw, hz⟩ =>
+      have hv : w.2.val = b := hw
+      subst hz
+      show k * w.2.val = k * b
+      rw [hv]
 
 end Multiplicity.UOR.Bridge.F1Square.Square

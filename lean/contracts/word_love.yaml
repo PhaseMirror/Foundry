@@ -1,0 +1,389 @@
+# ADR-0031: Word Love Provable Contract
+# Decision ID: ADR-WORDLOVE-001
+# Prime-Recursive Multiplicity Substrate: Counting Prime Factors Without Double Counting
+# Proof obligations binding Lean 4 theorems (unbounded) ↔ Rust/Kani harnesses (bounded)
+#
+# Schema: provable-contracts v1
+# Gate:   scripts/word-love-gate.sh validates this file + Lean proofs + Kani harnesses
+
+adr:
+  id: ADR-WORDLOVE-001
+  title: "Word Love Production Implementation"
+  document: docs/ADR-0031-Word-Love.md
+  status: accepted
+
+pipeline:
+  phases:
+    - extract
+    - specify
+    - scaffold
+    - implement
+    - falsify
+    - verify
+    - prove
+
+bounds:
+  max_tokens: 16
+  max_primes: 16
+  unwind: 17
+
+proof_obligations:
+  - id: WL-GEMATRIA-001
+    type: invariant
+    property: "Standard and Reduced Hebrew Gematria Evaluation"
+    formal: "gematria(Standard, אהבה) = 13 ∧ gematria(Standard, אחד) = 13 ∧ gematria(Reduced, אהבה) = 4"
+    lean:
+      module: Multiplicity.WordLove.Proofs
+      theorems:
+        - ahavah_standard_gematria
+        - echad_standard_gematria
+        - ahavah_reduced_gematria
+      status: proved
+      sorry_free: true
+    kani_harnesses:
+      - id: KANI-WL-001
+        file: Multiplicity/kani/src/proofs/word_love.rs
+        function: kani_wordlove_001_gematria_ahavah_echad
+        obligation: WL-GEMATRIA-001
+        property: "Gematria sum for Ahavah=13, Echad=13, Reduced=4"
+        bound: 16
+        unwind: 17
+
+  - id: WL-FACTOR-002
+    type: invariant
+    property: "Canonical Prime Factorization and Multiplicity Representation"
+    formal: "factorize(13) = {13 ↦ 1} ∧ factorize(4) = {2 ↦ 2} ∧ Ω(13) = 1 ∧ Ω(4) = 2"
+    lean:
+      module: Multiplicity.WordLove.Proofs
+      theorems:
+        - ahavah_standard_factors
+        - ahavah_standard_Omega
+        - ahavah_reduced_factors
+        - ahavah_reduced_Omega
+      status: proved
+      sorry_free: true
+    kani_harnesses:
+      - id: KANI-WL-002
+        file: Multiplicity/kani/src/proofs/word_love.rs
+        function: kani_wordlove_002_factorization_multiplicity
+        obligation: WL-FACTOR-002
+        property: "Factorization and Ω(n) count for canonical inputs"
+        bound: 16
+        unwind: 17
+
+  - id: WL-ORTHOGONALITY-003
+    type: theorem
+    property: "Orthogonality of Semantic and Mathematical Invariant Dimensions"
+    formal: "∃ e1 e2, (token(e1) = token(e2) ∧ inv(e1) ≠ inv(e2)) ∧ (inv(e1) = inv(e2) ∧ token(e1) ≠ token(e2))"
+    lean:
+      module: Multiplicity.WordLove.Proofs
+      theorems:
+        - same_semantic_token_ahavah
+        - trajectories_distinct_ahavah
+        - shared_invariant_ahavah_echad
+        - orthogonality_semantic_not_imply_math
+        - orthogonality_math_not_imply_semantic
+      status: proved
+      sorry_free: true
+    kani_harnesses:
+      - id: KANI-WL-003
+        file: Multiplicity/kani/src/proofs/word_love.rs
+        function: kani_wordlove_003_orthogonality
+        obligation: WL-ORTHOGONALITY-003
+        property: "Semantic equivalence does not imply mathematical equivalence and vice versa"
+        bound: 16
+        unwind: 17
+
+  - id: WL-RETRACTION-004
+    type: theorem
+    property: "ADR-022 Retraction: Digital Root Normalization Destroys Global Prime Entropy"
+    formal: "∀ n ∈ {13, 22, 31, 40, 49}, DR(n) = 4 ∧ distinct_factorizations({13, 22, 31, 40, 49})"
+    lean:
+      module: Multiplicity.WordLove.Proofs
+      theorems:
+        - digital_root_entropy_collapse
+      status: proved
+      sorry_free: true
+    kani_harnesses:
+      - id: KANI-WL-005
+        file: Multiplicity/kani/src/proofs/word_love.rs
+        function: kani_wordlove_005_digital_root_entropy_collapse
+        obligation: WL-RETRACTION-004
+        property: "Finite state modulo 9 collapse collapses infinite prime support"
+        bound: 16
+        unwind: 17
+
+  - id: WL-ADDITIVITY-005
+    type: invariant
+    property: "Substrate Exponent Additivity Under Multiplicative Combination"
+    formal: "vp(A + B) = vp(A) + vp(B) ∧ Ω(A + B) = Ω(A) + Ω(B)"
+    lean:
+      module: Multiplicity.WordLove.Proofs
+      theorems:
+        - exponent_additivity_single
+        - exponent_additivity_Omega
+        - combined_ahavah_echad
+      status: proved
+      sorry_free: true
+    kani_harnesses:
+      - id: KANI-WL-004
+        file: Multiplicity/kani/src/proofs/word_love.rs
+        function: kani_wordlove_004_exponent_additivity
+        obligation: WL-ADDITIVITY-005
+        property: "Exponent vector addition combines prime powers"
+        bound: 16
+        unwind: 17
+
+  - id: WL-NODUP-006
+    type: invariant
+    property: "Multiplicity is Not Double Counting"
+    formal: "countUniqueEvents(duplicate_events) = 1 ∧ Ω(single(13, 2)) = 2"
+    lean:
+      module: Multiplicity.WordLove.Proofs
+      theorems:
+        - event_dedup_rejects_duplicate
+        - multiplicity_vs_double_counting
+      status: proved
+      sorry_free: true
+    kani_harnesses: []
+
+  - id: WL-PARM-008
+    type: theorem
+    property: "Canonical Prime Sorting and Permutation Invariance Under PARM Sealing"
+    formal: "∀ L₁ L₂ : List Nat, List.Perm L₁ L₂ → canonicalSealedState L₁ = canonicalSealedState L₂"
+    lean:
+      module: Multiplicity.WordLove.Proofs
+      theorems:
+        - insertDescending_ge
+        - insertDescending_lt
+        - insertDescending_comm
+        - canonicalPrimeSort_eq_of_perm
+        - canonicalSealedState_eq_of_perm
+        - universal_parm_permutation_invariance
+        - sort_108_cycle_perm1
+        - sort_108_cycle_perm2
+        - sort_108_cycle_perm3
+        - sort_108_cycle_id
+        - sealed_state_108_cycle_permutations_invariant
+        - canonical_sealing_permutation_invariance_108
+      status: proved
+      sorry_free: true
+    kani_harnesses:
+      - id: KANI-WL-006
+        file: Multiplicity/kani/src/proofs/word_love.rs
+        function: kani_wordlove_006_parm_canonical_sorting_invariance
+        obligation: WL-PARM-008
+        property: "All permutations of the 108-cycle multiset sort to [3, 3, 3, 2, 2] and evaluate to 960"
+        bound: 16
+        unwind: 17
+
+  - id: WL-CIRCUIT-009
+    type: theorem
+    property: "Zero-Knowledge Circuit Monotonicity Sequence Constraint"
+    formal: "∀ p ∈ CircuitWitness, isMonotonicDescendingBool(p) = true ∧ evaluateCircuitConstraint(p) = true"
+    lean:
+      module: Multiplicity.WordLove.Proofs
+      theorems:
+        - unsorted_108_perm1_rejected_by_circuit
+        - unsorted_108_perm2_rejected_by_circuit
+        - unsorted_108_perm3_rejected_by_circuit
+        - canonical_108_accepted_by_circuit
+        - differences_108_cycle
+        - witness_108_cycle_eval
+        - circuit_eval_canonical_108
+        - circuit_eval_unsorted_108
+      status: proved
+      sorry_free: true
+    kani_harnesses:
+      - id: KANI-WL-007
+        file: Multiplicity/kani/src/proofs/word_love.rs
+        function: kani_wordlove_007_circuit_monotonicity_constraint
+        obligation: WL-CIRCUIT-009
+        property: "Only monotonic descending sequences satisfy circuit constraint; Δ_i non-negative"
+        bound: 16
+        unwind: 17
+
+  - id: WL-ANCHOR-010
+    type: theorem
+    property: "Grand Product Equivalence and Origin Anchoring Circuit Constraint"
+    formal: "∀ p ∈ AnchoredCircuitWitness, listProduct(p.primes) = p.rawEncoding"
+    lean:
+      module: Multiplicity.WordLove.Proofs
+      theorems:
+        - ahavah_std_grand_product
+        - ahavah_red_grand_product
+        - echad_std_grand_product
+        - hesed_std_grand_product
+        - emet_std_grand_product
+        - cycle_108_grand_product
+        - running_product_trace_108
+        - fabricated_primes_rejected_for_ahavah
+        - fabricated_primes_rejected_for_108
+        - witness_ahavah_std_eval
+        - witness_ahavah_red_eval
+      status: proved
+      sorry_free: true
+    kani_harnesses:
+      - id: KANI-WL-008
+        file: Multiplicity/kani/src/proofs/word_love.rs
+        function: kani_wordlove_008_grand_product_equivalence_constraint
+        obligation: WL-ANCHOR-010
+        property: "Running product circuit correctly enforces prod pi = E_raw and rejects forged sorted inputs"
+        bound: 16
+        unwind: 17
+
+  - id: WL-PRIME-011
+    type: theorem
+    property: "In-Circuit Primality Table Lookup and Unit Exclusion Constraint"
+    formal: "∀ p ∈ FullyConstrainedParmWitness, allPrimesBool(p.primes) = true ∧ (∀ x ∈ p.primes, x ≥ 2 ∧ x ∈ Primes)"
+    lean:
+      module: Multiplicity.WordLove.Proofs
+      theorems:
+        - composite_12_9_rejected_by_circuit
+        - composite_54_2_rejected_by_circuit
+        - unit_padding_108_1_rejected_by_circuit
+        - unit_padding_108_cycle_rejected
+        - canonical_108_fully_accepted
+        - ahavah_std_fully_accepted
+        - ahavah_red_fully_accepted
+        - hesed_std_fully_accepted
+        - emet_std_fully_accepted
+        - witness_fully_constrained_108_eval
+        - witness_fully_constrained_ahavah_std_eval
+        - witness_fully_constrained_ahavah_red_eval
+      status: proved
+      sorry_free: true
+    kani_harnesses:
+      - id: KANI-WL-009
+        file: Multiplicity/kani/src/proofs/word_love.rs
+        function: kani_wordlove_009_primality_and_unit_exclusion_constraint
+        obligation: WL-PRIME-011
+        property: "Rejects composite factors [12, 9], [54, 2] and unit padding [108, 1]"
+        bound: 16
+        unwind: 17
+
+  - id: WL-LARGEPRIME-012
+    type: theorem
+    property: "Large-Prime Pratt Certificate Circuit Verification"
+    formal: "∀ p > 2^16, ∃ cert ∈ PrattCertificate, verifyPrattCertificate(cert) = true ∧ isHybridPrime(p, cert) = true"
+    lean:
+      module: Multiplicity.WordLove.Proofs
+      theorems:
+        - pratt_65537_verified
+        - pratt_131071_verified
+        - hybrid_large_prime_65537_accepted
+        - hybrid_large_prime_131071_accepted
+        - unbounded_circuit_65537_accepted
+        - unbounded_circuit_composite_accepted
+        - hybrid_composite_65535_rejected
+        - hybrid_fake_cert_rejected
+        - witness_unbounded_65537_sealed_state
+      status: proved
+      sorry_free: true
+    kani_harnesses:
+      - id: KANI-WL-010
+        file: Multiplicity/kani/src/proofs/word_love.rs
+        function: kani_wordlove_010_large_prime_pratt_certificate
+        obligation: WL-LARGEPRIME-012
+        property: "Validates Pratt certificate modular exponentiations for large primes > 2^16"
+        bound: 16
+        unwind: 17
+
+  - id: WL-SPINE-013
+    type: binding
+    property: "Sedona Spine Rust Kernel C-ABI Export & Certified Coupling Binding"
+    formal: "∀ p n trust, gammaCertified(p, n, trust) ∈ [0, 1024] ∧ (¬ isHybridPrime(p) ∨ ¬ isHybridPrime(n) → gammaCertified = 0)"
+    lean:
+      module: Multiplicity.WordLove.FFI
+      theorems:
+        - wordloveGammaCertified
+        - wordloveIsHybridPrimeFast
+        - wordloveParmSealedState108
+      status: proved
+      sorry_free: true
+    kani_harnesses:
+      - id: KANI-WL-011
+        file: Multiplicity/kani/src/proofs/word_love.rs
+        function: kani_wordlove_011_sedona_spine_certified_coupling
+        obligation: WL-SPINE-013
+        property: "Verifies Sedona Spine certified coupling gamma in [0, 1024] and multiplicity M in [1024, 3072]"
+        bound: 16
+        unwind: 17
+
+examples:
+  - id: ahavah_standard
+    module: Multiplicity.WordLove.Proofs
+    definition: encAhavahStd
+    value: 13
+    prime_support: [13]
+    omega: 1
+    Omega: 1
+  - id: ahavah_reduced
+    module: Multiplicity.WordLove.Proofs
+    definition: encAhavahRed
+    value: 4
+    prime_support: [2]
+    omega: 1
+    Omega: 2
+  - id: echad_standard
+    module: Multiplicity.WordLove.Proofs
+    definition: encEchadStd
+    value: 13
+    prime_support: [13]
+    omega: 1
+    Omega: 1
+  - id: pipeline_love_unity
+    module: Multiplicity.WordLove.Examples
+    definition: pipelineLoveAndUnity
+    prime_support: [13]
+    omega: 1
+    Omega: 2
+  - id: pipeline_divine_covenant
+    module: Multiplicity.WordLove.Examples
+    definition: pipelineDivineCovenant
+    prime_support: [2, 3, 7, 13]
+    omega: 4
+    Omega: 10
+
+ffi:
+  lean_exports:
+    - module: Multiplicity.WordLove.FFI
+      function: wordlove_gematria_standard_ffi
+      signature: "String → UInt32"
+      description: "Compute standard gematria via C ABI"
+    - module: Multiplicity.WordLove.FFI
+      function: wordlove_gematria_reduced_ffi
+      signature: "String → UInt32"
+      description: "Compute reduced gematria via C ABI"
+    - module: Multiplicity.WordLove.FFI
+      function: wordlove_prime_omega_ffi
+      signature: "UInt32 → UInt32"
+      description: "Return ω(n) distinct prime count via C ABI"
+    - module: Multiplicity.WordLove.FFI
+      function: wordlove_prime_Omega_ffi
+      signature: "UInt32 → UInt32"
+      description: "Return Ω(n) total prime multiplicity via C ABI"
+    - module: Multiplicity.WordLove.FFI
+      function: wordlove_verify_orthogonality_ffi
+      signature: "UInt32 → Bool"
+      description: "Verify orthogonality invariants via C ABI"
+
+gate:
+  script: scripts/word-love-gate.sh
+  checks:
+    - name: sorry_free
+      description: "No sorry/admit/axiom in WordLove Lean modules"
+      command: "grep -rn 'sorry\\|admit\\|axiom' Multiplicity/WordLove/"
+      expect: no_match
+    - name: lean_build
+      description: "Lake builds all WordLove modules"
+      command: "lake build word_love_test"
+      expect: success
+    - name: wordlove_tests
+      description: "WordLove test suite passes"
+      command: "lake exe word_love_test"
+      expect: success
+    - name: kani_proofs
+      description: "Kani harnesses registered"
+      command: "grep -c '#\\[kani::proof\\]' Multiplicity/kani/src/proofs/word_love.rs"
+      expect: ">= 5"

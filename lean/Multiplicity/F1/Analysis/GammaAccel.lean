@@ -16,8 +16,9 @@ This file builds the analytic foundation (the `artSum` bounds). The diagonal, it
 γ-lower bracket, and `Pos λ₁` follow. Pure Lean 4, no Mathlib, no `sorry`/`native_decide`, choice-free.
 -/
 
-import Multiplicity.F1Square.Analysis.Log
-import Multiplicity.F1Square.Analysis.Euler
+import Multiplicity.F1.Analysis.Log
+import Multiplicity.F1.Analysis.Euler
+import Multiplicity.F1.CoreCompat
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

@@ -31,8 +31,8 @@ impossible. Step 4 (band-coupling positivity) is RH; the crux fields stay `none`
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
-import Multiplicity.F1Square.Square.WeilPSD
-import Multiplicity.F1Square.Analysis.CosSinBound
+import Multiplicity.F1.Square.WeilPSD
+import Multiplicity.F1.Analysis.CosSinBound
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

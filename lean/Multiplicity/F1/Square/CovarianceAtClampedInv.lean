@@ -22,10 +22,11 @@ Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited b
 `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Square.MellinHatDilateCovarianceRealGe1
-import Multiplicity.F1Square.Square.DilateTestRDecay
-import Multiplicity.F1Square.Square.DilTailUniformBound
-import Multiplicity.F1Square.Analysis.HaarInterval
+import Multiplicity.F1.Square.MellinHatDilateCovarianceRealGe1
+import Multiplicity.F1.Square.DilateTestRDecay
+import Multiplicity.F1.Square.DilTailUniformBound
+import Multiplicity.F1.Analysis.HaarInterval
+import Multiplicity.F1.CoreCompat
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

@@ -8,8 +8,8 @@ Pure Lean 4, no Mathlib, no `sorry`.
 `Rpi` is the real; the rational brackets `S₁ ≤ arctanSum ≤ S₀` that pin its value (and give `Pos Rpi`,
 needed for `log π`) are developed next.
 -/
-import Multiplicity.F1Square.Analysis.Arctan
-import Multiplicity.F1Square.Analysis.ROrder
+import Multiplicity.F1.Analysis.Arctan
+import Multiplicity.F1.Analysis.ROrder
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

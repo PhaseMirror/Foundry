@@ -10,8 +10,8 @@ tail are `≤ 1/(n+1)`, so the diagonal gap is `≤ ⟨2,n+1⟩` — exactly the
 Pure Lean 4, no Mathlib, no `sorry`/`native_decide`, choice-free.
 -/
 
-import Multiplicity.F1Square.Analysis.Binomial
-import Multiplicity.F1Square.Analysis.CosSin
+import Multiplicity.F1.Analysis.Binomial
+import Multiplicity.F1.Analysis.CosSin
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

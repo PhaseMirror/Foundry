@@ -26,13 +26,13 @@ Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited b
 `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Analysis.DilateIntegral
-import Multiplicity.F1Square.Analysis.IntervalCert
-import Multiplicity.F1Square.Analysis.ClampedInv
-import Multiplicity.F1Square.Square.MellinLinear
-import Multiplicity.F1Square.Square.MultShift
-import Multiplicity.F1Square.Square.TestAlgebra
-import Multiplicity.F1Square.Square.BernsteinClampMatch
+import Multiplicity.F1.Analysis.DilateIntegral
+import Multiplicity.F1.Analysis.IntervalCert
+import Multiplicity.F1.Analysis.ClampedInv
+import Multiplicity.F1.Square.MellinLinear
+import Multiplicity.F1.Square.MultShift
+import Multiplicity.F1.Square.TestAlgebra
+import Multiplicity.F1.Square.BernsteinClampMatch
 
 set_option maxHeartbeats 4000000
 

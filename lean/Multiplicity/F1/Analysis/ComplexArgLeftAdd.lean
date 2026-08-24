@@ -13,9 +13,9 @@ This completes the cross-sector argument additivity over the whole punctured pla
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
-import Multiplicity.F1Square.Analysis.ComplexArgLeft
-import Multiplicity.F1Square.Analysis.ComplexArgAdd
-import Multiplicity.F1Square.Analysis.ComplexArgUpperAdd
+import Multiplicity.F1.Analysis.ComplexArgLeft
+import Multiplicity.F1.Analysis.ComplexArgAdd
+import Multiplicity.F1.Analysis.ComplexArgUpperAdd
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

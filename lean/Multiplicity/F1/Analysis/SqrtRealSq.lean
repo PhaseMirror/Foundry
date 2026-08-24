@@ -12,8 +12,8 @@ remaining step.)
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Analysis.SqrtReal
-import Multiplicity.F1Square.Analysis.ThetaFunction
+import Multiplicity.F1.Analysis.SqrtReal
+import Multiplicity.F1.Analysis.ThetaFunction
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

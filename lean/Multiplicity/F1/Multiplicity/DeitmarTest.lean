@@ -23,7 +23,7 @@
 
 import Multiplicity.F1.Square.IntersectionTemplate
 
-namespace Multiplicity.F1Square.DeitmarTest
+namespace Multiplicity.F1.DeitmarTest
 
 /- The Deitmar monoid product of size N gives a finite arithmetic site with N primes.
    The T3 test instantiates the intersection template for N primes and checks
@@ -201,4 +201,4 @@ theorem deitmarLift_general (n : Nat) (q : Fin n → Int) (a : Fin n → Int)
 
 end Multiplicity.DeitmarLift
 
-end Multiplicity.F1Square.DeitmarTest
+end Multiplicity.F1.DeitmarTest

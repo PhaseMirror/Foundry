@@ -13,9 +13,9 @@ saddle-point) stays [CLASSICAL] interface; WHERE the zeros sit is RH. Crux field
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free.
 -/
 
-import Multiplicity.F1Square.Analysis.ZeroGeometry
-import Multiplicity.F1Square.Analysis.RAddNF
-import Multiplicity.F1Square.Analysis.RMulNF
+import Multiplicity.F1.Analysis.ZeroGeometry
+import Multiplicity.F1.Analysis.RAddNF
+import Multiplicity.F1.Analysis.RMulNF
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

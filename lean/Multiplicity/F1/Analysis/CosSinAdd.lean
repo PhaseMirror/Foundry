@@ -8,9 +8,10 @@ per-degree Pythagorean coefficient vanishing.
 Pure Lean 4, no Mathlib, no `sorry`/`native_decide`, choice-free.
 -/
 
-import Multiplicity.F1Square.Analysis.Binomial
-import Multiplicity.F1Square.Analysis.CosSin
-import Multiplicity.F1Square.Analysis.ROrder
+import Multiplicity.F1.Analysis.Binomial
+import Multiplicity.F1.Analysis.CosSin
+import Multiplicity.F1.Analysis.ROrder
+import Multiplicity.F1.CoreCompat
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

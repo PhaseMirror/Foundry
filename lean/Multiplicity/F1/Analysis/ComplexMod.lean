@@ -8,8 +8,8 @@ that drives convergence of the complex `ζ` for `Re s > 1`.
 Pure Lean 4, no Mathlib, no `sorry`/`native_decide`, choice-free.
 -/
 
-import Multiplicity.F1Square.Analysis.ComplexExp
-import Multiplicity.F1Square.Analysis.CosSinBound
+import Multiplicity.F1.Analysis.ComplexExp
+import Multiplicity.F1.Analysis.CosSinBound
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

@@ -17,7 +17,7 @@ tactic source carries no opacity either.
 -/
 
 import Lean
-import Multiplicity.F1Square.Analysis.RingNF
+import Multiplicity.F1.Analysis.RingNF
 
 open Lean Elab Tactic Meta
 

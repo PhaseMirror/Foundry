@@ -6,7 +6,7 @@ import Multiplicity.F1.Analysis.GenuineLi
 open F1Square.Governance.GeneticFidelity
 open UOR.Bridge.F1Square.Analysis
 
-namespace Multiplicity.F1Square.Governance.CruxIntegration
+namespace Multiplicity.F1.Governance.CruxIntegration
 
 /-- 
   Analytic Receipt Gate: specifies the bounds for geometric/analytic equivalence 
@@ -75,4 +75,4 @@ def currentGovernanceStatus : GovernanceStatus :=
   , liPositivityHolds         := none
   }
 
-end Multiplicity.F1Square.Governance.CruxIntegration
+end Multiplicity.F1.Governance.CruxIntegration

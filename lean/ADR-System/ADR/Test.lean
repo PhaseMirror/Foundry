@@ -7,7 +7,8 @@ import ADR.Export
 # ADR Test Harness
 Run with `lake test`.
 
-This test harness validates all 22 registered ADRs (0004-0025) against
+This test harness validates all registered ADRs (0004-0025, substrate/system
+ADRs, PML ADRs, and Proposed ADR-0029) against
 the ADR-System invariants:
 1. Valid ID format
 2. Non-empty consequences
@@ -71,7 +72,8 @@ def test_all_valid_ids : Bool :=
   prop_valid_id adr_025_multiplicity_stablecoin &&
   prop_valid_id adr_008_formal_lean4 &&
   prop_valid_id adr_009_multiplicity_substrate &&
-  prop_valid_id adr_010_sedona_spine
+  prop_valid_id adr_010_sedona_spine &&
+  prop_valid_id adr_029_fpes
 
 /-- Test that all accepted ADRs have non-empty consequences. -/
 def test_all_consequences_nonempty : Bool :=
@@ -98,7 +100,8 @@ def test_all_consequences_nonempty : Bool :=
   prop_accepted_has_consequences adr_025_multiplicity_stablecoin &&
   prop_accepted_has_consequences adr_008_formal_lean4 &&
   prop_accepted_has_consequences adr_009_multiplicity_substrate &&
-  prop_accepted_has_consequences adr_010_sedona_spine
+  prop_accepted_has_consequences adr_010_sedona_spine &&
+  prop_accepted_has_consequences adr_029_fpes
 
 /-- Test that all accepted ADRs have non-empty links. -/
 def test_all_links_nonempty : Bool :=
@@ -125,7 +128,8 @@ def test_all_links_nonempty : Bool :=
   prop_accepted_has_links adr_025_multiplicity_stablecoin &&
   prop_accepted_has_links adr_008_formal_lean4 &&
   prop_accepted_has_links adr_009_multiplicity_substrate &&
-  prop_accepted_has_links adr_010_sedona_spine
+  prop_accepted_has_links adr_010_sedona_spine &&
+  prop_accepted_has_links adr_029_fpes
 
 /-- Test that all supersession chains are valid. -/
 def test_all_supersession_valid : Bool :=
@@ -152,7 +156,8 @@ def test_all_supersession_valid : Bool :=
   prop_supersession_valid adr_025_multiplicity_stablecoin &&
   prop_supersession_valid adr_008_formal_lean4 &&
   prop_supersession_valid adr_009_multiplicity_substrate &&
-  prop_supersession_valid adr_010_sedona_spine
+  prop_supersession_valid adr_010_sedona_spine &&
+  prop_supersession_valid adr_029_fpes
 
 /-- Test the genealogy chain: 0004 → 0005 → 0006 → ... → 0025. -/
 def test_genealogy_chain : Bool :=
@@ -212,6 +217,12 @@ def test_immutability_all_accepted : Bool :=
 def test_no_circular_supersession : Bool :=
   true
 
+/-- Test that ADR-0029 (FPES) is registered as Proposed, not silently Accepted. -/
+def test_029_fpes_proposed : Bool :=
+  adr_029_fpes.id = "ADR-0029" &&
+  adr_029_fpes.status = ADRStatus.Proposed &&
+  adr_029_fpes.supersedes = none
+
 /-! ### Main Test Runner -/
 
 def main : IO UInt32 := do
@@ -258,6 +269,12 @@ def main : IO UInt32 := do
     IO.println "✓ No circular supersession chains exist."
   else
     IO.println "✗ Circular supersession detected."
+    return 1
+
+  if test_029_fpes_proposed then
+    IO.println "✓ ADR-0029 (FPES) is registered and Proposed."
+  else
+    IO.println "✗ ADR-0029 (FPES) registration is wrong."
     return 1
 
   IO.println ""

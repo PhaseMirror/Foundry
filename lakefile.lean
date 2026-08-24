@@ -11,7 +11,50 @@ lean_lib Prime {
   srcDir := "."
 }
 
+lean_lib ADR {
+  roots := #[`ADR.Core, `ADR.Proofs, `ADR.Examples, `ADR.Export, `ADR.Test, `ADR.Theorems.CareViability]
+}
+
 @[default_target]
 lean_lib PhaseMirror {
-  roots := #[`PhaseMirror]
+  roots := #[`PhaseMirror, `Care, `ADR.Theorems.CareViability, `ADR.Core, `ADR.Proofs, `ADR.Examples, `ADR.Export, `ADR.Test]
 }
+
+@[test_driver]
+lean_exe adr_test {
+  root := `ADR.Test
+}
+
+-- ADR-0034-F1-Geometry Scaffolding (spectral attractor layer).
+lean_lib SpectralAttractor where
+  srcDir := "lean"
+  roots := #[`Multiplicity.SpectralAttractor]
+
+lean_exe spectral_attractor_tests where
+  srcDir := "lean"
+  root := `Multiplicity.SpectralAttractor.Tests
+
+-- WL-LARGEPRIME-012 / WordLove hybrid primality + certified coupling
+-- Files live under lean/Multiplicity/WordLove/{Attrs,Core,Fixtures,Proofs,FFI,Examples,Certified,Test}.lean
+lean_lib WordLove where
+  srcDir := "lean"
+  roots := #[
+    `Multiplicity.WordLove.Attrs,
+    `Multiplicity.WordLove.Core,
+    `Multiplicity.WordLove.Fixtures,
+    `Multiplicity.WordLove.Proofs,
+    `Multiplicity.WordLove.FFI,
+    `Multiplicity.WordLove.Examples,
+    `Multiplicity.WordLove.Certified,
+    `Multiplicity.WordLove.Test
+  ]
+
+lean_exe word_love_test where
+  srcDir := "lean"
+  root := `Multiplicity.WordLove.Test
+
+-- F1.Square repair (Phase R1): dominance spine over the constructive-Real layer.
+-- Roots pull the 82-module transitive cone only; widen to the full tree later.
+lean_lib F1Spine where
+  srcDir := "lean"
+  roots := #[`Multiplicity.F1.Square.WeilPSD, `Multiplicity.F1.Square.CoupledWeilKernel]

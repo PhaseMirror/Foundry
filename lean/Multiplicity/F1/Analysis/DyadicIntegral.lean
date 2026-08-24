@@ -12,9 +12,9 @@ envelope `K/((k+1)k)` (with `K = L`, since `(k+1)k ≤ 4·2^k`), so the generic 
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Analysis.RiemannConv
-import Multiplicity.F1Square.Analysis.ComplexDigamma
-import Multiplicity.F1Square.Analysis.RlimProps
+import Multiplicity.F1.Analysis.RiemannConv
+import Multiplicity.F1.Analysis.ComplexDigamma
+import Multiplicity.F1.Analysis.RlimProps
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

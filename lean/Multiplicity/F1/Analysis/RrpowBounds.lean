@@ -9,9 +9,9 @@ exponent times `RexpReal`-monotone. This is the integrand bound the general `t^{
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Analysis.Gamma
-import Multiplicity.F1Square.Analysis.RartanhBounds
-import Multiplicity.F1Square.Analysis.ThetaLipschitz
+import Multiplicity.F1.Analysis.Gamma
+import Multiplicity.F1.Analysis.RartanhBounds
+import Multiplicity.F1.Analysis.ThetaLipschitz
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

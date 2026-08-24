@@ -20,8 +20,8 @@ Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited b
 `scripts/honesty_audit.sh`. Defines the open statement; proves nothing about where the zeros are.
 -/
 
-import Multiplicity.F1Square.Analysis.CriticalZeta
-import Multiplicity.F1Square.Analysis.ZeroGeometry
+import Multiplicity.F1.Analysis.CriticalZeta
+import Multiplicity.F1.Analysis.ZeroGeometry
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

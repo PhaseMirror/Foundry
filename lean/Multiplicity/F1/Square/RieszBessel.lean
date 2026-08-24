@@ -27,8 +27,8 @@ modulus — the next brick), NOT positivity. Step 4 (band-coupling positivity) i
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
-import Multiplicity.F1Square.Square.RieszRealize
-import Multiplicity.F1Square.Square.QHilbertSymm
+import Multiplicity.F1.Square.RieszRealize
+import Multiplicity.F1.Square.QHilbertSymm
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

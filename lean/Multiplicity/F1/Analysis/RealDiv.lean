@@ -12,8 +12,8 @@ closes it.
 Pure Lean 4, no Mathlib, no `sorry`/`native_decide`, choice-free.
 -/
 
-import Multiplicity.F1Square.Analysis.Inv
-import Multiplicity.F1Square.Analysis.Log
+import Multiplicity.F1.Analysis.Inv
+import Multiplicity.F1.Analysis.Log
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

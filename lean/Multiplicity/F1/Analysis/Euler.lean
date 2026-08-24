@@ -19,9 +19,10 @@ each driven below the Bishop modulus `1/(j+1)`.
 Pure Lean 4, no Mathlib, no `sorry`/`native_decide`, choice-free.
 -/
 
-import Multiplicity.F1Square.Analysis.Zeta
-import Multiplicity.F1Square.Analysis.Complete
-import Multiplicity.F1Square.Analysis.Pi
+import Multiplicity.F1.Analysis.Zeta
+import Multiplicity.F1.Analysis.Complete
+import Multiplicity.F1.Analysis.Pi
+import Multiplicity.F1.CoreCompat
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 
@@ -121,7 +122,7 @@ theorem altSum_gap (b : Nat → Q) (hnn : ∀ i, 0 ≤ (b i).num) (hden : ∀ i,
 theorem zetaSum_s_anti_step (s : Nat) : ∀ N, Qle (zetaSum (s + 1) N) (zetaSum s N)
   | 0 => by
       show Qle (⟨1, npow 1 (s + 1)⟩ : Q) ⟨1, npow 1 s⟩
-      rw [npow_one, npow_one]; exact Qle_refl _
+      rw [npow_one_left, npow_one_left]; exact Qle_refl _
   | (N + 1) => by
       show Qle (add (zetaSum (s + 1) N) ⟨1, npow (N + 2) (s + 1)⟩)
         (add (zetaSum s N) ⟨1, npow (N + 2) s⟩)
@@ -154,7 +155,7 @@ theorem zetaSum_le_two (s : Nat) (hs : 2 ≤ s) (N : Nat) : Qle (zetaSum s N) (�
   have h2 : Qle (zetaU s N) (zetaU s 0) := zetaU_le s hs (Nat.zero_le N)
   have h3 : Qeq (zetaU s 0) (⟨2, 1⟩ : Q) := by
     show Qeq (add (⟨1, npow 1 s⟩ : Q) ⟨1, 1⟩) ⟨2, 1⟩
-    rw [npow_one]; decide
+    rw [npow_one_left]; decide
   exact Qle_trans (zetaU_den_pos s N) h1
     (Qle_congr_right (zetaU_den_pos s 0) h3 h2)
 

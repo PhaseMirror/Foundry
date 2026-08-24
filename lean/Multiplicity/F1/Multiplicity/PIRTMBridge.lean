@@ -1,6 +1,6 @@
 import Multiplicity.F1.Tropical.IntersectionPositivity
 
-namespace Multiplicity.F1Square.Tropical.PIRTMBridge
+namespace Multiplicity.F1.Tropical.PIRTMBridge
 
 open F1Square.Tropical.IntersectionPositivity
 
@@ -49,4 +49,4 @@ theorem contractedMult_le_stable (C : ContractionOperator) (e1 e2 : WeightedRay)
   contractedMult C e1 e2 ≤ stableIntersectionMult e1 e2 := by
   exact C.is_contractive _
 
-end Multiplicity.F1Square.Tropical.PIRTMBridge
+end Multiplicity.F1.Tropical.PIRTMBridge

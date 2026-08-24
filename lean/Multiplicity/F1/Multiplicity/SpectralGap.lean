@@ -11,7 +11,7 @@
 
 import Multiplicity.F1.Square.AtlasSpectrum
 
-namespace Multiplicity.F1Square.SpectralGap
+namespace Multiplicity.F1.SpectralGap
 
 /-- The Atlas spectral operator signature is (10, 14) — NOT the Hodge-index signature (1, N-1).
     This is theorem `atlasM_signature` in `AtlasSpectrum.lean`. -/
@@ -53,4 +53,4 @@ structure CouplingHypothesis where
 /-- OPEN: The coupling condition stated as a research target. -/
 def coupling_open : CouplingHypothesis → False := fun _ => False.elim
 
-end Multiplicity.F1Square.SpectralGap
+end Multiplicity.F1.SpectralGap

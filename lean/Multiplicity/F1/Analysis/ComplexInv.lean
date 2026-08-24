@@ -8,8 +8,8 @@ componentwise to `Re = ((Re z)² + (Im z)²)·I = N·I = 1` and `Im = (Re z)(Im 
 Pure Lean 4, no Mathlib, no `sorry`/`native_decide`, choice-free.
 -/
 
-import Multiplicity.F1Square.Analysis.ComplexMod
-import Multiplicity.F1Square.Analysis.RealDiv
+import Multiplicity.F1.Analysis.ComplexMod
+import Multiplicity.F1.Analysis.RealDiv
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

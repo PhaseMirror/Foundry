@@ -25,8 +25,8 @@ Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited b
 The crux fields stay `none`; RH is open.
 -/
 
-import Multiplicity.F1Square.Analysis.RArctanValue
-import Multiplicity.F1Square.Analysis.TanPiQuarter
+import Multiplicity.F1.Analysis.RArctanValue
+import Multiplicity.F1.Analysis.TanPiQuarter
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

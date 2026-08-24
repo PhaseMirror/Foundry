@@ -15,8 +15,8 @@ this relation yielding `CompletedZetaFE` — sits on the certified `halfLineInte
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Analysis.ThetaFunctionPos
-import Multiplicity.F1Square.Analysis.SqrtRealOf
+import Multiplicity.F1.Analysis.ThetaFunctionPos
+import Multiplicity.F1.Analysis.SqrtRealOf
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

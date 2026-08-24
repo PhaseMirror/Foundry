@@ -5,8 +5,8 @@ dyadic blocks `B_k = [2ᵏ, 2ᵏ⁺¹)`, giving a rational regularity modulus fo
 component — the honest route for *real* `σ = Re s > 1` (the integer-`s` telescoping of `Zeta.lean`
 fails for `1 < σ < 2`). This brick: the per-term component bounds `−exp(Re z) ≤ Re/Im(eᶻ) ≤ exp(Re z)`.
 -/
-import Multiplicity.F1Square.Analysis.RealPow
-import Multiplicity.F1Square.Analysis.ComplexPow
+import Multiplicity.F1.Analysis.RealPow
+import Multiplicity.F1.Analysis.ComplexPow
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

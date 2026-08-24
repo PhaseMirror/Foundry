@@ -19,8 +19,8 @@ Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited b
 `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Analysis.RArctanCongr
-import Multiplicity.F1Square.Analysis.GammaOne
+import Multiplicity.F1.Analysis.RArctanCongr
+import Multiplicity.F1.Analysis.GammaOne
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

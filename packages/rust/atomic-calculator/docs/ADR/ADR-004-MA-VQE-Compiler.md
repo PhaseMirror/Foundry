@@ -37,7 +37,7 @@ Compiling molecular Hamiltonians directly into qudit subspaces requires a specia
 We will build a standalone, multiplicity-aware compiler integrated directly into the Rust UAC SDK (`ma_vqe.rs`). This compiler will:
 1. Target physical qudits with dimensions $d=10$ (Sr) and $d=16$ (Cs).
 2. Apply Generalized Jordan-Wigner transformations to map fermionic operators to qudit instructions.
-3. Utilize the SnapKitty `QuantumM` monad's `bind` operation to prune the variational search tree, enforcing the "no-cloning" corollary to destroy failed or unphysical branches.
+3. Utilize the `QuantumM` monad's `bind` operation to prune the variational search tree, enforcing the "no-cloning" corollary to destroy failed or unphysical branches.
 4. Strictly route all optimization decisions through the Sedona Spine ALP policy gate.
 
 ## Consequences

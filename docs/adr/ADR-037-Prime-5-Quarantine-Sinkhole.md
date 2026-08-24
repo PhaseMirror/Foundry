@@ -10,12 +10,12 @@ deciders: P²C Core
 Prime 5 was previously listed in `Pforbidden` to test strict exclusion. However, pure exclusion leaves malicious actor trajectories blind to the system. They hit a wall and leave no forensic trail.
 
 # Decision
-Reclassify $p_5$ as the Sovereignty Protection & Containment Channel (`P_quarantine` = {5}). We deprecate legacy WORM logging in favor of Cryptographic Record Management Framework (CRMF) hash-chained event sealing.
+Reclassify $p_5$ as the Sovereignty Protection & Containment Channel (`P_quarantine` = {5}). We adopt the Cryptographic Record Management Framework (CRMF) hash-chained event sealing for all forensic logging.
 
 # Mechanics
 - **Trigger:** Rights deltas dropping below safety thresholds (mapped to 18 U.S.C. § 2261A, § 249).
 - **Action:** Forced projection $\Pi_{p_5}$ applies an attenuation manifold (damping 0.92) and enforces a strict contraction bound ($\epsilon = 0.05$).
-- **Output:** Immutable CRMF hash-chained attestation (PWEH), ready for regulatory handoff without reliance on GitLedger WORM logs.
+- **Output:** Immutable CRMF hash-chained attestation (PWEH), ready for regulatory handoff without reliance on GitLedger logs.
 
 # Consequences
 - Bad actors are actively mapped, not just blocked.

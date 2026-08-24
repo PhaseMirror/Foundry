@@ -17,11 +17,20 @@ pub struct MicrowavePulse {
     pub target_qudit: usize,
 }
 
+/// Maximum concurrent QaaS sessions supported by the hardware envelope.
+pub const MAX_CONCURRENT_SESSIONS: usize = 100;
+/// Maximum aggregate FPGA utilization threshold.
+pub const MAX_AGGREGATE_UTILIZATION: f64 = 0.90;
+/// Minimum required ratio of native d=16 sessions.
+pub const MIN_NATIVE_D16_RATIO: f64 = 0.80;
+
 /// Represents the FPGA Edge Node orchestrator with multiplexing capability.
 pub struct FpgaOrchestrator {
     pub max_dimension: u64,
     /// Tracks independent dimensions for up to 100 concurrent QCFI loops
     pub concurrent_dimensions: std::collections::HashMap<usize, u64>,
+    /// Tracks pulse execution load per session
+    pub session_loads: std::collections::HashMap<usize, f64>,
 }
 
 impl Default for FpgaOrchestrator {
@@ -29,15 +38,62 @@ impl Default for FpgaOrchestrator {
         Self {
             max_dimension: 16, // ^133Cs
             concurrent_dimensions: std::collections::HashMap::new(),
+            session_loads: std::collections::HashMap::new(),
         }
     }
 }
 
 impl FpgaOrchestrator {
-    /// Initializes a new session for a concurrent request
-    pub fn init_session(&mut self, session_id: usize) {
+    /// Initializes a new session for a concurrent request under strict concurrency bounds
+    pub fn init_session(&mut self, session_id: usize) -> Result<(), &'static str> {
+        if self.concurrent_dimensions.len() >= MAX_CONCURRENT_SESSIONS {
+            return Err("Concurrency limit reached: Maximum 100 concurrent sessions allowed.");
+        }
+        if self.aggregate_utilization() >= MAX_AGGREGATE_UTILIZATION {
+            return Err("FPGA overload: Aggregate utilization exceeds 90% threshold.");
+        }
         self.concurrent_dimensions.insert(session_id, self.max_dimension);
+        self.session_loads.insert(session_id, 0.008); // Baseline allocation (~0.8% per session)
+        Ok(())
     }
+
+    /// Terminates a session and reclaims resources
+    pub fn close_session(&mut self, session_id: usize) {
+        self.concurrent_dimensions.remove(&session_id);
+        self.session_loads.remove(&session_id);
+    }
+
+    /// Computes the ratio of sessions operating at native d=16
+    pub fn native_d16_ratio(&self) -> f64 {
+        if self.concurrent_dimensions.is_empty() {
+            return 1.0;
+        }
+        let d16_count = self.concurrent_dimensions.values().filter(|&&d| d == 16).count();
+        d16_count as f64 / self.concurrent_dimensions.len() as f64
+    }
+
+    /// Computes the aggregate FPGA core utilization across all active multiplexed sessions
+    pub fn aggregate_utilization(&self) -> f64 {
+        self.session_loads.values().sum::<f64>().min(1.0)
+    }
+
+    /// Multiplexed load balancer: adjusts session dimension to protect aggregate thermal window
+    pub fn balance_load(&mut self) {
+        if self.aggregate_utilization() > 0.85 && self.native_d16_ratio() > MIN_NATIVE_D16_RATIO {
+            // Pre-emptively downscale the lowest-priority active session from d=16 to d=8 to avoid breach
+            let candidate = self.concurrent_dimensions.iter()
+                .filter(|(_, &d)| d == 16)
+                .map(|(&id, _)| id)
+                .max();
+            if let Some(sess_id) = candidate {
+                self.concurrent_dimensions.insert(sess_id, 8);
+                if let Some(load) = self.session_loads.get_mut(&sess_id) {
+                    *load *= 0.6; // 40% reduction in pulse workload
+                }
+            }
+        }
+    }
+
     /// Dispatches a logical MA-VQE circuit into physical microwave pulses on the FPGA.
     pub fn dispatch_circuit(&mut self, circuit: &[QuditGate]) -> Vec<MicrowavePulse> {
         let mut pulses = Vec::new();

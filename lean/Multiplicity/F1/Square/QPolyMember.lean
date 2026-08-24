@@ -30,10 +30,10 @@ Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited b
 `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Square.QSumList
-import Multiplicity.F1Square.Square.ConstScale
-import Multiplicity.F1Square.Square.HilbertGram
-import Multiplicity.F1Square.Square.MomentReconSum
+import Multiplicity.F1.Square.QSumList
+import Multiplicity.F1.Square.ConstScale
+import Multiplicity.F1.Square.HilbertGram
+import Multiplicity.F1.Square.MomentReconSum
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

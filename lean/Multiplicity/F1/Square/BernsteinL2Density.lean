@@ -28,11 +28,11 @@ Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited b
 `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Square.BernsteinUniform
-import Multiplicity.F1Square.Square.MomentSummable
-import Multiplicity.F1Square.Square.PairingLimitI
-import Multiplicity.F1Square.Analysis.IntervalIntegral
-import Multiplicity.F1Square.Analysis.IntegralLocal
+import Multiplicity.F1.Square.BernsteinUniform
+import Multiplicity.F1.Square.MomentSummable
+import Multiplicity.F1.Square.PairingLimitI
+import Multiplicity.F1.Analysis.IntervalIntegral
+import Multiplicity.F1.Analysis.IntegralLocal
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

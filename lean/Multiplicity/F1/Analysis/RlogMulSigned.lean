@@ -1,5 +1,5 @@
-import Multiplicity.F1Square.Analysis.ClogAddBounded
-import Multiplicity.F1Square.Analysis.Gamma
+import Multiplicity.F1.Analysis.ClogAddBounded
+import Multiplicity.F1.Analysis.Gamma
 
 /-!
 # Signed-τ artanh/exp substrate — toward general-modulus `Rlog`/`Clog` additivity

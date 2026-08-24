@@ -20,10 +20,10 @@ surjectivity. Step 4 is RH; the crux fields stay `none`.
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
-import Multiplicity.F1Square.Square.PairingIUReschedule
-import Multiplicity.F1Square.Square.PairingUnitCongr
-import Multiplicity.F1Square.Square.DeepMemberThree
-import Multiplicity.F1Square.Square.ContinuousMomentGenScale
+import Multiplicity.F1.Square.PairingIUReschedule
+import Multiplicity.F1.Square.PairingUnitCongr
+import Multiplicity.F1.Square.DeepMemberThree
+import Multiplicity.F1.Square.ContinuousMomentGenScale
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

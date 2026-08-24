@@ -91,9 +91,9 @@ fn calculate_fes_energy(circuit: &[QuditGate]) -> f64 {
 
 /// Endpoint: Execute Molecular Simulation
 pub fn execute_simulation(request: SimulationRequest) -> Result<SimulationResponse, &'static str> {
-    // 1. Enforce physical capability bounds
-    if request.max_qudits > 100 {
-        return Err("Qudit target exceeds QaaS bound of 100.");
+    // 1. Enforce physical capability bounds and no-molecular-scaling mandate
+    if request.max_qudits > 69 {
+        return Err("Qudit target exceeds FeMoco boundary (q <= 69). No larger molecular scaling allowed.");
     }
     
     // 2. Ingest Preprocessed Integrals (e.g. CAS(114, 114) for FeMoco)
@@ -127,8 +127,9 @@ pub fn execute_simulation(request: SimulationRequest) -> Result<SimulationRespon
         return Err("Circuit pruned by no-cloning corollary.");
     }
 
-    // 5. FPGA Pulse Orchestration
+    // 5. FPGA Pulse Orchestration with session allocation
     let mut fpga = FpgaOrchestrator::default();
+    fpga.init_session(1).map_err(|_| "Failed to initialize FPGA session")?;
     let pulses = fpga.dispatch_circuit(&final_circuit);
     
     // 6. Sedona Spine Policy Governance (ALP Gate Audit)
@@ -140,12 +141,14 @@ pub fn execute_simulation(request: SimulationRequest) -> Result<SimulationRespon
     };
     let witness = H2ErrorWitness::new();
     
-    // 6.b Mock FPGA post-pulse Q-SQD calculation
+    // 6.b Mock FPGA post-pulse Q-SQD calculation with mandatory signature and 7-year CRMF retention
     let mut f_hat = std::collections::HashMap::new();
     let mut se = std::collections::HashMap::new();
     f_hat.insert("Z0Z1".to_string(), 0.50); // diff = 0
     se.insert("Z0Z1".to_string(), 0.01);
-    let sqd_sig = crate::sqd::q_sqd(required_qudits, &f_hat, &se);
+    let mut sqd_sig = crate::sqd::q_sqd(required_qudits, &f_hat, &se);
+    sqd_sig.extra_fields.insert("crmf_retention_policy".to_string(), "7_year_mandatory".to_string());
+    sqd_sig.extra_fields.insert("layer_b_status".to_string(), "gated".to_string());
     
     if NarrativeAuditor::audit_agent_output(&truth, &agent_output, &witness, Some(&sqd_sig)).is_err() {
         return Err("Sedona Spine Governance Violation: Agent drifted from engine truth or unstable signature.");
@@ -160,6 +163,35 @@ pub fn execute_simulation(request: SimulationRequest) -> Result<SimulationRespon
     })
 }
 
+/// Endpoint: Execute Concurrent Batch of up to 100 QaaS Requests with Load Balancing
+pub fn execute_concurrent_batch(
+    requests: Vec<SimulationRequest>,
+) -> Result<Vec<SimulationResponse>, &'static str> {
+    if requests.len() > crate::fpga_pulse::MAX_CONCURRENT_SESSIONS {
+        return Err("Batch exceeds maximum allowed concurrency of 100 sessions.");
+    }
+
+    let mut orchestrator = FpgaOrchestrator::default();
+    let mut responses = Vec::with_capacity(requests.len());
+
+    for (session_id, req) in requests.into_iter().enumerate() {
+        orchestrator.init_session(session_id)?;
+        let resp = execute_simulation(req)?;
+        orchestrator.balance_load();
+        responses.push(resp);
+    }
+
+    if orchestrator.aggregate_utilization() >= crate::fpga_pulse::MAX_AGGREGATE_UTILIZATION {
+        return Err("Batch execution breached aggregate FPGA utilization threshold (90%).");
+    }
+
+    if orchestrator.native_d16_ratio() < crate::fpga_pulse::MIN_NATIVE_D16_RATIO {
+        return Err("Batch execution failed minimum native d=16 allocation ratio (80%).");
+    }
+
+    Ok(responses)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -169,12 +201,12 @@ mod tests {
         let req = SimulationRequest {
             molecule_name: "Nitrogenase_FeMoco".to_string(),
             target_accuracy_mha: 15.0,
-            max_qudits: 100,
+            max_qudits: 69,
         };
         
         let response = execute_simulation(req).expect("Simulation should succeed");
         assert!(response.energy_mha < 15.0);
-        assert!(response.qudits_used < 100);
+        assert!(response.qudits_used <= 69);
         assert!(response.meets_sedona_compliance);
     }
 
@@ -183,11 +215,11 @@ mod tests {
         let req = SimulationRequest {
             molecule_name: "P_Cluster".to_string(),
             target_accuracy_mha: 15.0,
-            max_qudits: 100,
+            max_qudits: 69,
         };
         
         let response = simulate_with_autoreduction(req).expect("AEGISS auto-reduction should succeed");
-        assert!(response.qudits_used <= 100);
+        assert!(response.qudits_used <= 69);
         assert!(response.meets_sedona_compliance);
     }
 }

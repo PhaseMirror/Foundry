@@ -25,12 +25,12 @@ Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited b
 `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Square.Bern2DValue
-import Multiplicity.F1Square.Square.Bern2DUniform
-import Multiplicity.F1Square.Square.ProdParamTest
-import Multiplicity.F1Square.Square.ParamIntegral
-import Multiplicity.F1Square.Square.MulConvRLip
-import Multiplicity.F1Square.Analysis.IntervalRsmul
+import Multiplicity.F1.Square.Bern2DValue
+import Multiplicity.F1.Square.Bern2DUniform
+import Multiplicity.F1.Square.ProdParamTest
+import Multiplicity.F1.Square.ParamIntegral
+import Multiplicity.F1.Square.MulConvRLip
+import Multiplicity.F1.Analysis.IntervalRsmul
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

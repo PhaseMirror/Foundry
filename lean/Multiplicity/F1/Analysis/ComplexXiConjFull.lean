@@ -13,9 +13,9 @@ witnesses (`Re`-bounds, ρ-bounds, η-blocks, inverse witnesses) and the standar
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Analysis.ComplexXiConj
-import Multiplicity.F1Square.Analysis.ComplexGammaConj
-import Multiplicity.F1Square.Analysis.ComplexZetaConj
+import Multiplicity.F1.Analysis.ComplexXiConj
+import Multiplicity.F1.Analysis.ComplexGammaConj
+import Multiplicity.F1.Analysis.ComplexZetaConj
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

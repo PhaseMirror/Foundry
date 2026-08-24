@@ -28,7 +28,7 @@ import Multiplicity.F1.Template
 import Multiplicity.F1.BridgeFF
 import Multiplicity.F1.Analysis.RingTac
 
-namespace Multiplicity.F1Square.IntersectionTemplate
+namespace Multiplicity.F1.IntersectionTemplate
 
 /- The single-prime template class: a linear combination of H, V, Δ, Γ.
    This is the T3 building block; for n primes we take the direct sum plus
@@ -224,4 +224,4 @@ theorem mample_sq_pos (n : Nat) (q : Fin n → Int) (d t : Fin n → Int) :
 
 end Multiplicity.MultiPrimeTemplate
 
-end Multiplicity.F1Square.IntersectionTemplate
+end Multiplicity.F1.IntersectionTemplate

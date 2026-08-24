@@ -35,10 +35,10 @@ Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited b
 `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Square.WeilLattice
-import Multiplicity.F1Square.Square.Forced
-import Multiplicity.F1Square.Analysis.RSum
-import Multiplicity.F1Square.Analysis.RMulNF
+import Multiplicity.F1.Square.WeilLattice
+import Multiplicity.F1.Square.Forced
+import Multiplicity.F1.Analysis.RSum
+import Multiplicity.F1.Analysis.RMulNF
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

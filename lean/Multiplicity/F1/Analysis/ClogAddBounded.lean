@@ -1,6 +1,6 @@
-import Multiplicity.F1Square.Analysis.ComplexArgAdd
-import Multiplicity.F1Square.Analysis.RlogMulPos
-import Multiplicity.F1Square.Analysis.LiGrowth
+import Multiplicity.F1.Analysis.ComplexArgAdd
+import Multiplicity.F1.Analysis.RlogMulPos
+import Multiplicity.F1.Analysis.LiGrowth
 
 /-!
 # Unconditional `Clog` additivity for bounded moduli — discharging `hmod`

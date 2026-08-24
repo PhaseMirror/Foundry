@@ -23,8 +23,8 @@ approach the crux. Step 4 (band-coupling positivity) is RH; the crux fields stay
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
-import Multiplicity.F1Square.Square.SineSquareSOS
-import Multiplicity.F1Square.Square.AngleEmbeddingBound
+import Multiplicity.F1.Square.SineSquareSOS
+import Multiplicity.F1.Square.AngleEmbeddingBound
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

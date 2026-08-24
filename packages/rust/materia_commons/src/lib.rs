@@ -1,4 +1,5 @@
 pub mod constitution;
+pub mod care_viability;
 pub mod identity;
 pub mod ledger;
 pub mod replication;

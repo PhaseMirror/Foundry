@@ -1,0 +1,81 @@
+name: ADR Formal Governance
+
+on:
+  push:
+    paths:
+      - 'ADR/**'
+      - 'lean-toolchain'
+      - 'lakefile.lean'
+      - '.github/workflows/adr-governance.yml'
+  pull_request:
+    paths:
+      - 'ADR/**'
+      - 'lean-toolchain'
+      - 'lakefile.lean'
+      - '.github/workflows/adr-governance.yml'
+
+jobs:
+  governance:
+    name: Lean proofs, zero-escape gate, export determinism
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Toolchain is pinned by the committed `lean-toolchain` file.
+      # We read the pin and install exactly that version so every runner
+      # checks against byte-identical semantics — never a floating "stable".
+      - name: Read pinned toolchain
+        id: toolchain
+        run: echo "version=$(cat lean-toolchain | tr -d '[:space:]')" >> "$GITHUB_OUTPUT"
+
+      - name: Install Elan
+        run: |
+          curl https://elan.lean-lang.org/elan-init.sh -sSf | sh -s -- -y --default-toolchain "${{ steps.toolchain.outputs.version }}"
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+
+      - name: Verify toolchain matches repository pin
+        run: |
+          lean --version
+          lake --version
+          grep -q "$(lean --version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+(-rc[0-9]+)?')" lean-toolchain
+
+      # Governance gate 1: no incomplete or unsound proof escapes.
+      # Blocks `sorry`, `admit`, top-level `axiom`/`opaque` declarations,
+      # `unsafe`, and `@[implemented_by]` in the entire ADR module.
+      - name: Zero-escape gate (sorry / admit / axiom / opaque / unsafe / implemented_by)
+        run: |
+          set -e
+          if grep -rnE '\b(sorry|admit)\b' --include='*.lean' ADR; then
+            echo "::error::Incomplete proof term found in ADR module"
+            exit 1
+          fi
+          if grep -rnE '^[[:space:]]*(axiom|opaque|unsafe)\b|@[[:space:]]*implemented_by' --include='*.lean' ADR; then
+            echo "::error::Unsound escape hatch found in ADR module"
+            exit 1
+          fi
+          echo "Gate 1 passed: no sorry/admit/axiom/opaque/unsafe/implemented_by"
+
+      # Build all ADR library roots. Any failed proof obligation fails here.
+      - name: Build ADR library (proof checking)
+        run: lake build ADR
+
+      - name: Run ADR test suite
+        run: lake exe adr_test
+
+      # Governance gate 2: export determinism.
+      # The test suite already exports to docs/adr; regenerate and require
+      # a clean worktree so generated docs can never silently drift.
+      - name: Export determinism gate
+        run: |
+          set -e
+          lake exe adr_test > /dev/null
+          git diff --exit-code docs/adr/
+          git status --porcelain docs/adr/ | (! grep -q '^??')
+          echo "Gate 2 passed: docs/adr output is byte-for-byte deterministic"
+
+      - name: Upload generated docs
+        uses: actions/upload-artifact@v4
+        with:
+          name: adr-docs
+          path: docs/adr/

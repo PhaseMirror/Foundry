@@ -15,8 +15,8 @@ crux fields stay `none`.
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
-import Multiplicity.F1Square.Square.PairingIULinear2
-import Multiplicity.F1Square.Square.BernsteinBasisZero
+import Multiplicity.F1.Square.PairingIULinear2
+import Multiplicity.F1.Square.BernsteinBasisZero
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

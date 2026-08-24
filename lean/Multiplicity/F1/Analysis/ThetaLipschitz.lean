@@ -14,9 +14,9 @@ per-term difference factors through `max` with no dichotomy.
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Analysis.ThetaValueDecay
-import Multiplicity.F1Square.Analysis.ExpVarGlobal
-import Multiplicity.F1Square.Analysis.ClampOne
+import Multiplicity.F1.Analysis.ThetaValueDecay
+import Multiplicity.F1.Analysis.ExpVarGlobal
+import Multiplicity.F1.Analysis.ClampOne
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

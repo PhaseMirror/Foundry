@@ -15,8 +15,9 @@ positivity hypotheses are threaded explicitly (and discharged automatically for 
 construct, since every rational they build has a positive denominator).
 -/
 
-import Multiplicity.F1Square.Analysis.Rat
-import Multiplicity.F1Square.Analysis.RingTac
+import Multiplicity.F1.Analysis.Rat
+import Multiplicity.F1.Analysis.RingTac
+import Multiplicity.F1.CoreCompat
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

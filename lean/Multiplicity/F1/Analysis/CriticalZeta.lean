@@ -16,8 +16,8 @@ This file builds the denominator `1 − 2^{1−s} = 1 − 2·2⁻ˢ = 1 − 2·c
 Pure Lean 4, no Mathlib, no `sorry`/`native_decide`, choice-free.
 -/
 
-import Multiplicity.F1Square.Analysis.EtaVariation
-import Multiplicity.F1Square.Analysis.ComplexInv
+import Multiplicity.F1.Analysis.EtaVariation
+import Multiplicity.F1.Analysis.ComplexInv
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

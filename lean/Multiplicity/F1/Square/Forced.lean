@@ -30,7 +30,7 @@ whose `dict` is the theorem `vanCyc_selfpair`), the same engine runs over ℤ:
 Pure Lean 4 core, no Mathlib, no `sorry`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Square.WeilLattice
+import Multiplicity.F1.Square.WeilLattice
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

@@ -22,9 +22,9 @@ NOT positivity. Step 4 (band-coupling positivity) is RH; the crux fields stay `n
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
-import Multiplicity.F1Square.Square.PairingIUEnergy
-import Multiplicity.F1Square.Square.HilbertGram
-import Multiplicity.F1Square.Square.L2ElementSpace
+import Multiplicity.F1.Square.PairingIUEnergy
+import Multiplicity.F1.Square.HilbertGram
+import Multiplicity.F1.Square.L2ElementSpace
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

@@ -13,10 +13,10 @@ denominator factor conjugates cleanly through the toolbox: the natural-base powe
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Analysis.CriticalZeta
-import Multiplicity.F1Square.Analysis.ComplexConjAlgebra
-import Multiplicity.F1Square.Analysis.ComplexDigammaConj
-import Multiplicity.F1Square.Analysis.ComplexArgLower
+import Multiplicity.F1.Analysis.CriticalZeta
+import Multiplicity.F1.Analysis.ComplexConjAlgebra
+import Multiplicity.F1.Analysis.ComplexDigammaConj
+import Multiplicity.F1.Analysis.ComplexArgLower
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

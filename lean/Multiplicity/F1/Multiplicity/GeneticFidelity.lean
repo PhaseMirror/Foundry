@@ -1,6 +1,6 @@
 import Multiplicity.F1.Tropical.Spectrum
 
-namespace Multiplicity.F1Square.Governance.GeneticFidelity
+namespace Multiplicity.F1.Governance.GeneticFidelity
 
 abbrev Fidelity := Nat
 abbrev RiskBound := Nat
@@ -167,4 +167,4 @@ theorem operational_descendant_fused {g : ReceiptGate}
     rw [h_fail] at h_operational
     contradiction
 
-end Multiplicity.F1Square.Governance.GeneticFidelity
+end Multiplicity.F1.Governance.GeneticFidelity

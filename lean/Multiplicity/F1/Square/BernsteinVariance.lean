@@ -23,8 +23,8 @@ Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited b
 `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Analysis.BernsteinMoments
-import Multiplicity.F1Square.Square.PreHilbert
+import Multiplicity.F1.Analysis.BernsteinMoments
+import Multiplicity.F1.Square.PreHilbert
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

@@ -34,11 +34,11 @@ Pure Lean 4 core (no Mathlib), choice-free.  The only ring tactic is `ring_uor` 
 abstract-`Real` algebra is manual `Req`/`Rle` rearrangement.  Axiom-audited to `{propext, Quot.sound}`
 by `scripts/honesty_audit.sh`.
 -/
-import Multiplicity.F1Square.Square.PairingBernOpZero
-import Multiplicity.F1Square.Square.PairingIUEnergy
-import Multiplicity.F1Square.Square.BernsteinL2Density
-import Multiplicity.F1Square.Square.IntegralCSFull
-import Multiplicity.F1Square.Square.L2ElementSpace
+import Multiplicity.F1.Square.PairingBernOpZero
+import Multiplicity.F1.Square.PairingIUEnergy
+import Multiplicity.F1.Square.BernsteinL2Density
+import Multiplicity.F1.Square.IntegralCSFull
+import Multiplicity.F1.Square.L2ElementSpace
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

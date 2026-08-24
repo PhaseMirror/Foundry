@@ -14,9 +14,9 @@ F1 square — Track 1: **conjugation of the Spouge Γ approximant** `Γ(s̄/2) =
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Analysis.ComplexLogConj
-import Multiplicity.F1Square.Analysis.ComplexConjAlgebra
-import Multiplicity.F1Square.Analysis.ComplexArgLower
+import Multiplicity.F1.Analysis.ComplexLogConj
+import Multiplicity.F1.Analysis.ComplexConjAlgebra
+import Multiplicity.F1.Analysis.ComplexArgLower
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

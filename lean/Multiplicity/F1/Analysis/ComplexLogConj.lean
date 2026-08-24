@@ -15,12 +15,12 @@ These are the principal-sector faces of Î¾'s conjugate-pair zero symmetry; the Î
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Analysis.ComplexLog
-import Multiplicity.F1Square.Analysis.ComplexArgUpper
-import Multiplicity.F1Square.Analysis.ComplexArgLower
-import Multiplicity.F1Square.Analysis.ComplexDigammaConj
-import Multiplicity.F1Square.Analysis.ComplexPowGen
-import Multiplicity.F1Square.Analysis.ComplexLimit
+import Multiplicity.F1.Analysis.ComplexLog
+import Multiplicity.F1.Analysis.ComplexArgUpper
+import Multiplicity.F1.Analysis.ComplexArgLower
+import Multiplicity.F1.Analysis.ComplexDigammaConj
+import Multiplicity.F1.Analysis.ComplexPowGen
+import Multiplicity.F1.Analysis.ComplexLimit
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

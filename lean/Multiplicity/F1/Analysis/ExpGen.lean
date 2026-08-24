@@ -21,7 +21,7 @@ and `log` (positivity-as-data + the artanh series) are the later bricks of the a
 Pure Lean 4, no Mathlib, no `sorry`.
 -/
 
-import Multiplicity.F1Square.Analysis.Exp
+import Multiplicity.F1.Analysis.Exp
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

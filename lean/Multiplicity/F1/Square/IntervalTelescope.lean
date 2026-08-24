@@ -25,9 +25,9 @@ Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited b
 `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Square.IntervalSplitAtCap
-import Multiplicity.F1Square.Square.IntervalPiece
-import Multiplicity.F1Square.Analysis.RSum
+import Multiplicity.F1.Square.IntervalSplitAtCap
+import Multiplicity.F1.Square.IntervalPiece
+import Multiplicity.F1.Analysis.RSum
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

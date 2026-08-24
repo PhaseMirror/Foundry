@@ -12,7 +12,7 @@ defined over the whole punctured plane near the four axes.
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
-import Multiplicity.F1Square.Analysis.ComplexArgUpper
+import Multiplicity.F1.Analysis.ComplexArgUpper
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

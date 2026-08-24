@@ -13,8 +13,8 @@ Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited b
 `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Square.StageG
-import Multiplicity.F1Square.Square.AtlasSpectrum
+import Multiplicity.F1.Square.StageG
+import Multiplicity.F1.Square.AtlasSpectrum
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

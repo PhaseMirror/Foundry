@@ -33,10 +33,10 @@ Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited b
 `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Analysis.LambdaThree
-import Multiplicity.F1Square.Analysis.LambdaThreePos
-import Multiplicity.F1Square.Analysis.LambdaFivePrecision
-import Multiplicity.F1Square.Analysis.LogFourPiLower
+import Multiplicity.F1.Analysis.LambdaThree
+import Multiplicity.F1.Analysis.LambdaThreePos
+import Multiplicity.F1.Analysis.LambdaFivePrecision
+import Multiplicity.F1.Analysis.LogFourPiLower
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

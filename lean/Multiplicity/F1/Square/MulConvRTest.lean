@@ -18,10 +18,10 @@ Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited b
 `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Square.MulConvRLip
-import Multiplicity.F1Square.Analysis.MulConvRBound
-import Multiplicity.F1Square.Analysis.MulConvRCongr
-import Multiplicity.F1Square.Analysis.BandClamp
+import Multiplicity.F1.Square.MulConvRLip
+import Multiplicity.F1.Analysis.MulConvRBound
+import Multiplicity.F1.Analysis.MulConvRCongr
+import Multiplicity.F1.Analysis.BandClamp
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

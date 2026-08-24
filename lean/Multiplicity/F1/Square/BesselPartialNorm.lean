@@ -26,10 +26,10 @@ supplied, audit-visible hypothesis), NOT surjectivity onto arbitrary sequences, 
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
-import Multiplicity.F1Square.Square.RieszBessel
-import Multiplicity.F1Square.Square.RieszParseval
-import Multiplicity.F1Square.Square.RieszDimInv
-import Multiplicity.F1Square.Square.BesselCauchyModulus
+import Multiplicity.F1.Square.RieszBessel
+import Multiplicity.F1.Square.RieszParseval
+import Multiplicity.F1.Square.RieszDimInv
+import Multiplicity.F1.Square.BesselCauchyModulus
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

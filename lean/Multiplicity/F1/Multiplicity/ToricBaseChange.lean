@@ -21,7 +21,7 @@ import Multiplicity.F1.Square.DeitmarTest
 import Multiplicity.F1.Square.IntersectionTemplate
 import Multiplicity.F1.Analysis.RingTac
 
-namespace Multiplicity.F1Square.ToricBaseChange
+namespace Multiplicity.F1.ToricBaseChange
 
 /-- A blueprint is a monoid A with a pre-addition. The trivial pre-addition case
     recovers pure Deitmar monoids. This structure notes that our Deitmar monoid
@@ -93,4 +93,4 @@ theorem torified_witness_n2 : True := trivial
 /-- N=3 torified witness. -/
 theorem torified_witness_n3 : True := trivial
 
-end Multiplicity.F1Square.ToricBaseChange
+end Multiplicity.F1.ToricBaseChange

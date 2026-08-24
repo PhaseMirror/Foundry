@@ -17,11 +17,11 @@ Bridging `RlogPos ↔ Rlog` (`RlogPos_eq_Rlog`), presenting `x` at radius `B²` 
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Analysis.RdivBounds
-import Multiplicity.F1Square.Analysis.RlogMulSigned
-import Multiplicity.F1Square.Analysis.RlogMulPos
-import Multiplicity.F1Square.Analysis.RartanhBounds
-import Multiplicity.F1Square.Analysis.RrpowBounds
+import Multiplicity.F1.Analysis.RdivBounds
+import Multiplicity.F1.Analysis.RlogMulSigned
+import Multiplicity.F1.Analysis.RlogMulPos
+import Multiplicity.F1.Analysis.RartanhBounds
+import Multiplicity.F1.Analysis.RrpowBounds
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

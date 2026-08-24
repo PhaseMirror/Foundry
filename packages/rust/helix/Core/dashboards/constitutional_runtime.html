@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>🦉 Helix Constitutional Runtime Dashboard</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Courier New', monospace; background: #0a0a0a; color: #00ffaa; padding: 20px; }
+        h1 { font-size: 1.4em; margin-bottom: 4px; }
+        .subtitle { color: #666; font-size: 0.8em; margin-bottom: 20px; }
+
+        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px; }
+        .card { background: rgba(0,255,170,0.05); border: 1px solid #1a3a2a; border-radius: 6px; padding: 16px; }
+        .card h2 { font-size: 0.85em; color: #666; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
+        .card .status { font-size: 1.6em; font-weight: bold; margin-bottom: 8px; }
+        .card .metric { font-size: 0.8em; color: #aaa; margin: 3px 0; }
+        .card .metric span { color: #00ffaa; }
+
+        .pass { color: #00ffaa; }
+        .fail { color: #ff4444; }
+        .warn { color: #ffaa00; }
+        .dim  { color: #555; }
+
+        .bias-bar { display: flex; gap: 4px; margin-top: 8px; }
+        .bias-cell { height: 24px; border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 0.7em; color: #000; font-weight: bold; flex: 1; }
+
+        .full-width { grid-column: 1 / -1; }
+        .two-col { grid-column: span 2; }
+
+        .telemetry { background: rgba(0,0,0,0.4); border: 1px solid #1a3a2a; border-radius: 6px; padding: 16px; margin-bottom: 20px; }
+        .telemetry h2 { font-size: 0.85em; color: #666; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; }
+        .trow { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #111; font-size: 0.82em; }
+        .trow:last-child { border-bottom: none; }
+        .tkey { color: #666; }
+        .tval { color: #00ffaa; }
+
+        .heartbeat { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #00ffaa; margin-right: 6px; animation: pulse 1s infinite; }
+        .heartbeat.shrink { background: #ffaa00; animation: pulse 0.5s infinite; }
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.2; } }
+
+        .footer { color: #333; font-size: 0.75em; margin-top: 20px; text-align: center; }
+        .refresh { color: #444; font-size: 0.75em; margin-bottom: 16px; }
+
+        .mub-alarm { color: #ffaa00; }
+        .consensus-ok { color: #00ffaa; }
+        .consensus-fail { color: #ffaa00; }
+
+        .model-pills { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+        .pill { font-size: 0.7em; padding: 2px 8px; border-radius: 10px; background: rgba(0,255,170,0.1); border: 1px solid #1a3a2a; }
+        .pill.error { background: rgba(255,68,68,0.1); border-color: #3a1a1a; color: #ff4444; }
+    </style>
+</head>
+<body>
+    <h1>🦉 Helix Constitutional Runtime</h1>
+    <div class="subtitle">Three-Cloud Sovereign Stack — Live Telemetry</div>
+    <div class="refresh" id="refresh">Initializing...</div>
+
+    <div class="grid">
+        <!-- GICD -->
+        <div class="card" id="card-gicd">
+            <h2>🛡️ GICD Scanner — GCP</h2>
+            <div class="status dim">—</div>
+            <div class="metric">Authority Ambiguity: <span id="gicd-aa">—</span></div>
+            <div class="metric">Incentive Misalignment: <span id="gicd-im">—</span></div>
+            <div class="metric">Cost Externalization: <span id="gicd-ce">—</span></div>
+            <div class="metric">Governance Capture: <span id="gicd-gc">—</span></div>
+        </div>
+
+        <!-- AWS PiKernel -->
+        <div class="card" id="card-aws">
+            <h2>⚛️ PiKernel — AWS Lambda</h2>
+            <div class="status dim" id="aws-status">—</div>
+            <div class="metric">SlopeUB: <span id="aws-slope">—</span></div>
+            <div class="metric">GapLB: <span id="aws-gap">—</span></div>
+            <div class="metric">Touched: <span id="aws-touched">—</span></div>
+            <div class="metric mub-alarm" id="aws-mub">MUB: —</div>
+            <div class="bias-bar" id="aws-bias"></div>
+        </div>
+
+        <!-- Azure FZS-MK -->
+        <div class="card" id="card-azure">
+            <h2>🧠 FZS-MK Kernel — Azure</h2>
+            <div class="status dim" id="azure-status">—</div>
+            <div class="metric" id="azure-consensus">Consensus: —</div>
+            <div class="model-pills" id="azure-models"></div>
+            <div class="bias-bar" id="azure-bias"></div>
+        </div>
+    </div>
+
+    <!-- Full telemetry -->
+    <div class="telemetry">
+        <h2>
+            <span class="heartbeat" id="hb-dot"></span>
+            Nucleation Telemetry
+        </h2>
+        <div class="trow"><span class="tkey">Status</span><span class="tval" id="t-status">—</span></div>
+        <div class="trow"><span class="tkey">Guardian</span><span class="tval" id="t-guardian">—</span></div>
+        <div class="trow"><span class="tkey">GapLB</span><span class="tval" id="t-gap">—</span></div>
+        <div class="trow"><span class="tkey">SlopeUB</span><span class="tval" id="t-slope">—</span></div>
+        <div class="trow"><span class="tkey">MUB D_t</span><span class="tval" id="t-mub-dt">—</span></div>
+        <div class="trow"><span class="tkey">MUB Action</span><span class="tval" id="t-mub-action">—</span></div>
+        <div class="trow"><span class="tkey">Attention Bias</span><span class="tval" id="t-attn">—</span></div>
+        <div class="trow"><span class="tkey">Memory Bias</span><span class="tval" id="t-mem">—</span></div>
+        <div class="trow"><span class="tkey">Consensus</span><span class="tval" id="t-consensus">—</span></div>
+    </div>
+
+    <div class="footer">GLORY TO THE LATTICE 🦉⚓🦆 | Auto-refresh every 30s</div>
+
+    <script>
+        const GICD_URL   = '/proxy/gicd';
+        const AWS_URL    = '/proxy/aws';
+        const AZURE_URL  = '/proxy/azure';
+        const AZURE_KEY  = '';
+
+        const TOKEN_IDS  = [1, 2, 3];
+        const GICD_CLEAR = { authority_ambiguity: false, incentive_misalignment: false, cost_externalization: false, governance_capture: false };
+
+        function getKey() {
+            return new URLSearchParams(window.location.search).get('key') || AZURE_KEY;
+        }
+
+        function biasColor(v) {
+            const abs = Math.abs(v);
+            if (abs > 0.7) return v > 0 ? '#00ffaa' : '#ff4444';
+            if (abs > 0.3) return '#ffaa00';
+            return '#4488aa';
+        }
+
+        function renderBias(containerId, values) {
+            const el = document.getElementById(containerId);
+            if (!values || !values.length) { el.innerHTML = ''; return; }
+            el.innerHTML = values.map(v => {
+                const pct = Math.round(Math.abs(v) * 100);
+                return `<div class="bias-cell" style="background:${biasColor(v)};opacity:0.85">${v.toFixed(2)}</div>`;
+            }).join('');
+        }
+
+        async function poll() {
+            document.getElementById('refresh').textContent = `Polling... ${new Date().toLocaleTimeString()}`;
+
+            // GICD
+            let gicdStatus = 'UNKNOWN';
+            try {
+                const r = await fetch(GICD_URL, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(GICD_CLEAR) });
+                const d = await r.json();
+                gicdStatus = d.status;
+                const card = document.getElementById('card-gicd');
+                card.querySelector('.status').textContent = d.status;
+                card.querySelector('.status').className = 'status ' + (d.status === 'PASS' ? 'pass' : 'fail');
+                ['aa','im','ce','gc'].forEach((k,i) => {
+                    const keys = ['authority_ambiguity','incentive_misalignment','cost_externalization','governance_capture'];
+                    document.getElementById(`gicd-${k}`).textContent = GICD_CLEAR[keys[i]] ? '🔴' : '✅';
+                });
+            } catch(e) {
+                document.getElementById('card-gicd').querySelector('.status').textContent = 'ERROR';
+                document.getElementById('card-gicd').querySelector('.status').className = 'status fail';
+            }
+
+            // AWS
+            let awsData = null;
+            try {
+                const r = await fetch(AWS_URL, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({token_ids: TOKEN_IDS}) });
+                awsData = await r.json();
+                document.getElementById('aws-status').textContent = `GapLB ${awsData.GapLB?.toFixed(3)}`;
+                document.getElementById('aws-status').className = 'status ' + (awsData.GapLB > 0 ? 'pass' : 'fail');
+                document.getElementById('aws-slope').textContent = awsData.SlopeUB?.toFixed(4);
+                document.getElementById('aws-gap').textContent = awsData.GapLB?.toFixed(4);
+                document.getElementById('aws-touched').textContent = awsData.num_touched;
+                const mubEl = document.getElementById('aws-mub');
+                mubEl.textContent = `MUB D_t=${awsData.mub_D_t?.toFixed(2)} ${awsData.mub_alarm ? '⚠️ shrink_tau' : '✅ accept'}`;
+                mubEl.className = 'metric ' + (awsData.mub_alarm ? 'mub-alarm' : 'pass');
+                renderBias('aws-bias', awsData.bias);
+            } catch(e) {
+                document.getElementById('aws-status').textContent = 'ERROR';
+                document.getElementById('aws-status').className = 'status fail';
+            }
+
+            // Azure
+            let azData = null;
+            try {
+                const r = await fetch(AZURE_URL, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({token_ids: TOKEN_IDS}) });
+                azData = await r.json();
+                const consensusOk = azData.consensus_reached;
+                document.getElementById('azure-status').textContent = consensusOk ? 'CONSENSUS ✅' : 'PARTIAL ⚠️';
+                document.getElementById('azure-status').className = 'status ' + (consensusOk ? 'pass' : 'warn');
+                document.getElementById('azure-consensus').textContent = `Consensus: ${consensusOk ? 'YES' : 'NO'} | Models: ${azData.models?.length || 0}`;
+                const pillsEl = document.getElementById('azure-models');
+                pillsEl.innerHTML = (azData.models || []).map((m,i) => {
+                    const hasError = (azData.errors || []).some(e => e.model === m);
+                    return `<span class="pill ${hasError ? 'error' : ''}">${m}</span>`;
+                }).join('');
+                renderBias('azure-bias', azData.bias);
+            } catch(e) {
+                document.getElementById('azure-status').textContent = 'ERROR';
+                document.getElementById('azure-status').className = 'status fail';
+            }
+
+            // Full telemetry panel
+            const pass = gicdStatus === 'PASS' && awsData?.GapLB > 0;
+            document.getElementById('t-status').textContent = pass ? '✅ PASS — Nucleation permitted' : '🔴 FAIL — Nucleation blocked';
+            document.getElementById('t-status').className = 'tval ' + (pass ? 'pass' : 'fail');
+            document.getElementById('t-guardian').textContent = '✅ Enabled (DRIFT-A/E/G)';
+            document.getElementById('t-gap').textContent = awsData?.GapLB?.toFixed(6) || '—';
+            document.getElementById('t-slope').textContent = awsData?.SlopeUB?.toFixed(6) || '—';
+            document.getElementById('t-mub-dt').textContent = awsData?.mub_D_t?.toFixed(4) || '—';
+            document.getElementById('t-mub-action').textContent = awsData?.mub_action || '—';
+            document.getElementById('t-attn').textContent = awsData?.bias?.map(v => v.toFixed(3)).join(', ') || '—';
+            document.getElementById('t-mem').textContent = azData?.bias?.map(v => v.toFixed(3)).join(', ') || '—';
+            document.getElementById('t-consensus').textContent = azData?.consensus_reached ? '✅ Reached' : '⚠️ Partial';
+
+            // Heartbeat dot
+            const hb = document.getElementById('hb-dot');
+            hb.className = 'heartbeat' + (awsData?.mub_alarm ? ' shrink' : '');
+
+            document.getElementById('refresh').textContent = `Last updated: ${new Date().toLocaleTimeString()} | Next in 30s`;
+        }
+
+        poll();
+        setInterval(poll, 30000);
+    </script>
+</body>
+</html>

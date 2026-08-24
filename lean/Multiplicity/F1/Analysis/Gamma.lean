@@ -15,11 +15,11 @@ estimate follow.
 Pure Lean 4, no Mathlib, no `sorry`/`native_decide`, choice-free.
 -/
 
-import Multiplicity.F1Square.Analysis.RealPow
-import Multiplicity.F1Square.Analysis.Log
-import Multiplicity.F1Square.Analysis.Pi
-import Multiplicity.F1Square.Analysis.RealDiv
-import Multiplicity.F1Square.Analysis.ComplexZeta
+import Multiplicity.F1.Analysis.RealPow
+import Multiplicity.F1.Analysis.Log
+import Multiplicity.F1.Analysis.Pi
+import Multiplicity.F1.Analysis.RealDiv
+import Multiplicity.F1.Analysis.ComplexZeta
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

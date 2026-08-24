@@ -9,7 +9,7 @@ matrix equality is decidable without Mathlib's `Fintype`.
 Running example (companion §0): edges 0→1:−3, 0→3:−7, 1→2:−2, 2→0:−5, 2→3:−1, 3→2:−4.
 -/
 
-import Multiplicity.F1Square.CharOne
+import Multiplicity.F1.CharOne
 
 namespace Multiplicity.UOR.Bridge.F1Square.Tropical
 

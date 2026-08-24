@@ -33,9 +33,9 @@ Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited b
 `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Square.MomentDefinite
-import Multiplicity.F1Square.Square.MomentInvariant
-import Multiplicity.F1Square.Square.L2Complete
+import Multiplicity.F1.Square.MomentDefinite
+import Multiplicity.F1.Square.MomentInvariant
+import Multiplicity.F1.Square.L2Complete
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

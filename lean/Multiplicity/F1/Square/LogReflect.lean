@@ -28,10 +28,10 @@ Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited b
 `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Square.MultShift
-import Multiplicity.F1Square.Analysis.ReflectTest
-import Multiplicity.F1Square.Analysis.RealDiv
-import Multiplicity.F1Square.Analysis.ComplexExp
+import Multiplicity.F1.Square.MultShift
+import Multiplicity.F1.Analysis.ReflectTest
+import Multiplicity.F1.Analysis.RealDiv
+import Multiplicity.F1.Analysis.ComplexExp
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

@@ -1,4 +1,4 @@
-import Multiplicity.F1Square.Analysis.ArtanhAdd
+import Multiplicity.F1.Analysis.ArtanhAdd
 
 /-!
 # `RlogPos` multiplicativity (bounded modulus) — discharging the `Clog_add` modulus seam

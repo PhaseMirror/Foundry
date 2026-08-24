@@ -19,8 +19,9 @@ bracket follow (the γ₂ analogue of `GammaOne`'s dyadic-tail stack).
 Pure Lean 4, no Mathlib, no `sorry`/`native_decide`, choice-free.
 -/
 
-import Multiplicity.F1Square.Analysis.GammaOne
-import Multiplicity.F1Square.Analysis.RAddNF
+import Multiplicity.F1.Analysis.GammaOne
+import Multiplicity.F1.Analysis.RAddNF
+import Multiplicity.F1.CoreCompat
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

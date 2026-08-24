@@ -24,9 +24,9 @@ Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited b
 `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Square.GateSanity
-import Multiplicity.F1Square.Square.AtlasAddressing
-import Multiplicity.F1Square.Square.Cohomology
+import Multiplicity.F1.Square.GateSanity
+import Multiplicity.F1.Square.AtlasAddressing
+import Multiplicity.F1.Square.Cohomology
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

@@ -31,8 +31,8 @@ crux fields stay `none`.
 Pure Lean 4 core, no Mathlib, no `sorry`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Analysis.LambdaFour
-import Multiplicity.F1Square.Analysis.GammaFour
+import Multiplicity.F1.Analysis.LambdaFour
+import Multiplicity.F1.Analysis.GammaFour
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

@@ -13,10 +13,10 @@ real laws — `RexpReal_add` (`e^{x+y}=e^x e^y`), `Rcos_add` (`cos(a+b)=cos a co
 Pure Lean 4, no Mathlib, no `sorry`/`native_decide`, choice-free.
 -/
 
-import Multiplicity.F1Square.Analysis.ComplexExp
-import Multiplicity.F1Square.Analysis.CosSinAddFormula
-import Multiplicity.F1Square.Analysis.ExpRealAdd
-import Multiplicity.F1Square.Analysis.ExpLog
+import Multiplicity.F1.Analysis.ComplexExp
+import Multiplicity.F1.Analysis.CosSinAddFormula
+import Multiplicity.F1.Analysis.ExpRealAdd
+import Multiplicity.F1.Analysis.ExpLog
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

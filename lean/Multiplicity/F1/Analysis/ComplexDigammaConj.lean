@@ -14,9 +14,9 @@ the two real-part partial-sum sequences are pointwise `≈` (each term `≈` via
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
-import Multiplicity.F1Square.Analysis.ComplexDigamma
-import Multiplicity.F1Square.Analysis.RlimProps
-import Multiplicity.F1Square.Analysis.Reflection
+import Multiplicity.F1.Analysis.ComplexDigamma
+import Multiplicity.F1.Analysis.RlimProps
+import Multiplicity.F1.Analysis.Reflection
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

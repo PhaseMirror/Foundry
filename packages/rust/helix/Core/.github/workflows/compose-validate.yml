@@ -1,0 +1,23 @@
+name: Validate Docker Compose
+
+on:
+  push:
+    paths:
+      - "docker-compose.yml"
+      - "docker-compose.override.yml"
+      - ".github/workflows/compose-validate.yml"
+  pull_request:
+    paths:
+      - "docker-compose.yml"
+      - "docker-compose.override.yml"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Docker Compose config
+        run: docker compose config

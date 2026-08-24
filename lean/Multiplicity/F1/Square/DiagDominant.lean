@@ -10,9 +10,9 @@ kernel it is a concrete per-`n` sufficient condition for the coupled positivity,
 the exact dominance (= RH); whether it holds at the genuine data is unproven. A fence/lever, not a
 discharge; crux stays `none`. Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free.
 -/
-import Multiplicity.F1Square.Square.SelfAdjoint
-import Multiplicity.F1Square.Analysis.RabsLemmas
-import Multiplicity.F1Square.Analysis.ThetaLipschitz
+import Multiplicity.F1.Square.SelfAdjoint
+import Multiplicity.F1.Analysis.RabsLemmas
+import Multiplicity.F1.Analysis.ThetaLipschitz
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

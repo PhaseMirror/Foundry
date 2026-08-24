@@ -19,7 +19,7 @@ sum with `RsumL_perm` — e.g. the Brahmagupta–Fibonacci `|zw|² = |z|²|w|²`
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free.
 -/
 
-import Multiplicity.F1Square.Analysis.RealPow
+import Multiplicity.F1.Analysis.RealPow
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

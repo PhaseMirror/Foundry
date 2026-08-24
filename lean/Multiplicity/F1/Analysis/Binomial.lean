@@ -8,8 +8,8 @@ This module builds `choose` (Pascal's recurrence) and that factorial identity (t
 discharged by `ring_uor`, the project's from-scratch `ring`). Pure Lean 4, no Mathlib, no `sorry`.
 -/
 
-import Multiplicity.F1Square.Analysis.Exp
-import Multiplicity.F1Square.Analysis.ExpGen
+import Multiplicity.F1.Analysis.Exp
+import Multiplicity.F1.Analysis.ExpGen
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

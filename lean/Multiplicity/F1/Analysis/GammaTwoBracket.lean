@@ -14,8 +14,9 @@ round-down) and the cubed/squared-log upper bounds (`logCube`/`logN²` via `logB
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free.
 -/
 
-import Multiplicity.F1Square.Analysis.GammaTwo
-import Multiplicity.F1Square.Analysis.RMulNF
+import Multiplicity.F1.Analysis.GammaTwo
+import Multiplicity.F1.Analysis.RMulNF
+import Multiplicity.F1.CoreCompat
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

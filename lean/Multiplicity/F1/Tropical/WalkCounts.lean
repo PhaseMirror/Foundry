@@ -22,7 +22,7 @@ the UOR content-addressing formalization; it makes no claim about the crux, whic
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; `by decide`.
 -/
 
-import Multiplicity.F1Square.Tropical.Closure
+import Multiplicity.F1.Tropical.Closure
 
 namespace Multiplicity.UOR.Bridge.F1Square.Tropical
 

@@ -24,8 +24,8 @@ positivity) is RH; the crux fields stay `none`.
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
-import Multiplicity.F1Square.Square.BesselCauchyModulus
-import Multiplicity.F1Square.Square.PairingMomentInjective
+import Multiplicity.F1.Square.BesselCauchyModulus
+import Multiplicity.F1.Square.PairingMomentInjective
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

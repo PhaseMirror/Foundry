@@ -11,7 +11,7 @@ This file first builds the rational reciprocal `Qinv` (of a positive-numerator r
 Pure Lean 4, no Mathlib, no `sorry`.
 -/
 
-import Multiplicity.F1Square.Analysis.ROrder
+import Multiplicity.F1.Analysis.ROrder
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

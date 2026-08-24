@@ -27,12 +27,12 @@ between the product side and the explicit formula.
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Analysis.CayleyMap
-import Multiplicity.F1Square.Analysis.ComplexSeries
-import Multiplicity.F1Square.Analysis.ComplexXi
-import Multiplicity.F1Square.Analysis.EulerMaclaurin
-import Multiplicity.F1Square.Analysis.LiLinearize
-import Multiplicity.F1Square.Analysis.RHWitness
+import Multiplicity.F1.Analysis.CayleyMap
+import Multiplicity.F1.Analysis.ComplexSeries
+import Multiplicity.F1.Analysis.ComplexXi
+import Multiplicity.F1.Analysis.EulerMaclaurin
+import Multiplicity.F1.Analysis.LiLinearize
+import Multiplicity.F1.Analysis.RHWitness
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

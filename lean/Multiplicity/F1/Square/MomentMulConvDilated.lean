@@ -24,9 +24,9 @@ Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited b
 `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Square.MellinConv
-import Multiplicity.F1Square.Square.DilMellinFEval
-import Multiplicity.F1Square.Square.IntervalMinorant
+import Multiplicity.F1.Square.MellinConv
+import Multiplicity.F1.Square.DilMellinFEval
+import Multiplicity.F1.Square.IntervalMinorant
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

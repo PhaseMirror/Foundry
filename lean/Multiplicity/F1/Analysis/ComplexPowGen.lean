@@ -12,9 +12,9 @@ base law `(zz')^w = z^w·z'^w` will follow from `Clog` additivity (`Clog_add`/`C
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
-import Multiplicity.F1Square.Analysis.ComplexLog
-import Multiplicity.F1Square.Analysis.ComplexExpAdd
-import Multiplicity.F1Square.Analysis.ComplexArgAdd
+import Multiplicity.F1.Analysis.ComplexLog
+import Multiplicity.F1.Analysis.ComplexExpAdd
+import Multiplicity.F1.Analysis.ComplexArgAdd
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

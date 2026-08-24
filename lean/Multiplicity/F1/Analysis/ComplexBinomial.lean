@@ -17,10 +17,10 @@ additivity `Cnsmul_add`), so no `ofReal`/`ofQ` embedding of the binomial coeffic
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Analysis.ComplexSeries
-import Multiplicity.F1Square.Analysis.LiLinearize
-import Multiplicity.F1Square.Analysis.RHWitness
-import Multiplicity.F1Square.Analysis.Binomial
+import Multiplicity.F1.Analysis.ComplexSeries
+import Multiplicity.F1.Analysis.LiLinearize
+import Multiplicity.F1.Analysis.RHWitness
+import Multiplicity.F1.Analysis.Binomial
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

@@ -19,11 +19,11 @@ The modular transformation itself (Poisson summation) remains the labelled class
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Analysis.RealPow
-import Multiplicity.F1Square.Analysis.Pi
-import Multiplicity.F1Square.Analysis.ComplexDigamma
-import Multiplicity.F1Square.Analysis.ExpRealMono
-import Multiplicity.F1Square.Analysis.RlimProps
+import Multiplicity.F1.Analysis.RealPow
+import Multiplicity.F1.Analysis.Pi
+import Multiplicity.F1.Analysis.ComplexDigamma
+import Multiplicity.F1.Analysis.ExpRealMono
+import Multiplicity.F1.Analysis.RlimProps
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

@@ -16,9 +16,9 @@ consumes, with `L = 4·|e|` — `ofQ`-valued once `|e|` is a rational (concrete 
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Analysis.RrpowAbsLipNat
-import Multiplicity.F1Square.Analysis.RQmaxClamp
-import Multiplicity.F1Square.Analysis.RlogMulPos
+import Multiplicity.F1.Analysis.RrpowAbsLipNat
+import Multiplicity.F1.Analysis.RQmaxClamp
+import Multiplicity.F1.Analysis.RlogMulPos
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

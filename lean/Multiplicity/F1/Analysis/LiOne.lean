@@ -28,9 +28,9 @@ not fabricate the (unbuilt) analytic identification. None of this bears on posit
 Pure Lean 4, no Mathlib, no `sorry`/`native_decide`, choice-free.
 -/
 
-import Multiplicity.F1Square.Analysis.RealPow
-import Multiplicity.F1Square.Analysis.LambdaOne
-import Multiplicity.F1Square.Li
+import Multiplicity.F1.Analysis.RealPow
+import Multiplicity.F1.Analysis.LambdaOne
+import Multiplicity.F1.Li
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

@@ -20,9 +20,10 @@ This module builds the real substrate — the term `(ln k)/k`, the partial sum `
 Pure Lean 4, no Mathlib, no `sorry`/`native_decide`, choice-free.
 -/
 
-import Multiplicity.F1Square.Analysis.RealPow
-import Multiplicity.F1Square.Analysis.ComplexZeta
-import Multiplicity.F1Square.Analysis.GammaAccel
+import Multiplicity.F1.Analysis.RealPow
+import Multiplicity.F1.Analysis.ComplexZeta
+import Multiplicity.F1.Analysis.GammaAccel
+import Multiplicity.F1.CoreCompat
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

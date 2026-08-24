@@ -152,7 +152,7 @@ theorem f1_initial_unique (T : CMon) (h h' : MHom F1 T) : ∀ u : F1.carrier, h.
     (the function-field-style Frobenius; over `𝔽_q` this is `x ↦ x^q`). -/
 def frobPow (k : Nat) : MHom Curve Curve where
   map := fun a => ⟨a.val ^ k, by
-    have := Nat.pos_pow_of_pos k (show 0 < a.val from a.property)
+    have := Nat.one_le_pow k a.val (show 0 < a.val from a.property)
     omega⟩
   map_one := Subtype.ext (Nat.one_pow k)
   map_mul := fun a b => Subtype.ext (Nat.mul_pow a.val b.val k)

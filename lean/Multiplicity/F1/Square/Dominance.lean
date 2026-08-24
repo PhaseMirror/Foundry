@@ -80,11 +80,11 @@ FAITHFULNESS (the standing discipline, enforced):
 Pure Lean 4 core, no Mathlib, no `sorry`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Square.Spectral
-import Multiplicity.F1Square.Analysis.LiComplete
-import Multiplicity.F1Square.Analysis.ArchTrend
-import Multiplicity.F1Square.Analysis.GenuineLi
-import Multiplicity.F1Square.Analysis.Pi
+import Multiplicity.F1.Square.Spectral
+import Multiplicity.F1.Analysis.LiComplete
+import Multiplicity.F1.Analysis.ArchTrend
+import Multiplicity.F1.Analysis.GenuineLi
+import Multiplicity.F1.Analysis.Pi
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

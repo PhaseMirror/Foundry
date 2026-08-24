@@ -1,0 +1,42 @@
+name: Sync Federation Submodules
+
+on:
+  # Run manually from the Actions tab
+  workflow_dispatch:
+  # Or run every night at midnight
+  schedule:
+    - cron: '0 0 * * *'
+
+jobs:
+  update-submodules:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🔄 Pull Latest Submodules
+        run: |
+          git config --global user.name 'Helix Federation Bot'
+          git config --global user.email 'bot@helix-ttd.ai'
+          # Update pointers to the latest commits on remote branches
+          # Force fetch everything
+          git submodule foreach --recursive git fetch origin
+          # Hard reset every submodule to match the remote 'main' branch
+          # This ignores history conflicts and just snaps to the latest code
+          git submodule foreach --recursive git reset --hard origin/main
+
+      - name: 💾 Commit & Push Update
+        run: |
+          if [[ -n $(git status -s) ]]; then
+            git add .
+            git commit -m "Federation Sync: Updated submodules to latest versions"
+            git pull --rebase origin main
+            git push
+            echo "✅ Federation pointers updated."
+          else
+            echo "✨ Federation is already up to date."
+          fi

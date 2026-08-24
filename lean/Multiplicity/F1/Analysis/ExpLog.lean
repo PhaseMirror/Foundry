@@ -10,9 +10,10 @@ not a definitional identity. This file assembles the pieces toward it. First bri
 Pure Lean 4, no Mathlib, no `sorry`/`native_decide`, choice-free.
 -/
 
-import Multiplicity.F1Square.Analysis.ExpRealAdd
-import Multiplicity.F1Square.Analysis.ComplexExp
-import Multiplicity.F1Square.Analysis.Log
+import Multiplicity.F1.Analysis.ExpRealAdd
+import Multiplicity.F1.Analysis.ComplexExp
+import Multiplicity.F1.Analysis.Log
+import Multiplicity.F1.CoreCompat
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

@@ -24,12 +24,12 @@ factor values `gammaHalf`, `zeta` (and their `1−s` counterparts), so the resul
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Analysis.ComplexXi
-import Multiplicity.F1Square.Analysis.EulerMaclaurin
-import Multiplicity.F1Square.Analysis.EtaVariation
-import Multiplicity.F1Square.Analysis.LiLinearize
-import Multiplicity.F1Square.Analysis.ComplexArgLeftAdd
-import Multiplicity.F1Square.Analysis.ComplexConjAlgebra
+import Multiplicity.F1.Analysis.ComplexXi
+import Multiplicity.F1.Analysis.EulerMaclaurin
+import Multiplicity.F1.Analysis.EtaVariation
+import Multiplicity.F1.Analysis.LiLinearize
+import Multiplicity.F1.Analysis.ComplexArgLeftAdd
+import Multiplicity.F1.Analysis.ComplexConjAlgebra
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

@@ -21,10 +21,11 @@ kernel-decidable. This is the
 Pure Lean 4, no Mathlib, no `sorry`/`native_decide`, choice-free.
 -/
 
-import Multiplicity.F1Square.Analysis.GammaOne
-import Multiplicity.F1Square.Analysis.GammaUpper
-import Multiplicity.F1Square.Analysis.ZetaTwo
-import Multiplicity.F1Square.Analysis.LambdaOne
+import Multiplicity.F1.Analysis.GammaOne
+import Multiplicity.F1.Analysis.GammaUpper
+import Multiplicity.F1.Analysis.ZetaTwo
+import Multiplicity.F1.Analysis.LambdaOne
+import Multiplicity.F1.CoreCompat
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

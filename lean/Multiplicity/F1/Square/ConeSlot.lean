@@ -22,12 +22,12 @@ Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited b
 `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Square.ConeTent
-import Multiplicity.F1Square.Analysis.T4PoleAAssembly
-import Multiplicity.F1Square.Analysis.T4ArchPieces
-import Multiplicity.F1Square.Analysis.T4TailImproper
-import Multiplicity.F1Square.Analysis.DilogValue
-import Multiplicity.F1Square.Analysis.LambdaThreePos
+import Multiplicity.F1.Square.ConeTent
+import Multiplicity.F1.Analysis.T4PoleAAssembly
+import Multiplicity.F1.Analysis.T4ArchPieces
+import Multiplicity.F1.Analysis.T4TailImproper
+import Multiplicity.F1.Analysis.DilogValue
+import Multiplicity.F1.Analysis.LambdaThreePos
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

@@ -19,7 +19,7 @@ with `Rnonneg → Rle 0 x`.
 Pure Lean 4, no Mathlib, no `sorry`.
 -/
 
-import Multiplicity.F1Square.Analysis.Real
+import Multiplicity.F1.Analysis.Real
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

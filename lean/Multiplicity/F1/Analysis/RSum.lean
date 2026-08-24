@@ -10,7 +10,7 @@ needs: congruence (`≈` termwise ⟹ `≈` of sums), non-negativity (termwise `
 Pure Lean 4 core, no Mathlib, no `sorry`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Analysis.Pi
+import Multiplicity.F1.Analysis.Pi
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

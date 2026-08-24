@@ -26,14 +26,14 @@ Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited b
 `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Square.WindowMomentReflect
-import Multiplicity.F1Square.Square.IntervalSplitAtCap
-import Multiplicity.F1Square.Square.IntervalMinorant
-import Multiplicity.F1Square.Square.IntervalPiece
-import Multiplicity.F1Square.Square.TwTermPowBand
-import Multiplicity.F1Square.Analysis.IntervalIntegral
-import Multiplicity.F1Square.Analysis.ClampedInvLower
-import Multiplicity.F1Square.Analysis.Inv
+import Multiplicity.F1.Square.WindowMomentReflect
+import Multiplicity.F1.Square.IntervalSplitAtCap
+import Multiplicity.F1.Square.IntervalMinorant
+import Multiplicity.F1.Square.IntervalPiece
+import Multiplicity.F1.Square.TwTermPowBand
+import Multiplicity.F1.Analysis.IntervalIntegral
+import Multiplicity.F1.Analysis.ClampedInvLower
+import Multiplicity.F1.Analysis.Inv
 
 set_option maxHeartbeats 4000000
 

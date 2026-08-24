@@ -32,8 +32,8 @@ The crux fields stay `none`.
 Pure Lean 4 core, no Mathlib, no `sorry`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Analysis.Complex
-import Multiplicity.F1Square.Analysis.RealPow
+import Multiplicity.F1.Analysis.Complex
+import Multiplicity.F1.Analysis.RealPow
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

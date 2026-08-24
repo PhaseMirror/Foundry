@@ -25,10 +25,10 @@ Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited b
 `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Square.FiniteRankFubini
-import Multiplicity.F1Square.Square.BernsteinBasisZero
-import Multiplicity.F1Square.Square.ConstScale
-import Multiplicity.F1Square.Square.BernsteinDeviation
+import Multiplicity.F1.Square.FiniteRankFubini
+import Multiplicity.F1.Square.BernsteinBasisZero
+import Multiplicity.F1.Square.ConstScale
+import Multiplicity.F1.Square.BernsteinDeviation
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

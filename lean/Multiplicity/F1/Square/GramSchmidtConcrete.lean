@@ -26,10 +26,10 @@ stay `none`.
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
-import Multiplicity.F1Square.Square.GramSchmidtOrtho
-import Multiplicity.F1Square.Square.QHilbertPos
-import Multiplicity.F1Square.Square.QHilbertSymm
-import Multiplicity.F1Square.Square.QHilbertTrunc
+import Multiplicity.F1.Square.GramSchmidtOrtho
+import Multiplicity.F1.Square.QHilbertPos
+import Multiplicity.F1.Square.QHilbertSymm
+import Multiplicity.F1.Square.QHilbertTrunc
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

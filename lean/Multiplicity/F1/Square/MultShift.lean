@@ -25,10 +25,10 @@ The crux stays `none`.
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
-import Multiplicity.F1Square.Analysis.IntegralInner
-import Multiplicity.F1Square.Analysis.RabsLemmas
-import Multiplicity.F1Square.Analysis.RealPow
-import Multiplicity.F1Square.Analysis.ExpRealAdd
+import Multiplicity.F1.Analysis.IntegralInner
+import Multiplicity.F1.Analysis.RabsLemmas
+import Multiplicity.F1.Analysis.RealPow
+import Multiplicity.F1.Analysis.ExpRealAdd
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

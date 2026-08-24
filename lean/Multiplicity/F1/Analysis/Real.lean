@@ -25,7 +25,7 @@ exact-bounded objects is statable here; proving `λₙ ≥ 0 ∀n` is RH.
 Pure Lean 4, no Mathlib, no `sorry`.
 -/
 
-import Multiplicity.F1Square.Analysis.QOrder
+import Multiplicity.F1.Analysis.QOrder
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

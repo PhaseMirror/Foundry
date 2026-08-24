@@ -20,7 +20,7 @@ import Multiplicity.F1.Square.DeitmarTest
 import Multiplicity.F1.Square.IntersectionTemplate
 import Multiplicity.F1.Analysis.RingTac
 
-namespace Multiplicity.F1Square.SAlgebraDocking
+namespace Multiplicity.F1.SAlgebraDocking
 
 /-- Finite pointed sets (objects of the Γ category). -/
 abbrev FinPointed (n : Nat) : Type := Fin (n + 1)
@@ -114,4 +114,4 @@ theorem site_basechange_morphism :
     -- The morphism 𝕊M → ℤ[M] preserves the partition structure
     True := trivial
 
-end Multiplicity.F1Square.SAlgebraDocking
+end Multiplicity.F1.SAlgebraDocking

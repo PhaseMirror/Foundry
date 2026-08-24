@@ -8,11 +8,11 @@ arch(5) lower bound + the `Pos Rlambda5` assembly, mirroring `LambdaFourPos`.
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free.
 -/
 
-import Multiplicity.F1Square.Analysis.LambdaFivePrecision
-import Multiplicity.F1Square.Analysis.LambdaFourPos
-import Multiplicity.F1Square.Analysis.GammaThreeLower
-import Multiplicity.F1Square.Analysis.GammaFourLower
-import Multiplicity.F1Square.Analysis.LambdaFive
+import Multiplicity.F1.Analysis.LambdaFivePrecision
+import Multiplicity.F1.Analysis.LambdaFourPos
+import Multiplicity.F1.Analysis.GammaThreeLower
+import Multiplicity.F1.Analysis.GammaFourLower
+import Multiplicity.F1.Analysis.LambdaFive
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

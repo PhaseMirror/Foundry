@@ -15,9 +15,9 @@ archimedean lower (`arch(4) = 1 − 2(γ+log4π) + (9/2)ζ(2) − (7/2)ζ(3) + (
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Analysis.GammaTwoUpper
-import Multiplicity.F1Square.Analysis.LambdaThreePos
-import Multiplicity.F1Square.Analysis.LambdaFour
+import Multiplicity.F1.Analysis.GammaTwoUpper
+import Multiplicity.F1.Analysis.LambdaThreePos
+import Multiplicity.F1.Analysis.LambdaFour
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

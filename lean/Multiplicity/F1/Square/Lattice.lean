@@ -48,9 +48,9 @@ Companion §1.2 / §1.3 / §2.2 / T2 / T3. The derivation, step by step:
 Pure Lean 4 core, no Mathlib, no `sorry`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Square.Divisors
-import Multiplicity.F1Square.Template
-import Multiplicity.F1Square.Analysis.RingTac
+import Multiplicity.F1.Square.Divisors
+import Multiplicity.F1.Template
+import Multiplicity.F1.Analysis.RingTac
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

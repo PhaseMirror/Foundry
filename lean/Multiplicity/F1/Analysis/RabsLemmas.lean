@@ -12,8 +12,8 @@ Both lift the rational facts (`Qabs_add_le`) through the `Rabs x = ⟨n ↦ |x�
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Analysis.RMax
-import Multiplicity.F1Square.Analysis.RSum
+import Multiplicity.F1.Analysis.RMax
+import Multiplicity.F1.Analysis.RSum
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

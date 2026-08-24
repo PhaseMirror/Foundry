@@ -1,5 +1,5 @@
 """
-Phase Mirror Routing Logic - ADR-037 (WORM-Free / CRMF Sealed)
+Phase Mirror Routing Logic - ADR-037 (CRMF Sealed)
 Handles dynamic interception and redirection of malicious agent trajectories 
 into the Prime 5 ($p_5$) quarantine and reporting sinkhole.
 """
@@ -87,7 +87,7 @@ class QuarantineRouter:
         canonical_payload = json.dumps(payload, sort_keys=True)
         pweh_signature = hashlib.sha256(canonical_payload.encode('utf-8')).hexdigest()
         
-        # 4. Seal event through CRMF (Cryptographic Record Management Framework) instead of WORM
+        # 4. Seal event through CRMF (Cryptographic Record Management Framework)
         crmf_receipt = self.crmf.seal_event(
             prime_target=self.quarantine_prime,
             hash_signature=pweh_signature,

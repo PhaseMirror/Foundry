@@ -26,8 +26,8 @@ Mellin/Poisson atom (per-term Gamma integral + the `t↦1/t` modular split).
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Analysis.ComplexXiFE
-import Multiplicity.F1Square.Analysis.ComplexZetaConj
+import Multiplicity.F1.Analysis.ComplexXiFE
+import Multiplicity.F1.Analysis.ComplexZetaConj
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

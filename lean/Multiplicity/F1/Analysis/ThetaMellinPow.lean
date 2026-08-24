@@ -11,9 +11,9 @@ real Mellin object the roadmap's item-3 bridge `ThetaModular ⟹ CompletedZetaFE
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Analysis.RpowClampLip
-import Multiplicity.F1Square.Analysis.ThetaMellin
-import Multiplicity.F1Square.Analysis.RmulLipschitz
+import Multiplicity.F1.Analysis.RpowClampLip
+import Multiplicity.F1.Analysis.ThetaMellin
+import Multiplicity.F1.Analysis.RmulLipschitz
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

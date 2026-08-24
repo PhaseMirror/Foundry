@@ -26,7 +26,8 @@ the bound), then halve once at the end (`Rhalf`, which preserves positivity).
 Pure Lean 4, no Mathlib, no `sorry`/`native_decide`, choice-free.
 -/
 
-import Multiplicity.F1Square.Analysis.GammaAccel
+import Multiplicity.F1.Analysis.GammaAccel
+import Multiplicity.F1.CoreCompat
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

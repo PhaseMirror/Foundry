@@ -30,8 +30,8 @@ Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited b
 `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Square.BandBridge
-import Multiplicity.F1Square.Square.MomentQuintic
+import Multiplicity.F1.Square.BandBridge
+import Multiplicity.F1.Square.MomentQuintic
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

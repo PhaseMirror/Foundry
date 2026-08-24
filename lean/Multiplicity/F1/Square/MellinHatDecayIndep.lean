@@ -22,9 +22,10 @@ Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited b
 `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Square.ImproperScheduleIndep
-import Multiplicity.F1Square.Square.DigammaMidxCommon
-import Multiplicity.F1Square.Square.MellinHat
+import Multiplicity.F1.Square.ImproperScheduleIndep
+import Multiplicity.F1.Square.DigammaMidxCommon
+import Multiplicity.F1.Square.MellinHat
+import Multiplicity.F1.CoreCompat
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

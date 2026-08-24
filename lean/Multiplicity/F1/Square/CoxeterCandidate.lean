@@ -22,8 +22,8 @@ Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited b
 `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Square.KillTest
-import Multiplicity.F1Square.Square.AtlasCoxeter
+import Multiplicity.F1.Square.KillTest
+import Multiplicity.F1.Square.AtlasCoxeter
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

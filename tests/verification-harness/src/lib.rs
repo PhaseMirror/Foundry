@@ -204,7 +204,7 @@ pub fn run_treasury_clinical_trace() -> Result<(), String> {
         1,  // tissue_id
         10, // current_tick (inside window)
         jubilee_window,
-        &worm_log,
+        &audit_log,
         &reg_hom,
         &pre_memory,
         &post_memory,
@@ -224,9 +224,9 @@ pub fn run_treasury_clinical_trace() -> Result<(), String> {
 mod tests {
     use super::*;
 
-    fn setup() -> (WormLog, RegHomRegistry, (Tick, Tick)) {
-        let mut log = WormLog::default();
-        log.commit(WormBlock {
+    fn setup() -> (AppendOnlyLog, RegHomRegistry, (Tick, Tick)) {
+        let mut log = AppendOnlyLog::default();
+        log.commit(AuditBlock {
             tissue_id: 1,
             tick: 0,
             thickness: 20,

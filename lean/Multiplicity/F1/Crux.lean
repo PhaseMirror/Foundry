@@ -38,7 +38,7 @@ faithfulness caution made explicit below.
     that equivalence faithfully is the v0.18.0 bridge, and `hodgeIndexHolds` stays `none`.
 -/
 
-import Multiplicity.F1Square.Template
+import Multiplicity.F1.Template
 
 namespace Multiplicity.UOR.Bridge.F1Square.Crux
 

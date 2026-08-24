@@ -10,10 +10,10 @@ map, and `Czeta` build on this in subsequent bricks.
 Pure Lean 4, no Mathlib, no `sorry`, choice-free.
 -/
 
-import Multiplicity.F1Square.Analysis.Complex
-import Multiplicity.F1Square.Analysis.CosSin
-import Multiplicity.F1Square.Analysis.ExpReal
-import Multiplicity.F1Square.Analysis.ExpGen
+import Multiplicity.F1.Analysis.Complex
+import Multiplicity.F1.Analysis.CosSin
+import Multiplicity.F1.Analysis.ExpReal
+import Multiplicity.F1.Analysis.ExpGen
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

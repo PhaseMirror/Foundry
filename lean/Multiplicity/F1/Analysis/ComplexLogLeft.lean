@@ -16,8 +16,8 @@ imaginary part is definitional (`CargLeft z = Carg(−z) + π`), and the modulus
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
-import Multiplicity.F1Square.Analysis.ComplexLog
-import Multiplicity.F1Square.Analysis.ComplexArgLeft
+import Multiplicity.F1.Analysis.ComplexLog
+import Multiplicity.F1.Analysis.ComplexArgLeft
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

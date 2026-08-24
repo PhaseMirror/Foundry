@@ -10,10 +10,11 @@ for `exp(c·log n) = nᶜ` (real powers) and hence the `ζ(s)` tail bound at `Re
 Pure Lean 4, no Mathlib, no `sorry`/`native_decide`, choice-free.
 -/
 
-import Multiplicity.F1Square.Analysis.ExpReal
-import Multiplicity.F1Square.Analysis.Binomial
-import Multiplicity.F1Square.Analysis.ROrder
-import Multiplicity.F1Square.Analysis.ExpAdd
+import Multiplicity.F1.Analysis.ExpReal
+import Multiplicity.F1.Analysis.Binomial
+import Multiplicity.F1.Analysis.ROrder
+import Multiplicity.F1.Analysis.ExpAdd
+import Multiplicity.F1.CoreCompat
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

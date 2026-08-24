@@ -34,9 +34,9 @@ THIS module is the exact shape of what carrying it buys. RH itself stays OPEN.
 Pure Lean 4 core, no Mathlib, no `sorry`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Mechanism
-import Multiplicity.F1Square.Template
-import Multiplicity.F1Square.Analysis.RingTac
+import Multiplicity.F1.Mechanism
+import Multiplicity.F1.Template
+import Multiplicity.F1.Analysis.RingTac
 
 namespace Multiplicity.UOR.Bridge.F1Square.BridgeFF
 

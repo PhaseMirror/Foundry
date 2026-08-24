@@ -8,7 +8,7 @@ compares `h` to the constant `c_m` only on `[m+1, m+2]` (where `h ≤ c_m`), not
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Analysis.IntervalIntegral
+import Multiplicity.F1.Analysis.IntervalIntegral
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

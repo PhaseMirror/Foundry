@@ -38,8 +38,8 @@ Nothing here bears on `λₙ > 0 ∀ n` — that is RH and stays OPEN.
 Pure Lean 4 core, no Mathlib, no `sorry`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Analysis.LambdaTwo
-import Multiplicity.F1Square.Analysis.LiOne
+import Multiplicity.F1.Analysis.LambdaTwo
+import Multiplicity.F1.Analysis.LiOne
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

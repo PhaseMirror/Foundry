@@ -1,4 +1,4 @@
-import Multiplicity.F1Square.Analysis.RlogMulSigned
+import Multiplicity.F1.Analysis.RlogMulSigned
 
 /-!
 # General-radius (`ρ < 1`) artanh continuity — toward fully general `Rlog`/`Clog`

@@ -48,9 +48,9 @@ math/0101068: "il est élémentaire que l'Hypothèse de Riemann équivaut à: Z(
 Pure Lean 4 core, no Mathlib, no `sorry`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Analysis.Mangoldt
-import Multiplicity.F1Square.Analysis.LambdaOne
-import Multiplicity.F1Square.Analysis.RSum
+import Multiplicity.F1.Analysis.Mangoldt
+import Multiplicity.F1.Analysis.LambdaOne
+import Multiplicity.F1.Analysis.RSum
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

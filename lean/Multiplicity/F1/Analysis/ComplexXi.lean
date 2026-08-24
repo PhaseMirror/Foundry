@@ -16,8 +16,8 @@ bound, Hadamard) of items 3–5.
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by
 `scripts/honesty_audit.sh`.
 -/
-import Multiplicity.F1Square.Analysis.ComplexExp
-import Multiplicity.F1Square.Analysis.Pi
+import Multiplicity.F1.Analysis.ComplexExp
+import Multiplicity.F1.Analysis.Pi
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

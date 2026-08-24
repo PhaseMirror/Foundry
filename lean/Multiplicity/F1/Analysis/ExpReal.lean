@@ -13,9 +13,10 @@ factorial-growth estimate converting the tail to a `1/(j+1)` reindex. This file 
 Pure Lean 4, no Mathlib, no `sorry`.
 -/
 
-import Multiplicity.F1Square.Analysis.ExpGen
-import Multiplicity.F1Square.Analysis.Zeta
-import Multiplicity.F1Square.Analysis.Complete
+import Multiplicity.F1.Analysis.ExpGen
+import Multiplicity.F1.Analysis.Zeta
+import Multiplicity.F1.Analysis.Complete
+import Multiplicity.F1.CoreCompat
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

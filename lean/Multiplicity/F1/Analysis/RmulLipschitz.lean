@@ -14,9 +14,9 @@ monotonicity (`Rmul_le_Rmul_both`). Reusable for both tracks (any product integr
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Analysis.RabsLemmas
-import Multiplicity.F1Square.Analysis.GammaOne
-import Multiplicity.F1Square.Analysis.ThetaValueDecay
+import Multiplicity.F1.Analysis.RabsLemmas
+import Multiplicity.F1.Analysis.GammaOne
+import Multiplicity.F1.Analysis.ThetaValueDecay
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

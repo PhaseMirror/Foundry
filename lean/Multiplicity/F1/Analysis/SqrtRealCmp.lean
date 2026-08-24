@@ -16,8 +16,8 @@ square root (`Rsqrt_unique`) and is monotone in its rational radicand (`Rsqrt_mo
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Analysis.SqrtRealSq
-import Multiplicity.F1Square.Analysis.Gamma
+import Multiplicity.F1.Analysis.SqrtRealSq
+import Multiplicity.F1.Analysis.Gamma
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

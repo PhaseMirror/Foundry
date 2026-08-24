@@ -1,7 +1,7 @@
 # FeMoco 100-Concurrent Load Test Criteria
 
-**Status:** LOCKED  
-**Date:** 2026-08-05  
+**Status:** PROVISIONAL (GREENLIT contingent upon Layer-B Identity Materialization)  
+**Date:** 2026-08-22  
 **Owner:** Ryan (scaling lead) + formal-methods reviewer  
 **Supersedes:** —  
 
@@ -9,18 +9,22 @@
 
 ## Acceptance Gates (Non-Negotiable)
 
-All gates must pass before the FeMoco-class QaaS concurrency hardening is declared production-ready.
+All gates must pass before the FeMoco-class QaaS concurrency hardening is declared production-ready and elevated to full GREENLIT status.
 
-| Gate | Metric | Threshold | Measurement Method |
-|------|--------|-----------|-------------------|
-| G1 | Concurrent requests sustained | N ≤ 100 | FPGA orchestrator load test |
-| G2 | Qudits per request | q ≤ 69 | Config validation |
-| G3 | Energy error | ε < 15.0 mHa | Kani harness + Python validator |
-| G4 | Entropy | S ≤ 6.0 | HSEC admission gate |
-| G5 | NarrativeAuditor drift | drift_score = 0.0 | E2E attestation record |
-| G6 | ThermalWindow max temp | ≤ 15,000 mHa | FPGA telemetry |
-| G7 | No-Mathlib compliance | 0 Mathlib imports | CI grep |
-| G8 | Zero-sorry compliance | 0 sorry occurrences | CI grep |
+| Gate | Metric | Threshold | Measurement Method | Gate Status |
+|------|--------|-----------|-------------------|-------------|
+| G1 | Concurrent requests sustained | N = 100 | FPGA orchestrator load test | Pending telemetry lock |
+| G2 | Qudits per request | q ≤ 69 (FeMoco locked) | Config validation (no larger targets) | Enforced |
+| G3 | Native d=16 allocation | ≥ 80% sessions | FPGA telemetry / QCFI multiplexor | Pending telemetry lock |
+| G4 | Aggregate FPGA utilization | < 90% | Prometheus telemetry observer | Pending telemetry lock |
+| G5 | Energy error | ε < 15.0 mHa (target ≤ 14.5) | Kani harness + Python validator | Verified |
+| G6 | State Entropy H(ρ) | S ≤ 6.0 (target ≤ 5.9) | HSEC admission gate | Verified |
+| G7 | NarrativeAuditor drift | drift_score = 0.0 | HSEC consensus checksum | Verified |
+| G8 | ThermalWindow max temp | ≤ 15,000 mHa | FPGA telemetry | Verified |
+| G9 | **Layer-B Code Identity (Hard Block)** | **Immutable Git tag + CID** | **Git release attestation + Content Hash** | **BLOCKING (Missing on disk)** |
+| G10 | Audit & Retention Architecture | CRMF + ACE telemetry | 7-year Continuous Risk Mitigation log | Configured |
+| G11 | No-Mathlib compliance | 0 Mathlib imports | CI grep | Verified |
+| G12 | Zero-sorry compliance | 0 sorry occurrences | CI grep | Verified |
 
 ---
 
@@ -69,19 +73,22 @@ Record attestation in `E2E_Attestation_Record` with:
 
 ---
 
-## Lock Conditions
-
-This criteria is **LOCKED**. Any change requires:
-1. Formal-methods reviewer sign-off
-2. Updated `ConcurrencyBound.is_valid` proof
-3. Updated CI workflow with new gate
-4. Revised `L0-CONCURRENCY` clause in `adr_007_femoco_concurrency.l0_clauses`
-
----
-
-## References
-
-- `scripts/validate_concurrency.py` — Python bound validator
-- `src/ADR/Proofs.lean` — Formal Lean 4 proofs
-- `contracts/sedona_spine.yaml` — Sedona Spine CONTRACT
-- `.github/workflows/sedona_spine_ci.yml` — CI enforcement
+## Lock Conditions & Hard Boundaries
+ 
+ This criteria is **LOCKED**. The operational boundaries are:
+ 1. **No New Molecular Scaling:** The 100-physical-qudit hard boundary strictly limits targets to FeMoco CAS(114,114) ($q=69$). Larger molecular targets approach the 100-physical-qudit wall and risk catastrophic entropy violations ($S > 6.0$).
+ 2. **No DAO Filing or Layer-D zkVM:** Layer-B code identity (immutable git tag + CID) must exist and be attested before any Layer-C circuit execution or Wyoming DAO filing.
+ 3. **Concurrency Hardening Only:** Optimization is restricted to FPGA multiplexing and load balancing across the 100 sessions.
+ 4. **Milestone Horizons:**
+    - **7-day horizon:** Multiplex optimization (achieving $\ge 80\%$ native $d=16$, aggregate utilization $<90\%$, zero drift).
+    - **30-day horizon:** Full throughput lock under formal invariant verification.
+ 5. Any change requires formal-methods reviewer sign-off, updated `ConcurrencyBound.is_valid` proof, and zero-sorry CI pass.
+ 
+ ---
+ 
+ ## References
+ 
+ - `scripts/validate_concurrency.py` — Python bound validator
+ - `src/ADR/Proofs.lean` — Formal Lean 4 proofs
+ - `contracts/sedona_spine.yaml` — Sedona Spine CONTRACT
+ - `.github/workflows/sedona_spine_ci.yml` — CI enforcement

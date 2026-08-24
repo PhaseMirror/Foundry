@@ -28,9 +28,9 @@ Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited b
 `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Analysis.RQmaxClamp
-import Multiplicity.F1Square.Analysis.RlogAbsLip
-import Multiplicity.F1Square.Analysis.RlimProps
+import Multiplicity.F1.Analysis.RQmaxClamp
+import Multiplicity.F1.Analysis.RlogAbsLip
+import Multiplicity.F1.Analysis.RlimProps
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

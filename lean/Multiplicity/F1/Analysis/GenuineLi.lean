@@ -43,9 +43,9 @@ one bound between the two closed forms from `n = 3` on — the bound that exists
 Pure Lean 4 core, no Mathlib, no `sorry`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Analysis.ArchTrend
-import Multiplicity.F1Square.Analysis.LiComplete
-import Multiplicity.F1Square.Li
+import Multiplicity.F1.Analysis.ArchTrend
+import Multiplicity.F1.Analysis.LiComplete
+import Multiplicity.F1.Li
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

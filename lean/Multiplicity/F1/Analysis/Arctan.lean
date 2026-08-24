@@ -9,7 +9,7 @@ the diagonal is truncation-only (no Lipschitz term) — strictly simpler than `R
 
 This is the engine for `π` via Machin's formula (Pi.lean). Pure Lean 4, no Mathlib, no `sorry`.
 -/
-import Multiplicity.F1Square.Analysis.Log
+import Multiplicity.F1.Analysis.Log
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

@@ -21,9 +21,9 @@ Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited b
 `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Square.SelfDualPointwise
-import Multiplicity.F1Square.Square.TwTermPowBand
-import Multiplicity.F1Square.Square.TestAlgebra
+import Multiplicity.F1.Square.SelfDualPointwise
+import Multiplicity.F1.Square.TwTermPowBand
+import Multiplicity.F1.Square.TestAlgebra
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

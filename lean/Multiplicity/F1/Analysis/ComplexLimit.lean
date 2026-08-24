@@ -14,8 +14,8 @@ which the complex series and infinite products of the remaining Track-1 stack ar
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Analysis.Complex
-import Multiplicity.F1Square.Analysis.RlimProps
+import Multiplicity.F1.Analysis.Complex
+import Multiplicity.F1.Analysis.RlimProps
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

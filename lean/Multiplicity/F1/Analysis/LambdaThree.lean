@@ -43,8 +43,8 @@ stay `none`.
 Pure Lean 4 core, no Mathlib, no `sorry`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Analysis.GenuineLi
-import Multiplicity.F1Square.Analysis.GammaTwo
+import Multiplicity.F1.Analysis.GenuineLi
+import Multiplicity.F1.Analysis.GammaTwo
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

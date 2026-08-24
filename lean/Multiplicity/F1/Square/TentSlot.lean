@@ -23,11 +23,11 @@ Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited b
 `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Square.Pairing
-import Multiplicity.F1Square.Analysis.TentLogPiece
-import Multiplicity.F1Square.Analysis.TentArchTail
-import Multiplicity.F1Square.Analysis.LambdaThreePos
-import Multiplicity.F1Square.Analysis.GammaZeroBracket
+import Multiplicity.F1.Square.Pairing
+import Multiplicity.F1.Analysis.TentLogPiece
+import Multiplicity.F1.Analysis.TentArchTail
+import Multiplicity.F1.Analysis.LambdaThreePos
+import Multiplicity.F1.Analysis.GammaZeroBracket
 
 namespace Multiplicity.UOR.Bridge.F1Square.Square
 

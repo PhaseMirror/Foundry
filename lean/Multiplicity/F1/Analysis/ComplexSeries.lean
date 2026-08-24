@@ -14,9 +14,9 @@ from `Cadd`/`Cmul`. Two facts make them usable:
 Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited by `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Analysis.ComplexLimit
-import Multiplicity.F1Square.Analysis.EtaVariation
-import Multiplicity.F1Square.Analysis.RSum
+import Multiplicity.F1.Analysis.ComplexLimit
+import Multiplicity.F1.Analysis.EtaVariation
+import Multiplicity.F1.Analysis.RSum
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 

@@ -24,8 +24,8 @@ Pure Lean 4 core, no Mathlib, no `sorry`/`native_decide`, choice-free; audited b
 `scripts/honesty_audit.sh`.
 -/
 
-import Multiplicity.F1Square.Analysis.IntervalIntegral
-import Multiplicity.F1Square.Analysis.IntegralCertIrrel
+import Multiplicity.F1.Analysis.IntervalIntegral
+import Multiplicity.F1.Analysis.IntegralCertIrrel
 
 set_option maxHeartbeats 1000000
 

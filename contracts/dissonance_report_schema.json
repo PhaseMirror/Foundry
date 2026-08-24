@@ -1,0 +1,88 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PhaseMirror Dissonance and NIST RMF Compliance Report",
+  "type": "object",
+  "required": [
+    "report_id",
+    "timestamp",
+    "law_version",
+    "framework_alignments",
+    "nist_rmf_binding",
+    "on_chain_telemetry",
+    "audit_verdict"
+  ],
+  "properties": {
+    "report_id": {
+      "type": "string",
+      "description": "Unique cryptographic dossier identifier."
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "law_version": {
+      "type": "string",
+      "example": "v1.1"
+    },
+    "framework_alignments": {
+      "type": "object",
+      "required": ["nist_ai_rmf", "eu_ai_act"],
+      "properties": {
+        "nist_ai_rmf": {
+          "type": "object",
+          "required": ["profile_id", "traceability_score_pct", "status"],
+          "properties": {
+            "profile_id": { "type": "string" },
+            "traceability_score_pct": { "type": "number", "minimum": 0, "maximum": 100 },
+            "status": { "type": "string", "enum": ["COMPLIANT", "BREACHED"] }
+          }
+        },
+        "eu_ai_act": {
+          "type": "object",
+          "properties": {
+            "standard": { "type": "string" },
+            "article_11_conformity": { "type": "string" },
+            "fail_closed_mode": { "type": "string" }
+          }
+        }
+      }
+    },
+    "nist_rmf_binding": {
+      "type": "object",
+      "description": "Machine-readable enforcement mapping to NIST RMF functions.",
+      "required": ["function", "subcategory", "evidence_type", "enforcement_mechanism", "live_lambda_p", "live_lp_norm"],
+      "properties": {
+        "function": {
+          "type": "string",
+          "enum": ["GOVERN", "MAP", "MEASURE", "MANAGE"]
+        },
+        "subcategory": {
+          "type": "string",
+          "example": "MS-1"
+        },
+        "evidence_type": {
+          "type": "string",
+          "example": "Lean 4 Kernel Theorem + Kani Bounded Verification"
+        },
+        "enforcement_mechanism": {
+          "type": "string",
+          "example": "scripts/fpes-gate.sh + build.rs compile-time abort"
+        },
+        "live_lambda_p": { "type": "number" },
+        "live_lp_norm": { "type": "number" }
+      }
+    },
+    "on_chain_telemetry": {
+      "type": "object",
+      "properties": {
+        "registry_contract": { "type": "string" },
+        "total_certified_witnesses": { "type": "number" },
+        "max_allowed_contractivity_score": { "type": "number" }
+      }
+    },
+    "audit_verdict": {
+      "type": "string",
+      "enum": ["PASSED_ALL_INVARIANTS", "SIG_GOV_KILL_TRIGGERED"]
+    }
+  }
+}

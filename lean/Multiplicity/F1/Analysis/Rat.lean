@@ -189,6 +189,13 @@ theorem add_zero (a : Q) : Qeq (add a ⟨0, 1⟩) a := by
 
 /-- `a + (−a) = 0` on ℚ (value-level), for ALL rationals: the additive inverse law. -/
 theorem add_neg (a : Q) : Qeq (add a (neg a)) ⟨0, 1⟩ := by
-  unfold Qeq add neg; simp only [Int.neg_mul]; omega
+  show ((add a (neg a)).num : Int) * ((⟨0, 1⟩ : Q).den : Int)
+      = ((⟨0, 1⟩ : Q).num : Int) * ((add a (neg a)).den : Int)
+  rw [show ((⟨0, 1⟩ : Q).num : Int) = 0 from rfl,
+      show ((⟨0, 1⟩ : Q).den : Int) = 1 from rfl,
+      show (add a (neg a)).num = a.num * ↑((neg a).den) + (neg a).num * ↑a.den from rfl,
+      show (neg a).num = -a.num from rfl, show (neg a).den = a.den from rfl]
+  have key : ∀ n d : Int, n * d + -n * d = 0 := fun n d => by rw [Int.neg_mul]; omega
+  rw [Int.mul_one, key, Int.zero_mul]
 
 end Multiplicity.UOR.Bridge.F1Square.Analysis

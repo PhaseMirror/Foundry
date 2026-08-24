@@ -1,41 +1,42 @@
 use pqcrypto_dilithium::dilithium5::*;
 use pqcrypto_traits::sign::{DetachedSignature, PublicKey, SecretKey};
 
-/// Generate a new Dilithium5 keypair.
+/// Generate a new Dilithium5 (ML-DSA-87, FIPS 204) keypair.
 ///
 /// # Returns
 /// `(public_key_bytes, secret_key_bytes)` where:
-/// - `public_key_bytes` is 1312 bytes
-/// - `secret_key_bytes` is 2528 bytes
+/// - `public_key_bytes` is 2592 bytes
+/// - `secret_key_bytes` is 4896 bytes
 pub fn keygen() -> (Vec<u8>, Vec<u8>) {
     let (pk, sk) = keypair();
     (pk.as_bytes().to_vec(), sk.as_bytes().to_vec())
 }
 
-/// Sign a message with a Dilithium5 secret key.
+/// Sign a message with a Dilithium5 (ML-DSA-87, FIPS 204) secret key.
 ///
 /// # Arguments
-/// * `sk_bytes` - 2528-byte secret key
+/// * `sk_bytes` - 4896-byte secret key
 /// * `msg` - message bytes to sign
 ///
 /// # Returns
-/// 2420-byte detached signature
+/// 4627-byte detached signature
 pub fn sign(sk_bytes: &[u8], msg: &[u8]) -> Vec<u8> {
     let sk = SecretKey::from_bytes(sk_bytes).expect("Invalid Dilithium secret key");
     let sig = detached_sign(msg, &sk);
     sig.as_bytes().to_vec()
 }
 
-/// Verify a Dilithium5 signature.
+/// Verify a Dilithium5 (ML-DSA-87, FIPS 204) signature.
 ///
 /// # Arguments
-/// * `pk_bytes` - 1312-byte public key
+/// * `pk_bytes` - 2592-byte public key
 /// * `msg` - message bytes that were signed
-/// * `sig_bytes` - 2420-byte signature
+/// * `sig_bytes` - 4627-byte signature
 ///
 /// # Returns
 /// `Ok(())` if valid, `Err(())` if invalid
 pub fn verify(pk_bytes: &[u8], msg: &[u8], sig_bytes: &[u8]) -> Result<(), ()> {
+
     let pk = PublicKey::from_bytes(pk_bytes).map_err(|_| ())?;
     let sig = DetachedSignature::from_bytes(sig_bytes).map_err(|_| ())?;
     verify_detached_signature(&sig, msg, &pk).map_err(|_| ())

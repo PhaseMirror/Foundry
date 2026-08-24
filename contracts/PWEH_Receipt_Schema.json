@@ -1,0 +1,85 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ADR-042 Two-Layer PWEH Receipt Schema",
+  "description": "Verifiable WORM audit receipt generated upon Kani model check of two-layer cross-talk dynamics.",
+  "type": "object",
+  "required": [
+    "receipt_id",
+    "adr_id",
+    "timestamp",
+    "s_integrity",
+    "last_prime_move",
+    "policy_root_hash",
+    "crmf_certificate",
+    "lambda_m_resonance_score",
+    "tuning_parameters",
+    "kani_proof_digest",
+    "prev_hash"
+  ],
+  "properties": {
+    "receipt_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique UUIDv4 identifying this execution receipt."
+    },
+    "adr_id": {
+      "type": "string",
+      "enum": ["ADR-042"],
+      "description": "Architecture Decision Record identifier."
+    },
+    "timestamp": {
+      "type": "string",
+      "description": "RFC3339 timestamp of the Kani verification run."
+    },
+    "s_integrity": {
+      "type": "string",
+      "pattern": "^0x[a-fA-F0-9]{64}$",
+      "description": "PWEH cumulative integrity hash S_integrity(t) = SHA256(canonical_payload || prev_hash)."
+    },
+    "last_prime_move": {
+      "type": "string",
+      "description": "The active prime channel p_t (e.g., 'p_2', 'p_3', 'p_5') applied in the transition."
+    },
+    "policy_root_hash": {
+      "type": "string",
+      "pattern": "^0x[a-fA-F0-9]{64}$",
+      "description": "Policy root hash R_pi ensuring strict parameter governance."
+    },
+    "crmf_certificate": {
+      "type": "object",
+      "required": ["gamma_0", "gamma_1", "beta", "eta", "effective_contraction_bound"],
+      "properties": {
+        "gamma_0": { "type": "string" },
+        "gamma_1": { "type": "string" },
+        "beta": { "type": "string" },
+        "eta": { "type": "string" },
+        "effective_contraction_bound": { "type": "string" }
+      }
+    },
+    "lambda_m_resonance_score": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Measured multiplicity resonance metric Lambda_m."
+    },
+    "tuning_parameters": {
+      "type": "object",
+      "required": ["column_sum_x_max", "column_sum_lambda_max", "is_strictly_contractive"],
+      "properties": {
+        "column_sum_x_max": { "type": "number", "maximum": 1.0 },
+        "column_sum_lambda_max": { "type": "number", "maximum": 1.0 },
+        "is_strictly_contractive": { "type": "boolean", "enum": [true] }
+      }
+    },
+    "kani_proof_digest": {
+      "type": "string",
+      "pattern": "^0x[a-fA-F0-9]{64}$",
+      "description": "SHA-256 digest of the Kani verification log certifying zero assertion failures."
+    },
+    "prev_hash": {
+      "type": "string",
+      "pattern": "^0x[a-fA-F0-9]{64}$",
+      "description": "Cryptographic hash of the prior block in the PWEH audit chain."
+    }
+  }
+}

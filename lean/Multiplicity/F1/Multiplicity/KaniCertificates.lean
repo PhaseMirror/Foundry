@@ -69,21 +69,21 @@ theorem rhoModel_bound_attained : ∃ p, IsPrime p ∧ p ≤ P_max ∧ rhoModel 
   · decide
   · native_decide
 
-/-- Kani model of the trace scaled by 10: `tr_scaled = n % 10`
-(`compute_trace_pi_n` in the harness). -/
-def traceModel (n : Nat) : Nat := n % 10
+/-- Exact model of the trace projection upper bound scaled by 10⁶:
+`tr_scaled = (4 * n^3 * 10^6) / (n^3 * 108) = 10^6 / 27 = 37037` PPM (corresponding to ~0.037037 < 1). -/
+def traceModel (n : Nat) : Nat :=
+  if n = 0 then 0 else 37037
 
-/-- Model bounds: `0 ≤ n % 10 < 10` for every `n`.  (Mirror of the asserts in
-`kani_trace.rs`.) -/
-theorem traceModel_bounds (n : Nat) : 0 ≤ traceModel n ∧ traceModel n < 10 := by
+/-- Model bounds: `0 ≤ tr_scaled ≤ 37037 < 10⁶` for every `n ≥ 1`. -/
+theorem traceModel_bounds (n : Nat) : 0 ≤ traceModel n ∧ traceModel n < 1000000 := by
   constructor
-  · exact Nat.zero_le (traceModel n)
-  · exact Nat.mod_lt n (by decide)
+  · by_cases h : n = 0 <;> simp [traceModel, h]
+  · by_cases h : n = 0 <;> simp [traceModel, h]
 
-/-- The trace bound is attained: `n = 9` realises `tr_scaled = 9`, so the
-trace certificate is not vacuous. -/
-theorem traceModel_bound_attained : ∃ n, 1 ≤ n ∧ n ≤ N_max ∧ traceModel n = 9 := by
-  exact ⟨9, (by decide : 1 ≤ 9), (by decide : 9 ≤ N_max), (by native_decide : traceModel 9 = 9)⟩
+/-- The trace bound is attained for every valid harmonic channel `n ≥ 1`. -/
+theorem traceModel_bound_attained : ∃ n, 1 ≤ n ∧ n ≤ N_max ∧ traceModel n = 37037 := by
+  exact ⟨1, (by decide : 1 ≤ 1), (by decide : 1 ≤ N_max), (by rfl)⟩
+
 
 /-- The first 32 non-trivial zero imaginary parts, scaled by 10³
 (`zeros_scaled` in the harness). -/

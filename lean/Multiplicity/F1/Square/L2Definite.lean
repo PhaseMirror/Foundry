@@ -245,7 +245,7 @@ private theorem Rle_zero_of_not_Pos {x : Real} (h : ¬ Pos x) : Rle x zero := by
 
 /-- `0` is not strictly positive (local copy). -/
 private theorem zero_not_Pos' : ¬ Pos zero := by
-  intro ⟨n, hn⟩
+  rintro ⟨n, hn⟩
   simp only [Qlt, Qbound, zero_seq] at hn
   omega
 

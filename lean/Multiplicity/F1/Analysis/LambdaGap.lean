@@ -252,14 +252,14 @@ theorem Rlambda2_ge : Rle (ofQ (⟨797, 10000⟩ : Q) (by decide)) Rlambda2 := b
 
 /-- `0` is not strictly positive (the `Pos` witness inequality `1/(n+1) < 0` is absurd). -/
 theorem not_Pos_zero : ¬ Pos zero := by
-  intro ⟨n, hn⟩
+  rintro ⟨n, hn⟩
   simp only [Qlt, Qbound, zero_seq] at hn
   omega
 
 /-- **The order clash**: a real cannot be strictly positive while its negation is non-negative
     (seq-level: `Pos` gives an approximant above `Qbound n`, `Rnonneg (−z)` pins it below). -/
 theorem not_Pos_of_Rnonneg_Rneg {z : Real} (hn : Rnonneg (Rneg z)) : ¬ Pos z := by
-  intro ⟨n, hlt⟩
+  rintro ⟨n, hlt⟩
   have h : Qle (neg (Qbound n)) (neg (z.seq n)) := hn n
   simp only [Qle, Qlt, Qbound, neg] at h hlt
   push_cast at h hlt

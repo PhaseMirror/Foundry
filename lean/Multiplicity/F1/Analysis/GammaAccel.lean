@@ -232,7 +232,7 @@ theorem Ssum_tail_le {f : Nat → Q} (hf : ∀ i, 0 < (f i).den)
 theorem npow_base_mono {a b : Nat} (h : a ≤ b) : ∀ m, npow a m ≤ npow b m
   | 0 => Nat.le_refl 1
   | (m + 1) => by
-      show a * npow a m ≤ b * npow b m
+      rw [npow_succ, npow_succ]
       exact Nat.mul_le_mul h (npow_base_mono h m)
 
 /-- `i^{a+b} = i^a · i^b`. -/
@@ -709,10 +709,7 @@ theorem deltaTail_eq (p T : Nat) :
   rw [qpow_one_den]
   have hnp : npow (2 * p + 1) (2 * T + 3)
       = npow (2 * p + 1) (2 * T + 1) * ((2 * p + 1) * (2 * p + 1)) := by
-    rw [show 2 * T + 3 = (2 * T + 1) + 2 from by omega, npow_add]
-    congr 1
-    show npow (2 * p + 1) 2 = (2 * p + 1) * (2 * p + 1)
-    simp only [npow_succ, npow, Nat.mul_one]
+    rw [show 2 * T + 3 = (2 * T + 1) + 2 from by omega, npow_add, npow_two]
   rw [hnp]
   generalize npow (2 * p + 1) (2 * T + 1) = N
   simp only [Qeq, mul, Qsub, add, neg]

@@ -1,58 +1,137 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import cytoscape from 'cytoscape';
 
 interface TensorTopographyProps {
-  stabilityMetric: number;
+  resonance: number; // R in [0.0, 1.0]
+  stabilityMetric?: number;
 }
 
-export const TensorTopography = ({ stabilityMetric }: TensorTopographyProps) => {
+export const TensorTopography = ({ resonance, stabilityMetric = 0.5 }: TensorTopographyProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const cyRef = useRef<cytoscape.Core | null>(null);
+
+  // Multiplicity formula: M(R) = 2R + 1 (Multiplicity.SocioAtomic in Lean 4)
+  const multiplicityM = 2.0 * resonance + 1.0;
 
   useEffect(() => {
     if (!containerRef.current) return;
 
-    // Initialize Cytoscape
+    // Initialize Cytoscape with Layer 6 Socio-Atomic Particles and Layer 7 Shells
     cyRef.current = cytoscape({
       container: containerRef.current,
       elements: [
-        { data: { id: 'p2', label: 'p2 (HRV)' } },
-        { data: { id: 'p3', label: 'p3 (EEG)' } },
-        { data: { id: 'p5', label: 'p5' } },
-        { data: { id: 'p7', label: 'p7 (GSR / Entropy)' } },
-        
-        { data: { id: 'e1', source: 'p2', target: 'p3' } },
-        { data: { id: 'e2', source: 'p3', target: 'p5' } },
-        { data: { id: 'e3', source: 'p5', target: 'p7' } },
-        { data: { id: 'e4', source: 'p7', target: 'p2' } },
+        // NUCLEUS: Protons (Core Individuals / Identity)
+        { data: { id: 'p1', label: 'Proton α (Agent)', type: 'proton', role: 'nucleus' } },
+        { data: { id: 'p2', label: 'Proton β (Counsel)', type: 'proton', role: 'nucleus' } },
+
+        // NUCLEUS: Neutrons (Civic Infrastructure / WORM Ledger)
+        { data: { id: 'n1', label: 'Neutron 1 (WORM Anchor)', type: 'neutron', role: 'nucleus' } },
+        { data: { id: 'n2', label: 'Neutron 2 (CRMF Ledger)', type: 'neutron', role: 'nucleus' } },
+
+        // VALENCE SHELL: Electrons (Dynamic Participants / Sensors)
+        { data: { id: 'e1', label: 'e⁻ (Custodian ESI)', type: 'electron', role: 'orbital' } },
+        { data: { id: 'e2', label: 'e⁻ (Sidecar Stream)', type: 'electron', role: 'orbital' } },
+        { data: { id: 'e3', label: 'e⁻ (Auditor Node)', type: 'electron', role: 'orbital' } },
+
+        // Nuclear Strong-Force Bonds (Internal Cohesion)
+        { data: { id: 'n_bond1', source: 'p1', target: 'n1', kind: 'nuclear' } },
+        { data: { id: 'n_bond2', source: 'p2', target: 'n2', kind: 'nuclear' } },
+        { data: { id: 'n_bond3', source: 'p1', target: 'p2', kind: 'nuclear' } },
+        { data: { id: 'n_bond4', source: 'n1', target: 'n2', kind: 'nuclear' } },
+
+        // Multiplicity Resonance Exchange: M(R) = 2R + 1
+        { data: { id: 'orb1', source: 'p1', target: 'e1', kind: 'resonance' } },
+        { data: { id: 'orb2', source: 'p2', target: 'e2', kind: 'resonance' } },
+        { data: { id: 'orb3', source: 'n1', target: 'e3', kind: 'resonance' } },
+        { data: { id: 'orb4', source: 'e1', target: 'e2', kind: 'orbital_coupling' } },
+        { data: { id: 'orb5', source: 'e2', target: 'e3', kind: 'orbital_coupling' } },
       ],
       style: [
+        // Protons: Vibrant Gold/Amber
         {
-          selector: 'node',
+          selector: 'node[type = "proton"]',
           style: {
-            'background-color': '#8b5cf6',
+            'background-color': '#f59e0b',
             'label': 'data(label)',
-            'color': '#f8fafc',
+            'color': '#fef3c7',
+            'font-size': '10px',
+            'font-family': 'JetBrains Mono, monospace',
             'text-valign': 'top',
             'text-halign': 'center',
-            'font-size': '12px',
-            'font-family': 'JetBrains Mono, monospace',
-            'width': 20,
-            'height': 20,
+            'width': 26,
+            'height': 26,
+            'border-width': 2,
+            'border-color': '#fbbf24',
           }
         },
+        // Neutrons: Deep Emerald (Stability)
         {
-          selector: 'edge',
+          selector: 'node[type = "neutron"]',
+          style: {
+            'background-color': '#10b981',
+            'label': 'data(label)',
+            'color': '#d1fae5',
+            'font-size': '10px',
+            'font-family': 'JetBrains Mono, monospace',
+            'text-valign': 'top',
+            'text-halign': 'center',
+            'width': 26,
+            'height': 26,
+            'border-width': 2,
+            'border-color': '#34d399',
+          }
+        },
+        // Electrons: Cyan/Indigo Orbitals
+        {
+          selector: 'node[type = "electron"]',
+          style: {
+            'background-color': '#06b6d4',
+            'label': 'data(label)',
+            'color': '#cffafe',
+            'font-size': '9px',
+            'font-family': 'JetBrains Mono, monospace',
+            'text-valign': 'bottom',
+            'text-halign': 'center',
+            'width': 18,
+            'height': 18,
+            'border-width': 1,
+            'border-color': '#67e8f9',
+          }
+        },
+        // Nuclear Strong-Force Bonds
+        {
+          selector: 'edge[kind = "nuclear"]',
+          style: {
+            'width': 3,
+            'line-color': 'rgba(245, 158, 11, 0.7)',
+            'curve-style': 'bezier',
+          }
+        },
+        // Multiplicity Resonance Exchange Lines
+        {
+          selector: 'edge[kind = "resonance"]',
           style: {
             'width': 2,
-            'line-color': 'rgba(139, 92, 246, 0.4)',
-            'curve-style': 'bezier'
+            'line-color': 'rgba(16, 185, 129, 0.6)',
+            'line-style': 'dashed',
+            'curve-style': 'bezier',
+          }
+        },
+        // Orbital Valence Coupling
+        {
+          selector: 'edge[kind = "orbital_coupling"]',
+          style: {
+            'width': 1,
+            'line-color': 'rgba(6, 182, 212, 0.4)',
+            'curve-style': 'bezier',
           }
         }
       ],
       layout: {
-        name: 'circle',
-        padding: 40,
+        name: 'concentric',
+        concentric: (node: any) => node.data('role') === 'nucleus' ? 2 : 1,
+        levelWidth: () => 1,
+        padding: 35,
         animate: true,
       },
       userZoomingEnabled: false,
@@ -64,55 +143,58 @@ export const TensorTopography = ({ stabilityMetric }: TensorTopographyProps) => 
     };
   }, []);
 
+  // Animate dynamic bond thickness and orbital coupling based on M(R) = 2R + 1
   useEffect(() => {
     if (!cyRef.current) return;
-
     const cy = cyRef.current;
-    
-    // Animate the network based on the stability metric
-    const isStable = stabilityMetric >= 0.05;
-    
-    const nodeColor = isStable ? '#10b981' : '#f43f5e'; // Success green vs Danger red
-    const edgeColor = isStable ? 'rgba(16, 185, 129, 0.5)' : 'rgba(244, 63, 94, 0.5)';
 
-    cy.nodes().animate({
+    const bondWidth = Math.max(1, Math.round(multiplicityM * 1.5));
+    const resonanceAlpha = Math.min(1.0, 0.3 + (resonance * 0.7));
+
+    cy.edges('[kind = "resonance"]').animate({
       style: {
-        'background-color': nodeColor
+        'width': bondWidth,
+        'line-color': `rgba(16, 185, 129, ${resonanceAlpha})`,
       }
     }, { duration: 300 });
 
-    cy.edges().animate({
+    cy.nodes('[type = "proton"]').animate({
       style: {
-        'line-color': edgeColor,
-        'width': isStable ? 2 : 4
+        'width': Math.round(20 + resonance * 10),
+        'height': Math.round(20 + resonance * 10),
       }
     }, { duration: 300 });
 
-    // Apply a jitter to simulate dissonance if not stable
-    if (!isStable) {
-      cy.nodes().forEach(node => {
-        node.animate({
-          position: {
-            x: node.position('x') + (Math.random() - 0.5) * 20,
-            y: node.position('y') + (Math.random() - 0.5) * 20
-          }
-        }, { duration: 500 });
-      });
-    } else {
-      cy.layout({ name: 'circle', animate: true, animationDuration: 500 }).run();
-    }
-
-  }, [stabilityMetric]);
+  }, [resonance, multiplicityM]);
 
   return (
-    <div 
-      style={{ 
-        width: '100%', 
-        height: '300px',
-        position: 'relative',
-        zIndex: 10
-      }} 
-      ref={containerRef} 
-    />
+    <div style={{ width: '100%', position: 'relative' }}>
+      <div 
+        style={{ 
+          width: '100%', 
+          height: '320px',
+          position: 'relative',
+          zIndex: 10
+        }} 
+        ref={containerRef} 
+      />
+      <div style={{
+        position: 'absolute',
+        bottom: '8px',
+        right: '12px',
+        fontSize: '11px',
+        color: '#10b981',
+        fontFamily: 'JetBrains Mono, monospace',
+        background: 'rgba(0,0,0,0.6)',
+        padding: '4px 8px',
+        borderRadius: '4px',
+        border: '1px solid rgba(16, 185, 129, 0.3)',
+        zIndex: 20
+      }}>
+        M(R) = 2({resonance.toFixed(2)}) + 1 = {multiplicityM.toFixed(2)} (Layer 6 Verified)
+      </div>
+    </div>
   );
 };
+
+

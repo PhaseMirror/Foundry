@@ -6,12 +6,13 @@ Historical content of this brick: the rational partial sums
 consumed by the `γ`-term estimates (`Euler`, `GammaOne`, …), the numeric brackets
 (`ZetaTwo`), and the completeness layer (`Complete`, `Pi`).
 
-Pure Lean 4 core, no Mathlib, no `sorry`; built on exact `Q` (brick one) and the
-restored `npow` helper (core-compat).
+Pure Lean 4 core, no Mathlib, no `sorry`; built on exact `Q` (brick one),
+the restored `npow` helper (core-compat), and the order layer (`QOrder`).
 -/
 
 import Multiplicity.F1.Analysis.QOrder
 import Multiplicity.F1.Analysis.Rat
+import Multiplicity.F1.Analysis.Real
 import Multiplicity.F1.CoreCompat
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
@@ -23,14 +24,12 @@ def zetaSum (s : Nat) : Nat → Q
   | 0 => ⟨1, npow 1 s⟩
   | (n + 1) => add (zetaSum s n) ⟨1, npow (n + 2) s⟩
 
-/-! ### Positivity and monotonicity of the approximant -/
-
 /-- The partial sums have positive denominators (products of positive factors). -/
 theorem zetaSum_den_pos (s : Nat) : ∀ N, 0 < (zetaSum s N).den
-  | 0 => npow_pos (by decide) s
+  | 0 => npow_pos (b := 1) (k := s) (by omega)
   | (n + 1) =>
       add_den_pos (zetaSum_den_pos s n)
-        (npow_pos (by show (0 : Nat) < n + 2; omega) s)
+        (npow_pos (b := n + 2) (k := s) (by show (0:Nat) < n + 2; omega))
 
 /-- The partial sums increase (each step appends a positive term). -/
 theorem zetaSum_step_le (s N : Nat) : Qle (zetaSum s N) (zetaSum s (N + 1)) :=
@@ -47,19 +46,6 @@ theorem zetaSum_le (s : Nat) {N M : Nat} (hNM : N ≤ M) : Qle (zetaSum s N) (ze
 
 /-! ### The key one-step inequality -/
 
-/-- Power growth: for `s ≥ 2`, `(n+2)(n+1) ≤ (n+2)^s`. -/
-private theorem prod_le_pow (s n : Nat) (hs : 2 ≤ s) : (n + 2) * (n + 1) ≤ npow (n + 2) s := by
-  obtain ⟨d, hd⟩ : ∃ d, s = d + 2 := ⟨s - 2, by omega⟩
-  subst hd
-  have h1 : npow (n + 2) (d + 2) = (n + 2) * ((n + 2) * npow (n + 2) d) := by
-    rw [npow_succ, npow_succ]
-  have h2 : 1 ≤ npow (n + 2) d := Nat.one_le_pow d _ (by show (0:Nat) < n + 2; omega)
-  rw [h1]
-  have hge : ((n:Nat) + 1) ≤ n + 2 := by omega
-  have hP : (0:Nat) < npow (n + 2) d := by omega
-  have k1 : ((n:Nat) + 2) ≤ (n + 2) * npow (n + 2) d := Nat.le_mul_of_pos_right _ hP
-  exact Nat.le_trans (Nat.mul_le_mul_left _ hge) (Nat.mul_le_mul_left _ k1)
-
 /-- Reduced-fraction comparison against `1/(a+1)` (local copy of the brick-one lemma,
     which lives in `Complete`, downstream of this module). -/
 private theorem zQfrac_le {p d a : Nat} (h : p * (a + 1) ≤ d) :
@@ -68,6 +54,19 @@ private theorem zQfrac_le {p d a : Nat} (h : p * (a + 1) ≤ d) :
   have hc : (((p * (a + 1) : Nat) : Int)) ≤ ((d : Nat) : Int) := by exact_mod_cast h
   push_cast at hc ⊢
   omega
+
+/-- Power growth: for `s ≥ 2`, `(n+2)(n+1) ≤ (n+2)^s`. -/
+private theorem prod_le_pow (s n : Nat) (hs : 2 ≤ s) : (n + 2) * (n + 1) ≤ npow (n + 2) s := by
+  obtain ⟨d, hd⟩ : ∃ d, s = d + 2 := ⟨s - 2, by omega⟩
+  subst hd
+  have h1 : npow (n + 2) (d + 2) = (n + 2) * ((n + 2) * npow (n + 2) d) := by
+    rw [npow_succ, npow_succ]
+  rw [h1]
+  have hge : ((n:Nat) + 1) ≤ n + 2 := by omega
+  have hP : (0:Nat) < npow (n + 2) d :=
+    npow_pos (b := n + 2) (k := d) (by show (0:Nat) < n + 2; omega)
+  have k1 : ((n:Nat) + 2) ≤ (n + 2) * npow (n + 2) d := Nat.le_mul_of_pos_right _ hP
+  exact Nat.le_trans (Nat.mul_le_mul_left _ hge) (Nat.mul_le_mul_left _ k1)
 
 /-- Load-bearing one-step bound `1/(n+2)^s + 1/(n+2) ≤ 1/(n+1)` for `s ≥ 2`
     (cross-multiplies to `(n+1)(n+2) ≤ (n+2)^s`). -/
@@ -129,9 +128,8 @@ private theorem zetaTail_telescope (s : Nat) (hs : 2 ≤ s) :
         (Qsub ⟨1, j + 1⟩ ⟨1, j + d + 1⟩)
   | 0, j => by
       rw [Nat.add_zero]
-      have e : Qeq (Qsub (zetaSum s j) (zetaSum s j)) (Qsub ⟨1, j + 1⟩ ⟨1, j + 1⟩) := by
-        simp only [Qsub, add, neg, Qeq]; push_cast; ring_uor
-      exact Qeq_le e
+      refine Qeq_le ?_
+      simp only [Qsub, add, neg, Qeq]; push_cast; ring_uor
   | (d + 1), j => by
       have ih := zetaTail_telescope s hs d j
       have hbrk : Qle (⟨1, npow (j + d + 2) s⟩ : Q)
@@ -141,13 +139,14 @@ private theorem zetaTail_telescope (s : Nat) (hs : 2 ≤ s) :
           exact_mod_cast prod_le_pow s (j + d) hs
         unfold Qle Qsub add neg
         push_cast
-        simp only [Int.one_mul, Int.natCast_mul]
+        simp only [Int.one_mul]
         have hg2 : (((↑j + ↑d + 1 : Int)) * ((↑j + ↑d + 1 : Int) + 1))
             ≤ ↑(npow (j + d + 2) s) := by
-          have h4 : (((↑(j + d + 1) : Int)) * ((↑(j + d + 2) : Int)))
+          have h4 : ((↑(j + d + 2) : Int) * (↑(j + d + 1) : Int))
               ≤ ↑(npow (j + d + 2) s) := hg
-          rw [show ((↑(j + d + 1) : Int) = (↑j + ↑d + 1 : Int)) from by push_cast; omega,
-              show ((↑(j + d + 2) : Int) = ((↑j + ↑d + 1 : Int) + 1)) from by push_cast; omega] at h4
+          rw [show ((↑(j + d + 2) : Int) = ((↑j + ↑d + 1 : Int) + 1)) from by push_cast; omega,
+              show ((↑(j + d + 1) : Int) = (↑j + ↑d + 1 : Int)) from by push_cast; omega,
+              Int.mul_comm] at h4
           exact h4
         rw [show ((((↑j + ↑d + 1 : Int) + 1) + -1 * (↑j + ↑d + 1 : Int)) : Int) = 1
             from by push_cast; omega, Int.one_mul]
@@ -159,9 +158,7 @@ private theorem zetaTail_telescope (s : Nat) (hs : 2 ≤ s) :
       have htele : Qeq (add (Qsub ⟨1, j + 1⟩ ⟨1, j + d + 1⟩)
             (Qsub ⟨1, j + d + 1⟩ ⟨1, j + d + 2⟩))
           (Qsub ⟨1, j + 1⟩ ⟨1, j + d + 2⟩) := by
-        simp only [Qsub, add, neg, Qeq]
-        push_cast
-        ring_uor
+        simp only [Qsub, add, neg, Qeq]; push_cast; ring_uor
       have hV : Qle (add (Qsub ⟨1, j + 1⟩ ⟨1, j + d + 1⟩)
             (⟨1, npow (j + d + 2) s⟩ : Q))
           (Qsub ⟨1, j + 1⟩ ⟨1, j + d + 2⟩) :=
@@ -169,7 +166,7 @@ private theorem zetaTail_telescope (s : Nat) (hs : 2 ≤ s) :
       have hdpos : 0 < (add (Qsub (zetaSum s (j + d)) (zetaSum s j))
           ⟨1, npow (j + d + 2) s⟩).den :=
         add_den_pos (Qsub_den_pos (zetaSum_den_pos s (j + d)) (zetaSum_den_pos s j))
-          (npow_pos (by show (0:Nat) < j + d + 2; omega) s)
+          (npow_pos (b := j + d + 2) (k := s) (by show (0:Nat) < j + d + 2; omega))
       have hspl : Qeq (Qsub (zetaSum s (j + (d + 1))) (zetaSum s j))
           (add (Qsub (zetaSum s (j + d)) (zetaSum s j)) ⟨1, npow (j + d + 2) s⟩) := by
         show Qeq (Qsub (add (zetaSum s (j + d)) ⟨1, npow (j + d + 2) s⟩) (zetaSum s j)) _
@@ -216,39 +213,100 @@ private theorem Qabs_of_nonneg {x : Q} (hx : Qle (⟨0, 1⟩ : Q) x) : Qeq (Qabs
   have h00 : (0 : Int) ≤ x.num := by
     have h5 := hx
     unfold Qle at h5
-    simp only [Int.zero_mul, Int.one_mul] at h5
-    omega
+    rw [show ((⟨0, 1⟩ : Q).num : Int) = 0 from rfl,
+        show (((⟨0, 1⟩ : Q).den : Nat) : Int) = 1 from rfl,
+        Int.zero_mul, Int.mul_one] at h5
+    exact h5
   unfold Qabs
-  rcases Int.le_total 0 x.num with hn | hn
-  · rw [Int.natAbs_of_nonneg hn]
-  · exfalso
-    omega
+  rw [Int.natAbs_of_nonneg h00]
+  rfl
 
 /-- **Per-depth ζ-stability**: deepening from `Dj` to `Dk ≥ Dj` moves the partial sum
-/-- **Per-depth ζ-stability**: deepening from `Dj` to `Dk ≥ Dj` moves the partial sum
     by at most `1/(Dj+1)`. -/
-theorem zetaabs_bound (s : Nat) (hs : 2 ≤ s) :
-    ∀ Dj Dk, Dj ≤ Dk →
-      Qle (Qabs (Qsub (zetaSum s Dk) (zetaSum s Dj))) (⟨1, Dj + 1⟩ : Q)
-  | Dj, Dk, h => by
-      have hnn := zetaSub_nonneg s Dj Dk h
+theorem zetaabs_bound (s : Nat) (hs : 2 ≤ s) {Dj Dk : Nat} (hjk : Dj ≤ Dk) :
+      Qle (Qabs (Qsub (zetaSum s Dk) (zetaSum s Dj))) (⟨1, Dj + 1⟩ : Q) := by
+      have hnn := zetaSub_nonneg s hjk
       obtain ⟨d, hd⟩ : ∃ d, Dk = Dj + d := ⟨Dk - Dj, by omega⟩
       subst hd
       have ht := zetaTail_telescope s hs d Dj
-      have hdrop : Qle (Qsub ⟨1, Dj + 1⟩ ⟨1, Dj + d + 1⟩) (⟨1, Dj + 1⟩ : Q) := by
-        have hnq : Qle (neg ⟨1, Dj + d + 1⟩) (⟨0, 1⟩ : Q) := by
-          unfold Qle neg add
-          simp only [Qeq]
-          push_cast
-          omega
-        have hstep : Qle (add ⟨1, Dj + 1⟩ (neg ⟨1, Dj + d + 1⟩))
-            (add ⟨1, Dj + 1⟩ (⟨0, 1⟩ : Q)) :=
-          Qadd_le_add (Qle_refl _) hnq
-        have e : Qeq (add ⟨1, Dj + 1⟩ (⟨0, 1⟩ : Q)) (⟨1, Dj + 1⟩ : Q) := by
-          simp only [add, Qeq]; push_cast; ring_uor
-        exact Qle_congr_left (by decide) e hstep
-      have hmain : Qle (Qsub (zetaSum s Dk) (zetaSum s Dj)) (⟨1, Dj + 1⟩ : Q) :=
-        Qle_trans (Qsub_den_pos (zetaSum_den_pos s _) (by decide)) ht hdrop
+      have hnq : Qle (neg ⟨1, Dj + d + 1⟩) (⟨0, 1⟩ : Q) := by
+        show ((neg ⟨1, Dj + d + 1⟩).num : Int) * ((⟨0, 1⟩ : Q).den : Int)
+            ≤ ((⟨0, 1⟩ : Q).num : Int) * ((neg ⟨1, Dj + d + 1⟩).den : Int)
+        rw [show ((⟨0, 1⟩ : Q).den : Int) = 1 from rfl,
+            show ((⟨0, 1⟩ : Q).num : Int) = 0 from rfl,
+            show (neg ⟨1, Dj + d + 1⟩).num = -(1 : Int) from rfl,
+            show (neg ⟨1, Dj + d + 1⟩).den = Dj + d + 1 from rfl]
+        push_cast
+        omega
+      have e : Qeq (add ⟨1, Dj + 1⟩ (⟨0, 1⟩ : Q)) (⟨1, Dj + 1⟩ : Q) := by
+        simp only [add, Qeq]; push_cast; ring_uor
+      have hdrop : Qle (Qsub ⟨1, Dj + 1⟩ ⟨1, Dj + d + 1⟩) (⟨1, Dj + 1⟩ : Q) :=
+        Qle_congr_right (Nat.mul_pos (Nat.succ_pos _) Nat.one_pos) e
+          (Qadd_le_add (Qle_refl (⟨1, Dj + 1⟩ : Q)) hnq)
+      have hmid : (0 : Nat) < (Qsub ⟨1, Dj + 1⟩ ⟨1, Dj + d + 1⟩).den :=
+        Nat.mul_pos (Nat.succ_pos _) (Nat.succ_pos _)
+      have hmain : Qle (Qsub (zetaSum s (Dj + d)) (zetaSum s Dj)) (⟨1, Dj + 1⟩ : Q) :=
+        Qle_trans hmid ht hdrop
       exact Qle_trans
-        (Qsub_den_pos (zetaSum_den_pos s Dk) (zetaSum_den_pos s Dj))
-        (Qeq_le (Qabs_of_nonneg hnn)) hmain
+        (Qsub_den_pos (zetaSum_den_pos s (Dj + d)) (zetaSum_den_pos s Dj))
+        (Qeq_le (Qabs_of_nonneg hnn))
+        hmain
+
+/-! ### The ζ constant as a constructive real -/
+
+/-- `|a − b|` and `|b − a|` agree (local copy; the canonical one lives downstream in `Complete`). -/
+private theorem zeta_abs_comm (a b : Q) : Qeq (Qabs (Qsub a b)) (Qabs (Qsub b a)) := by
+  unfold Qeq Qabs
+  rw [Qsub_swap_num a b, Qsub_swap_den a b, Int.natAbs_neg]
+
+/-- **The ζ constant**: the constructive real represented by the regular sequence of partial sums
+    `n ↦ Σ_{k≤n} 1/(k+1)^s`. Regularity is exactly `zetaabs_bound`; this is the phantom consumed
+    throughout the bracket layer (`ZetaTwo`, `Lambda*`). -/
+def zeta (s : Nat) (hs : 2 ≤ s) : Real where
+  seq := fun n => zetaSum s n
+  reg := by
+    intro m n
+    show Qle (Qabs (Qsub (zetaSum s m) (zetaSum s n))) (add (Qbound m) (Qbound n))
+    rcases Nat.le_total m n with h | h
+    · refine Qle_trans
+        (Qabs_den_pos (Qsub_den_pos (zetaSum_den_pos s n) (zetaSum_den_pos s m)))
+        (Qeq_le (zeta_abs_comm (zetaSum s m) (zetaSum s n))) ?_
+      refine Qle_trans (Nat.succ_pos m) (zetaabs_bound s hs h) ?_
+      exact Qle_self_add (x := ⟨1, m + 1⟩) (p := ⟨1, n + 1⟩)
+        (by
+          show (0 : Int) ≤ ((⟨1, n + 1⟩ : Q).num : Int)
+          rw [show ((⟨1, n + 1⟩ : Q).num : Int) = 1 from rfl]
+          decide)
+    · refine Qle_trans (Nat.succ_pos n) (zetaabs_bound s hs h) ?_
+      have e := add_comm (⟨1, n + 1⟩ : Q) (Qbound m)
+      exact Qle_congr_right (Nat.mul_pos (Nat.succ_pos n) (Nat.succ_pos m)) e
+        (Qle_self_add (x := ⟨1, n + 1⟩) (p := ⟨1, m + 1⟩)
+          (by
+            show (0 : Int) ≤ ((⟨1, m + 1⟩ : Q).num : Int)
+            rw [show ((⟨1, m + 1⟩ : Q).num : Int) = 1 from rfl]
+            decide))
+  den_pos := zetaSum_den_pos s
+
+/-- **Depth-difference bound** `S(M) − S(N) ≤ 1/(N+1)` for `N ≤ M` (`s ≥ 2`): the telescoped tail
+    is dominated by its first term (the phantom `zetadiff_bound` of the bracket layer). -/
+theorem zetadiff_bound (s : Nat) (hs : 2 ≤ s) {N M : Nat} (h : N ≤ M) :
+    Qle (Qsub (zetaSum s M) (zetaSum s N)) (⟨1, N + 1⟩ : Q) := by
+  obtain ⟨d, hd⟩ : ∃ d, M = N + d := ⟨M - N, by omega⟩
+  subst hd
+  have ht := zetaTail_telescope s hs d N
+  have hnq : Qle (neg ⟨1, N + d + 1⟩) (⟨0, 1⟩ : Q) := by
+    show ((neg ⟨1, N + d + 1⟩).num : Int) * ((⟨0, 1⟩ : Q).den : Int)
+        ≤ ((⟨0, 1⟩ : Q).num : Int) * ((neg ⟨1, N + d + 1⟩).den : Int)
+    rw [show ((⟨0, 1⟩ : Q).den : Int) = 1 from rfl,
+        show ((⟨0, 1⟩ : Q).num : Int) = 0 from rfl,
+        show (neg ⟨1, N + d + 1⟩).num = -(1 : Int) from rfl,
+        show (neg ⟨1, N + d + 1⟩).den = N + d + 1 from rfl]
+    push_cast
+    omega
+  have e : Qeq (add ⟨1, N + 1⟩ (⟨0, 1⟩ : Q)) (⟨1, N + 1⟩ : Q) := by
+    simp only [add, Qeq]; push_cast; ring_uor
+  refine Qle_trans (Qsub_den_pos (Nat.succ_pos _) (Nat.succ_pos _)) ht ?_
+  exact Qle_congr_right (Nat.mul_pos (Nat.succ_pos _) Nat.one_pos) e
+    (Qadd_le_add (Qle_refl (⟨1, N + 1⟩ : Q)) hnq)
+
+end Multiplicity.UOR.Bridge.F1Square.Analysis

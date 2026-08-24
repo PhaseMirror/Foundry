@@ -39,6 +39,8 @@ import Multiplicity.F1.Analysis.LogPiLower
 
 namespace Multiplicity.UOR.Bridge.F1Square.Analysis
 
+set_option maxRecDepth 20000
+
 -- ===========================================================================
 -- The positive correction term cₙ = s/((n+1/4)((n+1/4)²+s)) at s = 25 (τ = 10),
 -- in exact-rational form 1600/((4n+1)((4n+1)²+400)), and its telescoping bound.
@@ -74,7 +76,7 @@ private theorem corrT_le_teldiff (n : Nat) :
   push_cast
   have key :
       (100 * (4 * ((n : Int) + 1) + 1) + -100 * (4 * (n : Int) + 1))
-        * ((4 * (n : Int) + 1) * ((4 * (n : Int) + 1) * (4 * (n : Int) + 1) + 400))
+        * ((4 * (n : Int) + 1) * ((4 * (n : Int) + 1) * (4 * (n : Int) + 1) + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1))
       = 1600 * ((4 * (n : Int) + 1) * (4 * ((n : Int) + 1) + 1))
         + 400 * (4 * (n : Int) + 1) * ((4 * (n : Int) - 1) * (4 * (n : Int) - 1) + 380) := by
     ring_uor
@@ -87,7 +89,8 @@ private theorem corrT_le_teldiff (n : Nat) :
       · exact Int.mul_nonneg h h
       · have h' : (0 : Int) ≤ -(4 * (n : Int) - 1) := by omega
         have hh : (0 : Int) ≤ (-(4 * (n : Int) - 1)) * (-(4 * (n : Int) - 1)) := Int.mul_nonneg h' h'
-        simpa using hh
+        rw [Int.neg_mul_neg] at hh
+        exact hh
     omega
   omega
 
@@ -243,9 +246,24 @@ theorem rsLineSlope10_pos : Pos (Rsub psiLineRe5 Rlogπc) := by
     Rsub_le_sub psiLineRe5_lower hlogle
   refine Pos_of_Rle_ofQ (c := (⟨13, 100⟩ : Q)) (by decide) (by decide) (Rle_trans ?_ hstep)
   intro n
-  show Qle (⟨13, 100⟩ : Q) (add (add (⟨128, 100⟩ : Q) (neg (⟨115, 100⟩ : Q))) ⟨2, n + 1⟩)
-  simp only [Qle, add, neg]
-  push_cast
+  have hinner : (Rsub (ofQ (⟨128, 100⟩ : Q) (by decide)) (ofQ (⟨115, 100⟩ : Q) (by decide))).seq n
+      = Qsub (⟨128, 100⟩ : Q) (⟨115, 100⟩ : Q) := rfl
+  rw [hinner]
+  have hinner2 : Qsub (⟨128, 100⟩ : Q) (⟨115, 100⟩ : Q) = (⟨1300, 10000⟩ : Q) := by
+    show add (⟨128, 100⟩ : Q) (neg (⟨115, 100⟩ : Q)) = (⟨1300, 10000⟩ : Q)
+    rfl
+  rw [hinner2]
+  have houter : add (⟨1300, 10000⟩ : Q) (⟨2, n + 1⟩ : Q)
+      = (⟨1300 * (n + 1) + 20000, 10000 * (n + 1)⟩ : Q) := by
+    show add (⟨1300, 10000⟩ : Q) (⟨2, n + 1⟩ : Q)
+        = ⟨(⟨1300, 10000⟩ : Q).num * (((⟨2, n + 1⟩ : Q).den : Nat) : Int)
+            + (⟨2, n + 1⟩ : Q).num * (((⟨1300, 10000⟩ : Q).den : Nat) : Int),
+          (⟨1300, 10000⟩ : Q).den * (⟨2, n + 1⟩ : Q).den⟩
+    rfl
+  rw [houter]
+  show ((13 : Int)) * (((10000 * (n + 1) : Nat) : Int))
+      ≤ (1300 * (n + 1) + 20000 : Int) * ((100 : Nat) : Int)
+  rw [Int.natCast_mul]
   omega
 
 /-- **THE RIEMANN–SIEGEL ANGLE IS NON-MONOTONE — TWO-SIDED, an axiom-clean theorem.** For the same
@@ -321,6 +339,9 @@ private theorem corrTP_le_corrT {sn sd : Nat} (hs : sn ≤ 25 * sd) (n : Nat) :
       exact Int.mul_nonneg (Int.mul_nonneg h h) h
     · have : (sn : Int) ≤ 25 * (sd : Int) := by exact_mod_cast hs
       omega
+  have hfold : (4 * (n : Int) + 1) * ((4 * (n : Int) + 1) * (4 * (n : Int) + 1) + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1)
+      = (4 * (n : Int) + 1) * ((4 * (n : Int) + 1) * (4 * (n : Int) + 1) + 400) := by ring_uor
+  rw [hfold]
   omega
 
 /-- `cₙ(s) ≤ tel(n) − tel(n+1)` for `s ≤ 25` — chain `cₙ(s) ≤ corrT n` through the `s = 25`
@@ -499,9 +520,24 @@ theorem rsLineSlope16_pos : Pos (Rsub (psiLineReP 16 1 (by omega) (by omega)) Rl
     Rsub_le_sub psiLineReP_16_lower hlogle
   refine Pos_of_Rle_ofQ (c := (⟨3, 100⟩ : Q)) (by decide) (by decide) (Rle_trans ?_ hstep)
   intro n
-  show Qle (⟨3, 100⟩ : Q) (add (add (⟨118, 100⟩ : Q) (neg (⟨115, 100⟩ : Q))) ⟨2, n + 1⟩)
-  simp only [Qle, add, neg]
-  push_cast
+  have hinner : (Rsub (ofQ (⟨118, 100⟩ : Q) (by decide)) (ofQ (⟨115, 100⟩ : Q) (by decide))).seq n
+      = Qsub (⟨118, 100⟩ : Q) (⟨115, 100⟩ : Q) := rfl
+  rw [hinner]
+  have hinner2 : Qsub (⟨118, 100⟩ : Q) (⟨115, 100⟩ : Q) = (⟨300, 10000⟩ : Q) := by
+    show add (⟨118, 100⟩ : Q) (neg (⟨115, 100⟩ : Q)) = (⟨300, 10000⟩ : Q)
+    rfl
+  rw [hinner2]
+  have houter : add (⟨300, 10000⟩ : Q) (⟨2, n + 1⟩ : Q)
+      = (⟨300 * (n + 1) + 20000, 10000 * (n + 1)⟩ : Q) := by
+    show add (⟨300, 10000⟩ : Q) (⟨2, n + 1⟩ : Q)
+        = ⟨(⟨300, 10000⟩ : Q).num * (((⟨2, n + 1⟩ : Q).den : Nat) : Int)
+            + (⟨2, n + 1⟩ : Q).num * (((⟨300, 10000⟩ : Q).den : Nat) : Int),
+          (⟨300, 10000⟩ : Q).den * (⟨2, n + 1⟩ : Q).den⟩
+    rfl
+  rw [houter]
+  show ((3 : Int)) * (((10000 * (n + 1) : Nat) : Int))
+      ≤ (300 * (n + 1) + 20000 : Int) * ((100 : Nat) : Int)
+  rw [Int.natCast_mul]
   omega
 
 /-- **THE ANGLE STRICTLY INCREASES ON THE UPPER BAND**: for every rational `s = τ²/4 ∈ [16, 25]`,
@@ -556,7 +592,9 @@ private theorem sq_nonneg_int (a : Int) : 0 ≤ a * a := by
   rcases Int.le_total 0 a with h | h
   · exact Int.mul_nonneg h h
   · have h' : (0 : Int) ≤ -a := by omega
-    have := Int.mul_nonneg h' h'; simpa using this
+    have := Int.mul_nonneg h' h'
+    rw [Int.neg_mul_neg] at this
+    exact this
 
 private theorem quad_nonneg_ge2 {n : Int} (hn : 2 ≤ n) : 0 ≤ 16 * n * n - 8 * n - 35 := by
   have h0 : (0 : Int) ≤ n * (n - 2) := Int.mul_nonneg (by omega) (by omega)
@@ -574,12 +612,12 @@ private theorem corrTP1_le_teldiff1 {n : Nat} (hn : 2 ≤ n) :
   simp only [corrTP, corrTel1, Qsub, Qle, add, neg]
   push_cast
   have key :
-      (16 * ((4 * ((n : Int) + 1) + 1) * (4 * ((n : Int) + 1) + 1) + 16)
-          + -16 * ((4 * (n : Int) + 1) * (4 * (n : Int) + 1) + 16))
-        * ((4 * (n : Int) + 1) * ((4 * (n : Int) + 1) * (4 * (n : Int) + 1) * 1 + 16))
-      = 64 * (((4 * (n : Int) + 1) * (4 * (n : Int) + 1) + 16)
-          * ((4 * ((n : Int) + 1) + 1) * (4 * ((n : Int) + 1) + 1) + 16))
-        + 64 * ((4 * (n : Int) + 1) * (4 * (n : Int) + 1) + 16)
+      (16 * ((4 * ((n : Int) + 1) + 1) * (4 * ((n : Int) + 1) + 1) + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1)
+          + -16 * ((4 * (n : Int) + 1) * (4 * (n : Int) + 1) + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1))
+        * ((4 * (n : Int) + 1) * ((4 * (n : Int) + 1) * (4 * (n : Int) + 1) * 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1))
+      = 64 * (((4 * (n : Int) + 1) * (4 * (n : Int) + 1) + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1)
+          * ((4 * ((n : Int) + 1) + 1) * (4 * ((n : Int) + 1) + 1) + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1))
+        + 64 * ((4 * (n : Int) + 1) * (4 * (n : Int) + 1) + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1)
           * (16 * (n : Int) * (n : Int) - 8 * (n : Int) - 35) := by ring_uor
   rw [key]
   have hnn : (0 : Int) ≤ 64 * ((4 * (n : Int) + 1) * (4 * (n : Int) + 1) + 16)

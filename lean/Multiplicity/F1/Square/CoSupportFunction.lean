@@ -39,7 +39,7 @@ open UOR.Bridge.F1Square.Analysis
 
 /-- `0` is not strictly positive (local copy; the others are private per file). -/
 private theorem zero_not_Pos' : ¬ Pos zero := by
-  intro ⟨n, hn⟩
+  rintro ⟨n, hn⟩
   simp only [Qlt, Qbound, zero_seq] at hn
   omega
 

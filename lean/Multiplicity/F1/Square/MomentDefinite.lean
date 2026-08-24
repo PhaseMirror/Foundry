@@ -161,7 +161,7 @@ theorem crossMomL2_congr_of_energies (φ ψ χ : L2Test)
 
 /-- `0` is not strictly positive (local: the copy in `LambdaGap` is off this import chain). -/
 private theorem zero_not_Pos : ¬ Pos zero := by
-  intro ⟨n, hn⟩
+  rintro ⟨n, hn⟩
   simp only [Qlt, Qbound, zero_seq] at hn
   omega
 

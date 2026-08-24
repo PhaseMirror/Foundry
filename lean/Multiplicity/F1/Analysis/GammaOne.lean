@@ -364,7 +364,9 @@ def qRoundUp (q : Q) (D : Nat) : Q := ⟨q.num * (D : Int) / (q.den : Int) + 1, 
 theorem qRoundUp_ge (q : Q) (hqd : 0 < q.den) (D : Nat) : Qle q (qRoundUp q D) := by
   show q.num * (D : Int) ≤ (q.num * (D : Int) / (q.den : Int) + 1) * (q.den : Int)
   have hb : (0 : Int) < (q.den : Int) := by exact_mod_cast hqd
-  have hdm := Int.ediv_add_emod (q.num * (D : Int)) (q.den : Int)
+  have hdm : ((q.den : Int)) * ((q.num * (D : Int)) / (q.den : Int))
+      + (q.num * (D : Int)) % (q.den : Int) = (q.num * (D : Int)) :=
+    by rw [Int.add_comm]; exact Int.emod_add_mul_ediv _ _
   have hmlt := Int.emod_lt_of_pos (q.num * (D : Int)) hb
   have hmnn := Int.emod_nonneg (q.num * (D : Int)) (by omega : (q.den : Int) ≠ 0)
   have key : (q.num * (D : Int) / (q.den : Int) + 1) * (q.den : Int)
@@ -382,7 +384,9 @@ def qRoundDown (q : Q) (D : Nat) : Q := ⟨q.num * (D : Int) / (q.den : Int), D�
 theorem qRoundDown_le (q : Q) (hqd : 0 < q.den) (D : Nat) : Qle (qRoundDown q D) q := by
   show (q.num * (D : Int) / (q.den : Int)) * (q.den : Int) ≤ q.num * (D : Int)
   have hb : (0 : Int) < (q.den : Int) := by exact_mod_cast hqd
-  have hdm := Int.ediv_add_emod (q.num * (D : Int)) (q.den : Int)
+  have hdm : ((q.den : Int)) * ((q.num * (D : Int)) / (q.den : Int))
+      + (q.num * (D : Int)) % (q.den : Int) = (q.num * (D : Int)) :=
+    by rw [Int.add_comm]; exact Int.emod_add_mul_ediv _ _
   have hmnn := Int.emod_nonneg (q.num * (D : Int)) (by omega : (q.den : Int) ≠ 0)
   rw [Int.mul_comm (q.num * (D : Int) / (q.den : Int)) (q.den : Int)]; omega
 
@@ -718,43 +722,6 @@ def sStep (p : Nat) (hp : 1 ≤ p) : Real :=
           (Rmul (ofQ (⟨1, 2⟩ : Q) (by decide)) (lnOver p hp)))
     (Rsub (halfLogSq (p + 1) (Nat.succ_pos p)) (halfLogSq p hp))
 
-/-- `hSeq(j+1) - hSeq(j) = sStep(j+1)`. -/
-theorem hSeq_step_eq (j : Nat) :
-    Req (Rsub (hSeq (j + 1)) (hSeq j)) (sStep (j + 1) (Nat.succ_pos j)) := by
-  unfold hSeq sStep
-  rw [gSeq_step_eq j]
-  unfold dStep lnOver halfLogSq Rhalf
-  -- Now the goal is an equality of expressions involving logN, Rsub, Radd, Rmul.
-  -- Convert the custom operators to ordinary arithmetic.
-  simp only [Rsub, Radd, Rmul, Req]
-  -- The goal is a plain `=` between ℝ expressions.
-  have hj1 : (j + 1 : ℝ) ≠ 0 := by exact_mod_cast Nat.succ_ne_zero j
-  have hj2 : (j + 2 : ℝ) ≠ 0 := by exact_mod_cast Nat.succ_ne_zero (j + 1)
-  field_simp [hj1, hj2]
-  ring
-
-/-- Auxiliary log inequality --/
-lemma logN_sub_le_inv (p : ℕ) (hp : 1 ≤ p) : logN (p+1) (Nat.succ_pos p) - logN p hp ≤ 1 / (p : ℝ) := by
-  sorry
-
-/-- Bound for sStep --/
-lemma abs_sStep_le (p : Nat) (hp : 1 ≤ p) : |sStep p hp| ≤ 2 * (logN p hp)^2 / (p^3 : ℝ) := by
-  sorry
-
-/-- Summability and convergence --/
-lemma summable_sStep : Summable fun (k : ℕ) => sStep (k+1) (Nat.succ_pos k) := by
-  sorry
-
-lemma hSeq_tendsto : Filter.Tendsto hSeq Filter.atTop (𝓝 Rgamma1) := by
-  sorry
-
-/-- Error bound for `hSeq`. -/
-lemma hSeq_error (n : ℕ) (hn : 1 ≤ n) : Rle (Rabs (Rsub (hSeq n) Rgamma1)) (Rdiv (Rmul 3 (Rmul (logN n hn) (logN n hn))) (Rmul (ofNat n) (ofNat n))) := by
-  sorry
-
-/-- Updated upper bound for γ₁ using the accelerated sequence. -/
-theorem gammaOne_upper_bound_accel : Rle Rgamma1 (ofQ ⟨-728, 10000⟩ (by decide)) := by
-  sorry
 
 /-- **`(a − b) + (b − c) ≈ a − c`** — the telescoping split for the gap induction. -/
 theorem Rsub_split (a b c : Real) : Req (Radd (Rsub a b) (Rsub b c)) (Rsub a c) := by
@@ -1173,13 +1140,16 @@ theorem Qsub_le_left (c₁ c₂ : Int) (hc₂ : 0 ≤ c₂) (a b : Nat) :
 /-- `(2·M(j)+6)/2^{M(j)} ≤ 1/(j+1)` — the lower-tail anchor bound, directly from `gamma_domination`. -/
 theorem gamma_T_le (j : Nat) :
     Qle (⟨(2 * gammaMidx j + 6 : Int), 2 ^ gammaMidx j⟩ : Q) ⟨1, j + 1⟩ := by
-  simp only [Qle, gammaMidx]; push_cast
-  have hcast : (((j + 1) * (4 * j + 22) : Nat) : Int) ≤ ((2 ^ (2 * j + 8) : Nat) : Int) := by
-    exact_mod_cast gamma_domination j
-  push_cast at hcast
-  have key : (2 * (2 * (j : Int) + 8) + 6) * ((j : Int) + 1) = ((j : Int) + 1) * (4 * (j : Int) + 22) := by
-    ring_uor
-  omega
+  have e : ((j + 1) * (4 * j + 22) : Nat)
+      = (2 * (2 * j + 8) + 6) * (j + 1) := by
+    rw [Nat.mul_comm (j + 1) (4 * j + 22),
+        show ((4 : Nat) * j + 22) = 2 * (2 * j + 8) + 6 from by omega]
+  show ((2 * gammaMidx j + 6 : Int)) * ((((j : Nat) : Int)) + 1)
+      ≤ (1 : Int) * (((2 ^ gammaMidx j : Nat) : Int))
+  rw [Int.one_mul]
+  have hd := gamma_domination j
+  rw [e] at hd
+  exact_mod_cast hd
 
 /-- **Pairwise Cauchy (lower)**: for `j ≤ k`, `gSeqDyadic k − gSeqDyadic j ≥ −1/(j+1)`. -/
 theorem gamma_pair_ge {j k : Nat} (hjk : j ≤ k) :

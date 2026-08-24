@@ -292,7 +292,7 @@ private theorem prime_dvd_mul_fuel {q : Nat} (hq2 : 2 ≤ q)
       have hdvd2 : q ∣ q % a * b := by
         have hle : a * (q / a) * b ≤ q * b := by omega
         have hsub : q * b - a * (q / a) * b = q % a * b := by omega
-        have hd := Nat.dvd_sub hle (Nat.dvd_mul_right q b) hdvd1
+        have hd := Nat.dvd_sub (Nat.dvd_mul_right q b) hdvd1
         rwa [hsub] at hd
       rcases Nat.eq_zero_or_pos (q % a) with hz | hpos'
       · -- a ∣ q with 1 < a < q: impossible for a prime q
@@ -318,7 +318,7 @@ private theorem prime_dvd_mul_fuel {q : Nat} (hq2 : 2 ≤ q)
           have h1 : q ∣ q * (a / q * b) := Nat.dvd_mul_right q (a / q * b)
           rwa [← Nat.mul_assoc] at h1
         have hsub : a * b - q * (a / q) * b = a % q * b := by omega
-        have hd := Nat.dvd_sub hle hab hq1
+        have hd := Nat.dvd_sub hab hq1
         rwa [hsub] at hd
       rcases ih (a % q) b (by omega) hdvd2 with h | h
       · -- q ∣ a % q ⟹ q ∣ a

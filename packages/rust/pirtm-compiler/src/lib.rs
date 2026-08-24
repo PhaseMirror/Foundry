@@ -6,7 +6,11 @@
 mod error;
 pub mod linker;
 pub mod manifest;
+pub mod witness_bytecode;
+pub mod stablehlo_lowering;
 mod translate;
+
+
 
 pub use error::{CompileError, MlirModule, ProofError, ProofReceipt, TranslateError};
 pub use pirtm_mlir::PirtmOp;

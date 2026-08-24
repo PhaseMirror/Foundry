@@ -95,8 +95,8 @@ theorem H1_universal (T : FrobSys) (h : FrobHom H1 T) : ∀ n, h.map n = T.orbit
   | zero => exact h.map_g
   | succ k ih =>
       have hp : h.map (H1.phi k) = T.phi (h.map k) := h.map_phi k
-      show h.map (k + 1) = T.phi (T.orbit k)
-      rw [show (k + 1 : Nat) = H1.phi k from rfl, hp, ih]
+      rw [show (k.succ : Nat) = H1.phi k from rfl, hp,
+          show T.orbit (H1.phi k) = T.phi (T.orbit k) from rfl, ih]
 
 /-- The freeness property, packaged as **initiality**: a Frobenius system is free on one
     generator iff every Frobenius system receives a UNIQUE morphism from it (a morphism is

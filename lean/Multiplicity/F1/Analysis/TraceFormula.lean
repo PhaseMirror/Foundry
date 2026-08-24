@@ -49,7 +49,7 @@ lemma xi_zero_iff_nontrivial_zero (s : ℂ) (hleft : 0 < re s) (hright : re s < 
   · intro hξ
     have hζ : ζ s = 0 := (zeta_zero_iff_xi_zero s).mp hξ
     exact ⟨hleft, hright, hζ⟩
-  · intro ⟨hleft', hright', hζ⟩
+  · rintro ⟨hleft', hright', hζ⟩
     exact (zeta_zero_iff_xi_zero s).mpr hζ
 
 /-- The regularised determinant is zero iff ξ(s) = 0. -/

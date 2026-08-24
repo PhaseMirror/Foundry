@@ -58,14 +58,16 @@ theorem zeta2_lower : Rle (ofQ (⟨163, 100⟩ : Q) (by decide)) (zeta 2 (by dec
     `Usum_step_ineq` pattern (explicit `key`, `omega`). -/
 theorem zetaSum2_perstep_ge (m : Nat) :
     Qle (Qsub (⟨1, m + 2⟩ : Q) (⟨1, m + 3⟩ : Q)) (⟨1, npow (m + 2) 2⟩ : Q) := by
-  have hnp : npow (m + 2) 2 = (m + 2) * (m + 2) := by simp only [npow, Nat.mul_one]
+  have hnp : npow (m + 2) 2 = (m + 2) * (m + 2) := npow_two (m + 2)
   rw [hnp]
   simp only [Qle, Qsub, add, neg]
   push_cast
-  have key : 1 * (((m : Int) + 2) * ((m : Int) + 3))
-      - (1 * ((m : Int) + 3) + -1 * ((m : Int) + 2)) * (((m : Int) + 2) * ((m : Int) + 2))
-      = (m : Int) + 2 := by ring_uor
-  have hm : (0 : Int) ≤ (m : Int) := Int.ofNat_nonneg m
+  have c1 : (1 * (((m : Int) + 1 + 1) + 1) + -1 * ((m : Int) + 1 + 1)) = 1 := by ring_uor
+  have c2 : (1 * (((m : Int) + 1 + 1) * ((m : Int) + 1 + 1 + 1)))
+      = (((m : Int) + 1 + 1) * ((m : Int) + 1 + 1)) + ((m : Int) + 1 + 1) := by ring_uor
+  rw [c1, c2]
+  have hp : (0 : Int) ≤ ((m : Int) + 1 + 1) * ((m : Int) + 1 + 1) :=
+    Int.mul_nonneg (by omega) (by omega)
   omega
 
 /-- **Telescoped tail bound** `1/(N+2) − 1/(N+d+2) ≤ zetaSum 2 (N+d) − zetaSum 2 N` (`d`-induction,
@@ -121,11 +123,12 @@ theorem zeta2_ge_partial_tail (N : Nat) :
     refine Qadd_le_add (Qle_refl _) ?_
     simp only [Qle, add]; push_cast
     have hle : (n : Int) ≤ (N : Int) := by exact_mod_cast hnN
-    have key : 2 * (((n : Int) + 1) * ((N : Int) + 2))
-        - (1 * ((N : Int) + 2) + 1 * ((n : Int) + 1)) * ((n : Int) + 1)
-        = ((n : Int) + 1) * (((N : Int) + 1) - (n : Int)) := by ring_uor
-    have hp : (0 : Int) ≤ ((n : Int) + 1) * (((N : Int) + 1) - (n : Int)) :=
-      Int.mul_nonneg (by omega) (by omega)
+    have cL : ((1 * ((N : Int) + 1 + 1) + 1 * ((n : Int) + 1)) * ((n : Int) + 1))
+        = ((n : Int) + 1) * ((N : Int) + 1 + 1 + (n : Int) + 1) := by ring_uor
+    have cR : (2 * (((n : Int) + 1) * ((N : Int) + 1 + 1)))
+        = ((n : Int) + 1) * (2 * ((N : Int) + 1 + 1)) := by ring_uor
+    rw [cL, cR]
+    refine Int.mul_le_mul_of_nonneg_left ?_ (by omega)
     omega
   · -- n ≥ N
     obtain ⟨d, rfl⟩ := Nat.le.dest hNn

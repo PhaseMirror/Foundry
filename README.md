@@ -430,6 +430,47 @@ The Safe-Prime Cyclicity conjecture has been empirically bounded away from zero 
 ### Tensor Network Integration (`models/legalese-scopist/src/ts/tensorNetwork.ts`)
 The `evaluate_esi_risk_wasm` output tensor directly maps into the Prime-Indexed Hilbert Space (`p=2, 3, 5, 7`), converting WASM execution trace hashes into deterministically parsed amplitude and phase dimensions for real-time tensor computation.
 
+## P²C Core v1.1 & Sovereign Verification Architecture
+
+The **P²C (Prime-Encoded Provenance Compiler) Core v1.1** enforces the **Governance-as-Compilation** mandate across four vertically integrated layers:
+
+```
+[Lean 4 Formal Core] ──> [Rust / WASM Kernel] ──> [PWEH Gatekeeper] ──> [On-Chain EVM / Ledger]
+```
+
+### 1. Axiom-Clean Formal Core (`lean/`)
+- **`lean/Multiplicity/Dynamics/TwoLayer.lean`**: Constructive proof of the two-layer cross-talk contraction theorem (`coupled_system_is_contractive`) over exact rationals ($\mathbb{Q}$) with zero `sorry` and zero Mathlib.
+- **`lean/Multiplicity/CSL/Homomorphism.lean`**: Constructive representation homomorphism intertwining syntactic normalizer reductions with the Hecke action and modular trace preservation.
+
+### 2. Post-Quantum Cryptography & Zero-Knowledge Substrate
+- **NIST FIPS 204 (ML-DSA-87 / Dilithium5)**: Category-5 post-quantum detached signature standard with locked parameters (2,592-byte Public Key, 4,627-byte Detached Signature) in `packages/rust/dilithium-signer/` and `packages/contracts/DilithiumVerifier.sol`.
+- **Poseidon2 ($t=9, r=8$) Canonical Sponge**: 5,087 R1CS constraint budget specification (`FWHT: 384`, `H: 3171`, `Γ: 1500`, `Range: 32`) in `packages/rust/ace-zk/circuits/poseidon2.circom` and `ace.circom`.
+
+### 3. Glass Box UI & Legal Observability (`research/playground/glass-console/`)
+- **Layer 5 (Formal Verification Rail)**: Real-time status tracking of Lean 4 axiom-clean proofs and Kani model checking.
+- **Layer 6 (Socio-Atomic Model)**: Force-directed Cytoscape graph rendering Protons (Core Individuals), Neutrons (WORM Infrastructure), and Electrons (Valence Cloud) satisfying the Multiplicity Formula: $M(R) = 2R + 1$.
+- **Layer 7 & 8 (Hundian Valence & Crypto-Economic Phase Space)**: Master valuation equation ($V = 1 + S + C$) tracking saturation toward the Hundian Limit.
+
+### 4. Automated Compliance & Dissonance Reporting
+- **Machine-Readable Schema (`contracts/dissonance_report_schema.json`)**: Mandates machine-readable `nist_rmf_binding` (`GOVERN`, `MAP`, `MEASURE`, `MANAGE`) and EU AI Act Article 11 technical documentation.
+- **Audit Endpoint (`/audit/fpes/status`)**: Serves automated, cryptographically sealed compliance dossiers with fail-closed HTTP 403 interlocks on non-contractive state transitions ($L_\Phi \ge 1.0$).
+
+### 5. Citizen Gardens Certification Mark Engine (`scripts/verify_certification_mark.py`)
+Under **Section 7 of the License**, implementations independently verified for conformance with the Constitutional Core specifications receive the **"Citizen Gardens Verified"** or **"OEM Certified"** mark.
+
+```bash
+# Run the end-to-end Certification Mark verification pipeline
+python3 scripts/verify_certification_mark.py "Citizen Gardens Verified"
+```
+The pipeline verifies:
+1. Formal Lean 4 core proofs (zero `sorry`, constructive).
+2. PWEH rational contraction bounds and $S_{\text{integrity}}$ hash chains.
+3. NIST RMF schema conformance.
+4. Emits tamper-evident receipt to `state/certification_mark_receipt.json`.
+
+### 6. Defensive Publication
+- Formally registered in `docs/p2c_core_v1_1_defensive_publication.tex` establishing public domain prior art for witness calculus, prime-encoded tensor provenance, and Banach-space affine recursions.
+
 ## Building
 
 ```bash
@@ -447,6 +488,12 @@ lake build
 # Run Lean honesty audit
 bash lean/scripts/honesty_audit.sh
 
+# Run PWEH pre-receive gatekeeper
+python3 scripts/verify_pweh.py
+
+# Run Certification Mark pipeline
+python3 scripts/verify_certification_mark.py
+
 # Run all Rust tests
 cargo test --workspace
 
@@ -462,3 +509,4 @@ docker-compose up mcp-server
 ## License
 
 Prime Materia Open Commons and Bound Works License v1.0. The Constitutional Core is irrevocably public domain. Bound Works belong to their Makers. See [LICENSE](LICENSE).
+

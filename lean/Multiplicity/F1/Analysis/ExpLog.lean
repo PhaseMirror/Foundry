@@ -620,7 +620,7 @@ theorem expSum_quad {q : Q} (hqd : 0 < q.den) (hq : Qle (Qabs q) ⟨1, 1⟩) :
       refine Qle_trans (add_den_pos (Qmul_den_pos (Qmul_den_pos (Qabs_den_pos hqd) (Qabs_den_pos hqd))
           (expSumM_den_pos 1 (N + 1))) (Qmul_den_pos (Qmul_den_pos (Qabs_den_pos hqd) (Qabs_den_pos hqd)) (fct_pos _)))
         (Qadd_le_add (expSum_quad hqd hq N) (expTerm_quad hqd hq (by omega : 2 ≤ N + 1 + 1))) (Qeq_le ?_)
-      rw [npow_one]
+      rw [npow_one_left]
       simp only [Qeq, mul, add]; push_cast; ring_uor
 
 /-- **The artanh quadratic remainder** (brick B): `|artSum t b − t|·(1−ρ²) ≤ ρ³` for `|t| ≤ ρ`. Since
@@ -3320,7 +3320,7 @@ theorem qpow_mono_exp {η : Q} (hη0 : 0 ≤ η.num) (hηd : 0 < η.den) (hη1 :
 
 /-- `qpow ⟨c,1⟩ k = ⟨cᵏ,1⟩`. -/
 theorem qpow_const_nat (c : Int) : ∀ k, Qeq (qpow (⟨c, 1⟩ : Q) k) (⟨c ^ k, 1⟩ : Q)
-  | 0 => Qeq_refl _
+  | 0 => by simp only [qpow]; simp; rfl
   | (k + 1) => by
     show Qeq (mul (⟨c, 1⟩ : Q) (qpow ⟨c, 1⟩ k)) ⟨c ^ (k + 1), 1⟩
     refine Qeq_trans (Qmul_den_pos Nat.one_pos Nat.one_pos)

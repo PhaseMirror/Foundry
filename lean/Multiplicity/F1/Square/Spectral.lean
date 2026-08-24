@@ -217,7 +217,7 @@ theorem spectral_evidence_two :
 
 /-- `0 + 0` is not strictly positive (the `n ≥ 3` slices of the two-slice instance vanish). -/
 theorem not_Pos_zero_double : ¬ Pos (Radd zero zero) := by
-  intro ⟨n, hn⟩
+  rintro ⟨n, hn⟩
   simp only [Qlt, Radd, add, Qbound, zero_seq] at hn
   omega
 

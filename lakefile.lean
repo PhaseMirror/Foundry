@@ -53,8 +53,11 @@ lean_exe word_love_test where
   srcDir := "lean"
   root := `Multiplicity.WordLove.Test
 
--- F1.Square repair (Phase R1): dominance spine over the constructive-Real layer.
--- Roots pull the 82-module transitive cone only; widen to the full tree later.
+-- F1 square repair path (ADR-0033 follow-up): spine closure of the
+-- constructive-Real carried Weil PSD machinery.
 lean_lib F1Spine where
   srcDir := "lean"
-  roots := #[`Multiplicity.F1.Square.WeilPSD, `Multiplicity.F1.Square.CoupledWeilKernel]
+  roots := #[
+    `Multiplicity.F1.Square.WeilPSD,
+    `Multiplicity.F1.Square.CoupledWeilKernel
+  ]

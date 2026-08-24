@@ -623,7 +623,7 @@ private theorem altSum_quad_M {q : Q} {off : Nat} (hqd : 0 < q.den) (hq1 : Qle (
           (Qsub_den_pos (expSumM_den_pos 1 N) (by decide)))
           (Qmul_den_pos (Qmul_den_pos (Qabs_den_pos hqd) (Qabs_den_pos hqd)) (fct_pos _)))
         (Qadd_le_add ih (altTerm_quad hqd hq1 (by omega : 1 ≤ N + 1))) (Qeq_le ?_)
-      rw [npow_one]
+      rw [npow_one_left]
       simp only [Qeq, mul, add, Qsub, neg]; push_cast; ring_uor
 
 theorem altSum_quad {q : Q} {off : Nat} (hqd : 0 < q.den) (hq1 : Qle (Qabs q) (⟨1, 1⟩ : Q)) (N : Nat) :
@@ -668,7 +668,7 @@ theorem altSum_quad {q : Q} {off : Nat} (hqd : 0 < q.den) (hq1 : Qle (Qabs q) (�
 private theorem npow_ge_sq {B : Nat} (hB : 0 < B) : B * B ≤ npow B (2 * B + 1) := by
   have h1 : B ≤ npow B (2 * B) := by
     have := npow_mono (i := B) hB (a := 1) (b := 2 * B) (by omega)
-    rwa [(by rfl : npow B 1 = B * npow B 0), (by rfl : npow B 0 = 1), Nat.mul_one] at this
+    rwa [show ((1 : Nat) = 0 + 1) from rfl, npow_succ, npow_zero, Nat.mul_one] at this
   calc B * B ≤ B * npow B (2 * B) := Nat.mul_le_mul_left B h1
     _ = npow B (2 * B + 1) := (npow_succ B (2 * B)).symm
 

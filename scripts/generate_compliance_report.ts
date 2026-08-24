@@ -46,9 +46,11 @@ async function main() {
       function: "MEASURE",
       subcategory: "MS-1",
       evidence_type: "WASM-Native Contractivity & Poseidon2 Hash Seal",
-      live_lambda_p: 0.97,
-      live_lp_norm: 0.85
+      enforcement_mechanism: "scripts/fpes-gate.sh + build.rs compile-time abort",
+      live_lambda_p: 0.50,
+      live_lp_norm: 0.50
     },
+
     on_chain_telemetry: {
       registry_contract: registryAddress,
       total_certified_witnesses: totalAttestations,

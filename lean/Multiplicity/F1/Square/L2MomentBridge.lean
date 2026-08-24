@@ -105,7 +105,7 @@ theorem moments_vanish_congr_of_dist2I (φ ψ : L2Test) (h : Req (dist2I φ ψ) 
 
 /-- `0` is not strictly positive (local: the copy in `LambdaGap` is off this import chain). -/
 private theorem zero_not_Pos' : ¬ Pos zero := by
-  intro ⟨n, hn⟩
+  rintro ⟨n, hn⟩
   simp only [Qlt, Qbound, zero_seq] at hn
   omega
 

@@ -485,7 +485,13 @@ theorem altSum_add_eq {a b : Q} (had : 0 < a.den) (hbd : 0 < b.den) :
       (Qsub (Fsum (cosConv a b) (N + 1)) (Fsum (sinConv a b) N))
   | 0 => by
       have hbase : Qeq (altTerm (add a b) 0 0) (cosConv a b 0) := by
-        simp only [cosConv, Fsum, altTerm, qpow]; decide
+        simp only [cosConv, Fsum, altTerm, qpow]
+        rw [show ((0 : Nat) - 0) = 0 from rfl]
+        simp only [qpow]
+        simp only [Qeq, mul]
+        push_cast
+        rw [show (((fct 0 : Nat) : Int)) = 1 from rfl]
+        ring_uor
       have h1 := altTerm_add_eq had hbd 0
       refine Qeq_trans (add_den_pos (cosConv_den_pos had hbd 0)
           (Qsub_den_pos (cosConv_den_pos had hbd 1) (sinConv_den_pos had hbd 0)))

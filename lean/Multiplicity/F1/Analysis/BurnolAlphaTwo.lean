@@ -93,8 +93,29 @@ theorem burnolAlphaTwo_neg : Pos (Rneg burnolAlphaTwo) := by
   have hstart : Rle (ofQ (⟨1, 100⟩ : Q) (by decide))
       (Radd (Rneg (ofQ (⟨12, 17⟩ : Q) (by decide))) (Rneg (ofQ (⟨-78, 100⟩ : Q) (by decide)))) := by
     intro n
-    show Qle (⟨1, 100⟩ : Q) (add (add (neg (⟨12, 17⟩ : Q)) (neg (⟨-78, 100⟩ : Q))) ⟨2, n + 1⟩)
-    simp only [Qle, add, neg]; push_cast; omega
+    have h0 : (Radd (Rneg (ofQ (⟨12, 17⟩ : Q) (by decide)))
+        (Rneg (ofQ (⟨-78, 100⟩ : Q) (by decide)))).seq n
+        = add (neg (⟨12, 17⟩ : Q)) (neg (⟨-78, 100⟩ : Q)) := rfl
+    rw [h0]
+    have h1 : add (neg (⟨12, 17⟩ : Q)) (neg (⟨-78, 100⟩ : Q)) = (⟨126, 1700⟩ : Q) := by
+      show add (⟨-12, 17⟩ : Q) (⟨78, 100⟩ : Q)
+          = ⟨(⟨-12, 17⟩ : Q).num * (((⟨78, 100⟩ : Q).den : Nat) : Int)
+              + (⟨78, 100⟩ : Q).num * (((⟨-12, 17⟩ : Q).den : Nat) : Int),
+            (⟨-12, 17⟩ : Q).den * (⟨78, 100⟩ : Q).den⟩
+      rfl
+    rw [h1]
+    have h2 : add (⟨126, 1700⟩ : Q) (⟨2, n + 1⟩ : Q)
+        = (⟨126 * (n + 1) + 3400, 1700 * (n + 1)⟩ : Q) := by
+      show add (⟨126, 1700⟩ : Q) (⟨2, n + 1⟩ : Q)
+          = ⟨(⟨126, 1700⟩ : Q).num * (((⟨2, n + 1⟩ : Q).den : Nat) : Int)
+              + (⟨2, n + 1⟩ : Q).num * (((⟨126, 1700⟩ : Q).den : Nat) : Int),
+            (⟨126, 1700⟩ : Q).den * (⟨2, n + 1⟩ : Q).den⟩
+      rfl
+    rw [h2]
+    show ((1 : Int)) * (((1700 * (n + 1) : Nat) : Int))
+        ≤ (126 * (n + 1) + 3400 : Int) * ((100 : Nat) : Int)
+    rw [Int.natCast_mul]
+    omega
   exact Pos_of_Rle_ofQ (c := (⟨1, 100⟩ : Q)) (by decide) (by decide)
     (Rle_trans hstart
       (Rle_trans (Radd_le_add (Rneg_le hcost_le) (Rneg_le hhplus_le))

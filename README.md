@@ -243,7 +243,7 @@ Verification flow: local proof generation -> local verification -> on-chain subm
 
 zk-SNARK circuits for on-chain verification:
 
-- **`ace.circom`**: ACE (Automated Circuit Enhancement) circuit
+- **`ace.circom`**: ACE (Arithmetic Control Engine) circuit
 - **`attestation.circom`**: Attestation proof
 - **`consent.circom`**: Consent proof
 - **`breakglass.circom`**: Break-glass emergency access

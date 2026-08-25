@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ADR-006 - MultiContract Atomic Contraction with PartialSum Tokens</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 40px auto; line-height: 1.6; padding: 0 20px; color: #24292e; }
+    h1 { border-bottom: 1px solid #eaecef; padding-bottom: 0.3em; }
+    .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-weight: bold; background: #e1f5fe; color: #0277bd; }
+    code { background: #f6f8fa; padding: 2px 5px; border-radius: 3px; font-family: monospace; }
+  </style>
+</head>
+<body>
+  <h1>ADR-006: MultiContract Atomic Contraction with PartialSum Tokens</h1>
+  <p><span class="badge">Status: Accepted</span></p>
+  
+
+  <h2>Context</h2>
+  <p>Contraction over sharded tensor dimensions produces partial sums requiring explicit collective reductions before downstream consumption.</p>
+
+  <h2>Decision</h2>
+  <p>Standardize opcode 0x05 (MultiContract) to atomically verify dual signatures and emit PartialSum(mesh_axis) tokens consumed strictly by subsequent Collective operations.</p>
+
+  <h2>Consequences</h2>
+  <ul>
+      <li>Prevents unreduced partial sum escapes in SPMD graphs</li>
+      <li>Simultaneous atomic multi-axis tensor contractions in O(k) time</li>
+  </ul>
+
+  <h2>Traceability & Links</h2>
+  <ul>
+      <li><strong>[Specification]</strong> <code>specs/p2c_petc_v12.md</code> &mdash; P2C PETC v1.2 Opcode Semantics Section 4</li>
+      <li><strong>[Source File]</strong> <code>packages/rust/engine/src/petc.rs</code> &mdash; MultiContract Evaluator</li>
+    </ul>
+</body>
+</html>

@@ -12,12 +12,12 @@ lean_lib Prime {
 }
 
 lean_lib ADR {
-  roots := #[`ADR.Core, `ADR.Proofs, `ADR.Examples, `ADR.Export, `ADR.Test, `ADR.Theorems.CareViability]
+  roots := #[`ADR.Core, `ADR.Proofs, `ADR.Examples, `ADR.Export, `ADR.Test, `ADR.Theorems.CareViability, `ADR.Theorems.Homestead_UCC_Care_Bridge]
 }
 
 @[default_target]
 lean_lib PhaseMirror {
-  roots := #[`PhaseMirror, `Care, `ADR.Theorems.CareViability, `ADR.Core, `ADR.Proofs, `ADR.Examples, `ADR.Export, `ADR.Test]
+  roots := #[`PhaseMirror, `Care, `ADR.Theorems.CareViability, `ADR.Theorems.Homestead_UCC_Care_Bridge, `ADR.Core, `ADR.Proofs, `ADR.Examples, `ADR.Export, `ADR.Test]
 }
 
 @[test_driver]
@@ -61,3 +61,9 @@ lean_lib F1Spine where
     `Multiplicity.F1.Square.WeilPSD,
     `Multiplicity.F1.Square.CoupledWeilKernel
   ]
+
+-- Certification gate: formal veto / triple-lock linkage backing the
+-- documented control surfaces (ADR-PML-003).
+lean_lib CertificationGate where
+  srcDir := "lean"
+  roots := #[`Core.CertificationGate]

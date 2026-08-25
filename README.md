@@ -400,7 +400,7 @@ Interactive WASM/LSP compiler environment with glassmorphism UI:
 The `language_mapping` module has achieved complete mathematical and computational alignment between Lean 4 and Rust/Kani.
 
 ### Verified Lean Theorems (`lean/language_mapping/`)
-The following core theorems have been fully proven and verified without `sorry`:
+The following core theorems in `lean/Multiplicity/language_mapping/` carry complete machine-checked proofs (`lake build` clean; no manifested debt against them in `alp_sorry_manifest.json`):
 - `stability_on_no_structural_change`: Asserts regime stability when semantic structure is strictly maintained.
 - `stability_on_output_match`: Guarantees behavioral adherence when outputs precisely match the semantic manifold.
 - `artifact_on_divergence_and_structural`: Identifies adversarial divergence resulting from structural mutations as mere artifacts.
@@ -420,7 +420,7 @@ The Rust core mirrors the mathematical invariants set by the Lean formalization:
 The `Sedona Spine` and its associated analytic structures have achieved full integration across the formal mathematical core, empirical validation layer, and the prime-indexed Multiplicity Tensor Network:
 
 ### Verified Lean Theorems (`lean/dynamics/SedonaRiskModel.lean` & `EulerProduct.lean`)
-The following analytic and ethical properties have been rigidly enforced via Phase Mirror structural constraints (with zero `sorry` gaps):
+The following analytic and ethical properties have been rigidly enforced via Phase Mirror structural constraints (machine-checked proofs in `lean/dynamics/SedonaRiskModel.lean` & `EulerProduct.lean`; the repo-wide debt boundary is `alp_sorry_manifest.json`):
 - `unstable_must_be_critical`: Enforces the Zero Drift mandate by mathematically mapping any deviations from threshold stability and physical fidelity (via PIRTM constraints) strictly to `RiskLevel.Critical`.
 - `dirichlet_series_von_mangoldt_proved`: The formal Dirichlet series of von Mangoldt is equated structurally to `-ζ'/ζ`, eliminating the final analytic barrier and narrowing the Riemann Hypothesis proof down strictly to prime cyclicity.
 
@@ -439,7 +439,7 @@ The **P²C (Prime-Encoded Provenance Compiler) Core v1.1** enforces the **Govern
 ```
 
 ### 1. Axiom-Clean Formal Core (`lean/`)
-- **`lean/Multiplicity/Dynamics/TwoLayer.lean`**: Constructive proof of the two-layer cross-talk contraction theorem (`coupled_system_is_contractive`) over exact rationals ($\mathbb{Q}$) with zero `sorry` and zero Mathlib.
+- **`lean/Multiplicity/Dynamics/TwoLayer.lean`**: Constructive proof of the two-layer cross-talk contraction theorem (`coupled_system_is_contractive`) over exact rationals ($\mathbb{Q}$); the development is self-contained (no external dependencies) and its verification boundary is recorded in `alp_sorry_manifest.json`.
 - **`lean/Multiplicity/CSL/Homomorphism.lean`**: Constructive representation homomorphism intertwining syntactic normalizer reductions with the Hecke action and modular trace preservation.
 
 ### 2. Post-Quantum Cryptography & Zero-Knowledge Substrate
@@ -463,7 +463,7 @@ Under **Section 7 of the License**, implementations independently verified for c
 python3 scripts/verify_certification_mark.py "Citizen Gardens Verified"
 ```
 The pipeline verifies:
-1. Formal Lean 4 core proofs (zero `sorry`, constructive).
+1. Formal Lean 4 core proofs (constructive, machine-checked; residual debt manifested per `alp_sorry_manifest.json`).
 2. PWEH rational contraction bounds and $S_{\text{integrity}}$ hash chains.
 3. NIST RMF schema conformance.
 4. Emits tamper-evident receipt to `state/certification_mark_receipt.json`.

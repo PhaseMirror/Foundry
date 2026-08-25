@@ -328,7 +328,18 @@ def scan_lean() -> LeanEvidence:
     ev = LeanEvidence()
     if not os.path.isdir(LEAN_ROOT):
         return ev
-    decl_rx = re.compile(r"^\s*(?:theorem|lemma|def|abbrev|example)\s+([A-Za-z_][\w.']*)")
+    # `axiom` is included because alp_sorry_manifest.json explicitly tracks
+    # manifested axioms ("type": "axiom"); ignoring them would flag every
+    # axiom-backed manifest entry as stale boundary drift.
+    # Attribute decorators (@[proof], @[simp], @[adr], ...) may precede the
+    # declaration keyword (repo convention, cf. AGENTS.md); skipping them
+    # prevents attributed declarations from being invisible to existence
+    # checks.
+    decl_rx = re.compile(
+        r"^\s*(?:@\[[^\]]*\]\s*)*"
+        r"(?:private\s+|protected\s+|noncomputable\s+|partial\s+)*"
+        r"(?:theorem|lemma|axiom|def|abbrev|example)\s+([A-Za-z_][\w.']*)"
+    )
     for dirpath, _dirs, files in os.walk(LEAN_ROOT):
         if "/.lake/" in dirpath or "/build/" in dirpath:
             continue
@@ -361,7 +372,19 @@ def scan_lean() -> LeanEvidence:
                     cur_decl = m.group(1)
                     cur_line = i
                     ev.decls.add(cur_decl)
-                    ev.decl_meta[cur_decl] = {"file": rel, "line": cur_line, "has_sorry": False}
+                    ev.decl_meta[cur_decl] = {
+                        "file": rel, "line": cur_line,
+                        "has_sorry": False, "inline_sorry": False,
+                    }
+                    # ADR-PML-005 (Facet A): a `sorry` written inline on the
+                    # declaration line itself (`theorem foo : P := sorry`)
+                    # belongs to the fresh declaration; without this check the
+                    # hit escapes both the tally and the manifestation audit.
+                    if re.search(r"\bsorry\b", s):
+                        file_sorry += 1
+                        ev.total_sorry += 1
+                        ev.decl_meta[cur_decl]["has_sorry"] = True
+                        ev.decl_meta[cur_decl]["inline_sorry"] = True
                     continue
                 # Whole-word `sorry` tactic (not `sorry_free`, docstring, etc.)
                 if re.search(r"\bsorry\b", s):
@@ -485,6 +508,40 @@ def detect_tensions(claims: list[Claim], lean: LeanEvidence,
             leaked=True,
             owner="the-examiner",
         ))
+
+    # --- Unmanifested sorry debt -> risk claimed vs risk owned ------------- #
+    # ADR-PML-005 Decision step 2: any sorry-bearing declaration whose leaf is
+    # not permitted by alp_sorry_manifest.json is a tension on its own — this
+    # rule is NOT gated behind purity/theorem-claim doc evidence.
+    unmanifested = _unmanifested_sorry_decls(lean, manifest["permitted"])
+    if unmanifested:
+        inline_n = sum(1 for _, meta in unmanifested if meta.get("inline_sorry"))
+        tensions.append(Tension(
+            axis="risk claimed vs risk owned",
+            title=(f"Unmanifested sorry debt: {len(unmanifested)} declaration(s) carry `sorry` "
+                   f"with no alp_sorry_manifest.json entry"),
+            severity=4,
+            blast_radius=len(unmanifested),
+            effort=2,
+            doc_evidence=[
+                "alp_sorry_manifest.json: 'Debt ledger for transitional sorry/axiom blocks. "
+                "Every entry must be amortized' — the ledger claims exhaustiveness over manifested proof debt",
+                "docs/adr/ADR-PML-005.md — Facet A (inline `:= sorry`) + Facet B (unmanifested blocks)",
+            ],
+            impl_evidence=[f"{meta['file']}:{meta['line']} — `{decl}` carries unmanifested `sorry`"
+                           f"{' (inline on declaration line)' if meta.get('inline_sorry') else ''}"
+                           for decl, meta in unmanifested[:8]]
+                          + ([f"... +{len(unmanifested) - 8} more"] if len(unmanifested) > 8 else []),
+            leaked=True,
+            owner="the-examiner",
+            is_cluster=True,
+            cluster_names=[decl.split(".")[-1] for decl, _ in unmanifested],
+        ))
+        if inline_n:
+            # keep the facet split visible in the ranked printout
+            tensions[-1].impl_evidence.insert(
+                0, f"facet split: {inline_n} inline `:= sorry` (Facet A), "
+                   f"{len(unmanifested) - inline_n} block-level (Facet B)")
 
     # --- Missing theorem-name claims -> urgency vs capacity ---------------- #
     seen = set()
@@ -686,6 +743,24 @@ def _all_sorrys_manifested(lean: LeanEvidence, manifest_permitted: set[str]) -> 
             if not any(leaf == m.split(".")[-1] for m in manifest_permitted):
                 return False
     return True
+
+
+def _unmanifested_sorry_decls(lean: LeanEvidence,
+                              manifest_permitted: set[str]) -> list[tuple[str, dict]]:
+    """Return sorted (decl, meta) pairs carrying `sorry` with no ledger entry.
+
+    Leaf-name match semantics are identical to _all_sorrys_manifested and
+    honesty_audit.sh so all three surfaces can never disagree (ADR-PML-005).
+    """
+    out = []
+    for decl in sorted(lean.decl_meta):
+        meta = lean.decl_meta[decl]
+        if not meta.get("has_sorry"):
+            continue
+        leaf = decl.split(".")[-1]
+        if not any(leaf == m.split(".")[-1] for m in manifest_permitted):
+            out.append((decl, meta))
+    return out
 
 
 def _check_overdue_entries(entries: list[dict]) -> int:
@@ -1010,7 +1085,16 @@ stub, per `alp_sorry_manifest.json`) backs it.
 
 def _actionable_levers(t: Tension) -> list[str]:
     levers: list[str] = []
-    if t.is_cluster and t.cluster_names:
+    if t.is_cluster and t.cluster_names and t.title.startswith("Unmanifested sorry debt"):
+        levers.append("Ratify the ADR-PML-005 debt-amnesty batch at the next governance cycle: classify "
+                      "every listed declaration via state/amnesty_batch_PML-005.json with a disposition "
+                      "(tier3_aspirational | prove | exclude), governor, deadline, and pairing per entry — "
+                      "no fabricated metadata.")
+        levers.append("Apply ratified entries to alp_sorry_manifest.json; move `exclude` scaffolds out of "
+                      "the canonical tree (_archive/, legacy/, phase_mirror_loop_scaffolds/).")
+        levers.append("Re-run scripts/honesty_audit.sh until it exits green with zero unauthorized blocks "
+                      "and loop-tally parity holds.")
+    elif t.is_cluster and t.cluster_names:
         names = ", ".join(f"`{n}`" for n in t.cluster_names[:12])
         if len(t.cluster_names) > 12:
             names += f", +{len(t.cluster_names) - 12} more"

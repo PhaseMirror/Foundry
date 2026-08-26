@@ -8,23 +8,23 @@
 > `ADR-Plan-Phase-Mirror-Dissonance-Loop.backlog.md`.
 
 ## Loop Summary
-- Documents scanned: 27
+- Documents scanned: 35
 - Lean declarations indexed: 15879
 - `sorry` blocks found in lean: 195
 - `mathlib` imports found in lean: 2
-- Tensions detected: 1  (rolled into 1 plan ADRs)
+- Tensions detected: 0  (rolled into 0 plan ADRs)
 - Manifest drift (permitted sorrys not present): 0
 - Overdue sorry debt entries: 0
 - Re-entrant accepted ADRs: 0
 - Consequence entailment gaps: 0
 
 
-**Dissonance drift vs previous run:** total score 0 -> 12.0 (↑ 12.0).
+**Dissonance drift vs previous run:** total score 0 -> 0 (→ 0).
 
 ## Ranked Plan ADRs (actionable levers)
 | # | Plan ADR | Axis | Sev | Gaps | Aggregate Score | Owner | Leak |
 |---|----------|------|-----|------|-----------------|-------|------|
-| 1 | ADR-PML-006 | risk claimed vs risk owned | 4 | 1 | **12.0** | the-publisher | ok |
+
 
 ## How to operate the loop
 1. Open the top-ranked `ADR-PML-###` file; it contains the actionable levers.

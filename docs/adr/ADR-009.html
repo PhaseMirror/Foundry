@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ADR-009 - Mandatory Contraction Witness & Spectral Radius Verification Before Emission Gate</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 40px auto; line-height: 1.6; padding: 0 20px; color: #24292e; }
+    h1 { border-bottom: 1px solid #eaecef; padding-bottom: 0.3em; }
+    .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-weight: bold; background: #e1f5fe; color: #0277bd; }
+    code { background: #f6f8fa; padding: 2px 5px; border-radius: 3px; font-family: monospace; }
+  </style>
+</head>
+<body>
+  <h1>ADR-009: Mandatory Contraction Witness & Spectral Radius Verification Before Emission Gate</h1>
+  <p><span class="badge">Status: Accepted</span></p>
+  
+
+  <h2>Context</h2>
+  <p>Unconstrained recurrence or agent emission can produce unbounded Lyapunov drift, violating the sovereign contraction invariant of the Phase Mirror core.</p>
+
+  <h2>Decision</h2>
+  <p>No signal may pass the Emission Gate unless a machine-checkable ContractionWitness is supplied that proves the spectral radius of the current operator is strictly less than 1. The witness must be re-validated on every gate evaluation.</p>
+
+  <h2>Consequences</h2>
+  <ul>
+      <li>EmissionGate returns Suppress or Hold when no valid witness is present</li>
+      <li>SpectralGovernor is the sole authority permitted to mint ContractionWitness values</li>
+      <li>Any bypass of the witness check constitutes a hard kernel violation and aborts the process</li>
+  </ul>
+
+  <h2>Traceability & Links</h2>
+  <ul>
+      <li><strong>[Lean Declaration]</strong> <code>PhaseMirror.SpectralGovernor</code> &mdash; Formal contract of spectral governor</li>
+      <li><strong>[Source File]</strong> <code>packages/rust/ramanujan-multiplicity</code> &mdash; Witness generation site</li>
+    </ul>
+</body>
+</html>

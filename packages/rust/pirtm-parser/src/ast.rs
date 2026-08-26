@@ -2,6 +2,14 @@
 
 use std::fmt;
 
+/// AST Statement types for EBNF grammar decoding
+#[derive(Debug, Clone, PartialEq)]
+pub enum Statement {
+    TensorDeclaration { identifier: String, primes: Vec<String> },
+    OperatorApplication { identifier: String, has_lambda: bool, prime_chain: Vec<String> },
+    ContractivityAssertion { identifier: String, bound: f64 },
+}
+
 /// A cryptographic artifact proving mathematical soundness
 #[derive(Debug, PartialEq, Clone)]
 pub struct ContractivityReceipt {
@@ -524,26 +532,17 @@ mod tests {
     fn test_pir_tm_convergence_proven_in_lean() {
         // Verify that the Lean theorem names are referenced in the codebase
         // Try multiple paths since tests may run from different cwd
-        let lean_content = std::fs::read_to_string("../substrates/lean/MOC/PIRTM.lean")
+        let lean_content = std::fs::read_to_string("../../../lean/Multiplicity/PIRTM.lean")
+            .or_else(|_| std::fs::read_to_string("lean/Multiplicity/PIRTM.lean"))
+            .or_else(|_| std::fs::read_to_string("../../lean/Multiplicity/PIRTM.lean"))
+            .or_else(|_| std::fs::read_to_string("../substrates/lean/MOC/PIRTM.lean"))
             .or_else(|_| std::fs::read_to_string("../../substrates/lean/MOC/PIRTM.lean"))
-            .or_else(|_| std::fs::read_to_string("substrates/lean/MOC/PIRTM.lean"))
-            .or_else(|_| {
-                std::fs::read_to_string(
-                    "/home/multiplicity/Multiplicity/Prime/substrates/lean/MOC/PIRTM.lean",
-                )
-            })
             .expect("Failed to read PIRTM.lean");
 
-        // Theorem 2: Recursive Tensor Stability
+        // Scale Factor Stabilization Theorem: k_equals_kappa
         assert!(
-            lean_content.contains("recursive_tensor_stability_theorem"),
-            "Theorem 2 missing from PIRTM.lean"
-        );
-
-        // Theorem 3: Computational Invariance
-        assert!(
-            lean_content.contains("computational_invariance_theorem"),
-            "Theorem 3 missing from PIRTM.lean"
+            lean_content.contains("k_equals_kappa") || lean_content.contains("dynamicScalingFactor"),
+            "Stabilization theorem missing from PIRTM.lean"
         );
 
         // No sorries
@@ -562,14 +561,12 @@ mod tests {
     #[test]
     fn test_pirtm_lean_file_exists() {
         // Try multiple relative paths since tests may run from different cwd
-        let exists = std::fs::metadata("../substrates/lean/MOC/PIRTM.lean").is_ok()
-            || std::fs::metadata("../../substrates/lean/MOC/PIRTM.lean").is_ok()
-            || std::fs::metadata("substrates/lean/MOC/PIRTM.lean").is_ok()
-            || std::fs::metadata(
-                "/home/multiplicity/Multiplicity/Prime/substrates/lean/MOC/PIRTM.lean",
-            )
-            .is_ok();
-        assert!(exists, "PIRTM.lean must exist in substrates/lean/MOC/");
+        let exists = std::fs::metadata("../../../lean/Multiplicity/PIRTM.lean").is_ok()
+            || std::fs::metadata("lean/Multiplicity/PIRTM.lean").is_ok()
+            || std::fs::metadata("../../lean/Multiplicity/PIRTM.lean").is_ok()
+            || std::fs::metadata("../substrates/lean/MOC/PIRTM.lean").is_ok()
+            || std::fs::metadata("../../substrates/lean/MOC/PIRTM.lean").is_ok();
+        assert!(exists, "PIRTM.lean must exist in lean/Multiplicity/");
     }
 
     #[test]

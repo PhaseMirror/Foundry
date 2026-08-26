@@ -32,6 +32,9 @@ open ADR.Export
 #check (adr005_consequence_entailment : Entails [adr005_P, .implies adr005_P adr005_Q] adr005_Q)
 #check (adr006_consequence_entailment : Entails [adr006_P, .implies adr006_P adr006_Q] adr006_Q)
 #check (adr007_consequence_entailment : Entails [adr007_P, .implies adr007_P adr007_Q] adr007_Q)
+#check (adr008_consequence_entailment : Entails [adr008_P, .implies adr008_P adr008_Q] adr008_Q)
+#check (adr009_consequence_entailment : Entails [adr009_P, .implies adr009_P adr009_Q] adr009_Q)
+#check (adr010_consequence_entailment : Entails [adr010_P, .implies adr010_P adr010_Q] adr010_Q)
 
 /-! ## 2. Property-Based / Universal Invariant Verification -/
 
@@ -151,7 +154,7 @@ theorem syntactic_check_misses_compound_conflict :
 /-- Snapshot exported artifacts as raw bytes for cross-run comparison. -/
 def snapshotExports (reg : ADRRegistry) (dir : System.FilePath) :
     IO (List (String × ByteArray)) := do
-  let names := "README.md" :: reg.adrs.flatMap (fun a => [s!"{a.id}.md", s!"{a.id}.html"])
+  let names := "README.md" :: "registry.json" :: reg.adrs.flatMap (fun a => [s!"{a.id}.md", s!"{a.id}.html", s!"{a.id}.json"])
   let mut snaps : List (String × ByteArray) := []
   for n in names do
     let bytes ← IO.FS.readBinFile (dir / n)
@@ -188,10 +191,10 @@ def runAllTests : IO UInt32 := do
   -- Test 1: Registry Invariants
   IO.print "[TEST 1/5] Checking Sample Registry Invariants ... "
   let n := sampleRegistry.adrs.length
-  if n == 7 then
-    IO.println "PASSED (7 ADRs verified: Unique IDs, Acyclicity, No Conflicts)"
+  if n == 10 then
+    IO.println "PASSED (10 ADRs verified: Unique IDs, Acyclicity, No Conflicts)"
   else
-    IO.println s!"FAILED (expected 7 ADRs, found {n})"
+    IO.println s!"FAILED (expected 10 ADRs, found {n})"
     return 1
 
   -- Test 2: Consequence Entailment Logic

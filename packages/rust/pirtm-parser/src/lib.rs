@@ -314,6 +314,244 @@ pub fn parse(input: &str) -> Result<Program, String> {
     parser.parse_program()
 }
 
+// ---------------------------------------------------------------------------
+// PIRTM EBNF Decoder Parser (Mirroring pirtm/csc.py)
+// ---------------------------------------------------------------------------
+
+pub use ast::Statement;
+
+#[derive(Debug, Clone, PartialEq)]
+enum EBNFToken {
+    Keyword(String),
+    Lambda,
+    Ident(String),
+    Prime(String),
+    Float(f64),
+    Op(String),
+}
+
+pub struct PIRTMDecoderParser {
+    tokens: Vec<EBNFToken>,
+    pos: usize,
+}
+
+impl PIRTMDecoderParser {
+    pub fn new(source: &str) -> Result<Self, String> {
+        let tokens = Self::tokenize(source)?;
+        Ok(Self { tokens, pos: 0 })
+    }
+
+    fn tokenize(source: &str) -> Result<Vec<EBNFToken>, String> {
+        let mut tokens = Vec::new();
+        let chars: Vec<char> = source.chars().collect();
+        let mut i = 0;
+        let n = chars.len();
+
+        while i < n {
+            let c = chars[i];
+            if c.is_whitespace() {
+                i += 1;
+                continue;
+            }
+            if c == '#' {
+                while i < n && chars[i] != '\n' {
+                    i += 1;
+                }
+                continue;
+            }
+            if c == '\\' && i + 8 < n && &chars[i..i + 9] == &['\\', 'L', 'a', 'm', 'b', 'd', 'a', '_', 'm'] {
+                tokens.push(EBNFToken::Lambda);
+                i += 9;
+                continue;
+            }
+            if c == 'Λ' && i + 2 < n && &chars[i..i + 3] == &['Λ', '_', 'm'] {
+                tokens.push(EBNFToken::Lambda);
+                i += 3;
+                continue;
+            }
+            if c == '|' && i + 1 < n && chars[i + 1] == '>' {
+                tokens.push(EBNFToken::Op("|>".to_string()));
+                i += 2;
+                continue;
+            }
+            if c == '[' || c == ']' || c == '(' || c == ')' || c == ',' || c == ';' || c == '*' || c == '<' || c == '>' {
+                tokens.push(EBNFToken::Op(c.to_string()));
+                i += 1;
+                continue;
+            }
+            if c.is_ascii_digit() {
+                let start = i;
+                while i < n && (chars[i].is_ascii_digit() || chars[i] == '.') {
+                    i += 1;
+                }
+                let s: String = chars[start..i].iter().collect();
+                if let Ok(f) = s.parse::<f64>() {
+                    tokens.push(EBNFToken::Float(f));
+                } else {
+                    return Err(format!("Invalid numeric literal: {}", s));
+                }
+                continue;
+            }
+            if c.is_ascii_alphabetic() || c == '_' {
+                let start = i;
+                while i < n && (chars[i].is_ascii_alphanumeric() || chars[i] == '_') {
+                    i += 1;
+                }
+                let s: String = chars[start..i].iter().collect();
+                if s == "tensor" || s == "assert_contractive" {
+                    tokens.push(EBNFToken::Keyword(s));
+                } else if s.starts_with("p_") && s[2..].chars().all(|ch| ch.is_ascii_digit()) {
+                    tokens.push(EBNFToken::Prime(s));
+                } else {
+                    tokens.push(EBNFToken::Ident(s));
+                }
+                continue;
+            }
+            return Err(format!("Unexpected character: {}", c));
+        }
+        Ok(tokens)
+    }
+
+    fn peek(&self) -> Option<&EBNFToken> {
+        self.tokens.get(self.pos)
+    }
+
+    fn next_token(&mut self) -> Option<EBNFToken> {
+        if self.pos < self.tokens.len() {
+            let tok = self.tokens[self.pos].clone();
+            self.pos += 1;
+            Some(tok)
+        } else {
+            None
+        }
+    }
+
+    pub fn parse_source(&mut self) -> Result<Vec<Statement>, String> {
+        let mut stmts = Vec::new();
+        while self.peek().is_some() {
+            stmts.push(self.parse_statement()?);
+        }
+        Ok(stmts)
+    }
+
+    fn parse_statement(&mut self) -> Result<Statement, String> {
+        match self.peek() {
+            Some(EBNFToken::Keyword(k)) if k == "tensor" => self.parse_tensor_declaration(),
+            Some(EBNFToken::Keyword(k)) if k == "assert_contractive" => self.parse_contractivity_assertion(),
+            Some(EBNFToken::Ident(_)) => self.parse_operator_application(),
+            Some(other) => Err(format!("Unexpected token starting statement: {:?}", other)),
+            None => Err("Unexpected EOF".to_string()),
+        }
+    }
+
+    fn parse_tensor_declaration(&mut self) -> Result<Statement, String> {
+        self.next_token(); // consume 'tensor'
+        let ident = match self.next_token() {
+            Some(EBNFToken::Ident(id)) => id,
+            other => return Err(format!("Expected identifier after tensor, got {:?}", other)),
+        };
+        match self.next_token() {
+            Some(EBNFToken::Op(ref op)) if op == "[" => {}
+            other => return Err(format!("Expected '[' after tensor identifier, got {:?}", other)),
+        }
+        let mut primes = Vec::new();
+        loop {
+            match self.next_token() {
+                Some(EBNFToken::Prime(p)) => primes.push(p),
+                other => return Err(format!("Expected prime token p_N, got {:?}", other)),
+            }
+            match self.peek() {
+                Some(EBNFToken::Op(ref op)) if op == "," => {
+                    self.next_token(); // consume ','
+                }
+                _ => break,
+            }
+        }
+        match self.next_token() {
+            Some(EBNFToken::Op(ref op)) if op == "]" => {}
+            other => return Err(format!("Expected ']' closing tensor primes, got {:?}", other)),
+        }
+        match self.next_token() {
+            Some(EBNFToken::Op(ref op)) if op == ";" => {}
+            other => return Err(format!("Expected ';' ending tensor declaration, got {:?}", other)),
+        }
+        Ok(Statement::TensorDeclaration { identifier: ident, primes })
+    }
+
+    fn parse_operator_application(&mut self) -> Result<Statement, String> {
+        let ident = match self.next_token() {
+            Some(EBNFToken::Ident(id)) => id,
+            other => return Err(format!("Expected identifier, got {:?}", other)),
+        };
+        match self.next_token() {
+            Some(EBNFToken::Op(ref op)) if op == "|>" => {}
+            other => return Err(format!("Expected '|>' after identifier, got {:?}", other)),
+        }
+        let has_lambda = if let Some(EBNFToken::Lambda) = self.peek() {
+            self.next_token(); // consume \Lambda_m
+            match self.next_token() {
+                Some(EBNFToken::Op(ref op)) if op == "*" => {}
+                other => return Err(format!("Expected '*' after \\Lambda_m, got {:?}", other)),
+            }
+            true
+        } else {
+            false
+        };
+        let mut prime_chain = Vec::new();
+        loop {
+            match self.next_token() {
+                Some(EBNFToken::Prime(p)) => prime_chain.push(p),
+                other => return Err(format!("Expected prime token in chain, got {:?}", other)),
+            }
+            match self.peek() {
+                Some(EBNFToken::Op(ref op)) if op == "*" => {
+                    self.next_token(); // consume '*'
+                }
+                _ => break,
+            }
+        }
+        match self.next_token() {
+            Some(EBNFToken::Op(ref op)) if op == ";" => {}
+            other => return Err(format!("Expected ';' ending operator application, got {:?}", other)),
+        }
+        Ok(Statement::OperatorApplication { identifier: ident, has_lambda, prime_chain })
+    }
+
+    fn parse_contractivity_assertion(&mut self) -> Result<Statement, String> {
+        self.next_token(); // consume 'assert_contractive'
+        match self.next_token() {
+            Some(EBNFToken::Op(ref op)) if op == "(" => {}
+            other => return Err(format!("Expected '(' after assert_contractive, got {:?}", other)),
+        }
+        let ident = match self.next_token() {
+            Some(EBNFToken::Ident(id)) => id,
+            other => return Err(format!("Expected identifier inside assert_contractive, got {:?}", other)),
+        };
+        match self.next_token() {
+            Some(EBNFToken::Op(ref op)) if op == ")" => {}
+            other => return Err(format!("Expected ')' closing assert_contractive, got {:?}", other)),
+        }
+        match self.next_token() {
+            Some(EBNFToken::Op(ref op)) if op == "<" => {}
+            other => return Err(format!("Expected '<' after assert_contractive(...), got {:?}", other)),
+        }
+        let bound = match self.next_token() {
+            Some(EBNFToken::Float(f)) => f,
+            other => return Err(format!("Expected float bound, got {:?}", other)),
+        };
+        match self.next_token() {
+            Some(EBNFToken::Op(ref op)) if op == ";" => {}
+            other => return Err(format!("Expected ';' ending contractivity assertion, got {:?}", other)),
+        }
+        Ok(Statement::ContractivityAssertion { identifier: ident, bound })
+    }
+}
+
+pub fn parse_ebnf_statements(input: &str) -> Result<Vec<Statement>, String> {
+    let mut parser = PIRTMDecoderParser::new(input)?;
+    parser.parse_source()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -339,5 +577,45 @@ mod tests {
             }
             _ => panic!("Expected let stmt"),
         }
+    }
+
+    #[test]
+    fn test_ebnf_tensor_declaration() {
+        let stmts = parse_ebnf_statements("tensor T_0 [p_2, p_3, p_5];").unwrap();
+        assert_eq!(stmts.len(), 1);
+        assert_eq!(
+            stmts[0],
+            Statement::TensorDeclaration {
+                identifier: "T_0".to_string(),
+                primes: vec!["p_2".to_string(), "p_3".to_string(), "p_5".to_string()],
+            }
+        );
+    }
+
+    #[test]
+    fn test_ebnf_operator_application() {
+        let stmts = parse_ebnf_statements("T_1 |> \\Lambda_m * p_11 * p_13;").unwrap();
+        assert_eq!(stmts.len(), 1);
+        assert_eq!(
+            stmts[0],
+            Statement::OperatorApplication {
+                identifier: "T_1".to_string(),
+                has_lambda: true,
+                prime_chain: vec!["p_11".to_string(), "p_13".to_string()],
+            }
+        );
+    }
+
+    #[test]
+    fn test_ebnf_contractivity_assertion() {
+        let stmts = parse_ebnf_statements("assert_contractive(T_0) < 0.85;").unwrap();
+        assert_eq!(stmts.len(), 1);
+        assert_eq!(
+            stmts[0],
+            Statement::ContractivityAssertion {
+                identifier: "T_0".to_string(),
+                bound: 0.85,
+            }
+        );
     }
 }

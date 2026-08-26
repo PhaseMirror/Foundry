@@ -76,3 +76,37 @@ jobs:
               exit 1
             fi
           done
+
+      - name: Verify ECHO_BRAID Lean 4 Formalization
+        run: |
+          cd Projects/ECHO_BRAID
+          lake build
+          lake exe EchoBraidTest
+
+      - name: Test ECHO_BRAID Rust Engine & Generate UnifiedWitness
+        run: |
+          cd Projects/ECHO_BRAID/rust
+          cargo test --verbose
+
+      - name: Test UAC-ALP Boundary Gatekeeper
+        run: |
+          cd packages/rust/uac-gatekeeper
+          cargo test --verbose
+
+      - name: Co-Verify Hardware Safety Interlock (Verilog <-> Rust)
+        run: |
+          python3 packages/circuits/test_hardware_co_verification.py
+
+      - name: Generate & Anchor CI Release Witness
+        run: |
+          python3 scripts/generate_release_witness.py
+
+      - name: Upload Release Witness Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-witness
+          path: release_witness.json
+
+
+
+

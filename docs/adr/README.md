@@ -11,3 +11,6 @@
 | [ADR-005](ADR-005.md) | BLAKE2b-16 Personalization & Canonical Bytecode Wire Format | Accepted | - |
 | [ADR-006](ADR-006.md) | MultiContract Atomic Contraction with PartialSum Tokens | Accepted | - |
 | [ADR-007](ADR-007.md) | Commutative Collective Transformers for Deterministic Sharding Commit | Accepted | - |
+| [ADR-008](ADR-008.md) | Prime Signature Canonical Monoid as Exclusive Rust Kernel Substrate | Accepted | - |
+| [ADR-009](ADR-009.md) | Mandatory Contraction Witness & Spectral Radius Verification Before Emission Gate | Accepted | - |
+| [ADR-010](ADR-010.md) | Axiom-Clean Kernel Boundary and Manifested Proof Debt Policy | Accepted | - |

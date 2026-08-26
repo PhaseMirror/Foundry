@@ -12,6 +12,7 @@ ADR-PML-005 Decision step 3 ("no fabricated metadata").
 
 Usage: python3 scripts/build_amnesty_batch.py [--root PATH] [--out PATH]
        [--apply-policy] [--prune-stale-permits] [--write-manifest]
+       [--include-axioms]
 """
 
 from __future__ import annotations
@@ -43,6 +44,9 @@ POLICY = {
     "urgency": 3,
 }
 EXCLUDED_TREE_PREFIXES = ("_archive/", "legacy/", "phase_mirror_loop_scaffolds/")
+
+# ADR-PML-007 axiom-amnesty policy (operator directive 2026-08-25).
+POLICY_AXIOMS = dict(POLICY, assigned_by="operator-directive-2026-08-25")
 
 
 def build(root: str) -> dict:
@@ -103,17 +107,78 @@ def build(root: str) -> dict:
     }
 
 
+def build_axioms(root: str) -> dict:
+    """Stage the ADR-PML-007 axiom-amnesty batch.
+
+    Every `axiom` under the lean tree whose leaf has no manifest entry lands
+    here with governance fields null. Postulate/infrastructure classification
+    follows pml.scan_lean()'s single-line heuristic and is recorded per entry.
+    """
+    ev = pml.scan_lean()
+    man = pml.load_sorry_manifest()
+    manifested = {e.get("name", "").split(".")[-1] for e in man["entries"]}
+    entries = []
+    for name in sorted(ev.axioms):
+        meta = ev.axioms[name]
+        if name.split(".")[-1] in manifested:
+            continue
+        entries.append({
+            "kind": "axiom",
+            "class": "postulate" if meta["postulate"] else "infrastructure",
+            "qualified_name": name,
+            "name": name.split(".")[-1],
+            "file": meta["file"],
+            "line": meta["line"],
+            "disposition": None,
+            "governor": None,
+            "deadline": None,
+            "pairing": None,
+            "urgency": None,
+            "resolution": None,
+        })
+    posts = sum(1 for e in entries if e["class"] == "postulate")
+    return {
+        "batch_id": "amnesty-PML-007",
+        "created_utc": _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "adr": "docs/adr/ADR-PML-007.md",
+        "status": "AWAITING-CYCLE-RATIFICATION",
+        "measured": {
+            "distinct_axioms": len(ev.axioms),
+            "already_manifested": len(ev.axioms) - len(entries),
+            "batch_entries": len(entries),
+            "postulates": posts,
+            "infrastructure": len(entries) - posts,
+        },
+        "schema_notes": {
+            "allowed_dispositions": ALLOWED_DISPOSITIONS,
+            "allowed_governors": ALLOWED_GOVERNORS,
+            "allowed_pairings": ALLOWED_PAIRINGS,
+            "class_heuristic": ("postulate = statement line carries relational/quantifier tokens "
+                                "(=,<,≤,∀,∃,↔,Prop,True,False); infrastructure otherwise; "
+                                "misclassification cannot hide debt — all classes are manifested"),
+        },
+        "protocol": [
+            "1. Ratify at the Phase Mirror cycle (ADR-PML-007).",
+            "2. Assign disposition/governor/deadline/pairing per entry -- no fabricated metadata.",
+            "3. Apply to alp_sorry_manifest.json as type:axiom entries.",
+            "4. Re-run scripts/phase_mirror_loop.py; the 'Unledgered axioms' tension must drop out.",
+        ],
+        "entries": entries,
+    }
+
+
 def apply_policy(batch: dict) -> dict:
     """Fill null governance fields per POLICY (uniform, recorded, opt-in)."""
+    policy = POLICY_AXIOMS if batch.get("batch_id") == "amnesty-PML-007" else POLICY
     for e in batch["entries"]:
-        for k, v in POLICY.items():
+        for k, v in policy.items():
             if k == "assigned_by":
                 continue
             if e.get(k) is None:
                 e[k] = v
-        e["assigned_by"] = POLICY["assigned_by"]
+        e["assigned_by"] = policy["assigned_by"]
     batch["status"] = "POLICY-ASSIGNED-PENDING-MANIFEST-APPLY"
-    batch["assignment_policy"] = dict(POLICY)
+    batch["assignment_policy"] = dict(policy)
     return batch
 
 
@@ -167,23 +232,42 @@ def write_manifest_entries(batch: dict, manifest_path: str) -> int:
         if e.get("disposition") == "exclude":
             continue  # excluded scaffolds are relocated, not manifested
         leaf = e["name"].split(".")[-1]
-        data.setdefault("entries", []).append({
-            "file": e["file"],
-            "line": e["line"],
-            "type": "sorry",
-            "name": e["qualified_name"],
-            "description": (f"ADR-PML-005 amnesty batch ({batch['batch_id']}): Tier-3 "
-                            f"aspirational debt — `{e['qualified_name']}` carries a transitional "
-                            f"`sorry` (Facet {e['facet']}); permitted by leaf-name match"
-                            + (" (broad: namespace-prefixed declaration)" if "." in e["name"] else "")
-                            + "."),
-            "resolution": (f"Amortize via real proof or demotion per ADR-PML-005 Decision step 3; "
-                           f"assigned_by={e['assigned_by']}, governor={e['governor']}."),
-            "deadline": e["deadline"],
-            "governor": e["governor"],
-            "pairing": e["pairing"],
-            "urgency": e["urgency"],
-        })
+        if e.get("kind") == "axiom":
+            data.setdefault("entries", []).append({
+                "file": e["file"],
+                "line": e["line"],
+                "type": "axiom",
+                "name": e["qualified_name"],
+                "description": (f"ADR-PML-007 axiom amnesty ({batch['batch_id']}): "
+                                f"{'mathematical postulate' if e['class'] == 'postulate' else 'infrastructure symbol'} "
+                                f"— `axiom {e['qualified_name']}` is postulated outside the proof "
+                                f"engine; recorded per the exhaustiveness principle of ADR-PML-005."),
+                "resolution": (f"Accounted by axiom-amnesty policy {POLICY_AXIOMS['assigned_by']}: "
+                               f"governor={e['governor']}; discharge via witness pairing (Quarternion "
+                               f"precedent), proof, or explicit Mathlib reconstitution."),
+                "deadline": e["deadline"],
+                "governor": e["governor"],
+                "pairing": e["pairing"],
+                "urgency": e["urgency"],
+            })
+        else:
+            data.setdefault("entries", []).append({
+                "file": e["file"],
+                "line": e["line"],
+                "type": "sorry",
+                "name": e["qualified_name"],
+                "description": (f"ADR-PML-005 amnesty batch ({batch['batch_id']}): Tier-3 "
+                                f"aspirational debt — `{e['qualified_name']}` carries a transitional "
+                                f"`sorry` (Facet {e['facet']}); permitted by leaf-name match"
+                                + (" (broad: namespace-prefixed declaration)" if "." in e["name"] else "")
+                                + "."),
+                "resolution": (f"Amortize via real proof or demotion per ADR-PML-005 Decision step 3; "
+                               f"assigned_by={e['assigned_by']}, governor={e['governor']}."),
+                "deadline": e["deadline"],
+                "governor": e["governor"],
+                "pairing": e["pairing"],
+                "urgency": e["urgency"],
+            })
         added += 1
     data["last_audit"] = _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     note = data.get("audit_note", "")
@@ -205,25 +289,30 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--manifest", default=os.path.join(here, "alp_sorry_manifest.json"))
     p.add_argument("--apply-policy", action="store_true",
                    help="fill null governance fields with the uniform POLICY defaults")
+    p.add_argument("--include-axioms", action="store_true",
+                   help="stage the ADR-PML-007 axiom-amnesty batch instead of the sorry batch")
     p.add_argument("--prune-stale-permits", action="store_true",
                    help="drop permitted_sorrys/entries whose declarations left the lean tree")
     p.add_argument("--write-manifest", action="store_true",
                    help="merge policy-assigned entries into alp_sorry_manifest.json")
     args = p.parse_args(argv)
 
+    if args.include_axioms and args.out == os.path.join(here, "state", "amnesty_batch_PML-005.json"):
+        args.out = os.path.join(here, "state", "amnesty_batch_PML-007.json")
+
     if args.prune_stale_permits:
         pruned = prune_stale_permits(args.manifest)
         print(f"pruned {len(pruned)} stale permit(s)" + (f": {pruned}" if pruned else ""))
 
     if args.apply_policy or args.write_manifest or not (os.path.isfile(args.out) and not args.apply_policy):
-        batch = build(args.root)
+        batch = build_axioms(args.root) if args.include_axioms else build(args.root)
         m = batch["measured"]
-        print(f"measured {m['unmanifested_entries']} unmanifested entries "
-              f"(A={m['facet_a_inline']}, B={m['facet_b_block_level']})")
+        print(f"measured {m['batch_entries']} batch entries")
         if args.apply_policy:
             batch = apply_policy(batch)
-            print(f"policy assigned: disposition={POLICY['disposition']} governor={POLICY['governor']} "
-                  f"deadline={POLICY['deadline']}")
+            pol = POLICY_AXIOMS if args.include_axioms else POLICY
+            print(f"policy assigned: disposition={pol['disposition']} governor={pol['governor']} "
+                  f"deadline={pol['deadline']}")
         os.makedirs(os.path.dirname(args.out), exist_ok=True)
         with open(args.out, "w", encoding="utf-8") as fh:
             json.dump(batch, fh, indent=2)

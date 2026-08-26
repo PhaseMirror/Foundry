@@ -141,9 +141,63 @@ def adr007 : ADR where
     ⟨"lean/Multiplicity/PETC.lean", .LeanDeclaration, "Collective transformer commutation"⟩
   ]
 
+/-- **ADR-008:** Prime Signature Canonical Monoid as Exclusive Rust Kernel Substrate. -/
+def adr008 : ADR where
+  id := "ADR-008"
+  title := "Prime Signature Canonical Monoid as Exclusive Rust Kernel Substrate"
+  status := .Accepted
+  context := "All multiplicity computations, spectral analysis, and emission decisions must share a single, deterministic representation to prevent representational drift between Lean formalization and Rust execution."
+  decision := "The only permitted representation of a Multiplicity Signature inside the Rust kernel is a finitely supported map from primes to exponents, equipped with the free commutative monoid structure (pointwise addition of exponents). No alternative encodings (dense vectors, hashed bags, or floating-point approximations) are permitted in the core path."
+  consequences := [
+    "Signature equality is decidable by structural comparison of support and exponents",
+    "Multiplicity product is strictly associative and commutative",
+    "Any foreign representation must be converted at the kernel boundary and rejected if conversion is lossy"
+  ]
+  supersedes := none
+  links := [
+    ⟨"PhaseMirror.PrimeSignature", .LeanDeclaration, "Formal specification of signature monoid"⟩,
+    ⟨"packages/rust/multiplicity/multiplicity-core/src/signature.rs", .SourceFile, "Target Rust implementation site"⟩
+  ]
+
+/-- **ADR-009:** Mandatory Contraction Witness & Spectral Radius Verification Before Emission Gate. -/
+def adr009 : ADR where
+  id := "ADR-009"
+  title := "Mandatory Contraction Witness & Spectral Radius Verification Before Emission Gate"
+  status := .Accepted
+  context := "Unconstrained recurrence or agent emission can produce unbounded Lyapunov drift, violating the sovereign contraction invariant of the Phase Mirror core."
+  decision := "No signal may pass the Emission Gate unless a machine-checkable ContractionWitness is supplied that proves the spectral radius of the current operator is strictly less than 1. The witness must be re-validated on every gate evaluation."
+  consequences := [
+    "EmissionGate returns Suppress or Hold when no valid witness is present",
+    "SpectralGovernor is the sole authority permitted to mint ContractionWitness values",
+    "Any bypass of the witness check constitutes a hard kernel violation and aborts the process"
+  ]
+  supersedes := none
+  links := [
+    ⟨"PhaseMirror.SpectralGovernor", .LeanDeclaration, "Formal contract of spectral governor"⟩,
+    ⟨"packages/rust/ramanujan-multiplicity", .SourceFile, "Witness generation site"⟩
+  ]
+
+/-- **ADR-010:** Axiom-Clean Kernel Boundary and Manifested Proof Debt Policy. -/
+def adr010 : ADR where
+  id := "ADR-010"
+  title := "Axiom-Clean Kernel Boundary and Manifested Proof Debt Policy"
+  status := .Accepted
+  context := "Unmanifested sorry, todo!, or commented-out critical paths create verification leakage that undermines the honesty guarantee of the entire formal stack."
+  decision := "The kernel boundary (Rust + Lean interface) must be axiom-clean. Every open proof obligation that affects runtime behavior must be either (a) fully discharged or (b) explicitly manifested as a named sorry with a tracking issue and a hard CI failure if the count increases. Zero untracked proof debt is permitted on the main branch."
+  consequences := [
+    "CI rejects any increase in manifested or unmanifested sorry count on protected paths",
+    "Kernel startup performs a static check that the formal registry and the Rust core share the same honesty manifest",
+    "Research surfaces (including F1-square) may contain open obligations only when explicitly quarantined outside the kernel boundary"
+  ]
+  supersedes := none
+  links := [
+    ⟨".github/workflows/adr-verify.yml", .SpecificationDoc, "Honesty audit workflow"⟩,
+    ⟨"docs/CURRENT_TRUTH.md", .SpecificationDoc, "Living honesty ledger"⟩
+  ]
+
 /-- Canonical list of production example ADRs. -/
 def sampleADRList : List ADR :=
-  [adr001, adr002, adr003, adr004, adr005, adr006, adr007]
+  [adr001, adr002, adr003, adr004, adr005, adr006, adr007, adr008, adr009, adr010]
 
 /-! ## Embedded Formal Claims (Semantic Conflict Layer)
 
@@ -180,6 +234,21 @@ def adr007_claim : PropTerm :=
   .and (.atom "CollectiveTransformersCommutative")
        (.atom "MeshAxisReplicationGuaranteed")
 
+/-- Embedded claim of **ADR-008**. -/
+def adr008_claim : PropTerm :=
+  .and (.atom "PrimeSignatureCanonicalMonoidEnforced")
+       (.atom "ForeignEncodingsRejectedAtBoundary")
+
+/-- Embedded claim of **ADR-009**. -/
+def adr009_claim : PropTerm :=
+  .and (.atom "MandatoryContractionWitnessEnforced")
+       (.atom "SpectralRadiusStrictlyBelowUnity")
+
+/-- Embedded claim of **ADR-010**. -/
+def adr010_claim : PropTerm :=
+  .and (.atom "KernelBoundaryAxiomClean")
+       (.atom "ZeroUntrackedProofDebtEnforced")
+
 /-- Claims asserted by all accepted records in the governance registry. -/
 def sampleClaims : List Claim :=
   [ ⟨"ADR-002", adr002_claim⟩
@@ -188,6 +257,9 @@ def sampleClaims : List Claim :=
   , ⟨"ADR-005", adr005_claim⟩
   , ⟨"ADR-006", adr006_claim⟩
   , ⟨"ADR-007", adr007_claim⟩
+  , ⟨"ADR-008", adr008_claim⟩
+  , ⟨"ADR-009", adr009_claim⟩
+  , ⟨"ADR-010", adr010_claim⟩
   ]
 
 /-- Valuation environment witnessing joint satisfiability of all accepted claims in the registry. -/
@@ -203,26 +275,35 @@ def envP2C : String → Bool
   | "PartialSumTokenTrackingActive" => true
   | "CollectiveTransformersCommutative" => true
   | "MeshAxisReplicationGuaranteed" => true
+  | "PrimeSignatureCanonicalMonoidEnforced" => true
+  | "ForeignEncodingsRejectedAtBoundary" => true
+  | "MandatoryContractionWitnessEnforced" => true
+  | "SpectralRadiusStrictlyBelowUnity" => true
+  | "KernelBoundaryAxiomClean" => true
+  | "ZeroUntrackedProofDebtEnforced" => true
   | _ => false
 
 /-- All registered claims evaluate to `true` under `envP2C`. -/
 theorem sample_claim_eval_true (c : Claim) (hc : c ∈ sampleClaims) :
     c.claim.evalB envP2C = true := by
   simp [sampleClaims] at hc
-  rcases hc with (rfl | rfl | rfl | rfl | rfl | rfl) <;> rfl
+  rcases hc with (rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl) <;> rfl
 
 /-- Every embedded claim has an Accepted owner in `sampleADRList`. -/
 theorem sample_claims_owned_by_accepted :
     ∀ c ∈ sampleClaims, ∃ a ∈ sampleADRList, a.id = c.owner ∧ a.status = .Accepted := by
   intro c hc
   simp [sampleClaims] at hc
-  rcases hc with rfl | rfl | rfl | rfl | rfl | rfl
+  rcases hc with rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl
   · exact ⟨adr002, by simp [sampleADRList], rfl, rfl⟩
   · exact ⟨adr003, by simp [sampleADRList], rfl, rfl⟩
   · exact ⟨adr004, by simp [sampleADRList], rfl, rfl⟩
   · exact ⟨adr005, by simp [sampleADRList], rfl, rfl⟩
   · exact ⟨adr006, by simp [sampleADRList], rfl, rfl⟩
   · exact ⟨adr007, by simp [sampleADRList], rfl, rfl⟩
+  · exact ⟨adr008, by simp [sampleADRList], rfl, rfl⟩
+  · exact ⟨adr009, by simp [sampleADRList], rfl, rfl⟩
+  · exact ⟨adr010, by simp [sampleADRList], rfl, rfl⟩
 
 /-- Semantic coherence: no pair of distinct-owner claims in the registry is contradictory.
 Discharged constructively via the jointly satisfying environment `envP2C`. -/
@@ -247,14 +328,14 @@ theorem no_step_from_001 (target : ADRId) :
     ¬ SupersedesRel sampleADRList "ADR-001" target := by
   rintro ⟨a, ha, ha_id, ha_sup⟩
   simp [sampleADRList] at ha
-  rcases ha with (rfl | rfl | rfl | rfl | rfl | rfl | rfl) <;>
+  rcases ha with (rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl) <;>
     revert ha_id <;> intro h <;> first | contradiction | nomatch ha_sup
 
 /-- The supersession relation on `sampleADRList` is strictly acyclic. -/
 theorem sample_acyclic : StrictAcyclic sampleADRList := by
   intro id ⟨parent, ⟨a, ha, ha_id, ha_sup⟩, hPath⟩
   simp [sampleADRList] at ha
-  rcases ha with (rfl | rfl | rfl | rfl | rfl | rfl | rfl)
+  rcases ha with (rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl)
   · revert ha_sup; intro h; nomatch h
   · revert ha_sup; intro h; nomatch h
   · have hparent : parent = "ADR-001" := by revert ha_sup; intro h; cases h; rfl
@@ -266,18 +347,24 @@ theorem sample_acyclic : StrictAcyclic sampleADRList := by
   · revert ha_sup; intro h; nomatch h
   · revert ha_sup; intro h; nomatch h
   · revert ha_sup; intro h; nomatch h
+  · revert ha_sup; intro h; nomatch h
+  · revert ha_sup; intro h; nomatch h
+  · revert ha_sup; intro h; nomatch h
 
 /-- Every superseded target exists in the sample registry. -/
 theorem sample_supersedes_exist :
     ∀ a ∈ sampleADRList, ∀ sid, a.supersedes = some sid → ∃ target ∈ sampleADRList, target.id = sid := by
   intro a ha sid hsup
   simp [sampleADRList] at ha
-  rcases ha with (rfl | rfl | rfl | rfl | rfl | rfl | rfl)
+  rcases ha with (rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl)
   · revert hsup; intro h; nomatch h
   · revert hsup; intro h; nomatch h
   · have hsid : sid = "ADR-001" := by revert hsup; intro h; cases h; rfl
     subst hsid
     exact ⟨adr001, by simp [sampleADRList, adr001], rfl⟩
+  · revert hsup; intro h; nomatch h
+  · revert hsup; intro h; nomatch h
+  · revert hsup; intro h; nomatch h
   · revert hsup; intro h; nomatch h
   · revert hsup; intro h; nomatch h
   · revert hsup; intro h; nomatch h
@@ -289,12 +376,15 @@ theorem sample_superseded_status_consistent :
       ∃ target ∈ sampleADRList, target.id = sid ∧ target.status = .Superseded := by
   intro a ha sid hsup
   simp [sampleADRList] at ha
-  rcases ha with (rfl | rfl | rfl | rfl | rfl | rfl | rfl)
+  rcases ha with (rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl)
   · revert hsup; intro h; nomatch h
   · revert hsup; intro h; nomatch h
   · have hsid : sid = "ADR-001" := by revert hsup; intro h; cases h; rfl
     subst hsid
     exact ⟨adr001, by simp [sampleADRList, adr001], rfl, rfl⟩
+  · revert hsup; intro h; nomatch h
+  · revert hsup; intro h; nomatch h
+  · revert hsup; intro h; nomatch h
   · revert hsup; intro h; nomatch h
   · revert hsup; intro h; nomatch h
   · revert hsup; intro h; nomatch h
@@ -360,5 +450,29 @@ def adr007_Q : PropTerm := .atom "TopologyInvariantShardingCommit"
 theorem adr007_consequence_entailment :
     Entails [adr007_P, .implies adr007_P adr007_Q] adr007_Q :=
   entailment_modus_ponens adr007_P adr007_Q
+
+/-- Formal propositional terms for ADR-008 consequence entailment. -/
+def adr008_P : PropTerm := .atom "PrimeSignatureMonoidStructure"
+def adr008_Q : PropTerm := .atom "StructuralSignatureEqualityDecidable"
+
+theorem adr008_consequence_entailment :
+    Entails [adr008_P, .implies adr008_P adr008_Q] adr008_Q :=
+  entailment_modus_ponens adr008_P adr008_Q
+
+/-- Formal propositional terms for ADR-009 consequence entailment. -/
+def adr009_P : PropTerm := .atom "ContractionWitnessRequirement"
+def adr009_Q : PropTerm := .atom "UnboundedLyapunovDriftRejected"
+
+theorem adr009_consequence_entailment :
+    Entails [adr009_P, .implies adr009_P adr009_Q] adr009_Q :=
+  entailment_modus_ponens adr009_P adr009_Q
+
+/-- Formal propositional terms for ADR-010 consequence entailment. -/
+def adr010_P : PropTerm := .atom "AxiomCleanKernelBoundary"
+def adr010_Q : PropTerm := .atom "ZeroUntrackedProofDebt"
+
+theorem adr010_consequence_entailment :
+    Entails [adr010_P, .implies adr010_P adr010_Q] adr010_Q :=
+  entailment_modus_ponens adr010_P adr010_Q
 
 end ADR.Examples

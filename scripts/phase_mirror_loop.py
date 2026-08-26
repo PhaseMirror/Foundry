@@ -172,6 +172,13 @@ class LeanEvidence:
     sorry_by_file: dict = field(default_factory=dict)
     # file -> import Mathlib?
     mathlib_by_file: dict = field(default_factory=dict)
+    # ADR-PML-007: axiom name -> {file, line, postulate}
+    # postulate=True when the statement asserts a proposition (relational /
+    # quantifier tokens or a Prop-sorted conclusion) rather than merely
+    # introducing an opaque symbol (infrastructure, e.g. shadow Real algebra).
+    # Single-line heuristic; misclassification cannot hide debt because the
+    # amnesty manifests every unledgered axiom regardless of class.
+    axioms: dict = field(default_factory=dict)
     total_sorry: int = 0
     total_mathlib: int = 0
 
@@ -338,7 +345,12 @@ def scan_lean() -> LeanEvidence:
     decl_rx = re.compile(
         r"^\s*(?:@\[[^\]]*\]\s*)*"
         r"(?:private\s+|protected\s+|noncomputable\s+|partial\s+)*"
-        r"(?:theorem|lemma|axiom|def|abbrev|example)\s+([A-Za-z_][\w.']*)"
+        r"(theorem|lemma|axiom|def|abbrev|example)\s+([A-Za-z_][\w.']*)"
+    )
+    # ADR-PML-007: statement shapes that make an axiom a mathematical
+    # postulate rather than an opaque symbol introduction.
+    axiom_postulate_rx = re.compile(
+        r"∀|∃|↔|=|≤|≥|≠|<|>|\bProp\b|\bTrue\b|\bFalse\b"
     )
     for dirpath, _dirs, files in os.walk(LEAN_ROOT):
         if "/.lake/" in dirpath or "/build/" in dirpath:
@@ -369,13 +381,19 @@ def scan_lean() -> LeanEvidence:
                     has_mathlib = True
                 m = decl_rx.match(raw)
                 if m:
-                    cur_decl = m.group(1)
+                    cur_decl = m.group(2)
                     cur_line = i
                     ev.decls.add(cur_decl)
                     ev.decl_meta[cur_decl] = {
                         "file": rel, "line": cur_line,
                         "has_sorry": False, "inline_sorry": False,
                     }
+                    # ADR-PML-007: register postulates on the axiom boundary.
+                    if m.group(1) == "axiom":
+                        ev.axioms[cur_decl] = {
+                            "file": rel, "line": cur_line,
+                            "postulate": bool(axiom_postulate_rx.search(s)),
+                        }
                     # ADR-PML-005 (Facet A): a `sorry` written inline on the
                     # declaration line itself (`theorem foo : P := sorry`)
                     # belongs to the fresh declaration; without this check the
@@ -543,6 +561,42 @@ def detect_tensions(claims: list[Claim], lean: LeanEvidence,
                 0, f"facet split: {inline_n} inline `:= sorry` (Facet A), "
                    f"{len(unmanifested) - inline_n} block-level (Facet B)")
 
+    # --- Unledgered axioms -> postulate claimed vs proof owned ------------- #
+    # ADR-PML-007: every `axiom` under lean/ is a postulate. Those whose leaf
+    # has no alp_sorry_manifest.json entry are unaccounted debt — the ledger
+    # already tracks manifested axioms ("type": "axiom"), so exhaustiveness
+    # extends naturally to this boundary.
+    manifested_leaves = {e.get("name", "").split(".")[-1]
+                         for e in manifest.get("entries", [])}
+    unledgered = {n: v for n, v in lean.axioms.items()
+                  if n.split(".")[-1] not in manifested_leaves}
+    if unledgered:
+        posts = sorted(n for n, v in unledgered.items() if v["postulate"])
+        infras = sorted(n for n, v in unledgered.items() if not v["postulate"])
+        tensions.append(Tension(
+            axis="risk claimed vs risk owned",
+            title=(f"Unledgered axioms: {len(posts)} mathematical postulate(s), "
+                   f"{len(infras)} infrastructure symbol(s) with no "
+                   f"alp_sorry_manifest.json entry"),
+            severity=4 if posts else 3,
+            blast_radius=len({v["file"] for v in unledgered.values()}),
+            effort=3,
+            doc_evidence=[
+                "alp_sorry_manifest.json: 'Debt ledger for transitional sorry/axiom blocks' — "
+                "the ledger claims exhaustiveness over manifested axioms too",
+                "docs/adr/ADR-PML-006.md Resolution — SigmaKernel Real/beta4 axioms flagged "
+                "as candidate axiom-audit lever",
+            ],
+            impl_evidence=[f"{unledgered[n]['file']}:{unledgered[n]['line']} — `axiom {n}` "
+                           f"({'mathematical postulate' if unledgered[n]['postulate'] else 'infrastructure'})"
+                           for n in posts[:8]]
+                          + ([f"... +{len(posts) - 8} more postulates"] if len(posts) > 8 else []),
+            leaked=True,
+            owner="the-examiner",
+            is_cluster=True,
+            cluster_names=sorted(unledgered),
+        ))
+
     # --- Missing theorem-name claims -> urgency vs capacity ---------------- #
     seen = set()
     for c in [c for c in claims if c.kind == "theorem"]:
@@ -585,12 +639,22 @@ def detect_tensions(claims: list[Claim], lean: LeanEvidence,
         # Check whether the cited invariant is enforced in code (heuristic: a
         # matching constant/threshold appears in lean or crates).
         enforced = _invariants_enforced(inv_claims, lean)
-        # Check how many invariant-related theorems are proven (sorry-free)
+        # Check how many invariant-related theorems are proven (sorry-free).
+        # Canon = invariants actually claimed by live docs, each backed by a
+        # sorry-free Lean theorem (ADR-PML-006 resolution). The former list
+        # mixed in scaffold ghosts (operator_contractive_universal,
+        # stratum_transition_monotonic, certificate_contractivity,
+        # successor_contractivity, general_contractivity_bound) that exist
+        # nowhere outside lean/phase_mirror_loop_scaffolds/ (attic since
+        # ADR-PML-005) and are claimed by no document; anomaly_threshold_valid
+        # lost its cited Kani witness (phantom path in packages/rust/Cargo.toml)
+        # and matrix_engine_contraction has only a unit test, not a proof.
         invariant_theorems = [
-            "L_eff_bound", "drift_bound", "anomaly_threshold_valid",
-            "operator_contractive_universal", "stratum_transition_monotonic",
-            "certificate_contractivity", "successor_contractivity",
-            "general_contractivity_bound", "matrix_engine_contraction",
+            "L_eff_bound_verified",               # Identity.lean (L_eff <= aceBound)
+            "drift_bounded_lawfulness",           # DriftBound.lean
+            "sigma_kernel_preserves_contraction", # SigmaKernel.lean (README.md:190)
+            "dissonance_detects_drift",           # SigmaKernel.lean
+            "no_spectral_explosion",              # SigmaKernel.lean
         ]
         proven = sum(1 for t in invariant_theorems
                      if t in lean.decls and not lean.decl_meta.get(t, {}).get("has_sorry", True))
@@ -1015,6 +1079,42 @@ def existing_plan_ids() -> set[str]:
     return out
 
 
+def _open_plan_adr_match(t: Tension) -> int | None:
+    """Return an existing open plan-ADR number to reuse for tension `t`.
+
+    Operator directive 2026-08-25: re-emitting an open tension must reuse its
+    existing open plan-ADR ID instead of minting a fresh one every run —
+    duplicate IDs weaken registry uniqueness/monotonicity (cf. collapsed
+    ADR-PML-008/009 pair). Match rule: identical leading title segment
+    (text before ':') AND same axis, file still `Proposed`, and carrying no
+    operator-appended Resolution section (loop-owned working artifact only;
+    resolved levers are never silently reopened by overwrite).
+    """
+    want = t.title.split(":")[0].strip()
+    best: int | None = None
+    if not os.path.isdir(ADR_DIR):
+        return None
+    for fn in sorted(os.listdir(ADR_DIR)):
+        if not (fn.startswith(PLAN_PREFIX) and fn.endswith(".md")):
+            continue
+        path = os.path.join(ADR_DIR, fn)
+        try:
+            text = open(path, encoding="utf-8", errors="replace").read()
+        except OSError:
+            continue
+        if "## Status\nProposed" not in text or "## Resolution" in text:
+            continue
+        m = re.match(rf"# {PLAN_PREFIX}(\d+): (.*)", text)
+        if not m or m.group(2).split(":")[0].strip() != want:
+            continue
+        am = re.search(r"## Axis \(Phase Mirror tension class\)\n(.+)", text)
+        if not am or am.group(1).strip() != t.axis:
+            continue
+        idx = int(m.group(1))
+        best = idx if best is None else min(best, idx)
+    return best
+
+
 def render_adr(idx: int, t: Tension, rank: int, total: int) -> str:
     tid = f"{PLAN_PREFIX}{idx:03d}"
     date = _dt.date.today().isoformat()
@@ -1094,6 +1194,16 @@ def _actionable_levers(t: Tension) -> list[str]:
                       "the canonical tree (_archive/, legacy/, phase_mirror_loop_scaffolds/).")
         levers.append("Re-run scripts/honesty_audit.sh until it exits green with zero unauthorized blocks "
                       "and loop-tally parity holds.")
+    elif t.is_cluster and t.cluster_names and t.title.startswith("Unledgered axioms"):
+        levers.append("Ratify the ADR-PML-007 axiom-amnesty batch at the next governance cycle: account "
+                      "for every listed axiom via state/amnesty_batch_PML-007.json — mathematical "
+                      "postulates need a witness, a proof plan, or demotion; infrastructure symbols "
+                      "(shadow Real/Complex algebra) are recorded as declared-API pending Mathlib "
+                      "reconstitution — no fabricated metadata.")
+        levers.append("Apply ratified entries to alp_sorry_manifest.json (type: axiom); prefer verified "
+                      "Rust/Kani pairings where witnesses exist (Quarternion precedent).")
+        levers.append("Re-run scripts/honesty_audit.sh (axiom parity lines) and phase_mirror_loop.py; the "
+                      "'Unledgered axioms' tension must drop out of the ranked list.")
     elif t.is_cluster and t.cluster_names:
         names = ", ".join(f"`{n}`" for n in t.cluster_names[:12])
         if len(t.cluster_names) > 12:
@@ -1297,6 +1407,104 @@ def save_state(run_meta: dict) -> None:
         json.dump(run_meta, fh, indent=2)
 
 
+def export_plan_registry(run_meta: dict, ranked: list[Tension],
+                         lean: LeanEvidence, manifest: dict) -> None:
+    """Deterministic JSON registry consumed by crates/adr-verifier.
+
+    Scans ``ADR_DIR`` for ``ADR-PML-*.md`` files and extracts the structured
+    fields the kernel boundary guard needs: status, axis, owner, score,
+    leaked flag, and whether a ``## Resolution`` section is present.
+
+    Written every non-dry-run PLAN phase so the runtime boundary guard
+    always sees the latest snapshot alongside the lean/manifest metrics.
+    """
+    adrs: list[dict] = []
+    for fn in sorted(os.listdir(ADR_DIR)):
+        if not (fn.startswith(PLAN_PREFIX) and fn.endswith(".md")):
+            continue
+        path = os.path.join(ADR_DIR, fn)
+        try:
+            text = open(path, encoding="utf-8", errors="replace").read()
+        except OSError:
+            continue
+        m = re.match(rf"# {PLAN_PREFIX}(\d+): (.*)", text)
+        if not m:
+            continue
+        adr_id = f"{PLAN_PREFIX}{m.group(1)}"
+        title = m.group(2).strip()
+
+        def _section(key: str) -> str:
+            """Return the first non-empty line after a ## heading."""
+            hit = False
+            for line in text.splitlines():
+                if line.startswith(f"## {key}"):
+                    hit = True
+                    continue
+                if hit and line.strip():
+                    return line.strip()
+            return ""
+
+        status = _section("Status")
+        axis = _section("Axis (Phase Mirror tension class)")
+        owner = _section("Owner (multi-agent lever)").strip("`")
+        leaked_text = _section("Manifested boundary")
+        leaked = "leaked" in leaked_text.lower() and "no" not in leaked_text.lower()
+        has_resolution = "## Resolution" in text
+
+        score_m = re.search(r"\*\*Score = ([\d.]+)\*\*", text)
+        score = float(score_m.group(1)) if score_m else 0.0
+
+        adrs.append({
+            "id": adr_id,
+            "title": title,
+            "status": status,
+            "axis": axis,
+            "owner": owner,
+            "score": score,
+            "leaked": leaked,
+            "has_resolution": has_resolution,
+        })
+
+    registry = {
+        "generated_utc": _now(),
+        "version": "2.0",
+        "lean": {
+            "decls": run_meta.get("lean_decls", len(lean.decls)),
+            "sorry_total": run_meta.get("lean_sorry", lean.total_sorry),
+            "sorry_manifested": _all_sorrys_manifested(lean, manifest.get("permitted", [])),
+            "axioms_total": run_meta.get("lean_axioms", len(lean.axioms)),
+            "axioms_postulates": run_meta.get("lean_axioms_postulates",
+                                               sum(1 for v in lean.axioms.values() if v["postulate"])),
+            "axioms_manifested": not any(
+                n.split(".")[-1] not in {e.get("name", "").split(".")[-1]
+                                          for e in manifest.get("entries", [])}
+                for n in lean.axioms
+            ),
+            "mathlib_imports": run_meta.get("lean_mathlib", lean.total_mathlib),
+        },
+        "manifest": {
+            "entries": run_meta.get("manifest_entries", len(manifest.get("entries", []))),
+            "permitted_leaves": run_meta.get("manifest_permitted", len(manifest.get("permitted", []))),
+            "drift": run_meta.get("manifest_drift",
+                                  sum(1 for m in manifest.get("permitted", [])
+                                      if not _manifest_entry_present(m, lean))),
+            "overdue": run_meta.get("manifest_overdue",
+                                    _check_overdue_entries(manifest.get("entries", []))),
+            "reentrant_adrs": run_meta.get("reentrant_adrs", 0),
+        },
+        "tensions": {
+            "open": run_meta.get("tensions", len(ranked)),
+            "total_score": run_meta.get("total_score", round(sum(t.score for t in ranked), 2)),
+        },
+        "plan_adrs": adrs,
+    }
+
+    os.makedirs(os.path.dirname(PLAN_REGISTRY_PATH), exist_ok=True)
+    with open(PLAN_REGISTRY_PATH, "w", encoding="utf-8") as fh:
+        json.dump(registry, fh, indent=2, sort_keys=False)
+        fh.write("\n")
+
+
 # --------------------------------------------------------------------------- #
 # Main
 # --------------------------------------------------------------------------- #
@@ -1304,13 +1512,14 @@ def save_state(run_meta: dict) -> None:
 
 def _resolve_paths(root: str) -> None:
     """Point the module-level path globals at the given repository root."""
-    global PRIME_ROOT, DOC_ROOTS, LEAN_ROOT, ADR_DIR, STATE_PATH, SORRY_MANIFEST
+    global PRIME_ROOT, DOC_ROOTS, LEAN_ROOT, ADR_DIR, STATE_PATH, SORRY_MANIFEST, PLAN_REGISTRY_PATH
     PRIME_ROOT = os.path.abspath(root)
     DOC_ROOTS = [os.path.join(PRIME_ROOT, d) for d in DOC_RECURSE_SUBDIRS]
     LEAN_ROOT = os.path.join(PRIME_ROOT, LEAN_SUBDIR)
     ADR_DIR = os.path.join(PRIME_ROOT, ADR_SUBDIR)
     STATE_PATH = os.path.join(PRIME_ROOT, STATE_SUBDIR)
     SORRY_MANIFEST = os.path.join(PRIME_ROOT, SORRY_MANIFEST_REL)
+    PLAN_REGISTRY_PATH = os.path.join(os.path.dirname(STATE_PATH), "adr_plan_registry.json")
 
 
 def validate_plan_adr(adr_text: str, adr_id: str) -> bool:
@@ -1436,6 +1645,8 @@ def run(args: argparse.Namespace) -> int:
         "lean_decls": len(lean.decls),
         "lean_sorry": lean.total_sorry,
         "lean_mathlib": lean.total_mathlib,
+        "lean_axioms": len(lean.axioms),
+        "lean_axioms_postulates": sum(1 for v in lean.axioms.values() if v["postulate"]),
         "manifest_permitted": len(manifest["permitted"]),
         "manifest_entries": len(manifest.get("entries", [])),
         "manifest_drift": sum(1 for m in manifest["permitted"] if not _manifest_entry_present(m, lean)),
@@ -1462,12 +1673,22 @@ def run(args: argparse.Namespace) -> int:
         else:
             print("  no legacy IDs found to migrate")
 
+    # ADR-PML-007 follow-up: deterministic JSON registry export consumed by
+    # crates/adr-verifier at kernel startup.  Written every non-dry-run so
+    # the runtime boundary guard can always see the latest snapshot.
+    export_plan_registry(run_meta, ranked, lean, manifest)
+
     print(f"[{_now()}] Phase 4: PLAN (write ADRs to {os.path.relpath(ADR_DIR, PRIME_ROOT)})")
-    start = next_plan_number(existing_plan_ids())
+    next_fresh = next_plan_number(existing_plan_ids())
     tension_to_adr: dict = {}
+    written_ids: list[int] = []
     for ordinal, c in enumerate(clusters, 1):
-        j = start + ordinal - 1
-        view = make_cluster_view(c, j)
+        view = make_cluster_view(c, 0)
+        reuse = _open_plan_adr_match(view)
+        j = reuse if reuse is not None else next_fresh
+        if reuse is None:
+            next_fresh += 1
+        written_ids.append(j)
         # map every child tension to this cluster's ADR id
         adr_id = f"{PLAN_PREFIX}{j:03d}"
         for child in c["tensions"]:
@@ -1475,7 +1696,8 @@ def run(args: argparse.Namespace) -> int:
         adr_text = render_adr(j, view, ordinal, len(clusters))
         # ValidADR validation gate before writing to disk
         path = emit_plan_adr(adr_id, adr_text, ADR_DIR)
-        print(f"  wrote {os.path.relpath(path, PRIME_ROOT)}")
+        verb = ("refreshed (reused open plan ID)" if reuse is not None else "wrote")
+        print(f"  {verb} {os.path.relpath(path, PRIME_ROOT)}")
     index_text = render_index(ranked, clusters, tension_to_adr, run_meta)
     with open(os.path.join(ADR_DIR, MASTER_INDEX), "w", encoding="utf-8") as fh:
         fh.write(index_text)
@@ -1484,8 +1706,11 @@ def run(args: argparse.Namespace) -> int:
         fh.write(backlog_text)
     save_state(run_meta)
 
-    print(f"  wrote {len(clusters)} plan ADRs ({PLAN_PREFIX}{start:03d}..{PLAN_PREFIX}{start+len(clusters)-1:03d}) "
-          f"covering {len(ranked)} tensions")
+    if written_ids:
+        print(f"  wrote {len(clusters)} plan ADRs ({PLAN_PREFIX}{min(written_ids):03d}.."
+              f"{PLAN_PREFIX}{max(written_ids):03d}) covering {len(ranked)} tensions")
+    else:
+        print(f"  wrote 0 plan ADRs covering {len(ranked)} tensions")
     print(f"  wrote {MASTER_INDEX} + backlog")
     print(f"  saved state -> {os.path.relpath(STATE_PATH, PRIME_ROOT)}")
     print(f"\n=== Loop complete: total dissonance score = {run_meta['total_score']} ===")

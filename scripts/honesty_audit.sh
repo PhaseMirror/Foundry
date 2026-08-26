@@ -13,6 +13,11 @@ set -euo pipefail
 # 2026-08-24 (ADR-PML-005 Decision steps 1-2): scan_lean now attributes inline
 # `:= sorry` declaration lines, so the tally covers Facet A + Facet B; the
 # former open-lever advisory is replaced by an independent parity cross-check.
+#
+# 2026-08-25 (ADR-PML-007): axiom-boundary parity lines added. The axiom
+# boundary is enforced by the operational loop's "Unledgered axioms" tension;
+# here it is reported informationally (non-gating) so drift is visible on
+# every CI run without widening this script's sorry-boundary contract.
 
 ROOT_DIR="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 
@@ -85,6 +90,43 @@ if independent != ev.total_sorry:
           f"vs loop tally {ev.total_sorry}")
 else:
     print(f"Parity: loop tally {ev.total_sorry} == independent strip-and-count {independent}")
+
+# Axiom boundary (ADR-PML-007) — informational parity, non-gating.
+manifested_leaves = {e.get("name", "").split(".")[-1] for e in man.get("entries", [])}
+unledgered = [n for n in ev.axioms if n.split(".")[-1] not in manifested_leaves]
+posts = sum(1 for n in unledgered if ev.axioms[n]["postulate"])
+ax_rx = re.compile(r"^\s*(?:@\[[^\]]*\]\s*)*"
+                   r"(?:private\s+|protected\s+|noncomputable\s+|partial\s+)*"
+                   r"axiom\s+([A-Za-z_][\w.']*)")
+indep_names = set()
+for dirpath, _dirs, files in os.walk(root):
+    if "/.lake/" in dirpath or "/build/" in dirpath:
+        continue
+    for fn in files:
+        if fn.endswith(".lean"):
+            try:
+                for ln in open(os.path.join(dirpath, fn), encoding="utf-8", errors="replace"):
+                    m = ax_rx.match(ln)
+                    if m:
+                        indep_names.add(m.group(1))
+            except OSError:
+                pass
+n_math = sum(1 for v in ev.axioms.values() if v["postulate"])
+print(f"Axiom boundary: {len(ev.axioms)} distinct postulates "
+      f"({n_math} mathematical / {len(ev.axioms) - n_math} infrastructure); "
+      f"unledgered: {len(unledgered)} ({posts} mathematical)")
+if indep_names != set(ev.axioms):
+    only_indep = sorted(indep_names - set(ev.axioms))[:5]
+    only_loop = sorted(set(ev.axioms) - indep_names)[:5]
+    print(f"❌ Axiom parity drift (ADR-PML-007): independent distinct-axiom set "
+          f"{len(indep_names)} vs loop tally {len(ev.axioms)}; "
+          f"only-independent: {only_indep}; only-loop: {only_loop}")
+    sys.exit(1)
+elif unledgered:
+    print(f"⚠️  {len(unledgered)} axiom(s) not yet manifested — ratify the ADR-PML-007 "
+          f"amnesty batch (state/amnesty_batch_PML-007.json).")
+else:
+    print("Axiom parity OK: every axiom under lean/ is ledgered (ADR-PML-007).")
 
 if unauthorized:
     print(f"❌ Audit Failed: {len(unauthorized)} unmanifested sorry block(s) crossing the boundary:")

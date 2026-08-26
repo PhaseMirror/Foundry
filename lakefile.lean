@@ -12,12 +12,12 @@ lean_lib Prime {
 }
 
 lean_lib ADR {
-  roots := #[`ADR.Core, `ADR.Proofs, `ADR.Examples, `ADR.Export, `ADR.Test, `ADR.Theorems.CareViability, `ADR.Theorems.Homestead_UCC_Care_Bridge]
+  roots := #[`ADR.Core, `ADR.Proofs, `ADR.Examples, `ADR.Export, `ADR.Test, `ADR.Theorems.CareViability, `ADR.Theorems.Homestead_UCC_Care_Bridge, `ADR.Theorems.UacAlpBoundary, `ADR.Theorems.HardwareInterlock]
 }
 
 @[default_target]
 lean_lib PhaseMirror {
-  roots := #[`PhaseMirror, `Care, `ADR.Theorems.CareViability, `ADR.Theorems.Homestead_UCC_Care_Bridge, `ADR.Core, `ADR.Proofs, `ADR.Examples, `ADR.Export, `ADR.Test]
+  roots := #[`PhaseMirror, `Care, `ADR.Theorems.CareViability, `ADR.Theorems.Homestead_UCC_Care_Bridge, `ADR.Theorems.UacAlpBoundary, `ADR.Theorems.HardwareInterlock, `ADR.Core, `ADR.Proofs, `ADR.Examples, `ADR.Export, `ADR.Test]
 }
 
 @[test_driver]

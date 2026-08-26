@@ -64,13 +64,8 @@ Theorem 2: Any active fault signal (rho or drift) sets the latch.
 theorem fault_sets_latch (st : HardwareState) (hRho : rho = true) :
     (stepHardware st true rho drift).faultLatched = true := by
   dsimp [stepHardware]
-  split
-  · contradiction
-  · split
-    · rfl
-    · rename_i _ hNot
-      have hOr : (rho || drift) = true := by simp [hRho]
-      contradiction
+  rw [hRho]
+  rfl
 
 /--
 Theorem 3: Once latched, fault remains latched under normal operation (rstN = true).
@@ -78,11 +73,7 @@ Theorem 3: Once latched, fault remains latched under normal operation (rstN = tr
 theorem latch_persistence (rho drift : Bool) :
     (stepHardware { faultLatched := true } true rho drift).faultLatched = true := by
   dsimp [stepHardware]
-  split
-  · contradiction
-  · split
-    · rfl
-    · rfl
+  split <;> rfl
 
 /--
 Theorem 4: Equivalence to Rust InterlockClient model:

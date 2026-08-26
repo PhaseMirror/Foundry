@@ -104,7 +104,7 @@ theorem no_authorization_with_proof_debt
   · rfl
   · split
     · rfl
-    · rename_i hNotHalt hNotDebt
+    · rename_i _ hNotDebt
       have hDebtBool : (tok.proofDebt.debtCount > 0 || tok.proofDebt.isUncertified) = true := by
         simp [hDebt]
       contradiction
@@ -122,7 +122,7 @@ theorem no_authorization_uncertified
   · rfl
   · split
     · rfl
-    · rename_i hNotHalt hNotDebt
+    · rename_i _ hNotDebt
       have hDebtBool : (tok.proofDebt.debtCount > 0 || tok.proofDebt.isUncertified) = true := by
         simp [hUncert]
       contradiction
@@ -185,11 +185,12 @@ is strictly the identity function.
 -/
 theorem decompose_reassemble_identity (codes : List Nat) :
     reassembleTokens (decomposeGraphemes codes) = codes := by
-  dsimp [decomposeGraphemes, reassembleTokens]
-  induction codes with
-  | nil => rfl
-  | cons c cs ih =>
-    dsimp
-    rw [ih]
+  dsimp [reassembleTokens, decomposeGraphemes]
+  rw [List.map_map]
+  have hComp : ((fun (x : PrimeToken) => x.graphemeCode) ∘ (fun (c : Nat) => ({ graphemeCode := c, primeModulus := c * 2 + 3 } : PrimeToken))) = id := by
+    funext x
+    rfl
+  rw [hComp]
+  exact List.map_id codes
 
 end PhaseMirror.UacAlpBoundary

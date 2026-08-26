@@ -7,7 +7,7 @@ package adr_scaffold {
 
 @[default_target]
 lean_lib Multiplicity where
-  roots := #[`Multiplicity.Complex, `Multiplicity.Prime, `Multiplicity.Axioms, `Multiplicity.RSA, `Multiplicity.RSA.PrimePowerRSA, `Multiplicity.FPES.Core, `Multiplicity.FPES.Proofs, `Multiplicity.FPES.Examples, `Multiplicity.FPES.FFI, `Multiplicity.FPES.Test, `Multiplicity.Fold.Core, `Multiplicity.Fold.Proofs, `Multiplicity.Fold.Examples, `Multiplicity.Fold.Test, `Multiplicity.WordLove.Core, `Multiplicity.WordLove.Proofs, `Multiplicity.WordLove.Examples, `Multiplicity.WordLove.FFI, `Multiplicity.WordLove.Test]
+  roots := #[`Multiplicity.Complex, `Multiplicity.Prime, `Multiplicity.Axioms, `Multiplicity.RSA, `Multiplicity.RSA.PrimePowerRSA, `Multiplicity.FPES.Core, `Multiplicity.FPES.Proofs, `Multiplicity.FPES.Examples, `Multiplicity.FPES.FFI, `Multiplicity.FPES.Test, `Multiplicity.Fold.Core, `Multiplicity.Fold.Proofs, `Multiplicity.Fold.Examples, `Multiplicity.Fold.Test, `Multiplicity.WordLove.Core, `Multiplicity.WordLove.Proofs, `Multiplicity.WordLove.Examples, `Multiplicity.WordLove.FFI, `Multiplicity.WordLove.Test, `Multiplicity.Bose, `Multiplicity.Bose.Core, `Multiplicity.Bose.Proofs, `Multiplicity.Bose.Examples, `Multiplicity.Bose.Test]
 
 lean_exe adr_test where
   root := `ADR.Test
@@ -15,7 +15,7 @@ lean_exe adr_test where
 lean_exe test where
   root := `Test.RSA
 
-@[test_runner]
+@[test_driver]
 lean_exe fpes_test where
   root := `Multiplicity.FPES.Test
 
@@ -24,6 +24,9 @@ lean_exe fold_test where
 
 lean_exe word_love_test where
   root := `Multiplicity.WordLove.Test
+
+lean_exe bose_test where
+  root := `Multiplicity.Bose.Test
 
 lean_lib PdeRnn where
   roots := #[`PdeRnn.FFI, `PdeRnn.Spec, `PdeRnn.Smm]

@@ -38,18 +38,18 @@ The operational execution envelope is strictly bound to the following parameters
 | Parameter | Symbol | Value | Enforcement Mechanism |
 | :--- | :--- | :--- | :--- |
 | **Max Concurrency** | $N$ | $\le 100$ sessions | FPGA Orchestrator session table |
-| **Max Qudits (FeMoco Locked)** | $q$ | $\le 69$ qudits | QaaS endpoint validation (CAS(114,114)) |
-| **Energy Error Bound** | $\epsilon$ | $< 15.0$ mHa (target $\le 14.5$) | Kani harness + Python validator |
+| **Max Qudits (Active-Space Cap)** | $q$ | $\le 69$ qudits | Allocation cap (CAS(114,114) compression envelope; NOT ground-state proof) |
+| **Energy Error Bound (Cap, not measurement)** | $\epsilon$ | $< 15.0$ mHa (target $\le 14.5$) | Policy filter / complexity cap (NOT a measured physical energy without named Hamiltonian and $E_{\mathrm{ref}}$) |
 | **State Entropy Cap** | $S$ | $\le 5.9$ (hard ceiling $6.0$) | ThermalWindow / HSEC admission gate |
 | **Native $d=16$ Ratio** | — | $\ge 80\%$ of active sessions | QCFI multiplexor telemetry |
 | **Aggregate Utilization** | — | $< 90\%$ | Prometheus core observer |
 | **NarrativeAuditor Drift** | — | $0.0$ (strictly zero) | HSEC consensus checksum |
 | **Audit & Retention** | — | 7 years (2555 days) | CRMF + ACE Telemetry |
 
-### 2.1 Concurrency & Molecular Lock Clause
-- **Fixed Envelope:** Concurrency is strictly bounded at $N = 100$ concurrent sessions, qudit allocations are locked to FeMoco CAS(114,114) at $q = 69$, energy error is capped at $\epsilon \le 14.5$ mHa, and state entropy is bounded at $S \le 5.9$ ($H(\rho) \le 6.0$).
-- **No Molecular Scaling:** Any attempt to simulate larger molecular active spaces exceeding 69 qudits is rejected at the admission gate to prevent catastrophic thermodynamic/entropy collapse.
-- **No Independent Overrides:** Empirical tuning during the 7-day window cannot freeze parameters that formal coverage treats as invariants while Layer-B identity remains missing.
+### 2.1 Concurrency & Molecular Lock Clause (Policy Envelopes)
+- **Policy Envelopes (Not Empirical Measurements):** Concurrency is strictly bounded at $N = 100$ concurrent sessions, qudit allocations are capped at $q = 69$ (CAS(114,114) compression envelope), energy error threshold is a policy cap at $\epsilon < 15.0$ mHa, and state entropy is bounded at $S \le 5.9$ ($H(\rho) \le 6.0$). In accordance with ADR-010 (Claim/Evidence Split), these values constitute admission filters and complexity bounds, NOT verified physical measurements of ground-state chemical accuracy.
+- **No Molecular Scaling:** Any attempt to simulate molecular active spaces exceeding 69 qudits is rejected at the admission gate to prevent catastrophic thermodynamic/entropy collapse.
+- **No Empirical Ground-State Claims:** Empirical tuning or capacity testing cannot assert chemical accuracy or physical ground-state convergence while a named published Hamiltonian $H_{\mathrm{named}}$, reference energy $E_{\mathrm{ref}}$, and Layer-B identity remain missing.
 
 ---
 

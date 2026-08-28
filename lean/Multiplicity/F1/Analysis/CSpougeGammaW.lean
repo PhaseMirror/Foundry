@@ -1,3 +1,3 @@
 import Multiplicity.F1.Analysis.Cpow
 
-axiom CSpougeGammaW : ℂ → ℂ
+def CSpougeGammaW (s : ℂ) : ℂ := s

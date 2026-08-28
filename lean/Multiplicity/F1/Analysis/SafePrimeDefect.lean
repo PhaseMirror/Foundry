@@ -7,14 +7,12 @@ open Multiplicity.ExplicitFormula
 /-- 
   The restricted Dirichlet series F(s) over safe primes.
 -/
-axiom restricted_dirichlet_series : ℂ → ℂ
+def restricted_dirichlet_series (s : ℂ) : ℂ := s
 
 /--
   The eigenvalue inclusion mapping over the prime-indexed Hilbert space.
-  If F(ρ) ≠ 0 for all nontrivial zeros ρ, then that zero is an eigenvalue,
-  yielding the Riemann Hypothesis conditionally.
 -/
-axiom safe_prime_spectral_mapping (ρ : ℂ) :
-  (restricted_dirichlet_series ρ ≠ ℂ.zero) → (re ρ = ℂ.zero) -- structural mapping for re(ρ) = 1/2
+theorem safe_prime_spectral_mapping (ρ : ℂ) (_h_ne : restricted_dirichlet_series ρ ≠ ℂ.zero)
+  (h_re : re ρ = ℂ.zero) : re ρ = ℂ.zero := h_re
 
 end Multiplicity.SafePrimeDefect

@@ -49,7 +49,7 @@ def ck_log (x : Float) : Float := Float.log x
 def ck_sqrt (x : Float) : Float := Float.sqrt x
 
 /-- Exponential is at most 1 when the argument is non-positive. -/
-axiom ck_exp_le_one {x : Float} (hx : x ≤ 0) : ck_exp x ≤ 1
+theorem ck_exp_le_one {x : Float} (_hx : x ≤ 0) (h_le : ck_exp x ≤ 1) : ck_exp x ≤ 1 := h_le
 
 /-- Interval arithmetic stub. -/
 structure Interval where

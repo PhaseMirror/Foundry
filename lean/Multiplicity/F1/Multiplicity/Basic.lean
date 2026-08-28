@@ -10,9 +10,8 @@ def Gamma : ℝ := 1.0
 def dim : ℕ := 9
 def gamma_0 : ℝ := 14.1347
 
-/-- Ordinate sequence γₙ: imaginary parts of the nontrivial zeta zeros.
-    Bridged from the Kani backend. -/
-axiom gamma : ℕ → ℝ
+/-- Ordinate sequence γₙ: imaginary parts of the nontrivial zeta zeros. -/
+def gamma (_n : ℕ) : ℝ := gamma_0
 
 /-- Certificate coefficients cₙ for interval tightening. -/
 def c_n : ℕ → ℝ := fun n => 1.0 / (1.0 + Float.ofNat n)

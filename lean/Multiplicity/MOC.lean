@@ -75,11 +75,11 @@ instance basePermitted : PermittedPrimes baseVerified where
 /-- Concrete 108-cycle transition word -/
 def transition_108_cycle : OperatorWord baseVerified := 
   { ops := [
-      Operator.subdivision ⟨3, sorry⟩ 3,
-      Operator.subdivision ⟨3, sorry⟩ 3,
-      Operator.subdivision ⟨3, sorry⟩ 3,
-      Operator.subdivision ⟨2, sorry⟩ 2,
-      Operator.subdivision ⟨2, sorry⟩ 2
+      Operator.subdivision ⟨3, by decide⟩ 3,
+      Operator.subdivision ⟨3, by decide⟩ 3,
+      Operator.subdivision ⟨3, by decide⟩ 3,
+      Operator.subdivision ⟨2, by decide⟩ 2,
+      Operator.subdivision ⟨2, by decide⟩ 2
     ] 
   }
 
@@ -137,15 +137,17 @@ structure StabilityCertificate {last_seq : Nat} (vs : VerifiedSchema last_seq) [
   is_ace_dominant : True
 
 /-- Verification of the 108-cycle transition invariant. -/
-theorem transition_108_valid : IsValidTransition transition_108_cycle 108 := sorry
+theorem transition_108_valid : IsValidTransition transition_108_cycle 108 := by
+  dsimp [IsValidTransition, apply_len_word, transition_108_cycle, apply_len]
+  rfl
 
 /-- Axiom-clean stability certificate for 108-cycle transitions -/
 def stability_108_cycle : StabilityCertificate baseVerified :=
   {
     transition := transition_108_cycle,
     ace_bound := 6/10,
-    r_bound := {r1 := 9/10, r3 := 5/10, h_r1 := sorry, h_r3 := sorry},
-    is_contractive := sorry,
+    r_bound := {r1 := 9/10, r3 := 5/10, h_r1 := by decide, h_r3 := by decide},
+    is_contractive := by decide,
     is_ace_dominant := trivial
   }
 

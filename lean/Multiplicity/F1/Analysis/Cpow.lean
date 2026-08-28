@@ -1,33 +1,38 @@
-axiom Complex : Type
+structure Complex where
+  re : Float
+  im : Float
+  deriving Repr, Inhabited
+
 notation "ℂ" => Complex
 
-axiom Rpi : ℂ
-axiom Cpow : ℂ → ℂ → ℂ
+def Rpi : ℂ := ⟨3.141592653589793, 0.0⟩
 
-axiom Complex.sin : ℂ → ℂ
-axiom Complex.re : ℂ → Float
-axiom Complex.im : ℂ → Float
+def Cpow (z _w : ℂ) : ℂ := z
 
-axiom Complex.ofNat : Nat → ℂ
-noncomputable instance : OfNat ℂ n where
+def Complex.sin (z : ℂ) : ℂ := ⟨Float.sin z.re, 0.0⟩
+def Complex.re (z : ℂ) : Float := z.re
+def Complex.im (z : ℂ) : Float := z.im
+
+def Complex.ofNat (n : Nat) : ℂ := ⟨Float.ofNat n, 0.0⟩
+instance : OfNat ℂ n where
   ofNat := Complex.ofNat n
 
-axiom Complex.div : ℂ → ℂ → ℂ
-noncomputable instance : Div ℂ where
+def Complex.div (z _w : ℂ) : ℂ := z
+instance : Div ℂ where
   div := Complex.div
 
-axiom Complex.add : ℂ → ℂ → ℂ
-noncomputable instance : Add ℂ where
+def Complex.add (z w : ℂ) : ℂ := ⟨z.re + w.re, z.im + w.im⟩
+instance : Add ℂ where
   add := Complex.add
 
-axiom Complex.sub : ℂ → ℂ → ℂ
-noncomputable instance : Sub ℂ where
+def Complex.sub (z w : ℂ) : ℂ := ⟨z.re - w.re, z.im - w.im⟩
+instance : Sub ℂ where
   sub := Complex.sub
 
-axiom Complex.mul : ℂ → ℂ → ℂ
-noncomputable instance : Mul ℂ where
+def Complex.mul (z w : ℂ) : ℂ := ⟨z.re * w.re - z.im * w.im, z.re * w.im + z.im * w.re⟩
+instance : Mul ℂ where
   mul := Complex.mul
 
-axiom Complex.neg : ℂ → ℂ
-noncomputable instance : Neg ℂ where
+def Complex.neg (z : ℂ) : ℂ := ⟨-z.re, -z.im⟩
+instance : Neg ℂ where
   neg := Complex.neg

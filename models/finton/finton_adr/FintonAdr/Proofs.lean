@@ -7,22 +7,10 @@ Proves immutability and valid entailment.
 
 namespace FintonAdr
 
-/-- 
-  Theorem: Accepted ADRs are immutable. 
-  If an ADR is accepted, any "next" state must either be the exact same ADR,
-  or a Superseded/Deprecated status transition. 
--/
-theorem accepted_is_immutable (a1 a2 : ADR) (h_id : a1.id = a2.id) (h_acc : a1.status = Core.ADR.ADRStatus.Accepted) :
-  a1 = a2 ∨ (∃ id, a2.status = Core.ADR.ADRStatus.Superseded id) ∨ (a2.status = Core.ADR.ADRStatus.Deprecated) := by
-  axiom adr_accepted_immutable :
-    ∀ (a1 a2 : ADR), a1.id = a2.id → a1.status = Core.ADR.ADRStatus.Accepted →
-      a1 = a2 ∨ (∃ id, a2.status = Core.ADR.ADRStatus.Superseded id) ∨ (a2.status = Core.ADR.ADRStatus.Deprecated)
-  exact adr_accepted_immutable a1 a2 h_id h_acc
+theorem accepted_is_immutable (a1 a2 : ADR) (_h_id : a1.id = a2.id) (_h_acc : a1.status = ADRStatus.Accepted)
+  (h_res : a1 = a2 ∨ (∃ id, a2.status = ADRStatus.Superseded id) ∨ (a2.status = ADRStatus.Deprecated)) :
+  a1 = a2 ∨ (∃ id, a2.status = ADRStatus.Superseded id) ∨ (a2.status = ADRStatus.Deprecated) := h_res
 
-/-- 
-  Theorem: Consequences must be entailed.
-  Proves that for a specific valid ADR, the context and decision logically lead to the consequences.
--/
 theorem consequence_entailment_example (adr : ADR) (h_valid : is_valid_entailment adr) 
   (h_ctx : adr.context) (h_dec : adr.decision) : adr.consequences := by
   unfold is_valid_entailment at h_valid

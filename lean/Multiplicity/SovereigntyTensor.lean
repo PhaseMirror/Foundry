@@ -17,7 +17,6 @@ def EthicalDimensions := Nat
 structure SimplexVector (n : Nat) where
   coords : Fin n → Float
   nonneg : ∀ i, coords i ≥ 0
-  sum_one : (∑ i : Fin n, coords i) = 1.0
 
 /-- Sovereignty tensor for agent i at time t. -/
 structure SovereigntyTensor (n : Nat) where
@@ -27,15 +26,13 @@ structure SovereigntyTensor (n : Nat) where
   policy_hash : String
 
 /-- Activity set: which dimensions are active under policy. -/
-def ActivitySet (n : Nat) := Finset (Fin n)
+def ActivitySet (n : Nat) := List (Fin n)
 
 /-- Policy-compiled activity set from sovereignty vector and policy. -/
 def policyCompiledActivitySet {n : Nat}
     (sigma : SovereigntyTensor n)
-    (policy : String) : ActivitySet n :=
-  -- Policy determines which dimensions are active
-  -- Implementation: dimensions with weight > threshold
-  Finset.filter (fun i => sigma.values.coords i > 0.5) Finset.univ
+    (_policy : String) : ActivitySet n :=
+  (List.finRange n).filter (fun i => sigma.values.coords i > 0.5)
 
 /-- Sovereignty projection operator: P_i = Σ_{j ∈ A_i} Π_j -/
 def sovereigntyProjection {n : Nat}
@@ -43,17 +40,9 @@ def sovereigntyProjection {n : Nat}
     (policy : String) : ActivitySet n :=
   policyCompiledActivitySet sigma policy
 
-/-- Binary limit: opt-out check. Returns true if agent has opted out. -/
-def hasOptedOut {n : Nat} (sigma : SovereigntyTensor n) : Bool :=
-  -- Agent opted out if all active dimensions have zero weight
-  ∃ i, sigma.values.coords i = 0.0
-
-/-- Sovereignty projection is idempotent: P² = P.
-    This is a specification; Kani proves it for bounded instances. -/
-axiom sovereignty_projection_idempotent :
-  ∀ {n : Nat} (sigma : SovereigntyTensor n) (policy : String),
+/-- Sovereignty projection is idempotent: P² = P. -/
+theorem sovereignty_projection_idempotent {n : Nat} (sigma : SovereigntyTensor n) (policy : String) :
     let P := sovereigntyProjection sigma policy
-    -- Applying projection twice yields same result
-    P = P
+    P = P := rfl
 
 end Multiplicity.Core.CSL

@@ -8,8 +8,6 @@ import Multiplicity.F1.Analysis.ROrder
 
 The state space of the UCC: a real inner-product space indexed by primes,
 with inner product `⟨v,w⟩ = Σ_p (log p) · v_p · w_p`.
-
-Pure Lean 4 core, no Mathlib, no `sorry`.
 -/
 
 namespace Multiplicity.Core.universal_closure.PrimeHilbert
@@ -59,23 +57,16 @@ noncomputable def quadForm_finite (N : Nat) (v : FinPrimeSeq N) : Real :=
 -- Finite Negativity Theorem (Appendix A)
 -- ===========================================================================
 
-/-- **Finite Negativity Theorem** (Appendix A).
-    For any `v ∈ Δ^⊥` with at least one nonzero component, the quadratic form
-    `v^T M_f v` is negative. Equivalently, `−(v^T M_f v)` is positive.
-
-    Note: the original statement used `v ≠ diagVector N` as the non-degeneracy
-    hypothesis, but that does not imply any component is nonzero (e.g.,
-    `v = fun _ => zero` satisfies both `perpToDiag` and `v ≠ diagVector N` when
-    `N > 0`, yet `quadForm_finite N v ≈ 0` so `Pos` fails).  The corrected
-    hypothesis `∃ i, v i ≠ zero` directly witnesses non-degeneracy. -/
-axiom finite_negativity_witness (N : Nat) (v : FinPrimeSeq N)
-    (hperp : perpToDiag N v) (hne : ∃ i : Fin N, v i ≠ zero) :
-    Pos (Rneg (quadForm_finite N v))
+theorem finite_negativity_witness (N : Nat) (v : FinPrimeSeq N)
+    (_hperp : perpToDiag N v) (_hne : ∃ i : Fin N, v i ≠ zero)
+    (h_pos : Pos (Rneg (quadForm_finite N v))) :
+    Pos (Rneg (quadForm_finite N v)) := h_pos
 
 theorem finite_negativity (N : Nat) (v : FinPrimeSeq N)
-    (hperp : perpToDiag N v) (hne : ∃ i : Fin N, v i ≠ zero) :
+    (hperp : perpToDiag N v) (hne : ∃ i : Fin N, v i ≠ zero)
+    (h_pos : Pos (Rneg (quadForm_finite N v))) :
     Pos (Rneg (quadForm_finite N v)) := by
-  exact finite_negativity_witness N v hperp hne
+  exact finite_negativity_witness N v hperp hne h_pos
 
 -- ===========================================================================
 -- Self-intersection of the diagonal

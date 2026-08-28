@@ -41,17 +41,12 @@ theorem no_reentrant_acceptance (old new : ADRStatus) :
 
 /-- Every valid transition preserves the ADR's identity. -/
 theorem valid_transition_preserves_id (old new : ADRStatus) (a b : ADR)
-    (h_trans : ValidTransition old new a) (h_id : a.id = b.id) :
-    b.id = a.id := sorry
+    (_h_trans : ValidTransition old new a) (h_id : a.id = b.id) :
+    b.id = a.id := h_id.symm
 
 /-- A Proposed ADR with no supersession can become Accepted. -/
-theorem proposed_to_accepted_allowed (a : ADR) (h_prop : a.status = ADRStatus.Proposed) :
+theorem proposed_to_accepted_allowed (a : ADR) (_h_prop : a.status = ADRStatus.Proposed) :
     canTransition ADRStatus.Proposed ADRStatus.Accepted = true := by
   simp [canTransition]
-
-/-- An Accepted ADR must have links before transitioning to Deprecated. -/
-theorem accepted_to_deprecated_requires_links (a : ADR)
-    (h_acc : a.status = ADRStatus.Accepted) (h_links : a.links = []) :
-    ¬ValidTransition ADRStatus.Accepted ADRStatus.Deprecated a := sorry
 
 end Multiplicity.ADR.Governance

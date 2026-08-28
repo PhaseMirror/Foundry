@@ -1,3 +1,0 @@
-namespace Prime.DirichletConvergence
-
-end Prime.DirichletConvergence

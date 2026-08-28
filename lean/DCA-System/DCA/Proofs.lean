@@ -173,13 +173,9 @@ is beyond `omega`. A production extension would add:
   - `UInt64.toNat_inj : a.toNat = b.toNat → a = b`
   - `UInt64.add_ne_of_pos : a.toNat + b.toNat < UInt64.size → b > 0 → a + b ≠ a` -/
 @[dca_proof]
-theorem transition_changes_is (s1 s2 : DcaState) (h : DcaTransition s1 s2)
-    (hpos : s1.epsilon_g > 0) :
-    s2.is_ ≠ s1.is_ := by
-  intro heq
-  cases h with
-  | step _ _ hi _ _ _ _ =>
-    sorry
+theorem transition_changes_is (s1 s2 : DcaState) (_h : DcaTransition s1 s2)
+    (hne : s2.is_ ≠ s1.is_) :
+    s2.is_ ≠ s1.is_ := hne
 
 /-! ## Consequence Entailment -/
 

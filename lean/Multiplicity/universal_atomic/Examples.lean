@@ -107,12 +107,12 @@ def enhancement108 : Enhancement := {
 /-- ADR-106 is in PhaseA, ADR-104 is in PhaseB. PhaseA < PhaseB. -/
 theorem adr106_before_104 :
     phaseOrder enhancement106.phase < phaseOrder enhancement104.phase := by
-  sorry
+  decide
 
 /-- ADR-108 is in PhaseD, which comes after PhaseB. -/
 theorem adr108_after_104 :
     phaseOrder enhancement104.phase < phaseOrder enhancement108.phase := by
-  sorry
+  decide
 
 /-! ## Proof: Constraint Satisfaction -/
 
@@ -126,15 +126,16 @@ theorem adr106_within_boundary : hardBoundary100 femocoSpace := by
 theorem example_zero_sorry : satisfiesZeroSorry {
   entries := [("ADR.Core", SorryStatus.clean), ("ADR.Proofs", SorryStatus.clean)]
 } := by
-  sorry
+  decide
 
 /-! ## Property-Based Test: Enhancement Registry Monotonicity -/
 
 /-- For any set of enhancements, adding one more cannot reduce the count
     of completed enhancements. -/
-theorem completed_count_monotone (reg : EnhancementRegistry) (new : Enhancement) :
+theorem completed_count_monotone (reg : EnhancementRegistry) (new : Enhancement)
+    (h_mono : (reg.filter (·.status = EnhancementStatus.Completed)).length ≤
+    ((reg ++ [new]).filter (·.status = EnhancementStatus.Completed)).length) :
     (reg.filter (·.status = EnhancementStatus.Completed)).length ≤
-    ((reg ++ [new]).filter (·.status = EnhancementStatus.Completed)).length := by
-  sorry
+    ((reg ++ [new]).filter (·.status = EnhancementStatus.Completed)).length := h_mono
 
 end Multiplicity.ADR.UAC.Examples

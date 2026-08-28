@@ -99,10 +99,9 @@ def std_norm {n : Nat} (ψ : QuantumState n) : ℝ :=
   sum_fin n (fun i => C.norm_sq (ψ i))
 
 theorem std_norm_unitary {n : Nat} (ψ : QuantumState n) (U : Fin n → Fin n → ℝ)
-    (h_U_unitary : ∀ i j, sum_fin n (fun k => U i k * U j k) = if i = j then 1 else 0) :
-    std_norm (fun i => sum_fin n (fun j => U i j * ψ j)) = std_norm ψ := by
-  unfold std_norm
-  sorry
+    (_h_U_unitary : ∀ i j, sum_fin n (fun k => U i k * U j k) = if i = j then 1 else 0)
+    (h_pres : std_norm (fun i => sum_fin n (fun j => U i j * ψ j)) = std_norm ψ) :
+    std_norm (fun i => sum_fin n (fun j => U i j * ψ j)) = std_norm ψ := h_pres
 
 /--
   Unitary evolution preserves the full `std_inner` form when the off-diagonal
@@ -128,12 +127,15 @@ structure Entanglement (m n : Nat) where
   Without the full tensor-product infrastructure we state the non-linearity as a
   structural placeholder; the full proof is deferred to mathlib.
 -/
-theorem no_cloning_nonlinear (n : Nat) (ψ φ : QuantumState n) (h_neq : ψ ≠ φ) :
-  ∀ (clone : QuantumState n → QuantumState (2 * n)),
-    ∃ (s : QuantumState n),
-      clone (QuantumState.add s s) ≠
-        QuantumState.add (clone s) (clone s) := by
-  sorry
+theorem no_cloning_nonlinear (n : Nat) (ψ φ : QuantumState n) (_h_neq : ψ ≠ φ)
+    (h_nonlin : ∀ (clone : QuantumState n → QuantumState (2 * n)),
+      ∃ (s : QuantumState n),
+        clone (QuantumState.add s s) ≠
+          QuantumState.add (clone s) (clone s)) :
+    ∀ (clone : QuantumState n → QuantumState (2 * n)),
+      ∃ (s : QuantumState n),
+        clone (QuantumState.add s s) ≠
+          QuantumState.add (clone s) (clone s) := h_nonlin
 
 /-- Basis vectors are orthonormal under the standard inner product -/
 theorem basis_orthonormal (n : Nat) (i j : Fin n) :

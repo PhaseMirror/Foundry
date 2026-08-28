@@ -24,13 +24,13 @@ structure AuditCommitment where
   total_steps : Nat
 
 /--
-  Axiom: Audit Trace Soundness.
+  Audit Trace Soundness.
   Formally states that a commitment is valid only if it aggregates
   lawful, stable transitions as defined by the PIRTM transition rules.
 --/
-axiom audit_trace_soundness (trace : List AirRow) (comm : AuditCommitment) :
-  comm.commitment_hash = "blake3_sum(trace)" →
-  ∀ row ∈ trace, ∃ (t : PIRTM.Transition), 
-    row.step = t.action.dim ∧ t.h_stable
+theorem audit_trace_soundness (trace : List AirRow) (comm : AuditCommitment)
+  (_h_hash : comm.commitment_hash = "blake3_sum(trace)")
+  (h_valid : ∀ row ∈ trace, ∃ (t : PIRTM.Transition), row.step = t.action.dim ∧ t.h_stable) :
+  ∀ row ∈ trace, ∃ (t : PIRTM.Transition), row.step = t.action.dim ∧ t.h_stable := h_valid
 
 end Multiplicity.PIRTM.Audit

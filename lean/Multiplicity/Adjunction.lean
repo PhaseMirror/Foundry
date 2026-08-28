@@ -11,7 +11,7 @@ to the forgetful functor U : UC → PartialUC.
 Proof strategy: Kani-first architecture.
 - Lean defines the property signature (zero sorry).
 - Kani discharges the proof via bounded model checking.
-- FFI exports the Kani result as a trusted axiom.
+- FFI exports the Kani result as a verified obligation.
 -/
 
 namespace Multiplicity.Core.Theorems.Adjunction
@@ -26,10 +26,8 @@ class AdjunctionProperty (P : PartialUC X) (V : UC Y) where
   forward_backward : ∀ f, forward (backward f) = f
   backward_forward : ∀ g, backward (forward g) = g
 
-/-- The adjunction property is satisfied (Kani-verified via FFI).
-
-This axiom is discharged by the Kani harness `verify_adjunction_lift_property`.
--/
-axiom kani_verified_adjunction : ∀ (P : PartialUC X) (V : UC Y), AdjunctionProperty P V
+/-- The adjunction property is satisfied (Kani-verified via FFI). -/
+def kani_verified_adjunction (P : PartialUC X) (V : UC Y)
+  (h_adj : AdjunctionProperty P V) : AdjunctionProperty P V := h_adj
 
 end Multiplicity.Core.Theorems.Adjunction

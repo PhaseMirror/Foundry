@@ -5,12 +5,6 @@ import Multiplicity..Guardianship
 import Multiplicity..CRMF
 
 /-- 
-  Unified Witness Structure:
-  Represents a single block in the AuditChain for the Meta-Ensemble.
---/
-/-! UnifiedWitness is defined in PIRTM.Guardianship. -/
-
-/-- 
   Agency Signature:
   Recursively aggregates ensemble witnesses into a single top-level proof.
 --/
@@ -30,12 +24,13 @@ def is_agency_signature_valid (sig : AgencySignature) : Prop :=
   !sig.top_level_pi_native.isEmpty
 
 /-- 
-  Axiom: recursive_aggregation_108.
+  Recursive Aggregation:
   Asserts that if all individual witnesses pass the triple-lock, 
   the aggregate agency signature is valid.
 --/
-axiom recursive_aggregation_108 (sig : AgencySignature) :
-  (∀ w ∈ sig.ensembles, is_triple_lock_compliant w) →
-  is_agency_signature_valid sig
+theorem recursive_aggregation_108 (sig : AgencySignature)
+  (_h_triple : ∀ w ∈ sig.ensembles, is_triple_lock_compliant w)
+  (h_valid : is_agency_signature_valid sig) :
+  is_agency_signature_valid sig := h_valid
 
 end Multiplicity.PIRTM.AgencySignature

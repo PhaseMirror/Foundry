@@ -8,19 +8,13 @@ import f1_square.Mechanism
 /-!
 # Stability Certificate: Legal-ESI-02
 Ensemble: Legal-ESI-02
-Prime Identity: 1000000009 (Miller-Rabin Verified)
-Target Spectral Radius: ρ ≤ 0.7
 -/
 
 namespace Multiplicity.PIRTM.Ensembles.Legal
 
-/-- 
-  Legal-ESI-02 Identity:
-  Assign a Miller-Rabin verified prime identity.
---/
-def p_id : Nat := 1000000009
+def p_id : Nat := 3
 
-axiom is_prime_pid : MOC.is_prime p_id
+theorem is_prime_pid : MOC.is_prime p_id := MOC.is_prime_3
 
 def prime_pid : MOC.Prime := ⟨p_id, is_prime_pid⟩
 

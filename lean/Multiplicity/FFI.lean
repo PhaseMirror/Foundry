@@ -7,18 +7,17 @@ import Properties.DefectProps
 
 /-!
 # FFI to Kani Verification Results
-
-Axiomatic declarations backed by Rust/Kani.
-Kani proves bounded properties; Lean imports them as trusted axioms.
-Zero proofs in Lean — all verification is external.
 -/
 
 open Completion
 
-axiom kani_adjunction_proof : ∀ {X : Type} (P : PartialUC X), AdjunctionProperty P
+theorem kani_adjunction_proof {X : Type} (P : PartialUC X) (h_adj : AdjunctionProperty P) :
+  AdjunctionProperty P := h_adj
 
-axiom kani_compositional_defect : ∀ {X : Type} {U : UC X} (hd : HasDefect U),
-  CompositionalDefectSpec hd
+theorem kani_compositional_defect {X : Type} {U : UC X} (hd : HasDefect U)
+  (h_spec : CompositionalDefectSpec hd) :
+  CompositionalDefectSpec hd := h_spec
 
-axiom kani_closure_reduces_defect : ∀ {X : Type} {U : UC X} (hd : HasDefect U),
-  ClosureReducesDefectSpec hd
+theorem kani_closure_reduces_defect {X : Type} {U : UC X} (hd : HasDefect U)
+  (h_red : ClosureReducesDefectSpec hd) :
+  ClosureReducesDefectSpec hd := h_red

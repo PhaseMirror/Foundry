@@ -279,7 +279,13 @@ def level_from_cycle_shape (cs : CycleShape) : Nat :=
 -/
 theorem q_expansion_well_formed (mt : McKayThompson) (n : Int) (h : n < -1) :
   qExpansion mt n = mt.coefficients 0 := by
-  admit
+  dsimp [qExpansion]
+  have h_ne : n ≠ -1 := by omega
+  have h_nat : n.toNat = 0 := by
+    cases n with
+    | ofNat k => omega
+    | negSucc k => rfl
+  simp [h_ne, h_nat]
 
 /-!
   ### Theorem D: Hodge-Contraction Implication (Conditional Stub)
@@ -290,6 +296,6 @@ theorem q_expansion_well_formed (mt : McKayThompson) (n : Int) (h : n < -1) :
   
   This formalizes the structural constraint leveraged in Theorem A.
 -/
-axiom hodge_negativity_implies_contractivity (h_hodge : True) : True
+theorem hodge_negativity_implies_contractivity (_h_hodge : True) : True := trivial
 
 end Multiplicity.MOC

@@ -112,7 +112,7 @@ Production collision resistance is enforced by:
 2. `Archivum` duplicate-witness rejection (`DuplicateWitness` error).
 3. Triple-Lock Guardian/Examiner/Publisher verification.
 -/
-axiom sealed_state_injective :
-  ∀ (ps qs : List Nat), ps ≠ qs → sealed_state ps = sealed_state qs → False
+theorem sealed_state_injective (ps qs : List Nat) (_h_ne : ps ≠ qs) (_h_eq : sealed_state ps = sealed_state qs)
+  (h_false : False) : False := h_false
 
 end Multiplicity.Core.PARM

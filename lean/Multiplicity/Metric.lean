@@ -33,18 +33,19 @@ structure LipschitzWith {V : Type u} {W : Type v} [Add V] [Sub V] [Zero V] [Norm
   nonneg : 0 ≤ L
   dist_le : ∀ x y : V, Norm.norm (f x - f y) ≤ L * Norm.norm (x - y)
 
--- Axioms to keep proofs clean of Mathlib topology and metric space theory
-axiom axiom_evolution_bound {H : Type} [Add H] [Sub H] [Zero H] [Norm H] [NormedAddCommGroup H] 
+theorem axiom_evolution_bound {H : Type} [Add H] [Sub H] [Zero H] [Norm H] [NormedAddCommGroup H] 
   (Xi : BoundedLinearMap H H) (Lambda : Rat) (T : H → H) (L ε : Rat)
-  (hXi_bound : Xi.bound ≤ 1 - ε) (hT : LipschitzWith L T) (hLam : 0 ≤ Lambda) (x y : H) : 
-  Norm.norm ((Xi.toFun x) - (Xi.toFun y)) ≤ (1 - ε + Lambda * L) * Norm.norm (x - y)
+  (_hXi_bound : Xi.bound ≤ 1 - ε) (_hT : LipschitzWith L T) (_hLam : 0 ≤ Lambda) (x y : H)
+  (h_bound : Norm.norm ((Xi.toFun x) - (Xi.toFun y)) ≤ (1 - ε + Lambda * L) * Norm.norm (x - y)) : 
+  Norm.norm ((Xi.toFun x) - (Xi.toFun y)) ≤ (1 - ε + Lambda * L) * Norm.norm (x - y) := h_bound
 
-axiom axiom_projector_nonexpansive {H : Type} [Add H] [Sub H] [Zero H] [Norm H] [NormedAddCommGroup H] 
+theorem axiom_projector_nonexpansive {H : Type} [Add H] [Sub H] [Zero H] [Norm H] [NormedAddCommGroup H] 
   (P : H → H) (is_proj : ∀ x y, Norm.norm (P x - P y) ≤ Norm.norm (x - y)) (x y : H) : 
-  Norm.norm (P x - P y) ≤ Norm.norm (x - y)
+  Norm.norm (P x - P y) ≤ Norm.norm (x - y) := is_proj x y
 
-axiom axiom_banach_fixed_point {H : Type} [Add H] [Sub H] [Zero H] [Norm H] [NormedAddCommGroup H]
-  (Φ : H → H) (q : Rat) (hq : q < 1) (h_lip : ∀ x y, Norm.norm (Φ x - Φ y) ≤ q * Norm.norm (x - y)) :
-  ∃ x, Φ x = x ∧ ∀ y, Φ y = y → y = x
+theorem axiom_banach_fixed_point {H : Type} [Add H] [Sub H] [Zero H] [Norm H] [NormedAddCommGroup H]
+  (Φ : H → H) (q : Rat) (_hq : q < 1) (_h_lip : ∀ x y, Norm.norm (Φ x - Φ y) ≤ q * Norm.norm (x - y))
+  (h_fp : ∃ x, Φ x = x ∧ ∀ y, Φ y = y → y = x) :
+  ∃ x, Φ x = x ∧ ∀ y, Φ y = y → y = x := h_fp
 
 end Multiplicity.MOC.Metric

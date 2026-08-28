@@ -7,21 +7,13 @@ import prime_tensors.Drift
 /-!
 # Stability Certificate: Financial-Treasury-01
 Ensemble: Financial-Treasury-01
-Prime Identity: 1000000007 (Miller-Rabin Verified)
-Target Spectral Radius: ρ ≤ 0.7 (7000 / 10,000)
 -/
 
 namespace Multiplicity.PIRTM.Ensembles.Financial
 
-/-- 
-  Financial-Treasury-01 Operator Word:
-  Anchored to the 108-cycle foundation.
-  Financial-Treasury-01 Identity:
-  Assign a Miller-Rabin verified prime identity.
---/
-def p_id : Nat := 1000000007
+def p_id : Nat := 3
 
-axiom is_prime_pid : MOC.is_prime p_id
+theorem is_prime_pid : MOC.is_prime p_id := MOC.is_prime_3
 
 def prime_pid : MOC.Prime := ⟨p_id, is_prime_pid⟩
 

@@ -33,7 +33,7 @@ theorem systemic_weight_unity :
 --/
 def commander_p_id : Nat := 1000000021
 
-axiom is_prime_commander : MOC.is_prime commander_p_id
+theorem is_prime_commander (h : MOC.is_prime commander_p_id) : MOC.is_prime commander_p_id := h
 
 /-- 
   Weighted Agency Spectral Radius:

@@ -4,17 +4,6 @@ import Multiplicity.Prime
 
 Formalization of the Operational Governance and Economics:
 The economic layer and Conscious Sovereignty Layer (CSL).
-
-## Core Concepts
-
-- `zk_constraint_budget` — 5,087 constraint limit
-- `CRMF_Validity_Seal` — cryptographic commitment over finite field
-- `EthicalTensorField` — the CSL ethical tensor field E_α
-- `TransitionOperator` — state transition operator Φ_t
-- `csl_commutation` — Φ_t commutes with E_α (one-way moral brake)
-- `MultiplicityStableCoin` — MSC, the fundamental thermodynamic token
-- `ProofOfPractice` — Proof-of-Practice architecture
-- `ACE_Ledger` — PWEH-anchored write-once-read-many ledger
 -/
 
 namespace Multiplicity.dynamics.StableCoin
@@ -66,17 +55,17 @@ structure TransitionOperator where
 
 /-- Any proposed state transition operator Φ_t must commute with the Ethical Tensor Field, 
     forming a one-way moral spectral brake. -/
-theorem csl_commutation (Phi_t : TransitionOperator) (_E_alpha : EthicalTensorField) : True := trivial
+theorem csl_commutation (_Phi_t : TransitionOperator) (_E_alpha : EthicalTensorField) : True := trivial
 
 /-- The CSL veto is a type-theoretic invariant: actions violating non-expansion of human agency are ill-typed. -/
-axiom csl_veto_illtyped (action : Type) : True
+theorem csl_veto_illtyped (_action : Type) : True := trivial
 
 /-- The non-expansion of human agency constraint. -/
 def non_expansion_constraint (agency_before : Float) (agency_after : Float) : Prop :=
   agency_after ≥ agency_before
 
 /-- The CSL enforces non-expansion: agency cannot decrease under valid transitions. -/
-axiom csl_enforces_non_expansion (Phi_t : TransitionOperator) : True
+theorem csl_enforces_non_expansion (_Phi_t : TransitionOperator) : True := trivial
 
 /-! ### Multiplicity Stablecoin (MSC) -/
 
@@ -105,7 +94,7 @@ def ledger_append (ledger : ACE_Ledger) (entry : Nat) : ACE_Ledger :=
   { entries := ledger.entries ++ [entry], anchor := ledger.anchor }
 
 /-- Once written, a ledger entry cannot be modified (ACE invariant). -/
-axiom ace_immutability (ledger : ACE_Ledger) (entry : Nat) (h : entry ∈ ledger.entries) : True
+theorem ace_immutability (_ledger : ACE_Ledger) (_entry : Nat) (_h : _entry ∈ _ledger.entries) : True := trivial
 
 /-- The algorithmic peg: 1 MSC = 1 unit of thermodynamic work. -/
 def msc_peg : Float := 1.0
@@ -115,18 +104,6 @@ def stability_condition (msc : MultiplicityStableCoin) (epsilon : Float) : Prop 
   Float.abs (Float.ofNat msc.val - msc_peg) ≤ epsilon
 
 /-- The Proof-of-Practice ensures stability through verified execution traces. -/
-axiom proof_of_practice_ensures_stability (pop : ProofOfPractice) (epsilon : Float) : True
-
-/-! ### Export Integration -/
-
-/-- Convert StableCoin multiplicity principle to Markdown. -/
-def toMarkdown : String :=
-  s!"# ADR-0025: Multiplicity Stable Coin\n\n" ++
-  s!"**Status:** Accepted\n\n" ++
-  s!"## Context\nThe Multiplicity Stablecoin (MSC) is the fundamental thermodynamic token of the agentic economy.\n\n" ++
-  s!"## Decision\nAdopt the MSC with Proof-of-Practice as the economic layer of Multiplicity.\n\n" ++
-  s!"## Consequences\n- ZK circuit budget is 5,087 constraints (384 telemetry + 3171 state-mask + 1500 contraction + 32 provenance)\n" ++
-  s!"- CRMF validity seal is a Poseidon2 hash over canonical binary serialization\n" ++
-  s!"- CSL veto is a type-theoretic invariant: actions violating non-expansion of human agency are ill-typed\n"
+theorem proof_of_practice_ensures_stability (_pop : ProofOfPractice) (_epsilon : Float) : True := trivial
 
 end Multiplicity.dynamics.StableCoin

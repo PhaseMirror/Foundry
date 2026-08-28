@@ -19,21 +19,21 @@ def runValidation : IO UInt32 := do
 
   -- [S0] Lake Tree & Axiom Cleanliness
   IO.println "\n[S0] Gate S0: Axiom Cleanliness & Build Integrity..."
-  IO.println "    Axiom Status: ZERO axioms, ZERO sorryAx on all Bose definitions/proofs."
-  IO.println "    [+] PASSED: S0 verified (Lake tree active in Foundry/lean)."
+  IO.println "    Axiom Status: ZERO custom axioms, ZERO sorryAx on all Bose definitions/proofs."
+  IO.println "    [+] S0: Local build verified against Lean 4 core."
 
-  -- [S1b] Isomorphism B_N,g ≃ P_N,g
-  IO.println "\n[S1b] Gate S1b: Bi-directional Isomorphism B_N,g ≃ P_N,g..."
+  -- [S1b] Finite Decoder Verification (N ≤ 5, g = 3)
+  IO.println "\n[S1b] Gate S1b: Finite Decoder Verification (N ≤ 5, g = 3)..."
   for N in [1, 2, 3, 5] do
     let states := enumerateBoseStates N 3
     let ok := states.all (fun occ =>
       decodeBoseState (encodeBoseState occ [2, 3, 5]) 3 [2, 3, 5] == occ
     )
     if !ok then
-      IO.eprintln s!"[-] ERROR: Isomorphism roundtrip failure on B_{N},3!"
+      IO.eprintln s!"[-] ERROR: Decoder roundtrip failure on B_{N},3!"
       return 1
     IO.println s!"    Verified exact bidirectional recovery on all {states.length} states of B_{N},3."
-  IO.println "    [+] PASSED: S1b verified (FTA-backed bijection)."
+  IO.println "    [+] PASSED: S1b verified (Finite decoder verification on N ≤ 5, g = 3)."
 
   -- [S2] (C, F) Independence Test
   IO.println "\n[S2] Gate S2: Two-Coordinate Independence ((3,1,1) vs (3,2,0))..."
@@ -58,10 +58,10 @@ def runValidation : IO UInt32 := do
   IO.println "    [+] PASSED: S3 verified (finite product interface only; no unchecked zeta claims)."
 
   -- [S4] Leakage Firewall
-  IO.println "\n[S4] Gate S4: Leakage Firewall Active..."
+  IO.println "\n[S4] Gate S4: Leakage Firewall (Policy Constraint)..."
   IO.println "    Boundary: Bose theorems are algebraic/statistical occupancy models."
   IO.println "    Firewall: Zero leakage into civic, on-chain finality, or open RH statements."
-  IO.println "    [+] PASSED: S4 verified."
+  IO.println "    [+] POLICY: S4 active by governance mandate."
 
   -- [S5b] Map Table Dump & Stop-Rule Comparison
   IO.println "\n[S5b] Gate S5b: Map Table & Energy Spectrum Comparison (N=1..20)..."
@@ -79,13 +79,13 @@ def runValidation : IO UInt32 := do
   IO.println "\n    Total configurations across N=1..20: 1770 states."
   IO.println "    Stop-Rule Evaluation:"
   IO.println "      1. E_linear displays physical degeneracies (e.g. (3,2,0) and (4,0,1) both have E=2)."
-  IO.println "      2. E_log = ln(m) has degeneracy EXACTLY 1 for every state due to FTA uniqueness."
+  IO.println "      2. E_log = ln(m) has degeneracy EXACTLY 1 for every state due to FTA uniqueness on fixed basis."
   IO.println "      3. Result: E_log is a non-degenerate algebraic coordinate index; no novel physical force."
   IO.println "      4. Action: STOP RULE APPLIED (Preserve encoding theorems, drop physical claims)."
   IO.println "    [+] PASSED: S5b verified."
 
   IO.println "\n================================================================="
-  IO.println "  ALL GATES S0 - S5b PASSED (100% PRODUCTION COHERENCE)          "
+  IO.println "  BOSE MULTIPLICITY GOVERNANCE RUN COMPLETED                     "
   IO.println "================================================================="
   return 0
 

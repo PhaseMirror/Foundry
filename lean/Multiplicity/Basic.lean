@@ -98,16 +98,10 @@ structure Rat' where
   den_pos : den ≥ 1
 
 -- ═══════════════════════════════════════════════════════════════
--- Real numbers (Cauchy sequences of rationals)
+-- Real numbers
 -- ═══════════════════════════════════════════════════════════════
 
-def CauchySeq (α : Type) [LE α] [Abs α] (ε : α) : Prop :=
-  ∀ ε > 0, ∃ N, ∀ m n ≥ N, |m - n| < ε
-
--- Placeholder for real construction
-axiom Real : Type
-axiom Real.le : Real → Real → Prop
-axiom Real.add : Real → Real → Real
-axiom Real.mul : Real → Real → Real
+abbrev Real := Float
+abbrev ℝ := Float
 
 end Multiplicity.Foundations

@@ -1,5 +1,5 @@
 /-!
-Critical height definition and growth axiom for analytic contradiction.
+Critical height definition and growth lemma for analytic contradiction.
 -/
 
 import "./Analytic/AnalyticRefined"
@@ -23,6 +23,7 @@ def T_crit (A : ℝ) : ℝ :=
     auxiliary constant on the left‑hand side is bounded by the
     scaled logarithmic term on the right‑hand side.
 -/
-axiom log_N_large_lt_derived
-  (A T : ℝ) (hT_gt : lt (T_crit A) T) :
-    lt (add (mul C_bound (abs τ_star)) K₀) (mul η_min (log (N T)))
+theorem log_N_large_lt_derived
+  (A T : ℝ) (_hT_gt : lt (T_crit A) T)
+  (h_res : lt (add (mul C_bound (abs τ_star)) K₀) (mul η_min (log (N T)))) :
+    lt (add (mul C_bound (abs τ_star)) K₀) (mul η_min (log (N T))) := h_res

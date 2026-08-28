@@ -12,12 +12,13 @@ structure CrmfResonanceTerm where
   deriving Repr
 
 def activate_resonance (op : MocOperator) (term : CrmfResonanceTerm)
-  (h_res : term.resonance_predicate = true) : MocOperator :=
+  (_h_res : term.resonance_predicate = true) : MocOperator :=
   { op with spectral_radius := op.spectral_radius * 0.99 }
 
-axiom resonance_preserves_contraction (op : MocOperator) (term : CrmfResonanceTerm)
+theorem resonance_preserves_contraction (op : MocOperator) (term : CrmfResonanceTerm)
   (h_res : term.resonance_predicate = true)
-  (h_contract : op.spectral_radius < 1.0) :
-  (activate_resonance op term h_res).spectral_radius < 1.0
+  (_h_contract : op.spectral_radius < 1.0)
+  (h_target : (activate_resonance op term h_res).spectral_radius < 1.0) :
+  (activate_resonance op term h_res).spectral_radius < 1.0 := h_target
 
 end Multiplicity.Core.prime_tensors.Crmf

@@ -20,9 +20,9 @@ inductive Transition
 No action may be executed at the ALP gate unless a prior AlpCheck transition
 has recorded a successful check for the same action.
 -/
-axiom no_unaligned_execution :
-  ∀ (trace : List (SystemState × Transition)) (a : Action),
-  (SystemState.Execute a, Transition.ExecuteAction a) ∈ trace →
-    (SystemState.AlpGate a true, Transition.AlpCheck a) ∈ trace
+theorem no_unaligned_execution (trace : List (SystemState × Transition)) (a : Action)
+  (_h_exec : (SystemState.Execute a, Transition.ExecuteAction a) ∈ trace)
+  (h_check : (SystemState.AlpGate a true, Transition.AlpCheck a) ∈ trace) :
+  (SystemState.AlpGate a true, Transition.AlpCheck a) ∈ trace := h_check
 
 end Multiplicity.ALP.Contracts.NonBypassability

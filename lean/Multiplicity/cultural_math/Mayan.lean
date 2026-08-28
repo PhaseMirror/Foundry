@@ -1,8 +1,15 @@
-import Multiplicity.CulturalMath.Base
+import Foundations.CulturalMath.Base
 
-namespace Multiplicity.CulturalMath.Mayan
+/-!
+# Foundations.CulturalMath.Mayan — Vigesimal (Base-20) Place Value & Calendar Rounds
 
--- Base-20 (vigesimal)
+Formalizes Mayan base-20 arithmetic, zero ground state, and Tzolkin/Haab synchronizations.
+-/
+
+namespace Foundations.CulturalMath.Mayan
+
+open Foundations.CulturalMath.Base
+
 def mod20 (n : Nat) : Nat := n % 20
 
 theorem mod20_periodic (n : Nat) : mod20 (n + 20) = mod20 n := by simp [mod20]
@@ -10,11 +17,9 @@ theorem mod20_add (a b : Nat) : mod20 (a + b) = mod20 (mod20 a + mod20 b) := by 
 theorem mod20_mul (a b : Nat) : mod20 (a * b) = mod20 (mod20 a * mod20 b) := by
   simp only [mod20]; rw [Nat.mul_mod]
 
--- Zero as ground state
 theorem mayanZero_add (n : Nat) : 0 + n = n := by omega
 theorem mayanZero_mul (n : Nat) : 0 * n = 0 := by omega
 
--- Calendrical cycles
 def tzolkinCycle := 260
 def haabCycle := 365
 def tzolkinDay (t : Nat) : Nat := t % tzolkinCycle
@@ -31,7 +36,6 @@ theorem calendarRound_sync :
     calendarRound % tzolkinCycle = 0 ∧ calendarRound % haabCycle = 0 := by
   simp [calendarRound, tzolkinCycle, haabCycle]
 
--- Vigesimal encoding
 def fromBase20 : List Nat → Nat
   | []      => 0
   | v :: vs => v + 20 * fromBase20 vs
@@ -49,7 +53,6 @@ theorem fromBase20_toBase20 : ∀ n, n < 20 → fromBase20 (toBase20 n) = n
     rw [hm, hd]
     simp [toBase20, fromBase20]
 
--- Fractal in base 20
 def vigesimalFractal (T0 : Nat) : Nat → Nat
   | 0     => T0
   | n + 1 => vigesimalFractal T0 n / 20
@@ -58,7 +61,6 @@ theorem vigesimalFractal_contracting (T0 n : Nat) (_hT0 : T0 ≥ 1) :
     vigesimalFractal T0 (n + 1) ≤ vigesimalFractal T0 n := by
   simp [vigesimalFractal]; omega
 
--- Positional encoding
 def mayanPositional : List Nat → Nat
   | []      => 0
   | v :: vs => v + 20 * mayanPositional vs
@@ -66,4 +68,4 @@ def mayanPositional : List Nat → Nat
 theorem mayanPositional_single (v : Nat) (_hv : v < 20) :
     mayanPositional [v] = v := by simp [mayanPositional]
 
-end Multiplicity.CulturalMath.Mayan
+end Foundations.CulturalMath.Mayan

@@ -1,15 +1,23 @@
-import Multiplicity.CulturalMath.Base
+import Foundations.CulturalMath.Base
 
-namespace Multiplicity.CulturalMath.Japanese
+/-!
+# Foundations.CulturalMath.Japanese — Wasan Geometry & Sangaku Fractals
+
+Formalizes right-triangle incircles, iterative root extraction, and Sangaku self-similar fractals.
+-/
+
+namespace Foundations.CulturalMath.Japanese
+
+open Foundations.CulturalMath.Base
 
 -- Incircle radius of right triangle
 def incircleRadius (a b c : Nat) : Nat := (a + b - c) / 2
 
 theorem incircle_345 :
-    incircleRadius 3 4 5 = 1 := by native_decide
+    incircleRadius 3 4 5 = 1 := by decide
 
 theorem incircle_51213 :
-    incircleRadius 5 12 13 = 2 := by native_decide
+    incircleRadius 5 12 13 = 2 := by decide
 
 -- Newton iteration
 def newtonIterate (α : Nat) (residual : Nat → Nat) : Nat → Nat
@@ -47,4 +55,4 @@ theorem sangakuFractal_decreasing (T0 n : Nat) (_hT0 : T0 ≥ 1) :
     sangakuFractal T0 (n + 1) ≤ sangakuFractal T0 n := by
   simp [sangakuFractal]; omega
 
-end Multiplicity.CulturalMath.Japanese
+end Foundations.CulturalMath.Japanese

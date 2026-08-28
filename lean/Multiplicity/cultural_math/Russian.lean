@@ -1,6 +1,14 @@
-import Multiplicity.CulturalMath.Base
+import Foundations.CulturalMath.Base
 
-namespace Multiplicity.CulturalMath.Russian
+/-!
+# Foundations.CulturalMath.Russian — Soviet Nonlinear Dynamics, Lyapunov & Boundary Operators
+
+Formalizes vector operations, 2x2 commutator brackets, Lyapunov monotone bounds, and nilpotent boundary operators.
+-/
+
+namespace Foundations.CulturalMath.Russian
+
+open Foundations.CulturalMath.Base
 
 structure Vec (n : Nat) where
   data : Fin n → Nat
@@ -27,6 +35,7 @@ structure Mat2 where
   b : Nat
   c : Nat
   d : Nat
+  deriving Repr
 
 def Mat2.mul (M N : Mat2) : Mat2 :=
   ⟨M.a * N.a + M.b * N.c, M.a * N.b + M.b * N.d,
@@ -45,16 +54,6 @@ theorem lyapunov_bounded (δx : Nat → Nat) (hm : lyapunovMonotone δx) :
   | zero => omega
   | succ k ih => have := hm k; omega
 
-def noiseTerm (t : Nat) : Nat := t * 7 % 13
-
-def stochasticUpdate (sigma : Nat) : Nat → Nat
-  | 0     => 0
-  | t + 1 => stochasticUpdate sigma t + sigma * noiseTerm t
-
-theorem stochasticUpdate_monotone (sigma t : Nat) (_hs : sigma ≥ 1) :
-    stochasticUpdate sigma (t + 1) ≥ stochasticUpdate sigma t := by
-  simp [stochasticUpdate]
-
 def boundaryOp : Nat → Nat → Nat
   | _, 0   => 0
   | n, m + 1 => if m + 1 ≤ n then (m + 1) else 0
@@ -68,16 +67,4 @@ theorem boundary_squared_zero (n m : Nat) (hm : m > n) :
     boundaryOp (n - 1) (boundaryOp n m) = 0 := by
   rw [boundaryOp_zero_of_gt n m hm]; simp [boundaryOp]
 
-def continuousGenerator (A : Nat) : Nat → Nat
-  | 0     => 1
-  | t + 1 => A * continuousGenerator A t
-
-theorem continuousGenerator_power (A t : Nat) :
-    continuousGenerator A t = A ^ t := by
-  induction t with
-  | zero => simp [continuousGenerator]
-  | succ k ih =>
-    simp only [continuousGenerator, ih]
-    rw [Nat.mul_comm A (A ^ k), Nat.pow_succ]
-
-end Multiplicity.CulturalMath.Russian
+end Foundations.CulturalMath.Russian

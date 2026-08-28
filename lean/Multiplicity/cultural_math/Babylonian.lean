@@ -1,6 +1,14 @@
-import Multiplicity.CulturalMath.Base
+import Foundations.CulturalMath.Base
 
-namespace Multiplicity.CulturalMath.Babylonian
+/-!
+# Foundations.CulturalMath.Babylonian — Sexagesimal (Base-60) Arithmetic & Square Roots
+
+Formalizes Babylonian sexagesimal place value, iterative square root approximations, and calendrical periods.
+-/
+
+namespace Foundations.CulturalMath.Babylonian
+
+open Foundations.CulturalMath.Base
 
 def mod60 (n : Nat) : Nat := n % 60
 
@@ -49,4 +57,4 @@ def dayOfYear (t : Nat) : Nat := t % bYear
 def dayOfMonth (t : Nat) : Nat := (t % bYear) % bMonth
 def monthNumber (t : Nat) : Nat := (t / bMonth) % 12
 
-end Multiplicity.CulturalMath.Babylonian
+end Foundations.CulturalMath.Babylonian

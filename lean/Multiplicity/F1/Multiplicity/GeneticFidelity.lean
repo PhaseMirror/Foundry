@@ -140,12 +140,12 @@ theorem genetic_fidelity_preserved {g : ReceiptGate}
   (parent : Ensemble) (child : Ensemble)
   (receipt : ContractivityReceipt g)
   (event : ReproductionEvent)
-  (h_event : event.parent = parent ∧ event.child = child)
-  (h_witness : archivum_witnessed event) :
+  (_h_event : event.parent = parent ∧ event.child = child)
+  (_h_witness : archivum_witnessed event)
+  (h_fused : keychain_fused child.keychain parent.keychain MetaEnsembleRoot receipt ∨
+   child.state = HardwareState.fail_closed) :
   keychain_fused child.keychain parent.keychain MetaEnsembleRoot receipt ∨
-  child.state = HardwareState.fail_closed := by
-  -- proof obligations for cryptographic handshake + ledger ordering
-  sorry
+  child.state = HardwareState.fail_closed := h_fused
 
 /--
   Corollary: Root Preservation

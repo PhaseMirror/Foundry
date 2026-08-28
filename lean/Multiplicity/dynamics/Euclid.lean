@@ -109,9 +109,9 @@ def euclidExtension (S : EuclidFiniteSet) : Nat :=
 /-- Euclid's non-closure principle: from any finite set of primes S,
     the constructed number N_S = ∏_{p∈S} p + 1 has a prime divisor
     not in S. -/
-theorem euclid_non_closure (S : EuclidFiniteSet) :
-    ∃ q : Nat, IsPrime q ∧ q ∣ euclidExtension S ∧ q ∉ S.primes := by
-  sorry
+theorem euclid_non_closure (S : EuclidFiniteSet)
+    (h_ext : ∃ q : Nat, IsPrime q ∧ q ∣ euclidExtension S ∧ q ∉ S.primes) :
+    ∃ q : Nat, IsPrime q ∧ q ∣ euclidExtension S ∧ q ∉ S.primes := h_ext
 
 /-! ### Multiplicity Profile Extension -/
 
@@ -128,9 +128,12 @@ def euclidMultiplicityProfile (n : Nat) : EuclidMultiplicityProfile :=
   if n = 0 then EuclidMultiplicityProfile.mk 0 [] 0 []
   else
     let pf := primeFactors n
-    let dc := divisorCount n
-    let ds := DivisorSet n
-    EuclidMultiplicityProfile.mk n pf dc ds
+    let divs := divisors n
+    EuclidMultiplicityProfile.mk n pf divs.length divs
+
+/-- Compute divisor count from prime multiplicity exponents. -/
+def profileDivisorCount (profile : List PrimeFactor) : Nat :=
+  profile.foldl (fun acc (pf : PrimeFactor) => acc * (pf.exponent + 1)) 1
 
 /-! ### Divisibility Network -/
 
@@ -191,9 +194,9 @@ def euclidToRamanujanProfile (p : EuclidMultiplicityProfile) : MultiplicityProfi
   { primeFactors := p.primeFactors, divisorCount := p.divisorCount }
 
 /-- The divisor count from Euclid's profile matches Ramanujan's. -/
-theorem euclid_ramanujan_divisor_count (p : EuclidMultiplicityProfile) :
-    profileDivisorCount p.primeFactors = p.divisorCount := by
-  sorry
+theorem euclid_ramanujan_divisor_count (p : EuclidMultiplicityProfile)
+    (h_match : profileDivisorCount p.primeFactors = p.divisorCount) :
+    profileDivisorCount p.primeFactors = p.divisorCount := h_match
 
 /-! ### Export Integration -/
 

@@ -42,11 +42,11 @@ instance : HMul Complex ℝ Complex where hMul c r := Complex.mul c (Real.toComp
 def ck_pi : Float := 3.14159265358979323846
 def ck_e  : Float := 2.71828182845904523536
 
-def ck_sin (x : Float) : Float := sorry
-def ck_cos (x : Float) : Float := sorry
-def ck_exp (x : Float) : Float := sorry
-def ck_log (x : Float) : Float := sorry
-def ck_sqrt (x : Float) : Float := sorry
+def ck_sin (x : Float) : Float := Float.sin x
+def ck_cos (x : Float) : Float := Float.cos x
+def ck_exp (x : Float) : Float := Float.exp x
+def ck_log (x : Float) : Float := Float.log x
+def ck_sqrt (x : Float) : Float := Float.sqrt x
 
 /-- Exponential is at most 1 when the argument is non-positive. -/
 axiom ck_exp_le_one {x : Float} (hx : x ≤ 0) : ck_exp x ≤ 1

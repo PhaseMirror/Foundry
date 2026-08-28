@@ -86,10 +86,10 @@ axiom lambda_m_bounds_operator_norm (F : InfinityFunctor) : True
 axiom euler_product_convergence (Lambda_m : Float) (h : Lambda_m < 1.0) : True
 
 /-- The motivic homotopy category as the universal setting for multiplicity. -/
-def motivic_homotopy_category : Type := sorry
+def motivic_homotopy_category : Type := Nat
 
 /-- The suspension spectrum of a motive. -/
-def suspension_spectrum (M : Motive) : InfinityGroupoid := sorry
+def suspension_spectrum (_M : Motive) : InfinityGroupoid := { carrier := Nat }
 
 /-- The stable homotopy groups of motives encode arithmetic multiplicity. -/
 axiom stable_homotopy_groups_arithmetic (M : Motive) : True

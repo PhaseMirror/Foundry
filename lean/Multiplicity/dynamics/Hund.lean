@@ -69,7 +69,8 @@ theorem pauli_max_occupancy (orbital : Nat) :
     pauli_exclusion up down ∧
     up.orbital = orbital ∧ down.orbital = orbital ∧
     up.spin = true ∧ down.spin = false := by
-  sorry
+  refine ⟨⟨orbital, true⟩, ⟨orbital, false⟩, ?_⟩
+  simp [pauli_exclusion]
 
 /-! ### Atomic Term Symbols as Multiplicity Profiles -/
 

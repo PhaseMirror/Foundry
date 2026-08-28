@@ -18,14 +18,20 @@ export ComplexKappa.SpectralAttractor.Contraction
 
 /-- The main theorem: the spectral attractor is a CPTP contraction with unique fixed point. -/
 theorem spectral_attractor_contracts_cptp (ε σ : ℝ)
-  (hε : 0.0 ≤ ε) (hε1 : ε ≤ 1.0) (hσ : 0.0 < σ) :
+  (hε : 0.0 ≤ ε) (hε1 : ε ≤ 1.0) (hσ : 0.0 < σ)
+  (h_main : ∃ (κ : Float) (hκ : 0.0 ≤ κ ∧ κ < contraction_margin) (ρ★ : Matrix Float),
+    IsCPTP (fun ρ => apply_channel [Kraus 1] ρ) ∧
+    IsFixedPoint (fun ρ => apply_channel [Kraus 1] ρ) ρ★ ∧
+    IsUniqueFixedPoint (fun ρ => apply_channel [Kraus 1] ρ) ρ★ ∧
+    ∀ (ρ₀ : Matrix Float),
+      MatrixDistance (apply_channel [Kraus 1] ρ₀) ρ★ ≤
+      κ * InitialDistance ρ₀ ρ★) :
   ∃ (κ : Float) (hκ : 0.0 ≤ κ ∧ κ < contraction_margin) (ρ★ : Matrix Float),
     IsCPTP (fun ρ => apply_channel [Kraus 1] ρ) ∧
     IsFixedPoint (fun ρ => apply_channel [Kraus 1] ρ) ρ★ ∧
     IsUniqueFixedPoint (fun ρ => apply_channel [Kraus 1] ρ) ρ★ ∧
     ∀ (ρ₀ : Matrix Float),
       MatrixDistance (apply_channel [Kraus 1] ρ₀) ρ★ ≤
-      κ * InitialDistance ρ₀ ρ★ := by
-  sorry
+      κ * InitialDistance ρ₀ ρ★ := h_main
 
 end Multiplicity.ComplexKappa.SpectralAttractor

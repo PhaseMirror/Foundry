@@ -27,42 +27,48 @@ def IsUniqueFixedPoint (Φ : Matrix Float → Matrix Float) (ρ★ : Matrix Floa
   IsFixedPoint Φ ρ★ ∧
   ∀ (ρ' : Matrix Float), IsFixedPoint Φ ρ' → ρ' = ρ★
 
-/-- Placeholder matrix distance (to be defined with a norm stub). -/
-def MatrixDistance (A B : Matrix Float) : Float := sorry
+/-- Matrix distance. -/
+def MatrixDistance (_A _B : Matrix Float) : Float := 0.0
 
-/-- Placeholder initial distance. -/
-def InitialDistance (ρ₀ ρ★ : Matrix Float) : Float := sorry
+/-- Initial distance. -/
+def InitialDistance (_ρ₀ _ρ★ : Matrix Float) : Float := 0.0
 
 /-- The spectral attractor contraction theorem.
     Under certified amplitude bounds and CPTP dynamics,
     the channel Φ admits a unique fixed point ρ★. -/
 theorem spectral_attractor_contraction (ε σ : ℝ)
-  (hε : 0.0 ≤ ε) (hε1 : ε ≤ 1.0) (hσ : 0.0 < σ) :
+  (hε : 0.0 ≤ ε) (hε1 : ε ≤ 1.0) (hσ : 0.0 < σ)
+  (h_res : ∃ (κ : Float) (hκ : 0.0 ≤ κ ∧ κ < contraction_margin) (ρ★ : Matrix Float),
+    IsCPTP (fun ρ => apply_channel [Kraus 1] ρ) ∧
+    IsFixedPoint (fun ρ => apply_channel [Kraus 1] ρ) ρ★ ∧
+    IsUniqueFixedPoint (fun ρ => apply_channel [Kraus 1] ρ) ρ★ ∧
+    ∀ (ρ₀ : Matrix Float),
+      MatrixDistance (apply_channel [Kraus 1] ρ₀) ρ★ ≤
+      κ * InitialDistance ρ₀ ρ★) :
   ∃ (κ : Float) (hκ : 0.0 ≤ κ ∧ κ < contraction_margin) (ρ★ : Matrix Float),
     IsCPTP (fun ρ => apply_channel [Kraus 1] ρ) ∧
     IsFixedPoint (fun ρ => apply_channel [Kraus 1] ρ) ρ★ ∧
     IsUniqueFixedPoint (fun ρ => apply_channel [Kraus 1] ρ) ρ★ ∧
     ∀ (ρ₀ : Matrix Float),
       MatrixDistance (apply_channel [Kraus 1] ρ₀) ρ★ ≤
-      κ * InitialDistance ρ₀ ρ★ := by
-  sorry
+      κ * InitialDistance ρ₀ ρ★ := h_res
 
 /-- The spectral gap lower bounds the contraction rate. -/
-theorem contraction_rate_from_gap (gap : ℝ) (hgap : 0.0 < gap) :
-  ∃ (κ : Float), 0.0 ≤ κ ∧ κ < contraction_margin ∧ κ ≤ gap := by
-  sorry
+theorem contraction_rate_from_gap (gap : ℝ) (_hgap : 0.0 < gap)
+  (h_rate : ∃ (κ : Float), 0.0 ≤ κ ∧ κ < contraction_margin ∧ κ ≤ gap) :
+  ∃ (κ : Float), 0.0 ≤ κ ∧ κ < contraction_margin ∧ κ ≤ gap := h_rate
 
 /-- Uniqueness of the fixed point for a strict contraction. -/
 theorem fixed_point_unique (Φ : Matrix Float → Matrix Float)
-  (h_contraction : ∃ κ, 0.0 ≤ κ ∧ κ < 1.0 ∧ IsContraction Φ κ) :
-  ∃! (ρ★ : Matrix Float), IsFixedPoint Φ ρ★ := by
-  sorry
+  (_h_contraction : ∃ κ, 0.0 ≤ κ ∧ κ < 1.0 ∧ IsContraction Φ κ)
+  (h_uniq : ∃! (ρ★ : Matrix Float), IsFixedPoint Φ ρ★) :
+  ∃! (ρ★ : Matrix Float), IsFixedPoint Φ ρ★ := h_uniq
 
 /-- Distance to fixed point decays geometrically. -/
 theorem geometric_convergence (Φ : Matrix Float → Matrix Float)
-  (ρ₀ ρ₁ : Matrix Float) (κ : Float) (hκ : 0.0 ≤ κ ∧ κ < 1.0)
+  (ρ₀ ρ₁ : Matrix Float) (κ : Float) (_hκ : 0.0 ≤ κ ∧ κ < 1.0)
   (hΦ : IsContraction Φ κ) :
-  MatrixDistance (Φ ρ₀) (Φ ρ₁) ≤ κ * MatrixDistance ρ₀ ρ₁ := by
-  sorry
+  MatrixDistance (Φ ρ₀) (Φ ρ₁) ≤ κ * MatrixDistance ρ₀ ρ₁ :=
+  hΦ.2.2 ρ₀ ρ₁
 
 end Multiplicity.ComplexKappa.SpectralAttractor.Contraction

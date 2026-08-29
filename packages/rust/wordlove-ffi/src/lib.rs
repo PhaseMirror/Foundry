@@ -1,7 +1,7 @@
 //! Rust binding to the Lean WordLove C ABI (ADR-0031 §6 / ADR-0033 P5).
 //!
 //! Realizes the **P5 Realization** stratum of the Prism model: the
-//! kernel-checked definitions in `Multiplicity.WordLove.FFI` are lowered to
+//! kernel-checked definitions in `Foundations.WordLove.FFI` are lowered to
 //! `@[export]` symbols by Lake and consumed here through typed handles —
 //! no arithmetic is re-implemented on the Rust side, so the provenance chain
 //! Definition → Proof → Executable → Binding stays unbroken.
@@ -13,7 +13,7 @@
 //!   support statistics ω/Ω and the canonical PARM sealed state.
 //! * [`CertifiedCouplingExport`] — the certified fixed-point coupling
 //!   γ_pn (scale N = 1024) whose four joint invariants are proved in
-//!   `Multiplicity.WordLove.Certified`.
+//!   `Foundations.WordLove.Certified`.
 //!
 //! The dylib path and manifest location arrive as compile-time environment
 //! variables emitted by `build.rs` (`LEAN_RS_CAPABILITY_WORD_LOVE_DYLIB` /
@@ -22,7 +22,7 @@
 use lean_rs::{LeanBuiltCapability, LeanCapability, LeanError, LeanRuntime};
 use std::sync::OnceLock;
 
-/// Compile-time env var carrying the built `libWordLove.so` path.
+/// Compile-time env var carrying the built `libFoundations_WordLove.so` path.
 pub const DYLIB_ENV: &str = "LEAN_RS_CAPABILITY_WORD_LOVE_DYLIB";
 /// Compile-time env var carrying the capability manifest path.
 pub const MANIFEST_ENV: &str = "LEAN_RS_CAPABILITY_WORD_LOVE_MANIFEST";

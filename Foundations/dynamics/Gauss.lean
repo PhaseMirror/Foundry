@@ -1,4 +1,4 @@
-import Multiplicity.Prime
+import Foundations.Prime
 
 /-! # Gauss Multiplicity Core (ADR-0005)
 

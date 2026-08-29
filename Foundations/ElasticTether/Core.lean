@@ -31,12 +31,10 @@ theorem tension_zero_at_rest (s : TetherState) (h : s.length ≤ s.restLen) :
     tension s = 0 := by
   unfold tension
   by_cases heq : s.length = s.restLen
-  · subst heq
-    simp
+  · simp [heq]
   · have hlt : s.length < s.restLen := Nat.lt_of_le_of_ne h heq
-    have : ¬ (s.length ≥ s.restLen) := by
-      have : ¬ (s.restLen ≤ s.length) := Nat.not_le.mpr hlt
-      simpa [Nat.ge_iff_le] using this
-    simp [this]
+    have hnot : ¬ s.length ≥ s.restLen := by
+      simpa using (Nat.not_le.mpr hlt)
+    simp [hnot]
 
 end Foundations.ElasticTether

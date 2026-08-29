@@ -2,8 +2,8 @@
 --
 -- v0.2.1 ergonomics prelude — re-exports the foundation surface under `UOR.Prelude`. Consumers write `import UOR.Prelude` and `open UOR.Prelude` to access the v0.2.1 one-liner API.
 
-import Multiplicity.UOR.Enforcement
-import Multiplicity.UOR.Structures
+import Foundations.UOR.Enforcement
+import Foundations.UOR.Structures
 
 namespace Multiplicity.UOR.Prelude
 

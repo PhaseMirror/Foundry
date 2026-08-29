@@ -45,17 +45,14 @@ theorem governance_monotone
 
 theorem anchor_monotone
     (anchors : List Anchor) (now : Nat) (newAnchor : Anchor)
+    (h_new : now - newAnchor.timestamp ≤ maxAnchorInterval)
     (h : anchorMandateSatisfied anchors now) :
     anchorMandateSatisfied (anchors ++ [newAnchor]) now := by
   intro _
   by_cases h_len : anchors.length > 0
   · obtain ⟨a, ha_mem, ha_le⟩ := h h_len
     exact ⟨a, List.mem_append_left _ ha_mem, ha_le⟩
-  · have : newAnchor ∈ anchors ++ [newAnchor] := List.mem_append_right _ (List.Mem.head [])
-    refine ⟨newAnchor, this, ?_⟩
-    have : anchors = [] := List.eq_nil_of_length_eq_zero (by omega)
-    subst this
-    omega
+  · exact ⟨newAnchor, List.mem_append_right _ (List.Mem.head []), h_new⟩
 
 theorem enhancement_deps_monotone
     (reg : EnhancementRegistry) (new : Enhancement)
@@ -85,7 +82,6 @@ theorem all_constraints_from_parts
 theorem ci_rejects_skip (cur tgt : Phase)
     (h_skip : phaseOrder tgt > phaseOrder cur + 1) :
     ciPhaseCheck cur tgt = false := by
-  dsimp [ciPhaseCheck]
-  omega
+  simp [ciPhaseCheck, Nat.not_le_of_gt h_skip]
 
 end Foundations.UniversalAtomic

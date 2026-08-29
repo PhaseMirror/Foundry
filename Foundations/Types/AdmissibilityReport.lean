@@ -1,4 +1,4 @@
-import Multiplicity.alp.Types.Action
+import Foundations.Types.Action
 
 namespace Multiplicity.ALP.Types.AdmissibilityReport
 

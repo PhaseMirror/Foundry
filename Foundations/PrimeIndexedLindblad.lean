@@ -1,4 +1,4 @@
-import Multiplicity.PrimeIndexedLindblad.SchurTest
+import Foundations.PrimeIndexedLindblad.SchurTest
 
 -- This module documents that `finite_contractivity` is discharged by the Schur-test route.
 -- The statement `hp_operator_contractive` from FinitePrimeOperator is conceptually merged here.

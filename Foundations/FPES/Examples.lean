@@ -1,5 +1,5 @@
-import Multiplicity.FPES.Core
-import Multiplicity.FPES.Proofs
+import Foundations.FPES.Core
+import Foundations.FPES.Proofs
 
 /-!
 # FPES Examples — realistic hypothesis spaces (ADR-0029 Phase 2)

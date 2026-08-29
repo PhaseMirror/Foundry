@@ -2,7 +2,7 @@
 --
 -- UOR Foundation — Convergence individual constants.
 
-import Multiplicity.UOR.Structures
+import Foundations.UOR.Structures
 
 open UOR.Primitives
 

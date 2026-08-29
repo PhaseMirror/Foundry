@@ -1,8 +1,8 @@
 -- PWEH.lean - Prime-Weighted Execution Hashing Formalization
 -- Beyond toy scalar version to real 3x3 tensor matrix convergence
 
-import Multiplicity.Init.Data.Nat.Basic
-import Multiplicity.Init.Data.List.Basic
+import Foundations.Init.Data.Nat.Basic
+import Foundations.Init.Data.List.Basic
 
 namespace Multiplicity.PIRTM.PWEH
 

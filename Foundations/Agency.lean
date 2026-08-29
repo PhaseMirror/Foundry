@@ -1,4 +1,4 @@
-import Multiplicity.Spine
+import Foundations.Spine
 import prime_tensors.Stability
 import prime_tensors.FinancialTreasury01
 import prime_tensors.LegalESI02

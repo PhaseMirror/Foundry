@@ -2,12 +2,12 @@
 --
 -- UOR Foundation — Proof individual constants.
 
-import Multiplicity.UOR.Structures
-import Multiplicity.UOR.Individuals.Cohomology
-import Multiplicity.UOR.Individuals.Homology
-import Multiplicity.UOR.Individuals.Observable
-import Multiplicity.UOR.Individuals.Op
-import Multiplicity.UOR.Individuals.Schema
+import Foundations.UOR.Structures
+import Foundations.UOR.Individuals.Cohomology
+import Foundations.UOR.Individuals.Homology
+import Foundations.UOR.Individuals.Observable
+import Foundations.UOR.Individuals.Op
+import Foundations.UOR.Individuals.Schema
 
 open UOR.Primitives
 

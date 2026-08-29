@@ -2,8 +2,8 @@
 --
 -- v0.2.1 ergonomics surface — sealed wrappers, Certify typeclass, PipelineFailure inductive, and the UOR.Prelude re-exports. Every symbol traces to an ontology entity.
 
-import Multiplicity.UOR.Primitives
-import Multiplicity.UOR.Enums
+import Foundations.UOR.Primitives
+import Foundations.UOR.Enums
 
 namespace Multiplicity.UOR.Enforcement
 

@@ -1,6 +1,6 @@
-import Multiplicity..BRA
-import Multiplicity..Geometry
-import Multiplicity..Impedance
+import Foundations..BRA
+import Foundations..Geometry
+import Foundations..Impedance
 
 /-- Top‑level namespace aggregating the genesis‑ode Lean artifacts. -/
 namespace Multiplicity.GenesisOde

@@ -1,4 +1,4 @@
-import Multiplicity.Spine
+import Foundations.Spine
 
 namespace Multiplicity.MOC
 

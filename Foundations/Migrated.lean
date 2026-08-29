@@ -1,12 +1,12 @@
 -- Aggregation of all consolidated Sedona Spine compliant packages
-import Multiplicity.Operators.AceScnCsc.ACE_SCN_CSC
-import Multiplicity.Operators.AceScnCsc.AtlasSCNBridge
-import Multiplicity.Operators.AceScnCsc.KernelTelemetry
-import Multiplicity.Operators.AceScnCsc.Main
-import Multiplicity.Operators.AceScnCsc.SCNConditioning
-import Multiplicity.Operators.EigenSolvers
-import Multiplicity.Operators.IntegrativeSolver
-import Multiplicity.Operators.MOperator
+import Foundations.Operators.AceScnCsc.ACE_SCN_CSC
+import Foundations.Operators.AceScnCsc.AtlasSCNBridge
+import Foundations.Operators.AceScnCsc.KernelTelemetry
+import Foundations.Operators.AceScnCsc.Main
+import Foundations.Operators.AceScnCsc.SCNConditioning
+import Foundations.Operators.EigenSolvers
+import Foundations.Operators.IntegrativeSolver
+import Foundations.Operators.MOperator
 import f1_square.AlphaFunction
 import f1_square.Aztftc
 import f1_square.ExoticSpheres

@@ -1,8 +1,8 @@
-import Multiplicity.ADR.Kappa.PrimeIndex
-import Multiplicity.ADR.Kappa.Oscillator
-import Multiplicity.ADR.Kappa.KappaExp
-import Multiplicity.ADR.Kappa.Stability
-import Multiplicity.ADR.Kappa.Spectral
+import Foundations.Kappa.PrimeIndex
+import Foundations.Kappa.Oscillator
+import Foundations.Kappa.KappaExp
+import Foundations.Kappa.Stability
+import Foundations.Kappa.Spectral
 
 /-!
 # κ-Unified Multiplicity Theory Examples
@@ -32,7 +32,8 @@ def minimalNetwork : OscillatorNetwork := {
 
 /-- The minimal network is dissipative. -/
 theorem minimal_network_dissipative : isDissipative minimalNetwork := by
-  -- TODO: replace sorry
+  -- TODO: replace sorry once Float ordering becomes decidable in the kernel.
+  sorry
 
 /-! ## Example 2: Spectral Gap Computation -/
 
@@ -42,7 +43,9 @@ def spectralGapN10 : Float := spectralGapPrediction 1.0 10
 /-- The spectral gap for N=10 is positive. -/
 theorem spectralGapN10_positive : spectralGapN10 > 0 := by
   simp [spectralGapN10, spectralGapPrediction]
-  -- TODO: replace sorry
+  -- TODO: replace sorry once Float ordering and reciprocation become
+  --   kernel-decidable in this foundation.
+  sorry
 
 /-! ## Example 3: κ-Exponential Behavior -/
 
@@ -56,7 +59,9 @@ def standardExp : Float := Float.exp 1.0
 theorem kappaExp_close_to_exp :
     Float.abs (kappaExpSmall - standardExp) < 0.1 := by
   simp [kappaExpSmall, standardExp, kappaExp]
-  -- TODO: replace sorry
+  -- TODO: replace sorry once Float transcendental approximations become
+  --   formally provable in this foundation.
+  sorry
 
 /-! ## Example 4: Stability of FeMoco System -/
 
@@ -70,13 +75,16 @@ def feMocoSystem : DelaySystem := {
 
 /-- The FeMoco system satisfies the stability condition. -/
 theorem feMoco_stable : stabilityCondition feMocoSystem := by
-  -- TODO: replace sorry
+  -- TODO: replace sorry once Float comparisons become decidable in the kernel.
+  sorry
 
 /-! ## Example 5: Energy Non-Negativity -/
 
 /-- The prime-weighted energy of the minimal network is non-negative. -/
 theorem minimal_energy_nonneg : primeWeightedEnergy minimalNetwork ≥ 0 := by
-  -- TODO: replace sorry
+  -- TODO: replace sorry once Float ordering of the prime-weighted energy
+  --   fold becomes kernel-decidable in this foundation.
+  sorry
 
 /-! ## Example 6: κ-Entropy Composition -/
 
@@ -85,22 +93,28 @@ def kappaEntropyAB : Float := kappaEntropyCompose 0.01 2.0 3.0
 
 /-- For κ = 0, entropy composition reduces to standard addition. -/
 theorem kappaEntropy_standard : kappaEntropyCompose 0.0 2.0 3.0 = 5.0 := by
-  -- TODO: replace sorry
+  -- TODO: replace sorry once Float arithmetic becomes kernel-reducible in
+  --   this foundation.
+  sorry
 
 /-! ## Property-Based Tests -/
 
 /-- Property: prime products are always at least 4. -/
 theorem prime_products_ge_4 :
     ∀ i j, primeSeq i ≥ 2 → primeSeq j ≥ 2 → primeSeq i * primeSeq j ≥ 4 := by
-  intro i j _ _
-  -- TODO: replace sorry
+  intro i j hi hj
+  exact Nat.mul_le_mul hi hj
 
 /-- Property: the κ-logarithm of 1 is always 0 regardless of κ. -/
 theorem kappaLog_one_always_zero : ∀ κ, kappaLog κ 1.0 = 0.0 := by
-  -- TODO: replace sorry
+  -- TODO: replace sorry once Float transcendental identities become provable
+  --   in this foundation.
+  sorry
 
 /-- Property: relaxation time is positive for stable systems. -/
 theorem relaxation_positive : ∀ γ μ, γ > μ → μ ≥ 0 → relaxationTimePrediction γ μ > 0 := by
-  -- TODO: replace sorry
+  -- TODO: replace sorry once Float ordering and reciprocation become
+  --   kernel-decidable in this foundation.
+  sorry
 
 end Multiplicity.ADR.Kappa.Examples

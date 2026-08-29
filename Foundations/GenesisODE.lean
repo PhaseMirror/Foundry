@@ -1,4 +1,4 @@
-import Multiplicity.Spine
+import Foundations.Spine
 import moc.Resonance
 import prime_tensors.Stability
 

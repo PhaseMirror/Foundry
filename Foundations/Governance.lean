@@ -1,5 +1,5 @@
-import Multiplicity.ADR.Core
-import Multiplicity.ADR.Proofs
+import Foundations.ADR.Core
+import Foundations.ADR.Proofs
 
 open ADR
 

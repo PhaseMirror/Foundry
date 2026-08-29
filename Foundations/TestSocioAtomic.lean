@@ -1,4 +1,4 @@
-import Multiplicity.ADR.SocioAtomic
+import Foundations.ADR.SocioAtomic
 
 open SocioAtomic
 

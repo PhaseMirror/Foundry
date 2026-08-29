@@ -1,6 +1,6 @@
 // Norm preservation for the first column of the Stinespring dilation
 
-import Multiplicity.ComplexKappa.IsometryKani
+import Foundations.ComplexKappa.IsometryKani
 
 set_option linter.unusedVariables false
 

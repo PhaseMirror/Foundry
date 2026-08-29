@@ -1,4 +1,4 @@
-import Multiplicity.Multiplicity.Polynomial
+import Foundations.Multiplicity.Polynomial
 
 /-!
 # Multiplicity Kernel — Root Multiplicity (ADR-0001 Phase 1 scope)

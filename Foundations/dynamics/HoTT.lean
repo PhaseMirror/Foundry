@@ -1,4 +1,4 @@
-import Multiplicity.Prime
+import Foundations.Prime
 
 /-! # HoTT/∞-Multiplicities (ADR-0021)
 

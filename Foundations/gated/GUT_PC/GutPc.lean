@@ -1,6 +1,6 @@
-import Multiplicity.Init.Data.Int.Basic
-import Multiplicity.Init.Data.Nat.Basic
-import Multiplicity.Init.Data.Real.Basic
+import Foundations.Init.Data.Int.Basic
+import Foundations.Init.Data.Nat.Basic
+import Foundations.Init.Data.Real.Basic
 
 namespace Multiplicity.GutPc
 

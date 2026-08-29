@@ -2,8 +2,8 @@
 --
 -- UOR Foundation — Morphism individual constants.
 
-import Multiplicity.UOR.Structures
-import Multiplicity.UOR.Individuals.Op
+import Foundations.UOR.Structures
+import Foundations.UOR.Individuals.Op
 
 open UOR.Primitives
 

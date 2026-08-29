@@ -1,6 +1,6 @@
-import alp.Constitution.Model
-import alp.Constitution.L0
-import alp.PolicyEngine.Core
+import Foundations.Constitution.Model
+import Foundations.Constitution.L0
+import Foundations.PolicyEngine.Core
 
 namespace Multiplicity.ALP.Candle.PirtmBridge
 

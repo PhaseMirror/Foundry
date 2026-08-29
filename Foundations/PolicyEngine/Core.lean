@@ -1,8 +1,8 @@
-import alp.Constitution.Model
-import alp.Constitution.L0
-import alp.Types.Action
-import alp.Types.TrustLevel
-import alp.Types.AdmissibilityReport
+import Foundations.Constitution.Model
+import Foundations.Constitution.L0
+import Foundations.Types.Action
+import Foundations.Types.TrustLevel
+import Foundations.Types.AdmissibilityReport
 
 namespace Multiplicity.ALP.PolicyEngine
 

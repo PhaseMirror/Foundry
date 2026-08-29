@@ -1,6 +1,6 @@
-import Multiplicity.FPES.Core
-import Multiplicity.FPES.Proofs
-import Multiplicity.FPES.Examples
+import Foundations.FPES.Core
+import Foundations.FPES.Proofs
+import Foundations.FPES.Examples
 
 /-!
 # FPES Test Harness (ADR-0029)

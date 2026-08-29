@@ -1,5 +1,5 @@
-import Multiplicity.ADR.Kappa.PrimeIndex
-import Multiplicity.ADR.Kappa.Oscillator
+import Foundations.Kappa.PrimeIndex
+import Foundations.Kappa.Oscillator
 
 /-!
 # Lyapunov-Krasovskii Stability Analysis
@@ -60,7 +60,9 @@ def lyapunovValue (V : LyapunovFunctional) : Float :=
 /-- The functional is non-negative. -/
 theorem lyapunov_nonneg (V : LyapunovFunctional) (h_energy : V.currentEnergy ≥ 0) :
     lyapunovValue V ≥ 0 := by
-  -- TODO: replace sorry
+  -- TODO: replace sorry with a formal proof once Float ordering, addition,
+  --   and delay-integral semantics are axiomatized in this foundation.
+  sorry
 
 /-! ## Stability Theorem -/
 
@@ -71,7 +73,9 @@ theorem stability_decreasing (sys : DelaySystem)
     (h_hurwitz : isHurwitz sys) :
     sys.damping - sys.couplingNorm * (1.0 + sys.delay) > 0 := by
   unfold stabilityCondition isHurwitz at *
-  -- TODO: replace sorry
+  -- TODO: replace sorry with a formal proof once Float ordering and
+  --   arithmetic semantics are axiomatized in this foundation.
+  sorry
 
 /-- The prime-weighted coupling provides stronger stability margins
     because prime products grow faster than linear. -/
@@ -79,7 +83,9 @@ theorem prime_stability_advantage (J : Float) (idx : Nat) :
     let p := primeSeq idx
     let coupling := primeCoupling J p p
     coupling ≤ J / 4.0 := by
-  -- TODO: replace sorry
+  -- TODO: replace sorry with a formal proof once Float ordering and
+  --   prime-weight divergence semantics are axiomatized in this foundation.
+  sorry
 
 /-! ## Specific Stability Bounds for FeMoco -/
 
@@ -96,6 +102,8 @@ def feMocoStabilityBound : Prop :=
 
 /-- The FeMoco system is stable under default parameters. -/
 theorem femoco_stable : feMocoStabilityBound := by
-  -- TODO: replace sorry
+  -- TODO: replace sorry once Float comparisons become decidable in the
+  --   kernel or the stability bound is formalized via rationals.
+  sorry
 
 end Multiplicity.ADR.Kappa

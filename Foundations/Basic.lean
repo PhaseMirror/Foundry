@@ -15,7 +15,7 @@ def Set (α : Type) := α → Prop
 def Set.mem {α : Type} (a : α) (s : Set α) : Prop := s a
 
 instance {α : Type} : Membership α (Set α) where
-  mem := Set.mem
+  mem s a := Set.mem a s
 
 def Set.empty {α : Type} : Set α := fun _ => False
 
@@ -101,8 +101,8 @@ structure Rat' where
 -- Real numbers (Cauchy sequences of rationals)
 -- ═══════════════════════════════════════════════════════════════
 
-def CauchySeq (α : Type) [LE α] [Abs α] (ε : α) : Prop :=
-  ∀ ε > 0, ∃ N, ∀ m n ≥ N, |m - n| < ε
+def CauchySeq (α : Type) (le : α → α → Prop) (lt : α → α → Prop) (sub : α → α → α) (abs : α → α) (ε : α) : Prop :=
+  ∃ N : α, ∀ m n : α, le N m → le N n → lt (abs (sub m n)) ε
 
 -- Placeholder for real construction
 axiom Real : Type

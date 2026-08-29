@@ -1,3 +1,3 @@
-import Multiplicity.FormalTest.Fitting
-import Multiplicity.FormalTest.ArtaMultiplicity
-import Multiplicity.FormalTest.RtaMetric
+import Foundations.FormalTest.Fitting
+import Foundations.FormalTest.ArtaMultiplicity
+import Foundations.FormalTest.RtaMetric

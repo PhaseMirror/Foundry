@@ -1,6 +1,6 @@
-import Multiplicity.WordLove.Attrs
-import Multiplicity.WordLove.Core
-import Multiplicity.WordLove.Fixtures
+import Foundations.WordLove.Attrs
+import Foundations.WordLove.Core
+import Foundations.WordLove.Fixtures
 
 /-!
 # Word Love Proofs — Machine-Checked Theorems (ADR-0031)
@@ -32,9 +32,9 @@ the Word Love formalization. **No `-- TODO: replace sorry`, no `admit`, no `axio
 
 -/
 
-namespace Multiplicity.WordLove
+namespace Foundations.WordLove
 
-open Multiplicity.WordLove
+open Foundations.WordLove
 
 /-! ### 2. Obligation WL-GEMATRIA-001: Gematria Calculation Theorems -/
 
@@ -749,4 +749,4 @@ theorem witness_unbounded_65537_sealed_state :
     (UnboundedParmCircuitWitness.mk [65537] [some cert65537] 65537 (by rfl) (by rfl) (by rfl)).sealedState = 4295098369 := by
   rfl
 
-end Multiplicity.WordLove
+end Foundations.WordLove

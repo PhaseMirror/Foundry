@@ -1,4 +1,4 @@
-import Multiplicity.alp.Constitution.Model
+import Foundations.Constitution.Model
 
 namespace Multiplicity.ALP.Constitution.L0
 

@@ -1,8 +1,8 @@
-import Multiplicity.ADR.Core
-import Multiplicity.ADR.Proofs
-import Multiplicity.ADR.PhaseMirror
-import Multiplicity.ADR.Resonance
-import Multiplicity.ADR.Export
+import Foundations.ADR.Core
+import Foundations.ADR.Proofs
+import Foundations.ADR.PhaseMirror
+import Foundations.ADR.Resonance
+import Foundations.ADR.Export
 
 /-!
 # Dissonance Module

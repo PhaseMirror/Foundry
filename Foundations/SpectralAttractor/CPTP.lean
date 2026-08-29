@@ -4,10 +4,10 @@ Released under Apache 2.0 license.
 Authors: Multiplicity Foundry
 -/
 import Init.Omega
-import Multiplicity.SpectralAttractor.Tags
-import Multiplicity.SpectralAttractor.Basic
-import Multiplicity.SpectralAttractor.Certificates
-import Multiplicity.SpectralAttractor.Matrices
+import Foundations.SpectralAttractor.Tags
+import Foundations.SpectralAttractor.Basic
+import Foundations.SpectralAttractor.Certificates
+import Foundations.SpectralAttractor.Matrices
 
 /-!
 # Completely positive trace-preserving maps

@@ -10,6 +10,48 @@
 //! The mathematical claim "Brauer ovals inside unit disk ⇒ ρ < 1"
 //! is an analytic theorem assumed by the living loop, not Kani-proven.
 
+use nalgebra::DMatrix;
+
+/// Cassini radius for the oval centered on diagonal entries `i` and `j`.
+///
+/// For the pair `(alpha, beta)` of diagonal magnitudes and row-removed
+/// off-diagonal sums `r_i`, `r_j`, the maximal module of the rightmost
+/// point of the corresponding Brauer oval of Cassini is
+/// `0.5 * (alpha + beta + sqrt((alpha - beta)^2 + 4 * r_i * r_j))`.
+pub fn cassini_radius(alpha: f64, beta: f64, r_i: f64, r_j: f64) -> f64 {
+    let disc = (alpha - beta).powi(2) + 4.0 * r_i * r_j;
+    0.5 * (alpha + beta + disc.sqrt())
+}
+
+/// True iff every Brauer oval of Cassini lies strictly inside the unit disk.
+///
+/// Analytic and deterministic (O(n²) pairwise products, no iteration).
+/// For matrices with no pair satisfying the strict bound, returns false.
+pub fn brauer_ovals_strictly_contracting(mat: &DMatrix<f64>) -> bool {
+    let n = mat.nrows();
+    if n == 0 {
+        return false;
+    }
+    for i in 0..n {
+        for j in (i + 1)..n {
+            let alpha = mat[(i, i)].abs();
+            let beta = mat[(j, j)].abs();
+            let r_i: f64 = (0..n)
+                .filter(|&k| k != i)
+                .map(|k| mat[(i, k)].abs())
+                .sum();
+            let r_j: f64 = (0..n)
+                .filter(|&k| k != j)
+                .map(|k| mat[(j, k)].abs())
+                .sum();
+            if cassini_radius(alpha, beta, r_i, r_j) >= 1.0 {
+                return false;
+            }
+        }
+    }
+    true
+}
+
 #[cfg(kani)]
 mod proof {
     use crate::{brauer_ovals_strictly_contracting, cassini_radius};

@@ -1,4 +1,4 @@
-import Multiplicity.Spine
+import Foundations.Spine
 import moc.Moonshine
 import f1_square.Mechanism
 import prime_tensors.Stability

@@ -1,5 +1,5 @@
-import Multiplicity.Init.Data.Nat.Basic
-import Multiplicity.Init.Data.List.Basic
+import Foundations.Init.Data.Nat.Basic
+import Foundations.Init.Data.List.Basic
 
 namespace Multiplicity.Core.Spine
 

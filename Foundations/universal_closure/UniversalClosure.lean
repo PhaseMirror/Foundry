@@ -1,4 +1,4 @@
-import Multiplicity.universal_closure.PartialUC
+import Foundations.universal_closure.PartialUC
 
 /-!
 # Total Universal Closure System — Formal Spec

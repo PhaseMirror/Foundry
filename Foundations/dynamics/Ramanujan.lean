@@ -1,4 +1,4 @@
-import Multiplicity.Prime
+import Foundations.Prime
 
 /-! # Ramanujan Multiplicity (ADRs 0003 and 0008)
 

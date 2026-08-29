@@ -1,4 +1,4 @@
-import Multiplicity.FPES.Core
+import Foundations.FPES.Core
 
 /-!
 # FPES Proofs — machine-checked theorems (ADR-0029)

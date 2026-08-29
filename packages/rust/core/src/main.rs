@@ -1,5 +1,5 @@
 use nalgebra::{DMatrix, DVector};
-use pirtm_rs::{EmissionPolicy, QARIConfig, SessionOrchestrator};
+use pirtm_core::{EmissionPolicy, QARIConfig, SessionOrchestrator};
 
 fn main() {
     println!("PIRTM-rs Smoke Test");

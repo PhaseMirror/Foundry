@@ -1,6 +1,6 @@
-import Multiplicity.Multiplicity.Core
-import Multiplicity.Multiplicity.Polynomial
-import Multiplicity.Multiplicity.RootMultiplicity
+import Foundations.Multiplicity.Core
+import Foundations.Multiplicity.Polynomial
+import Foundations.Multiplicity.RootMultiplicity
 
 /-!
 # Multiplicity Kernel — Polynomial Witnesses (ADR-0001, Phase 1 scope)

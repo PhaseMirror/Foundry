@@ -1,4 +1,4 @@
-import Multiplicity.PhaseMirror.AffineCore.UniformContraction
+import Foundations.PhaseMirror.AffineCore.UniformContraction
 import moc.Metric
 open MOC.Metric
 

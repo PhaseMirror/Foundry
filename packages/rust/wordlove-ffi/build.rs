@@ -38,8 +38,8 @@ fn main() {
     // LargePrimeExport: hybrid gate (Tier-1 table / Tier-2 Pratt witness).
     //   Lean Bool lowers to uint8_t under @[export].
     CargoLeanCapability::new(project_root.clone(), TARGET)
-        .package("Prime")
-        .module("Prime.Multiplicity.WordLove.FFI")
+        .package("foundations")
+        .module("Foundations.WordLove.FFI")
         .export_signature(sig(
             "wordlove_is_hybrid_prime_fast_ffi",
             vec![arg(LeanExportAbiRepr::U64)],

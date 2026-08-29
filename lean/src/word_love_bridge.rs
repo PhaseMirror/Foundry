@@ -3,7 +3,7 @@
 //! C ABI declarations and Rust wrappers connecting to the Lean 4 Word Love kernel.
 
 use std::ffi::c_char;
-use crate::word_love::{GematriaScheme, PrimeMultiplicity, SemanticToken, string_gematria};
+use crate::word_love::{GematriaScheme, string_gematria};
 
 #[repr(C)]
 pub struct WordLoveTokenFFI {

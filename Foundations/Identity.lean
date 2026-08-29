@@ -4,12 +4,12 @@
     BitL0 transport, and choice-free verification axioms (proved in Rust/Kani).
     =========================================================================== -/
 
-import Multiplicity.Init.Data.Nat.Basic
-import Multiplicity.Init.Data.List.Basic
-import Multiplicity.Spine
+import Foundations.Init.Data.Nat.Basic
+import Foundations.Init.Data.List.Basic
+import Foundations.Spine
 import moc.Resonance
-import Multiplicity.Resonance
-import Multiplicity.ContractionWitness
+import Foundations.Resonance
+import Foundations.ContractionWitness
 import prime_tensors.Stability
 import prime_tensors.Stability
 import prime_tensors.Transition

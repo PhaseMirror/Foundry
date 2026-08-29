@@ -1,4 +1,4 @@
-import Multiplicity.Init
+import Foundations.Init
 
 namespace Multiplicity.Core.Operators.EigenSolvers
 

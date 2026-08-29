@@ -4,9 +4,9 @@ Released under Apache 2.0 license.
 Authors: Multiplicity Foundry
 -/
 import Init.Omega
-import Multiplicity.SpectralAttractor.Tags
-import Multiplicity.SpectralAttractor.Basic
-import Multiplicity.SpectralAttractor.Certificates
+import Foundations.SpectralAttractor.Tags
+import Foundations.SpectralAttractor.Basic
+import Foundations.SpectralAttractor.Certificates
 
 /-!
 # The γ-weighted Lyapunov layer

@@ -1,4 +1,4 @@
-import Multiplicity.ComplexKappa.Types
+import Foundations.ComplexKappa.Types
 
 namespace Multiplicity.dynamics.SpectralCert
 

@@ -1,5 +1,5 @@
-import Multiplicity.ComplexKappa.Core
-import Multiplicity.ComplexKappa.KramersKronig
+import Foundations.ComplexKappa.Core
+import Foundations.ComplexKappa.KramersKronig
 
 namespace Multiplicity.ComplexKappa.EffectiveCoupling
 

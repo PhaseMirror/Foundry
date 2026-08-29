@@ -1,4 +1,4 @@
-import Multiplicity.universal_closure.PrimeHilbert
+import Foundations.universal_closure.PrimeHilbert
 
 /-!
 # Infinite Gluing and the Global Hodge Index

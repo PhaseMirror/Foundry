@@ -1,8 +1,8 @@
 // CPTPIntertwiner formalization – self‑contained stub without Mathlib
 
-import Multiplicity.ComplexKappa.Core
-import Multiplicity.ComplexKappa.IsometryKani
-import Multiplicity.ComplexKappa.SpectralAttractor
+import Foundations.ComplexKappa.Core
+import Foundations.ComplexKappa.IsometryKani
+import Foundations.ComplexKappa.SpectralAttractor
 
 set_option linter.unusedVariables false
 

@@ -2,8 +2,8 @@
 --
 -- v0.2.1 Lean 4 test module. Every `example ... := by decide` assertion verifies at elaboration time that the decider under test reduces. A successful `lake build` of this file is proof that the pipeline is (a) pure-functional, (b) fuel-bounded, and (c) free of `sorry` / `partial def` / `native_decide`.
 
-import Multiplicity.UOR.Enforcement
-import Multiplicity.UOR.Pipeline
+import Foundations.UOR.Enforcement
+import Foundations.UOR.Pipeline
 
 namespace Multiplicity.UOR.Test
 

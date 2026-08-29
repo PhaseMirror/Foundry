@@ -1,7 +1,7 @@
-import Multiplicity.Mathlib.Analysis.InnerProductSpace.Basic
-import Multiplicity.Mathlib.Analysis.NormedSpace.BoundedLinearMaps
-import Multiplicity.Mathlib.Topology.Instances.Real
-import Multiplicity.Mathlib.Data.Nat.Prime
+import Foundations.Mathlib.Analysis.InnerProductSpace.Basic
+import Foundations.Mathlib.Analysis.NormedSpace.BoundedLinearMaps
+import Foundations.Mathlib.Topology.Instances.Real
+import Foundations.Mathlib.Data.Nat.Prime
 
 namespace Multiplicity.UniversalMultiplicityConstant
 

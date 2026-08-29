@@ -1,4 +1,4 @@
-import Multiplicity.Spine
+import Foundations.Spine
 import moc.Moonshine
 import moc.AlmostPurity
 import f1_square.Mechanism

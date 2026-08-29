@@ -1,4 +1,4 @@
-import Multiplicity.dynamics.StableCoin
+import Foundations.dynamics.StableCoin
 
 namespace Multiplicity.Sedona
 

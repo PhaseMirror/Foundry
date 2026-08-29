@@ -1,5 +1,5 @@
-import Multiplicity.dynamics.Dedekind
-import Multiplicity.Prime
+import Foundations.dynamics.Dedekind
+import Foundations.Prime
 
 /-! # Dedekind Multiplicity Bridge (ADR-0017)
 

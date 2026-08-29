@@ -1,4 +1,4 @@
-import Multiplicity.ADR.Kappa.PrimeIndex
+import Foundations.Kappa.PrimeIndex
 
 /-!
 # Prime-Indexed Coupled Oscillator Network
@@ -111,7 +111,9 @@ def primeWeightedEnergy (net : OscillatorNetwork) : Float :=
 /-- The energy is non-negative. -/
 theorem energy_nonneg (net : OscillatorNetwork) :
     primeWeightedEnergy net ≥ 0 := by
-  -- TODO: replace sorry
+  -- TODO: replace sorry with a formal proof once Float ordering/division
+  --   semantics of complex norms and prime weights are axiomatized.
+  sorry
 
 /-! ## Convergence Prediction -/
 

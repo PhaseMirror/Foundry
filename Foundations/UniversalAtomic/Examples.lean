@@ -53,7 +53,7 @@ theorem adr108_after_104 :
 def femocoSpace : ActiveSpace := { electrons := 20, orbitals := 20 }
 
 theorem adr106_within_boundary : hardBoundary100 femocoSpace := by
-  decide
+  simp [hardBoundary100, quditCount, femocoSpace]
 
 theorem example_zero_sorry : satisfiesZeroSorry {
   entries := [("ADR.Core", SorryStatus.clean), ("ADR.Proofs", SorryStatus.clean)]

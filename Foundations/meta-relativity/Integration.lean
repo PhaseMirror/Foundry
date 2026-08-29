@@ -1,7 +1,7 @@
-import Multiplicity.META_RELATIVITY.Core
-import Multiplicity.META_RELATIVITY.Operators
-import Multiplicity.META_RELATIVITY.Certification
-import Multiplicity.META_RELATIVITY.Security
+import Foundations.META_RELATIVITY.Core
+import Foundations.META_RELATIVITY.Operators
+import Foundations.META_RELATIVITY.Certification
+import Foundations.META_RELATIVITY.Security
 
 /-!
 # META_RELATIVITY Integration

@@ -1,12 +1,12 @@
-import Multiplicity.ComplexKappa.Core
-import Multiplicity.ComplexKappa.HilbertTransform
-import Multiplicity.ComplexKappa.Distributions
-import Multiplicity.ComplexKappa.KramersKronig
-import Multiplicity.ComplexKappa.WardIdentity
-import Multiplicity.ComplexKappa.EffectiveCoupling
-import Multiplicity.ComplexKappa.Zeta
-import Multiplicity.ComplexKappa.ZetaComb
-import Multiplicity.ComplexKappa.GUE
+import Foundations.ComplexKappa.Core
+import Foundations.ComplexKappa.HilbertTransform
+import Foundations.ComplexKappa.Distributions
+import Foundations.ComplexKappa.KramersKronig
+import Foundations.ComplexKappa.WardIdentity
+import Foundations.ComplexKappa.EffectiveCoupling
+import Foundations.ComplexKappa.Zeta
+import Foundations.ComplexKappa.ZetaComb
+import Foundations.ComplexKappa.GUE
 
 namespace Multiplicity.ComplexKappa.MainTheorem
 

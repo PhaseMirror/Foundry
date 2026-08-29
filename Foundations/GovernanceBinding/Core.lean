@@ -9,7 +9,7 @@ verified tokens require verified admission through the constitutional policy eng
 
 namespace Foundations.GovernanceBinding
 
-open Foundations.PolicyEngine
+open Multiplicity.ALP.PolicyEngine Multiplicity.ALP.Types
 
 /-- Signed Admission Token issued upon passing governance checks. -/
 structure SignedAdmissionToken where
@@ -17,7 +17,7 @@ structure SignedAdmissionToken where
   action_id   : String
   trust_level : TrustLevel
   signature   : String
-  deriving Repr, DecidableEq
+  deriving DecidableEq
 
 /-- SAT Issuer descriptor. -/
 structure SatIssuer where
@@ -26,8 +26,8 @@ structure SatIssuer where
 /-- Default token issuance produces a pending signature. -/
 def SatIssuer.issue (_issuer : SatIssuer) (a : Action) (t : TrustLevel) : Except String SignedAdmissionToken :=
   Except.ok {
-    token_id := "sat-" ++ a.name,
-    action_id := a.name,
+    token_id := "sat-" ++ a.id,
+    action_id := a.id,
     trust_level := t,
     signature := "PENDING"
   }
@@ -40,18 +40,25 @@ def SatVerifier.verify (tok : SignedAdmissionToken) : Bool :=
 theorem validate_action_admitted_or_rejected (pe : PolicyEngine) (a : Action) (t : TrustLevel) :
     validate_action pe a t = { allowed := true, reason := "Admitted" } ∨
     (validate_action pe a t).allowed = false := by
-  dsimp [validate_action]
-  cases pe.constitution_valid
-  · exact Or.inr rfl
-  · cases t with
+  unfold validate_action
+  cases hc : Multiplicity.ALP.Constitution.L0.validate pe.constitution with
+  | false =>
+    right
+    rfl
+  | true =>
+    cases t with
     | Internal =>
-      exact Or.inl rfl
+      left
+      rfl
     | External =>
-      cases a.mutating
-      · cases a.server_binding.isSome
-        · exact Or.inl rfl
-        · exact Or.inr rfl
-      · exact Or.inr rfl
+      by_cases hm : a.mutating
+      · right
+        simp [hm]
+      · by_cases hb : a.server_binding.isSome
+        · right
+          simp [hm, hb]
+        · left
+          simp [hm, hb]
 
 /-- Theorem: SAT admission requires passing the constitutional policy engine. -/
 theorem sat_requires_alp_admission (a : Action) (t : TrustLevel)
@@ -66,8 +73,8 @@ theorem sat_requires_alp_admission (a : Action) (t : TrustLevel)
     exact ⟨pe, h_adm⟩
   | inr h_rej =>
     rw [h_eq] at h_rej
-    have h_contra : true = false := by
-      rw [← h_allowed, h_rej]
-    contradiction
+    have hc : true = false := h_allowed ▸ h_rej
+    have hfalse : False := Bool.noConfusion (P := False) hc
+    exact False.elim hfalse
 
 end Foundations.GovernanceBinding

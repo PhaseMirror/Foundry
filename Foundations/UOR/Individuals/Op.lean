@@ -2,8 +2,8 @@
 --
 -- UOR Foundation — Op individual constants.
 
-import Multiplicity.UOR.Structures
-import Multiplicity.UOR.Individuals.Schema
+import Foundations.UOR.Structures
+import Foundations.UOR.Individuals.Schema
 
 open UOR.Primitives
 

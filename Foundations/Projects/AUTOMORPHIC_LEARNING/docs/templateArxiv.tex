@@ -1,0 +1,358 @@
+\documentclass[11pt]{article}
+
+% ---------- Packages ----------
+\usepackage[margin=1in]{geometry}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb,amsfonts,amsthm,mathtools,bm}
+\usepackage{siunitx}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage[nameinlink,capitalize]{cleveref}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usepackage{listings}
+\usepackage{xcolor}
+
+% ---------- Listings setup ----------
+\definecolor{codebg}{RGB}{248,248,248}
+\definecolor{dkgray}{gray}{0.25}
+\definecolor{dkblue}{RGB}{0,0,120}
+\definecolor{dkgreen}{RGB}{0,110,0}
+\lstdefinestyle{mystyle}{
+  backgroundcolor=\color{codebg},
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{dkblue}\bfseries,
+  commentstyle=\color{dkgreen},
+  stringstyle=\color{dkgray},
+  showstringspaces=false,
+  frame=single,
+  framerule=0.4pt,
+  rulecolor=\color{black},
+  columns=fullflexible,
+  breaklines=true,
+  tabsize=2,
+  keepspaces=true
+}
+\lstset{style=mystyle}
+
+% ---------- Theorem environments ----------
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+\newtheorem{definition}{Definition}
+\newtheorem{proposition}{Proposition}
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}
+
+% ---------- Macros ----------
+\newcommand{\bbR}{\mathbb{R}}
+\newcommand{\bbC}{\mathbb{C}}
+\newcommand{\bbZ}{\mathbb{Z}}
+\newcommand{\bbF}{\mathbb{F}}
+\newcommand{\Norm}[2]{\left\lVert #1 \right\rVert_{#2}}
+\newcommand{\one}{\mathbf{1}}
+\newcommand{\ST}{\mathrm{ST}}
+\newcommand{\KL}{\mathrm{KL}}
+\newcommand{\softmax}{\operatorname{softmax}}
+\newcommand{\diag}{\operatorname{Diag}}
+\newcommand{\spec}{\operatorname{spec}}
+
+\title{\textbf{Ξ\textsuperscript{$\infty$}/CSL Automorphic Learning}\\
+\vspace{0.25em}\large A Formal Specification with Certificates, Preregistration, and Reference Code (v0.2.1)}
+\author{Ryan O. Van Gelder \& Tyler Van Osdol}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We formalize the Ξ\textsuperscript{$\infty$}/CSL framework: transformers endowed with prime-structured inductive bias, finite automorphic invariance, spectral diagnostics, and projection-first safety. The contribution is a mathematically precise specification with (i) explicit finite group actions (AGL$(1,p)$), (ii) additive masking semantics compatible with Legendre/CRT embeddings, (iii) permutation–equivariant unitarization and a Sato–Tate spectral proxy with predeclared confidence intervals, (iv) ACE weighted-$\ell_1$ projection with KKT certificates and Lipschitz envelopes (SlopeUB + SoftmaxUB), and (v) a preregistration schema with a linter and pass/fail gates. We include proofs of key lemmas and ready-to-run snippets for projection, certificates, and evaluation.
+\end{abstract}
+
+\tableofcontents
+
+% =========================================================
+\section{Overview and Contributions}
+
+\textbf{Goal.} Make automorphic learning math-first, testable, and reproducible. We:
+\begin{enumerate}[leftmargin=2em]
+  \item Replace informal ``Galois symmetry'' with explicit finite actions $G_p=\mathrm{AGL}(1,p)$ on token indices (optionally $\times$ transpose).
+  \item Wire attention using quadratic-residue masks with \emph{additive} logits and a fixed diagonal policy; support $n>p$ via CRT embeddings.
+  \item Define a permutation–equivariant unitarization after $\varepsilon$-stabilized Sinkhorn and compare eigen-phase laws to Sato--Tate (ST) with BCa bootstrap CIs and prereg pass bands.
+  \item Enforce safety with ACE weighted-$\ell_1$ projection; log Feasibility, $\tau$ (KKT multiplier), GapLB (dual gap), SoftmaxUB, and SlopeUB.
+  \item Provide a preregistration YAML, a linter, required ablations, and automated experiment gates.
+\end{enumerate}
+
+% =========================================================
+\section{Mathematical Specification}
+
+\subsection{Indices, embeddings, and finite group actions}
+Let $V=\{1,\dots,n\}$ index tokens. Prefer CRT embedding: choose odd primes $p_1,p_2$ with $p_1p_2\ge n$ and inject
+\[
+  \phi:V\hookrightarrow \bbF_{p_1}\times \bbF_{p_2}.
+\]
+(If hashing is used, seeds are preregistered and collisions logged.)
+
+\begin{definition}[Automorphic group]
+For odd prime $p$, define $G_p=\mathrm{AGL}(1,p)=\{i\mapsto u\,i + k: u\in\bbF_p^\times,\, k\in\bbF_p\}$.
+When CRT is used, act componentwise by $G_{p_1}\times G_{p_2}$. Optionally extend by transpose $\tau:(i,j)\mapsto (j,i)$.
+\end{definition}
+
+Each $g\in G_p$ induces a permutation matrix $P_g$ on indices $V$, hence acts on any $n\times n$ array $A$ by $A\mapsto A^{(g)}:=P_g A P_g^\top$.
+
+\subsection{Residue mask and additive logits}
+Let $\chi_p(\cdot)$ be the Legendre symbol with $\chi_p(0)=0$. Define
+\[
+  M_p[i,j] = \mathbf{1}\{\chi_p(\phi(i)-\phi(j))=+1\}.
+\]
+\textbf{Additive masking:}
+\begin{equation}\label{eq:additive-logits}
+  L := \frac{QK^\top}{\sqrt d} + \alpha\,M_p - \beta\,(1-M_p), \quad \beta\gg 0,\ \alpha\ge 0,\ \text{diag policy fixed},
+\end{equation}
+then $\widetilde A_p=\softmax(L)$ row-wise. This \emph{disallows} non-residue edges via $-\beta$, unlike multiplicative masks.
+
+\subsection{CSL invariance loss}
+Let $S_p\subset G_p$ be a minibatch of generators/compositions (e.g., size 8–16). Let $\mathcal F_{\mathrm{inv}}$ be a \emph{class function} of $A$ (permutation-invariant tuple), e.g., \((\spec(U),\,\text{sorted row-moments})\).
+Define
+\[
+  \mathcal L_{\mathrm{CSL}}(A) = \frac{1}{|S_p|}\sum_{g\in S_p}\Delta\big(\mathcal F_{\mathrm{inv}}(A^{(g)}),\ \mathcal F_{\mathrm{inv}}(A)\big).
+\]
+
+\begin{lemma}[Vanishing CSL on invariant orbits]
+If $A^{(g)}=A$ for all $g\in S_p$ and $\mathcal F_{\mathrm{inv}}$ is a class function, then $\mathcal L_{\mathrm{CSL}}(A)=0$.
+\end{lemma}
+
+\subsection{Presheaf over primes (diagrammatic Ξ$^\infty$)}
+Objects: $\{\widetilde A_p^{(\ell)}\}_{p\in\mathcal P,\ell}$. Arrows: token restrictions $r_W$ and parameter-tying edges $p\to q$. \emph{Sheaf-consistency losses} penalize $\|E_p(\theta)|_W - E_q(\theta)|_W\|$ and are reported separately.
+
+% =========================================================
+\section{Unitarization and the Sato--Tate Proxy}
+
+\subsection{$\varepsilon$-stabilized Sinkhorn and unitarization}
+Because masking can create near-zeros, use positivity:
+\[
+  B=\mathrm{Sinkhorn}(\mathrm{ReLU}(\widetilde A)+\varepsilon;\ \text{iters}=5,\ \text{tol}=10^{-3}).
+\]
+Define $J=\frac{1}{n}\one\one^\top$. Two unitarization paths:
+\begin{align*}
+  &\textbf{Exp (default):}\quad U = \exp\big(\pi i\, (B-J)\big),\\
+  &\textbf{Cayley (robustness):}\quad S=\tfrac12(B-B^\top),\quad U=(I-S)(I+S)^{-1}.
+\end{align*}
+
+\begin{lemma}[Permutation–equivariant unitarization]
+For any permutation $P$, $U(PAP^\top)=P\,U(A)\,P^\top$ for both paths. Consequently the eigen-phase multiset is invariant under $G_p$.
+\end{lemma}
+\begin{proof}
+Sinkhorn is permutation–equivariant and $J$ is invariant; exp and Cayley commute with conjugation.
+\end{proof}
+
+\subsection{Spectral law, metrics, and pass bands}
+Let $\{\theta_k\}$ be phases of eigenvalues of $U$; define empirical $\mu_{p,\ell}$. Compare to $\mu_{\ST}$ via $W_2$, KS, and CvM with BCa 95\% CIs (bootstrap resamples fixed). A run \emph{passes} the ST gate if median $W_2\le 0.03$ and CI width $\le 0.05$ (example prereg values).
+
+\paragraph{Certificates (batch-level).}
+(i) Permutation invariance: KS\(_\text{perm}\)=0 (within tolerance) for $\spec(U(A))$ vs.\ $\spec(U(A^{(g)}))$ and for sorted row-moments. (ii) Unitarity residual: $\Norm{U^\ast U-I}{1\to 1}\le 10^{-8}$.
+
+% =========================================================
+\section{ACE Projection and Lipschitz Envelopes}
+
+\subsection{Weighted-$\ell_1$ projection with KKT certificates}
+Budget set $\Omega=\{x:\sum_k \omega_k |x_k|\le \Lambda_m\}$.
+\begin{theorem}[KKT-correct projection]
+The projection of $v$ onto $\Omega$ is unique and given by weighted soft-thresholding
+\[
+  x_k^\*=\mathrm{sign}(v_k)\max\{|v_k|-\tau\,\omega_k,0\},\quad \tau\ge 0,
+\]
+with $\tau$ chosen so $\sum_k \omega_k |x_k^\*|=\Lambda_m$ when active. Feasibility and complementary slackness (\emph{$\tau(\Lambda_m-\sum\omega |x^\*|)=0$}) hold. A computable dual lower bound (GapLB) certifies small optimality gap.
+\end{theorem}
+\begin{proof}
+Strict convexity and separability yield the shrinkage form; monotone bisection on $\tau$ solves the KKT mass constraint. Dual follows from standard $\ell_1$-ball projection duality.
+\end{proof}
+
+\subsection{Softmax Jacobian and SlopeUB}
+For $s=\softmax(z)$, $J=\diag(s)-ss^\top$ satisfies
+\[
+  \Norm{J}{1\to 1} \le 2\max_i s_i(1-s_i) \le \tfrac12.
+\]
+Define \textbf{SoftmaxUB}$=\max_i 2 s_i(1-s_i)$ at runtime. With per-layer bounds $\Norm{W^{(\ell)}}{1\to 1}\le B_\ell$ (implied by budgets), the end-to-end $\ell_1$-Lipschitz constant is upper-bounded by
+\[
+  \text{SlopeUB}=\Big(\prod_{\ell}\! B_\ell\Big)\times \!\!\!\!\prod_{\text{softmax uses}}\!\!\!\!\text{SoftmaxUB}.
+\]
+
+% =========================================================
+\section{Preregistration, Linter, and Gates}
+
+\subsection{Golden-sample prereg (lint-passing, 20 lines)}
+\begin{lstlisting}[language=yaml]
+splits:
+  prime_train: [3,5,7,11,13,41]
+  prime_val: [17,19,23]
+  prime_test: [29,31,37]
+embedding: {method: crt, primes: [43,47]}
+group: {agl_include_transpose: false, agl_generator_policy: auto}
+masking: {alpha: 0.0, beta: 20.0, diagonal_policy: allow_self, normalize_logits: false}
+unitarization: {epsilon_rule: "1e-6_row_mean", paths: [exp,cayley], sinkhorn: {iters:5, tol:1e-3}}
+st_proxy: {pass_band: {w2_median_max: 0.03, bca_width_max: 0.05}, bootstrap_resamples: 1000, law_seed: 42}
+entropy: {band: [1.2,2.6], violation_handler: log_and_penalize}
+ace: {projection_variant: A, violation_policy: abort}
+determinism: {cuda_deterministic: true, cudnn_deterministic: true, tf32_policy: disabled, amp_policy: fp32}
+gates: {slopeub_max: 50.0, non_inferiority_margin: 0.003}
+ablations: {required: [no_mask,cyclic_mask,residue_permute,break_csl,drop_T1,drop_Ug,unitary_swap,no_projection]}
+numerics: {tolerances: {projection_feasibility: 1e-8, permutation_ks: 5e-6, sinkhorn_positivity: 1e-12, matrix_exp_rel_error: 1e-8, cayley_safety_margin: 1e-6}}
+sampling: {st_law_seed: 42, power_target_ci_width: 0.05, min_batches_ci: 1000}
+data: {tokenization: default, seeds: {train: 1, val: 2, test: 3}}
+optimization: {optimizer: adamw, lr: 3.0e-4, batch_size: 64}
+hashing: {enabled: false}
+version: v0.2.1
+\end{lstlisting}
+
+\subsection{Pass/fail gates (examples)}
+\begin{itemize}[leftmargin=2em]
+  \item ST gate: median $W_2\le 0.03$ and BCa width $\le 0.05$ (aggregate).
+  \item Permutation invariance: KS\(_\text{perm}\)\,$\le 5{\times}10^{-6}$ in $\ge$99\% batches (spectra and row-moments).
+  \item Cayley safety: $\lambda_{\min}(I+S)\ge 10^{-6}$ when used (else auto-fallback to exp).
+  \item Non-inferiority: accuracy drop $\le 0.3\%$ vs.\ baseline.
+  \item Projection: feasibility true at 100\% steps; GapLB $\le 10^{-6}$.
+  \item SlopeUB $\le$ prereg ceiling.
+\end{itemize}
+
+% =========================================================
+\section{Reference Code Snippets}
+
+\subsection{Weighted-$\ell_1$ projection with diagnostics (Python)}
+\begin{lstlisting}[language=Python]
+import numpy as np
+
+def project_weighted_l1(v, w, T, tol=1e-8):
+    """Project v onto {x: sum_i w_i |x_i| <= T}. Returns (x, tau, gaplb)."""
+    assert np.all(w > 0) and T >= 0
+    if (w * np.abs(v)).sum() <= T:
+        return v.copy(), 0.0, 0.0
+
+    def shrink(x, t):  # t is vector tau*w
+        return np.sign(x) * np.maximum(np.abs(x) - t, 0.0)
+
+    tau_lo, tau_hi = 0.0, np.max(np.abs(v) / w)
+    for _ in range(80):
+        tau = 0.5 * (tau_lo + tau_hi)
+        x = shrink(v, tau * w)
+        mass = (w * np.abs(x)).sum()
+        if mass > T: tau_lo = tau
+        else: tau_hi = tau
+        if abs(mass - T) <= tol: break
+
+    tau = tau_hi
+    x = shrink(v, tau * w)
+    dual = tau * T - np.maximum(np.abs(v) - tau * w, 0.0).sum()
+    primal = 0.5 * np.sum((x - v) ** 2)
+    gaplb = max(0.0, primal - dual)
+    return x, float(tau), float(gaplb)
+\end{lstlisting}
+
+\subsection{Permutation certificate and unitarity residual}
+\begin{lstlisting}[language=Python]
+import numpy as np
+
+def unitary_residual(U):
+    I = np.eye(U.shape[-1])
+    return float(np.linalg.norm(U.conj().T @ U - I, ord=1))
+
+def ks_zero_check(phases_a, phases_b, tol=5e-6):
+    a = np.sort(np.mod(phases_a, 2*np.pi))
+    b = np.sort(np.mod(phases_b, 2*np.pi))
+    # simple KS distance (1D)
+    grid = np.sort(np.concatenate([a, b]))
+    def ecdf(x, s): return np.searchsorted(s, x, side='right') / s.size
+    ks = np.max([abs(ecdf(x, a) - ecdf(x, b)) for x in grid])
+    return ks <= tol, float(ks)
+\end{lstlisting}
+
+\subsection{SoftmaxUB and SlopeUB (logging helpers)}
+\begin{lstlisting}[language=Python]
+def softmax(x, axis=-1):
+    z = x - x.max(axis=axis, keepdims=True)
+    ex = np.exp(z)
+    return ex / ex.sum(axis=axis, keepdims=True)
+
+def softmax_ub(logits):
+    s = softmax(logits, axis=-1)
+    return float(np.max(2.0 * s * (1.0 - s)).sum(axis=-1).max())
+
+def slopeub(linear_norms, softmax_ubs):
+    L = 1.0
+    for n in linear_norms: L *= n
+    for u in softmax_ubs: L *= u
+    return float(L)
+\end{lstlisting}
+
+\subsection{Additive masking + $\varepsilon$-Sinkhorn (sketch)}
+\begin{lstlisting}[language=Python]
+def logits_additive(Q, K, M, alpha=0.0, beta=20.0, d=None):
+    d = d or Q.shape[-1]
+    return (Q @ K.T) / np.sqrt(d) + alpha * M - beta * (1 - M)
+
+def sinkhorn_eps(A, eps=1e-6, iters=5, tol=1e-3):
+    B = np.maximum(A, 0.0) + eps
+    r = np.ones((B.shape[0], 1)); c = np.ones((1, B.shape[1]))
+    for _ in range(iters):
+        B = B / (B.sum(axis=1, keepdims=True));  # row norm
+        B = B / (B.sum(axis=0, keepdims=True));  # col norm
+    resid = max(np.abs(B.sum(axis=1)-1).max(), np.abs(B.sum(axis=0)-1).max())
+    return B, float(resid)
+
+def exp_unitary(B):
+    n = B.shape[-1]
+    J = np.ones((n,n))/n
+    U = scipy.linalg.expm(1j * np.pi * (B - J))
+    return U
+\end{lstlisting}
+
+\subsection{Minimal training step (projection-first)}
+\begin{lstlisting}[language=Python]
+def training_step(params, grads, groups, omega, Lambda, eta):
+    # proposal
+    proposal = {g: params[g] - eta * grads[g] for g in groups}
+    # ACE projection
+    tau, gaplb = {}, {}
+    for g in groups:
+        params[g], tau[g], gaplb[g] = project_weighted_l1(proposal[g], omega[g], Lambda[g])
+    # log feasibility, tau, gaplb; then forward pass uses projected params
+    return params, tau, gaplb
+\end{lstlisting}
+
+% =========================================================
+\section{Ablations and Evaluation Plan}
+
+\textbf{Required ablations:} no-mask; cyclic mask; residue-permute; break CSL (random $S_p$); generator-drop ($-T_1$ or $-U_g$); unitary-path swap; no-projection; (if hashing) collision sweep.
+
+\textbf{Epoch metrics:} $W_2$, KS, CvM with 1000× bootstrap (medians + BCa CI), $\mathcal L_{\mathrm{CSL}}$, entropy-band coverage, SlopeUB, validation accuracy (non-inferiority).
+
+% =========================================================
+\section{Discussion and Scope}
+
+The framework claims \emph{finite-group automorphy}, not full Galois symmetry; ST comparisons are treated as diagnostics, not guarantees of capability. Safety is enforced by projection and certificates, not inferred from symmetry. CRT embeddings avoid hashing pathologies for $n>p$.
+
+% =========================================================
+\appendix
+\section{Notation Summary}
+\begin{tabular}{ll}
+\toprule
+Symbol & Meaning \\
+\midrule
+$V$ & Token index set $\{1,\dots,n\}$ \\
+$G_p$ & $\mathrm{AGL}(1,p)$ acting by conjugation via $P_g$ \\
+$M_p$ & Residue mask from Legendre symbol \\
+$L$ & Additive logits (\cref{eq:additive-logits}) \\
+$\widetilde A$ & Row-stochastic attention after softmax \\
+$B$ & $\varepsilon$-stabilized Sinkhorn bistochastic matrix \\
+$U$ & Unitarization (exp or Cayley) \\
+$\mu_{p,\ell}$ & Empirical eigen-phase measure \\
+$\mu_{\ST}$ & Sato--Tate target law \\
+$\Lambda_m$ & ACE budget for weighted-$\ell_1$ projection \\
+SoftmaxUB & Bound on $\Norm{J_{\softmax}}{1\to 1}\le \tfrac12$ \\
+SlopeUB & End-to-end $\ell_1$ Lipschitz upper bound \\
+\bottomrule
+\end{tabular}
+
+\section{Proof Sketch: Continuity of Phases (informal)}
+On the positive cone, Sinkhorn is a contraction in the Hilbert projective metric; with $\varepsilon$ positivity, rows/cols stay bounded away from zero. The matrix exponential is analytic and Lipschitz on compact subsets; eigenvalues of normal matrices vary Hölder-continuously in operator norm, so the induced empirical phase law is stable in $W_1$.
+
+\end{document}

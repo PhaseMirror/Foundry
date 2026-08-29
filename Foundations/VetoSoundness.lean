@@ -1,5 +1,5 @@
-import Multiplicity.Resonance
-import Multiplicity.ContractionWitness
+import Foundations.Resonance
+import Foundations.ContractionWitness
 import prime_tensors.Stability
 
 namespace Multiplicity.CRMF

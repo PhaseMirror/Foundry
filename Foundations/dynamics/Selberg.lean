@@ -1,4 +1,4 @@
-import Multiplicity.Prime
+import Foundations.Prime
 
 /-! # Selberg Multiplicity (ADR-0012)
 

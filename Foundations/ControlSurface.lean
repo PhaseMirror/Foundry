@@ -1,5 +1,5 @@
-import Multiplicity.ADR.Core
-import Multiplicity.ADR.Governance
+import Foundations.ADR.Core
+import Foundations.ADR.Governance
 
 open ADR
 open ADR.Governance

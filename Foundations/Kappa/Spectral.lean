@@ -1,4 +1,4 @@
-import Multiplicity.ADR.Kappa.PrimeIndex
+import Foundations.Kappa.PrimeIndex
 
 /-!
 # Spectral Properties of Prime-Indexed Networks
@@ -34,9 +34,9 @@ def spectralGapPrediction (J : Float) (N : Nat) : Float :=
 /-- The spectral gap is positive for N ≥ 2. -/
 theorem spectral_gap_positive (J : Float) (hJ : J > 0) (N : Nat) (hN : N ≥ 2) :
     spectralGapPrediction J N > 0 := by
-  simp [spectralGapPrediction]
-  have hN' : N ≥ 2 := hN
-  -- TODO: replace sorry
+  -- TODO: replace sorry with a formal proof once Float ordering and
+  --   reciprocation semantics are axiomatized in this foundation.
+  sorry
 
 /-! ## Relaxation Time Prediction -/
 
@@ -52,7 +52,9 @@ theorem relaxation_time_finite
     (h_gamma : gammaMin > 0)
     (h_strong : gammaMin > normA) :
     relaxationTimePrediction gammaMin normA > 0 := by
-  -- TODO: replace sorry
+  -- TODO: replace sorry with a formal proof once Float ordering and
+  --   reciprocation semantics are axiomatized in this foundation.
+  sorry
 
 /-! ## Critical Mode Density Scaling -/
 

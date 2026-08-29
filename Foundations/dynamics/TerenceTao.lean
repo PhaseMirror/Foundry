@@ -1,4 +1,4 @@
-import Multiplicity.Prime
+import Foundations.Prime
 /-! # Terence Tao Multiplicity (ADR-0019)
 
     Formalization of the Tao Multiplicity Principle:

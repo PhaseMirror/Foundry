@@ -1,4 +1,4 @@
-import Multiplicity.Prime
+import Foundations.Prime
 
 /-! # Serre Multiplicity (ADR-0014)
 

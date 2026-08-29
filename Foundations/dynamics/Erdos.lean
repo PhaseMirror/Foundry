@@ -1,4 +1,4 @@
-import Multiplicity.Prime
+import Foundations.Prime
 
 /-! # Erdős Multiplicity (ADR-0013)
 

@@ -1,4 +1,4 @@
-import Multiplicity.Spine
+import Foundations.Spine
 import moc.Hecke
 import moc.Prismatic
 import f1_square.Mechanism

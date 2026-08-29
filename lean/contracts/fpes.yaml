@@ -1,0 +1,220 @@
+# ADR-0029: FPES Provable Contract
+# Decision ID: ADR-FPES-001
+# Falsification-Preserving Experiment Selection — proof obligations binding
+# Lean 4 theorems (unbounded) ↔ Kani harnesses (bounded, |Paths| ≤ 8)
+#
+# Schema: provable-contracts v1
+# Gate:   scripts/fpes-gate.sh validates this file + Lean proofs + Kani harnesses
+
+adr:
+  id: ADR-FPES-001
+  title: "FPES Production Implementation"
+  document: docs/ADR-0029-The FPES.md
+  status: accepted
+
+pipeline:
+  phases:
+    - extract
+    - specify
+    - scaffold
+    - implement
+    - falsify
+    - verify
+    - prove
+
+bounds:
+  max_paths: 8
+  max_classes: 8
+  unwind: 9
+
+proof_obligations:
+  - id: FPES-MULTIPLICITY-001
+    type: invariant
+    property: "Path multiplicity m(path) > 0 for all equivalence classes"
+    formal: "∀ c ∈ Classes, |{p ∈ Paths : p ↝ c}| ≥ 1"
+    lean:
+      module: Multiplicity.FPES.Proofs
+      theorem: multiplicity_nonzero
+      status: proved
+      sorry_free: true
+    kani_harnesses:
+      - id: KANI-FPES-001
+        file: Multiplicity/kani/src/proofs/fpes.rs
+        function: kani_fpes_001_multiplicity_nonzero
+        obligation: FPES-MULTIPLICITY-001
+        property: "firstPath is some iff count >= 1, for |Paths| ≤ N"
+        bound: 8
+        unwind: 9
+        strategy: stub_float_on_transcendentals
+
+  - id: FPES-SURVIVAL-002
+    type: invariant
+    property: "Contraction preserves falsification power per class"
+    formal: "∀ c ∈ Classes, mult(H,c) ≥ 1 → mult(contract(H),c) ≥ 1"
+    lean:
+      module: Multiplicity.FPES.Proofs
+      theorem: representatives_falsification_preserving
+      status: proved
+      sorry_free: true
+    kani_harnesses:
+      - id: KANI-FPES-002
+        file: Multiplicity/kani/src/proofs/fpes.rs
+        function: kani_fpes_002_contraction_preserves_multiplicity
+        obligation: FPES-SURVIVAL-002
+        property: "representatives keep ≥ 1 path per class, for |Paths| ≤ 8"
+        bound: 8
+        unwind: 9
+        strategy: stub_float_on_transcendentals
+
+  - id: FPES-SURVIVAL-003
+    type: theorem
+    property: "Per-path survival under contraction"
+    formal: "∀ p ∈ H.paths, ∃ p' ∈ op(H).paths, equiv(p, p')"
+    lean:
+      module: Multiplicity.FPES.Proofs
+      theorem: multiplicity_preserved_under_contraction
+      status: proved
+      sorry_free: true
+    kani_harnesses: []
+
+  - id: FPES-SURVIVAL-004
+    type: theorem
+    property: "Representative contraction achieves survival"
+    formal: "Survival H (contractToRepresentatives H)"
+    lean:
+      module: Multiplicity.FPES.Proofs
+      theorem: contraction_survival
+      status: proved
+      sorry_free: true
+    kani_harnesses: []
+
+  - id: FPES-CONFLICT-005
+    type: theorem
+    property: "Non-conflicting concurrent proposals agree"
+    formal: "¬ Conflicting H P Q c → P.select H c = Q.select H c"
+    lean:
+      module: Multiplicity.FPES.Proofs
+      theorem: both_select_agree
+      status: proved
+      sorry_free: true
+    kani_harnesses: []
+
+  - id: FPES-CERTIFICATE-006
+    type: gate
+    property: "Certificate existence implies viability"
+    formal: "Certificate H → Viable H"
+    lean:
+      module: Multiplicity.FPES.Proofs
+      theorem: certificate_sound
+      status: proved
+      sorry_free: true
+    kani_harnesses: []
+
+viability:
+  predicates:
+    - name: NoDupClasses
+      module: Multiplicity.FPES.Core
+      definition: NoDupClasses
+      decidable: true
+    - name: Registered
+      module: Multiplicity.FPES.Core
+      definition: Registered
+      decidable: true
+    - name: ClassesNonempty
+      module: Multiplicity.FPES.Core
+      definition: ClassesNonempty
+      decidable: true
+    - name: Viable
+      module: Multiplicity.FPES.Core
+      definition: Viable
+      decidable: true
+
+examples:
+  - id: hspace_simd
+    module: Multiplicity.FPES.Examples
+    definition: hspace_simd
+    paths: 8
+    classes: 3
+    viable: true
+    certificate: cert_simd
+  - id: hspace_prune
+    module: Multiplicity.FPES.Examples
+    definition: hspace_prune
+    paths: 6
+    classes: 3
+    viable: true
+    certificate: cert_prune
+  - id: hspace_diff
+    module: Multiplicity.FPES.Examples
+    definition: hspace_diff
+    paths: 5
+    classes: 3
+    viable: true
+    certificate: cert_diff
+  - id: hspace_defective
+    module: Multiplicity.FPES.Examples
+    definition: hspace_defective
+    paths: 4
+    classes: 3
+    viable: false
+    rejection_proofs:
+      - defective_not_nonempty
+      - defective_not_viable
+      - defective_no_certificate
+
+ffi:
+  lean_exports:
+    - module: Multiplicity.FPES.FFI
+      function: fpes_check_paths
+      signature: "HypothesisSpace → Bool"
+      description: "Check Viable predicate on a HypothesisSpace via C ABI"
+    - module: Multiplicity.FPES.FFI
+      function: fpes_multiplicity_count
+      signature: "HypothesisSpace → EquivalenceClass → Nat"
+      description: "Return multiplicity of a class via C ABI"
+    - module: Multiplicity.FPES.FFI
+      function: fpes_representatives
+      signature: "HypothesisSpace → List Path"
+      description: "Return representative contraction via C ABI"
+  rust_bridge:
+    file: src/fpes_bridge.rs
+    repr_c_structs:
+      - FpesPath
+      - FpesClass
+      - FpesHypothesisSpace
+    extern_functions:
+      - fpes_check_paths_ffi
+      - fpes_multiplicity_count_ffi
+      - fpes_representatives_ffi
+
+runtime_assertions:
+  enabled_env: CONTRACT_FPES
+  module: src/fpes_contract.rs
+  inject_at:
+    - function: prune_hypotheses
+      assertions:
+        - "space.paths.len() > 0"
+        - "multiplicity_survives(space, policy)"
+    - function: contract_to_representatives
+      assertions:
+        - "classes_nonempty(space)"
+
+gate:
+  script: scripts/fpes-gate.sh
+  checks:
+    - name: sorry_free
+      description: "No sorry/admit/axiom in FPES Lean modules"
+      command: "grep -rn 'sorry\\|admit\\|axiom' Multiplicity/FPES/"
+      expect: no_match
+    - name: lean_build
+      description: "Lake builds all FPES modules"
+      command: "lake build Multiplicity.FPES.Test"
+      expect: success
+    - name: fpes_tests
+      description: "FPES test suite passes"
+      command: "lake test"
+      expect: success
+    - name: kani_proofs
+      description: "Kani harnesses compile"
+      command: "cargo kani --manifest-path Multiplicity/kani/Cargo.toml --harness kani_fpes_001_multiplicity_nonzero"
+      expect: success

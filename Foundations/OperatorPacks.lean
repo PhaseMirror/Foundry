@@ -1,5 +1,5 @@
-import Multiplicity.MOC.Core
-import Multiplicity.Operators
+import Foundations.MOC.Core
+import Foundations.Operators
 
 namespace Multiplicity
 

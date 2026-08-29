@@ -1,10 +1,10 @@
 // Number theory basics for MetaMathematics
 
-import Multiplicity.Init.Core
-import Multiplicity.Init.Algebra.Order
-import Multiplicity.Init.Data.Nat.Basic
-import Multiplicity.Init.Data.Real.Basic
-import Multiplicity.Init.Tactics
+import Foundations.Init.Core
+import Foundations.Init.Algebra.Order
+import Foundations.Init.Data.Nat.Basic
+import Foundations.Init.Data.Real.Basic
+import Foundations.Init.Tactics
 
 namespace Multiplicity.MetaMathematics
 

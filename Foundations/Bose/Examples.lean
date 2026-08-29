@@ -1,4 +1,4 @@
-import Multiplicity.Bose.Core
+import Foundations.Bose.Core
 
 /-!
 # ADR-0036: Satyendra Nath Bose Multiplicity Examples

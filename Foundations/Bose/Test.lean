@@ -1,6 +1,6 @@
-import Multiplicity.Bose.Core
-import Multiplicity.Bose.Proofs
-import Multiplicity.Bose.Examples
+import Foundations.Bose.Core
+import Foundations.Bose.Proofs
+import Foundations.Bose.Examples
 
 /-!
 # ADR-0036: Satyendra Nath Bose Multiplicity Test Suite

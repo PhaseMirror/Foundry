@@ -1,4 +1,4 @@
-import Multiplicity.Init
+import Foundations.Init
 
 -- Placeholder formalization for this project.
 namespace Multiplicity.Core.moc.Mcpe

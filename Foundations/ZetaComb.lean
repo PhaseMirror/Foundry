@@ -1,5 +1,5 @@
-import Multiplicity.ComplexKappa.Core
-import Multiplicity.ComplexKappa.Zeta
+import Foundations.ComplexKappa.Core
+import Foundations.ComplexKappa.Zeta
 
 namespace Multiplicity.ComplexKappa.ZetaComb
 

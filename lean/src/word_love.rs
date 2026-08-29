@@ -49,7 +49,7 @@ pub fn digital_root(n: u64) -> u64 {
 /// Evaluate character gematria value under a given scheme.
 pub fn char_gematria(scheme: GematriaScheme, c: char) -> u64 {
     match scheme {
-        GematriaScheme.Standard => match c {
+        GematriaScheme::Standard => match c {
             'א' => 1, 'ב' => 2, 'ג' => 3, 'ד' => 4, 'ה' => 5,
             'ו' => 6, 'ז' => 7, 'ח' => 8, 'ט' => 9, 'י' => 10,
             'כ' | 'ך' => 20, 'ל' => 30, 'מ' | 'ם' => 40,
@@ -57,7 +57,7 @@ pub fn char_gematria(scheme: GematriaScheme, c: char) -> u64 {
             'צ' | 'ץ' => 90, 'ק' => 100, 'ר' => 200, 'ש' => 300,
             'ת' => 400, _ => 0,
         },
-        GematriaScheme.Reduced => match c {
+        GematriaScheme::Reduced => match c {
             'א' => 1, 'ב' => 2, 'ג' => 3, 'ד' => 4, 'ה' => 5,
             'ו' => 6, 'ז' => 7, 'ח' => 8, 'ט' => 9, 'י' => 1,
             'כ' | 'ך' => 2, 'ל' => 3, 'מ' | 'ם' => 4,
@@ -65,7 +65,7 @@ pub fn char_gematria(scheme: GematriaScheme, c: char) -> u64 {
             'צ' | 'ץ' => 9, 'ק' => 1, 'ר' => 2, 'ש' => 3,
             'ת' => 4, _ => 0,
         },
-        GematriaScheme.Ordinal => match c {
+        GematriaScheme::Ordinal => match c {
             'א' => 1, 'ב' => 2, 'ג' => 3, 'ד' => 4, 'ה' => 5,
             'ו' => 6, 'ז' => 7, 'ח' => 8, 'ט' => 9, 'י' => 10,
             'כ' | 'ך' => 11, 'ל' => 12, 'מ' | 'ם' => 13,
@@ -79,12 +79,12 @@ pub fn char_gematria(scheme: GematriaScheme, c: char) -> u64 {
 /// Compute gematria value of a string.
 pub fn string_gematria(scheme: GematriaScheme, s: &str) -> u64 {
     match scheme {
-        GematriaScheme.Standard => s.chars().map(|c| char_gematria(GematriaScheme.Standard, c)).sum(),
-        GematriaScheme.Reduced => {
-            let std_sum: u64 = s.chars().map(|c| char_gematria(GematriaScheme.Standard, c)).sum();
+        GematriaScheme::Standard => s.chars().map(|c| char_gematria(GematriaScheme::Standard, c)).sum(),
+        GematriaScheme::Reduced => {
+            let std_sum: u64 = s.chars().map(|c| char_gematria(GematriaScheme::Standard, c)).sum();
             digital_root(std_sum)
         }
-        GematriaScheme.Ordinal => s.chars().map(|c| char_gematria(GematriaScheme.Ordinal, c)).sum(),
+        GematriaScheme::Ordinal => s.chars().map(|c| char_gematria(GematriaScheme::Ordinal, c)).sum(),
     }
 }
 
@@ -170,6 +170,8 @@ impl PrimeMultiplicity {
                 existing.exponent += f.exponent;
             } else {
                 factors.push(*f);
+            }
+        }
         factors.sort_by_key(|pf| pf.prime);
         Self { factors }
     }
@@ -304,14 +306,14 @@ mod tests {
 
     #[test]
     fn test_gematria_values() {
-        assert_eq!(string_gematria(GematriaScheme.Standard, "אהבה"), 13);
-        assert_eq!(string_gematria(GematriaScheme.Standard, "אחד"), 13);
-        assert_eq!(string_gematria(GematriaScheme.Reduced, "אהבה"), 4);
-        assert_eq!(string_gematria(GematriaScheme.Reduced, "אחד"), 4);
-        assert_eq!(string_gematria(GematriaScheme.Standard, "חסד"), 72);
-        assert_eq!(string_gematria(GematriaScheme.Standard, "אמת"), 441);
-        assert_eq!(string_gematria(GematriaScheme.Standard, "שלום"), 376);
-        assert_eq!(string_gematria(GematriaScheme.Standard, "חיים"), 68);
+        assert_eq!(string_gematria(GematriaScheme::Standard, "אהבה"), 13);
+        assert_eq!(string_gematria(GematriaScheme::Standard, "אחד"), 13);
+        assert_eq!(string_gematria(GematriaScheme::Reduced, "אהבה"), 4);
+        assert_eq!(string_gematria(GematriaScheme::Reduced, "אחד"), 4);
+        assert_eq!(string_gematria(GematriaScheme::Standard, "חסד"), 72);
+        assert_eq!(string_gematria(GematriaScheme::Standard, "אמת"), 441);
+        assert_eq!(string_gematria(GematriaScheme::Standard, "שלום"), 376);
+        assert_eq!(string_gematria(GematriaScheme::Standard, "חיים"), 68);
     }
 
     #[test]
@@ -340,9 +342,9 @@ mod tests {
         let ahavah = SemanticToken::new("ahavah", "Love", "אהבה", "ahavah", "Love");
         let echad = SemanticToken::new("echad", "One", "אחד", "echad", "Oneness");
 
-        let enc_ahavah_std = Encoding::new(ahavah.clone(), GematriaScheme.Standard).unwrap();
-        let enc_ahavah_red = Encoding::new(ahavah.clone(), GematriaScheme.Reduced).unwrap();
-        let enc_echad_std = Encoding::new(echad.clone(), GematriaScheme.Standard).unwrap();
+        let enc_ahavah_std = Encoding::new(ahavah.clone(), GematriaScheme::Standard).unwrap();
+        let enc_ahavah_red = Encoding::new(ahavah.clone(), GematriaScheme::Reduced).unwrap();
+        let enc_echad_std = Encoding::new(echad.clone(), GematriaScheme::Standard).unwrap();
 
         let traj_ahavah_std = Trajectory::of_encoding(enc_ahavah_std.clone());
         let traj_ahavah_red = Trajectory::of_encoding(enc_ahavah_red.clone());
@@ -393,6 +395,7 @@ mod tests {
         ];
         let distinct_events = vec![
             SemanticEvent { event_id: 1, token: token.clone() },
+        ];
         assert_eq!(count_unique_events(&duplicate_events), 1);
         assert_eq!(count_unique_events(&distinct_events), 2);
     }

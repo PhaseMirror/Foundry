@@ -5,7 +5,7 @@
   is modified.
 -/
 
-import Multiplicity.NAF
+import Foundations.NAF
 
 namespace Multiplicity.ComplexKappa.ExactCoeffs
 

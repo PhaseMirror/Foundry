@@ -1,6 +1,6 @@
-import Multiplicity.Complex
-import Multiplicity.Prime
-import Multiplicity.dynamics.Dirichlet
+import Foundations.Complex
+import Foundations.Prime
+import Foundations.dynamics.Dirichlet
 
 /-! # Riemann Multiplicity (ADR-0007)
 

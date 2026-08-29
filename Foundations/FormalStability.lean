@@ -1,4 +1,4 @@
-import Multiplicity.Operators
+import Foundations.Operators
 import OperatorPacks
 
 namespace Multiplicity

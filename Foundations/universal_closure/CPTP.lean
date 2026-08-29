@@ -1,5 +1,5 @@
-import Multiplicity.universal_closure.UCC_RH
-import Multiplicity.F1.Analysis.Complex
+import Foundations.universal_closure.UCC_RH
+import Foundations.F1.Analysis.Complex
 
 /-!
 # CPTP Generator and Intertwiner

@@ -1,0 +1,1019 @@
+\documentclass[11pt]{article}
+\usepackage{amsmath,amssymb,amsthm,amsfonts}
+\usepackage{hyperref}
+\usepackage{geometry}
+\geometry{margin=1in}
+
+\title{Prime-Encoded Eigen Solvers as Categorical Prime Flows:\\
+A Multiplicity-Theoretic and Tensor-Quantum Framework}
+\author{Citizen Gardens \\ The Prime Materia Commons}
+\date{Mayy 5, 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This report presents a unified, multiplicity-theoretic, and categorical
+framework for prime-encoded eigenvalue solvers, with particular focus
+on a prime-weighted Lanczos method and its tensor/quantum extensions.
+Building on a base preprint introducing prime-encoded eigenvalue
+decomposition (PEED), we formalize:
+(i) a category of prime-labelled Krylov modules for the Lanczos
+recurrence,
+(ii) an endofunctor capturing the prime-weighted Lanczos flow as a
+``prime move'' on this category,
+(iii) spectral and dynamical invariants as functors and natural
+transformations, and
+(iv) an analogous categorical treatment of the tensor/quantum layer,
+including quantum phase estimation and prime-labelled tensor-network
+representations of eigenstates.
+We include an executive summary, mathematical definitions and
+propositions, and a concrete code sketch illustrating how a
+prime-weighted Lanczos prototype can be implemented in practice.
+The goal is to provide a prior-art defensive publication around this
+family of prime-indexed, recursively stable eigen-solvers and their
+categorical formalization.
+\end{abstract}
+\newpage
+\tableofcontents
+\newpage
+\section{Executive Summary}
+
+\subsection{Conceptual Overview}
+
+The underlying preprint introduces a prime-encoded eigenvalue
+decomposition (PEED) for an $n\times n$ Hermitian matrix $A$:
+\[
+P(A) = \sum_{p\in \mathbb{P}_A} \alpha_p\, p\, A_p,
+\]
+where $\mathbb{P}_A$ is a finite set of primes, $\alpha_p\in\mathbb{R}$,
+and $A_p$ are linear operators encoding ``interaction components''
+associated with each prime.\cite{PrimeEigenSolvers} Eigenvalues are
+also prime-encoded as
+\[
+\lambda_i = \prod_{j} p_j^{e_{ij}}
+\]
+with integer exponents $e_{ij}$ representing spectral multiplicity
+structure.\cite{PrimeEigenSolvers}
+
+The preprint further develops:
+\begin{itemize}
+  \item a prime-based QR iteration,
+  \item a prime-weighted Lanczos method that inserts prime weights into
+    the recurrence coefficients and the induced tridiagonal matrix,
+  \item a recursive feedback update on eigenvalue estimates,
+  \item quantum-inspired extensions including quantum phase estimation,
+    and
+  \item a tensor representation of eigenstates
+    $\Psi(t)=\sum_i \lambda_i |p_i\rangle\otimes|e_i\rangle$.\cite{PrimeEigenSolvers}
+\end{itemize}
+
+In this report, we:
+\begin{enumerate}
+  \item Recast the prime-weighted Lanczos procedure as a \emph{prime
+  flow} in a category of prime-labelled Krylov modules.
+  \item Define an endofunctor that advances the Krylov subspace and
+  records the prime weights, together with a natural transformation
+  representing the stepwise inclusion.
+  \item Identify invariants of this flow (trace, prime-weighted
+  off-diagonal energy, coupling ratios, exponent signatures) as functors
+  and natural quantities in the category.
+  \item Develop an analogous category of prime-labelled tensor modules
+  for the quantum/tensor layer, including a quantum evolution functor,
+  a phase-estimation functor, and expectation-value functors for
+  tensor-network observables.
+\end{enumerate}
+
+The resulting framework aligns with a multiplicity-theoretic viewpoint:
+mathematical objects are recursively generated prime-labelled
+configurations, and algorithms such as Lanczos become discrete flows on
+prime-indexed multiplicity spaces with well-defined invariants.
+
+\subsection{Novelty and Prior-Art Value}
+
+The combination of the following elements appears to be novel and thus
+worth documenting as prior art:
+\begin{itemize}
+  \item Explicit use of \emph{prime labels} at the level of:
+    \begin{itemize}
+      \item decomposition $P(A)=\sum_p \alpha_p p A_p$,
+      \item eigenvalue encoding $\lambda_i=\prod_j p_j^{e_{ij}}$,
+      \item recurrence coefficients $\beta_k p_k$ in Lanczos,
+      \item tensor states $\Psi(t)=\sum_i \lambda_i |p_i\rangle\otimes|e_i\rangle$.
+    \end{itemize}
+  \item A \emph{categorical} formulation of the prime-weighted Lanczos
+    method:
+    \begin{itemize}
+      \item objects: prime-labelled Krylov modules,
+      \item morphisms: maps preserving prime identity structure,
+      \item endofunctor: prime-weighted Lanczos step,
+      \item natural transformation: canonical inclusion (prime move).
+    \end{itemize}
+  \item Spectral and dynamical invariants (trace, prime-weighted energy,
+    coupling ratios, exponent signatures) expressed as functors or
+    natural quantities within this category.
+  \item A parallel categorical treatment for the tensor/quantum layer:
+    prime-labelled tensor modules, quantum evolution functor, and
+    phase-estimation functor.
+\end{itemize}
+
+Together, these give a coherent, mathematically explicit backbone for
+prime-encoded eigenvalue solvers that is suitable for defensive
+publication.
+
+\section{Mathematical Overview}
+
+\subsection{Prime-Encoding of Matrices and Eigenvalues}
+
+We recall the basic setup from the preprint.\cite{PrimeEigenSolvers}
+Let $A$ be an $n \times n$ Hermitian matrix; consider the eigenvalue
+problem
+\[
+A v = \lambda v.
+\]
+The prime-encoding of $A$ is given by
+\begin{equation}
+P(A) = \sum_{p\in\mathbb{P}_A} \alpha_p\, p\, A_p,
+\label{eq:prime-decomp}
+\end{equation}
+where $\mathbb{P}_A$ is a finite set of distinct primes, $\alpha_p \in
+\mathbb{R}$, and $A_p$ are linear operators on the same space as
+$A$.\cite{PrimeEigenSolvers}
+
+Eigenvalues are encoded as prime products:
+\begin{equation}
+\lambda_i = \prod_{j} p_j^{e_{ij}},
+\label{eq:lambda-prime-encoding}
+\end{equation}
+where $e_{ij} \in \mathbb{Z}$ are exponents encoding spectral
+characteristics.\cite{PrimeEigenSolvers}
+
+\subsection{Prime-Weighted Lanczos Method}
+
+The prime-weighted Lanczos method constructs the Krylov subspace
+\begin{equation}
+K_m(A,v) = \mathrm{span}\{v,Av,A^2 v,\dots, A^{m-1}v\}
+\label{eq:Krylov}
+\end{equation}
+and iteratively computes a tridiagonal matrix $T_m$.\cite{PrimeEigenSolvers}
+
+Initialization (Eq.~(11)):
+\begin{equation}
+w_1 = A v_1,\quad \alpha_1 = v_1^T w_1.
+\end{equation}
+
+Iterative prime-weighted recurrence (Eq.~(12)-(13)):
+\begin{align}
+w_{k+1} &= A v_k - \alpha_k v_k - \beta_k v_{k-1}, \label{eq:lanczos-rec}\\
+\beta_k &= \|w_k\| p_k, \label{eq:beta-prime}
+\end{align}
+with $\alpha_k = v_k^T A v_k$ (Eq.~(14)).\cite{PrimeEigenSolvers}
+
+The resulting prime-encoded tridiagonal matrix (Eq.~(15)) is
+\begin{equation}
+T_m =
+\begin{bmatrix}
+\alpha_1 & \beta_1 p_1 & 0 & \dots & 0 \\
+\beta_1 p_1 & \alpha_2 & \beta_2 p_2 & \dots & 0 \\
+0 & \beta_2 p_2 & \alpha_3 & \dots & 0 \\
+\vdots & \vdots & \vdots & \ddots & \beta_{m-1}p_{m-1} \\
+0 & 0 & 0 & \beta_{m-1}p_{m-1} & \alpha_m
+\end{bmatrix}.
+\label{eq:Tm}
+\end{equation}
+
+\subsection{Recursive Feedback and Quantum/Tensor Layer}
+
+Eigenvalues are further refined via a recursive feedback loop (Eq.~(8)):
+\begin{equation}
+\lambda_{t+1} = \lambda_t + \alpha_t \sum_i p_i e^{-\beta_i t},
+\label{eq:feedback}
+\end{equation}
+with learning rate $\alpha_t$ and scaling parameters
+$\beta_i$.\cite{PrimeEigenSolvers}
+
+Quantum phase estimation is modeled via a unitary $U$ with
+\begin{equation}
+U|v\rangle = e^{i\lambda} |v\rangle,
+\label{eq:QPE-unitary}
+\end{equation}
+as in Eq.~(9).\cite{PrimeEigenSolvers}
+
+A tensor representation of eigenstates is given by
+\begin{equation}
+\Psi(t) = \sum_i \lambda_i |p_i\rangle \otimes |e_i\rangle,
+\label{eq:tensor-state}
+\end{equation}
+as in Eq.~(10), realized in a tensor product Hilbert space
+$\mathcal{I}\otimes\mathcal{E}$ where $\{|p_i\rangle\}$ is a
+prime-labelled basis and $\{|e_i\rangle\}$ are eigenvectors.\cite{PrimeEigenSolvers}
+
+\section{Categorical Framework for Prime-Weighted Lanczos}
+
+\subsection{Category of Prime-Labelled Krylov Modules}
+
+\subsubsection*{Base data}
+
+Let $A$ be an $n\times n$ Hermitian matrix with prime encoding
+$P(A)$ as in (\ref{eq:prime-decomp}).\cite{PrimeEigenSolvers} Fix a
+starting vector $v_1 \in \mathcal{H}$ and define Krylov subspaces
+$\mathcal{C}_m := K_m(A,v_1)$ as in (\ref{eq:Krylov}).\cite{PrimeEigenSolvers}
+
+Let
+\[
+\mathcal{L} := \bigoplus_{p\in\mathbb{P}_A} \mathbb{R}\, e_p
+\]
+be the prime identity module, a free $\mathbb{R}$-module with basis
+indexed by primes.\cite{PrimeEigenSolvers,CategoryModules}
+
+\begin{definition}[Prime-labelled module]
+An object of $\mathbf{PrimeMod}_A$ is a triple
+$M = (\mathcal{C},\mathcal{L},\tau)$ where:
+\begin{itemize}
+  \item $\mathcal{C}\subseteq\mathcal{H}$ is a finite-dimensional
+    subspace (typically $\mathcal{C}_m$),
+  \item $\mathcal{L}$ is the prime identity module above,
+  \item $\tau : \mathcal{L}\otimes\mathcal{C} \to \mathcal{H}$ is
+    linear and satisfies
+  \[
+  \tau(e_p\otimes v) = A_p v \quad \forall p\in\mathbb{P}_A,\; v\in\mathcal{C}.
+  \]
+\end{itemize}
+\end{definition}
+
+\begin{definition}[Morphisms]
+A morphism $\phi : M_1=(\mathcal{C}_1,\mathcal{L}_1,\tau_1)
+\to M_2=(\mathcal{C}_2,\mathcal{L}_2,\tau_2)$ in
+$\mathbf{PrimeMod}_A$ is a pair
+$(\phi_{\mathcal{C}},\phi_{\mathcal{L}})$ where:
+\begin{itemize}
+  \item $\phi_{\mathcal{C}} : \mathcal{C}_1 \to \mathcal{C}_2$ is linear,
+  \item $\phi_{\mathcal{L}} : \mathcal{L}_1 \to \mathcal{L}_2$ is linear
+    and satisfies $\phi_{\mathcal{L}}(e_p) = c_p e_p$ for some
+    $c_p\neq 0$,
+  \item the diagram
+  \[
+  \begin{array}{ccc}
+  \mathcal{L}_1\otimes\mathcal{C}_1 & \xrightarrow{\tau_1} & \mathcal{H} \\
+  \downarrow \scriptstyle{\phi_{\mathcal{L}}\otimes\phi_{\mathcal{C}}} & &
+  \downarrow \scriptstyle{\mathrm{id}_{\mathcal{H}}} \\
+  \mathcal{L}_2\otimes\mathcal{C}_2 & \xrightarrow{\tau_2} & \mathcal{H}
+  \end{array}
+  \]
+  commutes.
+\end{itemize}
+\end{definition}
+
+It is straightforward to verify that $\mathbf{PrimeMod}_A$ is indeed a
+category (identity and composition respect the commutativity
+condition).\cite{CategoryModules}
+
+\subsection{Prime-Weighted Lanczos Functor}
+
+Fix a sequence $\vec{p}=(p_1,p_2,\dots)$ of primes from
+$\mathbb{P}_A$, as used in the recurrence
+(\ref{eq:lanczos-rec})--(\ref{eq:beta-prime}).\cite{PrimeEigenSolvers}
+
+\begin{definition}[Prime-weighted Lanczos functor]
+Define $\mathcal{F}_{\vec{p}} : \mathbf{PrimeMod}_A \to
+\mathbf{PrimeMod}_A$ as follows.
+\begin{itemize}
+  \item On objects $M_m =
+    (\mathcal{C}_m,\mathcal{L},\tau_m)$: let $M_{m+1} =
+    (\mathcal{C}_{m+1},\mathcal{L},\tau_{m+1})$ where
+    $\mathcal{C}_{m+1}=K_{m+1}(A,v_1)$ and $\tau_{m+1}$ is the unique
+    extension of $\tau_m$ satisfying
+    \[
+    \tau_{m+1}(e_p\otimes v_{m+1}) = A_p v_{m+1}
+    \]
+    for $v_{m+1}$ produced by a single prime-weighted Lanczos step
+    using $p_{m+1}$.\cite{PrimeEigenSolvers}
+  \item On morphisms
+    $\phi=(\phi_{\mathcal{C}},\phi_{\mathcal{L}}) :
+    M_m \to N_m$, let
+    $\mathcal{F}_{\vec{p}}(\phi)=(\phi'_{\mathcal{C}},\phi_{\mathcal{L}})$
+    where $\phi'_{\mathcal{C}}$ extends $\phi_{\mathcal{C}}$ and sends
+    $v_{m+1}$ to the vector obtained via the same numerical recurrence
+    in $N_m$, with identical scalars
+    $\alpha_k,\beta_k$ and prime $p_{m+1}$.\cite{PrimeEigenSolvers,LanczosSLEPc}
+\end{itemize}
+\end{definition}
+
+\begin{proposition}[Lanczos step as natural transformation]
+Let $\iota_{M_m} : M_m \to M_{m+1}$ be the canonical inclusion
+\[
+(\iota_{M_m})_{\mathcal{C}} : \mathcal{C}_m\hookrightarrow\mathcal{C}_{m+1},\quad
+(\iota_{M_m})_{\mathcal{L}} = \mathrm{id}_{\mathcal{L}}.
+\]
+Then the family $\{\iota_{M_m}\}$ is a natural transformation
+\[
+\iota : \mathrm{Id}_{\mathbf{PrimeMod}_A} \Rightarrow \mathcal{F}_{\vec{p}}.
+\]
+In the basis induced by iterating $\iota$ and $\mathcal{F}_{\vec{p}}$,
+the matrix of $A$ on $\mathcal{C}_m$ is precisely the tridiagonal
+matrix $T_m$ with diagonal entries $\alpha_k$ and off-diagonals
+$\beta_k p_k$ as in Eq.~(\ref{eq:Tm}).\cite{PrimeEigenSolvers,LanczosSLEPc}
+\end{proposition}
+
+\subsection{Invariants as Functors and Natural Quantities}
+
+\subsubsection{Trace}
+
+\begin{definition}[Trace functor]
+Define $\mathrm{Tr} : \mathbf{PrimeMod}_A \to \mathbb{R}$ by
+\[
+\mathrm{Tr}(M_m) = \sum_{k=1}^m \alpha_k,
+\]
+where $\alpha_k$ are the Lanczos diagonal coefficients for
+$\mathcal{C}_m$.\cite{PrimeEigenSolvers,LanczosSLEPc}
+\end{definition}
+
+For isometric morphisms that intertwine $A$, $\mathrm{Tr}$ is
+invariant; under $\iota$,
+\[
+\mathrm{Tr}(\mathcal{F}_{\vec{p}}(M_m)) = \mathrm{Tr}(M_m) + \alpha_{m+1}.
+\]
+
+\subsubsection{Prime-Weighted Off-Diagonal Energy}
+
+\begin{definition}[Prime-weighted off-diagonal energy]
+Define
+\[
+E(M_m) = \sum_{k=1}^{m-1} (\beta_k p_k)^2,
+\]
+the squared Frobenius norm of the off-diagonal part of
+$T_m$.\cite{PrimeEigenSolvers,LanczosSLEPc}
+\end{definition}
+
+$E$ is invariant under morphisms preserving the products
+$\beta_k p_k$; under $\iota$,
+\[
+E(\mathcal{F}_{\vec{p}}(M_m)) = E(M_m) + (\beta_m p_m)^2.
+\]
+
+\subsubsection{Coupling Ratios and Exponent Signature}
+
+\begin{definition}[Scale-free coupling ratios]
+For $m\ge2$, define
+\[
+r_k = \frac{\beta_k p_k}{\beta_{k-1} p_{k-1}},\quad k=2,\dots,m.
+\]
+\end{definition}
+
+These ratios are invariant under \emph{prime-similarities}:
+morphisms that rescale all $e_p$ by the same constant and preserve all
+$\|w_k\|$.
+
+\begin{definition}[Prime-exponent signature]
+Define
+\[
+s_m = \sum_{k=1}^{m-1} \log_{p_k} |\beta_k p_k|.
+\]
+\end{definition}
+
+Under morphisms that preserve $\beta_k p_k$ up to prime powers, $s_m$
+transforms linearly; once the Lanczos process has converged on a
+spectral block, $s_m$ stabilizes up to bounded variation.
+
+\subsection{Recursive Feedback as a Derived Functor}
+
+Let $\mathbf{Dyn}(\mathbb{R})$ denote the category of discrete-time
+dynamical systems on $\mathbb{R}$.
+
+\begin{definition}[Feedback functor]
+Given $M_m$ with primes and scalars $(\alpha_\tau,\beta_i)$, define
+\[
+\mathcal{R}(M_m)(t) = \lambda_0 +
+\sum_{\tau=0}^{t-1}
+\alpha_\tau \sum_{i} p_i e^{-\beta_i \tau}
+\]
+with initialization $\lambda_0$. This yields a map
+$\mathcal{R} : \mathbf{PrimeMod}_A \to
+\mathbf{Dyn}(\mathbb{R})$.
+\end{definition}
+
+Morphisms preserving the scalar data induce identical dynamical systems
+under $\mathcal{R}$, making the feedback update functorial.
+
+\section{Categorical Framework for Tensor/Quantum Layer}
+
+\subsection{Category of Prime-Labelled Tensor Modules}
+
+\subsubsection*{Base data}
+
+Let $A$ have prime encoding $P(A)$ as in (\ref{eq:prime-decomp}) and
+eigen-decomposition $A |e_i\rangle = \lambda_i |e_i\rangle$ with
+prime encodings $\lambda_i$ as in (\ref{eq:lambda-prime-encoding}).\cite{PrimeEigenSolvers}
+Let $\mathcal{I}$ be a Hilbert space with orthonormal basis
+$\{|p\rangle : p\in\mathbb{P}_A\}$ and $\mathcal{E}$ the eigenspace
+spanned by $\{|e_i\rangle\}$.\cite{PrimeEigenSolvers}
+
+\begin{definition}[Prime-tensor module]
+An object of $\mathbf{PrimeTen}_A$ is a triple
+$N=(\mathcal{E},\mathcal{I},\Theta)$ where:
+\begin{itemize}
+  \item $\mathcal{E}\subseteq\mathcal{H}$ is a finite-dimensional
+    eigenspace,
+  \item $\mathcal{I}$ is the prime identity Hilbert space,
+  \item $\Theta : \mathcal{I}\otimes\mathcal{E} \to \mathcal{H}$ is
+    linear and satisfies
+    \[
+    \Theta(|p_i\rangle\otimes|e_i\rangle) = \lambda_i |e_i\rangle
+    \]
+    for each eigenpair $(\lambda_i,|e_i\rangle)$.
+\end{itemize}
+\end{definition}
+
+The prime-labelled tensor state $\Psi(t)$ from
+(\ref{eq:tensor-state}) lies naturally in $\mathcal{I}\otimes\mathcal{E}$.
+
+\begin{definition}[Morphisms]
+A morphism $\Phi : N_1=(\mathcal{E}_1,\mathcal{I}_1,\Theta_1)
+\to N_2=(\mathcal{E}_2,\mathcal{I}_2,\Theta_2)$ is a pair
+$(\Phi_{\mathcal{E}},\Phi_{\mathcal{I}})$ where:
+\begin{itemize}
+  \item $\Phi_{\mathcal{E}} : \mathcal{E}_1 \to \mathcal{E}_2$ is
+    linear and intertwines $A$,
+  \item $\Phi_{\mathcal{I}} : \mathcal{I}_1 \to \mathcal{I}_2$ is
+    linear and satisfies $\Phi_{\mathcal{I}}(|p\rangle)
+    = e^{i\theta_p}|p\rangle$,
+  \item the diagram
+  \[
+  \begin{array}{ccc}
+  \mathcal{I}_1\otimes\mathcal{E}_1 & \xrightarrow{\Theta_1} & \mathcal{H} \\
+  \downarrow \scriptstyle{\Phi_{\mathcal{I}}\otimes\Phi_{\mathcal{E}}} & &
+  \downarrow \scriptstyle{\mathrm{id}_{\mathcal{H}}} \\
+  \mathcal{I}_2\otimes\mathcal{E}_2 & \xrightarrow{\Theta_2} & \mathcal{H}
+  \end{array}
+  \]
+  commutes.
+\end{itemize}
+\end{definition}
+
+\subsection{Quantum Evolution and Phase Estimation Functors}
+
+Let $U=e^{iA}$ be the unitary such that
+$U|e_i\rangle = e^{i\lambda_i}|e_i\rangle$ as in Eq.~(9).\cite{PrimeEigenSolvers}
+
+\begin{definition}[Quantum evolution functor]
+Define $\mathcal{Q} : \mathbf{PrimeTen}_A \to
+\mathbf{PrimeTen}_A$ by:
+\begin{itemize}
+  \item on objects $N=(\mathcal{E},\mathcal{I},\Theta)$,
+    \[
+    \mathcal{Q}(N) = (\mathcal{E},\mathcal{I},\Theta_U)
+    \]
+    with
+    \[
+    \Theta_U(|p_i\rangle\otimes|e_i\rangle) =
+    e^{i\lambda_i}\lambda_i |e_i\rangle,
+    \]
+  \item on morphisms, $\mathcal{Q}(\Phi) = (\Phi_{\mathcal{E}},\Phi_{\mathcal{I}})$,
+    since $\Phi_{\mathcal{E}}$ intertwines $A$ and thus $U$.
+\end{itemize}
+\end{definition}
+
+Let $\mathbf{QCirc}$ denote a suitable category of quantum circuits and
+measurement outcomes.
+
+\begin{definition}[Phase-estimation functor]
+A phase-estimation functor $\mathcal{P} :
+\mathbf{PrimeTen}_A \to \mathbf{QCirc}$ assigns to each
+$N=(\mathcal{E},\mathcal{I},\Theta)$ a quantum circuit implementing
+phase estimation for $U$ on states in $\mathcal{E}$, with measurement
+outcomes labelled by the prime basis states $|p_i\rangle$.
+\end{definition}
+
+\begin{proposition}[Functoriality of phase estimation]
+For any morphism $\Phi : N_1\to N_2$ in $\mathbf{PrimeTen}_A$ that
+intertwines $U$, the corresponding circuits $\mathcal{P}(N_1)$ and
+$\mathcal{P}(N_2)$ produce identical phase distributions up to
+relabelling via $\Phi_{\mathcal{I}}$.
+\end{proposition}
+
+\subsection{Tensor-Network Observables and Invariants}
+
+The tensor state $\Psi(t)$ admits tensor-network representations such as
+matrix product states.\cite{PrimeEigenSolversTensor} Prime labels may
+appear on physical or bond indices.
+
+\begin{definition}[Expectation-value functor]
+Let $\mathcal{O}$ be an observable on $\mathcal{I}\otimes\mathcal{E}$. Define
+$\mathbb{E}_{\mathcal{O}} : \mathbf{PrimeTen}_A \to \mathbb{R}$ by
+\[
+\mathbb{E}_{\mathcal{O}}(N) =
+\langle \Psi(t)|\mathcal{O}|\Psi(t)\rangle,
+\]
+where $\Psi(t)$ is determined by $\Theta$.
+\end{definition}
+
+When $\Phi$ preserves $\mathcal{O}$ (up to conjugation),
+$\mathbb{E}_{\mathcal{O}}(N)$ is invariant, providing a tensor-network
+analogue of the Lanczos invariants (trace, $E(M_m)$, $r_k$, $s_m$).
+
+\section{Code Sketch: Prime-Weighted Lanczos Prototype}
+
+This section illustrates how a research prototype of the prime-weighted
+Lanczos method can be implemented in Python/NumPy. The code is
+presented as an illustrative sketch, not a production-ready solver.
+
+\subsection{Prime-Weighted Lanczos in Python}
+
+\begin{verbatim}
+import numpy as np
+
+def prime_weighted_lanczos(A, v1, primes, m_max):
+    """
+    Prime-weighted Lanczos prototype.
+
+    Parameters
+    ----------
+    A : (n, n) Hermitian numpy array
+    v1 : (n,) initial vector, will be normalized
+    primes : list or array of primes [p_1, p_2, ...]
+    m_max : maximum Krylov depth
+
+    Returns
+    -------
+    alphas : array of length m
+    betas  : array of length m-1
+    T      : (m, m) tridiagonal matrix with off-diagonals beta_k * p_k
+    V      : (n, m) Lanczos basis vectors
+    """
+
+    n = A.shape[0]
+    v1 = v1 / np.linalg.norm(v1)
+    V = np.zeros((n, m_max), dtype=A.dtype)
+    V[:, 0] = v1
+
+    alphas = np.zeros(m_max, dtype=float)
+    betas = np.zeros(m_max - 1, dtype=float)
+
+    w = A @ V[:, 0]
+    alphas[0] = np.vdot(V[:, 0], w).real
+
+    for k in range(m_max - 1):
+        if k > 0:
+            w = A @ V[:, k] - alphas[k] * V[:, k] - betas[k-1] * V[:, k-1]
+        else:
+            w = A @ V[:, k] - alphas[k] * V[:, k]
+
+        # prime-weighted beta
+        p_k = primes[k]
+        beta_k_norm = np.linalg.norm(w)
+        betas[k] = beta_k_norm * p_k
+
+        if beta_k_norm == 0:
+            # early termination
+            m = k + 1
+            alphas = alphas[:m]
+            betas = betas[:m-1]
+            V = V[:, :m]
+            break
+
+        V[:, k+1] = w / beta_k_norm
+        alphas[k+1] = np.vdot(V[:, k+1], A @ V[:, k+1]).real
+
+    # construct T
+    m = V.shape[1]
+    T = np.diag(alphas[:m])
+    for k in range(m - 1):
+        p_k = primes[k]
+        off = betas[k]  # already includes p_k
+        T[k, k+1] = off
+        T[k+1, k] = off
+
+    return alphas[:m], betas[:m-1], T, V
+\end{verbatim}
+
+This prototype:
+\begin{itemize}
+  \item Implements the recurrence (\ref{eq:lanczos-rec})--(\ref{eq:beta-prime})
+    with $\beta_k = \|w_k\| p_k$.
+  \item Constructs the tridiagonal matrix $T_m$ of
+    (\ref{eq:Tm}) with off-diagonals $\beta_k p_k$ embedded in
+    \texttt{betas}.
+  \item Produces the Lanczos basis $V$ for Krylov subspaces
+    $\mathcal{C}_m$.
+\end{itemize}
+
+Extensions can:
+\begin{itemize}
+  \item track invariants $E(M_m)$, $r_k$, $s_m$ at each iteration,
+  \item plug $T_m$ into a tensor-network representation (e.g., MPS/MPO),
+  \item connect to a symbolic or categorical library that reflects
+    the $\mathbf{PrimeMod}_A$ structure directly.
+\end{itemize}
+
+\section{Conclusions and Further Work}
+
+This report consolidates the developments in prime-encoded eigenvalue
+solvers into a unified multiplicity-theoretic and categorical
+framework. The prime-weighted Lanczos method is cast as a prime flow in
+$\mathbf{PrimeMod}_A$ with well-defined invariants, and the tensor/
+quantum layer is described in $\mathbf{PrimeTen}_A$ with quantum
+evolution and phase-estimation functors.
+
+Future work could extend these ideas to:
+\begin{itemize}
+  \item Category-theoretic treatments of the prime-based QR iteration,
+  \item Hybrid quantum-classical prime flows, where classical Lanczos
+    and quantum phase estimation are combined as interconnected
+    functors,
+  \item Practical benchmarks comparing prime-encoded solvers with
+    standard methods in high-dimensional settings.
+\end{itemize}
+
+\appendix
+\section*{Mathematical Appendix}
+\addcontentsline{toc}{section}{Mathematical Appendix}
+
+This appendix collects explicit proofs, norm bounds, and auxiliary
+lemmas underpinning the prime-weighted Lanczos framework and its
+tensor/quantum extensions. We focus on:
+\begin{itemize}
+  \item well-posedness and stability of the prime-weighted Lanczos
+    recurrence,
+  \item operator-norm bounds for the induced tridiagonal $T_m$ and
+    associated residuals,
+  \item invariance properties of the prime-labelled categorical
+    structures,
+  \item compatibility of the tensor representation with quantum
+    evolution and phase estimation.
+\end{itemize}
+
+Throughout, $A\in\mathbb{C}^{n\times n}$ is Hermitian and prime-encoded
+as in Eq.~(2), and the Lanczos algorithm is as in Eqs.~(11)--(15) of
+the main text.\cite{PrimeEigenSolvers,LanczosTour,UrschelLanczos}
+
+\section{Prime-Weighted Lanczos: Well-Posedness and Norm Bounds}
+
+\subsection{Well-Posedness of the Prime-Weighted Recurrence}
+
+Recall the prime-weighted recurrence (Eqs.~(11)--(14)):
+\begin{align}
+w_1 &= A v_1, \qquad \alpha_1 = v_1^* w_1, \\
+w_{k+1} &= A v_k - \alpha_k v_k - \beta_k v_{k-1}, \label{eq:app-lanczos-rec}\\
+\beta_k &= \|w_k\|\, p_k, \label{eq:app-beta}\\
+\alpha_k &= v_k^* A v_k,
+\end{align}
+with $v_0:=0$ and $p_k$ the $k$-th prime in a fixed sequence
+$\vec{p}$.\cite{PrimeEigenSolvers}
+
+\begin{lemma}[Nondegeneracy and early termination]
+Assume $v_1\neq 0$ and $A$ Hermitian.
+\begin{enumerate}
+  \item If $w_k\neq 0$ for $k=1,\dots,m$, then the recurrence uniquely
+    defines nonzero $\beta_k$ and unit vectors $v_{k+1}$ up to phase.
+  \item If $w_{k_0}=0$ for some minimal $k_0$, the algorithm terminates
+    with $\mathcal{C}_{k_0}=K_{k_0}(A,v_1)$ invariant under $A$ and
+    exact on that subspace.
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+(1) For a given $k$, if $w_k\neq 0$, then $\|w_k\|>0$ and hence
+$\beta_k = \|w_k\| p_k \neq 0$ since $p_k>0$. Defining
+$v_{k+1} = w_{k+1}/\|w_{k+1}\|$ produces a unit vector uniquely
+determined up to a complex phase factor, as in the standard Lanczos
+algorithm.\cite{LanczosTour,BerkeleyLanczos}
+
+(2) If $w_{k_0}=0$, the recurrence gives $A v_{k_0} = \alpha_{k_0}
+v_{k_0} + \beta_{k_0} v_{k_0-1}$; since $w_{k_0}=0$ implies
+$\|w_{k_0}\|=0$, we have $\beta_{k_0}=0$ and thus
+$A v_{k_0} = \alpha_{k_0} v_{k_0}$, so $v_{k_0}$ is an eigenvector.
+Standard arguments for Lanczos show that
+$\mathrm{span}\{v_1,\dots,v_{k_0}\}$ is $A$-invariant and that the
+restriction of $A$ to $\mathcal{C}_{k_0}$ is represented exactly by
+the tridiagonal $T_{k_0}$.\cite{LanczosTour,UrschelLanczos}
+\end{proof}
+
+\subsection{Operator Norm Bounds for the Tridiagonal Matrix}
+
+Let $Q_m=[v_1,\dots,v_m]\in\mathbb{C}^{n\times m}$ be the orthonormal
+basis of $\mathcal{C}_m$ generated by the recurrence. We have the
+tridiagonal reduction
+\begin{equation}
+Q_m^* A Q_m = T_m
+\end{equation}
+with $T_m$ as in Eq.~(15).\cite{PrimeEigenSolvers,LanczosTour}
+
+\begin{lemma}[Spectral inclusion]
+For Hermitian $A$, we have
+\[
+\sigma(T_m)\subset \mathrm{conv}(\sigma(A)),
+\]
+where $\sigma(\cdot)$ denotes spectrum and $\mathrm{conv}$ the convex
+hull.
+\end{lemma}
+
+\begin{proof}
+This is standard for Lanczos: $T_m$ is the representation of $A$ on the
+Krylov subspace with an orthonormal basis, hence its eigenvalues are
+Ritz values for $A$ and lie in the convex hull of $\sigma(A)$ by the
+variational characterization of eigenvalues and the Rayleigh quotient
+bounds.\cite{LanczosAlgo,WikiLanczos}
+\end{proof}
+
+\begin{lemma}[Spectral norm bound]
+Let $\|\cdot\|_2$ denote the spectral norm. Then
+\[
+\|T_m\|_2 \le \|A\|_2.
+\]
+\end{lemma}
+
+\begin{proof}
+Since $T_m = Q_m^* A Q_m$ with $Q_m$ having orthonormal columns,
+\[
+\|T_m\|_2 = \|Q_m^* A Q_m\|_2 \le \|Q_m^*\|_2 \|A\|_2 \|Q_m\|_2
+= \|A\|_2,
+\]
+as $\|Q_m\|_2 = \|Q_m^*\|_2 = 1$.\cite{LanczosAlgo}
+\end{proof}
+
+The prime weights appear only in the off-diagonal entries
+$\beta_k p_k$. A crude but explicit bound in terms of primes is:
+
+\begin{proposition}[Prime-weighted Gershgorin bound]
+Let $T_m$ be as in Eq.~(15). Then every eigenvalue $\theta\in\sigma(T_m)$
+satisfies
+\[
+|\theta - \alpha_k|\le |\beta_{k-1} p_{k-1}| + |\beta_k p_k|
+\]
+for some $k$, with the convention $\beta_0 p_0 := 0$. Consequently,
+\[
+\max_{\theta\in\sigma(T_m)} |\theta|
+\le \max_k \left( |\alpha_k|+|\beta_{k-1} p_{k-1}|+|\beta_k p_k| \right).
+\]
+\end{proposition}
+
+\begin{proof}
+This follows from Gershgorin's circle theorem applied to the
+tridiagonal matrix $T_m$.\cite{UrschelLanczos} The $k$-th row has
+diagonal $\alpha_k$ and off-diagonal entries at most
+$|\beta_{k-1}p_{k-1}|$ and $|\beta_k p_k|$ in magnitude. The spectrum
+lies in the union of those disks, yielding the bound.
+\end{proof}
+
+\subsection{Residual Norm Bounds and Ritz Error Estimates}
+
+Let $\theta^{(m)}_j$ be an eigenvalue of $T_m$ (a Ritz value of $A$),
+with associated Ritz vector $u^{(m)}_j = Q_m y_j$ where $y_j$ is a unit
+eigenvector of $T_m$. The residual for this Ritz pair is
+\[
+r^{(m)}_j = A u^{(m)}_j - \theta^{(m)}_j u^{(m)}_j.
+\]
+
+\begin{lemma}[Residual norm formula]
+For Hermitian $A$ and tridiagonal $T_m$, we have
+\[
+\|r^{(m)}_j\|_2 = |\beta_m p_m|\, |e_m^T y_j|,
+\]
+where $e_m$ is the $m$-th standard basis vector in $\mathbb{R}^m$.
+\end{lemma}
+
+\begin{proof}
+In the classical Lanczos setting, the residual norm is
+$\|r^{(m)}_j\|_2 = |\beta_m| |e_m^T y_j|$.\cite{LanczosAlgo,MITLanczos}
+In the prime-weighted case, $T_m$ has off-diagonal entries $\beta_k p_k$,
+and the coupling to the $(m+1)$-st basis vector in the recurrence is
+scaled accordingly. Direct computation of
+$A Q_m - Q_m T_m$ gives the residual term at the last basis vector
+proportional to $\beta_m p_m v_{m+1}$; projecting onto $y_j$ yields the
+stated expression.
+\end{proof}
+
+\begin{proposition}[A priori Ritz error bound]
+Let $\lambda_1\ge\lambda_2\ge\dots\ge\lambda_n$ be the eigenvalues of
+$A$, and let $\theta^{(m)}_1$ be the largest Ritz value of $T_m$.
+Then
+\[
+\lambda_1 - \theta^{(m)}_1 \le \|r^{(m)}_1\|_2.
+\]
+In particular,
+\[
+\lambda_1 - \theta^{(m)}_1 \le |\beta_m p_m|\, |e_m^T y_1|.
+\]
+\end{proposition}
+
+\begin{proof}
+This is a standard bound for symmetric Lanczos: the Ritz value
+$\theta^{(m)}_1$ is the maximum of the Rayleigh quotient on the Krylov
+subspace, and the residual norm bounds the distance to a true
+eigenpair.\cite{LanczosAlgo,UrschelLanczos} The second inequality comes
+from the previous lemma.
+\end{proof}
+
+These bounds show how the prime factors $p_m$ enter the residual error
+and thus affect convergence; they also motivate normalisation or
+rescaling strategies if $p_m$ grows too quickly.
+
+\section{Categorical Invariants and Natural Transformations}
+
+\subsection{Trace and Energy as Functors}
+
+We recall the trace functor
+$\mathrm{Tr}(M_m)=\sum_{k=1}^m\alpha_k$ and the energy
+$E(M_m)=\sum_{k=1}^{m-1}(\beta_k p_k)^2$.\cite{PrimeEigenSolvers}
+
+\begin{proposition}[Functoriality of trace]
+Let $\phi : M_m\to N_m$ be a morphism in $\mathbf{PrimeMod}_A$ such
+that $\phi_{\mathcal{C}}$ is an isometric isomorphism onto its image
+and intertwines $A$. Then
+\[
+\mathrm{Tr}(M_m) = \mathrm{Tr}(N_m).
+\]
+\end{proposition}
+
+\begin{proof}
+Since $\phi_{\mathcal{C}}$ is isometric and intertwines $A$, it induces
+a unitary similarity between the restrictions $A|_{\mathcal{C}_m}$ and
+$A|_{\phi_{\mathcal{C}}(\mathcal{C}_m)}$, hence their traces
+coincide. The Lanczos tridiagonals $T_m$ and $T_m'$ are unitarily
+similar and share the same diagonal sum.\cite{LanczosAlgo}
+\end{proof}
+
+\begin{proposition}[Prime-weighted energy monotonicity]
+Under the inclusion $\iota_{M_m} : M_m\to M_{m+1}$, we have
+\[
+E(M_{m+1}) = E(M_m) + (\beta_m p_m)^2 \ge E(M_m).
+\]
+\end{proposition}
+
+\begin{proof}
+By definition,
+\[
+E(M_{m+1}) = \sum_{k=1}^{m}(\beta_k p_k)^2 =
+\sum_{k=1}^{m-1}(\beta_k p_k)^2 +(\beta_m p_m)^2 = E(M_m)+(\beta_m p_m)^2.
+\]
+\end{proof}
+
+\subsection{Scale-Free Ratios and Exponent Signature}
+
+\begin{proposition}[Invariance under prime-similarity]
+Let $\phi : M_m\to N_m$ be a morphism in $\mathbf{PrimeMod}_A$
+such that:
+\begin{itemize}
+  \item $\phi_{\mathcal{L}}(e_p) = c e_p$ for the same $c\neq 0$ and
+    all primes $p$,
+  \item $\phi_{\mathcal{C}}$ preserves all $\|w_k\|$.
+\end{itemize}
+Then the scale-free ratios
+$r_k=(\beta_k p_k)/(\beta_{k-1} p_{k-1})$ are invariant.
+\end{proposition}
+
+\begin{proof}
+Under the stated assumptions, both $\beta_k$ and $p_k$ are scaled
+in such a way that the products $\beta_k p_k$ are multiplied by a
+common factor, which cancels in the ratio. Preservation of $\|w_k\|$
+ensures that the norm-derived parts of $\beta_k$ are unchanged; the
+global scaling factor $c$ affects all primes equally and cancels in
+the ratio.\cite{PrimeEigenSolvers}
+\end{proof}
+
+\begin{proposition}[Exponent signature stability]
+Assume the Lanczos process has converged on an invariant subspace
+corresponding to a cluster of eigenvalues $\{\lambda_i\}$.
+Then the quantity
+\[
+s_m = \sum_{k=1}^{m-1} \log_{p_k}|\beta_k p_k|
+\]
+stabilizes as $m$ increases (up to bounded fluctuations).
+\end{proposition}
+
+\begin{proof}[Sketch]
+Once the Krylov subspace captures the invariant subspace, the recursion
+coefficients $(\alpha_k,\beta_k)$ converge to asymptotic values that
+depend only on the spectral block.\cite{LanczosAlgo,ConvergenceKrylov}
+The additional prime factors $p_k$ are fixed by the chosen sequence,
+hence the growth of $|\beta_k p_k|$ becomes regular, and their log
+sum behaves like a linear function of $m$ plus bounded fluctuations.
+The precise constant depends on the asymptotic values of $\beta_k$ and
+the distribution of $p_k$.
+\end{proof}
+
+\section{Tensor/Quantum Layer: Compatibility and Bounds}
+
+\subsection{Compatibility of $\Theta$ with $A$ and $U$}
+
+In the tensor/quantum category $\mathbf{PrimeTen}_A$, objects
+$N=(\mathcal{E},\mathcal{I},\Theta)$ satisfy
+$\Theta(|p_i\rangle\otimes|e_i\rangle) = \lambda_i |e_i\rangle$.
+
+\begin{lemma}[Intertwining with $A$]
+For any $N$ in $\mathbf{PrimeTen}_A$, we have
+\[
+A\,\Theta(|p_i\rangle\otimes|e_i\rangle)
+= \lambda_i\,\Theta(|p_i\rangle\otimes|e_i\rangle).
+\]
+\end{lemma}
+
+\begin{proof}
+By definition,
+$\Theta(|p_i\rangle\otimes|e_i\rangle) = \lambda_i |e_i\rangle$ and
+$A|e_i\rangle = \lambda_i |e_i\rangle$. Thus
+\[
+A\,\Theta(|p_i\rangle\otimes|e_i\rangle) =
+A(\lambda_i |e_i\rangle)=\lambda_i^2 |e_i\rangle =
+\lambda_i\,\Theta(|p_i\rangle\otimes|e_i\rangle),
+\]
+so $\Theta$ acts as a prime-labelled eigenvalue insertion operator.
+\end{proof}
+
+Let $U=e^{iA}$ be the unitary used in phase estimation.\cite{PrimeEigenSolvers}
+
+\begin{lemma}[Intertwining with $U$]
+We have
+\[
+U\,\Theta(|p_i\rangle\otimes|e_i\rangle) =
+e^{i\lambda_i}\lambda_i |e_i\rangle =
+\Theta_U(|p_i\rangle\otimes|e_i\rangle),
+\]
+where $\Theta_U$ defines the quantum evolution functor
+$\mathcal{Q}$ in the main text.
+\end{lemma}
+
+\begin{proof}
+Since $U|e_i\rangle = e^{i\lambda_i} |e_i\rangle$,
+\[
+U\,\Theta(|p_i\rangle\otimes|e_i\rangle) =
+U(\lambda_i |e_i\rangle) = e^{i\lambda_i}\lambda_i |e_i\rangle,
+\]
+which is precisely the action of $\Theta_U$ on the same basis element.
+\end{proof}
+
+\subsection{Norm Bounds for Tensor States}
+
+The tensor state
+$\Psi(t) = \sum_i \lambda_i |p_i\rangle\otimes|e_i\rangle$ satisfies:
+
+\begin{lemma}[Norm of prime-labelled tensor state]
+Assume $\{|p_i\rangle\}$ and $\{|e_i\rangle\}$ are orthonormal bases.
+Then
+\[
+\|\Psi(t)\|^2 = \sum_i |\lambda_i|^2.
+\]
+\end{lemma}
+
+\begin{proof}
+Orthogonality of the tensor product basis implies
+\[
+\|\Psi(t)\|^2 =
+\left\langle \sum_i \lambda_i |p_i,e_i\rangle,
+\sum_j \lambda_j |p_j,e_j\rangle \right\rangle
+=
+\sum_i |\lambda_i|^2,
+\]
+where $|p_i,e_i\rangle := |p_i\rangle\otimes|e_i\rangle$.
+\end{proof}
+
+\begin{proposition}[Bound in terms of $\|A\|_2$]
+If $A$ is Hermitian with eigenvalues $\lambda_i$ and spectral norm
+$\|A\|_2=\max_i |\lambda_i|$, then
+\[
+\|\Psi(t)\|^2 \le n \|A\|_2^2.
+\]
+\end{proposition}
+
+\begin{proof}
+We have $|\lambda_i|\le \|A\|_2$ for all $i$, so
+\[
+\|\Psi(t)\|^2 = \sum_{i=1}^n |\lambda_i|^2 \le n \|A\|_2^2.
+\]
+\end{proof}
+
+\subsection{Expectation-Value Bounds for Tensor Observables}
+
+Let $\mathcal{O}$ be a bounded operator on $\mathcal{I}\otimes\mathcal{E}$.
+
+\begin{lemma}[Expectation-value bound]
+We have
+\[
+|\langle \Psi(t)|\mathcal{O}|\Psi(t)\rangle|
+\le \|\mathcal{O}\|_2\, \|\Psi(t)\|^2.
+\]
+\end{lemma}
+
+\begin{proof}
+By Cauchy--Schwarz,
+\[
+|\langle \Psi(t)|\mathcal{O}|\Psi(t)\rangle|
+\le \|\mathcal{O}|\Psi(t)\rangle\|_2 \|\Psi(t)\|_2
+\le \|\mathcal{O}\|_2 \|\Psi(t)\|_2^2.
+\]
+\end{proof}
+
+Combining with the previous proposition yields:
+\[
+|\langle \Psi(t)|\mathcal{O}|\Psi(t)\rangle|
+\le n\|\mathcal{O}\|_2\,\|A\|_2^2.
+\]
+
+This provides explicit operator-norm bounds for prime-labelled
+tensor-network observables.
+
+\nocite{*}
+\bibliographystyle{unsrt}
+\bibliography{references}
+
+\end{document}

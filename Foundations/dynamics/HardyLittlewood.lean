@@ -1,5 +1,5 @@
-import Multiplicity.dynamics.Dirichlet
-import Multiplicity.Prime
+import Foundations.dynamics.Dirichlet
+import Foundations.Prime
 
 /-! # Hardy-Littlewood Multiplicity (ADR-0011)
 

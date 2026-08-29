@@ -1,7 +1,7 @@
 use ndarray::{Array1, Array2};
-use pirtm_rs::gates::{gate_langlands, LanglandsZKConfig};
-use pirtm_rs::rta::{RtaMetric, State};
-use pirtm_rs::uac_loss::{uac_total_loss, ArithmeticBinduAttractor, LanglandsLossConfig};
+use pirtm_core::gates::{gate_langlands, LanglandsZKConfig};
+use pirtm_core::rta::{RtaMetric, State};
+use pirtm_core::uac_loss::{uac_total_loss, ArithmeticBinduAttractor, LanglandsLossConfig};
 use pirtm_tensor::contractive_fit::ContractiveFit;
 use pirtm_tensor::multiplicity_cell::{LinearMultiplicityCell, MultiplicityCell};
 use serde_json::Value;
@@ -25,7 +25,7 @@ fn main() {
 
     if tether {
         println!("=== UAC Simulator: Tether Policy Mode ===");
-        use pirtm_rs::tether_policy::{NodeState, TetherPolicy};
+        use pirtm_core::tether_policy::{NodeState, TetherPolicy};
         let policy = TetherPolicy::default();
 
         let mut current_coverage = initial_coverage;

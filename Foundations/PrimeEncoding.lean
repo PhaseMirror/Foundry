@@ -1,5 +1,5 @@
 import Std
-import Multiplicity.Semantics.Multiplicity.Core
+import Foundations.Semantics.Multiplicity.Core
 
 namespace Multiplicity.Semantics
 

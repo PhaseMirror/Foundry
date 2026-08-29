@@ -1,4 +1,4 @@
-import Multiplicity.ComplexKappa.Core
+import Foundations.ComplexKappa.Core
 
 namespace Multiplicity.ComplexKappa.Zeta
 

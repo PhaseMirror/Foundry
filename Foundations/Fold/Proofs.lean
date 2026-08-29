@@ -1,4 +1,4 @@
-import Multiplicity.Fold.Core
+import Foundations.Fold.Core
 
 /-!
 # Fold Theory Proofs — machine-checked theorems (ADR-0032)

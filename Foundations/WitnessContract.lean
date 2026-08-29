@@ -1,5 +1,5 @@
-import alp.PolicyEngine.Core
-import alp.Constitution.L0
+import Foundations.PolicyEngine.Core
+import Foundations.Constitution.L0
 
 namespace Multiplicity.ALP.Archivum.WitnessContract
 

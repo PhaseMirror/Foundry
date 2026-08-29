@@ -1,6 +1,6 @@
-import Multiplicity.universal_closure.UniversalClosure
-import Multiplicity.universal_closure.DefectAlgebra
-import Multiplicity.universal_closure.Dirichlet
+import Foundations.universal_closure.UniversalClosure
+import Foundations.universal_closure.DefectAlgebra
+import Foundations.universal_closure.Dirichlet
 
 /-!
 # Universal Calculator — Formal Spec

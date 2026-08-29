@@ -1,5 +1,5 @@
-import Multiplicity.Std.Data.Real.Basic
-import Multiplicity.Std.Data.Rat.Basic
+import Foundations.Std.Data.Real.Basic
+import Foundations.Std.Data.Rat.Basic
 
 open Real
 

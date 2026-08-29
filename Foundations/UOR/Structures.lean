@@ -2,8 +2,8 @@
 --
 -- UOR Foundation — all structure declarations (single compilation unit).
 
-import Multiplicity.UOR.Primitives
-import Multiplicity.UOR.Enums
+import Foundations.UOR.Primitives
+import Foundations.UOR.Enums
 
 open UOR.Primitives
 

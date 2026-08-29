@@ -10,6 +10,7 @@ import Foundations.ADR.Core
 import Foundations.ADR.Proofs
 import Foundations.ADR.Examples
 import Foundations.ADR.Export
+import Foundations.ADR.GlobalResearchPlatform
 import Foundations.Care.Core
 import Foundations.CSL.Homomorphism
 import Foundations.Goldilocks.Core

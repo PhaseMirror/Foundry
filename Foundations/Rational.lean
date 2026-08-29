@@ -1,4 +1,4 @@
-import Multiplicity.Init.Data.Rat.Basic
+import Foundations.Init.Data.Rat.Basic
 
 namespace Multiplicity.MOC.Rational
 

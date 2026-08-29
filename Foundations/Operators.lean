@@ -19,45 +19,45 @@ Mathlib and are excluded from the axiom-clean build.
 -/
 
 -- Tier 1: Fibonacci operator (discrete recurrence, monotonicity, growth bounds)
-import Multiplicity.Operators.FibonacciOperator
+import Foundations.Operators.FibonacciOperator
 
 -- Tier 1: Algebraic operators (matrix/vector ops, determinant, eigenvalue decomp)
-import Multiplicity.Operators.AlgebraicOperators
+import Foundations.Operators.AlgebraicOperators
 
 -- Tier 1: Functional operators (exponential/logarithmic via rational power series)
-import Multiplicity.Operators.FunctionalOperators
+import Foundations.Operators.FunctionalOperators
 
 -- Tier 1: Probabilistic operators (Bernoulli, discrete distributions, expectation)
-import Multiplicity.Operators.ProbabilisticOperators
+import Foundations.Operators.ProbabilisticOperators
 
 -- Tier 1: Prime encoding (IsPrime, Godel encoding, injectivity)
-import Multiplicity.Operators.PrimeEncoding
+import Foundations.Operators.PrimeEncoding
 
 -- Tier 1: Quantum gates (Gaussian rationals, 2×2/4×4 matrices, unitarity)
-import Multiplicity.Operators.QuantumGates
+import Foundations.Operators.QuantumGates
 
 -- Tier 1: Multiplicity processor (eigenvalue evolution, multiplicity equation)
-import Multiplicity.Operators.MultiplicityProcessor
+import Foundations.Operators.MultiplicityProcessor
 
 -- Tier 1: PEQOMA (prime-encoded quantum operator multiplicity algorithm)
-import Multiplicity.Operators.PEQOMA
+import Foundations.Operators.PEQOMA
 
 -- Tier 1: Phase-adaptive controller (entanglement matrix, coherence)
-import Multiplicity.Operators.PhaseAdaptiveController
+import Foundations.Operators.PhaseAdaptiveController
 
 -- Tier 1: SHELL controller (feedback, self-healing, prime modulation)
-import Multiplicity.Operators.ShellController
+import Foundations.Operators.ShellController
 
 -- Tier 1: Stochastic controller (SGD, variance penalty, cost bounds)
-import Multiplicity.Operators.StochasticController
+import Foundations.Operators.StochasticController
 
 -- Tier 1: Zeta controller (dual-network prime partition, stability metric)
-import Multiplicity.Operators.ZetaController
+import Foundations.Operators.ZetaController
 
 -- Tier 1: Higher-order multiplicities (multiplicities of multiplicity)
-import Multiplicity.Core.multiplicity.HigherOrderMultiplicity
-import Multiplicity.Core.multiplicity.TensorProduct
-import Multiplicity.Core.multiplicity.RecursiveDepth
+import Foundations.Core.multiplicity.HigherOrderMultiplicity
+import Foundations.Core.multiplicity.TensorProduct
+import Foundations.Core.multiplicity.RecursiveDepth
 
 -- Tier 3: Floer differential (abstract + finite-dimensional, axiom-gated)
-import Multiplicity.Operators.FloerDifferential
+import Foundations.Operators.FloerDifferential

@@ -1,4 +1,4 @@
-import Multiplicity.Spine
+import Foundations.Spine
 import moc.Rational
 
 namespace Multiplicity.MOC.Fuzzy

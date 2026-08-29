@@ -1,5 +1,6 @@
 import Foundations.ADR.Core
 import Foundations.ADR.Proofs
+import Foundations.ADR.GlobalResearchPlatform
 
 /-!
 # Architecture Decision Records (ADR) — Production Examples & P²C PETC v1.2 Governance
@@ -360,5 +361,207 @@ def adr007_Q : PropTerm := .atom "TopologyInvariantShardingCommit"
 theorem adr007_consequence_entailment :
     Entails [adr007_P, .implies adr007_P adr007_Q] adr007_Q :=
   entailment_modus_ponens adr007_P adr007_Q
+
+/-! ## ADR-0035 — Global Research Platform (Layer-B-Gated Membrane)
+
+The Global Research Platform is *Accepted — blocked on Layer B*. The records below
+formalize ADR-0035 together with its two governing related artifacts (ADR-008 ZK Code
+Verification, ADR-009 MSC-Cert Schema Freeze) as a verified, Layer-B-gated registry slice.
+Concretely, the membrane stays fail-closed: with no `v1.0.0-Stable` tag recorded in
+`CONTRACT.md`, no certificate is accepted and no token is minted.
+-/
+
+/-- **ADR-0035:** Global Research Platform. Accepted; all certification and minting paths
+are fail-closed until Layer B (`v1.0.0-Stable` recorded in CONTRACT.md) exists. -/
+def adr0035 : ADR where
+  id := "ADR-0035"
+  title := "Global Research Platform"
+  status := .Accepted
+  context := "A plan advanced to convert the Multiplicity Sovereign Core into a public, buildable, certifiable research program. Existing constraints bind: ADR-008 records Layer B (git tag + content-addressed identifier) as missing; the Wyoming DAO Membrane forbids any legal or token instrument until an immutable Article III identifier exists and Lean propositions are proved against types from that tagged tree; L0 requires zero residual human authority; Production_Mode_Lock freezes complexity at FeMoco 69 qudits."
+  decision := "The Global Research Platform is defined as a future, Layer-B-gated capability. Until the annotated tag v1.0.0-Stable exists and its tree SHA is recorded in CONTRACT.md: all certification and minting paths remain fail-closed; the MSC-Cert v1 schema exists solely as a target format; local verification scripts may generate private witnesses only; no human-operated service is authorized to validate or mint; licensing, public README claims, contribution workflows that issue credentials, and any mint function remain deferred."
+  consequences := [
+    "Public launch and token issuance remain blocked until Layer B exists",
+    "MSC-Cert v1 schema is a frozen, non-minting target format",
+    "Local verification may generate private witnesses only",
+    "Zero residual human authority preserved",
+    "FeMoco 69-qudit envelope and Production_Mode_Lock unchanged",
+    "Any PR that activates a mint, verification endpoint, credential issuer, or public stability claim is rejected by governance"
+  ]
+  supersedes := none
+  links := [
+    ⟨"ADR-008-ZK-Code-Verification.md", .SpecificationDoc, "Layer B (tag + content-addressed id) recorded as missing"⟩,
+    ⟨"ADR-009-MSC-Cert-Schema-Freeze.md", .SpecificationDoc, "MSC-Cert v1 frozen as non-minting specification only"⟩,
+    ⟨"CONTRACT.md", .SpecificationDoc, "Article III identifier must be recorded here before any token"⟩,
+    ⟨"Production_Mode_Lock.md", .SpecificationDoc, "FeMoco 69-qudit envelope unchanged"⟩,
+    ⟨"UAC_OnChain_Finality_Lock.md", .SpecificationDoc, "On-chain finality lock unchanged"⟩,
+    ⟨"ADR-Wyoming-DAO-Membrane-Overrides.md", .SpecificationDoc, "Forbids token instrument until Layer B exists"⟩,
+    ⟨"Foundations.ADR.GlobalResearchPlatform", .LeanDeclaration, "Machine-checked Layer-B gate and fail-closed membrane"⟩
+  ]
+
+/-- **ADR-008 (related):** ZK Code Verification. Records Layer B as missing; no `v1.0.0-Stable`
+tag exists on the chosen repository. -/
+def adr008zk : ADR where
+  id := "ADR-008"
+  title := "ZK Code Verification (Layer B missing)"
+  status := .Accepted
+  context := "Code identity and supply-chain integrity require a content-addressed Layer B identifier before any Layer-C execution or statutory filing."
+  decision := "Block all certification, verification-service, and minting paths until an immutable Git release tag and its tree SHA are recorded in CONTRACT.md."
+  consequences := [
+    "Absence of Layer B blocks all Layer-C governance execution and statutory filings",
+    "No verification service may accept the MSC-Cert schema until Layer B exists"
+  ]
+  supersedes := none
+  links := [
+    ⟨"CONTRACT.md", .SpecificationDoc, "Layer-B identity requirement (tag + CID + signature)"⟩
+  ]
+
+/-- **ADR-009 (related):** MSC-Cert Schema Freeze. The schema is frozen as a non-minting
+specification only. -/
+def adr009msc : ADR where
+  id := "ADR-009"
+  title := "MSC-Cert Schema Freeze (non-minting)"
+  status := .Accepted
+  context := "A calibration certificate standard is needed for builders, but must not enable token issuance until the membrane is unblocked."
+  decision := "Freeze the MSC-Cert v1 schema as a target format only. No verification service may accept it, no oracle may sign under it, and no token (ERC-721, W3C credential, Archivum entry) may be issued that references it."
+  consequences := [
+    "Schema may be refined as text only",
+    "No token references the schema until a future ADR re-opens the path under Layer B"
+  ]
+  supersedes := none
+  links := [
+    ⟨"ADR-0035-Global Research Platform.md", .SpecificationDoc, "Global Research Platform gating"⟩
+  ]
+
+/-- Canonical Layer-B-gated slice of the governance registry (ADR-0035 + related artifacts). -/
+def grpADRList : List ADR :=
+  [adr0035, adr008zk, adr009msc]
+
+/-! ### Embedded Formal Claims (Semantic Conflict Layer) -/
+
+/-- Embedded claim of **ADR-0035**: membrane is fail-closed and the schema is non-minting. -/
+def adr0035_claim : PropTerm :=
+  .and (.atom "LayerBGateFailClosed") (.atom "MSCCertSchemaNonMinting")
+
+/-- Embedded claim of **ADR-008**: ZK code verification requires a recorded Layer B. -/
+def adr008zk_claim : PropTerm := .atom "ZKCodeVerificationRequiresLayerB"
+
+/-- Embedded claim of **ADR-009**: the MSC-Cert schema is frozen and non-minting. -/
+def adr009msc_claim : PropTerm := .atom "MSCCertSchemaFrozenNonMinting"
+
+/-- Claims asserted by the accepted records in the Global Research Platform slice. -/
+def grpClaims : List Claim :=
+  [ ⟨"ADR-0035", adr0035_claim⟩
+  , ⟨"ADR-008", adr008zk_claim⟩
+  , ⟨"ADR-009", adr009msc_claim⟩
+  ]
+
+/-- Valuation environment witnessing joint satisfiability of all GRP claims. -/
+def envGRP : String → Bool
+  | "LayerBGateFailClosed" => true
+  | "MSCCertSchemaNonMinting" => true
+  | "ZKCodeVerificationRequiresLayerB" => true
+  | "MSCCertSchemaFrozenNonMinting" => true
+  | _ => false
+
+/-- All GRP claims evaluate to `true` under `envGRP`. -/
+theorem grp_claim_eval_true (c : Claim) (hc : c ∈ grpClaims) :
+    c.claim.evalB envGRP = true := by
+  simp [grpClaims] at hc
+  rcases hc with rfl | rfl | rfl <;> rfl
+
+/-- Every embedded GRP claim has an Accepted owner in `grpADRList`. -/
+theorem grp_claims_owned_by_accepted :
+    ∀ c ∈ grpClaims, ∃ a ∈ grpADRList, a.id = c.owner ∧ a.status = .Accepted := by
+  intro c hc
+  simp [grpClaims] at hc
+  rcases hc with rfl | rfl | rfl
+  · exact ⟨adr0035, by simp [grpADRList], rfl, rfl⟩
+  · exact ⟨adr008zk, by simp [grpADRList], rfl, rfl⟩
+  · exact ⟨adr009msc, by simp [grpADRList], rfl, rfl⟩
+
+/-- Semantic coherence: no pair of distinct-owner GRP claims is contradictory. -/
+theorem grp_no_claim_conflicts :
+    ∀ c₁ ∈ grpClaims, ∀ c₂ ∈ grpClaims,
+      c₁.owner ≠ c₂.owner → ¬ Contradictory c₁.claim c₂.claim := by
+  intro c₁ hc₁ c₂ hc₂ _ hcon
+  have h1 := grp_claim_eval_true c₁ hc₁
+  have h2 := grp_claim_eval_true c₂ hc₂
+  have hJoint : (c₁.claim.evalB envGRP && c₂.claim.evalB envGRP) = true := by simp [h1, h2]
+  exact hcon envGRP hJoint
+
+/-! ### Formal Invariant Discharges for the GRP Slice -/
+
+/-- Identifiers in `grpADRList` are unique. -/
+theorem grp_unique_ids : (grpADRList.map ADR.id).Nodup := by decide
+
+/-- The supersession relation on `grpADRList` is strictly acyclic (no record supersedes). -/
+theorem grp_acyclic : StrictAcyclic grpADRList := by
+  intro id ⟨parent, ⟨a, ha, ha_id, ha_sup⟩, _⟩
+  simp [grpADRList] at ha
+  rcases ha with rfl | rfl | rfl <;> revert ha_sup <;> intro <;> contradiction
+
+/-- Every superseded target exists in the GRP slice (vacuously: no record supersedes). -/
+theorem grp_supersedes_exist :
+    ∀ a ∈ grpADRList, ∀ sid, a.supersedes = some sid → ∃ t ∈ grpADRList, t.id = sid := by
+  intro a ha sid hsup
+  simp [grpADRList] at ha
+  rcases ha with rfl | rfl | rfl <;> revert hsup <;> intro <;> contradiction
+
+/-- Every superseded target has status Superseded in the GRP slice (vacuously). -/
+theorem grp_superseded_status_consistent :
+    ∀ a ∈ grpADRList, ∀ sid, a.supersedes = some sid →
+      ∃ t ∈ grpADRList, t.id = sid ∧ t.status = .Superseded := by
+  intro a ha sid hsup
+  simp [grpADRList] at ha
+  rcases ha with rfl | rfl | rfl <;> revert hsup <;> intro <;> contradiction
+
+/-- No conflicting decisions exist in the GRP slice. -/
+theorem grp_no_conflicts :
+    ∀ a ∈ grpADRList, ∀ b ∈ grpADRList, ¬ ConflictsWith a b :=
+  no_conflicts_of_list_check grpADRList (by decide)
+
+/-- Verified Global Research Platform registry slice. -/
+def grpRegistry : ADRRegistry where
+  adrs := grpADRList
+  uniqueIds := grp_unique_ids
+  acyclic := grp_acyclic
+  supersedesExist := grp_supersedes_exist
+  supersededStatusConsistent := grp_superseded_status_consistent
+  noConflicts := grp_no_conflicts
+  claims := grpClaims
+  claimsOwnedByAccepted := grp_claims_owned_by_accepted
+  noClaimConflicts := grp_no_claim_conflicts
+
+/-! ### Concrete Fail-Closed Demonstration (membrane is closed today) -/
+
+/-- A representative (frozen) MSC-Cert v1 witness a builder would submit today. -/
+def sampleMSCCert : GlobalResearchPlatform.MSCCert where
+  certificate_version := "1.0"
+  builder_public_key := "ed25519:demoBuilderKey"
+  git_commit := "unverified-local-commit"
+  environment := { os := "linux", cpu := "x86_64", lean_version := "4.34.0", rust_version := "1.80", python_version := "3.12" }
+  release_witness := { merkle_root := "unverified-local-commit", leaves := [] }
+  test_logs_hash := "sha256:abc123"
+  timestamp_iso := "2026-08-26T00:00:00Z"
+  signature := "ed25519:detachedSignature"
+
+/-- **Demonstration:** with no Layer B recorded, the submitted certificate is rejected
+by the acceptance gate — fail-closed (ADR-0035 §Decision). -/
+theorem sample_cert_rejected_today :
+    GlobalResearchPlatform.acceptCertificate sampleMSCCert none = none := rfl
+
+/-- **Demonstration:** with no Layer B recorded, no MSC token can be minted. -/
+theorem sample_mint_rejected_today :
+    GlobalResearchPlatform.mintMSC sampleMSCCert none = .Rejected "LayerB-gate-fail-closed" := rfl
+
+/-- **Demonstration:** even against a *fake* Layer B whose tree SHA does not match the
+certificate, acceptance is rejected — only the contract-recorded `v1.0.0-Stable` tree
+SHA validates a certificate (ADR-0035 §Frozen Schema Reference). -/
+theorem sample_cert_rejected_against_mismatched_layerB :
+    let fakeB : GlobalResearchPlatform.LayerBIdentity := { tag := "v1.0.0-Stable", treeSHA := "recorded-tree-sha", recordedInContract := true }
+    GlobalResearchPlatform.acceptCertificate sampleMSCCert (some fakeB) = none := by
+  intro fakeB
+  have hInvalid : GlobalResearchPlatform.MSCCertValidAgainst sampleMSCCert fakeB = false := by decide
+  exact GlobalResearchPlatform.accept_certificate_rejected_when_invalid sampleMSCCert fakeB hInvalid
 
 end Foundations.ADR.Examples

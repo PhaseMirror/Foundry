@@ -1,5 +1,5 @@
-import Multiplicity.WordLove.Core
-import Multiplicity.WordLove.Proofs
+import Foundations.WordLove.Core
+import Foundations.WordLove.Proofs
 
 /-!
 # Word Love Examples (ADR-0031)
@@ -24,9 +24,9 @@ demonstrating the Word Love formalization across Hebrew semantic tokens.
   $13 \times 72 \times 441 = 412,776 = 2^3 \cdot 3^4 \cdot 7^2 \cdot 13^1$, $\Omega = 10$.
 -/
 
-namespace Multiplicity.WordLove.Examples
+namespace Foundations.WordLove.Examples
 
-open Multiplicity.WordLove
+open Foundations.WordLove
 
 /-! ### Extended Corpus of Semantic Tokens -/
 
@@ -143,4 +143,4 @@ theorem pipeline_harmony_Omega :
     pipelineHarmony.Omega = 8 := by
   rfl
 
-end Multiplicity.WordLove.Examples
+end Foundations.WordLove.Examples

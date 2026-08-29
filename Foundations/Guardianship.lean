@@ -5,7 +5,7 @@
 import prime_tensors.Stability
 import prime_tensors.Authority
 import prime_tensors.Agency
-import Multiplicity..CRMF
+import Foundations..CRMF
 
 namespace Multiplicity.PIRTM.Guardianship
 

@@ -21,8 +21,6 @@
 //! the Rust FFI exposes it for bounded real-code verification via Kani
 //! (`Multiplicity/kani/src/proofs/fpes.rs`).
 
-use std::os::raw::c_char;
-
 // ─── Lean object layout (minimal, from lean4 FFI docs) ───────
 
 /// Opaque Lean object header.  See [Lean String FFI Memory Layout].
@@ -198,25 +196,16 @@ impl FpesHypothesisSpace {
     pub fn new(paths: Vec<FpesPath>, classes: Vec<FpesClass>) -> Box<Self> {
         let paths_box = paths.into_boxed_slice();
         let classes_box = classes.into_boxed_slice();
+        let paths_len = paths_box.len() as u32;
+        let classes_len = classes_box.len() as u32;
         let paths_ptr = Box::into_raw(paths_box) as *const FpesPath;
         let classes_ptr = Box::into_raw(classes_box) as *const FpesClass;
-        let paths_len = unsafe { (*Box::from_raw(paths_ptr as *mut [FpesPath])).len() as u32 };
-        let classes_len = unsafe { (*Box::from_raw(classes_ptr as *mut [FpesClass])).len() as u32 };
-
-        // Re-leak the slices (they'll be freed in drop)
-        // This is a bit awkward; let's do it properly:
-        let paths_slice = unsafe { Box::from_raw(paths_ptr as *mut [FpesPath]) };
-        let classes_slice = unsafe { Box::from_raw(classes_ptr as *mut [FpesClass]) };
-        let plen = paths_slice.len() as u32;
-        let clen = classes_slice.len() as u32;
-        let p = Box::into_raw(paths_slice) as *const FpesPath;
-        let c = Box::into_raw(classes_slice) as *const FpesClass;
 
         Box::new(Self {
-            paths_ptr: p,
-            paths_len: plen,
-            classes_ptr: c,
-            classes_len: clen,
+            paths_ptr,
+            paths_len,
+            classes_ptr,
+            classes_len,
         })
     }
 

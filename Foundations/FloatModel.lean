@@ -5,7 +5,7 @@
   and order axioms are proved by `simp`.
 -/
 
-import Multiplicity.Init.Core
+import Foundations.Init.Core
 
 namespace Multiplicity.FloatModel
 

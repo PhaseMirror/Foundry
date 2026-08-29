@@ -1,4 +1,4 @@
-import Multiplicity.Prime
+import Foundations.Prime
 
 /-! # Grothendieck Multiplicity (ADR-0015)
 

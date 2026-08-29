@@ -1,7 +1,7 @@
 -- Proofs.lean – Production‑grade Lean4 formalization of ORF proofs
 
-import Multiplicity..Coherence
-import Multiplicity..Stratification
+import Foundations..Coherence
+import Foundations..Stratification
 
 namespace Multiplicity.Orf
 

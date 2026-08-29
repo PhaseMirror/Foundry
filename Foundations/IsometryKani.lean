@@ -2,8 +2,8 @@
 // Stinespring dilation operator is an isometry.  All heavy‑lifting is delegated to the Rust
 // engine via the `oracle_kani_isometry` axiom; the Lean side merely stitches the pieces together.
 
-import Multiplicity.ComplexKappa.Core
-import Multiplicity.ComplexKappa.SpectralAttractor
+import Foundations.ComplexKappa.Core
+import Foundations.ComplexKappa.SpectralAttractor
 
 set_option linter.unusedVariables false
 

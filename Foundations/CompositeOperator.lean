@@ -2,8 +2,8 @@
 -- Sealed two-layer operator Φ_t = Ξ(t) + M(Λ_inner(t))
 -- Core-only Lean 4, zero sorries, no Mathlib
 
-import Multiplicity.Init.Data.Nat.Basic
-import Multiplicity.Init.Data.List.Basic
+import Foundations.Init.Data.Nat.Basic
+import Foundations.Init.Data.List.Basic
 
 namespace Multiplicity.CompositeOperator
 

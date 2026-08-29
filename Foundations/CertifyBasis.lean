@@ -1,7 +1,7 @@
 import Lean.Data.Json
 import Lean.Data.Json.FromToJson
 import Lean.IO.FS
-import Multiplicity.F1.Analysis.RAddNF          -- provides Xi_trace, factors, etc.
+import Foundations.F1.Analysis.RAddNF          -- provides Xi_trace, factors, etc.
 import universal_closure.Dirichlet -- provides is_prime, etc.
 
 open Lean Json IO

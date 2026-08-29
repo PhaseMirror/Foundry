@@ -1,5 +1,5 @@
 import moc.PIRTM
-import Multiplicity.Spine
+import Foundations.Spine
 
 namespace Multiplicity.PhaseMirror
 

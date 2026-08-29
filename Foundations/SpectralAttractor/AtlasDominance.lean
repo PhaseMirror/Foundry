@@ -4,7 +4,7 @@ Released under Apache 2.0 license.
 Authors: Multiplicity Foundry
 -/
 import Init.Omega
-import Multiplicity.SpectralAttractor.Tags
+import Foundations.SpectralAttractor.Tags
 
 /-!
 # Atlas coupling dominance — finite-stage kernel (AC-15/AC-16)

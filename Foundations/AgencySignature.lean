@@ -1,8 +1,8 @@
 import prime_tensors.Stability
 import prime_tensors.Agency
 import prime_tensors.Guardianship
-import Multiplicity..Guardianship
-import Multiplicity..CRMF
+import Foundations..Guardianship
+import Foundations..CRMF
 
 /-- 
   Unified Witness Structure:

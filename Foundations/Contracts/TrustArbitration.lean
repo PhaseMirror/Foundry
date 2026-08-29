@@ -1,6 +1,6 @@
-import Multiplicity.alp.PolicyEngine.Core
-import Multiplicity.alp.Types.TrustLevel
-import Multiplicity.alp.Types.Action
+import Foundations.PolicyEngine.Core
+import Foundations.Types.TrustLevel
+import Foundations.Types.Action
 
 namespace Multiplicity.ALP.Contracts.TrustArbitration
 

@@ -1,4 +1,5 @@
 import Foundations.PolicyEngine.Core
+import Foundations.PolicyEngine.Proofs
 
 /-!
 # Foundations.TrustArbitration.Core — MCP Server Binding & Trust Arbitration Contracts
@@ -9,7 +10,7 @@ and rejection of external governed MCP bindings.
 
 namespace Foundations.TrustArbitration
 
-open Foundations.PolicyEngine
+open Multiplicity.ALP.PolicyEngine Multiplicity.ALP.Types Multiplicity.ALP.PolicyEngine.Proofs
 
 /-- MCP Server Descriptor record. -/
 structure McpServerDescriptor where
@@ -20,10 +21,9 @@ structure McpServerDescriptor where
 /-- Theorem: Internal trust level admits actions with MCP server bindings under valid constitution. -/
 theorem internal_admits_mcp (pe : PolicyEngine) (a : Action) (s : McpServerDescriptor)
     (_h_bind : a.server_binding = some s.descriptor_id)
-    (h_const : pe.constitution_valid = true) :
+    (h_const : Multiplicity.ALP.Constitution.L0.validate pe.constitution = true) :
     (validate_action pe a TrustLevel.Internal).allowed = true := by
-  dsimp [validate_action]
-  rw [h_const]
+  simp [validate_action, h_const]
 
 /-- Theorem: External trust level strictly blocks actions with governed MCP server bindings. -/
 theorem external_blocks_governed_mcp (pe : PolicyEngine) (a : Action) (s : McpServerDescriptor)

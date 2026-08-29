@@ -1,5 +1,5 @@
-import Multiplicity.ComplexKappa.Core
-import Multiplicity.ComplexKappa.HilbertTransform
+import Foundations.ComplexKappa.Core
+import Foundations.ComplexKappa.HilbertTransform
 
 namespace Multiplicity.ComplexKappa.Distributions
 

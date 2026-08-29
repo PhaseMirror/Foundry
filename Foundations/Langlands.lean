@@ -1,4 +1,4 @@
-import Multiplicity.Spine
+import Foundations.Spine
 import moc.Moonshine
 import moc.Automorphic
 import moc.Hecke

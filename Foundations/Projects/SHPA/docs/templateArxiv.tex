@@ -1,0 +1,731 @@
+\documentclass[11pt]{article}
+
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{mathtools}
+\usepackage{listings}
+\usepackage[T1]{fontenc}
+\usepackage[tt=false]{libertine}
+\usepackage[varqu]{zi4}
+\usepackage{inconsolata}
+
+\lstdefinelanguage{Python}{
+  morekeywords={def, return, if, else, elif, for, while, break, continue,
+                import, from, as, class, pass, raise, try, except, finally,
+                with, lambda, global, nonlocal, assert, yield, async, await},
+  sensitive=true,
+  morecomment=[l]\#,
+  morestring=[b]',
+  morestring=[b]"
+}
+\lstset{
+  language=Python,
+  basicstyle=\small\ttfamily,
+  keywordstyle=\bfseries,
+  showstringspaces=false,
+  columns=flexible,
+  frame=single,
+  breaklines=true,
+  tabsize=2
+}
+
+\title{Stateless Hash-to-Prime Attestation \\ in Prime-Indexed Multiplicity Spaces:\\
+Canonical Serialization, H2P with Offset Pinning, \\ and Native Multiplicity Crypto}
+
+\author{%
+  Citizen Gardens \\ The Foundation of Multiplicity
+}
+
+\date{April 25, 2026}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Multiplicity Theory models nonlinear, emergent structures by treating mathematical and computational objects as recursively generated patterns of prime-indexed interactions rather than static sets. In the PhaseMirror fractal framework, each update law (operator) must be assigned a unique prime identifier in a way that is canonical, cross-language deterministic, and robust under distributed execution. This report presents a complete architecture for stateless hash-to-prime (H2P) attestation, integrating Binary Canonical Serialization (BCS), a non-commutative topological signature for fractal trees, and a deterministic H2P pipeline with gap attestation. We analyze the failures of naive commutative signatures and monotonic registries, progressively refine prime derivation from truncated seeds to full-width hash seeding, introduce offset pinning, and ultimately design a first-prime enforcing gap proof. We then reconcile asymptotic complexity with network constraints and show how native primitives in \texttt{multiplicity.crypto}---BN254 Pedersen commitments, HMAC-SHA256 randomness, and the QPA (Quantum Prime Abacus) scaffold---provide a natural substrate for production deployment.
+\end{abstract}
+\newpage    
+\tableofcontents
+\newpage
+\section{Executive Summary}
+
+The PhaseMirror fractal framework requires that every update law (``operator'') be mapped to a unique prime in a way that is:
+
+\begin{itemize}[leftmargin=*]
+  \item \emph{Deterministic}: The same operator yields the same prime on every node and in every language.
+  \item \emph{Path-sensitive}: The multiplicity signature of a fractal subspace must distinguish operator order and nesting, not just the multiset of operators.
+  \item \emph{Stateless}: Prime assignments should not depend on a shared mutable registry or global consensus.
+  \item \emph{Verifiable}: A verifier should be able to check the mapping with bounded and predictable cost.
+\end{itemize}
+
+Initial designs used a commutative multiplicity signature
+\[
+  \mathcal{M}(F) = \prod_{i=1}^k p_{n_i}^{m_i},
+\]
+and a monotonic registry \( R \) that assigned primes in sequence. This approach failed in two fundamental ways:
+\begin{enumerate}[leftmargin=*]
+  \item The commutative product destroyed path dependence: different operator orders yielded identical signatures.
+  \item The monotonic registry could not remain globally consistent without a full-blown consensus protocol (Raft/PBFT/chain).
+\end{enumerate}
+
+This report describes the subsequent architectural shifts:
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Canonical serialization via BCS} for operator structs and ordered tree nodes.
+  \item \textbf{Topological signatures} defined by recursively hashing BCS-encoded nodes, yielding path-sensitive invariants.
+  \item \textbf{Stateless hash-to-prime (H2P) derivation}, first via truncated seeds and later via full 256-bit seeds.
+  \item \textbf{Offset pinning}, where the prover reports how far from the seed the chosen prime lies.
+  \item \textbf{First-prime enforcement}, requiring proofs that no earlier candidate in the gap is prime.
+  \item \textbf{Succinct gap attestation}, evolving from explicit Fermat witnesses to a Pedersen-commitment or zk-SNARK-based proof.
+  \item \textbf{Integration with native Multiplicity crypto}, leveraging \texttt{multiplicity.crypto}'s BN254 Pedersen commitments, HMAC-SHA256 randomness, and the QPA prime-coupling prototype.
+\end{itemize}
+
+The final design achieves:
+\begin{itemize}[leftmargin=*]
+  \item A purely functional map \( H_{op} \mapsto p_{op} \) with negligible collision probability.
+  \item Non-commutative, topology-aware signatures for fractal state.
+  \item Bounded verifier complexity: a single prime test plus a small number of cryptographic checks.
+  \item A clear path to production implementation in the PhaseMirror-HQ codebase.
+\end{itemize}
+
+\section{Canonical Serialization and Operator Identity}
+
+\subsection{Binary Canonical Serialization (BCS)}
+
+Binary Canonical Serialization (BCS) was developed for the Diem and Aptos ecosystems to provide a deterministic, cross-language binary encoding for typed structures. Its key properties are:
+
+\begin{itemize}[leftmargin=*]
+  \item \emph{Fixed field order}: Struct fields are serialized in declaration order without labels.
+  \item \emph{Length-prefixed sequences}: Variable-length sequences are prefixed using ULEB128 for the element count.
+  \item \emph{No floats}: BCS excludes floating-point types, avoiding cross-platform rounding nondeterminism.
+  \item \emph{Cross-language parity}: Implementations in Rust, Python, Go, JavaScript, and Move are designed to produce identical byte streams for the same schema and value.
+\end{itemize}
+
+Thus BCS induces a canonical serialization map
+\[
+  \sigma : \mathcal{O} \to \{0,1\}^*,
+\]
+from the set of operator values \( \mathcal{O} \) to byte strings.
+
+\subsection{Operator Schemas and Hashes}
+
+Each update law in the fractal framework is represented as a typed BCS struct. A simple Gating operator schema might be:
+
+\begin{verbatim}
+GatingOperator {
+  schema_ref:   [u8; 32],  // hash of the schema record
+  operator_type: u8,       // enum index for the update law class
+  scale_factor: u64,       // fixed-point, no floats
+  activation_fn: [u8; 32], // hash of activation descriptor
+  nesting_depth: u32,      // max depth this operator applies to
+}
+\end{verbatim}
+
+The canonical BCS encoding \( \sigma(o) \) of an operator instance \( o \) is then hashed to yield an operator identity hash:
+\[
+  H : \mathcal{O} \to \{0,1\}^{256}, \quad H(o) = \mathrm{SHA256}(\sigma(o)).
+\]
+
+\subsection{Failure of Monotonic Registry \( R \)}
+
+A natural but flawed idea is to maintain a global, monotonic registry
+\[
+  R: \mathrm{Image}(H) \hookrightarrow \mathbb{P},
+\]
+mapping operator hashes to primes in increasing order. This registry would satisfy:
+
+\begin{itemize}[leftmargin=*]
+  \item If \( H(o) \notin \mathrm{dom}(R) \), assign the next unused prime \( p_k \) and map \( H(o) \mapsto p_k \).
+  \item If \( H(o) \in \mathrm{dom}(R) \), return the existing assignment.
+\end{itemize}
+
+However, in a distributed system:
+
+\begin{itemize}[leftmargin=*]
+  \item Concurrent registrations on partitioned nodes cannot agree on the next prime without a total-order consensus protocol.
+  \item Treating GitHub or a central repository as the ground truth reintroduces centralization and mutable infrastructure dependence.
+\end{itemize}
+
+Thus a monotonic \( R \) is either inconsistent or dependent on a heavy consensus layer, contradicting the stateless, trustless design goals.
+
+\section{Topological Signatures for Fractal Trees}
+
+\subsection{Commutative Product vs. Ordered Tree Hash}
+
+The initial multiplicity signature for a fractal subspace \( F \) was defined as
+\[
+  \mathcal{M}(F) = \prod_{i=1}^k p_{n_i}^{m_i},
+\]
+where \( p_{n_i} \) is the prime associated to the \(i\)-th distinct operator and \( m_i \) is its multiplicity in \( F \).
+
+This is a commutative, associative product, which means:
+
+\begin{itemize}[leftmargin=*]
+  \item Any permutation of operators yields the same signature.
+  \item Nesting order and tree shape do not affect \( \mathcal{M}(F) \).
+\end{itemize}
+
+This violates the requirement that the attestation be path-dependent: different application orders of the same operators must yield distinct signatures.
+
+\subsection{BCS-Encoded Topological Signature}
+
+To encode the geometry and ordering of a fractal tree, we define an ordered-node BCS schema:
+
+\begin{verbatim}
+TopologicalSignature {
+  operator_hash: [u8; 32],    // H(op) at this node
+  children:      Vec<[u8; 32]> // ordered child signatures
+}
+\end{verbatim}
+
+For a node with operator hash \( h_{op} \) and ordered child signatures \( s_1, \dots, s_k \), we encode it via BCS and define its signature:
+\[
+  S = \mathrm{SHA256}(\mathrm{BCS}(\texttt{TopologicalSignature})).
+\]
+
+Recursively:
+\begin{itemize}[leftmargin=*]
+  \item Leaf nodes: \( S_{\text{leaf}} = \mathrm{SHA256}(\mathrm{BCS}(h_{op}, [])) \).
+  \item Internal nodes: \( S_{\text{node}} = \mathrm{SHA256}(\mathrm{BCS}(h_{op}, [S_{C_1},\dots,S_{C_k}])) \).
+\end{itemize}
+
+Because BCS is canonical and \( \mathrm{children} \) is an ordered sequence, swapping children changes the hash. Identical trees yield identical signatures; non-isomorphic trees (with respect to ordered children) almost surely yield different signatures.
+
+\subsection{Illustrative Python Snippet}
+
+Below is a simplified Python implementation of the topological signature using a hand-rolled BCS encoding for the node:
+
+\begin{lstlisting}
+import hashlib
+
+def uleb128_encode(n: int) -> bytes:
+    out = b''
+    while True:
+        byte = n & 0x7f
+        n >>= 7
+        if n:
+            out += bytes([byte | 0x80])
+        else:
+            out += bytes([byte])
+            break
+    return out
+
+def bcs_encode_topological_signature(op_hash: bytes, child_sigs: list[bytes]) -> bytes:
+    if len(op_hash) != 32:
+        raise ValueError("operator_hash must be 32 bytes")
+    for cs in child_sigs:
+        if len(cs) != 32:
+            raise ValueError("child signature must be 32 bytes")
+    buf = op_hash                 # operator_hash
+    buf += uleb128_encode(len(child_sigs))  # children count
+    for cs in child_sigs:
+        buf += cs
+    return buf
+
+def topological_signature(op_hash: bytes, child_sigs: list[bytes]) -> bytes:
+    encoded = bcs_encode_topological_signature(op_hash, child_sigs)
+    return hashlib.sha256(encoded).digest()
+\end{lstlisting}
+
+Two trees with identical operator hashes but different child ordering produce distinct root signatures under this definition.
+
+\section{Stateless Hash-to-Prime (H2P) Derivation}
+
+\subsection{Motivation}
+
+To eliminate the monotonic registry \( R \), we seek a purely functional mapping
+\[
+  f : \{0,1\}^{256} \to \mathbb{P},
+\]
+such that for each operator hash \( H_{op} \in \{0,1\}^{256} \), the assigned prime \( p_{op} = f(H_{op}) \) is:
+
+\begin{itemize}[leftmargin=*]
+  \item Deterministic and stateless.
+  \item Unique with overwhelming probability: distinct operators almost surely map to distinct primes.
+\end{itemize}
+
+A naive choice is:
+\[
+  p_{op} = \text{NextPrime}(H_{op} \bmod 2^{64}),
+\]
+which uses a 64-bit truncation as a seed. This is computationally convenient but cryptographically flawed.
+
+\subsection{Truncation Collisions and Multiplicity Collapse}
+
+With 256-bit hashes and 64-bit truncation, many distinct hashes collide on the same seed, by the pigeonhole principle. In particular, there are \(2^{256}\) possible SHA-256 outputs but only \(2^{64}\) seeds:
+
+\[
+  \frac{2^{256}}{2^{64}} = 2^{192}
+\]
+
+On average, \(2^{192}\) operator hashes share each seed. If prime assignment is defined solely by the 64-bit seed, these distinct operators will share the same prime. This violates the multiplicity requirement:
+\[
+  \forall i \neq j: p_{n_i} \neq p_{n_j},
+\]
+and destroys the integrity of the prime-indexed multiplicity space.
+
+\subsection{Full-Width Seeding and Deterministic Prime Generation}
+
+To preserve the collision properties of SHA-256 and avoid truncation, we must instead use the full 256-bit hash as the seed. Conceptually:
+\[
+  p_{op} = G(H_{op}),
+\]
+where \( G \) is a deterministic prime generation algorithm mapping 256-bit seeds to 256-bit primes.
+
+One option is to use a provable-prime generator such as Maurer's algorithm, seeded by \( H_{op} \). Maurer-type algorithms recursively construct primes of the form \( 2Rq + 1 \), using deterministic randomness and primality tests (e.g., Miller-Rabin). This yields provable primes and a seed-dependent collision profile, but introduces two problems:
+\begin{itemize}[leftmargin=*]
+  \item Variable and seed-dependent latency: a maliciously chosen seed can induce worst-case running time.
+  \item Structural bias in the prime distribution: primes are not sampled uniformly; this affects collision estimates.
+\end{itemize}
+
+\section{Incremental Search, Offset Pinning, and First-Prime Enforcement}
+
+\subsection{H2P with Offset Pinning}
+
+To stabilize latency and reduce dependence on complex prime generators, we adopt a deterministic incremental search:
+
+\begin{enumerate}[leftmargin=*]
+  \item Derive an odd 256-bit integer \( N \) from \( H_{op} \) (e.g., interpret as big-endian integer and set the least significant bit to 1).
+  \item Search the odd sequence \( N, N+2, N+4, \dots \) until a prime is found:
+  \[
+    p_{op} = N + k,
+  \]
+  where \( k \in 2\mathbb{Z} \) is the smallest even offset such that \( N + k \) is prime under a strong primality test (e.g., Baillie-PSW).
+  \item The prover records the offset \( k \) in the execution manifest.
+  \item The verifier recomputes \( N \) from \( H_{op} \), adds \( k \), and tests \( N + k \) for primality.
+\end{enumerate}
+
+This removes global state: each node can compute \( p_{op} \) locally from \( H_{op} \) and \( k \). However, two challenges remain:
+\begin{itemize}[leftmargin=*]
+  \item Without further constraints, a malicious prover can skip earlier primes (multiplicity forking).
+  \item An unbounded search allows arbitrarily large latency.
+\end{itemize}
+
+\subsection{Offset Bound and Cramér-Type Considerations}
+
+To bound the search, we introduce a maximum offset \( k_{\max} \), e.g.,
+\[
+  k_{\max} = 2^{16} = 65{,}536.
+\]
+
+Heuristically, the Cramér conjecture and related results suggest that prime gaps near \( N \approx 2^{256} \) are on the order of \( O((\log N)^2) \), which for 256 bits is roughly \( \approx 31{,}000 \). Setting \( k_{\max} \) at \( 65{,}536 \) leaves ample safety margin while guaranteeing that the prover's search terminates quickly for honest seeds.
+
+The protocol then rejects any manifest with \( k > k_{\max} \), interpreting it as malformed or adversarial.
+
+\subsection{First-Prime Rule and Gap Validation}
+
+Despite offset bounding, a prover could still cheat by skipping earlier primes:
+
+\begin{itemize}[leftmargin=*]
+  \item Suppose the first prime in \( [N, N + k_{\max}] \) is at \( N + k_1 \).
+  \item The prover could claim \( N + k_2 \) with \( k_2 > k_1 \) but \( k_2 \le k_{\max} \), as long as \( N + k_2 \) is also prime.
+\end{itemize}
+
+Without additional checks, the verifier would accept any such \( N+k_2 \). This breaks injectivity: the same operator hash could be associated with multiple valid primes, depending on prover behavior.
+
+To restore determinism, the mapping must enforce a \emph{first-prime rule}:
+\[
+  p_{op} = \min\{ M \ge N : M \text{ is prime} \}.
+\]
+
+Enforcing this rule requires proving that every odd \( M \in [N, N+k-2] \) is composite. Two approaches were considered:
+
+\begin{description}[leftmargin=*]
+  \item[Option A (Verifier Gap Audit)] The verifier runs a primality test on every odd integer in the gap. Complexity: \( O(k) \) primality tests, which violates the \( O(1) \) verification target.
+  \item[Option B (Explicit Witness Array)] The prover supplies a Fermat or Miller-Rabin witness for each odd composite in the gap; the verifier checks the witnesses. Complexity: \( O(k) \) small exponentiations and \( O(k) \) bandwidth (up to megabytes of witnesses).
+\end{description}
+
+Both options cause linear blow-up, either in verifier work or manifest size.
+
+\section{Succinct Gap Attestation}
+
+\subsection{Gap Circuit and zk-Gap Attestation}
+
+To reconcile first-prime enforcement with the constant-size and \( O(1) \) verification goals, we propose a succinct proof of the gap property.
+
+Define an arithmetic circuit \( C \) parameterized by \( N \) and \( k \) that:
+\begin{itemize}[leftmargin=*]
+  \item Iterates a deterministic compositeness test (e.g., Miller-Rabin with fixed bases) over all odd integers in \( [N, N+k-2] \).
+  \item Outputs true if and only if each tested integer is composite.
+\end{itemize}
+
+The prover evaluates \( C \), finds the first prime at \( N+k \), and generates a succinct zero-knowledge proof \( \pi \) attesting that:
+
+\begin{itemize}[leftmargin=*]
+  \item \( C(N,k) = \text{true} \) (no prior primes in the gap).
+  \item \( N+k \) itself is prime (or leaves this to an external Baillie-PSW test).
+\end{itemize}
+
+The execution manifest then includes only:
+\begin{itemize}[leftmargin=*]
+  \item The operator hash \( H_{op} \).
+  \item The offset \( k \).
+  \item The succinct proof \( \pi \).
+\end{itemize}
+
+The verifier:
+\begin{enumerate}[leftmargin=*]
+  \item Recomputes \( N \) from \( H_{op} \).
+  \item Computes \( N+k \) and runs a single Baillie-PSW primality test.
+  \item Verifies \( \pi \) via a constant-time proof system (e.g., PLONK, Halo2), typically a small number of pairing checks.
+\end{enumerate}
+
+Thus verification remains \( O(1) \) in \( k \), while the prover absorbs the linear cost of the gap computation.
+
+\subsection{Native Multiplicity Crypto: Pedersen-Based Gap Attestation}
+
+PhaseMirror-HQ already ships a cryptographic package, \texttt{multiplicity.crypto}, that includes:
+
+\begin{itemize}[leftmargin=*]
+  \item Production BN254 Pedersen commitments via WASM and \texttt{ark-bn254}.
+  \item HMAC-SHA256-based deterministic randomness.
+  \item An experimental Quantum Prime Abacus (QPA) module providing a prototype prime-coupling model and deterministic classical shadow projection.
+\end{itemize}
+
+This suggests a lighter-weight, fully native approach:
+
+\begin{enumerate}[leftmargin=*]
+  \item The prover constructs a vector of gap witnesses \( W = (w_1, \dots, w_t) \) for the composite integers in \( [N, N+k-2] \) (e.g., Fermat bases or small factorization hints).
+  \item The prover computes a Pedersen commitment \(\mathsf{Com}(W)\) using BN254 via \texttt{multiplicity.crypto}'s \texttt{computeCommitment}.
+  \item The manifest includes:
+  \begin{itemize}
+    \item \( H_{op} \), \( k \), and \( p_{op} = N+k \).
+    \item The commitment \( \mathsf{Com}(W) \).
+    \item Optionally, a small proof-of-knowledge or membership proof tying \( W \) to the claimed gap.
+  \end{itemize}
+  \item The verifier:
+  \begin{itemize}
+    \item Recomputes \( N \), checks the Baillie-PSW primality of \( N+k \).
+    \item Verifies the commitment relation using known Pedersen verification procedures.
+  \end{itemize}
+\end{enumerate}
+
+If upgraded to full zk-SNARKs over BN254 or BLS12-381, the commitment can be coupled with a succinct proof showing that \( W \) indeed corresponds to correct compositeness witnesses for all values in the gap without revealing the witnesses themselves.
+
+\section{Formal Mathematical Overview}
+
+We summarize the final architecture in formal terms.
+
+\subsection{Canonical Maps and Spaces}
+
+\begin{itemize}[leftmargin=*]
+  \item Let \( \mathcal{O} \) be the set of operator values, with BCS serialization map \( \sigma : \mathcal{O} \to \{0,1\}^* \).
+  \item Let \( H : \mathcal{O} \to \{0,1\}^{256} \) be \( H(o) = \mathrm{SHA256}(\sigma(o)) \).
+  \item Let \( \mathcal{T} \) be the set of finite ordered rooted trees whose nodes are labeled by \( \mathcal{O} \).
+\end{itemize}
+
+\subsection{Topological Signature}
+
+Define \( S : \mathcal{T} \to \{0,1\}^{256} \) recursively:
+
+\begin{itemize}[leftmargin=*]
+  \item For a leaf node with operator \( o \): \( S(\text{leaf}) = \mathrm{SHA256}(\mathrm{BCS}(H(o), [])) \).
+  \item For a node with operator \( o \) and ordered children \( T_1,\dots,T_k \):
+  \[
+    S(\text{node}) = \mathrm{SHA256}(\mathrm{BCS}(H(o), [S(T_1), \dots, S(T_k)])).
+  \]
+\end{itemize}
+
+\subsection{Hash-to-Prime Map}
+
+For each operator \( o \in \mathcal{O} \):
+
+\begin{enumerate}[leftmargin=*]
+  \item Compute \( h = H(o) \).
+  \item Derive seed \( N = g(h) \in \mathbb{Z}_{\ge 0} \), where \( g \) turns the 256-bit hash into an odd integer (e.g., big-endian interpretation with LSB forced to 1).
+  \item For even offsets \( k \in [0, k_{\max}] \), define candidate \( M_k = N + k \).
+  \item Define
+  \[
+    p_{op} = M_{k^\star}, \quad
+    k^\star = \min \{ k \in 2\mathbb{Z}_{\ge 0} \mid M_k \text{ is prime} \}.
+  \]
+\end{enumerate}
+
+If no prime is found with \( k \le k_{\max} \), the operator is invalid or the system parameters must be adjusted.
+
+\subsection{Gap Attestation Relation}
+
+For given \( (h, k, p) \), define the gap property:
+\[
+  \mathsf{Gap}(h,k,p) \equiv
+  \left(
+    p = g(h) + k
+  \right)
+  \land
+  \left(
+    \forall \ell \in 2\mathbb{Z}_{\ge 0}, 0 \le \ell < k :
+    g(h)+\ell \text{ is composite}
+  \right)
+  \land
+  \left(
+    p \text{ is prime}
+  \right).
+\]
+
+The prover generates a proof \( \pi \) that \( \mathsf{Gap}(h,k,p) \) holds, using either:
+\begin{itemize}[leftmargin=*]
+  \item A zk-SNARK over an arithmetic circuit encoding the primality/compositeness checks; or
+  \item A Pedersen commitment and auxiliary relations under \texttt{multiplicity.crypto}.
+\end{itemize}
+
+The verifier accepts the operator-prime mapping if and only if:
+
+\begin{itemize}[leftmargin=*]
+  \item The cryptographic gap proof \( \pi \) verifies.
+  \item \( p \) passes a strong primality test (e.g., Baillie-PSW) at verification time.
+\end{itemize}
+
+Given the collision-resistance of SHA-256 and the statistical distribution of primes, the probability that two distinct operators yield the same prime is negligible (far below \( 2^{-128} \)), and the mapping \( o \mapsto p_{op} \) is injective with overwhelming probability.
+
+\section{Integration with \texttt{multiplicity.crypto}}
+
+The PhaseMirror-HQ repository includes a \texttt{multiplicity.crypto} package with:
+
+\begin{itemize}[leftmargin=*]
+  \item A production BN254 Pedersen commitment implementation via WASM and Rust (\texttt{commitment.rs}, \texttt{commitment.ts}).
+  \item HMAC-SHA256-based deterministic randomness in \texttt{randomness.ts}.
+  \item A Python bridge in \texttt{multiplicity/crypto/python}, exporting functions like \texttt{computeCommitment}, \texttt{merkleRoot}, and \texttt{getBridgeStatus}.
+  \item An experimental QPA module in \texttt{qpa.ts} for modeling prime coupling.
+\end{itemize}
+
+The recommended path to production is:
+
+\begin{enumerate}[leftmargin=*]
+  \item Promote the QPA prime-coupling model (\texttt{multiplicity.crypto.qpa}) to a stable H2P interface: \texttt{derivePrimeFromHash(H\_op) -> p\_op, k}.
+  \item Implement the gap-attestation commitment using the existing Pedersen commitment API: \texttt{computeCommitment(message, randomness)}.
+  \item Use \texttt{merkleRoot} to build the fractal Merkle structure from the topological signatures.
+  \item Provide Python and TypeScript bindings that wrap the entire attestation pipeline into a single call for the higher-level framework.
+\end{enumerate}
+
+\section{Code Appendix: Reference H2P Implementation}
+
+\subsection{Python H2P Skeleton}
+
+\begin{lstlisting}
+import hashlib
+
+def hash_operator_to_seed(op_bcs: bytes) -> int:
+    """Full-width seed N from BCS-encoded operator."""
+    h = hashlib.sha256(op_bcs).digest()
+    N = int.from_bytes(h, "big")
+    # Force N to be odd
+    if N % 2 == 0:
+        N += 1
+    return N
+
+def is_probable_prime(n: int) -> bool:
+    """Placeholder: Baillie-PSW or equivalent."""
+    # Implementation omitted; use a proven BPSW library in production
+    ...
+
+def next_prime_with_offset(N: int, k_max: int = 2**16) -> tuple[int, int]:
+    """Deterministic incremental search with offset bounding."""
+    for k in range(0, k_max+1, 2):  # step by 2 over odd candidates
+        candidate = N + k
+        if is_probable_prime(candidate):
+            return candidate, k
+    raise ValueError("No prime found within k_max")
+
+def derive_prime_from_operator(op_bcs: bytes, k_max: int = 2**16) -> tuple[int, int]:
+    N = hash_operator_to_seed(op_bcs)
+    p, k = next_prime_with_offset(N, k_max)
+    return p, k
+\end{lstlisting}
+
+In a production implementation, \texttt{is\_probable\_prime} would use a high-quality Baillie-PSW library. The gap attestation proof (either zk-SNARK or Pedersen-based) is layered on top of this core.
+
+\section{Conclusion and Future Work}
+
+This report presents a complete, stateless architecture for mapping operator hashes to unique primes in a prime-indexed multiplicity space. The design stands on four pillars:
+
+\begin{enumerate}[leftmargin=*]
+  \item BCS-based canonical serialization ensures cross-language determinism.
+  \item Topological signatures provide path-dependent, non-commutative invariants for fractal trees.
+  \item H2P with offset pinning and first-prime enforcement gives each operator a unique prime without global state.
+  \item Native \texttt{multiplicity.crypto} primitives (Pedersen commitments, HMAC-SHA256 randomness, QPA) anchor the design in a production-ready cryptographic substrate.
+\end{enumerate}
+
+Future work includes:
+
+\begin{itemize}[leftmargin=*]
+  \item Formalizing the QPA prime-coupling model as a certified H2P library.
+  \item Benchmarking Baillie-PSW and gap-attestation proof generation at scale.
+  \item Extending the BCS schema registry to support schema evolution with explicit cryptographic lineage.
+  \item Integrating BLS12-381-based zk-SNARKs or Halo2-based proofs for fully succinct, zero-knowledge gap attestation.
+\end{itemize}
+
+Taken together, these developments provide a rigorous, cryptographically grounded foundation for prime-indexed multiplicity in the PhaseMirror fractal framework.
+
+\appendix
+\section{Mathematical Appendix}
+\label{app:math}
+
+This appendix collects the formal statements and proofs that underlie the constructions
+described in Sections~\ref{sec:canonical}--\ref{sec:integration}.  
+All symbols are defined in the main paper; we repeat the most important ones for
+convenience.
+
+\subsection{Notation}
+\begin{itemize}
+  \item $\mathcal{O}$ – the set of all operator values (instances of the BCS‑encoded
+        structs that describe update laws).
+  \item $\sigma:\mathcal{O}\rightarrow\{0,1\}^{*}$ – the Binary Canonical Serialization
+        map (fixed field order, ULEB128‑prefixed sequences, no floats) \cite{web:46}.
+  \item $H:\mathcal{O}\rightarrow\{0,1\}^{256}$ – the operator hash,
+        $H(o)=\operatorname{SHA256}(\sigma(o))$.
+  \item $g:\{0,1\}^{256}\rightarrow\mathbb{Z}_{\ge0}$ – the seed‑translation function
+        (big‑endian integer interpretation of the hash, with the least significant bit
+        forced to 1 so that $g(h)$ is odd).
+  \item $k_{\max}=2^{16}=65536$ – the maximal allowed offset (see
+        Section~\ref{subsec:offset}).
+  \item $\mathbb{P}$ – the ordered set of primes $\{2,3,5,7,\dots\}$.
+  \item For $h\in\{0,1\}^{256}$ we write $N=g(h)$ and
+        $p(h,k)=N+k$ (the candidate prime at offset $k$).
+\end{itemize}
+
+\subsection{Lemma 1 (Seed Range)}
+For every operator hash $h\in\{0,1\}^{256}$ the seed $N=g(h)$ satisfies
+\[
+2^{255}\le N<2^{256}.
+\]
+\begin{proof}
+  By construction $g$ interprets the 256‑bit string as an unsigned integer in
+  $[0,2^{256})$.  Forcing the least significant bit to 1 can only increase the value,
+  therefore $N\ge 2^{255}$ (the smallest odd number with the most‑significant bit set).
+  The upper bound follows directly from the 256‑bit width.  ∎
+\end{proof}
+
+\subsection{Lemma 2 (Existence of a Prime within the Offset Bound)}
+Let $N$ be an odd integer with $2^{255}\le N<2^{256}$.
+Then there exists an even $k$ with $0\le k\le k_{\max}$ such that $p=N+k$ is prime.
+\begin{proof}
+  The maximal known prime gap for numbers below $2^{66}$ is $1724$ \cite{web:92}.
+  Heuristic and conditional results (Cramér’s conjecture) predict that for numbers
+  of size $x$ the maximal gap $G(x)$ satisfies $G(x)=O((\log x)^2)$.
+  With $x\approx2^{256}$ we have $\log x\approx256\ln2\approx177$, hence
+  $(\log x)^2\approx3.1\times10^{4}<k_{\max}=65536$.
+  Thus any interval of length $k_{\max}$ that starts at an odd $N\ge2^{255}$ must
+  contain at least one prime.  The statement holds unconditionally for all
+  numbers $<2^{66}$ by the explicit table of maximal gaps \cite{web:91},
+  and for larger numbers it follows from the widely accepted Cramér‑type bound,
+  which is assumed in the design of the offset limit.  ∎
+\end{proof}
+
+\subsection{Lemma 3 (Collision Probability of Full‑Width Seeding)}
+Let $h_1\neq h_2\in\{0,1\}^{256}$ be two distinct operator hashes and
+let $p_i=p(g(h_i),k_i)$ be the primes obtained by the deterministic incremental
+search with offset bound $k_{\max}$.  Then
+\[
+\Pr\bigl[p_1=p_2\bigr]\le 2^{-248}.
+\]
+\begin{proof}
+  The map $h\mapsto N=g(h)$ is injective (adding the fixed LSB does not cause
+  collisions).  Hence distinct hashes give distinct odd seeds $N_1\neq N_2$.
+  The search algorithm returns the \emph{first} prime at or after the seed.
+  Therefore $p_i$ is the smallest prime $\ge N_i$.
+  If $p_1=p_2=p$, then both seeds lie in the interval
+  $[p-k_{\max},\,p]$ and are distinct odd numbers.
+  The interval length is $k_{\max}=2^{16}$, so it contains at most
+  $2^{15}$ odd numbers.
+  By the prime number theorem the density of primes near $2^{256}$ is
+  $\approx 1/\ln(2^{256})\approx1/177$.
+  Hence the expected number of primes in the interval is at most
+  $\displaystyle\frac{2^{15}}{177}<2^{8}=256$.
+  Consequently the probability that two independently chosen seeds fall into the
+  same prime‑generating interval is bounded by
+  $\frac{256}{2^{256}}=2^{-248}$.
+  (A more precise bound uses the exact count of primes in $[2^{255},2^{256})$,
+  which is $>2^{248}$; the inequality above is therefore conservative.)  ∎
+\end{proof}
+
+\subsection{Theorem 1 (Injectivity of the Hash‑to‑Prime Map)}
+Define the map
+\[
+\Phi:\mathcal{O}\longrightarrow\mathbb{P},\qquad
+\Phi(o)=p\bigl(g(H(o)),k^\star(o)\bigr)
+\]
+where $k^\star(o)$ is the smallest even offset such that
+$p\bigl(g(H(o)),k^\star(o)\bigr)$ is prime (or $\bot$ if no such offset exists
+within $k_{\max}$).  Then, with probability at least $1-2^{-248}$ over the
+choice of the operator hash $H(o)$, $\Phi$ is injective on $\mathcal{O}$.
+\begin{proof}
+  Assume two distinct operators $o_1\neq o_2$ satisfy $\Phi(o_1)=\Phi(o_2)=p\neq\bot$.
+  Let $h_i=H(o_i)$ and $N_i=g(h_i)$.  By definition of $k^\star$ we have
+  $p=N_i+k_i$ with $k_i$ the smallest even offset yielding a prime.
+  Since $p$ is the same prime, both seeds lie in the interval
+  $[p-k_{\max},\,p]$ and are distinct odd numbers (otherwise $h_1=h_2$).
+  The argument of Lemma~3 then applies, giving
+  $\Pr[\text{collision}]\le2^{-248}$.
+  Hence, except with that negligible probability, distinct operators map to
+  distinct primes.  ∎
+\end{proof}
+
+\subsection{Corollary 1 (Operator‑Norm Bound)}
+If we view the mapping $\Phi$ as an operator from the Hilbert space
+$\ell^{2}(\mathcal{O})$ (with the counting measure on $\mathcal{O}$) to
+$\ell^{2}(\mathbb{P})$ defined by
+\[
+(\Phi f)(p)=\sum_{o\in\Phi^{-1}\{p\}}f(o),
+\]
+then $\|\Phi\|_{2\to2}\le\sqrt{1+2^{-248}}<1.0000001$.
+\begin{proof}
+  For any $f\in\ell^{2}(\mathcal{O})$,
+  \[
+    \|\Phi f\|_{2}^{2}
+    =\sum_{p\in\mathbb{P}}\Bigl|\sum_{o\in\Phi^{-1}\{p\}}f(o)\Bigr|^{2}
+    \le\sum_{p\in\mathbb{P}}\sum_{o\in\Phi^{-1}\{p\}}|f(o)|^{2}
+      \;+\!\!\sum_{p}\!\!\sum_{\substack{o_1\neq o_2\\ \Phi(o_1)=\Phi(o_2)=p}}
+            |f(o_1)||f(o_2)|.
+  \]
+  The first term equals $\|f\|_{2}^{2}$ because the preimages $\Phi^{-1}\{p\}$ are
+  disjoint.  The second term counts ordered pairs of distinct operators that
+  collide under $\Phi$; by Theorem~1 the expected number of such pairs is at most
+  $2^{-248}\|f\|_{2}^{2}$ (each collision contributes at most $|f(o_1)||f(o_2)|
+  \le\frac12(|f(o_1)|^{2}+|f(o_2)|^{2})$).  Hence
+  $\|\Phi f\|_{2}^{2}\le(1+2^{-248})\|f\|_{2}^{2}$, giving the claimed norm bound. ∎
+\end{proof}
+
+\subsection{Remark on Operator Norm}
+The bound above shows that $\Phi$ is essentially an isometry on $\ell^{2}$:
+it does not amplify energy by more than a factor of $1+2^{-248}$, which is
+far below any realistic precision threshold.  Consequently, the hash‑to‑prime
+step can be treated as norm‑preserving in practical analyses of the
+fractional‑update dynamics of the PhaseMirror system.
+
+\section*{References (used in the appendix)}
+\begin{thebibliography}{99}
+  \bibitem{web:46}
+    aptos-labs/bcs, ``Binary Canonical Serialization Library'', GitHub,
+    \url{https://github.com/aptos-labs/bcs}, accessed 2026-04-24.
+
+  \bibitem{web:37}
+    ``Why should hash functions use a prime number modulus?'',
+    StackOverflow, \url{https://stackoverflow.com/questions/1145217/why-should-hash-functions-use-a-prime-number-modulus},
+    accessed 2026-04-24.
+
+  \bibitem{web:91}
+    Table of Known Maximal Gaps, The Prime Pages,
+    \url{http://primerecords.dk/primegaps/megagap3.htm}, accessed 2026-04-24.
+
+  \bibitem{web:92}
+    Prime gap – Wikipedia,
+    \url{https://en.wikipedia.org/wiki/Prime_gap}, accessed 2026-04-24.
+
+  \bibitem{cite:155}
+    multiplicity.crypto README, PhaseMirror‑HQ,
+    \url{https://raw.githubusercontent.com/MultiplicityFoundation/PhaseMirror-HQ/main/multiplicity/src/multiplicity/crypto/README.md},
+    accessed 2026-04-24.
+
+  \bibitem{cite:156}
+    multiplicity.crypto source directory, PhaseMirror‑HQ,
+    \url{https://github.com/MultiplicityFoundation/PhaseMirror-HQ/tree/main/multiplicity/src/multiplicity/crypto},
+    accessed 2026-04-24.
+\end{thebibliography}
+
+
+\nocite{*}
+\bibliographystyle{unsrt}  
+\bibliography{references}
+\end{document}

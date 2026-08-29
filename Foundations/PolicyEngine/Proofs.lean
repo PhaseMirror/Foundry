@@ -1,6 +1,6 @@
-import alp.PolicyEngine.Core
-import alp.PolicyEngine.Admissibility
-import alp.Constitution.L0
+import Foundations.PolicyEngine.Core
+import Foundations.PolicyEngine.Admissibility
+import Foundations.Constitution.L0
 
 namespace Multiplicity.ALP.PolicyEngine.Proofs
 

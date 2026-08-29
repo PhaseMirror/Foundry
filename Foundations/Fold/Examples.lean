@@ -1,4 +1,4 @@
-import Multiplicity.Fold.Proofs
+import Foundations.Fold.Proofs
 
 /-!
 # Fold Theory Worked Examples — ADR-0032

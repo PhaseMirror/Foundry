@@ -95,13 +95,16 @@ theorem prime_product_min (pi pj : Nat) (hpi : pi ≥ 2) (hpj : pj ≥ 2) :
 theorem prime_coupling_bound (J : Float) (pi pj : Nat)
     (hpi : pi ≥ 2) (hpj : pj ≥ 2) :
     (primeCoupling J pi pj).abs ≤ (J.abs / 4.0) := by
-  -- TODO: replace sorry
+  -- TODO: replace sorry with a formal proof once Float division semantics
+  --   (monotonicity in the denominator, |a/b| = |a|/|b|) are axiomatized.
+  sorry
 
 /-! ## Prime Counting Function -/
 
 /-- The prime counting function π(n): number of primes ≤ n. -/
-def primeCounting (n : Nat) : Nat :=
-  -- TODO: replace sorry
+noncomputable def primeCounting (n : Nat) : Nat := by
+  classical
+  exact ((List.range n).filter fun k => decide (isPrime k)).length
 
 /-- The prime number theorem approximation: π(n) ~ n / ln(n). -/
 def primeCountingApprox (n : Nat) : Float :=

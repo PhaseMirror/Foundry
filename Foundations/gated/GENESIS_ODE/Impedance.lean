@@ -1,10 +1,10 @@
-import Multiplicity.Std.Data.Real.Basic
-import Multiplicity.Std.Data.Rat.Basic
+import Foundations.Std.Data.Real.Basic
+import Foundations.Std.Data.Rat.Basic
 
 open Real
 
 -- Import the Geometry state defined in Geometry.lean
-import Multiplicity.Geometry
+import Foundations.Geometry
 
 /-- Compute the impedance ``omega`` and the kinematic drag ``drag`` for a given
     ``GeometryState``. The formulas mirror the `compute_impedance` method in

@@ -20,6 +20,7 @@ namespace Foundations.ADR.Test
 open Foundations.ADR
 open Foundations.ADR.Examples
 open Foundations.ADR.Export
+open Foundations.ADR.GlobalResearchPlatform
 
 /-! ## 1. Positive Type-Checked Tests -/
 
@@ -32,6 +33,20 @@ open Foundations.ADR.Export
 #check (adr005_consequence_entailment : Entails [adr005_P, .implies adr005_P adr005_Q] adr005_Q)
 #check (adr006_consequence_entailment : Entails [adr006_P, .implies adr006_P adr006_Q] adr006_Q)
 #check (adr007_consequence_entailment : Entails [adr007_P, .implies adr007_P adr007_Q] adr007_Q)
+
+/-! ## 1b. ADR-0035 (Global Research Platform) Positive Checks -/
+
+-- The verified Layer-B-gated registry slice is a valid ADRRegistry by construction.
+#check (grpRegistry : ADRRegistry)
+#check (grp_unique_ids : (grpADRList.map ADR.id).Nodup)
+#check (grp_acyclic : StrictAcyclic grpADRList)
+#check (grp_no_claim_conflicts :
+  ∀ c₁ ∈ grpClaims, ∀ c₂ ∈ grpClaims, c₁.owner ≠ c₂.owner → ¬ Contradictory c₁.claim c₂.claim)
+
+-- Concrete fail-closed demonstrations: with no Layer B, the submitted certificate and any
+-- token mint are rejected.
+#check (sample_cert_rejected_today : acceptCertificate sampleMSCCert none = none)
+#check (sample_mint_rejected_today : mintMSC sampleMSCCert none = .Rejected "LayerB-gate-fail-closed")
 
 /-! ## 2. Property-Based / Universal Invariant Verification -/
 
@@ -50,6 +65,16 @@ theorem prop_accepted_to_superseded_has_successor (s' : ADRStatus) (w : Option A
   cases h with
   | acceptToSupersede nid => exact ⟨nid, rfl⟩
   | acceptToDeprecate => contradiction
+
+/-- Property test (ADR-0035): for *every* certificate, absence of Layer B yields a
+fail-closed acceptance gate. -/
+theorem prop_grp_fail_closed_forall (cert : MSCCert) :
+    acceptCertificate cert none = none := accept_certificate_fail_closed cert
+
+/-- Property test (ADR-0035): for *every* certificate, absence of Layer B yields a
+rejected mint (no token references the frozen schema). -/
+theorem prop_grp_no_mint_forall (cert : MSCCert) :
+    mintMSC cert none = .Rejected "LayerB-gate-fail-closed" := mint_fail_closed cert
 
 /-! ## 3. Intentional Failure Cases (Caught at Verification Boundary) -/
 
@@ -146,6 +171,23 @@ theorem syntactic_check_misses_compound_conflict :
   rcases hdisj with h | h <;>
     exact absurd h (by decide)
 
+/-- **Negative Case (ADR-0035):** a well-formed certificate is rejected unless it matches
+the *contract-recorded* Layer B tree SHA. A fake `v1.0.0-Stable` whose tree SHA differs
+from the certificate's `git_commit` does not open the gate (ADR-0035 §Frozen Schema
+Reference constraint). -/
+def fakeLayerB : LayerBIdentity :=
+  { tag := "v1.0.0-Stable", treeSHA := "recorded-tree-sha", recordedInContract := true }
+
+theorem grp_cert_rejected_against_mismatched_layerB :
+    acceptCertificate sampleMSCCert (some fakeLayerB) = none :=
+  sample_cert_rejected_against_mismatched_layerB
+
+/-- **Negative Case (ADR-0035):** the membrane is fail-closed while Layer B is absent,
+so the mint gate cannot produce a token. -/
+theorem grp_mint_rejected_without_layerB :
+    mintMSC sampleMSCCert none = .Rejected "LayerB-gate-fail-closed" :=
+  sample_mint_rejected_today
+
 /-! ## 4. Export Determinism Verification -/
 
 /-- Snapshot exported artifacts as raw bytes for cross-run comparison. -/
@@ -163,7 +205,7 @@ produce byte-for-byte identical output. This is the local counterpart of the
 CI gate `git diff --exit-code docs/adr/`: the generator contains no timestamps,
 random identifiers, or iteration-order dependence. -/
 def runExportDeterminismTest : IO UInt32 := do
-  IO.print "[TEST 5/5] Export determinism (byte-identical across runs) ... "
+  IO.print "[TEST 5/6] Export determinism (byte-identical across runs) ... "
   exportADRSet sampleRegistry "docs/adr"
   let snap1 ← snapshotExports sampleRegistry "docs/adr"
   exportADRSet sampleRegistry "docs/adr"
@@ -185,8 +227,8 @@ def runAllTests : IO UInt32 := do
   IO.println "Running ADR Formal Governance Verification Test Suite"
   IO.println "============================================================"
 
-  -- Test 1: Registry Invariants
-  IO.print "[TEST 1/5] Checking Sample Registry Invariants ... "
+   -- Test 1: Registry Invariants
+  IO.print "[TEST 1/6] Checking Sample Registry Invariants ... "
   let n := sampleRegistry.adrs.length
   if n == 7 then
     IO.println "PASSED (7 ADRs verified: Unique IDs, Acyclicity, No Conflicts)"
@@ -195,21 +237,32 @@ def runAllTests : IO UInt32 := do
     return 1
 
   -- Test 2: Consequence Entailment Logic
-  IO.print "[TEST 2/5] Verifying Embedded Consequence Entailment ... "
+  IO.print "[TEST 2/6] Verifying Embedded Consequence Entailment ... "
   IO.println "PASSED (Modus Ponens and Conjunction Soundness verified)"
 
   -- Test 3: Negative Invariant Rejections
-  IO.print "[TEST 3/5] Verifying Negative Failure Rejections ... "
+  IO.print "[TEST 3/6] Verifying Negative Failure Rejections ... "
   IO.println "PASSED (Cycle detected, Syntactic conflict caught)"
 
   -- Test 4: Semantic Conflict Layer
-  IO.print "[TEST 4/5] Verifying Semantic Conflict Detection ... "
+  IO.print "[TEST 4/6] Verifying Semantic Conflict Detection ... "
   IO.println "PASSED (Compound contradiction caught, syntactic blind spot demonstrated)"
 
   -- Test 5: Export Generator Determinism
   let rc ← runExportDeterminismTest
   if rc != 0 then
     return rc
+
+  -- Test 6: ADR-0035 Layer-B fail-closed membrane gate
+  IO.print "[TEST 6/6] Verifying ADR-0035 Layer-B fail-closed gate ... "
+  match acceptCertificate sampleMSCCert none with
+  | none =>
+    IO.println "PASSED (certification fail-closed; membrane = FailClosed; no token mintable)"
+  | some _ =>
+    IO.println "FAILED (gate opened without Layer B)"
+    return 1
+  exportGRP none grpRegistry "docs/adr/grp"
+  IO.println s!"PASSED (GRP governance report + {grpRegistry.adrs.length} ADRs exported to docs/adr/grp)"
 
   IO.println "============================================================"
   IO.println "ALL ADR GOVERNANCE TESTS PASSED (0 failures, proofs complete)"
@@ -218,5 +271,6 @@ def runAllTests : IO UInt32 := do
 
 end Foundations.ADR.Test
 
-/-- Test runner entrypoint executable. -/
+/-! Test runner entrypoint executable. Built and run by `lake test` via the
+`adrTest` target (see `lakefile.lean`). -/
 def main : IO UInt32 := Foundations.ADR.Test.runAllTests

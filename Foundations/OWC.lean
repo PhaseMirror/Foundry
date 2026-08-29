@@ -1,6 +1,6 @@
 import Std
-import Multiplicity.Semantics.Core
-import Multiplicity.Semantics.Algebra
+import Foundations.Semantics.Core
+import Foundations.Semantics.Algebra
 
 namespace Multiplicity.Semantics
 

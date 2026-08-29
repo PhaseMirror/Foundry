@@ -1,6 +1,6 @@
-import Multiplicity.WordLove.Core
-import Multiplicity.WordLove.Proofs
-import Multiplicity.WordLove.FFI
+import Foundations.WordLove.Core
+import Foundations.WordLove.Proofs
+import Foundations.WordLove.FFI
 
 /-!
 # Word Love Certified Coupling — Joint Invariants (ADR-0033 P4 Certification)
@@ -47,7 +47,7 @@ of the Word Love layer: **no `-- TODO: replace sorry`, no `admit`, no `axiom`**.
    same pattern as `ProxySignatureHypothesis` in SpectralAttractor.Hyperplane.
 -/
 
-namespace Multiplicity.WordLove
+namespace Foundations.WordLove
 
 /-! ### Reference Model and Participation Multiplicity -/
 
@@ -181,4 +181,4 @@ participation stays at the base-plus-one level despite being one below the
 certificate threshold. -/
 example : certifiedMultiplicity 65535 13 none none = 2 := by decide
 
-end Multiplicity.WordLove
+end Foundations.WordLove

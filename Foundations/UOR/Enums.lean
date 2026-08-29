@@ -2,7 +2,7 @@
 --
 -- Controlled vocabulary types (enum classes).
 
-import Multiplicity.UOR.Primitives
+import Foundations.UOR.Primitives
 
 open UOR.Primitives
 

@@ -1,4 +1,4 @@
-import Multiplicity.Moc
+import Foundations.Moc
 
 namespace Multiplicity.Core.prime_tensors.Crmf
 open ADR.MOC

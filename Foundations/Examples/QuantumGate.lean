@@ -1,4 +1,4 @@
-import Multiplicity.universal_closure.UniversalClosure
+import Foundations.universal_closure.UniversalClosure
 
 /-!
 # Example: Quantum Gates as a Universal Closure Instance

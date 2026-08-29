@@ -1,7 +1,7 @@
-import Multiplicity.WordLove.Core
-import Multiplicity.WordLove.Proofs
-import Multiplicity.WordLove.Examples
-import Multiplicity.WordLove.FFI
+import Foundations.WordLove.Core
+import Foundations.WordLove.Proofs
+import Foundations.WordLove.Examples
+import Foundations.WordLove.FFI
 
 /-!
 # Word Love Test Harness (ADR-0031)
@@ -28,10 +28,10 @@ Run with `lake run word_love_test` (or `make word-love-test`).
    - Divine Covenant Ensemble: $2^3 \cdot 3^4 \cdot 7^2 \cdot 13^1$, $\Omega = 10$.
 -/
 
-namespace Multiplicity.WordLove
+namespace Foundations.WordLove
 
-open Multiplicity.WordLove
-open Multiplicity.WordLove.Examples
+open Foundations.WordLove
+open Foundations.WordLove.Examples
 
 /-! ### Decidable Boolean Checks Mirroring Proofs -/
 
@@ -272,7 +272,7 @@ def runTests : IO UInt32 := do
     IO.println "============================================================"
     return 1
 
-end Multiplicity.WordLove
+end Foundations.WordLove
 
 /-- Root entry point (Lake `lean_exe word_love_test` links `_root_.main`). -/
-def main : IO UInt32 := Multiplicity.WordLove.runTests
+def main : IO UInt32 := Foundations.WordLove.runTests

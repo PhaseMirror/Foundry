@@ -1,5 +1,5 @@
-import Multiplicity.LinearAlgebra.Matrix
-import Multiplicity.Drift
+import Foundations.LinearAlgebra.Matrix
+import Foundations.Drift
 
 open Core
 

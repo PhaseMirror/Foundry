@@ -1,4 +1,4 @@
-import Multiplicity.Spine
+import Foundations.Spine
 import moc.Hecke
 import moc.Resonance
 import moc.Ramanujan
@@ -10,8 +10,8 @@ import moc.Density
 import moc.Identity
 import moc.Dissonance
 
-import Multiplicity.Init.Data.Nat.Basic
-import Multiplicity.Init.Data.List.Basic
+import Foundations.Init.Data.Nat.Basic
+import Foundations.Init.Data.List.Basic
 
 namespace Multiplicity.Core.MOC
 

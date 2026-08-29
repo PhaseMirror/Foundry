@@ -1,8 +1,8 @@
 -- Orf Formalization
 
-import Multiplicity..Coherence
-import Multiplicity..Stratification
-import Multiplicity..Proofs
+import Foundations..Coherence
+import Foundations..Stratification
+import Foundations..Proofs
 
 namespace Multiplicity.Orf
 

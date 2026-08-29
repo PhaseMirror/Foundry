@@ -1,5 +1,5 @@
-import Multiplicity.Init.Data.Real.Basic
-import Multiplicity.Init.Data.Fin
+import Foundations.Init.Data.Real.Basic
+import Foundations.Init.Data.Fin
 
 namespace Multiplicity.MetaMaterials
 

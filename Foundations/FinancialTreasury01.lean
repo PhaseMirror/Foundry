@@ -1,4 +1,4 @@
-import Multiplicity.Spine
+import Foundations.Spine
 import moc.Moonshine
 import moc.Hecke
 import prime_tensors.Stability

@@ -1,5 +1,5 @@
-import Multiplicity.WordLove.Core
-import Multiplicity.WordLove.Fixtures
+import Foundations.WordLove.Core
+import Foundations.WordLove.Fixtures
 
 /-!
 # Word Love FFI — Lean 4 Side (ADR-0031 §4)
@@ -11,9 +11,9 @@ orthogonality checks, and pipeline validation.
 
 set_option compiler.ignoreBorrowAnnotation true
 
-namespace Multiplicity.WordLove.FFI
+namespace Foundations.WordLove.FFI
 
-open Multiplicity.WordLove
+open Foundations.WordLove
 
 /-- `wordlove_gematria_standard_ffi`: compute standard gematria for a Hebrew string. -/
 @[export wordlove_gematria_standard_ffi]
@@ -124,4 +124,4 @@ def spineExportInstance : SedonaSpineExport :=
   , sealed_root_108 := wordloveParmSealedState108
   , gamma_certified := wordloveGammaCertified }
 
-end Multiplicity.WordLove.FFI
+end Foundations.WordLove.FFI

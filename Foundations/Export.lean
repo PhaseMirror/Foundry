@@ -1,4 +1,4 @@
-import Multiplicity.ADR.Core
+import Foundations.ADR.Core
 
 /-!
 # Export ADRs to Markdown and HTML

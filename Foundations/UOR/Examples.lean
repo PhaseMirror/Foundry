@@ -2,8 +2,8 @@
 --
 -- v0.2.1 Lean 4 worked examples — parallel of the `foundation/examples/` directory. Each example compiles under `lake build` and mirrors a Rust example one-for-one. Every definition is total and reduces at elaboration — no `sorry`, `partial def`, or `native_decide` appear in this module.
 
-import Multiplicity.UOR.Enforcement
-import Multiplicity.UOR.Pipeline
+import Foundations.UOR.Enforcement
+import Foundations.UOR.Pipeline
 
 namespace Multiplicity.UOR.Examples
 

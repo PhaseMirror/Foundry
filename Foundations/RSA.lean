@@ -1,8 +1,8 @@
-import Multiplicity.RSA.ModEq
-import Multiplicity.RSA.Prime
-import Multiplicity.RSA.CRT
-import Multiplicity.RSA.Fermat
-import Multiplicity.RSA.Totient
+import Foundations.RSA.ModEq
+import Foundations.RSA.Prime
+import Foundations.RSA.CRT
+import Foundations.RSA.Fermat
+import Foundations.RSA.Totient
 
 /-!
 # RSA key encapsulation and the decryption correctness proof

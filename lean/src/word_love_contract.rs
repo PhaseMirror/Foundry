@@ -226,7 +226,7 @@ pub struct PrattCertificate {
 }
 
 /// Fast modular exponentiation $base^{exp} \pmod m$ using square-and-multiply.
-pub fn mod_pow(mut base: u64, mut exp: u64, modulus: u64) -> u64 {
+pub fn mod_pow(base: u64, mut exp: u64, modulus: u64) -> u64 {
     if modulus == 0 || modulus == 1 {
         return 0;
     }

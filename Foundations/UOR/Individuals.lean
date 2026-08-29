@@ -2,20 +2,20 @@
 --
 -- UOR Foundation — individual constant namespaces (aggregator).
 
-import Multiplicity.UOR.Individuals.Schema
-import Multiplicity.UOR.Individuals.Op
-import Multiplicity.UOR.Individuals.Resolver
-import Multiplicity.UOR.Individuals.Type_
-import Multiplicity.UOR.Individuals.Foundation
-import Multiplicity.UOR.Individuals.Observable
-import Multiplicity.UOR.Individuals.Homology
-import Multiplicity.UOR.Individuals.Cohomology
-import Multiplicity.UOR.Individuals.Proof
-import Multiplicity.UOR.Individuals.Trace
-import Multiplicity.UOR.Individuals.Morphism
-import Multiplicity.UOR.Individuals.State
-import Multiplicity.UOR.Individuals.Reduction
-import Multiplicity.UOR.Individuals.Convergence
-import Multiplicity.UOR.Individuals.Division
-import Multiplicity.UOR.Individuals.Predicate
-import Multiplicity.UOR.Individuals.Conformance_
+import Foundations.UOR.Individuals.Schema
+import Foundations.UOR.Individuals.Op
+import Foundations.UOR.Individuals.Resolver
+import Foundations.UOR.Individuals.Type_
+import Foundations.UOR.Individuals.Foundation
+import Foundations.UOR.Individuals.Observable
+import Foundations.UOR.Individuals.Homology
+import Foundations.UOR.Individuals.Cohomology
+import Foundations.UOR.Individuals.Proof
+import Foundations.UOR.Individuals.Trace
+import Foundations.UOR.Individuals.Morphism
+import Foundations.UOR.Individuals.State
+import Foundations.UOR.Individuals.Reduction
+import Foundations.UOR.Individuals.Convergence
+import Foundations.UOR.Individuals.Division
+import Foundations.UOR.Individuals.Predicate
+import Foundations.UOR.Individuals.Conformance_

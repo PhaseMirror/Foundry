@@ -1,4 +1,4 @@
-import Multiplicity.Spine
+import Foundations.Spine
 import moc.pAdicHodge
 import moc.ShimuraCohomology
 import f1_square.Mechanism

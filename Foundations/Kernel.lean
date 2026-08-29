@@ -1,4 +1,4 @@
-import Multiplicity.Multiplicity.Core
+import Foundations.Multiplicity.Core
 
 /-!
 # Multiplicity Kernel — Doctrine Witnesses (ADR-0000 / ADR-0001)

@@ -1,4 +1,4 @@
-import Multiplicity.alp.PolicyEngine.Core
+import Foundations.PolicyEngine.Core
 
 namespace Multiplicity.ALP.Contracts.NonBypassability
 

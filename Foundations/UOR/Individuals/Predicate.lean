@@ -2,8 +2,8 @@
 --
 -- UOR Foundation — Predicate individual constants.
 
-import Multiplicity.UOR.Structures
-import Multiplicity.UOR.Individuals.State
+import Foundations.UOR.Structures
+import Foundations.UOR.Individuals.State
 
 open UOR.Primitives
 

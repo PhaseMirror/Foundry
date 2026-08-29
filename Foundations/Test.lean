@@ -1,9 +1,9 @@
-import Multiplicity.ADR.Core
-import Multiplicity.ADR.Proofs
-import Multiplicity.ADR.Examples
-import Multiplicity.ADR.Resonance
-import Multiplicity.ADR.PhaseMirror
-import Multiplicity.ADR.Dissonance
+import Foundations.ADR.Core
+import Foundations.ADR.Proofs
+import Foundations.ADR.Examples
+import Foundations.ADR.Resonance
+import Foundations.ADR.PhaseMirror
+import Foundations.ADR.Dissonance
 
 open ADR
 

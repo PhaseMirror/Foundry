@@ -1,5 +1,5 @@
-import Multiplicity.Resonance
-import Multiplicity.CRMFState
+import Foundations.Resonance
+import Foundations.CRMFState
 import prime_tensors.Stability
 namespace Multiplicity.CRMF
 

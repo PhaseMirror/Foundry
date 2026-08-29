@@ -1,6 +1,6 @@
-import Multiplicity.universal_closure.UCC_RH
-import Multiplicity.F1.Analysis.Real
-import Multiplicity.F1.Analysis.RealPow
+import Foundations.universal_closure.UCC_RH
+import Foundations.F1.Analysis.Real
+import Foundations.F1.Analysis.RealPow
 
 /-!
 # Operator Norm Bounds

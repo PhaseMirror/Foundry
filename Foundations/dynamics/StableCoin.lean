@@ -1,4 +1,4 @@
-import Multiplicity.Prime
+import Foundations.Prime
 
 /-! # Multiplicity Stablecoin and Governance (ADR-0025)
 

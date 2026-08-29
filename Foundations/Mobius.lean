@@ -1,6 +1,6 @@
-import Multiplicity.ComplexKappa.Types
-import Multiplicity.ComplexKappa.Core
-import Multiplicity.ComplexKappa.Zeta
+import Foundations.ComplexKappa.Types
+import Foundations.ComplexKappa.Core
+import Foundations.ComplexKappa.Zeta
 
 set_option autoImplicit false
 noncomputable section

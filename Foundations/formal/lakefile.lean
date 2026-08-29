@@ -1,4 +1,4 @@
-import Multiplicity.Lake
+import Foundations.Lake
 open Lake DSL
 
 package PIRTMFormal where

@@ -4,14 +4,14 @@ Released under Apache 2.0 license.
 Authors: Multiplicity Foundry
 -/
 import Init.Omega
-import Multiplicity.SpectralAttractor.Tags
-import Multiplicity.SpectralAttractor.Basic
-import Multiplicity.SpectralAttractor.Certificates
-import Multiplicity.SpectralAttractor.Matrices
-import Multiplicity.SpectralAttractor.CPTP
-import Multiplicity.SpectralAttractor.Contraction
-import Multiplicity.SpectralAttractor.Energy
-import Multiplicity.SpectralAttractor.Atlas
+import Foundations.SpectralAttractor.Tags
+import Foundations.SpectralAttractor.Basic
+import Foundations.SpectralAttractor.Certificates
+import Foundations.SpectralAttractor.Matrices
+import Foundations.SpectralAttractor.CPTP
+import Foundations.SpectralAttractor.Contraction
+import Foundations.SpectralAttractor.Energy
+import Foundations.SpectralAttractor.Atlas
 
 /-!
 # Test harness

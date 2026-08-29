@@ -1,5 +1,5 @@
-import Multiplicity.Complex
-import Multiplicity.Prime
+import Foundations.Complex
+import Foundations.Prime
 
 open Multiplicity.Complex
 

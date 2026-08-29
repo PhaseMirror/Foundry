@@ -1,5 +1,5 @@
 -- import Core.Basic
-import Multiplicity.SpectralCert
+import Foundations.SpectralCert
 
 namespace Multiplicity.AffineCore.S4
 

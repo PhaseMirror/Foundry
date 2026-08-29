@@ -1,7 +1,7 @@
-import alp.Types.Action
-import alp.Types.TrustLevel
-import alp.Types.AdmissibilityReport
-import alp.PolicyEngine.Core
+import Foundations.Types.Action
+import Foundations.Types.TrustLevel
+import Foundations.Types.AdmissibilityReport
+import Foundations.PolicyEngine.Core
 
 namespace Multiplicity.ALP.MCP.GovernanceBinding
 

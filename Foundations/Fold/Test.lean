@@ -1,6 +1,6 @@
-import Multiplicity.Fold.Core
-import Multiplicity.Fold.Proofs
-import Multiplicity.Fold.Examples
+import Foundations.Fold.Core
+import Foundations.Fold.Proofs
+import Foundations.Fold.Examples
 
 /-!
 # Fold Theory Test Harness (ADR-0032)

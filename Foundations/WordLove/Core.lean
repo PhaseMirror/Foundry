@@ -41,12 +41,12 @@ Core Lean 4 only — no mathlib dependency. All definitions are computable.
 Tags `@[wordlove_adr]` and `@[wordlove_proof]` mark formal artifacts and theorems.
 -/
 
-namespace Multiplicity.WordLove
+namespace Foundations.WordLove
 
 /-! ### Project Tag Attributes
 
 The `@[wordlove_adr]` / `@[wordlove_proof]` tag attributes live in
-`Multiplicity.WordLove.Attrs` so this module stays free of `initialize`
+`Foundations.WordLove.Attrs` so this module stays free of `initialize`
 blocks (required for the Rust-loaded export closure; see Attrs.lean).
 -/
 
@@ -566,4 +566,4 @@ def countUniqueEvents (events : List SemanticEvent) : Nat :=
 def combineTrajectories (t1 t2 : Trajectory) : PrimeMultiplicity :=
   PrimeMultiplicity.add t1.invariant t2.invariant
 
-end Multiplicity.WordLove
+end Foundations.WordLove

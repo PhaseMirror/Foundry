@@ -1,4 +1,4 @@
-import Multiplicity.Prime
+import Foundations.Prime
 
 /-! # Mirror Symmetry Multiplicity (ADR-0020)
 

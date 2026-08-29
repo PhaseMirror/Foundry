@@ -2,7 +2,7 @@
 Copyright (c) 2026 Multiplicity Foundry. All rights reserved.
 Released under the terms described in the repository LICENSE file.
 -/
-import Multiplicity.WordLove.Core
+import Foundations.WordLove.Core
 
 /-!
 # Word Love Fixtures (ADR-0031)
@@ -18,7 +18,7 @@ dylib can initialize without registering environment extensions; see
 `Attrs.lean` for the full rationale.
 -/
 
-namespace Multiplicity.WordLove
+namespace Foundations.WordLove
 
 /-! ### Reference Semantic Tokens -/
 
@@ -89,4 +89,4 @@ def cert65537 : PrattCertificate :=
 def cert131071 : PrattCertificate :=
   { p := 131071, g := 3, factors := [(2, 1), (3, 1), (5, 1), (17, 1), (257, 1)] }
 
-end Multiplicity.WordLove
+end Foundations.WordLove

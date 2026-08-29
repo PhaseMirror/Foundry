@@ -5,7 +5,7 @@ Released under Apache 2.0 license.
 ! ADR-0034-F1-Geometry Scaffolding — Basic locked constants
 -/
 import Init.Omega
-import Multiplicity.SpectralAttractor.Tags
+import Foundations.SpectralAttractor.Tags
 
 /-!
 # ComplexKappa.SpectralAttractor.Basic

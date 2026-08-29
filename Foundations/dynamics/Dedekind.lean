@@ -1,5 +1,5 @@
-import Multiplicity.dynamics.Riemann
-import Multiplicity.Prime
+import Foundations.dynamics.Riemann
+import Foundations.Prime
 
 /-! # Dedekind Multiplicity (ADR-0010)
 

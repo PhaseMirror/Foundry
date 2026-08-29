@@ -1,4 +1,4 @@
-import Multiplicity.Spine
+import Foundations.Spine
 
 inductive Token where
   | Deploy

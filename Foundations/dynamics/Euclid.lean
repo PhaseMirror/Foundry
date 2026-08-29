@@ -1,4 +1,4 @@
-import Multiplicity.Prime
+import Foundations.Prime
 
 /-! # Euclid Multiplicity Core (ADR-0004)
 

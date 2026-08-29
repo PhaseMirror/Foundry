@@ -1,10 +1,10 @@
-import Multiplicity.universal_closure.UCC_RH
-import Multiplicity.universal_closure.CPTP
-import Multiplicity.universal_closure.OperatorBounds
-import Multiplicity.F1.Mechanism
-import Multiplicity.F1.Bridge
-import Multiplicity.F1.BridgeFF
-import Multiplicity.F1.Template
+import Foundations.universal_closure.UCC_RH
+import Foundations.universal_closure.CPTP
+import Foundations.universal_closure.OperatorBounds
+import Foundations.F1.Mechanism
+import Foundations.F1.Bridge
+import Foundations.F1.BridgeFF
+import Foundations.F1.Template
 
 /-!
 # UCC Test Harness

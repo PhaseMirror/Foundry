@@ -2,7 +2,7 @@
 --
 -- UOR Foundation — Trace individual constants.
 
-import Multiplicity.UOR.Structures
+import Foundations.UOR.Structures
 
 open UOR.Primitives
 

@@ -1,5 +1,5 @@
-import Multiplicity.Prime
-import Multiplicity.Complex
+import Foundations.Prime
+import Foundations.Complex
 
 /-! # 108-Cycle Multiplicity (ADR-0024)
 

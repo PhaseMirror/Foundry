@@ -1,5 +1,5 @@
-import Multiplicity.universal_closure.PartialUC
-import Multiplicity.universal_closure.UniversalClosure
+import Foundations.universal_closure.PartialUC
+import Foundations.universal_closure.UniversalClosure
 
 /-!
 # Completion Spec — Definitions + Property Signatures

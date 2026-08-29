@@ -1,9 +1,9 @@
-import Multiplicity.universal_closure.UniversalClosure
-import Multiplicity.universal_closure.DefectAlgebra
-import Multiplicity.universal_closure.Completion
-import Multiplicity.universal_closure.Dirichlet
-import Multiplicity.universal_closure.InfiniteGluing
-import Multiplicity.universal_closure.Bridge
+import Foundations.universal_closure.UniversalClosure
+import Foundations.universal_closure.DefectAlgebra
+import Foundations.universal_closure.Completion
+import Foundations.universal_closure.Dirichlet
+import Foundations.universal_closure.InfiniteGluing
+import Foundations.universal_closure.Bridge
 
 /-!
 # The Universal Closure Calculator: Sextuple Assembly and RH Equivalence

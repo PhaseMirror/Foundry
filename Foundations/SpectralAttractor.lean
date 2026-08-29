@@ -4,17 +4,17 @@ Released under Apache 2.0 license.
 
 ! ADR-0034-F1-Geometry Scaffolding — umbrella module
 -/
-import Multiplicity.SpectralAttractor.Tags
-import Multiplicity.SpectralAttractor.Basic
-import Multiplicity.SpectralAttractor.Certificates
-import Multiplicity.SpectralAttractor.Matrices
-import Multiplicity.SpectralAttractor.CPTP
-import Multiplicity.SpectralAttractor.Contraction
-import Multiplicity.SpectralAttractor.Energy
-import Multiplicity.SpectralAttractor.Atlas
-import Multiplicity.SpectralAttractor.Hyperplane
-import Multiplicity.SpectralAttractor.AtlasDominance
-import Multiplicity.SpectralAttractor.Tests
+import Foundations.SpectralAttractor.Tags
+import Foundations.SpectralAttractor.Basic
+import Foundations.SpectralAttractor.Certificates
+import Foundations.SpectralAttractor.Matrices
+import Foundations.SpectralAttractor.CPTP
+import Foundations.SpectralAttractor.Contraction
+import Foundations.SpectralAttractor.Energy
+import Foundations.SpectralAttractor.Atlas
+import Foundations.SpectralAttractor.Hyperplane
+import Foundations.SpectralAttractor.AtlasDominance
+import Foundations.SpectralAttractor.Tests
 
 /-!
 # ComplexKappa.SpectralAttractor

@@ -1,7 +1,7 @@
-import Multiplicity.Bose.Core
-import Multiplicity.Bose.Proofs
-import Multiplicity.Bose.Examples
-import Multiplicity.Bose.Test
+import Foundations.Bose.Core
+import Foundations.Bose.Proofs
+import Foundations.Bose.Examples
+import Foundations.Bose.Test
 
 /-!
 # Multiplicity.Bose (ADR-0036)

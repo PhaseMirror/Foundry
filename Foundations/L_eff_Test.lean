@@ -3,10 +3,10 @@
     Metric: Rust test confirms L_eff ≤ 0.85 on lifted CRMF states.
     =========================================================================== -/
 
-import Multiplicity.Init.Data.Nat.Basic
-import Multiplicity.Init.Data.List.Basic
-import Multiplicity.Spine
-import Multiplicity.Resonance
+import Foundations.Init.Data.Nat.Basic
+import Foundations.Init.Data.List.Basic
+import Foundations.Spine
+import Foundations.Resonance
 import prime_tensors.Stability
 import prime_tensors.Stability
 

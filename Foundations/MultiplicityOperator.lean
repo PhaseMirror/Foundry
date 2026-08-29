@@ -1,5 +1,5 @@
-import Multiplicity.Multiset
-import Multiplicity.LinearAlgebra.Engine
+import Foundations.Multiset
+import Foundations.LinearAlgebra.Engine
 
 namespace Multiplicity.Core.MultiplicityOperator
 

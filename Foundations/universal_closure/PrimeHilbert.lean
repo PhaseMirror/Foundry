@@ -1,7 +1,7 @@
-import Multiplicity.universal_closure.PartialUC
-import Multiplicity.F1.Analysis.Real
-import Multiplicity.F1.Analysis.RSum
-import Multiplicity.F1.Analysis.ROrder
+import Foundations.universal_closure.PartialUC
+import Foundations.F1.Analysis.Real
+import Foundations.F1.Analysis.RSum
+import Foundations.F1.Analysis.ROrder
 
 /-!
 # Prime-Indexed Hilbert Space and the Finite Negativity Theorem

@@ -1,4 +1,4 @@
-import Multiplicity.Multiplicity.Prime
+import Foundations.Multiplicity.Prime
 
 /-!
 # Multiplicity Kernel — Factorization (ADR-0001 Phase 1 scope)

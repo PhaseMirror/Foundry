@@ -1,4 +1,4 @@
-import Multiplicity.Spine
+import Foundations.Spine
 import prime_tensors.Stability
 
 namespace Multiplicity.CPIRTM

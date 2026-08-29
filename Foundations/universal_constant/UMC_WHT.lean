@@ -1,7 +1,7 @@
-import Multiplicity.Mathlib.Data.Vector
-import Multiplicity.Mathlib.Data.ZMod.Basic
-import Multiplicity.Mathlib.Data.Real.Basic
-import Multiplicity.Mathlib.Algebra.Group.Basic
+import Foundations.Mathlib.Data.Vector
+import Foundations.Mathlib.Data.ZMod.Basic
+import Foundations.Mathlib.Data.Real.Basic
+import Foundations.Mathlib.Algebra.Group.Basic
 
 namespace Multiplicity.WHTEpistasis
 

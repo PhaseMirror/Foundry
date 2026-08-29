@@ -1,6 +1,6 @@
 -- lean/Core/Drift.lean
 -- Production-grade formalisation of drift for square matrices.
-import Multiplicity.LinearAlgebra.Matrix
+import Foundations.LinearAlgebra.Matrix
 
 
 open Multiplicity.Core

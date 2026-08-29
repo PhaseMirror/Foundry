@@ -2,13 +2,13 @@
 Copyright (c) 2026 Multiplicity Foundry. All rights reserved.
 Released under the terms described in the repository LICENSE file.
 -/
-import Multiplicity.WordLove.Core
+import Foundations.WordLove.Core
 
 /-!
 # Word Love Tag Attributes (ADR-0031)
 
 This leaf module owns the two project tag attributes. It exists so that the
-Rust-loaded shared-library closure (`Multiplicity.WordLove.FFI` and its
+Rust-loaded shared-library closure (`Foundations.WordLove.FFI` and its
 imports) contains **no** `initialize` blocks: environment extensions can only
 be registered while Lean's initialization window is open, which holds for
 Lake executables (`word_love_test`) but not for modules initialized through
@@ -20,7 +20,7 @@ imports, so elaboration-time tagging works exactly as before. The export
 closure simply never initializes it.
 -/
 
-namespace Multiplicity.WordLove
+namespace Foundations.WordLove
 
 /-- Tag attribute for formally registered Word Love artifacts (ADR-0031). -/
 initialize wordloveAdrAttr : Lean.TagAttribute ←
@@ -30,4 +30,4 @@ initialize wordloveAdrAttr : Lean.TagAttribute ←
 initialize wordloveProofAttr : Lean.TagAttribute ←
   Lean.registerTagAttribute `wordlove_proof "Word Love (ADR-0031) proof tag" (fun _ => pure ())
 
-end Multiplicity.WordLove
+end Foundations.WordLove

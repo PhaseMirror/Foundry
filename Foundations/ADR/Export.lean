@@ -1,4 +1,6 @@
 import Foundations.ADR.Core
+import Foundations.ADR.Examples
+import Foundations.ADR.GlobalResearchPlatform
 
 /-!
 # Architecture Decision Records (ADR) — Export Generator
@@ -11,6 +13,7 @@ documentation site generation from the machine-checked formal governance model.
 namespace Foundations.ADR.Export
 
 open Foundations.ADR
+open Foundations.ADR.GlobalResearchPlatform
 
 /-- Convert artifact link to Markdown format. -/
 def linkToMarkdown (link : ArtifactLink) : String :=
@@ -91,5 +94,51 @@ def exportADRSet (reg : ADRRegistry) (targetDir : System.FilePath) : IO Unit := 
     IO.FS.writeFile mdPath (adrToMarkdown adr)
     IO.FS.writeFile htmlPath (adrToHTML adr)
   IO.println s!"[ADR Export] Successfully exported {reg.adrs.length} ADRs to {targetDir}"
+
+/-! ## ADR-0035 Global Research Platform Governance Report -/
+
+/-- Membrane posture derived from the global Layer B state. Mirrors `membraneState`
+but operates over the raw `Option LayerBIdentity` so it can be rendered without first
+constructing a `KnownLayerB` witness. -/
+def grpPosture (globalLayerB : Option LayerBIdentity) : String :=
+  match globalLayerB with
+  | none => "FailClosed (no Layer B present)"
+  | some b =>
+    if b.tag == requiredLayerBTag && b.recordedInContract
+    then "Operational"
+    else "FailClosed (Layer B present but not contract-recorded as v1.0.0-Stable)"
+
+/-- Render the ADR-0035 Global Research Platform governance report: membrane posture,
+Layer-B gate status, and the verified ADR slice. The report is timestamp-free so that
+exported bytes are deterministic across runs (CI gate `git diff --exit-code`). -/
+def grpGovernanceReport (globalLayerB : Option LayerBIdentity) (reg : ADRRegistry) : String :=
+  let gateStr := match globalLayerB with
+    | none => "ABSENT — all certification and minting paths fail-closed"
+    | some b =>
+      if b.tag == requiredLayerBTag && b.recordedInContract
+      then s!"OPEN ({b.tag} / treeSHA {b.treeSHA})"
+      else "PRESENT-BUT-INVALID — fail-closed"
+  s!"# ADR-0035 Global Research Platform — Governance Report
+
+**Status:** Accepted (blocked on Layer B)
+**Membrane posture:** {grpPosture globalLayerB}
+**Layer-B gate:** {gateStr}
+
+> The MSC-Cert v1 schema is a frozen, non-minting target format. Per ADR-0035, no
+> verification service may accept it, no oracle may sign under it, and no token
+> (ERC-721, W3C credential, or Archivum entry) may be issued that references it while
+> the gate is closed.
+
+## Verified ADR Slice
+{registryIndexMarkdown reg}
+"
+
+/-- Export the ADR-0035 governance report and the verified GRP ADR slice to `targetDir`. -/
+def exportGRP (globalLayerB : Option LayerBIdentity) (reg : ADRRegistry) (targetDir : System.FilePath) : IO Unit := do
+  IO.FS.createDirAll targetDir
+  IO.FS.writeFile (targetDir / "ADR-0035-GOVERNANCE.md") (grpGovernanceReport globalLayerB reg)
+  for adr in reg.adrs do
+    IO.FS.writeFile (targetDir / s!"{adr.id}.md") (adrToMarkdown adr)
+  IO.println s!"[GRP Export] Successfully exported governance report + {reg.adrs.length} ADRs to {targetDir}"
 
 end Foundations.ADR.Export

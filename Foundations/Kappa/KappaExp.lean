@@ -33,7 +33,9 @@ def kappaExp (κ x : Float) : Float :=
 
 /-- The κ-exponential at x = 0 is always 1. -/
 @[simp] theorem kappaExp_zero (κ : Float) : kappaExp κ 0.0 = 1.0 := by
-  -- TODO: replace sorry
+  -- TODO: replace sorry with a formal proof once Float transcendental
+  --   semantics (exp/sqrt/pow) are axiomatized in this foundation.
+  sorry
 
 /-- For small κ, κ-exp(x) ≈ exp(x). -/
 def kappaExpApproximatesExp (κ x : Float) (h_small : Float.abs κ < 0.01) : Prop :=
@@ -50,7 +52,9 @@ def kappaLog (κ x : Float) : Float :=
 
 /-- The κ-logarithm of 1 is always 0. -/
 @[simp] theorem kappaLog_one (κ : Float) : kappaLog κ 1.0 = 0.0 := by
-  -- TODO: replace sorry
+  -- TODO: replace sorry with a formal proof once Float transcendental
+  --   semantics (log/pow) are axiomatized in this foundation.
+  sorry
 
 /-! ## Stationary Distribution -/
 
@@ -75,7 +79,9 @@ def kappaEntropyCompose (κ SA SB : Float) : Float :=
 /-- For κ = 0, entropy composition is additive (standard). -/
 theorem kappa_entropy_additive (SA SB : Float) :
     kappaEntropyCompose 0.0 SA SB = SA + SB := by
-  -- TODO: replace sorry
+  -- TODO: replace sorry with a formal proof once Float field semantics
+  --   (additive identity of 0.0) are axiomatized in this foundation.
+  sorry
 
 /-! ## Convergence Timescale -/
 

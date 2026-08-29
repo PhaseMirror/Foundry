@@ -186,7 +186,8 @@ pub fn run_loop(
 ) -> Result<LoopOutput, LoopError> {
     // 1. ADR boundary guard
     let registry =
-        PhaseMirrorRegistry::from_json_str(registry_json).map_err(LoopError::RegistryParse)?;
+        PhaseMirrorRegistry::from_json_str(registry_json)
+            .map_err(|e| LoopError::RegistryParse(e.to_string()))?;
     let config = KernelBoundaryConfig::default();
     if let Err(violation) = registry.verify_boundary(&config) {
         return Err(LoopError::BoundaryViolation(violation.to_string()));
@@ -198,11 +199,10 @@ pub fn run_loop(
     }
 
     // 3. Spectral radius computation
-    let mut governor = SpectralGovernor::new(params.xi.nrows());
     let xi_vecs: Vec<Vec<f64>> = (0..params.xi.nrows())
         .map(|i| (0..params.xi.ncols()).map(|j| params.xi[(i, j)]).collect())
         .collect();
-    let metrics = governor.hybrid_spectral_radius(&xi_vecs);
+    let metrics = SpectralGovernor::hybrid_spectral_radius(&xi_vecs);
     let rho = metrics.spectral_radius;
 
     // 4. Contraction witness — hybrid cascade:
@@ -284,11 +284,13 @@ pub fn run_loop(
         contracted,
     };
 
+    let emitted = gated.emitted;
+
     Ok(LoopOutput {
         gated,
         witness,
         audit_entry_json: serde_json::to_string(&enriched).unwrap_or_default(),
-        emitted: gated.emitted,
+        emitted,
     })
 }
 

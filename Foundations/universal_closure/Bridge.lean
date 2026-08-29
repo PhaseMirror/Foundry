@@ -1,7 +1,7 @@
-import Multiplicity.universal_closure.InfiniteGluing
-import Multiplicity.F1.Li
-import Multiplicity.F1.Crux
-import Multiplicity.F1.Square.Spectral
+import Foundations.universal_closure.InfiniteGluing
+import Foundations.F1.Li
+import Foundations.F1.Crux
+import Foundations.F1.Square.Spectral
 
 /-!
 # Analytic Bridge: Hodge Index ↔ Li Criterion ↔ RH

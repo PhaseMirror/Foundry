@@ -1,4 +1,4 @@
-import Multiplicity.Spine
+import Foundations.Spine
 import moc.Hecke
 import prime_tensors.CPIRTM
 

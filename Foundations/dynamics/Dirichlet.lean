@@ -1,5 +1,5 @@
-import Multiplicity.Complex
-import Multiplicity.Prime
+import Foundations.Complex
+import Foundations.Prime
 
 /-! # Dirichlet Multiplicity Core (ADR-0006)
 

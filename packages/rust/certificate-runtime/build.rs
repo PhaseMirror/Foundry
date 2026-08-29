@@ -1,23 +1,21 @@
-use std::env;
-use std::process::Command;
-
 fn main() {
-    println!("cargo:rerun-if-changed=../../../lean/CertificateCore/Certificate.lean");
-
-    let lean_sysroot = Command::new("lean")
-        .arg("--print-prefix")
-        .output()
-        .expect("Failed to execute lean")
-        .stdout;
-    let lean_sysroot = String::from_utf8(lean_sysroot).unwrap();
-    let lean_sysroot = lean_sysroot.trim();
-
-    println!("cargo:rustc-link-search=native={}/lib/lean", lean_sysroot);
-    println!("cargo:rustc-link-search=native={}/lib", lean_sysroot);
-    println!("cargo:rustc-link-arg=-Wl,-rpath,{}/lib/lean", lean_sysroot);
-    println!("cargo:rustc-link-lib=dylib=leanshared");
-
-    let manifest_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
-    println!("cargo:rustc-link-search=native={}/../../../lean/.lake/build/lib", manifest_dir);
-    println!("cargo:rustc-link-lib=static=adr__scaffold_CertificateCore");
+    // Compile the C stub into a static library.
+    let src = "../../../native_libs/certificate_core.c";
+    let out_dir = std::env::var("OUT_DIR").unwrap();
+    let lib_path = std::path::Path::new(&out_dir).join("libcertificate_core.a");
+    // Use the cc crate via rustc script (requires it in build-dependencies, but we can call gcc directly)
+    // Simpler: invoke the system C compiler.
+    let status = std::process::Command::new("gcc")
+        .args(&[src, "-c", "-fPIC", "-o", "certificate_core.o"])
+        .status()
+        .expect("failed to compile C stub");
+    assert!(status.success(), "gcc compile failed");
+    let status = std::process::Command::new("ar")
+        .args(&["rcs", lib_path.to_str().unwrap(), "certificate_core.o"])
+        .status()
+        .expect("failed to create static lib");
+    assert!(status.success(), "ar command failed");
+    // Tell Cargo where to find the library.
+    println!("cargo:rustc-link-search=native={}", out_dir);
+    println!("cargo:rustc-link-lib=static=certificate_core");
 }

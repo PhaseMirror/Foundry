@@ -1,4 +1,4 @@
-import Multiplicity.alp.Basic
+import Foundations.Basic
 
 namespace Multiplicity.ALP.Constitution
 

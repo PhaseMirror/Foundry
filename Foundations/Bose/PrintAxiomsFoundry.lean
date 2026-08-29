@@ -1,5 +1,5 @@
-import Multiplicity.Bose.Core
-import Multiplicity.Bose.Proofs
+import Foundations.Bose.Core
+import Foundations.Bose.Proofs
 
 #print axioms Multiplicity.Bose.boseMultiplicity
 #print axioms Multiplicity.Bose.encodeBoseState

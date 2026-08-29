@@ -1,5 +1,5 @@
-import Multiplicity.Mathlib.Data.Real.Basic
-import Multiplicity.Mathlib.Analysis.InnerProductSpace.Basic
+import Foundations.Mathlib.Data.Real.Basic
+import Foundations.Mathlib.Analysis.InnerProductSpace.Basic
 
 namespace Multiplicity.UniversalMultiplicityConstantGovernance
 

@@ -25,8 +25,9 @@ theorem scv_eq_iff {K : Nat} (v w : SCV K) : v = w ↔ ∀ k, v.counts k = w.cou
 def support {K : Nat} (v : SCV K) : Channels K → Prop :=
   fun k => 0 < v.counts k
 
-def restrict {K : Nat} (v : SCV K) (s : Channels K → Prop) : Channels K → Nat :=
-  fun k => if s k then v.counts k else 0
+noncomputable def restrict {K : Nat} (v : SCV K) (s : Channels K → Prop) : Channels K → Nat := by
+  classical
+  exact fun k => if s k then v.counts k else 0
 
 def sumFin : {K : Nat} → (Fin K → Nat) → Nat
   | 0, _ => 0
@@ -92,7 +93,10 @@ def capped (τ : Nat) : Growth where
   apply := fun x => Nat.min x τ
   monotone := by
     intro a b hab
-    exact Nat.min_le_min hab (le_rfl)
+    apply Nat.le_min.mpr
+    constructor
+    · exact Nat.le_trans (Nat.min_le_left a τ) hab
+    · exact Nat.min_le_right a τ
 
 theorem capped_le (τ x : Nat) : (capped τ).apply x ≤ τ := by
   simp [capped, Nat.min_le_right]

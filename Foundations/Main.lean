@@ -1,5 +1,5 @@
 // Main.lean – entry point for lake_exe test
-import Multiplicity.ADR.Test
+import Foundations.ADR.Test
 
 open ADR
 

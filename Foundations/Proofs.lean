@@ -1,6 +1,6 @@
-import Multiplicity.ADR.Core
-import Multiplicity.ADR.Resonance
-import Multiplicity.ADR.PhaseMirror
+import Foundations.ADR.Core
+import Foundations.ADR.Resonance
+import Foundations.ADR.PhaseMirror
 
 /-!
 # Formal ADR Invariants

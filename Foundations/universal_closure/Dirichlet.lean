@@ -1,7 +1,7 @@
-import Multiplicity.universal_closure.PartialUC
-import Multiplicity.universal_closure.UniversalClosure
-import Multiplicity.F1.Analysis.Mangoldt
-import Multiplicity.F1.Analysis.RSum
+import Foundations.universal_closure.PartialUC
+import Foundations.universal_closure.UniversalClosure
+import Foundations.F1.Analysis.Mangoldt
+import Foundations.F1.Analysis.RSum
 
 /-!
 # Dirichlet Convolution and the Möbius Function

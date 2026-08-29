@@ -1,4 +1,4 @@
-import Multiplicity.META_RELATIVITY.Core
+import Foundations.META_RELATIVITY.Core
 
 /-!
 # META_RELATIVITY Spectral Invariants

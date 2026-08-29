@@ -12,7 +12,6 @@ def intervene {K : Nat} (target : Fin K) (delta : Nat) (v : SCV K) : SCV K where
 theorem intervene_preserves_nonneg {K : Nat} (target : Fin K) (delta : Nat) (v : SCV K) :
     ∀ k, (intervene target delta v).counts k ≥ 0 := by
   intro k
-  unfold intervene
-  split <;> omega
+  simp [intervene]
 
 end Foundations.IntegrativeSolver

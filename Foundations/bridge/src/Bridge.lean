@@ -1,6 +1,6 @@
-import Multiplicity.Spine
-import Multiplicity.Foundations.Completion
-import Multiplicity.Init.Data.String.Basic
+import Foundations.Spine
+import Foundations.Foundations.Completion
+import Foundations.Init.Data.String.Basic
 
 /-!
 # Lean ↔ Rust FFI Bridge (lean-rs-host)

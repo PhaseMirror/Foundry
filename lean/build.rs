@@ -9,7 +9,6 @@
 
 use std::fs;
 use std::path::Path;
-use std::process::Command;
 
 fn main() {
     println!("cargo:rerun-if-changed=contracts/fpes.yaml");

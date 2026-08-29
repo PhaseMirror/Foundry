@@ -1,4 +1,4 @@
-import Multiplicity.Spine
+import Foundations.Spine
 import moc.CNL
 
 -- Abstract execution state (e.g. cluster state)

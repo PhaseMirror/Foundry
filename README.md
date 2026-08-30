@@ -1,6 +1,8 @@
-# Prime — The Multiplicity Foundation
+# Universal Closure Calculator
 
 ![Verification](https://github.com/PhaseMirror/Prime/actions/workflows/verification.yml/badge.svg)
+
+> **Identity / provenance.** This repository is published as the **Universal Closure Calculator** (UCC), the Multiplicity / Foundry research monorepo. Licensing entities: **UOR Foundation** and **Prime Materia Commons**; Lead Multiplicity Theorist: **Ryan O. Van Gelder**. Upstream provenance: UOR Foundation / Multiplicity / PhaseMirror (`PhaseMirror/Prime`). The UCC audit and its governance acceptance live at `docs/PHASE MIRROR AUDIT.md` and `docs/adr/ADR-PML-056-Universal-Closure-Calculator-Audit-Acceptance.md`. The Riemann Hypothesis remains a **conjecture**; no component here constitutes a proof of it.
 
 The foundational monorepo for Phase Mirror. Contains the core Rust engine, Lean 4 formal verification layer (the F1 square research program), Solidity smart contracts, Circom zk-SNARK circuits, agent model definitions, and operational tooling. This is the mathematical and computational substrate from which the governance gateway in the parent workspace draws.
 

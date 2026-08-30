@@ -28,6 +28,7 @@ contract AttestationRegistry {
 
     IGroth16Verifier public consentVerifier;
     IGroth16Verifier public attestationVerifier;
+    IGroth16Verifier public aceVerifier;
     IHalo2Verifier public batchVerifier;
     IConsentRegistryView public consentRegistry;
 
@@ -45,6 +46,7 @@ contract AttestationRegistry {
     bool public isL0Halted = false;
 
     event VerifiersSet(address consentV, address attestV, address batchV);
+    event AceVerifierSet(address indexed verifier);
     event ConsentRegistrySet(address reg);
     event ProviderAllowed(address provider, bool allowed);
     event SidecarAuthorized(address sidecar, bool allowed);
@@ -76,6 +78,13 @@ contract AttestationRegistry {
 
     event GovernanceHalt(address indexed triggeredBy, bytes32 reasonHash);
 
+    event ACEStateTransitionLocked(
+        uint256 indexed crmfValiditySeal,
+        uint256 indexed kaniProofHash,
+        uint256 lawfulRecursionHash,
+        address indexed submittingAgent
+    );
+
     modifier onlySafeMode() {
         if (isL0Halted) revert("L0_HALT: Protocol suspended by Phase Mirror");
         _;
@@ -88,10 +97,13 @@ contract AttestationRegistry {
     error Replay();
     error InvalidDilithiumSignature();
     error InvalidDilithiumPublicKey();
+    error ACEVerifierNotSet();
+    error SealAlreadyRegistered();
 
     constructor(address consentV, address attestV, address batchV, address consentReg, address initialDilithiumVerifier) {
         consentVerifier = IGroth16Verifier(consentV);
         attestationVerifier = IGroth16Verifier(attestV);
+        aceVerifier = IGroth16Verifier(address(0));
         batchVerifier = IHalo2Verifier(batchV);
         consentRegistry = IConsentRegistryView(consentReg);
         dilithiumVerifier = IDilithiumVerifier(initialDilithiumVerifier);
@@ -106,6 +118,22 @@ contract AttestationRegistry {
         batchVerifier = IHalo2Verifier(batchV);
         emit VerifiersSet(consentV, attestV, batchV);
     }
+
+    function setAceVerifier(address aceV) external {
+        aceVerifier = IGroth16Verifier(aceV);
+        emit AceVerifierSet(aceV);
+    }
+
+    struct ACEAttestation {
+        uint256 timestamp;
+        uint256 kaniProofHash;
+        uint256 maxDrift;
+        uint256 lawfulRecursionHash;
+        address submittingAgent;
+        bool active;
+    }
+
+    mapping(uint256 => ACEAttestation) public aceRegistry;
 
     function setConsentRegistry(address reg) external {
         consentRegistry = IConsentRegistryView(reg);
@@ -125,6 +153,45 @@ contract AttestationRegistry {
     function setDilithiumVerifier(address verifier) external {
         dilithiumVerifier = IDilithiumVerifier(verifier);
         emit DilithiumVerifierSet(verifier);
+    }
+
+    /// @notice Submits a zero-knowledge proof of a lawful ACE governance state transition.
+    /// @param a Groth16 proof point A
+    /// @param b Groth16 proof point B
+    /// @param c Groth16 proof point C
+    /// @param pubSignals Public signals array of length 2:
+    ///   [0] = lawful_recursion_hash (Circom public input)
+    ///   [1] = crmf_validity_seal (Circom public output)
+    /// @param kaniProofHash Hash of the Kani formal verification proof bundle
+    /// @param maxDrift DSE macro-window drift bound enforced by the Rust kernel
+    function submitACEAttestation(
+        uint256[2] calldata a,
+        uint256[2][2] calldata b,
+        uint256[2] calldata c,
+        uint256[2] calldata pubSignals,
+        uint256 kaniProofHash,
+        uint256 maxDrift
+    ) external onlySafeMode {
+        if (address(aceVerifier) == address(0)) revert ACEVerifierNotSet();
+        uint256 crmfValiditySeal = pubSignals[1];
+        if (aceRegistry[crmfValiditySeal].active) revert SealAlreadyRegistered();
+        if (kaniProofHash == 0) revert InvalidProof();
+
+        if (!aceVerifier.verifyProof(a, b, c, pubSignals)) {
+            emit GovernanceHalt(msg.sender, "SIG_GOV_KILL: ZK Proof Validation Failed");
+            revert InvalidProof();
+        }
+
+        aceRegistry[crmfValiditySeal] = ACEAttestation({
+            timestamp: uint64(block.timestamp),
+            kaniProofHash: kaniProofHash,
+            maxDrift: maxDrift,
+            lawfulRecursionHash: pubSignals[0],
+            submittingAgent: msg.sender,
+            active: true
+        });
+
+        emit ACEStateTransitionLocked(crmfValiditySeal, kaniProofHash, pubSignals[0], msg.sender);
     }
 
     function registerDilithiumKey(bytes calldata publicKey) external {

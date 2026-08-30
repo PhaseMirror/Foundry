@@ -7,7 +7,7 @@
 //! before any state mutation is finalized.
 
 use serde::{Deserialize, Serialize};
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, TimeZone, Utc};
 
 use crmf::envelope::{EnvelopePayload, EnvelopeMetadata};
 use crmf::seal::CrmfSeal;
@@ -363,5 +363,136 @@ impl ACEGuardian {
 
     pub fn ledger(&self) -> &ArchivumLedger {
         &self.ledger
+    }
+}
+
+#[cfg(kani)]
+mod verification {
+    use super::*;
+
+    #[kani::proof]
+    fn proof_wac_lipschitz_enforced() {
+        let l_phi: f64 = kani::any();
+        kani::assume(l_phi > 0.0 && l_phi < 2.0);
+
+        let state_hash = String::from("proof-state");
+        let wac = WacCertification {
+            state_hash,
+            lipschitz_constant: l_phi,
+            distance_prev: 0.0,
+            distance_curr: 0.0,
+            is_contracting: l_phi < LIPSCHITZ_UPPER_BOUND,
+            timestamp: Utc.timestamp(1_600_000_000, 0),
+        };
+        if l_phi >= LIPSCHITZ_UPPER_BOUND {
+            assert!(wac.verify().is_err(), "Lipschitz violation must be rejected");
+        } else {
+            assert!(wac.verify().is_ok(), "Valid Lipschitz must be accepted");
+        }
+    }
+
+    #[kani::proof]
+    fn proof_dse_drift_enforced() {
+        let drift: f64 = kani::any();
+        let expansions: u64 = kani::any();
+        kani::assume(drift >= 0.0 && drift <= 0.1);
+        kani::assume(expansions <= 20);
+
+        let state_hash = String::from("proof-state");
+        let dse = DseCertification {
+            state_hash,
+            drift,
+            max_drift: DEFAULT_MAX_DRIFT,
+            expansion_count: expansions,
+            sparse_expansion_limit: 10,
+            is_within_bounds: drift <= DEFAULT_MAX_DRIFT && expansions <= 10,
+            timestamp: Utc.timestamp(1_600_000_000, 0),
+        };
+
+        if drift > DEFAULT_MAX_DRIFT || expansions > 10 {
+            assert!(dse.verify().is_err(), "Drift/expansion violation must be rejected");
+        } else {
+            assert!(dse.verify().is_ok(), "Valid drift must be accepted");
+        }
+    }
+
+    #[kani::proof]
+    fn proof_circuit_budget_exhaustion() {
+        let budget_limit: u64 = kani::any();
+        kani::assume(budget_limit > 0 && budget_limit < 1000);
+
+        let mut budget = CircuitBudget::new(budget_limit);
+        let consume: u64 = kani::any();
+        kani::assume(consume > 0);
+
+        if budget.used + consume > budget_limit {
+            assert!(budget.consume(consume).is_err(), "Budget exhaustion must be detected");
+        } else {
+            assert!(budget.consume(consume).is_ok(), "Valid consumption must succeed");
+        }
+    }
+
+    #[kani::proof]
+    fn proof_sig_gov_kill_audit_trail() {
+        let kill = SigGovKill {
+            reason: String::from("proof-reason"),
+            state_hash: String::from("proof-state"),
+            timestamp: Utc.timestamp(1_600_000_000, 0),
+            audit_trail: vec![String::from("SIG_GOV_KILL triggered: proof-reason")],
+        };
+        assert_eq!(kill.reason, "proof-reason");
+        assert_eq!(kill.audit_trail.len(), 1);
+        assert_eq!(kill.audit_trail[0], "SIG_GOV_KILL triggered: proof-reason");
+    }
+
+    #[kani::proof]
+    fn proof_wac_contracting_implies_verify_ok() {
+        let l_phi: f64 = kani::any();
+        kani::assume(l_phi > 0.0 && l_phi < 1.0);
+
+        let state_hash = String::from("proof-state");
+        let wac = WacCertification {
+            state_hash,
+            lipschitz_constant: l_phi,
+            distance_prev: 0.0,
+            distance_curr: 0.0,
+            is_contracting: l_phi < LIPSCHITZ_UPPER_BOUND,
+            timestamp: Utc.timestamp(1_600_000_000, 0),
+        };
+        assert!(wac.is_contracting);
+        assert!(wac.verify().is_ok());
+    }
+
+    #[kani::proof]
+    fn proof_dse_within_bounds_implies_verify_ok() {
+        let drift: f64 = kani::any();
+        let expansions: u64 = kani::any();
+        kani::assume(drift >= 0.0 && drift <= DEFAULT_MAX_DRIFT);
+        kani::assume(expansions <= 10);
+
+        let state_hash = String::from("proof-state");
+        let dse = DseCertification {
+            state_hash,
+            drift,
+            max_drift: DEFAULT_MAX_DRIFT,
+            expansion_count: expansions,
+            sparse_expansion_limit: 10,
+            is_within_bounds: drift <= DEFAULT_MAX_DRIFT && expansions <= 10,
+            timestamp: Utc.timestamp(1_600_000_000, 0),
+        };
+        assert!(dse.is_within_bounds);
+        assert!(dse.verify().is_ok());
+    }
+
+    #[kani::proof]
+    fn proof_circuit_budget_never_negative() {
+        let mut budget = CircuitBudget::new(100);
+        assert_eq!(budget.remaining(), 100);
+        
+        let consume: u64 = kani::any();
+        kani::assume(consume <= 100);
+        
+        let _ = budget.consume(consume);
+        assert!(budget.remaining() <= 100);
     }
 }

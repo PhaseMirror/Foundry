@@ -1,3 +1,5 @@
+mod tui;
+
 use archivum::WitnessLedger;
 use clap::{Parser, Subcommand};
 use sigma::{SigmaKernel, StateTransition, Thresholds, PolicyEngine};
@@ -5,14 +7,16 @@ use std::io::{self, Read};
 
 #[derive(Parser)]
 #[command(name = "pscmd")]
-#[command(about = "PhaseSpace Commander — governed operator shell", long_about = None)]
+#[command(about = "PhaseSpace Commander — governed PIRTM coding agent shell", long_about = None)]
 struct Cli {
     #[command(subcommand)]
-    command: Commands,
+    command: Option<Commands>,
 }
 
 #[derive(Subcommand)]
 enum Commands {
+    /// Launch interactive Terminal UI (TUI) coding agent shell
+    Agent,
     /// Evaluate a state transition through the Sigma kernel
     Sigma {
         #[command(subcommand)]
@@ -47,7 +51,7 @@ fn run_sigma_evaluate(input: Option<std::path::PathBuf>) -> anyhow::Result<()> {
     let thresholds = Thresholds::default();
 
     let engine = PolicyEngine::new();
-    let ledger = WitnessLedger::new("state/archivum/witnesses.jsonl");
+    let ledger = WitnessLedger::new();
     let mut kernel = SigmaKernel::new(engine, ledger, thresholds);
 
     match kernel.evaluate(transition) {
@@ -69,8 +73,11 @@ fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
 
     match cli.command {
-        Commands::Sigma { action: SigmaAction::Evaluate { input } } => {
+        Some(Commands::Sigma { action: SigmaAction::Evaluate { input } }) => {
             run_sigma_evaluate(input)
+        }
+        Some(Commands::Agent) | None => {
+            tui::run_tui()
         }
     }
 }

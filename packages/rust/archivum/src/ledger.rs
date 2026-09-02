@@ -105,6 +105,42 @@ impl ArchivumLedger {
         }
         Ok(quote)
     }
+
+    pub fn stamp_sigma_proof(&mut self, proof: &crate::proofs::SigmaProof) -> Result<(), ArchivumError> {
+        let w = Witness {
+            state_hash: proof.state_hash.clone(),
+            event_type: "SigmaProof".into(),
+            timestamp: 0,
+            commit_hash: None,
+            previous_hash: None,
+        };
+        let _ = self.append(w);
+        Ok(())
+    }
+
+    pub fn append_block(&mut self, block: &crate::proofs::TransitionBlock) -> Result<(), ArchivumError> {
+        let w = Witness {
+            state_hash: block.transition_id.clone(),
+            event_type: "TransitionBlock".into(),
+            timestamp: 0,
+            commit_hash: None,
+            previous_hash: None,
+        };
+        let _ = self.append(w);
+        Ok(())
+    }
+
+    pub fn stamp_pweh(&mut self, log: &crate::proofs::ConflictLogSchema) -> Result<(), ArchivumError> {
+        let w = Witness {
+            state_hash: log.receipt_hash.clone(),
+            event_type: "ConflictLog".into(),
+            timestamp: 0,
+            commit_hash: None,
+            previous_hash: None,
+        };
+        let _ = self.append(w);
+        Ok(())
+    }
 }
 
 #[cfg(kani)]

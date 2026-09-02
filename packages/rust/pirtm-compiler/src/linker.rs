@@ -1,4 +1,5 @@
 use crate::manifest::EnsembleManifest;
+use pirtm_engine::spectral::{self, Ensemble};
 use std::collections::HashMap;
 
 #[derive(Debug)]
@@ -13,7 +14,8 @@ pub enum LinkerError {
 }
 
 /// The SpectralGovernor oversees the linking of multiple ensembles.
-/// It ensures that their composite spectral radius stays within contractive bounds (< 1.0).
+/// It constructs the topological interconnection matrix A and gains λ,
+/// and computes ρ(|A|·diag(λ)) < 1.0 via the Spectral Small-Gain Runtime Gate.
 pub struct SpectralGovernor {
     registry: HashMap<String, EnsembleManifest>,
 }
@@ -31,51 +33,97 @@ impl SpectralGovernor {
             .insert(manifest.ensemble.name.clone(), manifest);
     }
 
-    /// Link a root ensemble, verifying all dependencies and spectral bounds recursively.
+    /// Link a root ensemble, verifying all dependencies and true matrix spectral radius.
     pub fn link(&self, root_name: &str) -> Result<(), LinkerError> {
         let root_manifest = self
             .registry
             .get(root_name)
             .ok_or_else(|| LinkerError::DependencyNotFound(root_name.to_string()))?;
 
-        self.verify_composition(root_manifest)
+        // 1. Gather all nodes in the transitive dependency graph
+        let mut nodes = Vec::new();
+        let mut node_indices = HashMap::new();
+        self.collect_dependencies(root_manifest, &mut nodes, &mut node_indices)?;
+
+        let n = nodes.len();
+        if n == 0 {
+            return Ok(());
+        }
+
+        // 2. Build adjacency matrix A and lambda gain vector
+        let mut adjacency = vec![vec![0.0; n]; n];
+        let mut lambdas = vec![0.0; n];
+
+        for (i, manifest) in nodes.iter().enumerate() {
+            lambdas[i] = manifest.governance.spectral_radius;
+
+            if let Some(deps) = &manifest.dependencies {
+                for (dep_name, dep_meta) in deps {
+                    let dep_manifest = self
+                        .registry
+                        .get(dep_name)
+                        .ok_or_else(|| LinkerError::DependencyNotFound(dep_name.to_string()))?;
+
+                    // Prime compatibility check
+                    if let Some(expected_prime) = dep_meta.prime_index {
+                        if expected_prime != dep_manifest.ensemble.prime_index {
+                            return Err(LinkerError::IncompatiblePrime(
+                                expected_prime,
+                                dep_manifest.ensemble.prime_index,
+                            ));
+                        }
+                    }
+
+                    if let Some(&j) = node_indices.get(dep_name) {
+                        adjacency[i][j] = dep_meta.spectral_max;
+                    }
+                }
+            }
+        }
+
+        // 3. Evaluate the true Small-Gain Spectral Radius Invariant: ρ(|A|·diag(λ)) < 1.0
+        let ensemble = Ensemble::new(root_name, adjacency, lambdas);
+        let rho = spectral::check_small_gain(&ensemble, 1e-6).map_err(|_| {
+            LinkerError::SpectralBudgetExceeded {
+                ensemble: root_name.to_string(),
+                total: 1.0,
+                limit: 1.0,
+            }
+        })?;
+
+        if rho >= 1.0 {
+            return Err(LinkerError::SpectralBudgetExceeded {
+                ensemble: root_name.to_string(),
+                total: rho,
+                limit: 1.0,
+            });
+        }
+
+        Ok(())
     }
 
-    fn verify_composition(&self, manifest: &EnsembleManifest) -> Result<(), LinkerError> {
-        let mut total_spectral_radius = manifest.governance.spectral_radius;
+    fn collect_dependencies<'a>(
+        &'a self,
+        manifest: &'a EnsembleManifest,
+        nodes: &mut Vec<&'a EnsembleManifest>,
+        node_indices: &mut HashMap<String, usize>,
+    ) -> Result<(), LinkerError> {
+        if node_indices.contains_key(&manifest.ensemble.name) {
+            return Ok(());
+        }
+
+        let idx = nodes.len();
+        node_indices.insert(manifest.ensemble.name.clone(), idx);
+        nodes.push(manifest);
 
         if let Some(deps) = &manifest.dependencies {
-            for (dep_name, dep_meta) in deps {
+            for (dep_name, _) in deps {
                 let dep_manifest = self
                     .registry
                     .get(dep_name)
                     .ok_or_else(|| LinkerError::DependencyNotFound(dep_name.to_string()))?;
-
-                // Add the dependency's declared max budget
-                total_spectral_radius += dep_meta.spectral_max;
-
-                // Prime compatibility check: If a dependency requests a specific prime,
-                // it must match the dependency's actual prime.
-                if let Some(expected_prime) = dep_meta.prime_index {
-                    if expected_prime != dep_manifest.ensemble.prime_index {
-                        return Err(LinkerError::IncompatiblePrime(
-                            expected_prime,
-                            dep_manifest.ensemble.prime_index,
-                        ));
-                    }
-                }
-
-                // Recursively verify the dependency
-                self.verify_composition(dep_manifest)?;
+                self.collect_dependencies(dep_manifest, nodes, node_indices)?;
             }
-        }
-
-        if total_spectral_radius >= 1.0 {
-            return Err(LinkerError::SpectralBudgetExceeded {
-                ensemble: manifest.ensemble.name.clone(),
-                total: total_spectral_radius,
-                limit: 1.0,
-            });
         }
 
         Ok(())
@@ -127,7 +175,7 @@ mod tests {
                 authors: None,
             },
             governance: GovernanceMeta {
-                spectral_radius: 0.2, // Within the 0.3 budget
+                spectral_radius: 0.2,
                 epsilon: None,
                 contractivity_receipt: "hash2".to_string(),
                 ledger_anchor: None,
@@ -145,58 +193,64 @@ mod tests {
     fn test_linker_composition_failure() {
         let mut governor = SpectralGovernor::new();
 
-        let mut deps = HashMap::new();
-        deps.insert(
-            "tensor-ops".to_string(),
+        let mut deps_a = HashMap::new();
+        deps_a.insert(
+            "node_b".to_string(),
             DependencyMeta {
-                version: "0.1".to_string(),
-                spectral_max: 0.6,
+                version: "1.0".to_string(),
+                spectral_max: 1.5,
                 prime_index: None,
             },
         );
 
-        let main = EnsembleManifest {
+        let mut deps_b = HashMap::new();
+        deps_b.insert(
+            "node_a".to_string(),
+            DependencyMeta {
+                version: "1.0".to_string(),
+                spectral_max: 1.5,
+                prime_index: None,
+            },
+        );
+
+        let node_a = EnsembleManifest {
             ensemble: EnsembleMeta {
-                name: "main-app".to_string(),
+                name: "node_a".to_string(),
                 version: "1.0".to_string(),
                 prime_index: 2,
                 description: None,
                 authors: None,
             },
             governance: GovernanceMeta {
-                spectral_radius: 0.5,
+                spectral_radius: 0.9,
                 epsilon: None,
-                contractivity_receipt: "hash1".to_string(),
+                contractivity_receipt: "hash_a".to_string(),
                 ledger_anchor: None,
             },
-            dependencies: Some(deps),
+            dependencies: Some(deps_a),
         };
 
-        let dep = EnsembleManifest {
+        let node_b = EnsembleManifest {
             ensemble: EnsembleMeta {
-                name: "tensor-ops".to_string(),
-                version: "0.1".to_string(),
-                prime_index: 17,
+                name: "node_b".to_string(),
+                version: "1.0".to_string(),
+                prime_index: 3,
                 description: None,
                 authors: None,
             },
             governance: GovernanceMeta {
-                spectral_radius: 0.5,
+                spectral_radius: 0.9,
                 epsilon: None,
-                contractivity_receipt: "hash2".to_string(),
+                contractivity_receipt: "hash_b".to_string(),
                 ledger_anchor: None,
             },
-            dependencies: None,
+            dependencies: Some(deps_b),
         };
 
-        governor.register(main);
-        governor.register(dep);
+        governor.register(node_a);
+        governor.register(node_b);
 
-        // 0.5 + 0.6 = 1.1 >= 1.0 => Exceeds bound!
-        let result = governor.link("main-app");
-        assert!(matches!(
-            result,
-            Err(LinkerError::SpectralBudgetExceeded { .. })
-        ));
+        // Feedback loop with high coupling gains (1.5 * 0.9 * 1.5 * 0.9 = 1.8225 > 1)
+        assert!(governor.link("node_a").is_err());
     }
 }

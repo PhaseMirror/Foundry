@@ -78,4 +78,5 @@ pub struct ProofReceipt {
 pub struct MlirModule {
     pub source: String,
     pub ops: Vec<PirtmOp>,
+    pub proof_receipt: Option<ProofReceipt>,
 }

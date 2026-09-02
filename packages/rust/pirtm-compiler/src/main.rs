@@ -14,7 +14,126 @@ impl AdmissibilityValidator {
     fn new() -> Self {
         Self {}
     }
-    fn validate(&self, _ast: &pirtm_parser::ast::Expr) -> Result<(), String> {
+    fn validate(&self, ast: &pirtm_parser::ast::Expr) -> Result<(), String> {
+        match ast {
+            pirtm_parser::ast::Expr::FloatLit(_) => {
+                Err("L0 Invariant Violation: floating-point literal used as stability proof is forbidden".to_string())
+            }
+            pirtm_parser::ast::Expr::Atom { prime: n } => {
+                self.validate_prime(*n).map_err(|e| format!("Prime operator violation: {}", e))?;
+                Ok(())
+            }
+            pirtm_parser::ast::Expr::Binary { left, right, .. } => {
+                self.validate(left)?;
+                self.validate(right)
+            }
+            pirtm_parser::ast::Expr::Call { args, .. } => {
+                args.iter().try_for_each(|arg| self.validate(arg))
+            }
+            pirtm_parser::ast::Expr::If {
+                cond,
+                then_branch,
+                else_branch,
+            } => {
+                self.validate(cond)?;
+                for stmt in then_branch {
+                    self.validate_stmt(stmt)?;
+                }
+                if let Some(else_branch) = else_branch {
+                    for stmt in else_branch {
+                        self.validate_stmt(stmt)?;
+                    }
+                }
+                Ok(())
+            }
+            pirtm_parser::ast::Expr::Successor(e)
+            | pirtm_parser::ast::Expr::StratumBoundary(e)
+            | pirtm_parser::ast::Expr::PrimeShift(e)
+            | pirtm_parser::ast::Expr::Sin(e)
+            | pirtm_parser::ast::Expr::Cos(e)
+            | pirtm_parser::ast::Expr::Log(e)
+            | pirtm_parser::ast::Expr::Not(e)
+            | pirtm_parser::ast::Expr::Try(e) => self.validate(e),
+            pirtm_parser::ast::Expr::LogicalOp { left, right, .. } => {
+                self.validate(left)?;
+                self.validate(right)
+            }
+            pirtm_parser::ast::Expr::MethodCall { obj, args, .. } => {
+                self.validate(obj)?;
+                args.iter().try_for_each(|arg| self.validate(arg))
+            }
+            pirtm_parser::ast::Expr::Tuple(elems) => {
+                elems.iter().try_for_each(|elem| self.validate(elem))
+            }
+            pirtm_parser::ast::Expr::StructInit { fields, .. } => {
+                fields.iter().try_for_each(|(_, expr)| self.validate(expr))
+            }
+            pirtm_parser::ast::Expr::FieldAccess { obj, .. } => self.validate(obj),
+            pirtm_parser::ast::Expr::Match { expr, arms, .. } => {
+                self.validate(expr)?;
+                for (_, stmts) in arms {
+                    for stmt in stmts {
+                        self.validate_stmt(stmt)?;
+                    }
+                }
+                Ok(())
+            }
+            _ => Ok(()),
+        }
+    }
+
+    fn validate_stmt(&self, stmt: &pirtm_parser::ast::Stmt) -> Result<(), String> {
+        match stmt {
+            pirtm_parser::ast::Stmt::Loop { cond: None, .. } => {
+                Err("L0 Invariant Violation: unbounded loop without explicit bound annotation".to_string())
+            }
+            pirtm_parser::ast::Stmt::Expr(expr) => self.validate(expr),
+            pirtm_parser::ast::Stmt::Let { expr, .. }
+            | pirtm_parser::ast::Stmt::LetMut { expr, .. }
+            | pirtm_parser::ast::Stmt::Assign { expr, .. } => self.validate(expr),
+            pirtm_parser::ast::Stmt::Return(Some(expr)) => self.validate(expr),
+            pirtm_parser::ast::Stmt::Block(stmts) => {
+                stmts.iter().try_for_each(|stmt| self.validate_stmt(stmt))
+            }
+            pirtm_parser::ast::Stmt::If {
+                cond,
+                then_branch,
+                else_branch,
+            } => {
+                self.validate(cond)?;
+                for stmt in then_branch {
+                    self.validate_stmt(stmt)?;
+                }
+                if let Some(else_branch) = else_branch {
+                    for stmt in else_branch {
+                        self.validate_stmt(stmt)?;
+                    }
+                }
+                Ok(())
+            }
+            pirtm_parser::ast::Stmt::FnDef { body, .. } => {
+                body.iter().try_for_each(|stmt| self.validate_stmt(stmt))
+            }
+            pirtm_parser::ast::Stmt::ImplDef { methods, .. } => {
+                methods.iter().try_for_each(|stmt| self.validate_stmt(stmt))
+            }
+            _ => Ok(()),
+        }
+    }
+
+    fn validate_prime(&self, n: u64) -> Result<(), String> {
+        if n < 2 {
+            return Err(format!("prime_index {} is not a prime", n));
+        }
+        let limit = (n as f64).sqrt() as u64;
+        for i in 2..=limit {
+            if n % i == 0 {
+                return Err(format!(
+                    "prime_index {} is not a prime (divisible by {})",
+                    n, i
+                ));
+            }
+        }
         Ok(())
     }
 }
@@ -65,6 +184,26 @@ enum Commands {
         #[arg(help = "Name of the new ensemble")]
         name: String,
     },
+    /// Run a compiled MLIR or LLVM IR file under governance, with optional ensemble validation.
+    Run {
+        #[arg(value_name = "FILE")]
+        file: String,
+        #[arg(long, help = "JSON ensemble configuration file")]
+        ensemble: Option<String>,
+        #[arg(long, help = "Input to pass to the program (via stdin)")]
+        input: Option<String>,
+    },
+    /// Start the Model Context Protocol (MCP) server or invoke tools
+    Mcp {
+        /// Optional action (e.g. 'start', 'compile', 'validate')
+        action: Option<String>,
+        #[arg(long, help = "Source code for compile/validate action")]
+        source: Option<String>,
+        #[arg(short, long, default_value = "stdio", help = "Transport: stdio or tcp")]
+        transport: String,
+        #[arg(short, long, default_value_t = 8090, help = "Port for TCP transport")]
+        port: u16,
+    },
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -93,11 +232,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             let validator = AdmissibilityValidator::new();
             for stmt in &program.stmts {
-                if let pirtm_parser::ast::Stmt::Expr(ref expr) = stmt {
-                    validator
-                        .validate(expr)
-                        .map_err(|e| format!("Validation error: {}", e))?;
-                }
+                validator
+                    .validate_stmt(stmt)
+                    .map_err(|e| format!("Validation error: {}", e))?;
             }
 
             let mut visitor = MlirEmitterVisitor::new();
@@ -178,6 +315,42 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             }
         }
+        Commands::Run {
+            file,
+            ensemble,
+            input,
+        } => {
+            let config = pirtm_engine::RuntimeConfig {
+                input_args: input.map(|s| vec![s]).unwrap_or_default(),
+                ledger_enabled: true,
+                ..Default::default()
+            };
+            let mut runtime = pirtm_engine::Runtime::new(config);
+
+            if let Some(ensemble_path) = ensemble {
+                let ensemble_obj = runtime
+                    .load_ensemble(Path::new(&ensemble_path))
+                    .map_err(|e| format!("Failed to load ensemble config {}: {}", ensemble_path, e))?;
+                let receipt = runtime
+                    .validate_ensemble(&ensemble_obj)
+                    .map_err(|e| format!("Ensemble validation failed: {}", e))?;
+                println!("✅ Ensemble validated under Small-Gain Theorem.");
+                println!("   Receipt hash: {}", receipt.hash);
+                println!("   Spectral radius ρ: {:.6}", receipt.spectral_radius);
+            } else {
+                eprintln!("⚠️  No ensemble config provided; skipping link-time spectral check.");
+            }
+
+            runtime
+                .load(std::path::Path::new(&file))
+                .map_err(|e| format!("Failed to load file: {}", e))?;
+            let receipt = runtime.run().map_err(|e| format!("Execution failed: {}", e))?;
+            println!("Execution result: {}", receipt.return_code);
+            println!("Contractivity hash: {}", receipt.contractivity_hash);
+            if !receipt.stdout.is_empty() {
+                println!("Stdout: {}", receipt.stdout);
+            }
+        }
         Commands::New { project_type, name } => {
             if project_type != "ensemble" {
                 eprintln!("Error: only 'ensemble' project type is supported via 'new' command.");
@@ -211,6 +384,71 @@ contractivity_receipt = "pending"
             fs::write(format!("{}/src/lib.pirtm", name), lib_content)?;
 
             println!("✅ Successfully created new ensemble '{}'", name);
+        }
+        Commands::Mcp { action, source, transport, port } => {
+            if let Some(act) = action.as_deref() {
+                if act == "compile" {
+                    let src = source.unwrap_or_else(|| "let genesis = Ap(42); genesis;".to_string());
+                    if transport == "tcp" {
+                        let payload = serde_json::json!({
+                            "jsonrpc": "2.0",
+                            "id": 1,
+                            "method": "tools/call",
+                            "params": {
+                                "name": "compile",
+                                "arguments": { "source": src.clone() }
+                            }
+                        });
+                        let addr = format!("127.0.0.1:{}", port);
+                        if let Ok(mut stream) = std::net::TcpStream::connect(&addr) {
+                            use std::io::{Read, Write};
+                            let body = serde_json::to_string(&payload)?;
+                            let req = format!(
+                                "POST / HTTP/1.1\r\nHost: {}\r\nContent-Type: application/json\r\nContent-Length: {}\r\n\r\n{}",
+                                addr, body.len(), body
+                            );
+                            stream.write_all(req.as_bytes())?;
+                            let mut buf = Vec::new();
+                            stream.read_to_end(&mut buf)?;
+                            let resp_str = String::from_utf8_lossy(&buf);
+                            println!("{}", resp_str);
+                            return Ok(());
+                        }
+                    }
+                    let val = pirtm_mcp::tools::handle_call("compile", &serde_json::json!({ "source": src }))
+                        .map_err(|e| format!("Tool execution failed: {}", e))?;
+                    println!("{}", serde_json::to_string_pretty(&val)?);
+                    return Ok(());
+                }
+            }
+
+            let server = pirtm_mcp::McpServer::new();
+            match transport.as_str() {
+                "stdio" => {
+                    eprintln!("PIRTM MCP Server running on stdio");
+                    let stdin = std::io::stdin();
+                    let stdout = std::io::stdout();
+                    server.run_stdio(stdin.lock(), stdout.lock())?;
+                }
+                "tcp" => {
+                    let addr = format!("127.0.0.1:{}", port);
+                    eprintln!("PIRTM MCP Server listening on TCP {}", addr);
+                    let listener = std::net::TcpListener::bind(&addr)?;
+                    for stream in listener.incoming() {
+                        if let Ok(stream) = stream {
+                            let reader = std::io::BufReader::new(stream.try_clone()?);
+                            let writer = std::io::BufWriter::new(stream);
+                            let _ = server.run_connection(reader, writer);
+                        }
+                    }
+                }
+                other => {
+                    eprintln!("Unknown transport '{}', defaulting to stdio", other);
+                    let stdin = std::io::stdin();
+                    let stdout = std::io::stdout();
+                    server.run_stdio(stdin.lock(), stdout.lock())?;
+                }
+            }
         }
     }
     Ok(())

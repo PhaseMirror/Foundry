@@ -181,7 +181,7 @@ theorem migrated_acyclic : StrictAcyclic migratedList := by
   -- Replace the opaque `a.supersedes` with `none` in `ha_sup` to expose a contradiction.
   have hcontra : (some parent : Option _) = none := by
     -- `ha_sup : a.supersedes = some parent`; rewrite via `hnone`.
-    simpa [hnone] using ha_sup
+    simp [hnone] at ha_sup
   cases hcontra
 
 /-- No migrated record has a superseded target, so the existence obligation is vacuous. -/

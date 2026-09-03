@@ -178,24 +178,23 @@ theorem merged_acyclic : StrictAcyclic mergedList := by
     -- Lift `hPath : ProvenancePath mergedList parent aid` to
     -- `ProvenancePath sampleADRList parent aid` by induction.
     -- Pin the `adrs` parameter so unification lands on `sampleADRList`.
-    have hpath' : ProvenancePath sampleADRList parent aid := by
-      -- Lift `hPath : ProvenancePath mergedList parent aid` to
-      -- `ProvenancePath sampleADRList parent aid` by structural induction.
-      -- We use `ProvenancePath.rec` with the motive `\a b _ => a = b ∨ True`
-      -- — no, simpler: we use a direct `cases` analysis since the path is
-      -- either `refl` (immediate) or `step` (recurses).
-      cases hPath with
-      | refl => exact ProvenancePath.refl _
-      | step child inter _ hRelStep hPathTail =>
-        rcases hRelStep with ⟨a', ham', ha'_id, ha'_sup⟩
-        rcases (List.mem_append.1 ham') with ha' | ha'
-        · exact ProvenancePath.step child inter _ ⟨a', ha', ha'_id, ha'_sup⟩ hPathTail
-        · have hnone : a'.supersedes = none := ADR.Migrated.migrated_no_supersedes a' ha'
-          exact False.elim (by simpa [hnone] using ha'_sup)
+    have hpath' : ProvenancePath sampleADRList parent aid :=
+      ProvenancePath.rec
+        (motive := fun a b _p => ProvenancePath sampleADRList a b)
+        (fun x => ProvenancePath.refl (adrs := sampleADRList) x)
+        (fun child inter _parent hRelStep hPathTail ih =>
+          match hRelStep with
+          | ⟨a', ham', ha'_id, ha'_sup⟩ =>
+            match List.mem_append.1 ham' with
+            | Or.inl ha' => ProvenancePath.step child inter _ ⟨a', ha', ha'_id, ha'_sup⟩ ih
+            | Or.inr ha'' =>
+              have hnone : a'.supersedes = none := ADR.Migrated.migrated_no_supersedes a' ha''
+              False.elim (by simp [hnone] at ha'_sup))
+        hPath
     exact sample_acyclic aid ⟨parent, hsrel, hpath'⟩
   · -- Migration case: no record in the migration slice has a `supersedes` edge.
     have hnone : a.supersedes = none := ADR.Migrated.migrated_no_supersedes a ha
-    exact False.elim (by simpa [hnone] using ha_sup)
+    exact False.elim (by simp [hnone] at ha_sup)
 
 /-- Existence of superseded targets: discharged by hand. -/
 theorem merged_supersedes_exist :
@@ -205,7 +204,7 @@ theorem merged_supersedes_exist :
   · rcases sample_supersedes_exist a ha sid hsup with ⟨t, ht, hid⟩
     exact ⟨t, List.mem_append_left _ ht, hid⟩
   · have hnone : a.supersedes = none := ADR.Migrated.migrated_no_supersedes a ha
-    exact False.elim (by simpa [hnone] using hsup)
+    exact False.elim (by simp [hnone] at hsup)
 
 /-- Superseded status consistency: discharged by hand. -/
 theorem merged_superseded_status_consistent :
@@ -216,7 +215,7 @@ theorem merged_superseded_status_consistent :
   · rcases sample_superseded_status_consistent a ha sid hsup with ⟨t, ht, hid, hst⟩
     exact ⟨t, List.mem_append_left _ ht, hid, hst⟩
   · have hnone : a.supersedes = none := ADR.Migrated.migrated_no_supersedes a ha
-    exact False.elim (by simpa [hnone] using hsup)
+    exact False.elim (by simp [hnone] at hsup)
 
 /-- The merged registry, with all invariants discharged by explicit proof. -/
 def mergedRegistry : ADRRegistry where

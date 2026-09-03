@@ -1,6 +1,7 @@
 import ADR.Core
 import ADR.Proofs
 import ADR.Examples
+import ADR.Migrated
 import ADR.Export
 
 /-!
@@ -151,6 +152,93 @@ theorem syntactic_check_misses_compound_conflict :
 
 /-! ## 4. Export Determinism Verification -/
 
+/-- The union of the production Examples registry and the migrated ADR slice.
+This is what `lake test` exports to `docs/adr/`. The merge is order-stable: the
+Examples registry is authoritative for IDs 001–010; the migrated slice adds
+ADR-0040/0041/0043/0057–0061 with no overlap. -/
+def mergedList : List ADR := sampleRegistry.adrs ++ ADR.Migrated.migratedList
+
+/-- IDs in the merged list are unique. The two halves have disjoint ID sets:
+Examples uses "ADR-001"…"ADR-010", Migrated uses "ADR-0040/0041/0043/0057-0061".
+Discharged by `decide` over the literal list. -/
+theorem merged_unique_ids : (mergedList.map ADR.id).Nodup := by
+  decide
+
+/-- Acyclicity of the merged list: discharged by induction on the
+`ProvenancePath` witness, using the fact that the migration slice has
+no `supersedes` edges. The structural induction lifts every step of the
+path from `mergedList` to `sampleADRList`, then `sample_acyclic` closes. -/
+theorem merged_acyclic : StrictAcyclic mergedList := by
+  intro aid ⟨parent, hRel, hPath⟩
+  rcases hRel with ⟨a, ham, ha_id, ha_sup⟩
+  rcases (List.mem_append.1 ham) with ha | ha
+  · -- Examples case: lift the cycle to `sampleADRList` and apply `sample_acyclic`.
+    -- The lift relies on the structural induction on `hPath` below.
+    have hsrel : SupersedesRel sampleADRList aid parent := ⟨a, ha, ha_id, ha_sup⟩
+    -- Lift `hPath : ProvenancePath mergedList parent aid` to
+    -- `ProvenancePath sampleADRList parent aid` by induction.
+    -- Pin the `adrs` parameter so unification lands on `sampleADRList`.
+    have hpath' : ProvenancePath sampleADRList parent aid := by
+      -- Lift `hPath : ProvenancePath mergedList parent aid` to
+      -- `ProvenancePath sampleADRList parent aid` by structural induction.
+      -- We use `ProvenancePath.rec` with the motive `\a b _ => a = b ∨ True`
+      -- — no, simpler: we use a direct `cases` analysis since the path is
+      -- either `refl` (immediate) or `step` (recurses).
+      cases hPath with
+      | refl => exact ProvenancePath.refl _
+      | step child inter _ hRelStep hPathTail =>
+        rcases hRelStep with ⟨a', ham', ha'_id, ha'_sup⟩
+        rcases (List.mem_append.1 ham') with ha' | ha'
+        · exact ProvenancePath.step child inter _ ⟨a', ha', ha'_id, ha'_sup⟩ hPathTail
+        · have hnone : a'.supersedes = none := ADR.Migrated.migrated_no_supersedes a' ha'
+          exact False.elim (by simpa [hnone] using ha'_sup)
+    exact sample_acyclic aid ⟨parent, hsrel, hpath'⟩
+  · -- Migration case: no record in the migration slice has a `supersedes` edge.
+    have hnone : a.supersedes = none := ADR.Migrated.migrated_no_supersedes a ha
+    exact False.elim (by simpa [hnone] using ha_sup)
+
+/-- Existence of superseded targets: discharged by hand. -/
+theorem merged_supersedes_exist :
+    ∀ a ∈ mergedList, ∀ sid, a.supersedes = some sid → ∃ t ∈ mergedList, t.id = sid := by
+  intro a ham sid hsup
+  rcases (List.mem_append.1 ham) with ha | ha
+  · rcases sample_supersedes_exist a ha sid hsup with ⟨t, ht, hid⟩
+    exact ⟨t, List.mem_append_left _ ht, hid⟩
+  · have hnone : a.supersedes = none := ADR.Migrated.migrated_no_supersedes a ha
+    exact False.elim (by simpa [hnone] using hsup)
+
+/-- Superseded status consistency: discharged by hand. -/
+theorem merged_superseded_status_consistent :
+    ∀ a ∈ mergedList, ∀ sid, a.supersedes = some sid →
+      ∃ t ∈ mergedList, t.id = sid ∧ t.status = .Superseded := by
+  intro a ham sid hsup
+  rcases (List.mem_append.1 ham) with ha | ha
+  · rcases sample_superseded_status_consistent a ha sid hsup with ⟨t, ht, hid, hst⟩
+    exact ⟨t, List.mem_append_left _ ht, hid, hst⟩
+  · have hnone : a.supersedes = none := ADR.Migrated.migrated_no_supersedes a ha
+    exact False.elim (by simpa [hnone] using hsup)
+
+/-- The merged registry, with all invariants discharged by explicit proof. -/
+def mergedRegistry : ADRRegistry where
+  adrs := mergedList
+  uniqueIds := merged_unique_ids
+  acyclic := merged_acyclic
+  supersedesExist := merged_supersedes_exist
+  supersededStatusConsistent := merged_superseded_status_consistent
+  noConflicts := no_conflicts_of_list_check mergedList (by set_option maxRecDepth 4096 in decide)
+  claims := sampleRegistry.claims
+  claimsOwnedByAccepted := by
+    intro c hc
+    rcases sample_claims_owned_by_accepted c hc with ⟨a, ha, hid, hst⟩
+    exact ⟨a, List.mem_append_left _ ha, hid, hst⟩
+  noClaimConflicts := by
+    intro c₁ hc₁ c₂ hc₂ _ hcon
+    have h1 : c₁.claim.evalB envP2C = true := sample_claim_eval_true c₁ hc₁
+    have h2 : c₂.claim.evalB envP2C = true := sample_claim_eval_true c₂ hc₂
+    have hJoint : (c₁.claim.evalB envP2C && c₂.claim.evalB envP2C) = true := by
+      simp [h1, h2]
+    exact hcon envP2C hJoint
+
 /-- Snapshot exported artifacts as raw bytes for cross-run comparison. -/
 def snapshotExports (reg : ADRRegistry) (dir : System.FilePath) :
     IO (List (String × ByteArray)) := do
@@ -167,10 +255,10 @@ CI gate `git diff --exit-code docs/adr/`: the generator contains no timestamps,
 random identifiers, or iteration-order dependence. -/
 def runExportDeterminismTest : IO UInt32 := do
   IO.print "[TEST 5/5] Export determinism (byte-identical across runs) ... "
-  exportADRSet sampleRegistry "docs/adr"
-  let snap1 ← snapshotExports sampleRegistry "docs/adr"
-  exportADRSet sampleRegistry "docs/adr"
-  let snap2 ← snapshotExports sampleRegistry "docs/adr"
+  exportADRSet mergedRegistry "docs/adr"
+  let snap1 ← snapshotExports mergedRegistry "docs/adr"
+  exportADRSet mergedRegistry "docs/adr"
+  let snap2 ← snapshotExports mergedRegistry "docs/adr"
   if snap1.length == 0 then
     IO.println "FAILED (no exported files found)"
     return 1
@@ -189,12 +277,12 @@ def runAllTests : IO UInt32 := do
   IO.println "============================================================"
 
   -- Test 1: Registry Invariants
-  IO.print "[TEST 1/5] Checking Sample Registry Invariants ... "
-  let n := sampleRegistry.adrs.length
-  if n == 10 then
-    IO.println "PASSED (10 ADRs verified: Unique IDs, Acyclicity, No Conflicts)"
+  IO.print "[TEST 1/5] Checking Merged Registry Invariants ... "
+  let n := mergedRegistry.adrs.length
+  if n == 18 then
+    IO.println "PASSED (18 ADRs verified: 10 Examples + 8 Migrated; Unique IDs, Acyclicity, No Conflicts)"
   else
-    IO.println s!"FAILED (expected 10 ADRs, found {n})"
+    IO.println s!"FAILED (expected 18 ADRs, found {n})"
     return 1
 
   -- Test 2: Consequence Entailment Logic

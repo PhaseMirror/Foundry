@@ -22,3 +22,4 @@
 | [ADR-0059](ADR-0059.md) | Phase-Decoupled Subsystem Pipeline | Accepted | - |
 | [ADR-0060](ADR-0060.md) | Lexical Standalone Delimiter Detection | Accepted | - |
 | [ADR-0061](ADR-0061.md) | Strict Validation & Fail-Closed Errors for Missing Delimiters | Accepted | - |
+| [ADR-0064](ADR-0064.md) | Hundian Social Physics Occupancy Governance & Term-Order Gate | Accepted | - |

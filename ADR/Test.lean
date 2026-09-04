@@ -162,7 +162,7 @@ def mergedList : List ADR := sampleRegistry.adrs ++ ADR.Migrated.migratedList
 Examples uses "ADR-001"…"ADR-010", Migrated uses "ADR-0040/0041/0043/0057-0061".
 Discharged by `decide` over the literal list. -/
 theorem merged_unique_ids : (mergedList.map ADR.id).Nodup := by
-  decide
+  set_option maxRecDepth 4096 in decide
 
 /-- Acyclicity of the merged list: discharged by induction on the
 `ProvenancePath` witness, using the fact that the migration slice has
@@ -278,10 +278,10 @@ def runAllTests : IO UInt32 := do
   -- Test 1: Registry Invariants
   IO.print "[TEST 1/5] Checking Merged Registry Invariants ... "
   let n := mergedRegistry.adrs.length
-  if n == 18 then
-    IO.println "PASSED (18 ADRs verified: 10 Examples + 8 Migrated; Unique IDs, Acyclicity, No Conflicts)"
+  if n == 19 then
+    IO.println "PASSED (19 ADRs verified: 10 Examples + 9 Migrated; Unique IDs, Acyclicity, No Conflicts)"
   else
-    IO.println s!"FAILED (expected 18 ADRs, found {n})"
+    IO.println s!"FAILED (expected 19 ADRs, found {n})"
     return 1
 
   -- Test 2: Consequence Entailment Logic

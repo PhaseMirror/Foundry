@@ -156,15 +156,43 @@ malformed headers."
   supersedes := none
   links := []
 
+/-- **ADR-0064** — Hundian Social Physics Occupancy Governance & Term-Order Gate.
+
+Formal verification of Pauli key capacity, term-order rules, spin
+calculation, and multiplicity derivation `M = n_unpaired + 1`. The
+types and theorems live in `PhaseMirror.HundianPauli` (see
+`ADR/Theorems/HundianPauli.lean`). -/
+def adr0064 : ADR where
+  id := "ADR-0064"
+  title := "Hundian Social Physics Occupancy Governance & Term-Order Gate"
+  status := .Accepted
+  context := "PIRTM social physics models participant role allocations onto \
+degenerate role-class sets; heuristic survey reciprocity is non-deterministic \
+and leaks drift into the audit trail."
+  decision := "Enforce Pauli key capacity, 5-stage gate priority, and exact \
+multiplicity M = n_unpaired + 1 over the canonical Hundian term-order gate."
+  consequences := [
+    "Eliminates heuristic survey reciprocity",
+    "Fail-closed term-ordering gate",
+    "Pauli exclusion provably rejects the third occupant",
+    "Closed-shell singlet multiplicity discharged by `closed_shell_singlet_multiplicity`"
+  ]
+  supersedes := none
+  links := [
+    ⟨"ADR/Theorems/HundianPauli.lean", .SourceFile, "Hundian Pauli gate types and proofs"⟩,
+    ⟨"PhaseMirror.HundianPauli.evaluatePauliGate", .LeanDeclaration,
+      "Canonical term-order / Pauli gate evaluator"⟩
+  ]
+
 /-- The complete list of migrated records, in stable ascending id order. -/
 def migratedList : List ADR :=
-  [ adr0040, adr0041, adr0043, adr0057, adr0058, adr0059, adr0060, adr0061 ]
+  [ adr0040, adr0041, adr0043, adr0057, adr0058, adr0059, adr0060, adr0061, adr0064 ]
 
 /-! ## Registry Invariant Discharges for the Migrated Set -/
 
 /-- Identifiers in `migratedList` are unique. -/
 theorem migrated_unique_ids : (migratedList.map ADR.id).Nodup := by
-  decide
+  set_option maxRecDepth 4096 in decide
 
 /-- No migrated record declares a `supersedes` target (they are leaves). -/
 theorem migrated_no_supersedes :
@@ -202,7 +230,7 @@ theorem migrated_superseded_status_consistent :
 pattern, so the list-level conflict test passes trivially. -/
 theorem migrated_no_conflicts :
     ∀ a ∈ migratedList, ∀ b ∈ migratedList, ¬ ConflictsWith a b :=
-  no_conflicts_of_list_check migratedList (by decide)
+  no_conflicts_of_list_check migratedList (by set_option maxRecDepth 4096 in decide)
 
 /-- A registry bundle over only the migrated records. Useful for export-only smoke
 tests and for callers that want the migrated slice in isolation. -/

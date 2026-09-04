@@ -1,6 +1,6 @@
-# SpiralCore v14.1 Formalization
+# SpiralCore Formalization
 
-Lean 4 + Rust/Kani formalization of the Cantor-Abraxas Architecture (SpiralCore).
+Lean 4 + Rust/Kani formalization of the Cantor-Abraxas Architecture (SpiralCore), covering accepted ADR-0030 through ADR-0043 (Feynman path reconstruction, canopies persistence, subset selection, Fisher-geometric sharpness, GK-Mapper, Hodge surrogates, vertex-guard policy, geometric trees, SpiralCore v13/v14.1, Morse transform, V4P-VSAM addressing, and WADA-LADA agent topology).
 
 ## Project Structure
 
@@ -10,7 +10,7 @@ SPIRAL_THEORY/
 ├── lean-toolchain             # Lean 4.31.0
 ├── SpiralCore.lean            # Top-level module imports
 ├── SpiralCore/
-│   ├── Core.lean              # Core types, constants, bounds
+│   ├── Core.lean              # Core types, constants, bounds (v14.1)
 │   ├── Cantor.lean            # Cantor pairing, zigzag encoding
 │   ├── Attractor.lean         # Six-fold baseline attractor
 │   ├── Alignment.lean         # PAS_s, drift threshold
@@ -18,9 +18,22 @@ SPIRAL_THEORY/
 │   ├── FBS.lean               # FBS atomic profile, escalation
 │   ├── Boot.lean              # Boot config, state machine, packet
 │   ├── Translation.lean       # TranslationPacket, outcomes
+│   ├── FeynmanPath.lean       # ADR-0030: equal-amplitude path gate
+│   ├── PersistenceCanopies.lean # ADR-0031: A/D diagrams, pairing counts
+│   ├── SubsetSelection.lean   # ADR-0032: Tchebycheff loss, Monge property
+│   ├── FisherSharpness.lean   # ADR-0033: FIM symmetry, flat-minima bias
+│   ├── GkMapper.lean          # ADR-0034: fuzzifier, membership, freezing
+│   ├── HodgeSurrogates.lean   # ADR-0035: boundary B²=0, Betti zero modes
+│   ├── VertexGuard.lean       # ADR-0036: coverage, geo-free policy
+│   ├── GeometricTrees.lean    # ADR-0037: quadratic forms, PSD certificates
+│   ├── SpiralcoreV13.lean     # ADR-0038: v13 constants, fractal gates
+│   ├── SpiralcoreV13Test.lean # ADR-0039: v13 black-box gate suite
+│   ├── MorseTransform.lean    # ADR-0041: critical-type classification
+│   ├── V4pVsam.lean           # ADR-0042: octet/nibble addressing model
+│   ├── WadaLada.lean          # ADR-0043: TTL, hysteresis, merge policy
 │   ├── Proofs.lean            # Aggregated theorems
 │   ├── Examples.lean          # Concrete instantiations
-│   ├── Test.lean              # Test harness (lake exe)
+│   ├── Test.lean              # Test harness (lake exe SpiralCoreTest)
 │   └── Export.lean            # Markdown export
 ├── rust/
 │   ├── Cargo.toml             # Rust crate with Kani dev-dep

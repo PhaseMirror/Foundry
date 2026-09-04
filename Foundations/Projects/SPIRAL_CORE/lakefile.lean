@@ -9,3 +9,11 @@ lean_lib SpiralCore
 lean_exe SpiralCoreTest {
   root := `SpiralCore.Main
 }
+
+lean_exe ADRTest {
+  root := `SpiralCore.ADR.Test
+}
+
+lean_exe ADRExport {
+  root := `SpiralCore.ADR.Export
+}

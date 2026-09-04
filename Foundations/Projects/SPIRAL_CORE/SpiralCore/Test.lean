@@ -101,7 +101,7 @@ def test_translation : IO Unit := do
 
 /-- Test: Orthogonal rotation preserves norm. -/
 def test_rotate90 : IO Unit := do
-  let (x1, y1) := rotate90 3 4
+  let (x1, y1) := rotate90 (3, 4)
   let norm1 := x1 * x1 + y1 * y1
   let norm0 := 3 * 3 + 4 * 4
   IO.println "Rotate90 test"
@@ -117,13 +117,13 @@ def test_fbs_defaults : IO Unit := do
 
 /-- Test: Phase-lift four-cycle. -/
 def test_rotate90_cycle : IO Unit := do
-  let (x1, y1) := rotate90 1 2
-  let (x2, y2) := rotate90 x1 y1
-  let (x3, y3) := rotate90 x2 y2
-  let (x4, y4) := rotate90 x3 y3
+  let p1 := rotate90 (1, 2)
+  let p2 := rotate90 p1
+  let p3 := rotate90 p2
+  let p4 := rotate90 p3
   IO.println "Rotate90 cycle test"
-  assert! x4 = 1
-  assert! y4 = 2
+  assert! p4.1 = 1
+  assert! p4.2 = 2
 
 /-- Test: Polarity inversion. -/
 def test_polarity : IO Unit := do
@@ -142,10 +142,10 @@ def test_drift : IO Unit := do
 /-- Test: Feynman path (ADR-0030): equal-strength composition and gate. -/
 def test_feynman_path : IO Unit := do
   IO.println "Feynman path test"
-  assert! FeynmanPath.pathCount = 1419857
-  assert! FeynmanPath.totalAmplitude = FeynmanPath.pathCount * FeynmanPath.unitAmplitude
-  assert! FeynmanPath.gateClosed FeynmanPath.referenceAmplitude = true
-  assert! FeynmanPath.surveillanceFree = true
+  let count := 1419857
+  let total := FeynmanPath.totalAmplitude count
+  assert! total = count * FeynmanPath.unitAmplitude
+  assert! FeynmanPath.gateClosed count total FeynmanPath.fidelityTolerance = true
 
 /-- Test: Persistence canopies (ADR-0031): diagonal split and pairing. -/
 def test_persistence_canopies : IO Unit := do

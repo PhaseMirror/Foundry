@@ -4,6 +4,7 @@ import SpiralCore.ADR.Core
 namespace SpiralCore.ADR.Examples
 
 open SpiralCore.ADR
+open SpiralCore (ClaimClass)
 
 def makeSampleADR (num : String) (title : String) (claim : ClaimClass) : ADR :=
   { id := s!"ADR-00{num}",
@@ -12,7 +13,7 @@ def makeSampleADR (num : String) (title : String) (claim : ClaimClass) : ADR :=
     claimClass := claim,
     context := [.var "context_valid"],
     decision := [.var "decision_enforced"],
-    consequences := [.var "system_governed"],
+    consequences := [.and (.var "context_valid") (.var "decision_enforced")],
     supersedes := none }
 
 def adr_0030 := makeSampleADR "30" "Feynman Path Integral Formal Model" ClaimClass.computationalSurrogate

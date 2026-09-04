@@ -1,26 +1,16 @@
 import Init
 import SpiralCore.Core
 
-/-! # Orthogonal Phase-Lift and Spin-to-Helicity (Discrete Representation)
-
-Formalizes the 90-degree rotation surrogate and spin-to-helicity control proxy
-as discrete operations (Section 5.4, 5.5).
-
-Continuous trigonometric computation is delegated to Rust + Kani.
--/
-
 namespace SpiralCore.PhaseLift
 
-/-- Apply a 90-degree rotation to a discrete coordinate pair.
-    Uses integer arithmetic: (x, y) -> (-y, x). -/
-def rotate90 (x y : Int) : Int × Int :=
-  (-y, x)
+def rotate90 (p : Int × Int) : Int × Int :=
+  (-p.2, p.1)
 
-/-- A DIM-dimensional state vector as a list of Ints. -/
+def sqNorm (p : Int × Int) : Int :=
+  p.1 * p.1 + p.2 * p.2
+
 def StateVector := List Int
 
-/-- Apply pairwise 90-degree rotation to a state vector.
-    For odd DIM, the final unpaired coordinate is preserved. -/
 def orthogonalPhaseLift (v : StateVector) : StateVector :=
   v.foldl (fun acc x =>
     match acc with
@@ -28,11 +18,21 @@ def orthogonalPhaseLift (v : StateVector) : StateVector :=
     | y :: ys => (-y) :: x :: ys
   ) [] |>.reverse
 
-/-- Spin-to-helicity control proxy (discrete finite difference). -/
 def helicityProxy (rhoPrev rhoCurr : Int) (gammaDelta : Nat := 22) : Int :=
   (gammaDelta * (rhoCurr - rhoPrev)) / 100
 
-/-- Discrete polarity inversion. -/
 def polarityInversion (sigma : Bool) : Bool := !sigma
+
+theorem rotate90_four_times (p : Int × Int) :
+    rotate90 (rotate90 (rotate90 (rotate90 p))) = p := by
+  dsimp [rotate90]
+  ext <;> simp
+
+theorem rotate90_preserves_norm (p : Int × Int) :
+    sqNorm (rotate90 p) = sqNorm p := by
+  dsimp [rotate90, sqNorm]
+  have h : -p.2 * -p.2 = p.2 * p.2 := by rw [Int.neg_mul_neg]
+  rw [h]
+  rw [Int.add_comm]
 
 end SpiralCore.PhaseLift

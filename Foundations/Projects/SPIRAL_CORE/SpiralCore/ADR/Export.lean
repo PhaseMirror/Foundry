@@ -10,7 +10,7 @@ open SpiralCore.ADR.Examples
 def generateHeader (adr : ADR) : String :=
   s!"<!-- LEAN_ADR_ID: {adr.id} STATUS: {repr adr.status} CLAIM_CLASS: {repr adr.claimClass} -->"
 
-def verifyOrUpdateFile (adr : ADR) : IO Unit := do
+def verifyFileNoDrift (adr : ADR) : IO Unit := do
   let path := s!"docs/{adr.id}.md"
   let fp : System.FilePath := System.FilePath.mk path
   let fileExists ← fp.pathExists
@@ -20,17 +20,16 @@ def verifyOrUpdateFile (adr : ADR) : IO Unit := do
     if content.startsWith header then
       IO.println s!"[SYNC] {path} header matches Lean formal ADR record."
     else
-      IO.println s!"[DRIFT DETECTED] {path} header drifted. Updating front-matter to match Lean kernel state."
-      IO.FS.writeFile path (header ++ "\n" ++ content)
+      throw (IO.userError s!"[DRIFT ERROR] {path} header drifted from Lean kernel state. Refusing to overwrite.")
   else
     IO.println s!"[CREATE] Generating governance artifact {path}."
     IO.FS.writeFile path (header ++ s!"\n# {adr.id}: {adr.title}\n")
 
 def runExport : IO Unit := do
-  IO.println "=== Running ADR Synchronized Drift-Detection Exporter ==="
+  IO.println "=== Running ADR Synchronized Drift-Detection Verification ==="
   for adr in sampleRegistry do
-    verifyOrUpdateFile adr
-  IO.println "=== ADR Export & Drift Detection Complete ==="
+    verifyFileNoDrift adr
+  IO.println "=== ADR Verification Complete — Zero Drift Detected ==="
 
 end SpiralCore.ADR.Export
 

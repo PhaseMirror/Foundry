@@ -1,22 +1,25 @@
-# Architecture Decision Records
+# Architectural Decision Records (ADR) Ledger
 
-This directory contains the Architecture Decision Records (ADRs) for the UOR Foundry project.
+*Formally verified and machine-checked in Lean 4.*
 
-## Accepted ADRs
-- [0001-Langlands Prism and Pirtm Integration](docs/adr/accepted/0001-Langlands Prism and Pirtm Integration.md)
-- [0002-Prism-Pirtm-Integration](docs/adr/accepted/0002-Prism-Pirtm-Integration.md)
-- [0003-NIST OSCAL as Optional Read-Only Export Packaging Format](docs/adr/accepted/0003-NIST OSCAL as Optional Read-Only Export Packaging Format.md)
-- [0004-geometric-intelligence-route-hierarchy](docs/adr/accepted/0004-geometric-intelligence-route-hierarchy.md)
-- [0005-predictive-geometric-connection-memory](docs/adr/accepted/0005-predictive-geometric-connection-memory.md)
-- [0006-complex-gravitational-coupling](docs/adr/accepted/0006-complex-gravitational-coupling.md)
-- [0007-hybrid-verification-pipeline](docs/adr/accepted/0007-hybrid-verification-pipeline.md)
-- [0008-r4-homonym-lock-and-architectural-role](docs/adr/accepted/0008-r4-homonym-lock-and-architectural-role.md)
-- [0008-r4-homonym-lock](docs/adr/accepted/0008-r4-homonym-lock.md)
-- [0009-The Legalese Scopist](docs/adr/accepted/0009-The Legalese Scopist.md)
-- [0010-normative-r4g1-scorer](docs/adr/accepted/0010-normative-r4g1-scorer.md)
-- [0011-geometric-causal-decoder](docs/adr/accepted/0011-geometric-causal-decoder.md)
-- [0012-fixed-zeta-prime-route-attention](docs/adr/accepted/0012-fixed-zeta-prime-route-attention.md)
-
-## Proposed ADRs
-
-## Completed ADRs
+| ID | Title | Status | Supersedes |
+| :--- | :--- | :--- | :--- |
+| [ADR-001](ADR-001.md) | Integer Jordan Bond Governance | Superseded | - |
+| [ADR-002](ADR-002.md) | Sedona Spine Retention Engine Sole Source of Truth | Accepted | - |
+| [ADR-003](ADR-003.md) | Per-Triad Resonance Floors (Audit v2) | Accepted | ADR-001 |
+| [ADR-004](ADR-004.md) | Meet-Semilattice Partition Refinement & LCR Operator | Accepted | - |
+| [ADR-005](ADR-005.md) | BLAKE2b-16 Personalization & Canonical Bytecode Wire Format | Accepted | - |
+| [ADR-006](ADR-006.md) | MultiContract Atomic Contraction with PartialSum Tokens | Accepted | - |
+| [ADR-007](ADR-007.md) | Commutative Collective Transformers for Deterministic Sharding Commit | Accepted | - |
+| [ADR-008](ADR-008.md) | Prime Signature Canonical Monoid as Exclusive Rust Kernel Substrate | Accepted | - |
+| [ADR-009](ADR-009.md) | Mandatory Contraction Witness & Spectral Radius Verification Before Emission Gate | Accepted | - |
+| [ADR-010](ADR-010.md) | Axiom-Clean Kernel Boundary and Manifested Proof Debt Policy | Accepted | - |
+| [ADR-0040](ADR-0040.md) | Conscious Sovereignty Layer, Zenolock, and the PIRTM Dialect | Proposed | - |
+| [ADR-0041](ADR-0041.md) | Automating Local DevOps for Multiplicity | Proposed | - |
+| [ADR-0043](ADR-0043.md) | Hyperprime Tensor Evolution and Prime Attention Neural Layers | Proposed | - |
+| [ADR-0057](ADR-0057.md) | Lexical Header Boundary Pre-Processor & Splitter | Accepted | - |
+| [ADR-0058](ADR-0058.md) | Formal Header Envelope Grammar & Scope Isolation | Accepted | - |
+| [ADR-0059](ADR-0059.md) | Phase-Decoupled Subsystem Pipeline | Accepted | - |
+| [ADR-0060](ADR-0060.md) | Lexical Standalone Delimiter Detection | Accepted | - |
+| [ADR-0061](ADR-0061.md) | Strict Validation & Fail-Closed Errors for Missing Delimiters | Accepted | - |
+| [ADR-0064](ADR-0064.md) | Hundian Social Physics Occupancy Governance & Term-Order Gate | Accepted | - |

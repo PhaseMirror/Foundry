@@ -1,0 +1,168 @@
+name: Build and Publish Docker Images
+
+on:
+  push:
+    branches:
+      - Multiplicity
+      - develop
+    tags:
+      - 'v*.*.*'
+  pull_request:
+    branches:
+      - Multiplicity
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (e.g., v1.0.0)'
+        required: false
+        default: 'latest'
+      platforms:
+        description: 'Target platforms (e.g., linux/amd64,linux/arm64)'
+        required: false
+        default: 'linux/amd64,linux/arm64'
+
+env:
+  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME || 'yourorgname' }}
+  IMAGE_NAME: hologram-devcontainer
+  PYTHON_VERSION: 3.12
+  NODE_VERSION: 20
+  RUST_VERSION: nightly
+  PLATFORMS: linux/amd64,linux/arm64
+
+jobs:
+  test:
+    name: Test Images (AMD64)
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        variant: [dev, prod]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Extract version from tag or use default
+        id: version
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            VERSION=${GITHUB_REF#refs/tags/}
+          elif [[ "${{ github.event.inputs.version }}" != "" ]]; then
+            VERSION=${{ github.event.inputs.version }}
+          else
+            VERSION=latest
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
+
+      - name: Build ${{ matrix.variant }} image (AMD64)
+        uses: docker/build-push-action@v5
+        with:
+          context: docker-images
+          file: docker-images/${{ matrix.variant }}/Dockerfile
+          target: ${{ matrix.variant == 'dev' && 'dev' || 'production' }}
+          platforms: linux/amd64
+          build-args: |
+            PYTHON_VARIANT=${{ matrix.variant == 'dev' && format('1-{0}-bullseye', env.PYTHON_VERSION) || format('{0}-slim-bullseye', env.PYTHON_VERSION) }}
+            NODE_VERSION=${{ env.NODE_VERSION }}
+            RUST_VERSION=${{ env.RUST_VERSION }}
+          tags: test-${{ matrix.variant }}:${{ steps.version.outputs.version }}
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Test ${{ matrix.variant }} image
+        run: |
+          docker run --rm test-${{ matrix.variant }}:${{ steps.version.outputs.version }} bash -c " \
+            echo '🧪 Running ${{ matrix.variant }} image tests...' && \
+            rustc --version && \
+            cargo --version && \
+            python3 --version && \
+            node --version && \
+            pnpm --version && \
+            sqlite3 --version && \
+            zig version && \
+            echo '✅ All tools verified successfully!'"
+
+  publish:
+    name: Build and Publish Multi-Arch Images
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    strategy:
+      matrix:
+        variant: [dev, prod]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU for multi-arch builds
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Extract version from tag or use default
+        id: version
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            VERSION=${GITHUB_REF#refs/tags/}
+          elif [[ "${{ github.event.inputs.version }}" != "" ]]; then
+            VERSION=${{ github.event.inputs.version }}
+          else
+            VERSION=latest
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
+
+      - name: Determine platforms
+        id: platforms
+        run: |
+          if [[ "${{ github.event.inputs.platforms }}" != "" ]]; then
+            PLATFORMS="${{ github.event.inputs.platforms }}"
+          else
+            PLATFORMS="${{ env.PLATFORMS }}"
+          fi
+          echo "platforms=$PLATFORMS" >> $GITHUB_OUTPUT
+          echo "Building for platforms: $PLATFORMS"
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build metadata for ${{ matrix.variant }}
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=${{ matrix.variant }}-${{ steps.version.outputs.version }}
+            type=raw,value=${{ matrix.variant }}-latest,enable=${{ github.ref == 'refs/heads/Multiplicity' }}
+
+      - name: Build and push ${{ matrix.variant }} multi-arch image
+        uses: docker/build-push-action@v5
+        with:
+          context: docker-images
+          file: docker-images/${{ matrix.variant }}/Dockerfile
+          target: ${{ matrix.variant == 'dev' && 'dev' || 'production' }}
+          platforms: ${{ steps.platforms.outputs.platforms }}
+          build-args: |
+            PYTHON_VARIANT=${{ matrix.variant == 'dev' && format('1-{0}-bullseye', env.PYTHON_VERSION) || format('{0}-slim-bullseye', env.PYTHON_VERSION) }}
+            NODE_VERSION=${{ env.NODE_VERSION }}
+            RUST_VERSION=${{ env.RUST_VERSION }}
+          tags: ${{ steps.meta.outputs.tags }}
+          push: true
+          cache-from: |
+            type=gha,scope=${{ matrix.variant }}
+            type=registry,ref=${{ env.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:${{ matrix.variant }}-latest
+          cache-to: type=gha,mode=max,scope=${{ matrix.variant }}
+
+      - name: Output image info
+        run: |
+          echo "✅ Published multi-arch image:"
+          echo "   Platforms: ${{ steps.platforms.outputs.platforms }}"
+          echo "   Tags:"
+          echo "${{ steps.meta.outputs.tags }}" | sed 's/^/     - /'

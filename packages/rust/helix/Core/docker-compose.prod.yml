@@ -1,0 +1,45 @@
+services:
+  watchtower:
+    image: python:3.11-slim
+    container_name: helix_watchtower
+    restart: unless-stopped
+    cap_drop:
+    - ALL
+    user: 1000:1000
+    networks:
+    - helix-net
+    ports:
+    - 127.0.0.1:8501:8501
+    volumes:
+    - ./identity:/app/identity:ro
+    - ./agents:/app/agents:ro
+    - type: tmpfs
+      target: /tmp
+    working_dir: /app
+    command: sh -c "pip install --no-cache-dir streamlit && streamlit run identity/dashboard.py"
+  cds-exclusion-field:
+    build: ./perimeter
+    container_name: helix-cds-exclusion-field
+    ports:
+    - 9090:8080
+    volumes:
+    - ./perimeter/config:/opt/cds/config:ro
+    networks:
+    - helix-net
+    restart: unless-stopped
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8080/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+networks:
+  helix-net:
+    driver: bridge
+    internal: true
+volumes:
+  cds-block-logs: null

@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "phase-mirror-operator.fullname" . }}
+  labels:
+    app: {{ include "phase-mirror-operator.name" . }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ include "phase-mirror-operator.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "phase-mirror-operator.name" . }}
+    spec:
+      serviceAccountName: {{ include "phase-mirror-operator.fullname" . }}
+      containers:
+        - name: operator
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: ws
+              containerPort: 3030
+              protocol: TCP
+          env:
+            - name: RUST_LOG
+              value: info
+            - name: DEFAULT_GOVERNANCE_MODE
+              value: {{ .Values.config.defaultGovernanceMode | quote }}
+            - name: DEFAULT_LEXICON
+              value: {{ .Values.config.defaultLexicon | quote }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}

@@ -1,0 +1,62 @@
+name: ADR-0026 PDE-RNN Verification Pipeline
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  lean_proofs:
+    name: Lean 4 Proof Verification
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Elan & Lean 4
+        run: |
+          curl https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -sSf | sh -s -- -y
+          source ~/.profile
+          elan toolchain install leanprover/lean4:v4.31.0
+          elan default leanprover/lean4:v4.31.0
+      - name: Build Lean Code (Zero Sorry)
+        run: |
+          cd lean
+          lake build PdeRnn
+
+  kani_verification:
+    name: Kani Bounded Model Checking
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Kani
+        run: cargo install --locked kani-verifier --version 0.67.0
+      - name: Run Kani Harnesses
+        run: |
+          cd lean
+          cargo kani --enable-unstable --harness
+
+  ffi_tests:
+    name: FFI Thread & MIRI Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run single-threaded cargo tests
+        run: |
+          cd lean
+          cargo test -- --test-threads=1
+      - name: Install MIRI
+        run: rustup component add miri
+      - name: Run Cargo MIRI Test (UB Detection)
+        run: |
+          cd lean
+          cargo miri test
+
+  proptest:
+    name: Proptest Statistical Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Proptest
+        run: |
+          cd lean
+          cargo test

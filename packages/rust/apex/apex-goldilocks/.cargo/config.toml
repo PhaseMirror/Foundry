@@ -1,0 +1,41 @@
+# LLVM configuration for different platforms
+# To check your platform: rustc --print cfg | grep target_os
+# To find LLVM on your system: find /usr -name "llvm-config" 2>/dev/null | head -1
+
+# Linux (Ubuntu/Debian with LLVM 11 installed via apt)
+[target.x86_64-unknown-linux-gnu.env]
+LLVM_SYS_110_PREFIX = "/usr/lib/llvm-11"
+
+[target.aarch64-unknown-linux-gnu.env]
+LLVM_SYS_110_PREFIX = "/usr/lib/llvm-11"
+
+# macOS Apple Silicon (M1/M2) - Homebrew
+[target.aarch64-apple-darwin.env]
+LLVM_SYS_110_PREFIX = "/opt/homebrew/opt/llvm/bin/llvm-config"
+
+# macOS Intel - Homebrew
+[target.x86_64-apple-darwin.env]
+LLVM_SYS_110_PREFIX = "/usr/local/opt/llvm@11"
+
+# Cargo aliases for FFI development
+[alias]
+# Build FFI in release mode
+# Note: For UniFFI checksum errors, run: ./scripts/rebuild_ffi.sh --clean
+build-ffi = "build --release -p hologram-ffi"
+
+# WebAssembly target configuration
+[target.wasm32-unknown-unknown]
+# Enable WASM SIMD instructions for better performance
+# Enable getrandom's WASM JS backend for random number generation (required for Candle)
+rustflags = [
+    "-C", "target-feature=+simd128",
+    "--cfg", 'getrandom_backend="wasm_js"',
+]
+
+# Optimize WASM builds for size and performance
+[profile.wasm-release]
+inherits = "release"
+opt-level = "z"           # Optimize for size
+lto = true                # Link-time optimization
+codegen-units = 1         # Better optimization (slower build, smaller/faster binary)
+panic = "abort"           # Smaller code size

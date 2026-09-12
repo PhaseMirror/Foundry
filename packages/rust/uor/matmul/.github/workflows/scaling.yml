@@ -1,0 +1,29 @@
+# CG-01 .. CG-08: the scaling axis, and CT-06's super-massive exactness.
+#
+# Every figure this job prints is `open`: measured and reported, never asserted.
+# It does not gate a merge on a performance number, because a shared runner is a
+# noisy machine and a gate on its timings would be a gate on the weather.
+# What it does do is publish the fits, with their confidence intervals, so that
+# a change of shape is visible.
+name: scaling
+
+on:
+  push: { branches: [main] }
+  schedule: [{ cron: "0 5 * * 0" }]
+  workflow_dispatch:
+
+jobs:
+  scaling:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: extractions/setup-just@v2
+      - uses: Swatinem/rust-cache@v2
+      - name: fitted exponents, ours and every oracle's
+        run: just scaling
+      # CT-06, CG-08: gigabytes of operands and minutes of wall clock, so it is
+      # not part of `vv` --- but it is part of CI, or the largest shapes would be
+      # measured only when somebody remembered to.
+      - name: CT-06, CG-08, super-massive input
+        run: just massive

@@ -1,0 +1,71 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "LindbladRenormalizationInputs",
+  "description": "Pinned input schema for Phase 5 Lindblad renormalization. All inputs must be committed before execution.",
+  "type": "object",
+  "required": [
+    "primes",
+    "gamma_heal",
+    "c_zero_empirical",
+    "delta_crit",
+    "tau_zero",
+    "slope_ub_naive",
+    "renormalization_target",
+    "coupling_model"
+  ],
+  "properties": {
+    "primes": {
+      "type": "array",
+      "items": {"type": "integer"},
+      "description": "Prime spectrum to sweep. Standard: [2,3,5,7,11,13]. Extended: up to 997.",
+      "example": [2, 3, 5, 7, 11, 13]
+    },
+    "gamma_heal": {
+      "type": "number",
+      "description": "Healing rate coefficient. Currently = C_ZERO = ln(10) ≈ 2.3026.",
+      "example": 2.302585092994046
+    },
+    "c_zero_empirical": {
+      "type": "number",
+      "description": "Empirical field strength constant. CF-PENDING: not yet derived from MKT.",
+      "example": 2.302585092994046
+    },
+    "delta_crit": {
+      "type": "number",
+      "description": "Critical drift threshold. Empirical calibration.",
+      "example": 0.17
+    },
+    "tau_zero": {
+      "type": "number",
+      "description": "Base heartbeat period in seconds.",
+      "example": 3.33
+    },
+    "slope_ub_naive": {
+      "type": "number",
+      "description": "SlopeUB under naive normalization. Known to be > 1 (7.23 at p=2). Must be < 1 after renormalization.",
+      "example": 7.2284
+    },
+    "renormalization_target": {
+      "type": "number",
+      "description": "Target SlopeUB after renormalization. Must be < 1.0, ideally < 1 - delta_crit = 0.83.",
+      "example": 0.83
+    },
+    "coupling_model": {
+      "type": "string",
+      "enum": ["naive", "renormalized", "wetterich_rg"],
+      "description": "Lindblad coupling model variant.",
+      "example": "naive"
+    },
+    "wetterich_rg_steps": {
+      "type": "integer",
+      "description": "Number of RG flow integration steps (if coupling_model = wetterich_rg).",
+      "example": 1000
+    },
+    "wetterich_dt": {
+      "type": "number",
+      "description": "RG flow integration step size.",
+      "example": 0.01
+    }
+  },
+  "additionalProperties": false
+}

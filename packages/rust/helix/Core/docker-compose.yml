@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  watchtower:
+    # Python 3.11-slim (Pinned Digest)
+    image: python:3.11-slim
+    container_name: helix_watchtower
+    restart: unless-stopped
+    cap_drop: [ALL]
+    user: 1000:1000
+    networks:
+      - helix-net
+    ports:
+      - "127.0.0.1:8501:8501"
+    volumes:
+      - ./identity:/app:ro
+      - ./agents:/app/agents:ro
+      - type: tmpfs
+        target: /tmp
+    command: sh -c "pip install --no-cache-dir . && streamlit run dashboard.py"
+
+  hgl-compiler:
+    image: python:3.11-slim
+    container_name: helix_hgl
+    cap_drop: [ALL]
+    user: 1000:1000
+    networks:
+      - helix-net
+    volumes:
+      - ./hgl:/app:ro
+    command: python3 cli/hglc/hglc.py --help
+
+networks:
+  helix-net:
+    driver: bridge
+    internal: true

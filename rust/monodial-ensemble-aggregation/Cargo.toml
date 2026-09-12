@@ -1,0 +1,48 @@
+[package]
+name = "monodial_ensemble_aggregation"
+version = "0.1.0"
+edition = "2021"
+authors = ["Multiplicative Research Program <research@multiplicity.org>"]
+description = "Formal verification framework for monodial ensemble aggregation with monoidal category structures"
+license = "MIT"
+repository = "https://github.com/multiplicity-ai/MONODIAL_ENSEMBLE_AGGREGATION"
+readme = "README.md"
+keywords = ["monoidal", "ensemble", "aggregation", "formal-verification", "kani", "category-theory"]
+categories = ["science", "development-tools", "mathematics"]
+
+[dependencies]
+kani = { package = "kani-verifier", version = "0.67.0", optional = true }
+serde = { version = "1.0", features = ["derive"], optional = true }
+thiserror = { version = "2.0", optional = true }
+rand = { version = "0.8", optional = true }
+
+[features]
+default = ["std"]
+std = ["serde", "thiserror", "rand"]
+kani = ["dep:kani", "std"]
+
+[lib]
+name = "monodial_ensemble_aggregation"
+path = "src/lib.rs"
+
+[[bin]]
+name = "mea-cli"
+path = "src/bin/main.rs"
+
+[[test]]
+name = "mea-tests"
+path = "tests/integration.rs"
+
+[profile.release]
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
+
+[profile.test]
+opt-level = 1
+debug = true
+
+[lints.rust]
+unsafe_code = "warn"
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(kani)'] }

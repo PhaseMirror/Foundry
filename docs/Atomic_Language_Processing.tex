@@ -1,0 +1,377 @@
+% IFMD: Atomic Language Processing (ALP)
+% Author: —
+% Date: \today
+\documentclass[11pt]{article}
+
+% ---- Packages ----
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb,mathtools}
+\usepackage{bm}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue}
+\usepackage{listings}
+\lstdefinestyle{code}{
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  frame=single,
+  numbers=left,
+  numberstyle=\tiny, 
+  keywordstyle=\color{blue!60!black},
+  commentstyle=\color{green!50!black},
+  stringstyle=\color{red!60!black},
+  showstringspaces=false,
+  tabsize=2
+}
+\lstset{style=code,language=Python}
+
+% ---- Macros ----
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\PP}{\mathcal{P}}
+\newcommand{\ord}{\mathrm{ord}}
+\newcommand{\sig}{\boldsymbol{\sigma}}
+\newcommand{\E}{\mathbb{E}}
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\argmax}{arg\,max}
+
+\title{Atomic Language Processing (ALP) with IFMD: \\
+A Three-Layer Prime--Encoded Formalism with Certified Stability}
+\author{Ryan O. Van Gelder \& Tyler Van Osdol}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We present a practical and mathematically rigorous formulation of \emph{Atomic Language Processing (ALP)} within the IFMD framework. ALP assigns prime-based codes to linguistic units and composes them with prime-encoded tensor signatures (PETC) while enforcing update stability via Arithmetic Control Engine (ACE) constraints. We formalize a three-layer architecture---graphemic (static), grapheme-in-context (lightly dynamic), and lexical/morphemic (dynamic)---define the algebra, derive stability certificates, and provide reference implementations for ranking, isotonic rank adjustment, ACE-constrained assignment, PETC composition, and evaluation.
+\end{abstract}
+
+\tableofcontents
+
+\section{Introduction}
+The original ALP idea maps high-frequency linguistic relations to small primes and augments them with multiplicity-like features. Directly updating primes additively breaks primality and algebraic meaning. We resolve this by separating (i) an \emph{order prime} determined by rank, from (ii) a \emph{PETC signature} that carries structure via exponents on disjoint feature primes. Learning occurs by updating association scores and re-ranking, while composition is certified by PETC invariants. Stability and reproducibility are enforced using ACE-style spectral constraints.
+
+\paragraph{Contributions.} (1) A clean algebra for order primes and PETC signatures; (2) a three-layer ALP architecture; (3) stable re-ranking via EMA + isotonic adjustment + ACE-constrained assignment; (4) sparse PETC vectors and monoid composition; (5) an evaluation protocol including churn and algebraic-law metrics.
+
+\section{Preliminaries}
+\subsection{Prime sets and disjointness}
+Let $\PP_\text{ord}$ and $\PP_\text{petc}$ be disjoint sets of primes used for order codes and PETC features, respectively. All integer materializations use
+\begin{equation}
+  C_\mathbb{Z} = p_{\text{ord}} \cdot \prod_{i} q_i^{e_i}, \quad p_{\text{ord}}\in\PP_\text{ord},\; q_i\in\PP_\text{petc},\; e_i\in\Z_{\ge 0}.
+\end{equation}
+In-memory, codes remain tuples $(p_{\text{ord}},\,\sig)$ with $\sig\in\Z^{d}_{\ge 0}$ stored sparsely.
+
+\subsection{PETC composition}
+A PETC signature is an exponent vector $\sig\in\Z^{d}_{\ge 0}$ over feature primes $\{q_1,\dots,q_d\}$. Composition (tensor product) is vector addition:
+\begin{equation}
+  \sig_{x\otimes y} = \sig_x + \sig_y. \label{eq:petc-add}
+\end{equation}
+This yields a commutative monoid $(\Z^{d}_{\ge 0},+)$ with identity $\mathbf{0}$ and supports compile-time validity checks via linear constraints on exponents.
+
+\subsection{Association scores and ranks}
+For a unit $u$ (e.g., a grapheme-in-context key), define a robust association score $R(u)$ (e.g., smoothed PPMI or log-likelihood). Online updates use an exponential moving average (EMA):
+\begin{equation}
+  R^{t+1}(u) = \beta R^{t}(u) + (1-\beta)\,\widehat{R}^{\,t+1}(u), \quad \beta\in[0,1). \label{eq:ema}
+\end{equation}
+The order prime $p_{\text{ord}}(u)$ is determined by the rank of $R^t$ and reassigned after each update.
+
+\section{Three-Layer ALP}
+\subsection{L1: Graphemic layer (static)}
+Units are Unicode grapheme clusters. Order primes are fixed per language by corpus frequency. PETC features include position (onset/nucleus/coda), stress, morph role (prefix/root/suffix), and grapheme-to-phoneme (G2P) cluster.
+
+\subsection{L1.5: Grapheme-in-context (dynamic bridge)}
+Keys are tuples $u=(g,\,\text{pos},\,\text{stress},\,\text{g2p\_cluster})$ so that domain drift changes ranks meaningfully. After EMA, we compute an \emph{isotonic adjustment} $R^{t+1}_{\text{iso}}$ that preserves near-monotonicity relative to the previous order before re-ranking and ACE-constrained assignment.
+
+\subsection{L2/L3: Morphemic and lexical layers}
+Morphemic units (affixes, stems) are lightly dynamic; lexical relations (e.g., lemma--lemma, role arcs) are fully dynamic. PETC captures morphosyntactic features; order primes are assigned by ranks of task-specific association scores under ACE constraints.
+
+\section{Stability via ACE}
+Let $A^t$ be a weighted bipartite matrix (units $\times$ contexts) with entries derived from $R^t$. ACE imposes a spectral perturbation budget $\|\Delta A\|_2\le \varepsilon$, which bounds singular value drift by Weyl:
+\begin{equation}
+  |\sigma_i(A^{t+1})-\sigma_i(A^{t})| \le \|A^{t+1}-A^{t}\|_2 \le \varepsilon.\label{eq:weyl}
+\end{equation}
+We operationalize this by (i) isotonic rank projection, (ii) min-cost assignment with a churn cap (\(\le K\) swaps), and (iii) rejecting updates that would exceed $\varepsilon$ based on a power-iteration estimate.
+
+\section{Algebraic validity (PETC)}
+Mutually exclusive or constrained features are encoded as linear inequalities on $\sig$. For example, a tense conflict is captured by $e_{\text{past}}+e_{\text{future}}\le 1$. A composition $\sig_x+\sig_y$ is valid iff all constraints are satisfied.
+
+\section{Algorithms}
+\subsection{Isotonic Rank Adjustment}
+Given scores $R$ and a previous order $\pi^{t}$, we compute $R_{\text{iso}}$ by projecting onto the set of vectors that are \emph{nearly} non-increasing along $\pi^{t}$ using pool-adjacent-violators with a slack parameter. This stabilizes ranks prior to assignment.
+
+\subsection{ACE-Constrained Assignment}
+We seek a new permutation $\pi^{t+1}$ minimizing total rank displacement subject to a churn budget $K$:
+\begin{equation}
+  \min_{\pi\in S_n} \sum_{i=1}^n w_{i}\,|\pi(i)-i| \quad \text{s.t.}\quad |\{i: \pi(i)\ne i\}| \le K. \label{eq:assignment}
+\end{equation}
+A min-cost flow formulation solves (\ref{eq:assignment}) efficiently.
+
+\section{Reference Implementations}
+\subsection{Data structures}
+\begin{lstlisting}[language=Python,caption={Sparse PETC vector and code tuple}]
+from dataclasses import dataclass
+from typing import Dict, Tuple
+
+FeatureId = int
+
+@dataclass(frozen=True)
+class PETCVec:
+    exp: Dict[FeatureId, int]  # feature_id -> exponent (>=0)
+
+    def add(self, other: "PETCVec") -> "PETCVec":
+        out = dict(self.exp)
+        for k, v in other.exp.items():
+            out[k] = out.get(k, 0) + v
+        return PETCVec(out)
+
+@dataclass(frozen=True)
+class ALPCode:
+    order_prime: int
+    petc: PETCVec
+
+    def compose(self, other: "ALPCode") -> "ALPCode":
+        return ALPCode(
+            order_prime=compose_order(self.order_prime, other.order_prime),
+            petc=self.petc.add(other.petc)
+        )
+
+# Serialization (UF-encoding). PP_order and PP_petc are disjoint prime tables.
+PP_petc: Tuple[int, ...] = (...,)  # registry-ordered feature primes
+
+def to_integer(code: ALPCode) -> int:
+    n = code.order_prime
+    # Multiply only non-zero exponents; avoid huge ints unless needed.
+    for idx, q in enumerate(PP_petc):
+        e = code.petc.exp.get(idx, 0)
+        if e:
+            n *= pow(q, e)
+    return n
+\end{lstlisting}
+
+\subsection{L1 Graphemic encoder}
+\begin{lstlisting}[language=Python,caption={Graphemic ALP (static)}]
+class GraphemicALP:
+    def __init__(self, order_primes: Dict[str, int], feature_map: Dict[str, int]):
+        self.order_primes = order_primes          # e.g., {'e':2,'t':3,...}
+        self.feature_map = feature_map            # feature name -> feature_id
+
+    def encode(self, grapheme: str, ctx: dict) -> ALPCode:
+        p = self.order_primes[grapheme]
+        exp = {}
+        exp[self.feature_map['position_'+ctx['position']]] = 1   # onset/nucleus/coda
+        exp[self.feature_map['stress_'+str(ctx['stress'])]] = 1  # 0/1/2
+        exp[self.feature_map['morph_'+ctx['morph_role']]] = 1    # prefix/root/suffix
+        exp[self.feature_map['g2p_'+str(ctx['g2p_cluster'])]] = 1
+        return ALPCode(order_prime=p, petc=PETCVec(exp))
+\end{lstlisting}
+
+\subsection{L1.5 Contextual ranking (EMA + isotonic)}
+\begin{lstlisting}[language=Python,caption={EMA + isotonic rank stabilization}]
+import numpy as np
+
+def ema_update(R_prev: Dict[tuple, float], R_hat: Dict[tuple, float], beta=0.9):
+    R = dict(R_prev)
+    for k, v in R_hat.items():
+        R[k] = beta * R.get(k, 0.0) + (1 - beta) * v
+    return R
+
+def isotonic_adjust(R: Dict[tuple, float], order_prev: list[tuple], slack: float=0.0):
+    # Pool-adjacent-violators on values ordered by order_prev; optional slack
+    vals = np.array([R[k] for k in order_prev], dtype=float)
+    # Simple PAV without slack for brevity
+    n = len(vals); i = 0
+    while i < n-1:
+        if vals[i] < vals[i+1] - slack:
+            j = i
+            while j >= 0 and vals[j] < vals[i+1] - slack:
+                j -= 1
+            block = slice(j+1, i+2)
+            m = float(np.mean(vals[block]))
+            vals[block] = m
+            i = max(j, 0)
+        else:
+            i += 1
+    return {k: v for k, v in zip(order_prev, vals)}
+\end{lstlisting}
+
+\subsection{ACE-constrained assignment (churn cap)}
+\begin{lstlisting}[language=Python,caption={Min-cost assignment with churn cap (sketch)}]
+# Given stabilized scores R_iso and previous order, produce a new order with <=K swaps.
+# Here we sketch: keep top T fixed, allow limited swaps in a candidate window.
+
+def constrained_order(R_iso: Dict[tuple, float], order_prev: list[tuple], K: int= int(0.05*1e6)):
+    # Rank by R_iso
+    order_new = sorted(R_iso.keys(), key=lambda k: R_iso[k], reverse=True)
+    # Compute minimal edits under cap K (greedy windowed)
+    pos_prev = {k:i for i,k in enumerate(order_prev)}
+    swaps = 0; final = []
+    used = set()
+    for k in order_new:
+        if k in used: continue
+        if k in pos_prev and abs(len(final) - pos_prev[k]) <= 1 and swaps < K:
+            final.append(k); used.add(k)
+        else:
+            final.append(k); used.add(k); swaps += 1
+    return final, swaps
+\end{lstlisting}
+
+\subsection{Spectral drift (power iteration)}
+\begin{lstlisting}[language=Python,caption={Estimate ||ΔA||_2 by power iteration}]
+import scipy.sparse as sp
+import numpy as np
+
+def spectral_drift_norm(DeltaA: sp.spmatrix, iters: int = 20):
+    n = DeltaA.shape[1]
+    x = np.random.randn(n)
+    x /= np.linalg.norm(x) + 1e-12
+    for _ in range(iters):
+        y = DeltaA @ x
+        normy = np.linalg.norm(y)
+        if normy == 0: return 0.0
+        x = (DeltaA.T @ y)
+        x_norm = np.linalg.norm(x)
+        if x_norm == 0: break
+        x /= x_norm
+    # Rayleigh quotient estimate
+    return float(normy)
+\end{lstlisting}
+
+\section{Evaluation Protocol}
+For each layer, report task metrics and stability/compositional metrics:
+\begin{itemize}[leftmargin=2em]
+  \item L1: G2P CER, spelling/ocr AUC; PETC-law violations per 1k compositions.
+  \item L1.5: prime-churn per update (\%), spectral-drift@k (top-$k$ singular values).
+  \item L2: SIGMORPHON inflection F1; contradiction rate (tense/number).
+  \item L3: SRL / relation-extraction F1 deltas with ALP features.
+\end{itemize}
+
+\section{Serialization and Registries}
+Maintain a versioned registry for feature IDs and prime tables. On the wire, emit:
+\begin{verbatim}
+{
+  "version": 1,
+  "lang": "en",
+  "unit": "grapheme|morpheme|lemma",
+  "text_span": {"start": 123, "end": 127},
+  "order_prime": 37,
+  "petc": {"2":1, "11":2, ...}  // feature_id -> exponent
+}
+\end{verbatim}
+
+\section{Theoretical Properties}
+\paragraph{Monoid.} With composition defined by \eqref{eq:petc-add} and order-prime multiset accumulation, $(\text{ALP},\circ)$ is a monoid with identity (empty code). Associativity follows from integer addition associativity.
+
+\paragraph{Stability certificate.} If $\|\Delta A\|_2\le\varepsilon$, then by \eqref{eq:weyl} all top-$k$ singular values move by at most $\varepsilon$, bounding the rank churn needed to maintain order within a budget.
+
+\section{Example Prime Tables (English, illustrative)}
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{ll|ll|ll}
+\toprule
+Letter & $p_\text{ord}$ & Letter & $p_\text{ord}$ & Letter & $p_\text{ord}$ \\
+\midrule
+ e & 2 & t & 3 & a & 5 \\
+ o & 7 & i & 11 & n & 13 \\
+ s & 17 & h & 19 & r & 23 \\
+ d & 29 & l & 31 & c & 37 \\
+ u & 41 & m & 43 & w & 47 \\
+ f & 53 & g & 59 & y & 61 \\
+ p & 67 & b & 71 & v & 73 \\
+ k & 79 & j & 83 & x & 89 \\
+ q & 97 & z & 101 &  &  \\
+\bottomrule
+\end{tabular}
+\caption{Illustrative static order primes for English letters (per L1).}
+\end{table}
+
+\section{Conclusion}
+This report consolidates ALP into a compositional, prime-encoded framework with certified stability. The division into static graphemic, dynamic contextual grapheme, and dynamic morpho-lexical layers preserves mathematical elegance (PETC) and practical learning (ACE). The accompanying code sketches provide a starting point for production implementations.
+
+\section*{Acknowledgments}
+IFMD framework components: Arithmetic Control Engine (ACE, Tyler Van Osdol) and Prime-Encoded Tensor Calculus (PETC, Ryan Van Gelder).
+
+\begin{thebibliography}{9}
+\bibitem{ACE}
+Tyler Van Osdol. \emph{Arithmetic Control Engine (ACE)}. Technical memorandum.
+
+\bibitem{PETC}
+Ryan Van Gelder. \emph{Prime-Encoded Tensor Calculus (PETC)}. Technical memorandum.
+\end{thebibliography}
+
+\appendix
+\section{Notes on Implementation Details}
+\paragraph{Isotonic slack.} In practice, use a convex projection or isotonic regression with a temperature parameter that trades off fidelity vs.~order preservation.
+
+
+\paragraph{Assignment solver.} A full min-cost flow with churn constraint yields better optimality than greedy; the sketch provided is a placeholder for clarity.
+
+
+\paragraph{G2P clusters.} Initialize with a pronouncing dictionary and allow online clustering (e.g., Dirichlet process) over phoneme posteriors to adapt to domain text.
+
+
+\section{Minimal Runnable Example (Toy)}\label{app:toy}
+\noindent\textbf{Goal.} Demonstrate L1.5 dynamic re-ranking (EMA + constrained assignment) and PETC composition on two toy words (\texttt{cat}, \texttt{city}). Pure Python, no external dependencies.
+
+
+\subsection*{Code}
+\begin{lstlisting}[language=Python]
+# Minimal ALP toy demo (Python 3.10+)
+# - Dynamically ranks grapheme-in-context keys (L1.5)
+# - Encodes PETC vectors (sparse) and composes word codes
+# - Prints churn and example codes for 'cat' and 'city'
+
+
+from dataclasses import dataclass
+from typing import Dict, Tuple, List
+from math import log
+
+
+# ------------------ Utilities ------------------
+
+
+def first_n_primes(n: int) -> List[int]:
+primes, x = [], 2
+def is_prime(k: int) -> bool:
+i = 2
+while i * i <= k:
+if k % i == 0: return False
+i += 1
+return True
+while len(primes) < n:
+if is_prime(x): primes.append(x)
+x += 1
+return primes
+
+
+# PETC vector (sparse): feature_id -> exponent
+@dataclass(frozen=True)
+class PETCVec:
+exp: Dict[int, int]
+def add(self, other: "PETCVec") -> "PETCVec":
+out = dict(self.exp)
+for k, v in other.exp.items():
+out[k] = out.get(k, 0) + v
+return PETCVec(out)
+
+
+@dataclass(frozen=True)
+class ALPCode:
+order_prime: int
+petc: PETCVec
+def compose(self, other: "ALPCode") -> "ALPCode":
+\end{lstlisting}
+
+\nocite{*}
+\bibliographystyle{unsrt}
+\bibliography{references}
+\end{document}

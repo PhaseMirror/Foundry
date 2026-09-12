@@ -1,0 +1,67 @@
+# UOR-Atlas-UTQC — a parametric, BDD-driven, V&V-gated realization of The UOR Atlas UTQC.
+#
+# This is a VIRTUAL workspace (no root package). Every member is a focused crate
+# whose responsibility maps onto the conceptual model in `docs/conceptual-model/`.
+# Shared dependency versions and lints live here so the implementation stays DRY.
+[workspace]
+resolver = "2"
+members = [
+    "crates/tqc-model",
+    "crates/tqc-core",
+    "crates/tqc-atlas",
+    "crates/tqc-mtc",
+    "crates/tqc-substrate",
+    "crates/tqc-vv",
+    "crates/tqc-conformance",
+    "xtask", "crates/tqc-compiler", "crates/tqc-algorithms",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.83"
+license = "MIT"
+repository = "https://github.com/afflom/UOR-Atlas-UTQC"
+description = "A parametric, BDD-driven, V&V-gated realization of The UOR Atlas UTQC — the basis of the entire UOR ecosystem of tooling including Hologram Holospaces."
+authors = ["Alex Flom <alex@uor.foundation>"]
+
+# DRY: one place to pin every shared dependency.
+[workspace.dependencies]
+serde = { version = "1", default-features = false, features = ["derive", "alloc"] }
+serde_json = { version = "1", default-features = false, features = ["alloc"] }
+toml = "0.8"
+sha2 = "0.10"
+hex = "0.4"
+cucumber = "0.21"
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+anyhow = "1"
+
+# Internal crates referenced by path (DRY: declared once, used by version+path).
+tqc-model = { path = "crates/tqc-model", version = "0.1.0" }
+tqc-core = { path = "crates/tqc-core", version = "0.1.0" }
+tqc-atlas = { path = "crates/tqc-atlas", version = "0.1.0" }
+tqc-mtc = { path = "crates/tqc-mtc", version = "0.1.0" }
+tqc-substrate = { path = "crates/tqc-substrate", version = "0.1.0" }
+tqc-vv = { path = "crates/tqc-vv", version = "0.1.0" }
+tqc-compiler = { path = "crates/tqc-compiler", version = "0.1.0" }
+tqc-algorithms = { path = "crates/tqc-algorithms", version = "0.1.0" }
+
+# Deny-heavy posture applied to every member crate. No half-measures.
+[workspace.lints.rust]
+unsafe_code = "forbid"
+missing_docs = "warn"
+unreachable_pub = "warn"
+rust_2018_idioms = { level = "warn", priority = -1 }
+
+[workspace.lints.clippy]
+all = { level = "deny", priority = -1 }
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"
+todo = "deny"
+unimplemented = "deny"
+dbg_macro = "deny"
+used_underscore_binding = "deny"
+
+[profile.release]
+overflow-checks = true

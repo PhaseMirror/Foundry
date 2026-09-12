@@ -1,0 +1,143 @@
+name: Version Bump
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_type:
+        description: 'Version bump type'
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+      prerelease:
+        description: 'Pre-release identifier (leave empty for stable release)'
+        required: false
+        type: choice
+        options:
+          - ''
+          - alpha
+          - beta
+          - rc
+
+permissions:
+  contents: write
+
+jobs:
+  bump-version:
+    name: Bump Version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install cargo-edit
+        run: cargo install cargo-edit
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Get current version
+        id: current_version
+        run: |
+          CURRENT=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[] | select(.name == "hologram") | .version')
+          echo "version=$CURRENT" >> $GITHUB_OUTPUT
+          echo "Current version: $CURRENT"
+
+      - name: Bump version
+        id: bump
+        run: |
+          # Bump the version
+          cargo set-version --workspace --bump ${{ inputs.version_type }}
+
+          # Get the new version
+          NEW_VERSION=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[] | select(.name == "hologram") | .version')
+
+          # Add prerelease identifier if specified
+          if [ -n "${{ inputs.prerelease }}" ]; then
+            cargo set-version --workspace "${NEW_VERSION}-${{ inputs.prerelease }}.1"
+            NEW_VERSION=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[] | select(.name == "hologram") | .version')
+          fi
+
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "New version: $NEW_VERSION"
+
+      - name: Update CHANGELOG.md
+        run: |
+          DATE=$(date +%Y-%m-%d)
+          VERSION=${{ steps.bump.outputs.new_version }}
+
+          # Create CHANGELOG.md if it doesn't exist
+          if [ ! -f CHANGELOG.md ]; then
+            cat > CHANGELOG.md << 'EOL'
+          # Changelog
+
+          All notable changes to this project will be documented in this file.
+
+          The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+          and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0/).
+
+          ## [Unreleased]
+
+          EOL
+          fi
+
+          # Insert new version section after [Unreleased]
+          sed -i "/## \[Unreleased\]/a\\\n## [${VERSION}] - ${DATE}\\\n\\\n### Added\\\n- \\n---\\\n### Changed\\\n- \\n---\\\n### Fixed\\\n- " CHANGELOG.md
+
+      - name: Commit version bump
+        run: |
+          VERSION=${{ steps.bump.outputs.new_version }}
+
+          # Add all Cargo.toml files and CHANGELOG.md
+          git add Cargo.toml Cargo.lock crates/*/Cargo.toml bins/*/Cargo.toml CHANGELOG.md || true
+
+          # Commit changes
+          git commit -m "chore: bump version to v${VERSION}" || true
+
+          echo "Version bump committed"
+
+      - name: Create and push tag
+        run: |
+          VERSION=${{ steps.bump.outputs.new_version }}
+
+          # Create annotated tag
+          git tag -a "v${VERSION}" -m "Release version ${VERSION}"
+
+          echo "Tag v${VERSION} created"
+
+      - name: Push changes and tag
+        run: |
+          # Push the commit to the monorepo default branch (Multiplicity)
+          git push origin Multiplicity || git push origin main || git push origin HEAD
+
+          # Push the tag (this will trigger the publish workflow)
+          git push origin --tags
+
+          echo "Changes and tag pushed to remote"
+
+      - name: Summary
+        run: |
+          echo "## ✅ Version Bump Successful" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Previous Version:** ${{ steps.current_version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**New Version:** ${{ steps.bump.outputs.new_version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Bump Type:** ${{ inputs.version_type }}" >> $GITHUB_STEP_SUMMARY
+          if [ -n "${{ inputs.prerelease }}" ]; then
+            echo "**Pre-release:** ${{ inputs.prerelease }}" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "1. The publish workflow has been automatically triggered by the version tag" >> $GITHUB_STEP_SUMMARY
+          echo "2. Monitor the [Actions tab](https://github.com/${{ github.repository }}/actions) for publish progress" >> $GITHUB_STEP_SUMMARY
+          echo "3. Once published, the release will be available at [Releases](https://github.com/${{ github.repository }}/releases)" >> $GITHUB_STEP_SUMMARY
+          echo "4. Update the CHANGELOG.md with actual changes for this version" >> $GITHUB_STEP_SUMMARY

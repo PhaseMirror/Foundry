@@ -1,0 +1,30 @@
+name: Conformance Tests
+on: [push, pull_request]
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        runner: [python, rust]
+    
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      # Mocked setup for runner
+      - name: Setup ${{ matrix.runner }}
+        run: echo "Setting up ${{ matrix.runner }}"
+      
+      - name: Run Conformance Suite (Rust)
+        if: matrix.runner == 'rust'
+        run: |
+          cargo build --workspace
+          cargo run -p archivum-cli -- --vectors ./tests/vectors --output ./tests/results/${{ matrix.os }}-rust.json
+          
+      - name: Upload Results
+        uses: actions/upload-artifact@v3
+        with:
+          name: results-${{ matrix.os }}-${{ matrix.runner }}
+          path: ./tests/results/

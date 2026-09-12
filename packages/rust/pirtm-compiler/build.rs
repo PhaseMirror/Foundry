@@ -1,0 +1,11 @@
+use std::path::PathBuf;
+use std::path::Path;
+
+fn main() {
+    // let dir: PathBuf = ["tree-sitter-pirtm", "src"].iter().collect();
+    //
+    // cc::Build::new()
+    //     .include(&dir)
+    //     .file(dir.join("parser.c"))
+    //     .compile("tree-sitter-pirtm");
+}

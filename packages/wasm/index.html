@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zeta-ROS WASM Demo</title>
+    <style>
+        body { font-family: 'Courier New', Courier, monospace; background: #1e1e1e; color: #00ff00; padding: 2rem; }
+        .box { border: 1px solid #00ff00; padding: 1rem; margin-top: 1rem; }
+        button { background: #00ff00; color: #1e1e1e; border: none; padding: 0.5rem 1rem; cursor: pointer; font-weight: bold; }
+        button:hover { background: #00cc00; }
+    </style>
+</head>
+<body>
+    <h1>Zeta-ROS (Π₇) Interactive Lattice</h1>
+    <p>Running ZMT Dense Kernel entirely within the browser via WebAssembly.</p>
+    
+    <div class="box">
+        <p><strong>Kernel Status:</strong> <span id="status">Loading WASM...</span></p>
+        <button id="runBtn" disabled>Compute HS-Norm²</button>
+        <p><strong>Result:</strong> <span id="result">--</span></p>
+    </div>
+
+    <script type="module">
+        // Import generated JS glue code (assuming wasm-pack build --target web)
+        import init, { compute_hs_norm_sq, kernel_version } from './pkg/zmt_wasm_kernel.js';
+
+        async function run() {
+            await init();
+            document.getElementById('status').innerText = `Online - ${kernel_version()}`;
+            const btn = document.getElementById('runBtn');
+            btn.disabled = false;
+
+            btn.addEventListener('click', () => {
+                // Mock 100 primes and zeros
+                const primes = new Float64Array(100).map((_, i) => i + 2);
+                const zeros = new Float64Array(100).map((_, i) => 14.1347 + i);
+                
+                const hsNormSq = compute_hs_norm_sq(primes, zeros);
+                document.getElementById('result').innerText = hsNormSq.toFixed(4);
+            });
+        }
+        
+        run().catch(console.error);
+    </script>
+</body>
+</html>

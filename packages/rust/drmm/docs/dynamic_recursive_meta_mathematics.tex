@@ -1,0 +1,859 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{mathtools}
+\usepackage{bm}
+\usepackage{amsthm}
+\usepackage{hyperref}
+\usepackage{microtype}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage[T1]{fontenc}
+\usepackage[scaled]{beramono}
+
+\lstdefinestyle{code}{
+  basicstyle=\ttfamily\small,
+  keywordstyle=\bfseries,
+  commentstyle=\itshape,
+  columns=fullflexible,
+  breaklines=true,
+  showstringspaces=false,
+  frame=single,
+  numberstyle=\tiny,
+  numbers=left,
+  stepnumber=1,
+  xleftmargin=2em,
+  framexleftmargin=1.5em
+}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{definition}{Definition}
+\newtheorem{proposition}{Proposition}
+\newtheorem{remark}{Remark}
+
+\title{%
+Dynamic Recursive Meta-Mathematics (DRMM) and the Multiplicity Constant $\Lambda_m$:\\
+Prime-Indexed Spectral Optimization, Mathematical Foundations,\\
+and Prior-Art Defensive Publication
+}
+
+\author{Multiplicity Foundation (Defensive Draft)}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This report consolidates recent developments in Dynamic Recursive Meta-Mathematics (DRMM) and Multiplicity Theory into a single, self-contained document intended both as a comprehensive technical overview and as a defensive prior-art publication.
+
+Starting from Prime-Indexed Recursive Tensor Mathematics (PIRTM), the Universal Multiplicity Constant $\Lambda_m$, and the recursive operator $\Xi(t)$, the report develops:
+\begin{itemize}[leftmargin=*]
+  \item a precise mathematical formulation of prime-indexed tensor recursion and multiplicity-governed stability;
+  \item a practical DRMM optimizer for deep learning that uses FFT-based prime-indexed spectral bins and layerwise $\Lambda_m$ as a contraction functional;
+  \item proposed empirical validation protocols (phase transitions in $\alpha$, noise robustness);
+  \item connections to operator algebras, quantum stability, and cognitive/proof-state semantics;
+  \item a prior-art record of the specific architecture and algorithms, suitable to block later patent claims on the same ideas.
+\end{itemize}
+The goal is to make the theoretical and algorithmic structure maximally explicit, so that future work can build on an open, well-documented foundation.
+\end{abstract}
+
+\tableofcontents
+
+\section{Executive Summary}
+
+\subsection{Conceptual core}
+
+Multiplicity Theory, as developed in the DRMM draft, proposes that a broad class of mathematical, physical, computational, and cognitive systems can be modeled as prime-indexed recursive tensor systems governed by:
+\begin{enumerate}[label=(\roman*),leftmargin=*]
+  \item a \emph{prime-indexed basis} and eigenstructure carrying the system's state;
+  \item a \emph{Universal Multiplicity Constant} $\Lambda_m$ encoding the distribution of multiplicities across prime-indexed modes;
+  \item a \emph{recursive operator} $\Xi(t)$ encoding feedback, stability, and self-reference;
+  \item a \emph{multiplicity operator} $M$ forming a C$^*$-algebra of transformations.
+\end{enumerate}
+
+At the computational level, the central operational claim is that a recursive contraction functional based on prime-weighted multiplicity can stabilize learning dynamics, especially when spectral energy spreads across many modes. The present work instantiates this claim as an optimizer for neural networks: a layerwise DRMM rule that applies a fast spectral transform (e.g.\ FFT), aggregates energy in prime-indexed bins, computes a multiplicity-weighted contraction scalar $\Lambda_m$, and applies momentum in the transformed domain before inverting the transform to update parameters.
+
+\subsection{What is new and what is practical}
+
+The novelty lies in the \emph{coupling} of three layers:
+\begin{enumerate}[label=(\alph*),leftmargin=*]
+  \item \textbf{Prime-indexed spectral ontology:} primes are not mere labels but index the decomposition of a system into recursively stable modes; they structure the eigenbasis and homotopy-like decomposition of tensor spaces.
+  \item \textbf{Multiplicity-driven contraction:} $\Lambda_m$ is not a fixed hyperparameter; it is a functional of prime-indexed multiplicities $M(T_t,p_i)$, designed to ensure convergence of recursive updates and to bound spectral radius.
+  \item \textbf{Closure into operator and categorical frameworks:} the multiplicity operators form a non-commutative C$^*$-algebra, and the prime-indexed recursion defines a category with morphisms given by prime-weighted recursive maps.
+\end{enumerate}
+
+The practical part is a concrete optimizer that:
+\begin{itemize}[leftmargin=*]
+  \item works with off-the-shelf models and datasets (e.g.\ CNNs on MNIST/CIFAR);
+  \item is implementable with standard deep learning frameworks;
+  \item exposes internal DRMM quantities ($\Lambda_m(t)$, $M_i(t)$, weighted sums) for direct comparison to theoretical predictions.
+\end{itemize}
+
+\subsection{Defensive publication scope}
+
+This report serves as a defensive publication for:
+\begin{itemize}[leftmargin=*]
+  \item the use of prime-indexed spectral bins and multiplicity-weighted contraction constants in optimizers;
+  \item the specific combination of FFT (or related orthogonal transforms) with prime-indexed binning and layerwise $\Lambda_m$;
+  \item the explicit logging and analysis of $\Lambda_m(t)$ and $M_i(t)$ as observables tied to multiplicity theory;
+  \item the idea of treating each layer as a recursive multiplicity system with prime-indexed modes and a dynamically updated multiplicity constant.
+\end{itemize}
+The intention is to place these methods and formulations into the public domain of ideas, preventing later enclosure via patents.
+
+\section{Mathematical Overview}
+
+\subsection{Prime-indexed recursive tensor mathematics (PIRTM)}
+
+\begin{definition}[Prime-indexed tensor recursion]
+Let $T^{(m,n)}_t$ be a rank-$(m,n)$ tensor at discrete time $t$, and let $P_N = \{p_1,\dots,p_N\}$ be the first $N$ primes. A \emph{prime-weighted recursive evolution} is given by
+\begin{equation}
+  T^{(m,n)}_{t+1}
+  =
+  \sum_{p_i \in P_N} \Lambda_m \, p_i^{\alpha} \, T^{(m,n)}_t
+  + F^{(m,n)},
+  \label{eq:pirtm_base}
+\end{equation}
+where $\Lambda_m$ is the multiplicity constant for rank $(m,n)$, $\alpha \in \mathbb{R}$ is an exponent, and $F^{(m,n)}$ is an external driving tensor.
+\end{definition}
+
+\begin{definition}[Contraction factor]
+Define
+\begin{equation}
+  k
+  =
+  \sum_{p_i \in P_N} \Lambda_m \, p_i^{\alpha}.
+  \label{eq:k-def}
+\end{equation}
+If $|k| < 1$ in an appropriate operator norm, the prime-weighted recursion is a contraction mapping on the space of tensors in that norm.
+\end{definition}
+
+\begin{theorem}[Convergence of prime-weighted tensor recursion]
+Suppose $T^{(m,n)}_t$ evolves according to \eqref{eq:pirtm_base}, and $F^{(m,n)}$ is constant in $t$. If $0 < \Lambda_m < 1$ and $\alpha$ are chosen so that $|k| < 1$, then
+\begin{equation}
+  \lim_{t \to \infty} T^{(m,n)}_t
+  =
+  \frac{F^{(m,n)}}{1 - k}.
+\end{equation}
+\end{theorem}
+
+\begin{proof}[Sketch]
+Iterate \eqref{eq:pirtm_base}:
+\begin{equation}
+  T_{t}^{(m,n)}
+  =
+  k^t T_0^{(m,n)}
+  +
+  \sum_{s=0}^{t-1} k^s F^{(m,n)}.
+\end{equation}
+If $|k|<1$, then $k^t \to 0$ and the geometric series converges, yielding the fixed point.
+\end{proof}
+
+\subsection{Prime-indexed basis and eigenstructures}
+
+\begin{definition}[Prime-indexed basis axiom]
+Let $\mathcal{T}$ be a tensor space. A \emph{prime-indexed basis} is a set $\{T_{p_i}^{(m,n)} : p_i \in P\}$ such that any $T^{(m,n)} \in \mathcal{T}$ can be written as
+\begin{equation}
+  T^{(m,n)}
+  =
+  \sum_{p_i \in P} \lambda_{p_i} T_{p_i}^{(m,n)},
+\end{equation}
+for some coefficients $\lambda_{p_i}$. The primes serve as indices structuring the recursive dependencies.
+\end{definition}
+
+\begin{theorem}[Prime-indexed eigenstructure]
+Consider a recursive tensor field $T^{(m,n)}_t$ obeying
+\begin{equation}
+  T^{(m,n)}_{t+1}
+  =
+  \sum_{p_i \in P_N} \Lambda_m p_i^{\alpha} V_{p_i},
+\end{equation}
+where $V_{p_i}$ are eigenvectors indexed by primes. Then the limiting tensor admits a decomposition
+\begin{equation}
+  T^{(m,n)}_{\infty}
+  =
+  \sum_{p_i \in P_N} \lambda_{p_i} T_{p_i}^{(m,n)},
+\end{equation}
+with coefficients stabilized by the recursion.
+\end{theorem}
+
+\begin{remark}
+This expresses the idea that recursive tensors evolve along prime-indexed eigenmodes, and that the multiplicity constant $\Lambda_m$ controls the spectral stability of these modes.
+\end{remark}
+
+\subsection{Multiplicity constant $\Lambda_m$}
+
+\begin{definition}[Multiplicity function]
+Let $T_t$ be a recursive system (tensor, vector, or other structured object) and let $P_N$ be a finite set of primes. A \emph{multiplicity function} is a map
+\[
+M(T_t, p_i)
+\]
+that quantifies the ``amount'' of the state associated with prime index $p_i$. Examples:
+\begin{itemize}[leftmargin=*]
+  \item multiplicity of an eigenvalue indexed by $p_i$;
+  \item average energy in a spectral bin tied to $p_i$;
+  \item count of features or events aligned to $p_i$.
+\end{itemize}
+\end{definition}
+
+\begin{definition}[Multiplicity-governed $\Lambda_m$]
+Given a multiplicity function $M(T_t,p_i)$, define
+\begin{equation}
+  \Lambda_m(t)
+  =
+  \left(
+    \sum_{p_i \in P_N}
+    M(T_t, p_i) \, p_i^{-\alpha}
+  \right)^{-1},
+  \quad \alpha > 1.
+  \label{eq:lambda-multiplicity-general}
+\end{equation}
+This quantity is the multiplicity constant at time $t$.
+\end{definition}
+
+\begin{theorem}[Convergence of $\Lambda_m(t)$]
+Suppose that $T_t$ evolves in a Hilbert space with norm $\|T_t\|$, and multiplicities $M(T_t,p_i)$ are uniformly bounded, $0 \le M(T_t,p_i) \le K$, for all $t$ and $p_i \in P_N$. If $\alpha > 1$, then the sequence $\Lambda_m(t)$ defined by \eqref{eq:lambda-multiplicity-general} converges to a finite positive limit as $t \to \infty$.
+\end{theorem}
+
+\begin{proof}[Sketch]
+The denominator is a finite prime-weighted sum with each term bounded by $K p_i^{-\alpha}$. For $\alpha>1$, the series $\sum p_i^{-\alpha}$ converges (as a subsequence of the Riemann zeta series), and the multiplicities remain bounded, so the denominator is bounded and bounded away from zero in the appropriate limits. Under convergence of $T_t$ to a fixed point $T$, the multiplicity vector $M(T_t,p_i)$ converges to a constant vector, and thus the denominator converges. The inverse then converges to a finite positive value.
+\end{proof}
+
+\begin{remark}
+The DRMM draft generalizes this to dynamic recursive constants (denoted $\mathrm{dyn}(t)$ in some contexts) and to spectral stability results where $\Lambda_m$ bounds the spectral radius of associated operators.
+\end{remark}
+
+\section{DRMM Optimizer: Algorithmic Formulation}
+
+\subsection{Design principles}
+
+The DRMM optimizer is designed to:
+\begin{itemize}[leftmargin=*]
+  \item treat each layer of a neural network as its own recursive system;
+  \item work in a spectral domain (via FFT or other orthogonal transforms);
+  \item assign primes to spectral bins and compute bin multiplicities as averaged energies;
+  \item compute layerwise $\Lambda_m^{(\ell)}(t)$ as a regularized contraction functional;
+  \item apply momentum in the transformed domain and invert back to parameter space.
+\end{itemize}
+
+\subsection{Spectral transform and bins}
+
+Let $w^{(\ell)} \in \mathbb{R}^{d_\ell}$ denote the flattened parameter vector for layer $\ell$. Define a real spectral transform
+\[
+\mathcal{Q}_\ell : \mathbb{R}^{d_\ell} \to \mathbb{C}^{\tilde d_\ell},
+\]
+e.g.\ an FFT with appropriate padding. For a gradient $g_t^{(\ell)}$, set
+\[
+\tilde g_t^{(\ell)} = \mathcal{Q}_\ell(g_t^{(\ell)}).
+\]
+Partition indices $\{1,\dots,\tilde d_\ell\}$ into $K_\ell$ bins $B_1^{(\ell)},\dots,B_{K_\ell}^{(\ell)}$ (typically linear or logarithmic in frequency). Assign primes $p_1,\dots,p_{K_\ell}$ to these bins. Define bin energies:
+\begin{equation}
+M_i^{(\ell)}(t)
+=
+\frac{1}{|B_i^{(\ell)}|}
+\sum_{j \in B_i^{(\ell)}} |\tilde g_{t,j}^{(\ell)}|^2.
+\end{equation}
+
+\subsection{Layerwise multiplicity constant}
+
+Define a regularized layerwise multiplicity constant:
+\begin{equation}
+\Lambda_m^{(\ell)}(t)
+=
+\mathrm{clip}
+\left(
+\frac{1}{\sqrt{\varepsilon + \sum_{i=1}^{K_\ell} M_i^{(\ell)}(t) p_i^{-\alpha}}},
+\Lambda_{\min}, \Lambda_{\max}
+\right),
+\end{equation}
+with small $\varepsilon>0$ and bounds $0<\Lambda_{\min}\le \Lambda_{\max}<\infty$.
+
+For stability and smoother dynamics, use an exponential moving average:
+\begin{equation}
+\widehat{\Lambda}_m^{(\ell)}(t)
+=
+\beta \widehat{\Lambda}_m^{(\ell)}(t-1)
++ (1-\beta)\Lambda_m^{(\ell)}(t),
+\quad 0<\beta<1.
+\end{equation}
+
+\subsection{Transformed-domain momentum and update}
+
+Let $\mu \in [0,1)$ be a momentum coefficient and $\eta > 0$ a base learning rate. In each layer:
+\begin{align}
+\tilde g'_t{}^{(\ell)} &= \widehat{\Lambda}_m^{(\ell)}(t)\,\tilde g_t^{(\ell)},\\
+\tilde v_t^{(\ell)} &= \mu\,\tilde v_{t-1}^{(\ell)} + (1-\mu)\,\tilde g'_t{}^{(\ell)},\\
+\Delta w_t^{(\ell)} &= -\eta\,\mathcal{Q}_\ell^{-1}(\tilde v_t^{(\ell)}).
+\end{align}
+Then update parameters:
+\[
+w_{t+1}^{(\ell)} = w_t^{(\ell)} + \Delta w_t^{(\ell)}.
+\]
+
+\subsection{Logging and observables}
+
+The optimizer maintains logs for each parameter tensor $p$:
+\begin{itemize}[leftmargin=*]
+  \item $\Lambda_m^{(\ell)}(t)$ (raw and EMA);
+  \item the weighted sum $\sum_i M_i^{(\ell)}(t)p_i^{-\alpha}$;
+  \item bin multiplicities $M_i^{(\ell)}(t)$ across training steps.
+\end{itemize}
+These logs are crucial for testing theoretical predictions:
+\begin{itemize}[leftmargin=*]
+  \item boundedness and convergence of $\Lambda_m^{(\ell)}(t)$ for $\alpha>1$;
+  \item redistribution of $M_i^{(\ell)}(t)$ towards lower bins;
+  \item sensitivity of $\Lambda_m^{(\ell)}(t)$ to injected gradient noise.
+\end{itemize}
+
+\section{Code Snippet (PyTorch-style)}
+
+The following snippet illustrates the core structure of a DRMM optimizer in PyTorch style. It is simplified for clarity but captures the essential ideas: FFT-based transform, prime-indexed bins, multiplicity-governed $\Lambda_m$, EMA smoothing, and transformed-domain momentum.
+
+\begin{lstlisting}[style=code,language=Python]
+import math
+import numpy as np
+import torch
+from torch.optim import Optimizer
+
+def generate_first_n_primes(n: int):
+    if n <= 0:
+        return []
+    primes = []
+    candidate = 2
+    while len(primes) < n:
+        is_prime = True
+        limit = int(candidate ** 0.5) + 1
+        for p in primes:
+            if p > limit: break
+            if candidate % p == 0:
+                is_prime = False
+                break
+        if is_prime:
+            primes.append(candidate)
+        candidate += 1
+    return primes
+
+class DRMM(Optimizer):
+    def __init__(self, params,
+                 lr=1e-2, alpha=1.2,
+                 eps=1e-8,
+                 lambda_min=0.01,
+                 lambda_max=5.0,
+                 momentum=0.9,
+                 num_bins=32,
+                 ema_beta=0.99,
+                 log_every=10,
+                 grad_clip=None):
+        defaults = dict(
+            lr=lr, alpha=alpha, eps=eps,
+            lambda_min=lambda_min,
+            lambda_max=lambda_max,
+            momentum=momentum,
+            num_bins=num_bins,
+            ema_beta=ema_beta,
+            log_every=log_every,
+            grad_clip=grad_clip,
+        )
+        super().__init__(params, defaults)
+        prime_count = max(256, num_bins)
+        self.primes = torch.tensor(
+            generate_first_n_primes(prime_count),
+            dtype=torch.float32
+        )
+        self.global_step = 0
+
+    def _fft_transform(self, x: torch.Tensor):
+        d = x.numel()
+        n = int(2 ** math.ceil(math.log2(max(2, d))))
+        x_pad = torch.zeros(n, device=x.device, dtype=x.dtype)
+        x_pad[:d] = x
+        y = torch.fft.rfft(x_pad)
+        return y, n, d
+
+    def _fft_inverse(self, y: torch.Tensor, n: int, d_orig: int):
+        x_pad = torch.fft.irfft(y, n=n)
+        return x_pad[:d_orig]
+
+    @torch.no_grad()
+    def step(self, closure=None):
+        loss = None
+        if closure is not None:
+            with torch.enable_grad():
+                loss = closure()
+
+        self.global_step += 1
+
+        for group in self.param_groups:
+            lr        = group["lr"]
+            alpha     = group["alpha"]
+            eps       = group["eps"]
+            lam_min   = group["lambda_min"]
+            lam_max   = group["lambda_max"]
+            mu        = group["momentum"]
+            num_bins  = group["num_bins"]
+            ema_beta  = group["ema_beta"]
+            log_every = group["log_every"]
+            grad_clip = group["grad_clip"]
+
+            for p in group["params"]:
+                if p.grad is None:
+                    continue
+
+                g = p.grad.detach().view(-1)
+                if grad_clip is not None:
+                    g.clamp_(-grad_clip, grad_clip)
+
+                orig_shape = p.data.shape
+
+                # 1) FFT transform of gradient
+                g_tilde, n, d_orig = self._fft_transform(g)
+                g_mag2 = g_tilde.real.square() + g_tilde.imag.square()
+
+                # 2) Prime-indexed bins
+                usable_bins = min(num_bins,
+                                  len(g_mag2),
+                                  len(self.primes))
+                edges = np.linspace(0, len(g_mag2),
+                                    usable_bins + 1,
+                                    dtype=int)
+                M_i = []
+                for i in range(usable_bins):
+                    start, end = edges[i], edges[i+1]
+                    end = max(end, start + 1)
+                    M_i.append(g_mag2[start:end].mean())
+                M_i = torch.stack(M_i)
+
+                # 3) Layerwise Lambda_m
+                weights = self.primes[:usable_bins].to(
+                    g_mag2.device
+                ) ** (-alpha)
+                weighted_sum = torch.sum(M_i * weights)
+                lambda_raw = 1.0 / torch.sqrt(weighted_sum + eps)
+                lambda_raw = torch.clamp(lambda_raw,
+                                         lam_min, lam_max)
+
+                state = self.state[p]
+                if "lambda_ema" not in state:
+                    state["lambda_ema"] = lambda_raw.clone()
+                else:
+                    state["lambda_ema"] = (
+                        ema_beta * state["lambda_ema"]
+                        + (1 - ema_beta) * lambda_raw
+                    )
+                Lambda_m = state["lambda_ema"]
+
+                # 4) Apply contraction in spectral domain
+                g_prime = Lambda_m * g_tilde
+
+                # 5) Momentum in spectral domain
+                if "momentum_buffer" not in state:
+                    state["momentum_buffer"] = torch.zeros_like(
+                        g_prime
+                    )
+                buf = state["momentum_buffer"]
+                buf.mul_(mu).add_(g_prime, alpha=1 - mu)
+                g_updated = buf
+
+                # 6) Inverse FFT and parameter update
+                delta = self._fft_inverse(g_updated, n, d_orig)
+                p.data.add_(delta.view(orig_shape), alpha=-lr)
+
+                # 7) Logging Lambda_m and M_i
+                if self.global_step % log_every == 0:
+                    if "lambda_history" not in state:
+                        state["lambda_history"] = []
+                        state["M_history"] = []
+                        state["weighted_sum_history"] = []
+                    state["lambda_history"].append(
+                        float(Lambda_m.detach().cpu())
+                    )
+                    state["M_history"].append(
+                        M_i.detach().cpu().numpy().copy()
+                    )
+                    state["weighted_sum_history"].append(
+                        float(weighted_sum.detach().cpu())
+                    )
+
+        return loss
+\end{lstlisting}
+
+\section{Prior Art and Defensive Claims}
+
+\subsection{Core claims made public}
+
+This document places the following specific ideas into the public record as prior art:
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Prime-indexed spectral optimizer:} An optimizer that flattens layer parameters or gradients, applies an FFT (or related orthogonal transform), partitions spectral coefficients into bins, assigns primes to bins, computes bin energies $M_i(t)$, and uses a prime-weighted contraction functional $\Lambda_m$ to rescale updates in the transformed domain.
+
+  \item \textbf{Layerwise multiplicity constant:} The notion of treating each layer of a neural network as a recursive multiplicity system with its own $\Lambda_m^{(\ell)}(t)$ computed from prime-indexed multiplicities, as opposed to a single global scalar.
+
+  \item \textbf{Logging of multiplicity observables:} The practice of logging $\Lambda_m(t)$, $M_i(t)$, and the corresponding prime-weighted sums as first-class observables tied to a theoretical multiplicity framework, and using them to check predicted phase transitions and stability properties.
+
+  \item \textbf{Phase transition in $\alpha$:} The explicit proposal to sweep the exponent $\alpha$ in the prime-weighted multiplicity sum and to interpret observed changes in optimization behavior as reflections of the theoretical convergence threshold ($\alpha>1$ vs.\ $\alpha\le 1$).
+
+  \item \textbf{Cross-domain extension template:} The modular plan to extend DRMM-style recursion and multiplicity constants to quantum toy models, spectral operator learning, and proof/cognitive systems, using prime-indexed projectors or modes and multiplicity-based stability constraints.
+\end{enumerate}
+
+\subsection{Guidance for future work}
+
+Future research can build on this framework by:
+\begin{itemize}[leftmargin=*]
+  \item tightening the mathematical link between practical FFT-based DRMM and the abstract PIRTM/DRMM theorems;
+  \item extending the optimizer to more general transforms and architectures;
+  \item refining the categorical and C$^*$-algebraic layers to reflect concrete computational structures;
+  \item running and publishing empirical studies that confirm or falsify the predicted behavior of $\Lambda_m$ and prime-indexed multiplicity in practice.
+\end{itemize}
+
+Regardless of future directions, the specific ideas enumerated above are here documented as prior art, with both mathematical and algorithmic details.
+
+\section*{Appendix A: Mathematical Appendix}
+
+\addcontentsline{toc}{section}{Appendix A: Mathematical Appendix}
+
+This appendix collects explicit proofs, operator-norm bounds, and technical refinements for the prime–indexed recursive tensor framework and the DRMM-inspired contraction functionals used in the main article. The goal is to make clear which stability and convergence statements are rigorously justified for the concrete operators appearing in the DRMM optimizer.
+
+Throughout, $\|\cdot\|$ denotes a norm on a (real or complex) Banach space, and $\|\cdot\|_{\mathrm{op}}$ denotes the induced operator norm.
+
+\subsection*{A.1 Prime–Indexed Recursive Tensor Evolution}
+
+\begin{definition}[Prime–Indexed Linear Operator]
+Let $\mathcal{X}$ be a Banach space and $\{p_i\}_{i=1}^N$ the first $N$ primes. Let $A^{(m,n)}$ be a bounded linear operator on $\mathcal{X}$ associated with a rank–$(m,n)$ tensor $T^{(m,n)}$. Define the prime–indexed operator
+\begin{equation}
+  \mathcal{K}
+  \;=\;
+  \sum_{i=1}^N \Lambda_m\, p_i^{\alpha}\, A^{(m,n)}_i,
+  \label{eq:K-def}
+\end{equation}
+where each $A^{(m,n)}_i$ is a bounded linear operator and $\Lambda_m \in \mathbb{R}$, $\alpha \in \mathbb{R}$.
+\end{definition}
+
+\begin{remark}
+The concrete tensor recursion in the main text corresponds to the special case $A^{(m,n)}_i = \mathsf{Id}$, the identity operator on the tensor space, but it is convenient here to allow distinct $A^{(m,n)}_i$ to account for heterogeneous prime–indexed actions.
+\end{remark}
+
+\begin{definition}[Prime–Indexed Recursive Update]
+Given an initial tensor $T_0^{(m,n)} \in \mathcal{X}$ and a fixed driving term $F^{(m,n)} \in \mathcal{X}$, define the recursion
+\begin{equation}
+  T_{t+1}^{(m,n)}
+  \;=\;
+  \mathcal{K} T_t^{(m,n)} + F^{(m,n)},
+  \qquad t = 0,1,2,\dots.
+  \label{eq:tensor-recursion-op}
+\end{equation}
+\end{definition}
+
+\subsubsection*{A.1.1 Operator Norm Bounds and Contraction}
+
+\begin{proposition}[Operator Norm Bound for Prime–Indexed Sum]
+Assume that $\|A^{(m,n)}_i\|_{\mathrm{op}} \leq M$ for all $i = 1,\dots,N$. Then the operator $\mathcal{K}$ in \eqref{eq:K-def} satisfies
+\begin{equation}
+  \|\mathcal{K}\|_{\mathrm{op}}
+  \;\leq\;
+  |\Lambda_m|\,M \sum_{i=1}^N p_i^{\alpha}.
+  \label{eq:K-op-bound}
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+For any $x \in \mathcal{X}$ with $\|x\|=1$,
+\begin{align}
+  \|\mathcal{K}x\|
+  &= \left\| \sum_{i=1}^N \Lambda_m\, p_i^{\alpha}\, A^{(m,n)}_i x \right\|
+   \leq \sum_{i=1}^N |\Lambda_m|\, p_i^{\alpha}\, \|A^{(m,n)}_i x\| \\
+  &\leq \sum_{i=1}^N |\Lambda_m|\, p_i^{\alpha}\, \|A^{(m,n)}_i\|_{\mathrm{op}} \|x\|
+   \leq |\Lambda_m|\, M \sum_{i=1}^N p_i^{\alpha}.
+\end{align}
+Taking the supremum over all $\|x\|=1$ yields \eqref{eq:K-op-bound}.
+\end{proof}
+
+\begin{theorem}[Contraction Condition]\label{thm:contraction}
+Suppose there exists $M>0$ such that $\|A^{(m,n)}_i\|_{\mathrm{op}} \leq M$ for all $i$, and that
+\begin{equation}
+  |\Lambda_m|\,M \sum_{i=1}^N p_i^{\alpha} \;<\; 1.
+  \label{eq:K-op-contraction}
+\end{equation}
+Then $\mathcal{K}$ is a strict contraction on $\mathcal{X}$ with respect to $\|\cdot\|$, and the recursion \eqref{eq:tensor-recursion-op} has a unique fixed point
+\begin{equation}
+  T_\infty^{(m,n)} \;=\; (\mathsf{Id} - \mathcal{K})^{-1} F^{(m,n)}.
+\end{equation}
+Furthermore, for any initial $T_0^{(m,n)}$,
+\begin{equation}
+  \|T_t^{(m,n)} - T_\infty^{(m,n)}\|
+  \;\leq\;
+  \|\mathcal{K}\|_{\mathrm{op}}^t \,\|T_0^{(m,n)} - T_\infty^{(m,n)}\|,
+\end{equation}
+so convergence is geometric.
+\end{theorem}
+
+\begin{proof}
+By Proposition~\ref{thm:contraction}, \eqref{eq:K-op-contraction} implies $\|\mathcal{K}\|_{\mathrm{op}}<1$. The Banach Fixed Point Theorem then guarantees both existence and uniqueness of the fixed point and geometric convergence of iterates.
+\end{proof}
+
+\begin{remark}
+In the scalar case $A^{(m,n)}_i = \mathsf{Id}$, the operator norm reduces to $|\sum_{i=1}^N \Lambda_m p_i^{\alpha}|$, recovering the scalar contraction factor $k$ discussed in the main text.
+\end{remark}
+
+\subsection*{A.2 Multiplicity–Governed $\Lambda_m$ and Convergence}
+
+\subsubsection*{A.2.1 Multiplicity Functional and Bounds}
+
+\begin{definition}[Multiplicity Vector and Weighted Sum]
+Let $P_N = \{p_1,\dots,p_N\}$ and let $T_t$ be a recursive system. The \emph{multiplicity vector} is
+\[
+  \bm{M}(T_t) = (M(T_t,p_1),\dots,M(T_t,p_N)) \in [0,\infty)^N.
+\]
+Define the prime–weighted sum
+\begin{equation}
+  S(T_t)
+  \;=\;
+  \sum_{i=1}^N M(T_t,p_i)\, p_i^{-\alpha},
+  \qquad \alpha > 1.
+  \label{eq:S-multiplicity-def}
+\end{equation}
+\end{definition}
+
+\begin{assumption}[Uniform Multiplicity Bound]\label{assump:bounded-M}
+There exists $K>0$ such that
+\[
+0 \le M(T_t,p_i) \le K
+\quad\text{for all } t\ge 0 \text{ and } i=1,\dots,N.
+\]
+\end{assumption}
+
+\begin{proposition}[Upper Bound on $S(T_t)$]
+Under Assumption~\ref{assump:bounded-M},
+\begin{equation}
+  S(T_t)
+  \;\leq\;
+  K \sum_{i=1}^N p_i^{-\alpha}
+  \;\leq\;
+  K \sum_{n=2}^{\infty} n^{-\alpha},
+\end{equation}
+which is finite for $\alpha>1$.
+\end{proposition}
+
+\begin{proof}
+Immediate from $M(T_t,p_i)\le K$ and monotonicity of the primes.
+\end{proof}
+
+\begin{definition}[Regularized Multiplicity Constant]
+Let $\varepsilon>0$ be fixed. Define
+\begin{equation}
+  \Lambda_m(T_t)
+  \;=\;
+  \frac{1}{\sqrt{\varepsilon + S(T_t)}}
+  \;=\;
+  \frac{1}{\sqrt{\varepsilon + \sum_{i=1}^N M(T_t,p_i)p_i^{-\alpha}}}.
+  \label{eq:lambda-regularized}
+\end{equation}
+\end{definition}
+
+\begin{proposition}[Bounds on $\Lambda_m(T_t)$]
+Under Assumption~\ref{assump:bounded-M} and $\alpha>1$, there exist constants $0<c_1\le c_2<\infty$ such that
+\begin{equation}
+  c_1 \;\leq\; \Lambda_m(T_t) \;\leq\; c_2
+  \quad\text{for all } t \ge 0.
+\end{equation}
+In particular, $c_2 = 1/\sqrt{\varepsilon}$ and
+\begin{equation}
+  c_1 \;\geq\; \frac{1}{\sqrt{\varepsilon + K \sum_{i=1}^N p_i^{-\alpha}}}.
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+The upper bound is immediate from $S(T_t)\ge 0$, so $\varepsilon + S(T_t)\ge \varepsilon$ and thus $\Lambda_m(T_t)\le 1/\sqrt{\varepsilon}$. The lower bound uses the upper bound on $S(T_t)$: $S(T_t)\le K\sum p_i^{-\alpha}$, hence $\varepsilon+S(T_t)\le \varepsilon + K \sum p_i^{-\alpha}$, which implies the lower bound on $\Lambda_m(T_t)$.
+\end{proof}
+
+\subsubsection*{A.2.2 Convergence of $\Lambda_m(t)$}
+
+\begin{assumption}[Convergence of Multiplicity Profiles]\label{assump:convergence-M}
+There exists a vector $\bm{M}_\infty = (M_\infty(p_1),\dots,M_\infty(p_N))$ such that
+\[
+  \lim_{t\to\infty} M(T_t,p_i) = M_\infty(p_i)
+  \quad\text{for each } i=1,\dots,N.
+\]
+\end{assumption}
+
+\begin{theorem}[Convergence of $\Lambda_m(t)$]\label{thm:lambda-convergence}
+Under Assumptions~\ref{assump:bounded-M} and \ref{assump:convergence-M}, and $\alpha>1$, the sequence
+\[
+  \Lambda_m(t) := \Lambda_m(T_t)
+\]
+converges to
+\begin{equation}
+  \Lambda_m^\infty
+  \;=\;
+  \frac{1}{\sqrt{\varepsilon + \sum_{i=1}^N M_\infty(p_i)\, p_i^{-\alpha}}}.
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+By Assumption~\ref{assump:convergence-M}, for each $i$ the scalar $M(T_t,p_i)$ converges to $M_\infty(p_i)$. By dominated convergence (the domination provided by Assumption~\ref{assump:bounded-M} and $\alpha>1$), the finite sum $S(T_t)$ converges to
+\[
+  S_\infty = \sum_{i=1}^N M_\infty(p_i)p_i^{-\alpha}.
+\]
+Continuity of $x\mapsto 1/\sqrt{\varepsilon+x}$ on $[0,\infty)$ then implies
+\[
+\Lambda_m(t) \to 1/\sqrt{\varepsilon+S_\infty}.
+\]
+\end{proof}
+
+\subsection*{A.3 DRMM–Style Spectral Contraction}
+
+\subsubsection*{A.3.1 Setup}
+
+Let $w^{(\ell)} \in \mathbb{R}^{d_\ell}$ be the flattened parameter vector for a layer $\ell$, and let $g_t^{(\ell)}$ be its gradient at iteration $t$. Let $\mathcal{Q}_\ell : \mathbb{R}^{d_\ell} \to \mathbb{C}^{\tilde d_\ell}$ be a unitary (or orthogonal) transform in the sense that
+\begin{equation}
+  \|\mathcal{Q}_\ell x\|_2 = \sqrt{\tilde d_\ell / d_\ell}\,\|x\|_2,
+\end{equation}
+or after rescaling, simply an isometry. For clarity, assume $\mathcal{Q}_\ell$ is chosen so that it is an isometry:
+\begin{equation}
+  \|\mathcal{Q}_\ell x\|_2 = \|x\|_2,
+  \quad \mathcal{Q}_\ell^{-1} = \mathcal{Q}_\ell^*.
+\end{equation}
+
+Define $\tilde g_t^{(\ell)} = \mathcal{Q}_\ell(g_t^{(\ell)})$. Partition indices $\{1,\dots,\tilde d_\ell\}$ into bins $B_i^{(\ell)}$, $i=1,\dots,K_\ell$, and define
+\begin{equation}
+  M_i^{(\ell)}(t)
+  =
+  \frac{1}{|B_i^{(\ell)}|}
+  \sum_{j\in B_i^{(\ell)}} |\tilde g^{(\ell)}_{t,j}|^2.
+\end{equation}
+Set
+\begin{equation}
+  S_\ell(t)
+  =
+  \sum_{i=1}^{K_\ell} M_i^{(\ell)}(t)p_i^{-\alpha},
+  \qquad
+  \Lambda_m^{(\ell)}(t)
+  =
+  \frac{1}{\sqrt{\varepsilon + S_\ell(t)}},
+\end{equation}
+with $\alpha>1$, $\varepsilon>0$.
+
+\subsubsection*{A.3.2 Spectral Norm Bounds for the Contracted Gradient}
+
+\begin{proposition}[Norm Bound for Contracted Gradient]
+For each layer $\ell$ and iteration $t$,
+\begin{equation}
+  \|\Lambda_m^{(\ell)}(t)\,\tilde g_t^{(\ell)}\|_2
+  =
+  \Lambda_m^{(\ell)}(t) \|\tilde g_t^{(\ell)}\|_2
+  =
+  \Lambda_m^{(\ell)}(t)\,\|g_t^{(\ell)}\|_2.
+\end{equation}
+Moreover, under the same bounded–multiplicity assumptions as in Section~A.2, there exist constants $0<c_1^{(\ell)}\le c_2^{(\ell)}<\infty$ such that
+\begin{equation}
+  c_1^{(\ell)} \|g_t^{(\ell)}\|_2
+  \;\le\;
+  \|\Lambda_m^{(\ell)}(t)\,\tilde g_t^{(\ell)}\|_2
+  \;\le\;
+  c_2^{(\ell)} \|g_t^{(\ell)}\|_2.
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+The first equality is by linearity and isometry of $\mathcal{Q}_\ell$. The existence of $c_1^{(\ell)},c_2^{(\ell)}$ follows from the bounds on $\Lambda_m^{(\ell)}(t)$ analogous to those in Section~A.2, applied to the layer–specific $S_\ell(t)$.
+\end{proof}
+
+\begin{remark}
+This establishes that the spectral contraction is bounded both above and below by constant multiples of the original gradient norm, preventing unbounded inflation or collapse of gradient magnitude due purely to the multiplicity contraction.
+\end{remark}
+
+\subsection*{A.4 EMA–Smoothed $\Lambda_m$ and Stability}
+
+In practice, the optimizer uses an exponentially–smoothed multiplicity constant
+\begin{equation}
+  \widehat{\Lambda}_m^{(\ell)}(t)
+  =
+  \beta \widehat{\Lambda}_m^{(\ell)}(t-1)
+  + (1-\beta)\Lambda_m^{(\ell)}(t),
+  \qquad 0<\beta<1.
+\end{equation}
+
+\begin{proposition}[Bounds for EMA–Smoothed Multiplicity Constant]
+Assume $\Lambda_m^{(\ell)}(t)\in[c_1,c_2]$ for all $t$ (with $0<c_1\le c_2<\infty$). Then $\widehat{\Lambda}_m^{(\ell)}(t)\in[c_1,c_2]$ for all $t$, and if $\Lambda_m^{(\ell)}(t)$ converges to $\Lambda_m^\infty$, then $\widehat{\Lambda}_m^{(\ell)}(t)$ converges to the same limit.
+\end{proposition}
+
+\begin{proof}
+The interval $[c_1,c_2]$ is convex and $\widehat{\Lambda}_m^{(\ell)}(t)$ is a convex combination of $\widehat{\Lambda}_m^{(\ell)}(t-1)$ and $\Lambda_m^{(\ell)}(t)$, so it remains in the interval by induction. Convergence follows from the standard fact that EMA of a convergent sequence converges to the same limit.
+\end{proof}
+
+\subsection*{A.5 Effective DRMM Update as a Perturbed Contraction}
+
+Ignoring momentum for a moment and considering a single gradient step, the DRMM update for a layer $\ell$ can be written as
+\begin{equation}
+  w_{t+1}^{(\ell)}
+  =
+  w_t^{(\ell)} - \eta\,\mathcal{Q}_\ell^{-1}(\widehat{\Lambda}_m^{(\ell)}(t)\tilde g_t^{(\ell)}),
+\end{equation}
+which is equivalent to
+\begin{equation}
+  w_{t+1}^{(\ell)}
+  =
+  w_t^{(\ell)} - \eta\,\widehat{\Lambda}_m^{(\ell)}(t)\,g_t^{(\ell)},
+\end{equation}
+due to the isometry of $\mathcal{Q}_\ell$.
+
+\begin{proposition}[Effective Learning Rate Bounds]
+At iteration $t$, the effective scalar learning rate for layer $\ell$ is
+\[
+  \eta_{\mathrm{eff}}^{(\ell)}(t)
+  =
+  \eta\,\widehat{\Lambda}_m^{(\ell)}(t),
+\]
+which satisfies
+\[
+  \eta c_1 \le \eta_{\mathrm{eff}}^{(\ell)}(t) \le \eta c_2,
+\]
+with constants $c_1,c_2$ as above. Thus the DRMM scheme is equivalent to SGD with a bounded, multiplicity–adaptive scalar learning rate per layer.
+\end{proposition}
+
+\begin{remark}
+This bound ensures that, under the assumptions on multiplicity and $\alpha>1$, the DRMM optimizer does not produce arbitrarily large effective learning rates, which would otherwise jeopardize stability.
+\end{remark}
+
+\subsection*{A.6 Phase Transition Heuristic in $\alpha$}
+
+While a full proof of a phase transition at $\alpha=1$ for neural–network training requires more detailed modeling of $M(T_t,p_i)$ and $g_t$, the following heuristic explains why the $\alpha>1$ regime is singled out.
+
+\begin{proposition}[Divergence of Prime Series for $\alpha\le 1$ (Heuristic)]
+Consider the infinite sum
+\[
+  S_\infty(\alpha) = \sum_{i=1}^{\infty} p_i^{-\alpha}.
+\]
+Then:
+\begin{itemize}[leftmargin=*]
+  \item For $\alpha>1$, $S_\infty(\alpha)$ converges.
+  \item For $\alpha\le 1$, $S_\infty(\alpha)$ diverges.
+\end{itemize}
+Consequently, in the infinite–prime limit, the unregularized multiplicity sum
+\[
+  \sum_{i} M(T_t,p_i)p_i^{-\alpha}
+\]
+will generically diverge or become unbounded for $\alpha\le 1$ when multiplicities do not decay fast enough with $p_i$, motivating a qualitative distinction between $\alpha>1$ and $\alpha\le 1$.
+\end{proposition}
+
+\begin{remark}
+In finite–dimensional implementations (finite $N$), divergence does not occur, but the empirical behavior of $\Lambda_m(t)$ is expected to reflect this analytic difference as $N$ increases: for $\alpha>1$ the prime–weighted energy behaves in a controlled way; for $\alpha\le 1$ it tends to be dominated by contributions from many primes, pushing $\Lambda_m$ towards smaller values and potentially altering training dynamics qualitatively.
+\end{remark}
+
+\subsection*{A.7 Summary of Assumptions and Valid Regimes}
+
+For clarity, the main explicit mathematical guarantees in this appendix rest on the following assumptions:
+\begin{itemize}[leftmargin=*]
+  \item boundedness of the prime–indexed operators $A^{(m,n)}_i$;
+  \item operator–norm contraction condition $\|\mathcal{K}\|_{\mathrm{op}}<1$ for recursive tensors;
+  \item bounded multiplicities $M(T_t,p_i)\le K$ and convergence of the multiplicity profiles;
+  \item choice of $\alpha>1$ for the prime–weighted multiplicity sums;
+  \item isometry (or well–controlled scaling) of the spectral transform $\mathcal{Q}_\ell$.
+\end{itemize}
+Under these conditions, the DRMM–style contraction functionals and prime–indexed recursive operators used in the main text admit explicit bounds and convergence guarantees as recorded above.
+
+This appendix is intended as a living document: as additional properties of $M(T_t,p_i)$ or $\mathcal{Q}_\ell$ are specified in future work (e.g.\ decay rates, sparsity patterns, or probabilistic models), the corresponding theorems and bounds can be refined here without altering the core structure of the main article.
+
+\nocite{*}
+\bibliographystyle{unsrt}  
+\bibliography{references}
+\end{document}

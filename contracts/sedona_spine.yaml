@@ -1,0 +1,88 @@
+# sedona_spine.yaml — Sedona Spine CONTRACT
+# ADR-007 §L0: Mandatory no-Mathlib, no-sorry, zero-drift constraints for the Sedona Spine.
+# Any import Mathlib or residual sorry in production modules is a CI-blocking violation.
+
+contract_id: sedona_spine
+version: "1.0.0"
+created_at: "2026-08-05T07:36:51-04:00"
+governance:
+  owner: Ryan
+  governor: the-examiner
+  fail_closed: true
+  sig_gov_kill: true
+
+# Zero-drift mandate
+narrative_auditor:
+  drift_score: 0.0
+  strict_inequality: true
+  attestation_required: true
+
+# Concurrency bounds (L0-CONCURRENCY)
+concurrency:
+  max_concurrent_requests: 100
+  qudits_per_request: 69
+  energy_error_mha: 15.0
+  strict_energy_inequality: true
+  max_entropy: 6.0
+
+# Thermal window
+thermal_window:
+  max_temp_mha: 15000
+  max_entropy: 6.0
+  window_ns: 1000000000
+
+# HSEC parameters
+hsec:
+  energy_error_mha: 14.5
+  qudit_count: 69
+  concurrent_limit: 100
+  entropy_cap: 6.0
+
+# Lean module constraints (L0-NO-MATHLIB, L0-NO-SORRY)
+lean_modules:
+  - name: ADR.Core
+    path: src/ADR/Core.lean
+    no_mathlib: true
+    no_sorry: true
+    verified: true
+  - name: ADR.Proofs
+    path: src/ADR/Proofs.lean
+    no_mathlib: true
+    no_sorry: true
+    verified: true
+  - name: ADR.Examples
+    path: src/ADR/Examples.lean
+    no_mathlib: true
+    no_sorry: true
+    verified: true
+  - name: ADR.Export
+    path: src/ADR/Export.lean
+    no_mathlib: true
+    no_sorry: true
+    verified: true
+  - name: ADR.Test
+    path: src/ADR/Test.lean
+    no_mathlib: true
+    no_sorry: true
+    verified: true
+
+# Cross-language parity
+parity:
+  lean_module: ADR.Core
+  rust_module: pirtm_engine.adr
+  byte_exact: true
+  check_interval: "1h"
+
+# CI enforcement
+ci:
+  mathlib_import_check: true
+  sorry_check: true
+  lake_build_required: true
+  lake_test_required: true
+  python_validator_required: true
+
+# Audit
+audit:
+  poseidon2_commitment: true
+  pweh_enabled: true
+  log_retention: "7y"

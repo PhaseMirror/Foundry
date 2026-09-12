@@ -1,0 +1,32 @@
+# Number of operator replicas (should be 1 for a single leader)
+replicaCount: 1
+
+image:
+  repository: phase-mirror-operator
+  tag: latest
+  pullPolicy: IfNotPresent
+
+serviceAccount:
+  create: true
+  name: "phase-mirror-operator"
+
+rbac:
+  create: true
+  # Role scope: ClusterRole (to watch all namespaces) or Role (single namespace)
+  scope: Cluster
+
+# Configuration for the operator
+config:
+  # governanceMode default for commands that don't specify it
+  defaultGovernanceMode: permissive
+  # Domain lexicon default
+  defaultLexicon: devops
+
+service:
+  type: ClusterIP
+  port: 3030
+
+resources: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}

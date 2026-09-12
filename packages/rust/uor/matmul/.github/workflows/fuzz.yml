@@ -1,0 +1,24 @@
+# CT-01, CT-03, CK-06: totality over unstructured input.
+#
+# Short on every push, long on a schedule. The claim is that no representable
+# input fails, so what the fuzzer looks for is a panic --- not a wrong answer,
+# which the differential tests cover.
+name: fuzz
+
+on:
+  pull_request:
+  schedule: [{ cron: "0 3 * * *" }]
+  workflow_dispatch:
+
+jobs:
+  fuzz:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: [totality, float_decode, codec_shapes]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@nightly
+      - uses: taiki-e/install-action@cargo-fuzz
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo fuzz run ${{ matrix.target }} -- -max_total_time=${{ github.event_name == 'schedule' && 900 || 60 }}

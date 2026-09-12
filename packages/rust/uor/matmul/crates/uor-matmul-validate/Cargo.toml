@@ -1,0 +1,51 @@
+[package]
+name = "uor-matmul-validate"
+description = "External validation: oracle adapters, corpus tooling, and the differential harness. Dev and CI only; never a dependency of a shipped crate."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+# `std` is what turns on runtime CPU detection. Without it the kernels
+# crate answers from `cfg!(target_feature = ...)`, which is false on a generic
+# build --- so every measurement would be of the portable kernel while claiming
+# to be of the machine.
+uor-matmul = { path = "../uor-matmul", features = ["std"] }
+uor-matmul-core = { workspace = true }
+uor-matmul-codec = { workspace = true }
+uor-matmul-gemm = { workspace = true }
+bytemuck = { version = "1", features = ["derive"] }
+
+# R11: every oracle is a dependency of this dev-and-CI-only crate and of
+# nothing else. The shipped crates depend on none of them, and `Cargo.lock`
+# pins the resolved versions because the version is part of the claim.
+#
+# They are optional normal dependencies rather than dev-dependencies because
+# Cargo does not allow an optional dev-dependency, and a validation run must be
+# able to declare which outside witnesses it called.
+ndarray = { version = "0.16", optional = true }
+nalgebra = { version = "0.34", optional = true }
+matrixmultiply = { version = "0.3", optional = true }
+faer = { version = "0.22", optional = true }
+gemm = { version = "0.18", optional = true }
+serde_json = "1"
+
+[features]
+default = ["ref-ndarray", "ref-nalgebra", "ref-matrixmultiply", "ref-faer"]
+ref-ndarray = ["dep:ndarray"]
+ref-nalgebra = ["dep:nalgebra"]
+ref-matrixmultiply = ["dep:matrixmultiply"]
+ref-faer = ["dep:faer"]
+ref-gemm = ["dep:gemm"]
+
+[[bench]]
+name = "scaling"
+harness = false
+
+[dev-dependencies]
+criterion = { version = "0.5", default-features = false, features = ["cargo_bench_support"] }
+
+[lints]
+workspace = true

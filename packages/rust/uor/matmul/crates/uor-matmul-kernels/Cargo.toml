@@ -1,0 +1,32 @@
+[package]
+name = "uor-matmul-kernels"
+description = "Factorizations of one identity: portable, AVX2, AVX-512 VNNI, NEON, NEON dotprod, wasm SIMD128. The only crate with `unsafe`."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+authors.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+[dependencies]
+uor-matmul-core = { workspace = true }
+
+[features]
+default = []
+# Runtime CPU feature detection. Without it, selection is compile-time only,
+# which is what an embedded target wants (C1).
+std = []
+
+[lints]
+workspace = true
+
+# The integration tests need the crate's own runtime feature detection. Without
+# this the test harness links the crate with `std` off, every `available_*`
+# predicate answers from the build's target features, and `CB-02` compares the
+# portable kernel against itself while claiming to cover the host --- which is
+# what it did until `CB-02` was made to assert otherwise.
+[dev-dependencies]
+uor-matmul-kernels = { path = ".", features = ["std"] }

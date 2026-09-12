@@ -1,0 +1,126 @@
+# oracles/provenance.toml --- R11.
+#
+# Every external claim is bound to a committed artifact, with provenance. An
+# external claim with no provenance is an assertion, not a validation.
+#
+# The resolved versions live in `Cargo.lock`, which is committed, because the
+# version of an oracle is part of the claim made against it.
+
+spec = "uor-matmul/1"
+
+[[record]]
+id = "CX-01"
+oracle = "ndarray"
+kind = "crate"
+entry = "Array2::dot"
+harness = "crates/uor-matmul-validate/tests/cross_library.rs::ndarray_i32_agrees_cx_01"
+version_pin = "Cargo.lock"
+exactness = "exact"
+status = "reproduced"
+note = """i32 satisfies LinalgScalar and ndarray dispatches integer types to its
+own generic kernel rather than to matrixmultiply, which is what makes this an
+independent witness for the integer path. Verified at implementation time."""
+
+[[record]]
+id = "CX-02"
+oracle = "nalgebra"
+kind = "crate"
+entry = "DMatrix<i32> multiplication"
+harness = "crates/uor-matmul-validate/tests/cross_library.rs::nalgebra_i32_agrees_cx_02"
+version_pin = "Cargo.lock"
+exactness = "exact"
+status = "reproduced"
+
+[[record]]
+id = "CX-03"
+oracle = "ndarray"
+kind = "crate"
+entry = "Array2::dot over widened i8"
+harness = "crates/uor-matmul-validate/tests/cross_library.rs::ndarray_widened_i8_agrees_with_our_i8_kernel_cx_03"
+version_pin = "Cargo.lock"
+exactness = "exact"
+status = "reproduced"
+note = "the load-bearing W8A8 external check: our side never widens to i32 at all"
+
+[[record]]
+id = "CX-04"
+oracle = "nalgebra"
+kind = "crate"
+entry = "DMatrix<i32> multiplication over decoded i4 weights"
+harness = "crates/uor-matmul-validate/tests/cross_library.rs::nalgebra_decoded_weights_agree_with_our_coded_kernel_cx_04"
+version_pin = "Cargo.lock"
+exactness = "exact"
+status = "reproduced"
+note = """ties CL-MM01 to an outside witness: the oracle is handed the decoded
+weights and we are handed the codes, and the products must be the same bytes."""
+
+[[record]]
+id = "CX-05"
+oracle = "matrixmultiply"
+kind = "crate"
+entry = "sgemm"
+harness = "crates/uor-matmul-validate/tests/float_oracles.rs::matrixmultiply_deviation_cx_05"
+version_pin = "Cargo.lock"
+exactness = "inexact"
+status = "measured"
+note = """Deviation from the exact value, in ulps. Never matched (N1): a
+classical sgemm computes an order-dependent approximation of the value this
+library computes exactly, so what is recorded is how far off it is."""
+
+[[record]]
+id = "CX-06"
+oracle = "faer"
+kind = "crate"
+entry = "matmul"
+harness = "crates/uor-matmul-validate/tests/float_oracles.rs::faer_deviation_cx_06"
+version_pin = "Cargo.lock"
+exactness = "inexact"
+status = "measured"
+
+[[record]]
+id = "CX-07"
+oracle = "ndarray"
+kind = "crate"
+entry = "general_mat_mul (routes to matrixmultiply)"
+harness = "crates/uor-matmul-validate/tests/float_oracles.rs::ndarray_f32_deviation_cx_07"
+version_pin = "Cargo.lock"
+exactness = "inexact"
+status = "measured"
+note = "not independent of CX-05; recorded as such"
+
+[[record]]
+id = "CX-08"
+oracle = "gemm"
+kind = "crate"
+entry = "crate entry point"
+harness = "crates/uor-matmul-validate/tests/float_oracles.rs::gemm_crate_deviation_cx_08"
+version_pin = "Cargo.lock"
+exactness = "inexact"
+status = "measured"
+
+[[record]]
+id = "CX-09"
+oracle = "matrixmultiply"
+kind = "crate"
+entry = "dgemm"
+harness = "crates/uor-matmul-validate/tests/float_oracles.rs::matrixmultiply_f64_deviation_cx_09"
+version_pin = "Cargo.lock"
+exactness = "inexact"
+status = "measured"
+
+[[record]]
+id = "CX-10"
+oracle = "numpy"
+kind = "committed artifact"
+entry = "numpy.matmul, int64"
+harness = "crates/uor-matmul-validate/tests/numpy.rs::numpy_int64_is_byte_identical_cx_10"
+version_pin = "oracles/numpy/manifest.json"
+exactness = "exact"
+status = "reproduced"
+generator = "oracles/numpy/generate.py"
+note = """Out of process and outside the Rust ecosystem entirely, which is the
+point: every other oracle here shares a language, a compiler, and sometimes a
+kernel author with this library, so agreement among them is weaker evidence
+than it looks. The artifacts are committed with a per-file SHA-256 recorded in
+manifest.json, so the claim reproduces without a Python toolchain, and the
+harness verifies each digest before believing the bytes."""

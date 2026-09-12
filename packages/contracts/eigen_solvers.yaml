@@ -1,0 +1,24 @@
+name: eigen_solvers
+version: 1.0.0-P2C
+description: |
+  Prime-weighted Lanczos residual verification.
+inputs:
+  - name: matrix_dim
+    type: int
+    bounds: [1, 32]
+  - name: step_count
+    type: int
+    bounds: [32, 100]
+outputs:
+  - name: residual_error
+    type: int
+theorems:
+  - id: lanczos_convergence
+    statement: "matrix_dim > 0 && step_count >= matrix_dim => residual_error == 0"
+rust_implementation:
+  path: rust/src/kernels/eigen_solvers.rs
+  function: check_residual
+  kani_bound: 16
+lean_implementation:
+  path: lean/Core/EigenSolvers.lean
+  theorem: lanczos_convergence

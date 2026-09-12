@@ -1,0 +1,77 @@
+{
+  "meta": {
+    "version": "1.0.0",
+    "schema_type": "RBAC/ABAC",
+    "context": "Helix-TTD Civic Firmware",
+    "reference_doc": "HG-7 (Crayon Pedagogy)"
+  },
+  "roles": {
+    "observer": {
+      "level": 0,
+      "description": "Public observer. Access to finalized, public-facing ledger artifacts.",
+      "permissions": [
+        "ledger:read:public",
+        "doc:read:public"
+      ]
+    },
+    "trace_master": {
+      "level": 1,
+      "description": "Learner/Apprentice. Access to historical archives for case study replication.",
+      "permissions": [
+        "ledger:read:public",
+        "ledger:read:archive",
+        "doc:read:internal:historical",
+        "sim:run:local"
+      ],
+      "constraints": [
+        "write:disabled"
+      ]
+    },
+    "color_artist": {
+      "level": 2,
+      "description": "Operator/Custodian. Active maintenance duties.",
+      "permissions": [
+        "ledger:read:all",
+        "drift:flag",
+        "quiescence:trigger:low_severity",
+        "telemetry:view:operational"
+      ],
+      "constraints": [
+        "mnap:propose:disabled"
+      ]
+    },
+    "shape_creator": {
+      "level": 3,
+      "description": "Architect/Contributor. Ability to extend the system.",
+      "permissions": [
+        "ledger:read:all",
+        "mnap:initiate",
+        "mnap:vote",
+        "schema:propose_change"
+      ],
+      "constraints": [
+        "mnap:ratify:requires_quorum"
+      ]
+    },
+    "system_architect": {
+      "level": 4,
+      "description": "Root admin/Bootstrap node (e.g., Goose).",
+      "permissions": [
+        "*"
+      ],
+      "constraints": [
+        "audit:logging:mandatory"
+      ]
+    }
+  },
+  "attributes": {
+    "drift_status": {
+      "type": "boolean",
+      "description": "If true, reduces write permissions to 'quiescence_protocol_only'."
+    },
+    "jurisdiction": {
+      "type": "string",
+      "description": "ISO 3166-1 alpha-2 code. Enforces G-3 constraints."
+    }
+  }
+}

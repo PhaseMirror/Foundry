@@ -1,0 +1,47 @@
+name: cptp_generator
+version: 1.0.0-P2C-Sealed
+description: |
+  Constructs the CPTP (Completely Positive, Trace‑Preserving) generator for the driven oscillator system.
+  The generator is defined as:
+    ℒ[ρ] = -i[H_eff, ρ] + Σ_m (L_m ρ L_m^† - 1/2 {L_m^† L_m, ρ})
+  where H_eff is the Hamiltonian evaluator, and L_m are Lindblad operators derived from hardware parameters.
+  Properties verified:
+  - Complete positivity: ℒ is CP (Kraus representation exists)
+  - Trace preservation: Tr(ℒ[ρ]) = 0 for all ρ
+
+inputs:
+  - name: rho
+    type: matrix of f64
+    bounds: [2, 9]            # density matrix dimension, matching the 9‑mode spectral attractor
+  - name: params
+    type: CPTPGeneratorParams  # alpha, beta, gamma, eta, lambda(t), xi(t), A, omega, phi
+    bounds: [2, 8]            # up to 8 oscillatory drives
+  - name: hardware
+    type: HardwareSpec        # from the Hamiltonian evaluator
+    bounds: [2, 8]            # 2‑8 qubits
+
+outputs:
+  - name: drho_dt
+    type: matrix of f64
+    properties:
+      - trace_zero: true
+      - hermitian: true      # if rho is Hermitian, drho_dt is Hermitian
+
+theorems:
+  - id: cptp_trace_preserving
+    statement: "∀ rho, params, hw, Tr(ℒ[rho]) = 0"
+  - id: cptp_complete_positive
+    statement: "∀ rho, params, hw, ℒ is completely positive"
+
+lean_implementation:
+  path: lean/F1/Multiplicity/CPTP.lean
+  theorem: cptp_trace_preserving
+  theorem: cptp_complete_positive
+
+rust_implementation:
+  path: rust/src/physics/cptp.rs
+  function: compute_drho_dt
+  kani_bound: 8
+
+telemetry:
+  export: "PWEH_Hash_Chain"

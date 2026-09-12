@@ -1,0 +1,80 @@
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{listings}
+\usepackage{xcolor}
+\geometry{margin=1in}
+
+\lstset{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    language=Python
+}
+
+\title{Defensive Publication: P²C Core v1.1 --- Witness Calculus for Tensor Provenance, Banach-Space Affine Recursions, and Stable Commitments}
+\author{Multiplicity Foundation Technical Steering Committee}
+\date{August 2026}
+
+\begin{document}
+
+\maketitle
+
+\section*{Abstract}
+This document consolidates the P²C (Prime-Encoded Provenance Compiler) core into a verifiable, production-ready specification. It formally discloses the witness calculus for tensor provenance, Banach-space affine recursions, and cross-language stable commitments to establish robust prior art in the public domain.
+
+\section{Core Architecture and Signatures}
+The architecture evaluates tensor programs by ensuring all legal reshapes and contractions are accompanied by a verifiable witness.
+\begin{itemize}
+    \item \textbf{Signature Group:} Tensor signatures are strictly defined as elements of a free abelian group over atoms.
+    \item \textbf{Canonical Forms:} The system enforces a hierarchy between weak equivalence ($\sim$) for reshape relations and strong equality ($\approx$) for preserving exact axis structure.
+    \item \textbf{Invariants:} All signatures are rigorously pruned to guarantee stable equality and predictable hashing, enforcing strict rules against empty axes and zero exponents.
+\end{itemize}
+
+\section{Banach-Space Affine Recursions}
+The L0 base reality evaluates proposed state changes through operator theory and contractivity bounds. The discrete-time affine recursion acting on states $T \in \mathcal{B}$ is defined as:
+\[
+T_{t+1} = \Lambda_m S T_t + F
+\]
+where $S = \sum_{p \in \mathbb{P}} p^{\alpha_p} P_p$ acts as a prime-weighted linear operator. To guarantee global stability and a strict Lipschitz bound ($\|\Lambda_m S\| \le \gamma < 1$), the framework uses a hybrid contraction certificate:
+\[
+\Lambda_m = \min\left\{\frac{\gamma}{\|S\|}, \frac{\gamma}{r(T_t)}\right\}
+\]
+
+\section{Witness Calculus and Reference Implementation}
+The Witness Calculus audits operator contractions across high-dimensional manifolds to verify that they exactly preserve the completely positive trace-preserving (CPTP) identity. Identity is evaluated via deterministic reduction maps, entirely bypassing informal naming.
+
+Below is the reference Python implementation illustrating the core witness classes and the stable hashing mechanism:
+
+\begin{lstlisting}
+from dataclasses import dataclass
+from typing import Tuple, Any
+import hashlib
+
+class Witness:
+    pass
+
+@dataclass(frozen=True)
+class Permute(Witness):
+    perm: Tuple[int, ...]
+
+@dataclass(frozen=True)
+class Split(Witness):
+    idx: int
+    parts: Tuple[Any, ...]
+
+@dataclass(frozen=True)
+class Contract(Witness):
+    left: int
+    right: int
+
+WITNESS_MAGIC = b'P2CWITv1'
+
+def commitment_digest(data: bytes) -> bytes:
+    # BLAKE2b personalized for stable cross-language commitments
+    return hashlib.blake2b(data, digest_size=32, person=b'P2C_2024').digest()
+\end{lstlisting}
+
+\end{document}

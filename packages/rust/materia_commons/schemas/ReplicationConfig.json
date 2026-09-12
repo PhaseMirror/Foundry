@@ -1,0 +1,73 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ReplicationConfig",
+  "description": "Runtime configuration for LAN Archivum replication. Stored in state/sync/replication_config.yaml — not in env.sh.",
+  "type": "object",
+  "required": [
+    "max_transport_retries",
+    "node_id",
+    "replicate_trust_levels",
+    "role"
+  ],
+  "properties": {
+    "max_transport_retries": {
+      "description": "Maximum retry attempts for Transport failures before quarantine.",
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    },
+    "node_id": {
+      "type": "string"
+    },
+    "replicate_trust_levels": {
+      "description": "Trust levels eligible for cross-node replication. Default: [Internal] only. Changing this requires an ALP policy update.",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/TrustLevel"
+      }
+    },
+    "role": {
+      "$ref": "#/definitions/ReplicationRole"
+    }
+  },
+  "definitions": {
+    "ReplicationRole": {
+      "description": "Role of this Commander node in the replication topology.",
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "primary"
+          ]
+        },
+        {
+          "type": "object",
+          "required": [
+            "replica"
+          ],
+          "properties": {
+            "replica": {
+              "type": "object",
+              "required": [
+                "primary_addr"
+              ],
+              "properties": {
+                "primary_addr": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "TrustLevel": {
+      "type": "string",
+      "enum": [
+        "internal",
+        "external"
+      ]
+    }
+  }
+}

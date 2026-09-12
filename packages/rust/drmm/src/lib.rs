@@ -1,0 +1,20 @@
+pub mod feedback;
+pub mod langlands;
+pub mod moc;
+pub mod moonshine;
+pub mod operators;
+pub mod optimizer;
+pub mod primes;
+pub mod spectral;
+pub mod tensor_core;
+pub mod verification;
+
+pub use feedback::{ConvergenceController, EntropicFeedbackLoop, EthicalModulator};
+pub use langlands::{AutomorphicForm, GaloisTensor, langlands_bridge};
+pub use moc::{MocDomain, PrimeSuccessorFormalism};
+pub use moonshine::MoonshineOperator;
+pub use operators::{LambdaM, Xi};
+pub use optimizer::{DRMMOptimizer, OptimizerConfig};
+pub use primes::generate_first_n_primes;
+pub use spectral::{SpectralTransform, compute_bin_energies};
+pub use tensor_core::{normalize_tensor, prime_indexed_tensor, tensor_spectrum};

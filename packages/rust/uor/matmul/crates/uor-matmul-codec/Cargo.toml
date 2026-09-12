@@ -1,0 +1,30 @@
+[package]
+name = "uor-matmul-codec"
+description = "The Codec trait and every shipped tier: identity, grid, packed, codebook, offset, runs, transcode. no_std, no alloc, no unsafe, no float."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+authors.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+[dependencies]
+uor-matmul-core = { workspace = true }
+bytemuck = { workspace = true }
+# Optional, off by default. `uor-addr-1` owns its own allocation, which is why
+# the manifest writer in `kappa.rs` works without it and why R7 describes the
+# default build.
+uor-addr-1 = { version = "0.1", optional = true }
+
+[features]
+default = []
+# Content addressing. `uor-addr-1` is itself no_std-capable and
+# forbid(unsafe_code); the kappa label is written into a caller-supplied buffer,
+# so enabling this feature still allocates nothing.
+kappa = ["dep:uor-addr-1"]
+
+[lints]
+workspace = true

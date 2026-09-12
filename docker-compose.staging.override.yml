@@ -1,0 +1,10 @@
+version: '3.8'
+services:
+  phase-mirror:
+    environment:
+      - P5_HANDOFF_ENABLED=false
+      - P5_STAGING_DASHBOARD_URL=${STAGING_DASHBOARD_URL}
+    volumes:
+      - ./config/staging/p5_sinkhole_override.yaml:/app/config/policy/p5_sinkhole_override.yaml:ro
+      - ./staging_logs:/var/log/p5_quarantine
+    command: ["python", "-m", "phase_mirror", "--config", "staging", "--shadow-run"]

@@ -1,0 +1,75 @@
+# Certificate Attestation Contract
+# Maps to Lean Core/Export/FFI.lean and Rust src/ffi.rs
+
+schema_version: "1.0.0"
+
+system:
+  name: "Attestation"
+  version: "0.1.0"
+
+description: |
+  Cryptographic attestation of verified equivalence classes.
+  Merkle root of UC verification results, suitable for on-chain
+  verification via EVM or Sigstore.
+
+components:
+  - name: "Certificate"
+    fields:
+      - name: "proof_hash"
+        type: "bytes32"
+        description: "SHA-256 hash of the Lean proof certificate"
+      - name: "kani_hash"
+        type: "bytes32"
+        description: "SHA-256 hash of the Kani verification output"
+      - name: "merkle_root"
+        type: "bytes32"
+        description: "Merkle root of all verified equivalence classes"
+      - name: "timestamp"
+        type: "uint256"
+        description: "Block timestamp of attestation"
+      - name: "verifier"
+        type: "address"
+        description: "Address of the attesting verifier"
+
+  - name: "VerificationResult"
+    fields:
+      - name: "theorem_name"
+        type: "string"
+      - name: "status"
+        type: "enum { Unproven, InProgress, Complete }"
+      - name: "axiom_count"
+        type: "uint8"
+        description: "Number of non-standard axioms used"
+      - name: "sorry_count"
+        type: "uint8"
+        description: "Number of sorry/admit placeholders (must be 0)"
+
+  - name: "EquivalenceClass"
+    fields:
+      - name: "class_id"
+        type: "uint256"
+      - name: "representative"
+        type: "bytes32"
+      - name: "size"
+        type: "uint256"
+      - name: "members"
+        type: "bytes32[]"
+
+verification:
+  on_chain:
+    contract: "AttestationRegistry.sol"
+    method: "verifyCertificate"
+    gas_limit: 500000
+
+  off_chain:
+    tool: "Sigstore"
+    transparency_log: true
+
+audit:
+  required:
+    - "All theorem statuses must be Complete"
+    - "sorry_count must be 0 for all theorems"
+    - "axiom_count must list only standard Lean axioms"
+    - "Merkle root must match computed root"
+  hash_algorithm: "SHA-256"
+  signature_scheme: "ECDSA-secp256k1"

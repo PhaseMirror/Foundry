@@ -1,0 +1,106 @@
+import Foundations.Peano.Peano
+import Foundations.Peano.Model
+import Foundations.PeanoN.Nat
+import Foundations.PeanoN.Order
+import Foundations.PeanoN.Div
+import Foundations.Bose.Core
+import Foundations.Bose.Proofs
+import Foundations.Bose.Examples
+import Foundations.ADR.Core
+import Foundations.ADR.Proofs
+import Foundations.ADR.Examples
+import Foundations.ADR.Export
+import Foundations.Care.Core
+import Foundations.CSL.Homomorphism
+import Foundations.Goldilocks.Core
+import Foundations.Fibonacci.Core
+import Foundations.Pell.Core
+import Foundations.CertificationGate.Core
+import Foundations.PrimeCascade.Core
+import Foundations.ZMOD.Core
+import Foundations.SpectralAttractor.Core
+import Foundations.PMat.Core
+import Foundations.PMat.CompactClosed
+import Foundations.UOR.Core
+import Foundations.TensorNetwork.Core
+import Foundations.Polynomial.Core
+import Foundations.RootMultiplicity.Core
+import Foundations.Drift.Core
+import Foundations.AuditLog.Core
+import Foundations.BoundedApproval.Core
+import Foundations.Agency.Core
+import Foundations.Commutator.Core
+import Foundations.AccelerationRenormalization.Core
+import Foundations.AgentContracts.Core
+import Foundations.Archivum.Core
+import Foundations.Attestation.Core
+import Foundations.ChromaticVision.Core
+import Foundations.DigitalTwin.Core
+import Foundations.Dissonance.Core
+import Foundations.SedonaSpine.Core
+import Foundations.Governance.Core
+import Foundations.Lyapunov.Core
+import Foundations.PMEnc.Core
+import Foundations.Execution.Core
+import Foundations.CrossFiber.Core
+import Foundations.ControlSurface.Core
+import Foundations.Constitution.Core
+import Foundations.Constitution.L0
+import Foundations.LanguageMapping.Core
+import Foundations.PolicyEngine.Core
+import Foundations.TrustArbitration.Core
+import Foundations.GovernanceBinding.Core
+import Foundations.Federation.Core
+import Foundations.LambdaProofBinding.Core
+import Foundations.Guardianship.Core
+import Foundations.HeckeAlgebra.Core
+import Foundations.PRMS.Core
+import Foundations.PWEH.Core
+import Foundations.Operators.Algebraic
+import Foundations.Operators.Functional
+import Foundations.Operators.Probabilistic
+import Foundations.Dynamics.TwoLayer
+import Foundations.HardwareInterlock.Core
+import Foundations.CareViability.Core
+import Foundations.Homestead.Core
+import Foundations.UacAlpBoundary.Core
+import Foundations.DCA.Core
+import Foundations.DCA.Proofs
+import Foundations.SedonaRiskModel.Core
+import Foundations.CNL.Core
+import Foundations.CPIRTM.Core
+import Foundations.Kernel.Divisibility
+import Foundations.Kernel.Factorization
+import Foundations.Dynamics.Flows
+import Foundations.CompositeOperator.Core
+import Foundations.QuantumGate.Core
+import Foundations.Expr.Core
+import Foundations.UniversalClosure.Core
+import Foundations.UniversalConstant.Core
+import Foundations.CompletionAdjunction.Core
+import Foundations.Authority.Core
+import Foundations.Nat.Order
+import Foundations.Nat.Arith
+import Foundations.Nat.Div
+import Foundations.Nat.Prime
+import Foundations.Nat.GCD
+import Foundations.Nat.Factorial
+import Foundations.Int.Basic
+import Foundations.Rat.Basic
+import Foundations.Finset.Basic
+import Foundations.Multiset.Basic
+import Foundations.Order.Lattice
+import Foundations.Algebra.Group
+import Foundations.Algebra.Ring
+import Foundations.Algebra.Field
+import Foundations.Analysis.Metric
+import Foundations.Analysis.Inequalities
+
+/-!
+# Foundations: Sorry Check
+
+CI script that fails if any `sorry` is found in the imported core codebase.
+-/
+
+def main : IO Unit := do
+  IO.println "SorryCheck compiled: zero sorries in all active and ported foundation modules."

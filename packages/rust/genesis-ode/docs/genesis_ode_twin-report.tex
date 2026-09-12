@@ -1,0 +1,461 @@
+\documentclass[11pt]{article}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{geometry}
+\usepackage{hyperref}
+\geometry{margin=1in}
+
+\title{Genesis ODE + Elastic Tether Adversarial Twin \\ with Multiplicity Metadata \& Prime-Based Encoding}
+\author{Phase Mirror / Genesis ODE Governance}
+\date{May 20, 2026}
+
+\begin{document}
+\maketitle
+
+\section{Overview}
+
+Lane A is defined as the governed engineering surface around an immutable Track A scalar core. The Track A core is the single canonical reference engine for substrate-indexed persistence; Lane A modules (Exploder, Builder, and the tether) are production-grade components that may observe and stress the core but never mutate its semantics or claim boundaries.
+
+The governance roadmap is structured through ADR-001 and ADR-002 (Track A core and Lane A governance) together with follow-on ADRs covering the Exploder/Builder twin, perturbation families, canonical schemas, and the test harness. These decisions are realized in a concrete repository scaffold and implementation pack that treats governance constraints as first-class code requirements.
+
+\section{Track A Scalar Core}
+
+The Track A core is a scalar, substrate-indexed engine governed by the persistence equation
+\begin{equation}
+\frac{dC_X}{dt}
+= \alpha (C_X^* - C_X)
++ \beta G_X
+- \gamma S_{\mathrm{eff},X}(t)
++ \eta A_X(t)
++ \kappa \sum_j w_{ij}(C_j - C_i)
+- \delta_X,
+\end{equation}
+where \(C_X(t)\) encodes persistence at substrate \(X\), \(C_X^*\) is a target or reference level, \(G_X\) captures growth or generative input, \(S_{\mathrm{eff},X}(t)\) is an effective stress term, \(A_X(t)\) encodes aligned agency, the weighted sum expresses coupling across substrates, and \(\delta_X\) is a decay or leakage term.
+
+The impedance and drag bridge is given by
+\begin{align}
+\rho_X &= C_X^* \left(1 - e^{-\lambda S_{\mathrm{eff},X}}\right), \\
+\Omega_X &= \frac{1}{\sqrt{1 - (\rho_X / C_X^*)^2}}, \\
+D_{k,X} &= \Omega_X - 1,
+\end{align}
+where \(\rho_X\) is an effective impedance, \(\Omega_X\) a Lorentz-like amplification factor, and \(D_{k,X}\) the drag term derived from this geometry.
+
+Metallurgical fatigue is the first concrete substrate, with cyclic effective stress
+\begin{equation}
+S_{\mathrm{eff},\mathrm{Met}}(t) = S_0 \sin(\omega t),
+\end{equation}
+used as the initial forcing profile for validation.
+
+Lane A development preserves this core as read-only: modules may query, simulate, and analyse trajectories of \(C_X(t)\) under specified forcings, but they may not introduce new state variables, alter the differential form, or change the impedance bridge from outside an explicit, superseding decision record.
+
+\section{Governance Architecture}
+
+Lane A governance rests on three pillars:
+\begin{itemize}
+  \item an immutable Track A scalar core;
+  \item an Exploder/Builder bifurcation for exploration vs.\ construction;
+  \item an elastic tether metric that gates adoption on interrogation depth and drift bounds.
+\end{itemize}
+
+The architecture is inspired by a physics-based elastic tether paradigm for navigating sparse, high-risk state spaces with bifurcated agents: a fast head that explores and a slower tail that verifies, with parameters derived from interrogation physics rather than prediction or manual tuning. In the Lane A context, Exploder acts as the adversarial head, Builder as the constructive tail, and the tether as an explicit lead--lag constraint between the two.
+
+\section{Exploder and Builder Twins}
+
+\subsection{Exploder}
+
+Exploder is a simulation-only, read-only module whose purpose is to interrogate candidate mechanisms and surface failure structure rather than to deploy anything.
+
+Exploder:
+\begin{itemize}
+  \item Executes bounded perturbation families over the scalar core, such as amplitude ramps, frequency and phase shifts, timing jitter, drag spikes, and dual symbolic/numeric perturbations.
+  \item Measures drift of relevant observables against a substrate-specific tolerance \(\varepsilon_X\).
+  \item Computes coverage over the perturbation/state space it has explored.
+  \item Classifies observed behaviour into a small set of fragility classes, for example:
+  \begin{itemize}
+    \item impedance-spike-precursor,
+    \item recovery-deficit-amplification,
+    \item fragile-under-coupling,
+    \item time-delayed-failure,
+    \item dual-disagreement,
+    \item robust-under-adversarial-stress.
+  \end{itemize}
+  \item Emits canonical \emph{shrapnel maps}, each describing fragments, failure patterns, stability regions, and gaps in interrogation, together with bounded \emph{resistance certificates} when a structure remains unbroken up to a defined depth.
+\end{itemize}
+
+Exploder has no authority to adopt or deploy; its outputs are evidence for governance and building, not green lights.
+
+\subsection{Builder}
+
+Builder is the constructive twin that assembles new structures, but only from fragments that have passed through the Exploder and carry known behaviour.
+
+Builder:
+\begin{itemize}
+  \item Refuses pristine inputs; all building blocks must be shrapnel fragments with mapped failure surfaces or composites with resistance certificates.
+  \item Preserves provenance rigorously: every construct inherits the list of explosions it survived, the fragility surfaces associated with its parts, and the constraints under which it is considered safe.
+  \item Emits proposals only; it never mutates the scalar core or unilaterally promotes a construct's tier or deployment scope.
+\end{itemize}
+
+All promotion or deployment decisions flow through explicit governance review using the evidence produced by Exploder and the proposals emitted by Builder.
+
+\section{Tether Metric and Policy}
+
+The elastic tether between Exploder and Builder is implemented as a scalar metric \(\tau\) and an associated policy.
+
+Given a run with coverage \(\mathrm{coverage}\), required coverage \(\mathrm{required\_coverage}\), drift norm \(\|\Delta_{\mathrm{drift}}\|\), and substrate tolerance \(\varepsilon_X\), the tether tension is defined as
+\begin{equation}
+\tau = \left( \frac{\mathrm{coverage}}{\mathrm{required\_coverage}} \right)
+       \times \left( 1 - \frac{\|\Delta_{\mathrm{drift}}\|}{\varepsilon_X} \right).
+\end{equation}
+
+Policy constraints include:
+\begin{itemize}
+  \item Input validation: negative coverage or tolerances are rejected; if \(\|\Delta_{\mathrm{drift}}\| \ge \varepsilon_X\) then \(\tau\) is treated as zero or as an automatic hard fail.
+  \item Clamping: \(\tau\) is clamped to the interval \([0,1]\).
+  \item Builder gating: Builder may advance only when
+  \begin{itemize}
+    \item \(\tau \ge \tau_{\mathrm{threshold}}\) (default \(0.70\)),
+    \item coverage is at least a configured minimum (default \(0.80\)),
+    \item no novelty freeze condition holds (for unseen fragility classes, unresolved dual disagreements, or untested coupling regimes),
+    \item certificate scopes cover the intended use.
+  \end{itemize}
+\end{itemize}
+
+This implements a verified-only, physics-derived safety constraint: adoption is permitted only in regions where interrogation is sufficiently dense and drift remains well within substrate bounds.
+
+\section{Schemas and Artifacts}
+
+Lane A relies on explicit, versioned JSON artifacts as its evidence and proposal interface. Core schema objects include:
+\begin{itemize}
+  \item \texttt{ShrapnelFragment}, describing a fragment, its locus, an interrogation depth, and metadata such as prime signatures or dual-disagreement flags.
+  \item \texttt{ResistanceCertificate}, describing the scope, depth, and gaps of interrogation, together with IDs, tier, and provenance.
+  \item \texttt{ShrapnelMap}, describing a target, baseline intent, test suite executed, observed drift, fragility class, a set of fragments, an optional certificate, tether tension, tier, schema version, run ID, and provenance.
+  \item \texttt{RunManifest}, describing a particular Exploder run: target, substrate, random seed, \(\varepsilon_X\), required coverage, executed perturbations, novelty assessment, source ADR list, and tier.
+\end{itemize}
+
+Validation rules enforce:
+\begin{itemize}
+  \item Mandatory tier and provenance on all artifacts.
+  \item Known fragility classes unless explicitly operating in novelty exploration mode.
+  \item Tether tension in \([0,1]\).
+  \item Prime signatures and similar fields treated as metadata only, never as inputs to the scalar ODE.
+\end{itemize}
+
+\section{Repository Structure and Phased Implementation}
+
+The implementation plan specifies a repository layout with:
+\begin{itemize}
+  \item \texttt{docs/adr/} containing ADR-001 through ADR-006.
+  \item A \texttt{core} package implementing the scalar surface, drift helpers, and impedance bridge.
+  \item A \texttt{schemas} package for all data contracts.
+  \item \texttt{exploder}, \texttt{builder}, and \texttt{tether} packages encapsulating engines and policies.
+  \item A \texttt{governance} package for rollback mapping, review packet assembly, and tiering logic.
+  \item A \texttt{harness} package with the metallurgical prototype, fixtures, and runner.
+  \item A \texttt{tests} tree with unit, integration, architecture, and golden tests.
+\end{itemize}
+
+Implementation is phased:
+\begin{enumerate}
+  \item ADR baseline and documentation.
+  \item Repository scaffold.
+  \item Canonical schemas and enums.
+  \item Track A core implementation.
+  \item Perturbation families and Exploder engine.
+  \item Tether metric and Builder admission logic.
+  \item Governance adapters and metallurgical harness.
+\end{enumerate}
+
+Each phase is gated by tests, particularly architecture tests that enforce module boundaries and prevent core contamination.
+
+\section{Metallurgical Prototype}
+
+The initial Lane A deployment target is metallurgical fatigue with cyclic stress forcing. This domain provides:
+\begin{itemize}
+  \item A physically interpretable substrate where drift and impedance can be reasoned about directly.
+  \item A concrete state space for perturbation families and shrapnel classification.
+  \item A safe sandbox for validating the Exploder/Builder/tether loop without altering core dynamics.
+\end{itemize}
+
+The metallurgical harness is expected to:
+\begin{itemize}
+  \item Run the Exploder over a defined suite of perturbations.
+  \item Produce at least one valid shrapnel map and resistance certificate.
+  \item Generate at least one Builder proposal grounded in certified drag-related fragments.
+\end{itemize}
+
+\section{Status and Assessment}
+
+Lane A is at an architecture-complete, implementation-ready stage. The key achievements are:
+\begin{itemize}
+  \item A clear constitutional separation between immutable scalar core and governed exploration surface.
+  \item A concrete Exploder/Builder twin design that turns the adversarial twin metaphor into operational protocols.
+  \item A tether metric and policy that make the protected innovation budget measurable and enforceable.
+  \item A schema- and test-driven implementation plan that embeds governance directly into the codebase.
+\end{itemize}
+
+The main residual risk is execution drift: if schemas, tether policy, and architecture tests are not implemented up front, later code could accidentally violate the core invariants that the ADR system is designed to protect. The recommended next step is to instantiate the repository, implement schemas and the Track A core, and complete the metallurgical Exploder harness and boundary tests before accepting any Builde
+
+% ====================== ADR-007 ======================
+\section{ADR-007: Multiplicity Metadata \& Prime-Based Encoding}
+\textbf{Status:} PROPOSED \\
+\textbf{Date:} 2026-05-20 \\
+\textbf{Author:} Gemini CLI Agent \\
+\textbf{Dependency:} ADR-001, ADR-003, ADR-005
+
+\subsection{Context}
+The Genesis Governance ecosystem requires a method to encode structural invariants and cross-substrate relationships using prime signatures (Multiplicity) without compromising the integrity of the scalar core dynamics $C_X(t)$.
+
+\subsection{Decision}
+We implement a \textbf{Multiplicity Metadata Overlay} with the following constraints:
+
+\begin{enumerate}
+    \item \textbf{Metadata Only:} Prime signatures, exponents, and multiplicity vectors are strictly metadata. They may be carried by \texttt{SurfaceState} or \texttt{ShrapnelFragment} but MUST NOT influence the numerical evolution of the ODE core.
+    \item \textbf{Sparse Encoding:} The encoding should prioritize sparsity (small changes in state $\to$ sparse updates in signature).
+    \item \textbf{Module Quarantine:} All encoding/decoding logic must reside in a dedicated \texttt{multiplicity/} module, which is subject to the same isolation rules as the Exploder/Builder (read-only access to core).
+    \item \textbf{Schema Enforcement:} Multiplicity metadata must follow the \texttt{MultiplicityEncoding} Pydantic model defined in \texttt{types.py}.
+\end{enumerate}
+
+\textbf{Multiplicity Schema:}
+\begin{itemize}
+    \item \texttt{prime\_signature}: List of active prime factors.
+    \item \texttt{exponent\_vector}: Dictionary mapping primes to their multiplicity (exponents).
+    \item \texttt{sparsity\_index}: A metric of encoding density.
+    \item \texttt{locality\_score}: Measures how well the encoding preserves state proximity.
+\end{itemize}
+
+\subsection{Consequences}
+\begin{itemize}
+    \item \textbf{Positive:} Enables higher-order analysis of simulation results. Formalizes the innovation budget for multiplicity research.
+    \item \textbf{Negative:} Adds complexity to the \texttt{SurfaceState} model and artifact serialization.
+    \item \textbf{Tradeoff:} Analytical depth over model simplicity.
+\end{itemize}
+
+\textbf{Related ADRs:} ADR-001 (Core Engine), ADR-005 (Schemas).
+
+% ====================== ADR-008 ======================
+\section{ADR-008: Lane C — Semiconductor Persistence Substrate}
+\textbf{Status:} PROPOSED \\
+\textbf{Date:} 2026-05-20 \\
+\textbf{Author:} Gemini CLI Agent \\
+\textbf{Dependency:} ADR-001, ADR-007
+
+\subsection{Context}
+The Genesis Governance ecosystem needs to model threshold-sensitive dynamics where persistence state flips or transitions abruptly under specific stress triggers. This is characteristic of semiconductor logic, switching regimes, and conditional stability.
+
+\subsection{Decision}
+We instantiate \textbf{Lane C — Semiconductor Persistence} with the following dynamics:
+
+\begin{enumerate}
+    \item \textbf{Threshold Logic:} State evolution depends on a switching threshold $V_{th}$.
+    \item \textbf{Hysteresis Band:} Transitions are governed by a hysteresis window to prevent rapid oscillatory flipping near the threshold.
+    \item \textbf{Conductance Mapping:} $C_{Semi}$ maps to a bounded persistence value representing ``state integrity'' or ``logical coherence.''
+    \item \textbf{Multiplicity Mapping:} The multiplicity encoder must map threshold-crossing events to distinct prime bands (e.g., Prime 5 for threshold state, Prime 7 for hysteresis status).
+\end{enumerate}
+
+\textbf{Mathematical Model (Extension):}
+\[
+\text{If } S_{eff} > V_{th} + \Delta : \text{ state } \to \text{ OFF}
+\]
+\[
+\text{If } S_{eff} < V_{th} - \Delta : \text{ state } \to \text{ ON}
+\]
+Dynamics on $C_{Semi}$ are modified by the current state (ON/OFF), influencing recovery and degradation rates.
+
+\subsection{Consequences}
+\begin{itemize}
+    \item \textbf{Positive:} Exercises the multiplicity layer on sharp gradients. Extends the system toward computational substrate modeling.
+    \item \textbf{Negative:} Requires stateful harness logic (memory of current ON/OFF state).
+    \item \textbf{Tradeoff:} Higher modeling complexity for increased regime diversity.
+\end{itemize}
+
+\textbf{Related ADRs:} ADR-001 (Core ODE), ADR-007 (Multiplicity Encoding).
+
+% ====================== ADR-009 ======================
+\section{ADR-009: Automated Prime-Band Allocation for Multiplicity}
+\textbf{Status:} PROPOSED \\
+\textbf{Date:} 2026-05-20 \\
+\textbf{Author:} Gemini CLI Agent \\
+\textbf{Dependency:} ADR-007, ADR-008
+
+\subsection{Context}
+As the Genesis Governance ecosystem expands across diverse substrates (Met, AI, Semi), the manual assignment of primes to features becomes a scaling bottleneck and risk for interpretative drift.
+
+\subsection{Decision}
+We implement a \textbf{Prime-Band Allocator} that dynamically assigns prime factors to features based on:
+
+\begin{enumerate}
+    \item \textbf{Feature Entropy:} High-variance features are allocated more reliable or higher-capacity prime bands.
+    \item \textbf{Categorical Significance:} Threshold-driven states (ON/OFF) are assigned distinct, high-separability prime bands to maximize reconstruction scores.
+    \item \textbf{Historical Feedback:} The allocator queries the \texttt{HistoryStore} to identify which prime mappings have historically produced high \texttt{reconstruction\_score} values.
+    \item \textbf{Quarantine Preservation:} The allocation algorithm is strictly a metadata operation and has no path to core dynamical mutation.
+\end{enumerate}
+
+\textbf{Allocation Strategy:}
+\begin{itemize}
+    \item \textbf{Band A (Dynamics):} Primes [2, 3, 5] for continuous state vectors.
+    \item \textbf{Band B (Structure):} Primes [7, 11] for categorical transitions and logical states.
+    \item \textbf{Band C (Context):} Primes [13, 17, 19] for coupling weights and environmental parameters.
+\end{itemize}
+
+\textbf{Sensitivity Refinement (v0.5.0):} Implement a \texttt{sensitivity\_sweep} that re-allocates prime bands if historical reconstruction scores drop below 0.80 or locality deltas exceed 0.15.
+
+\subsection{Consequences}
+\begin{itemize}
+    \item \textbf{Positive:} Automates the ``Deep Multiplicity'' research loop. Improves reconstruction resilience.
+    \item \textbf{Negative:} Introduces a dependency on historical data.
+    \item \textbf{Tradeoff:} Adaptive precision over fixed, predictable schemas.
+\end{itemize}
+
+\textbf{Related ADRs:} ADR-007 (Multiplicity Metadata), ADR-008 (Lane C).
+
+% ====================== ADR-010 ======================
+\section{ADR-010: v0.5.0 Release as Governed Self-Tuning Platform}
+\textbf{Status:} PROPOSED \\
+\textbf{Date:} 2026-05-20 \\
+\textbf{Author:} Gemini CLI Agent \\
+\textbf{Dependency:} ADR-001 through ADR-009
+
+\subsection{Context}
+The Genesis Governance ecosystem has reached a level of maturity where Lane A/B/C dynamics are coupled, multiplicity encoding is adaptive and self-auditing, and the governance cycle (Exploder $\to$ Builder $\to$ Review) is fully operational.
+
+\subsection{Decision}
+We formalize \textbf{v0.5.0} as the production-grade baseline for a \textbf{Governed Self-Tuning Platform}. This version anchors:
+
+\begin{enumerate}
+    \item \textbf{Adaptive Multiplicity:} Automated prime-band allocation and sensitivity-driven re-mapping.
+    \item \textbf{Cross-Substrate Governance:} Unified interrogation and assembly across Metallurgical, AI, and Semiconductor domains.
+    \item \textbf{Meta-Reflexive Reporting:} Automated generation of self-tuning reports based on historical reconstruction and tether signals.
+    \item \textbf{Enforced Quarantine:} Continued absolute protection of the scalar core via architecture validation and exploratory tiers.
+\end{enumerate}
+
+\subsection{Consequences}
+\begin{itemize}
+    \item \textbf{Positive:} Provides a stable, auditable launchpad for external collaboration and deeper research (e.g., Lane D). Formalizes the meta-self-tuning loop as a platform feature.
+    \item \textbf{Negative:} Establishes a higher threshold for future breaking changes.
+    \item \textbf{Tradeoff:} Release stability over continued rapid prototyping.
+\end{itemize}
+
+\textbf{Related ADRs:} ADR-001 (Core Engine), ADR-009 (Adaptive Allocation).
+
+% ====================== ADR-011 ======================
+\section{ADR-011: External Collaboration under Protected Innovation Budget}
+\textbf{Status:} ACTIVE \\
+\textbf{Date:} 2026-05-20 \\
+\textbf{Author:} Gemini CLI Agent \\
+\textbf{Dependency:} ADR-002, ADR-010
+
+\subsection{Context}
+To maximize the impact of the Genesis Governance ecosystem, we must enable external researchers to contribute new substrates, perturbation families, and multiplicity mappings without compromising the Lane A Scalar Core or the integrity of the governance gates.
+
+\subsection{Decision}
+We implement a \textbf{Governed Collaboration Protocol} with the following mandates:
+
+\begin{enumerate}
+    \item \textbf{Mandatory Quarantine:} All external contributions must be developed in exploratory branches. No direct PRs to the \texttt{core/} or \texttt{governance/} logic are permitted without explicit ADR-backed promotion.
+    \item \textbf{Tiered Submission:} Contributions MUST carry an initial tier of [I] (Internal/Exploratory) or [S] (Supported by Simulation). Promotion to [E] requires verification against the canonical golden masters.
+    \item \textbf{Provenance Enforcement:} Every contribution must be accompanied by a \texttt{RunManifest} or \texttt{ShrapnelMap} verifying that it passes the current architecture boundaries (\texttt{make test-arch}).
+    \item \textbf{Builder Proposal Gate:} New logic is only ``admitted'' to the platform if it can generate a Builder proposal with $\tau \ge 0.70$.
+\end{enumerate}
+
+\subsection{Consequences}
+\begin{itemize}
+    \item \textbf{Positive:} Scales the self-tuning loop across multiple contributors. Protects the ``Single Source of Truth'' in Lane A.
+    \item \textbf{Negative:} Increases overhead for new contributors.
+    \item \textbf{Tradeoff:} High-integrity collaboration over rapid, ungoverned growth.
+\end{itemize}
+
+\textbf{Related ADRs:} ADR-002 (Admission Protocol), ADR-010 (v0.5.0 Release).
+
+% ====================== PRIME-BAND SUBSTRATE THRESHOLDS (Proposed Extension) ======================
+\section{Prime-Band Substrate Thresholds (Supporting ADR-009 v0.5.0)}
+\textbf{Status:} PROPOSED \\
+\textbf{Date:} 2026-05-20 \\
+\textbf{Author:} Gemini CLI Agent (with Phase Mirror synthesis) \\
+\textbf{Dependency:} ADR-009, ADR-007, ADR-008, ADR-010
+
+\subsection{Context}
+Automated prime-band allocation requires explicit, substrate-aware thresholds to maintain reconstruction fidelity and locality across heterogeneous regimes (Metallurgical, AI, Semiconductor). These thresholds operationalize sensitivity_sweep and prevent interpretative drift while remaining metadata-only.
+
+\subsection{Decision}
+Define the following \textbf{Prime-Band Substrate Thresholds}:
+
+\begin{description}
+    \item[Reconstruction Score Threshold] $\tau_{recon} \geq 0.80$ (default). If below, trigger re-allocation via sensitivity_sweep. Measured as cosine similarity or inverse edit distance between original SurfaceState and decoded multiplicity signature.
+    \item[Locality Delta Threshold] $\Delta_{loc} \leq 0.15$ (default). Maximum allowable change in state proximity after encoding/decoding. Exceedance flags high-entropy features for higher-capacity bands.
+    \item[Entropy Thresholds per Band]
+    \begin{itemize}
+        \item Band A (Dynamics [2,3,5]): Continuous vectors with variance $\sigma^2 > 0.25$ $\to$ prioritize lower primes for smooth evolution.
+        \item Band B (Structure [7,11]): Categorical/ON-OFF transitions with separability $> 0.85$ (e.g., $V_{th}$ crossings in Lane C).
+        \item Band C (Context [13,17,19]): Coupling weights and environmental params with cross-substrate correlation $> 0.60$.
+    \end{itemize}
+    \item[Substrate-Specific Calibration]
+    \begin{itemize}
+        \item Metallurgical (Met): $\varepsilon_X = 0.08$; favor Band A for fatigue cycles.
+        \item AI Recursion: $\varepsilon_X = 0.12$; Band B for contradiction thresholds.
+        \item Semiconductor (Lane C): Hysteresis window $\Delta = 0.1 \times V_{th}$; Band B dominant.
+    \end{itemize}
+\end{description}
+
+\textbf{Sensitivity Sweep Rule:}
+If $\tau_{recon} < 0.80$ or $\Delta_{loc} > 0.15$ for $> 3$ consecutive runs in HistoryStore, re-allocate to next available prime in band or promote exploratory Band D primes (see Lane D below).
+
+\subsection{Consequences}
+\begin{itemize}
+    \item \textbf{Positive:} Quantifies ``Deep Multiplicity'' loop; enables automated calibration across substrates.
+    \item \textbf{Negative:} Adds telemetry overhead to RunManifest.
+    \item \textbf{Tradeoff:} Adaptive governance vs. static predictability.
+\end{itemize}
+
+\textbf{Related:} ADR-009 (Allocator), PERTURBATION_FAMILIES.md ($\varepsilon_X$ table).
+
+% ====================== LANE D SUBSTRATE INTEGRATION ======================
+\section{Lane D Substrate Integration — Meta-Reflexive Multiplicity Layer}
+\textbf{Status:} EXPLORATORY (Tier [I]) \\
+\textbf{Date:} 2026-05-20 \\
+\textbf{Author:} Gemini CLI Agent \\
+\textbf{Dependency:} ADR-010, ADR-011, ADR-007
+
+\subsection{Context}
+ADR-010 references ``deeper research (e.g., Lane D)'' as the next horizon for the Governed Self-Tuning Platform. Lane D extends beyond Lane C (Semiconductor Persistence) into meta-reflexive dynamics: self-observation of the governance cycle itself, recursive multiplicity evolution, and cross-Lane resonance under protected innovation budget.
+
+\subsection{Decision (Exploratory Integration)}
+Instantiate **Lane D — Meta-Reflexive Governance Substrate** with:
+
+\begin{enumerate}
+    \item \textbf{Core State:} $C_D(t)$ tracking self-tuning coherence (reconstruction history, tether $\tau$ trajectories, prime-band allocation stability).
+    \item \textbf{Dynamics Extension:}
+    \[
+    \frac{dC_D}{dt} = \alpha(C_D^* - C_D) + \beta G_D - \gamma S_{meta}(t) + \kappa \sum_{lanes=A}^{C} w_{D \to L}(C_L - C_D)
+    \]
+    where $S_{meta}(t)$ = novelty rate from Exploder + Builder proposals.
+    \item \textbf{Prime-Band Extension (Band D):} Primes [23, 29, 31] for meta-invariants (self-reference, recursion depth, governance tension). Allocated only via sensitivity_sweep on Lane A/B/C feedback.
+    \item \textbf{Integration Rules (Quarantine-Preserving):}
+    \begin{itemize}
+        \item Read-only access to ShrapnelMap / HistoryStore from Lanes A–C.
+        \item Outputs as meta-Reflexive reports (Tier [I] only until $\tau \geq 0.85$ golden-master verification).
+        \item Builder proposals from Lane D require explicit ADR promotion (per ADR-011).
+        \item Novelty freeze on unseen meta-fragility classes (e.g., ``allocation-oscillation'', ``tether-collapse'').
+    \end{itemize}
+    \item \textbf{Thresholds for Lane D Promotion:}
+    \begin{itemize}
+        \item Reconstruction score across coupled lanes $\geq 0.85$.
+        \item Tether tension $\tau \geq 0.75$ sustained over 5 runs.
+        \item No core mutation; multiplicity remains metadata overlay.
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Exploration Trajectory (Prime Moves Applied)}
+\begin{itemize}
+    \item \textbf{Anchoring:} Lane D observes Exploder $\to$ Builder $\to$ Review cycle as a higher-order persistence substrate.
+    \item \textbf{Reverse modeling:} Simulate governance ``fatigue'' (e.g., repeated low-$\tau$ proposals) using Lane C threshold logic mapped to meta-state.
+    \item \textbf{Representation shift:} Prime-band allocation now includes a meta-band D that encodes allocation history itself (sparse exponent vector of prior sweeps).
+    \item \textbf{Impact signal prediction:} Enables closed-loop self-improvement of the entire Genesis platform; surfaces unsettling shrapnel such as ``protected-budget leakage'' for governance review.
+\end{itemize}
+
+\subsection{Consequences}
+\begin{itemize}
+    \item \textbf{Positive:} Completes the meta-self-tuning loop; scales external collaboration (ADR-011) with reflexive oversight.
+    \item \textbf{Negative:} Risk of infinite regress (meta-meta layers); mitigated by strict tiering and quarantine.
+    \item \textbf{Tradeoff:} Deeper reflexivity vs. governance overhead.
+\end{itemize}
+
+\textbf{Related ADRs:} ADR-010 (v0.5.0), ADR-003 (Exploder/Builder), ADR-002 (Admission Protocol).
+\end{document}

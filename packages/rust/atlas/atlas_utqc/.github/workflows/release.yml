@@ -1,0 +1,63 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  build_and_release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Pandoc and TeXLive
+        run: |
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y texlive-latex-base texlive-fonts-recommended texlive-fonts-extra texlive-latex-extra texlive-publishers texlive-science latexmk pandoc
+          
+      - name: Compile PDF
+        working-directory: docs/paper
+        run: latexmk -pdf -Werror -interaction=nonstopmode main.tex
+        
+      - name: Rename PDF
+        run: cp docs/paper/main.pdf docs/paper/UOR_Atlas_Whitepaper.pdf
+
+      - name: Upload PDF to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: docs/paper/UOR_Atlas_Whitepaper.pdf
+          name: Release ${{ github.ref_name }}
+          generate_release_notes: true
+          
+      - name: Compile HTML
+        working-directory: docs/paper
+        run: |
+          mkdir -p public
+          cp UOR_Atlas_Whitepaper.pdf public/
+          chmod +x generate_html.sh
+          ./generate_html.sh
+          
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+        
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/paper/public
+
+  deploy_pages:
+    needs: build_and_release
+    permissions:
+      pages: write
+      id-token: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,306 @@
+# NIST AI RMF Compliance Mapping — Phase Mirror Architecture
+# Generated from ADR-0029 FPES implementation
+#
+# Maps each NIST AI RMF 1.0 core function and category to the specific
+# code artifact, formal proof, and enforcement mechanism in the Phase Mirror
+# system.  This is a machine-readable compliance receipt — not a narrative.
+#
+# Usage:
+#   - Loaded by nist_rmf.rs at startup
+#   - Served via /audit/nist-rmf/status endpoint
+#   - Every FPES gate decision produces a NIST-tagged audit entry
+#   - Regulators query this mapping to verify enforcement
+
+framework:
+  name: "NIST AI Risk Management Framework"
+  version: "1.0"
+  date: "2023-01-18"
+  mapping_version: "0.1.0"
+  generated_from: "ADR-0029 FPES Production Implementation"
+  system: "Phase Mirror Agent"
+
+# ─────────────────────────────────────────────────────────────
+# GOVERN — Governance as mechanical enforcement
+# ─────────────────────────────────────────────────────────────
+govern:
+  description: >
+    Governance is enforced mechanically as a pre-commit compilation stage
+    rather than through human ex post policy review.  Trust is derived from
+    machine-checked proofs under Algorithmic Supremacy.
+
+  categories:
+
+    - id: GOVERN-1
+      nist_title: "Legal and regulatory requirements are understood and managed"
+      enforcement:
+        type: build_gate
+        artifact: "scripts/fpes-gate.sh"
+        check: "YAML contract exists and is non-empty"
+        command: "scripts/fpes-gate.sh"
+        exit_code_required: 0
+      proof_artifact: null
+      adr: "ADR-0029 § Decision driver 5"
+
+    - id: GOVERN-2
+      nist_title: "Policies, processes, procedures, and practices across the organization are understood and managed"
+      enforcement:
+        type: build_gate
+        artifact: "build.rs"
+        check: "No sorry/admit/axiom in FPES Lean sources (word-boundary match)"
+        command: "cargo build (build.rs phase 2)"
+        exit_code_required: 0
+      proof_artifact: "Multiplicity.FPES.Proofs.multiplicity_nonzero"
+      adr: "ADR-0029 § Decision driver 1"
+
+    - id: GOVERN-3
+      nist_title: "Decision rights and accountabilities are appropriate and clearly articulated"
+      enforcement:
+        type: compile_time
+        artifact: "Multiplicity/FPES/Core.lean"
+        check: "Certificate H exists only when Viable H is machine-checked"
+        mechanism: "proof-carrying acceptance gate"
+      proof_artifact: "Multiplicity.FPES.Proofs.certificate_sound"
+      adr: "ADR-0029 § Decision driver 5"
+
+    - id: GOVERN-4
+      nist_title: "Organizational practices are in place for responsible AI"
+      enforcement:
+        type: runtime_gate
+        artifact: "phase-mirror-agent/src/fpes_gate.rs"
+        check: "enforce_fpes() blocks actions violating Viable H"
+        mechanism: "FpesGate.check() → FpesDecision::Block"
+      proof_artifact: "Multiplicity.FPES.Proofs.fpes_preserves_falsification_and_survival"
+      adr: "ADR-0029 § Decision 6"
+
+    - id: GOVERN-5
+      nist_title: "A culture of risk management is cultivated and incentivized"
+      enforcement:
+        type: type_system
+        artifact: "Multiplicity/FPES/Core.lean"
+        check: "defective hypothesis spaces cannot be constructed into the pipeline"
+        mechanism: "Viable H is Decidable; ¬ Viable → no Certificate term"
+      proof_artifact: "Multiplicity.FPES.Examples.defective_not_viable"
+      adr: "ADR-0029 § Alternatives Considered"
+
+# ─────────────────────────────────────────────────────────────
+# MAP — State boundary recognition and adversarial probing
+# ─────────────────────────────────────────────────────────────
+map:
+  description: >
+    The Sigma Kernel continuously evaluates physical operational metrics
+    to recognize state boundaries.  The Adversarial Digital Twin applies
+    maximum divergence pressure to probe for vulnerabilities.
+
+  categories:
+
+    - id: MAP-1
+      nist_title: "Intended purpose, context of use, and potential impacts are understood"
+      enforcement:
+        type: formal_model
+        artifact: "Multiplicity/FPES/Core.lean"
+        check: "HypothesisSpace structure defines the domain model"
+        mechanism: "Path, EquivalenceClass, HypothesisSpace types"
+      proof_artifact: null
+      adr: "ADR-0029 § Decision 2"
+
+    - id: MAP-2
+      nist_title: "Intended users, impacted groups, and stakeholders are identified"
+      enforcement:
+        type: yaml_contract
+        artifact: "contracts/fpes.yaml"
+        check: "governance.owner and governance.governor fields"
+        mechanism: "Phase Mirror + the-examiner"
+      proof_artifact: null
+      adr: "ADR-0029 § Specification Layer"
+
+    - id: MAP-3
+      nist_title: "Benefits and costs are characterized including potential impacts to individuals and groups"
+      enforcement:
+        type: formal_proof
+        artifact: "Multiplicity/FPES/Proofs.lean"
+        check: "FalsificationPreserving + Survival theorems quantify benefit preservation"
+        mechanism: "multiplicity_preserved_under_contraction"
+      proof_artifact: "Multiplicity.FPES.Proofs.multiplicity_preserved_under_contraction"
+      adr: "ADR-0029 § Decision 2"
+
+    - id: MAP-4
+      nist_title: "Potential risks and benefits are identified for system components and decision outputs"
+      enforcement:
+        type: kani_harness
+        artifact: "Multiplicity/kani/src/proofs/fpes.rs"
+        check: "Bounded model checking for |Paths| ≤ 8, |Classes| ≤ 8"
+        mechanism: "kani_fpes_001_multiplicity_nonzero, kani_fpes_002_contraction_preserves_multiplicity"
+      proof_artifact: null
+      adr: "ADR-0029 § Decision 3"
+
+    - id: MAP-5
+      nist_title: "Methods for measuring risks are identified"
+      enforcement:
+        type: regression_vector
+        artifact: "Multiplicity/kani/regression/fpes.json"
+        check: "Three test vectors with expected multiplicity counts"
+        mechanism: "hspace_simd, hspace_prune, hspace_diff"
+      proof_artifact: "Multiplicity.FPES.Examples.simd_contracted_class_counts"
+      adr: "ADR-0029 § Consequences Positive"
+
+# ─────────────────────────────────────────────────────────────
+# MEASURE — Quantified risk through operator norms and hash chains
+# ─────────────────────────────────────────────────────────────
+measure:
+  description: >
+    System risks are quantified through strict operator norm bounds.
+    Decisions are cross-examined via Triple-Lock verification.
+    Trajectories are authenticated using Prime-Weighted Execution Hashing.
+
+  categories:
+
+    - id: MEASURE-1
+      nist_title: "Approaches for measurement of AI risks are connected to deployment context and identified risks"
+      enforcement:
+        type: runtime_check
+        artifact: "phase-mirror-agent/src/fpes_gate.rs"
+        check: "FpesGate.check() evaluates Viable H on every action"
+        mechanism: "VerifiedAction::Contract → multiplicity check"
+      proof_artifact: "Multiplicity.FPES.Proofs.multiplicity_nonzero"
+      adr: "ADR-0029 § Decision 6"
+
+    - id: MEASURE-2
+      nist_title: "AI risks are measured using identified approaches"
+      enforcement:
+        type: formal_proof
+        artifact: "Multiplicity/FPES/Proofs.lean"
+        check: "Operator norm bounds: Contractive op H"
+        mechanism: "representative_contraction_is_contractive"
+      proof_artifact: "Multiplicity.FPES.Proofs.representative_contraction_is_contractive"
+      adr: "ADR-0029 § Decision 2"
+
+    - id: MEASURE-3
+      nist_title: "Measurements of identified risks are documented and communicated"
+      enforcement:
+        type: audit_entry
+        artifact: "fpes_gate.rs → OperatorEvent::FpesBlock"
+        check: "Every gate decision produces a NIST-tagged audit entry"
+        mechanism: "NistRmfAuditEntry with category_id, enforcement_type, proof_artifact"
+      proof_artifact: null
+      adr: "ADR-0029 § Consequences Positive"
+
+    - id: MEASURE-4
+      nist_title: "Regular reviews of risk measurements are conducted"
+      enforcement:
+        type: ci_pipeline
+        artifact: "Makefile"
+        check: "make gate runs fpes-gate.sh on every build"
+        mechanism: "lean-check + fpes-test + gate"
+      proof_artifact: null
+      adr: "ADR-0029 § Implementation Roadmap Phase 5"
+
+    - id: MEASURE-5
+      nist_title: "Incident response and recovery plans are in place"
+      enforcement:
+        type: fail_closed
+        artifact: "contracts/fpes.yaml"
+        check: "governance.fail_closed: true"
+        mechanism: "SIG_GOV_KILL on any invariant violation"
+      proof_artifact: "Multiplicity.FPES.Examples.defective_no_certificate"
+      adr: "ADR-0029 § Decision driver 5"
+
+# ─────────────────────────────────────────────────────────────
+# MANAGE — Fail-closed drift rejection and CRMF audit
+# ─────────────────────────────────────────────────────────────
+manage:
+  description: >
+    Detected drift triggers immediate L0_HALT.  Unsafe transitions are
+    mathematically rejected.  Rejected events are permanently recorded
+    in the CRMF audit ledger.
+
+  categories:
+
+    - id: MANAGE-1
+      nist_title: "Plans and processes are in place for risk response and recovery"
+      enforcement:
+        type: runtime_gate
+        artifact: "phase-mirror-agent/src/fpes_gate.rs"
+        check: "enforce_fpes() returns FpesBlockError on violation"
+        mechanism: "Err(StatusCode::FORBIDDEN) prevents execution"
+      proof_artifact: "Multiplicity.FPES.Examples.defective_not_viable"
+      adr: "ADR-0029 § Decision driver 5"
+
+    - id: MANAGE-2
+      nist_title: "Resources for risk response are allocated"
+      enforcement:
+        type: build_system
+        artifact: "Makefile"
+        check: "make kani-full, make fpes-test, make gate targets"
+        mechanism: "Automated verification on every build"
+      proof_artifact: null
+      adr: "ADR-0029 § Implementation Roadmap"
+
+    - id: MANAGE-3
+      nist_title: "Stakeholders are informed about AI risk findings"
+      enforcement:
+        type: audit_api
+        artifact: "phase-mirror-agent/src/main.rs"
+        check: "OperatorEvent::FpesBlock emitted on every block"
+        mechanism: "WsState.emit() + eprintln! for operator visibility"
+      proof_artifact: null
+      adr: "ADR-0029 § Consequences Positive"
+
+    - id: MANAGE-4
+      nist_title: "Incident response and recovery plans are exercised and updated"
+      enforcement:
+        type: regression_test
+        artifact: "Multiplicity/FPES/Test.lean"
+        check: "hspace_defective rejection proofs exercised on every lake test"
+        mechanism: "defective_not_nonempty, defective_not_viable, defective_no_certificate"
+      proof_artifact: "Multiplicity.FPES.Examples.defective_no_certificate"
+      adr: "ADR-0029 § Decision driver 5"
+
+    - id: MANAGE-5
+      nist_title: "Post-deployment monitoring plans are in place"
+      enforcement:
+        type: crmf_audit
+        artifact: "state/phase_mirror_audit_ledger.json"
+        check: "SHA-256 hash-chained entries with sequence numbers"
+        mechanism: "CRMF ledger: every FPES decision is permanently recorded"
+      proof_artifact: null
+      adr: "ADR-0029 § Consequences Positive"
+
+# ─────────────────────────────────────────────────────────────
+# Audit entry schema — produced by every FPES gate decision
+# ─────────────────────────────────────────────────────────────
+audit_entry_schema:
+  type: NistRmfAuditEntry
+  fields:
+    - name: trace_id
+      type: UUID
+      description: "Unique identifier for this audit event"
+    - name: timestamp
+      type: DateTime<Utc>
+      description: "When the gate decision was made"
+    - name: nist_function
+      type: "enum(GOVERN, MAP, MEASURE, MANAGE)"
+      description: "Which NIST RMF function this entry maps to"
+    - name: nist_category_id
+      type: String
+      description: "Specific NIST category (e.g., GOVERN-3, MEASURE-2)"
+    - name: enforcement_type
+      type: "enum(build_gate, runtime_gate, formal_proof, type_system, ci_pipeline, audit_entry, fail_closed)"
+      description: "How the category is enforced"
+    - name: enforcement_artifact
+      type: String
+      description: "File path of the enforcement mechanism"
+    - name: proof_artifact
+      type: "Option<String>"
+      description: "Lean theorem path (if applicable)"
+    - name: gate_decision
+      type: "enum(Allow, Block, Passthrough)"
+      description: "Outcome of the gate check"
+    - name: obligation_id
+      type: "Option<String>"
+      description: "FPES proof obligation id (if applicable)"
+    - name: reason
+      type: "Option<String>"
+      description: "Human-readable reason for Block decisions"
+    - name: evidence
+      type: "Option<GateEvidence>"
+      description: "Structured evidence for the decision"

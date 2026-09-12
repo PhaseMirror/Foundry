@@ -1,0 +1,320 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{url}
+\usepackage[colorlinks=true,linkcolor=blue,citecolor=blue]{hyperref}
+\usepackage{natbib}
+\usepackage[left=2.5cm,right=2.5cm,top=2.5cm,bottom=2.5cm]{geometry}
+
+\title{Modular Multiplicative Ecosystem Model (M³EM): A Testable Framework for Multi-Scale Ecological Dynamics}
+\author{Your Name \and Collaborator}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+We introduce the \textbf{Modular Multiplicative Ecosystem Model (M³EM)}, a hierarchical framework for modeling multi-scale ecological dynamics that enforces strict separation between (i) ecological state evolution, (ii) complexity quantification, and (iii) management optimization. The \textbf{core ecology layer} is a delayed, network-coupled stochastic state-space model defined on a graph of habitat patches, with a low-dimensional, interpretable multi-scale weighting that can be ablated without breaking model semantics. A \textbf{required observation model} connects latent ecological states to real measurements (counts, occupancy, indices), enabling likelihood-based inference. Optional modules add complexity regularization and external optimization of interventions, with quantum methods (e.g., QAOA) treated strictly as solver choices rather than ecological mechanisms. We provide sufficient conditions for mean-square boundedness of the delayed stochastic recursion and show how network connectivity controls perturbation decay in the linearized regime. A validation protocol emphasizes baseline comparison, ablation studies, and out-of-sample predictive scoring on spatial ecological time series.
+\end{abstract}
+
+\textbf{Keywords:} ecological modeling, multi-scale systems, network dynamics, state-space models, complexity metrics, validation
+
+\section{Introduction}
+\label{sec:intro}
+
+\subsection{The Challenge of Multi-Scale Ecological Modeling}
+Ecological systems exhibit dynamics across multiple scales---individuals, populations, communities, and landscapes---with delays, spatial coupling, and stochastic drivers. Existing models often either oversimplify (losing realism) or become overparameterized ``everything-bagels'' that are untestable \citep{May1976}. The Multiplicative Quantum Ecosystem Model (MQEM) represented an ambitious attempt to integrate quantum mechanics, fractals, and metamaterials into ecology, but suffered from unclear ecological relevance and unvalidated claims.
+
+\subsection{Design Principles for Next-Generation Models}
+We propose three design principles for testable multi-scale models:
+\begin{enumerate}
+    \item \textbf{Layer separation:} Ecology, complexity measurement, and optimization must be distinct modules.
+    \item \textbf{Ablation-first validation:} Each component must earn its keep through predictive performance.
+    \item \textbf{Parameter discipline:} Parameters must map to measurable quantities or have strong priors.
+\end{enumerate}
+
+\subsection{Contributions}
+\label{subsec:contributions}
+Our main contributions are:
+\begin{enumerate}
+    \item \textbf{Core model:} A delayed, graph-coupled stochastic state-space ecology model with normalized multi-scale weighting.
+    \item \textbf{Inference-ready framework:} Explicit observation model and likelihood enabling PMCMC / iterated filtering workflows \citep{Andrieu2010}.
+    \item \textbf{Provable guarantees:} Mean-square boundedness under Lipschitz drift and bounded coupling; connectivity–decay bound via $\lambda_2(L)$ \citep{Fiedler1973}.
+    \item \textbf{Validation discipline:} Baseline + ablation + calibration metrics with reproducible implementation (e.g., \texttt{pomp}-style pipeline) \citep{King2016}.
+\end{enumerate}
+
+\section{Related Work}
+\label{sec:related}
+
+\textbf{Ecological modeling:} Classical approaches include reaction-diffusion \citep{Okubo1980}, metapopulation models \citep{Hanski1998}, and state-space formulations \citep{deValpine2002}. 
+
+\textbf{Complexity quantification:} Network metrics \citep{Newman2003}, fractal geometry \citep{Mandelbrot1982}, and spectral methods \citep{Fiedler1973} have been used to characterize ecological complexity.
+
+\textbf{Inference methods:} Particle Markov chain Monte Carlo (PMCMC) \citep{Andrieu2010} and iterated filtering \citep{Ionides2015} enable inference for partially observed nonlinear systems.
+
+\textbf{Optimization for management:} Reserve design and corridor optimization are often framed as combinatorial problems \citep{Williams2004}, with recent interest in quantum solvers \citep{Farhi2014}.
+
+\section{The M³EM Framework}
+\label{sec:framework}
+
+\subsection{Core Ecology Layer}
+\label{subsec:core}
+
+\textbf{State variables:} Let $G=(V,E)$ be an undirected graph of habitat patches. Each node $v\in V$ has ecological state $x_v(t)\in\mathbb{R}^d$ (e.g., species biomasses, resource levels).
+
+\textbf{Dynamics:} The core update is:
+\begin{equation}
+\label{eq:core}
+x_v(t+1) = x_v(t) + \Delta t \left[ F(x_v(t), u_v(t)) + \sum_{w \in N(v)} a_{vw} (x_w(t-\tau) - x_v(t)) \right] + \Sigma \xi_v(t),
+\end{equation}
+where:
+\begin{itemize}
+    \item $F$: Ecological mechanism (e.g., Lotka–Volterra or occupancy-colonization)
+    \item $u_v(t)$: Management intervention (optional; zero if not optimizing)
+    \item $a_{vw}$: Dispersal coupling (estimated from movement data)
+    \item $\tau$: Integer delay (e.g., maturation time)
+    \item $\xi_v(t)\sim\mathcal{N}(0,I)$: Environmental noise
+    \item $\Sigma$: Noise covariance matrix
+\end{itemize}
+
+\textbf{Multi-scale weighting:} Replace arbitrary prime weights with ecologically meaningful scales $s_i$ (trophic level, body size class):
+\begin{equation}
+\label{eq:weights}
+\tilde w_i(t) = \frac{s_i^{-\beta(t)}}{\sum_j s_j^{-\beta(t)}}, \quad \beta(t) = \beta_0 + \sum_{k=1}^K b_k \psi_k(t),
+\end{equation}
+where $\psi_k(t)$ are low-dimensional basis functions (e.g., seasonal indicators).
+
+\subsection{Observation Model (Required)}
+\label{subsec:observation}
+
+Let $y_v(t)$ be observed data at node $v$. We specify:
+\begin{equation}
+\label{eq:obs}
+y_v(t) \sim p(y \mid h(x_v(t)), \Theta_{\text{obs}}),
+\end{equation}
+with examples:
+\begin{itemize}
+    \item \textbf{Counts:} $y\sim \text{NegBin}(\mu=h(x), k)$
+    \item \textbf{Presence/absence:} $y\sim \text{Bernoulli}(\text{logit}^{-1}(h(x)))$
+    \item \textbf{Continuous index:} $y = h(x) + \varepsilon$, $\varepsilon\sim\mathcal{N}(0,R)$
+\end{itemize}
+This enables likelihood-based inference and proper uncertainty quantification.
+
+\subsection{Complexity Layer (Optional)}
+\label{subsec:complexity}
+
+\textbf{Theorem-facing complexity:} Algebraic connectivity $\lambda_2(L)$ (Fiedler value) of graph Laplacian $L$ enables Proposition~\ref{prop:connectivity}.
+
+\textbf{Empirical complexity diagnostics:} Clustering coefficient, modularity, or estimated fractal dimension from spatial patterns are used as predictors/regularizers, not in proofs.
+
+\textbf{Regularization term:} 
+\begin{equation}
+\mathcal{L}_{\text{complexity}} = \lambda \cdot (C(t) - C_{\text{target}})^2,
+\end{equation}
+where $C(t)$ is an empirical complexity metric.
+
+\subsection{Optimization Layer (Optional)}
+\label{subsec:optimization}
+
+\textbf{Management problem:} Choose $u(t)$ to maximize objective $J(x,u)$ subject to constraints.
+
+\textbf{Solvers:} Classical (MIP, simulated annealing) or quantum (QAOA) methods may be used. \textbf{Crucially:} Any quantum method is evaluated solely as an optimization solver for a management objective, and never enters the ecological state equation \citep{Farhi2014}.
+
+\section{Mathematical Foundations}
+\label{sec:math}
+
+\subsection{Notation and Assumptions}
+\label{subsec:assumptions}
+
+\begin{table}[h]
+\centering
+\caption{Key notation}
+\begin{tabular}{ll}
+\toprule
+Symbol & Description \\
+\midrule
+$G=(V,E)$ & Habitat graph (nodes $v$, edges $e$) \\
+$x_v(t)$ & Ecological state at node $v$, time $t$ \\
+$F(\cdot)$ & Ecological mechanism (Lipschitz constant $L_F$) \\
+$a_{vw}$ & Dispersal coupling strength \\
+$\tau$ & Integer delay \\
+$\Sigma$ & Noise covariance matrix \\
+$\lambda_2(L)$ & Algebraic connectivity of graph Laplacian \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Assumptions:}
+\begin{enumerate}
+    \item[A1.] $F(\cdot,u)$ is globally Lipschitz in $x$ with constant $L_F$, uniformly over admissible $u$.
+    \item[A2.] Coupling matrix $A=[a_{vw}]$ has bounded norm $\|A\|<\infty$.
+    \item[A3.] $\xi_v(t)$ are i.i.d. with $\mathbb{E}\xi_v(t)=0$, $\mathbb{E}|\xi_v(t)|^2<\infty$.
+    \item[A4.] $\Delta t>0$ is fixed.
+\end{enumerate}
+
+\subsection{Theorem 1: Mean-Square Boundedness}
+\label{subsec:theorem1}
+
+Let integer delay be $\tau\in\mathbb{N}$. Define the augmented state for each node:
+\begin{equation}
+X_v(t)=\big[x_v(t)^\top,\ x_v(t-1)^\top,\ \dots,\ x_v(t-\tau)^\top\big]^\top \in \mathbb{R}^{d(\tau+1)}.
+\end{equation}
+
+\begin{theorem}[Mean-square boundedness of delayed M³EM-Core]
+\label{thm:boundedness}
+Under assumptions A1–A4, there exist constants $c_1,c_2>0$ such that if
+\begin{equation}
+\Delta t (L_F + \|A\|) \le c_1 \quad\text{and}\quad \mathrm{tr}(\Sigma\Sigma^\top) \le c_2,
+\end{equation}
+then the augmented process $\{X(t)\}$ is uniformly bounded in second moment, i.e., $\sup_t \mathbb{E}|X(t)|^2<\infty$.
+\end{theorem}
+
+\textbf{Proof outline:} See Appendix~\ref{app:proof1}. Construct quadratic Lyapunov function $V=X^\top P X$ and apply drift inequality, bounding nonlinear terms using Lipschitzness.
+
+\subsection{Proposition 2: Connectivity Controls Perturbation Decay}
+\label{subsec:prop2}
+
+\begin{proposition}[Connectivity controls perturbation decay]
+\label{prop:connectivity}
+Let the linearized dynamics around an equilibrium be
+\begin{equation}
+\delta x(t+1) = \big(I + \Delta t J - \Delta t \alpha L\big) \delta x(t),
+\end{equation}
+where $J$ is the local Jacobian and $L$ the graph Laplacian. If $J$ is stable enough that $\rho(I+\Delta t J)<1$, then increasing $\alpha\lambda_2(L)$ (algebraic connectivity) increases the worst-case exponential decay rate of perturbations orthogonal to the consensus mode.
+\end{proposition}
+
+\textbf{Proof:} Eigenvalue analysis of the coupled system matrix; see Appendix~\ref{app:proof2}.
+
+\section{Implementation and Inference}
+\label{sec:implementation}
+
+\subsection{Computational Implementation}
+\label{subsec:impl}
+
+\textbf{Time discretization:} Fixed $\Delta t$ with ring buffer for delays.
+
+\textbf{Graph representation:} Sparse adjacency matrix for coupling.
+
+\textbf{Code availability:} GitHub repository with \texttt{R}/\texttt{Julia} implementation.
+
+\subsection{Inference Method}
+\label{subsec:inference}
+
+We use particle Markov chain Monte Carlo (PMCMC) \citep{Andrieu2010} for its ability to handle non-Gaussian observations and nonlinear dynamics. Alternative: variational state-space inference for scalability.
+
+\subsection{Parameter Identifiability}
+\label{subsec:identifiability}
+
+\textbf{Priors:} Weakly informative priors on key parameters (e.g., dispersal distances).
+
+\textbf{Sensitivity analysis:} Sobol indices for multi-parameter sensitivity.
+
+\subsection{Computational Complexity}
+\label{subsec:complexity}
+
+Per MCMC iteration: $O(|V|\cdot d\cdot T)$. Parallelization across patches possible.
+
+\section{Validation Protocol}
+\label{sec:validation}
+
+\subsection{Dataset: Glanville Fritillary Metapopulation}
+\label{subsec:dataset}
+
+We use the Glanville fritillary butterfly metapopulation \citep{Hanski2011}:
+\begin{itemize}
+    \item \textbf{Structure:} 50 patches in Åland Islands, Finland
+    \item \textbf{Data:} Annual occupancy (1993–2020)
+    \item \textbf{Observation model:} Bernoulli with detection probability
+    \item \textbf{Ecology mechanism $F$:} Colonization–extinction with covariates
+\end{itemize}
+
+\subsection{Baseline Models}
+\label{subsec:baselines}
+
+Compare M³EM-Core against:
+\begin{enumerate}
+    \item No-delay variant
+    \item No-coupling variant
+    \item Standard stochastic Levins model
+    \item Generalized Lotka–Volterra with noise
+\end{enumerate}
+
+\subsection{Ablation Design}
+\label{subsec:ablation}
+
+\textbf{Components ablated:} delay ($\tau$), coupling ($a_{vw}$), multi-scale weights ($w_i$).
+
+\textbf{Evaluation metrics:}
+\begin{itemize}
+    \item Predictive log-likelihood (1–12 steps ahead)
+    \item Calibration (probability integral transform histograms)
+    \item Parameter recovery (simulation study)
+    \item Computation time
+\end{itemize}
+
+\subsection{Optional Module Testing}
+\label{subsec:modules}
+
+\textbf{Complexity layer:} Does regularization improve forecast skill?
+
+\textbf{Optimization layer:} For reserve design problem, compare QAOA vs. classical solvers.
+
+\section{Results}
+\label{sec:results}
+
+\textbf{Placeholder for:}
+\begin{itemize}
+    \item Core model performance vs. baselines (Table 1)
+    \item Ablation results (Figure 1)
+    \item Complexity–resilience correlation (Figure 2)
+    \item Optimization solver comparison (Table 2)
+\end{itemize}
+
+\section{Discussion}
+\label{sec:discussion}
+
+\subsection{Interpretability and Modularity}
+Each layer has clear purpose; parameters map to ecological concepts.
+
+\subsection{Limitations}
+\begin{itemize}
+    \item Requires graph-structured data
+    \item Complexity metrics may be dataset-dependent
+    \item Scaling to very large graphs
+\end{itemize}
+
+\subsection{Extensions}
+\begin{itemize}
+    \item Spatial explicit (continuous space)
+    \item Multi-trophic interactions
+    \item Climate forcing integration
+\end{itemize}
+
+\subsection{Implications for Ecological Modeling}
+M³EM provides a framework for incremental innovation while maintaining testability.
+
+\section{Conclusion}
+\label{sec:conclusion}
+
+M³EM offers a modular, testable alternative to monolithic ecological models. The core dynamics are provably stable under realistic conditions, and the validation protocol enables rigorous comparison. Code and examples are available at \url{https://github.com/yourrepo/m3em}.
+
+\appendix
+\section{Proofs}
+\label{app:proofs}
+
+\subsection{Proof of Theorem 1}
+\label{app:proof1}
+\textbf{Complete proof using augmented state and Lyapunov analysis...}
+
+\subsection{Proof of Proposition 2}
+\label{app:proof2}
+\textbf{Eigenvalue analysis of coupled system matrix...}
+
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+\end{document}

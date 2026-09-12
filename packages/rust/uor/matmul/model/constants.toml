@@ -1,0 +1,170 @@
+# model/constants.toml --- the single source of every numeral in the library (R10).
+#
+# Nothing in this file is a limit on the library. Every entry is either a
+# property of a machine integer type, or a property of a *caller's chosen
+# instantiation*, or a tuning parameter explicitly allowlisted out of R1.
+#
+# `xtask check-model` regenerates the Rust consts from this file and fails if
+# the generated values and the model disagree (CM-01).
+
+spec = "uor-matmul/1"
+
+# --------------------------------------------------------------------------
+# The largest reduction depth any addressable machine can present.
+#
+# Declared here, not inferred from `usize::BITS`, so that the accumulator type
+# is the same on a 64-bit host, a 32-bit host, and wasm32. A 32-bit host cannot
+# reach this depth, which makes the width conservative there and never wrong
+# anywhere --- and, more importantly, makes `CD-06` and `CA-02` comparisons of
+# the same function rather than of two functions that happen to agree.
+# --------------------------------------------------------------------------
+
+max_k_bits = 64
+
+# --------------------------------------------------------------------------
+# Element types. `bits` and `full` are properties of the type, not choices.
+# `full` is the largest magnitude the type can hold, so that `Full<E>` admits
+# every value of `E` and the default path cannot reject anything (§5.2). It is
+# written as a string because it is a magnitude, not a machine integer: |i64::MIN|
+# has no i64 spelling, which is the same fact that makes the accumulator wider
+# than the element type.
+# --------------------------------------------------------------------------
+
+[[element]]
+name = "i8"
+bits = 8
+bytes = 1
+full = "128" # |i8::MIN|; i8::MIN is an element of its own alphabet, not an error.
+accumulator = "i128"
+
+[[element]]
+name = "i16"
+bits = 16
+bytes = 2
+full = "32768"
+accumulator = "i128"
+
+[[element]]
+name = "i32"
+bits = 32
+bytes = 4
+full = "2147483648"
+accumulator = "i128"
+
+[[element]]
+name = "i64"
+bits = 64
+bytes = 8
+full = "9223372036854775808"
+accumulator = "Limbs<3>"
+
+# A complex element is not a special case: its `mac` is the scalar one applied
+# componentwise, and the only thing the derivation needs to know is that the
+# real part sums two element-products instead of one. That is `product_terms`,
+# and it buys one bit. Nothing else in the library branches on it.
+
+[[element]]
+name = "Complex<i32>"
+bits = 32
+bytes = 8
+product_terms = 2
+full = "2147483648"
+accumulator = "i128"
+
+[[element]]
+name = "Complex<i64>"
+bits = 64
+bytes = 16
+product_terms = 2
+full = "9223372036854775808"
+accumulator = "Limbs<3>"
+
+# --------------------------------------------------------------------------
+# Canonical instantiations. W8A8 is `(i8, 127)`: the instantiation with the
+# most instruction support and the most external oracles, and nothing else.
+# A user who instantiates `(i16, 4095)` never sees any numeral from this table.
+# --------------------------------------------------------------------------
+
+[[instantiation]]
+name = "W8A8"
+element = "i8"
+bound = 127
+canonical = true
+note = "the upstream formalization's single instantiation (B, cap) = (127, 2^31 - 1)"
+
+[[instantiation]]
+name = "W4A8"
+element = "i8"
+bound = 7
+canonical = false
+
+[[instantiation]]
+name = "W16A16"
+element = "i16"
+bound = 32767
+canonical = false
+
+# --------------------------------------------------------------------------
+# Narrow-register thresholds (§5.1, §7.3).
+#
+# These are NOT limits. `fits_narrow(b, cap, k)` answers one question: may this
+# tile be accumulated in a narrower register without changing the answer? A
+# `false` selects the wide register. Both compute the same integer, so the
+# choice is invisible, has no failure mode, and never reaches the caller.
+#
+# Every value below is `floor(cap / per_step)` and is checked as such by
+# `xtask check-constants` (R1). The numerals are pins, not definitions.
+# --------------------------------------------------------------------------
+
+[narrow]
+cap_i32 = 2147483647 # i32::MAX
+
+[[narrow.threshold]]
+name = "i32_tile_w8a8"
+sequence = "plain i32 tile, |a_i * w_i| <= 127 * 127"
+per_step = 16129
+k_max = 133144
+
+[[narrow.threshold]]
+name = "vnni_dpbusd_w8a8"
+sequence = "offset to u8: |sum((a+128) * b)| <= 255 * 127"
+per_step = 32385
+k_max = 66311
+
+[[narrow.threshold]]
+name = "vnni_dpbusd_compensation_w8a8"
+sequence = "offset compensation term: |128 * sum(b)| <= 128 * 127"
+per_step = 16256
+k_max = 132104
+
+[[narrow.threshold]]
+name = "avx2_madd_w8a8"
+sequence = "_mm256_madd_epi16 pair, |a0*w0 + a1*w1| <= 2 * 127 * 127"
+per_step = 32258
+k_max = 66572 # madd *steps*, i.e. k <= 133144 --- the same reach as the plain tile
+
+[[narrow.threshold]]
+name = "neon_vmull_s16_w8a8"
+sequence = "vmull_s8 accumulated in i16, |a*w| <= 127 * 127"
+per_step = 16129
+k_max = 2 # 3 * 127^2 = 48387 > i16::MAX; never accumulate more than two.
+cap_override = 32767
+
+# --------------------------------------------------------------------------
+# Blocking parameters. Tuning data, one table, explicitly allowlisted out of R1
+# (§5.1): these are cache-shaped, not derived, and changing one cannot change
+# any output byte --- only which traversal produces it.
+# --------------------------------------------------------------------------
+
+[blocking]
+allowlisted_from_r1 = true
+reason = "cache-shaped tuning; CD-01 asserts output is invariant under every value"
+mc = 128
+kc = 256
+nc = 1024
+# A packed panel whose lanes are steps of the reduction is a *transpose* of the
+# operand, and a transpose done column by column reads the whole operand once
+# per column. Done in tiles this wide it reads it once. The number is the
+# machine's cache line in bytes; like the three above it can change which
+# traversal produces an output byte and never which byte.
+cache_line_bytes = 64

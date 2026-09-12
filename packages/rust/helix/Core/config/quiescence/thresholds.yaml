@@ -1,0 +1,53 @@
+# Quiescence Marker Thresholds
+# Version: 1.1 | Date: $(date)
+
+thresholds:
+  q1:
+    drift_max: 0.00
+    duration_min: "60s"
+    models_required: "all"
+    
+  q2:
+    complementarity_min: 0.92
+    harmonic_overtone_detection: true
+    gear_verification:
+      min_gears: 3
+      max_dominance: 0.4
+      
+  q3:
+    confidence_min: 0.95
+    anchor_verification:
+      external: true
+      timestamp_freshness: "5m"
+      source_diversity: 2
+      
+  q4:
+    convergence_min: 0.95
+    independence_verification:
+      start_point_divergence: "high"
+      path_independence: true
+      validation_methods: 3
+
+alerting:
+  q1_absence:
+    threshold: "24h"
+    severity: "CRITICAL"
+    
+  q2_absence:
+    threshold: "72h"
+    severity: "EMERGENCY"
+    
+  q3_required_failure:
+    threshold: "5m"
+    severity: "WARNING"
+    
+  q4_achieved:
+    severity: "INFO"
+    notify: ["custodian_council"]
+
+logging:
+  format: "json"
+  level: "INFO"
+  q_markers: true
+  duck_signals: true
+  retention: "30d"

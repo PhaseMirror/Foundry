@@ -1,0 +1,195 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools,bm}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{cleveref}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{listings}
+\usepackage[T1]{fontenc}
+\usepackage[scaled]{beramono}
+\usepackage{inconsolata}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!60!black,
+  citecolor=blue!60!black,
+  urlcolor=blue!60!black
+}
+
+\lstdefinestyle{code}{
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  frame=single,
+  numbers=left,
+  numberstyle=\tiny,
+  tabsize=2,
+  showstringspaces=false,
+  keywordstyle=\bfseries\color{black},
+  commentstyle=\itshape\color{gray!70},
+  stringstyle=\color{blue!40!black}
+}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}{Proposition}
+\newtheorem{definition}{Definition}
+\newtheorem{remark}{Remark}
+
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\norm}[1]{\left\lVert #1 \right\rVert}
+
+\title{Universal Logic (v2.1+): A Typed, Contractively Certified Framework for Multi-Logic Reasoning}
+\author{Ryan O. Van Gelder}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We formalize \emph{Universal Logic v2.1+}, a unified, typed, and dynamically safe framework for multi-logic reasoning across classical, fuzzy, intuitionistic/Heyting, modal/Kripke, and quantum/effect modules. Each module is realized as a typed tensor algebra with \emph{Free-Type Signatures} (FTS) ensuring algebraic soundness by additive signature conservation. Dynamics run inside a \emph{Contractive Safety Projection} (CSP) loop that (i) projects updates to a safety set and (ii) certifies contraction via a computable Lipschitz bound (\textsf{SlopeUB}). Interoperability is handled by a typed fusion operator~$\oplus$ with explicit embeddings, pluggable fusion algebras, and auditable projections. We provide operational quantum primitives (sequential product, Kubo--Ando means), runtime Lipschitz recipes (affine/NN/quantum), performance modes, a concrete evaluation plan, and a minimal reference implementation.
+\end{abstract}
+
+\tableofcontents
+
+\section{Introduction}
+Safety-critical systems increasingly mix heterogeneous logics: crisp controllers (classical), graded evidence (fuzzy), constructive reasoning (intuitionistic), modal reachability (Kripke), and operator-level quantum dynamics. We propose a single operator-theoretic framework where each logic has explicit semantics, types are enforced by FTS, cross-logic fusion is explicit and auditable, and dynamics are certified by contraction.
+
+\paragraph{Contributions.}
+(1) A typed, fail-closed tensor framework with explicit per-logic semantics. (2) CSP: a projection-first, contractively certified dynamics loop with \textsf{SlopeUB}/\textsf{GapLB} logging. (3) An operational quantum module (computable conjunction/disjunction surrogates and CPTP updates). (4) Pluggable fusion algebras with guidance. (5) Runtime Lipschitz bounds for practical certification. (6) A minimal, runnable reference implementation and benchmarks.
+
+\section{Preliminaries}
+\subsection{Free-Type Signatures (FTS)}
+Let $\mathcal{A}$ be a set of named atoms (e.g., \texttt{logic.fuzzy}, \texttt{logic.quantum}). An FTS is a finitely supported map $\sigma:\mathcal{A}\to\Z$. Composition is additive: $\sigma(T\otimes S)=\sigma(T)+\sigma(S)$. Dual contractions cancel equal and opposite atoms. Humans write FTS; a versioned, lexicographic atom$\to$prime bijection (with a SHA-256 digest) yields canonical, auditable serialization.
+
+\subsection{Truth-Value Algebras}
+\begin{center}
+\begin{tabular}{@{}l l l l l@{}}
+\toprule
+Logic & Carrier & Negation & Conjunction & Disjunction \\
+\midrule
+Classical & $\{0,1\}$ & $1-x$ & $\min$ & $\max$ \\
+Fuzzy (MV) & $[0,1]$ & $1-x$ & $\max(0,x{+}y{-}1)$ & $\min(1,x{+}y)$ \\
+Fuzzy (Product) & $[0,1]$ & $1-x$ & $xy$ & $x+y-xy$ \\
+Heyting & Heyting algebra & $(x\Rightarrow 0)$ & $\wedge$ & $\vee$ \\
+Modal & Kripke frame & as algebra & $\wedge$ & $\vee$, $\Box,\Diamond$ by frame \\
+Quantum & effects $E\in[0,I]$ & $I-E$ & Kubo--Ando mean / sequential product & convex union proxy \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Notation}
+$\mathbb{T}_\mathcal{A}$ is the space of typed tensors over algebra $\mathcal{A}$. For an operator $F$, \textsf{SlopeUB} is a computable upper bound on $\norm{J_F}$. We write \textsf{GapLB}$:=1-\textsf{SlopeUB}$.
+
+\section{Core Framework}
+\subsection{Typed tensors and operators}
+A \textbf{TypedTensor} is $(\mathrm{data},\sigma,\mathcal{A})$. An operator $F:\mathbb{T}_\mathcal{A}\to\mathbb{T}_\mathcal{A}$ is typed by $(\sigma_{\text{in}},\sigma_{\text{param}},\sigma_{\text{out}})$ with signature conservation
+\[
+\sigma_{\text{in}}+\sigma_{\text{param}}=\sigma_{\text{out}}.
+\]
+Parameters are \emph{neutral} by default ($\sigma=0$); non-neutral parameters (e.g., embeddings) declare and enforce their signatures.
+
+\subsection{Interoperability via $\oplus$}
+Given $T\in\mathbb{T}_\mathcal{A}$ and $S\in\mathbb{T}_\mathcal{B}$, fusion is:
+\[
+T\oplus S := \pi_{\mathcal{C}}\!\Big(\Phi\big(\iota_{\mathcal{A}\to\mathcal{C}}(T),\,\iota_{\mathcal{B}\to\mathcal{C}}(S)\big)\Big),
+\]
+where $\mathcal{C}$ is a \emph{fusion algebra} (default MV; alternatives: Product, Gödel, ProbSum, logit-softmax), $\Phi$ is a certified aggregator (with a known Lipschitz bound), and $\pi_{\mathcal{C}}$ projects to the target algebra. All maps are typed and fail-closed on mismatch.
+
+\subsection{Contractive Safety Projection (CSP)}
+We evolve $X$ via
+\[
+X^{t+1}=\Pi_S\Big((1-\alpha)X^t+\alpha\,F(X^t;\theta)\Big),\qquad \alpha\in(0,1],
+\]
+where $\Pi_S$ enforces carrier constraints (e.g., $[0,1]$ clipping; PSD and projector-repair for quantum), and $\theta$ is projected (weighted-$\ell_1$ or spectral) to maintain bounds.
+
+\begin{theorem}[Banach contraction for CSP]
+If $\textsf{SlopeUB}=\norm{(1-\alpha)I+\alpha J_F}\le (1-\alpha)+\alpha L_F<1$, the CSP update is a contraction and $X^t\to X^\star$ uniquely.
+\end{theorem}
+
+\section{Quantum Module: Operational Primitives}
+\paragraph{Carriers.} Effects $E\in[0,I]$; projectors as a submodule.
+\paragraph{Conjunction.} Ordered: $E\circ F=E^{1/2}FE^{1/2}$. Symmetric: if $[E,F]=0$, use $EF$; otherwise a Kubo--Ando mean (default geometric mean) $E\#F = E^{1/2}(E^{-1/2}FE^{-1/2})^{1/2}E^{1/2}$.
+\paragraph{Disjunction.} For commuting pairs: $E+F-EF$ (clipped to $[0,I]$). Otherwise: convex union proxy $\operatorname{Proj}_{[0,I]}(\lambda E+(1-\lambda)F)$.
+\paragraph{Dynamics.} CPTP maps (Kraus/Lindblad); CSP handles PSD/trace and projector repairs.
+
+\begin{proposition}[Conservative Lipschitz bound for $E\#F$]
+With PSD clamping $E,F\succeq \varepsilon I$, a conservative bound in operator norm is
+\[
+L_{\#} \;\le\; \frac{1}{2\,\varepsilon^{3/2}}.
+\]
+\end{proposition}
+
+\section{Signature Serialization}
+Humans use FTS; machines audit via primes. The registry is a versioned, lexicographic atom$\to$prime map with a SHA-256 digest. Artifacts store \{version, map, signature\_fts, signature\_primes, digest\}. Registry changes require version bumps and migration.
+
+\section{Bounding \textsf{SlopeUB} in Practice}
+\paragraph{Affine.} $x\mapsto ax+b$: $L=|a|$.
+\paragraph{Neural.} $L\le\prod_i\|W_i\|_2\,L(\phi_i)$; estimate $\|W_i\|_2$ via 1–3 power iterations; enforce via weight/spectral norm projection.
+\paragraph{Aggregators.} MV/Gödel are 1-Lipschitz under $\ell_\infty$; Product $\le 1$ on $[0,1]$.
+\paragraph{Quantum channels.} CPTP maps are non-expansive in common norms ($\le 1$); composition with CSP projections preserves bounds.
+
+\section{Performance Modes}
+\textbf{Safe}: full checks/repairs and bounds. \textbf{Balanced}: batched type checks, cached spectral norms, approximate repairs. \textbf{Fast/Unchecked}: minimal checks (range only). CSP is fail-closed in all modes: no state mutation without certification.
+
+\section{Evaluation Plan}
+\begin{enumerate}
+  \item \textbf{CQ-Plant Control}: classical rules + fuzzy sensors + quantum plant (CPTP). Metrics: \textsf{GapLB}, violations, tracking error, runtime.
+  \item \textbf{Abductive Fusion}: Heyting + fuzzy evidence. Metrics: AUROC, calibration; ablate fusion algebra choice.
+  \item \textbf{Modal Safety Monitor}: Kripke reachability fused with classical controller. Metrics: unsafe FN rate, latency.
+  \item \textbf{Tri-Logic VQA-Toy}: fuzzy perception + classical rules + quantum attention. Metrics: accuracy, robustness, overhead.
+  \item \textbf{Type-Stress Suite}: randomized pipelines with deliberate signature errors. Metrics: detection rate, throughput.
+\end{enumerate}
+
+\section{Algorithms}
+\subsection{CSP Backtracking (fail-closed)}
+\begin{algorithm}
+\caption{CSP step with contraction certificate}\label{alg:csp}
+\begin{algorithmic}[1]
+\Require state $X$, operator $F$, step $\alpha$, projector $\Pi_S$, lower step $\alpha_{\min}$
+\State $a\gets \alpha$
+\Repeat
+  \State $Y \gets (1-a)X + a F(X)$; \quad $Y\gets \Pi_S(Y)$
+  \State $\textsf{SlopeUB} \gets (1-a) + a \cdot L_F$ \Comment{$L_F = F.\textproc{lipschitz}()$}
+  \If{$\textsf{SlopeUB}<1$} \State \Return $Y$ \EndIf
+  \State $a \gets a/2$
+\Until{$a<\alpha_{\min}$}
+\State \textbf{fail-closed}: return $X$ or raise \texttt{CSPContractionError}
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Type Conservation}
+\begin{algorithm}
+\caption{Signature conservation}\label{alg:type}
+\begin{algorithmic}[1]
+\Require $\sigma_{\text{in}}$, parameter signatures $\{\sigma_i\}$, $\sigma_{\text{out}}$
+\State $\sigma \gets \sigma_{\text{in}}$
+\For{each $i$} \State $\sigma \gets \sigma + \sigma_i$ \EndFor
+\State \textbf{assert} $\sigma = \sigma_{\text{out}}$
+\end{algorithmic}
+\end{algorithm}
+
+\section{Worked Example: Fuzzy + Classical \texorpdfstring{$\to$}{->} Quantum}
+Let $s\in[0,1]$ (fuzzy sensor), $r\in\{0,1\}$ (classical rule), and $E\in[0,I]$ (quantum effect). Fuse $u=\min(1,s+r)$, lift $U=uI$, combine via $E' = U \# E$, then apply a dephasing CPTP channel. CSP ensures PSD/range repairs and a contractive step (or fails closed).
+
+\section{Reference Implementation (Minimal)}
+We provide a minimal, single-file module implementing the abstractions and a tri-logic demo. Save it as \texttt{universal\_logic\_minref.py} next to this \texttt{.tex} file. Uncomment the following line to include it automatically:
+\begin{center}
+% \lstinputlisting[style=code,language=Python]{universal_logic_minref.py}
+\end{center}
+
+\section{Reproducibility Notes}
+\begin{itemize}
+  \item \textbf{Signature serialization}: versioned atom$\to$prime map with SHA-256 digest.
+  \item \textbf{CSP logs}: record \textsf{SlopeUB}, \textsf{GapLB}, $\alpha_{\text{used}}$, and repairs performed.
+  \item \textbf{Performance modes}: Safe/Balanced/Fast with explicit flags.
+\end{itemize}
+
+\section{Conclusion}
+Universal Logic v2.1+ balances rigorous safety (\emph{typed} structures and \emph{contractive} dynamics) with practical implementability (operational quantum primitives, runtime certification, and pluggable fusion). The framework is ready for implementation and empirical validation on the proposed benchmarks.
+
+\end{document}

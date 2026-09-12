@@ -1,0 +1,828 @@
+
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{bm}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{setspace}
+\usepackage{graphicx}
+\usepackage{float}
+\hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue,citecolor=blue}
+\lstset{basicstyle=\ttfamily\small,breaklines=true,frame=single,backgroundcolor=\color{gray!5}}
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{Sigma Kernel Report \& Defensive Publication}
+\lhead{PhaseMirror-HQ}
+\cfoot{\thepage}
+\titleformat{\section}{\large\bfseries}{\thesection}{0.75em}{}
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection}{0.75em}{}
+\title{Sigma Kernel: Comprehensive Architectural Report and Defensive Publication}
+\author{Citizen Gardens \\ The Foundation of Multiplicity}
+\date{April 27, 2026}
+\begin{document}
+\maketitle
+\begin{abstract}
+This document provides a comprehensive technical report and prior art defensive publication for the Sigma Kernel as currently evidenced in the PhaseMirror-HQ repository. The report synthesizes the visible repository structure, the layered PIRTM architecture, the projection-first $\pi$-kernel implementation, contraction certificates, residue-number-system arithmetic, ledgering, and the present Sigma package stubs. It also formalizes the architectural gap between the intended Sigma Kernel layer and the currently implemented code surfaces, and proposes a precise validation and publication path suitable for defensive disclosure, architectural governance, and future canonicalization.
+\end{abstract}
+\newpage
+\tableofcontents
+\newpage
+
+\section{Executive Summary}
+The current repository evidence supports a strong conclusion: the Sigma Kernel is architecturally present as a named layer and package surface, but its presently visible implementation inside \texttt{packages/pirtm/sigma/} is only a thin re-export interface rather than a self-contained kernel implementation. The package consists of minimal forwarding modules that re-export \texttt{RGFlowResult}, \texttt{SupermoduleCertificate}, and \texttt{SessionLevelInstabilityError}, indicating that Sigma is presently acting as an integration surface or namespace anchor rather than a completed standalone execution substrate.
+
+At the same time, the repository contains a far richer and mathematically substantive precursor or adjacent kernel candidate in \texttt{packages/experiments/apex/pikernel/}. That subsystem implements a projection-first update loop, weighted $\ell_1$ ACE safety projection, contraction certificates via an induced $\infty$-norm bound, PETC ledgering, residue-number-system arithmetic, and a strong monoidal functor interpretation from atom categories to prime-channel categories. In practical terms, the strongest defensible publication claim is that the Sigma Kernel should be disclosed not as a fully completed monolithic implementation, but as a kernel architecture whose current repository instantiation is split across: (i) PIRTM layer declarations, (ii) Sigma package aliases, and (iii) a mathematically detailed $\pi$-kernel experimental substrate.
+
+From a defensive-publication standpoint, this is still highly valuable. Prior art does not require commercial completion; it requires sufficiently public, enabling disclosure of structure, invariants, interfaces, update equations, safety conditions, and intended integration semantics. The repository already exposes enough material to support publication of the following novelty cluster: projection-first multiplicity kernel execution, prime-indexed and atom-indexed decomposition, contraction-certified updates, ACE-safe projection, per-atom cryptographic ledgering, residue-lane execution, and session-level spectral gating.
+
+\section{Purpose and Scope}
+This report serves three concurrent purposes:
+\begin{enumerate}[leftmargin=2em]
+    \item an executive architecture report for internal strategy and engineering alignment,
+    \item a mathematical overview for researchers and reviewers,
+    \item a prior art defensive publication suitable for timestamped public disclosure.
+\end{enumerate}
+
+The report is intentionally broader than a code review. It captures not only what is currently implemented, but also what is already disclosed by naming, interfaces, layer topology, stubs, certificates, and mathematically explicit experimental modules. This matters because defensive publication should preserve the conception space, not merely the current line count of implementation.
+
+\section{Repository Evidence}
+The PIRTM README describes a layered architecture in which PIRTM is L0 Core Foundations and Sigma Kernel is L1. The layer stack is explicitly stated as L5 Applications, L4 ZK Proof \& Verification, L3 Domain Reasoning, L2 Formal Methods, L1 Sigma Kernel, and L0 Core Foundations. The same README states that PIRTM is the core foundational runtime, that every session must be proven contractive, and that Gate K implements Multiplicity-LWE runtime hardening.
+
+Within the current repository state, two Sigma package locations are visible: \texttt{packages/pirtm/sigma/} and \texttt{mirror-dissonance-pro/pirtm/sigma/}. In both locations, \texttt{kernel.py} contains only:
+\begin{lstlisting}[language=Python]
+from kernel.kernel import RGFlowResult
+\end{lstlisting}
+and \texttt{session\_spectral\_gate.py} contains only:
+\begin{lstlisting}[language=Python]
+from kernel.session_spectral_gate import SupermoduleCertificate, SessionLevelInstabilityError
+\end{lstlisting}
+This supports the interpretation that Sigma is presently disclosed as an import boundary, API anchor, or packaging alias.
+
+The deeper kernel mathematics appear instead in \texttt{packages/experiments/apex/pikernel/}, whose README explicitly describes a projection-first kernel with ACE safety, contraction certificates, PETC ledger, spectral components, and residue-number-system arithmetic. This package is therefore the strongest concrete evidence base for a mathematical and architectural disclosure of Sigma-Kernel-like behavior.
+
+\section{Architectural Thesis}
+The central thesis that emerges from the codebase is this: the Sigma Kernel is best understood as a kernelization of multiplicity-aware execution, where state evolution is not merely scheduled procedurally, but certified through decomposition, projection, contractivity bounds, and auditable atom-local transitions.
+
+This differs from a conventional operating-system kernel in three important ways.
+\begin{enumerate}[leftmargin=2em]
+    \item The primitive unit is not merely a process or thread, but a prime-indexed or atom-indexed state fragment.
+    \item The admissibility of updates is constrained by formal projection and contraction conditions.
+    \item The execution trace is intended to be ledgerable as a mathematical object, not just as an operational log.
+\end{enumerate}
+
+The result is a kernel conception in which execution, safety, and proof obligations are interwoven.
+
+\section{Mathematical Core}
+\subsection{Projection-First Update Law}
+The $\pi$-kernel implementation documents a five-stage loop:
+\begin{enumerate}[leftmargin=2em]
+    \item extract coefficients for each $\pi$-atom,
+    \item compute a local proposal $F_\pi(c)$,
+    \item project onto the ACE safety set,
+    \item emit a ledger entry if the atom is touched,
+    \item reconstruct the global state from projected atoms.
+\end{enumerate}
+
+This implies a local-to-global update pattern of the form
+\[
+X_{t+1} = \mathcal{R}\Big( \big\{ \Pi_{\mathrm{ACE},\pi}\big(F_\pi(c_{\pi,t})\big) \big\}_{\pi \in \Pi} \Big)
+\]
+where $c_{\pi,t}$ is the coefficient vector of atom $\pi$ at time $t$, $F_\pi$ is the local proposer, $\Pi_{\mathrm{ACE},\pi}$ is the weighted $\ell_1$ safety projection for that atom, and $\mathcal{R}$ is the recomposition operator.
+
+The published default proposer is a damped identity map:
+\[
+F_\pi(c) = \delta c, \qquad 0 \leq \delta \leq 1.
+\]
+This is simple, but conceptually important: the proposer is intentionally separated from the safety projector. In other words, desire and admissibility are separate operators.
+
+\subsection{ACE Safety Projection}
+The ACE safety set is described as a weighted $\ell_1$ ball. In canonical notation, for weights $w_i > 0$ and budget $\tau > 0$, the admissible set is
+\[
+\mathcal{S}_{\tau,w} = \left\{x \in \mathbb{R}^n : \sum_i w_i |x_i| \leq \tau \right\}.
+\]
+The projector is implemented by weighted soft-thresholding,
+\[
+\big(\Pi_{\mathcal{S}_{\tau,w}}(v)\big)_i = \operatorname{sign}(v_i)\max\{ |v_i| - \lambda w_i, 0\},
+\]
+where $\lambda$ is chosen so that the weighted $\ell_1$ constraint is active whenever projection is necessary. This matters for a kernel interpretation because it turns safety into a geometric operator rather than an after-the-fact rejection rule.
+
+\subsection{Contraction Certificate}
+The contraction certificate is explicit in \texttt{certificates.py}. Given a vector of mixing parameters $\alpha$ and a coupling matrix $K$, the iteration matrix is
+\[
+A = \operatorname{diag}(1-\alpha) + \operatorname{diag}(\alpha)|K|.
+\]
+The upper bound on the slope is the induced $\infty$-norm:
+\[
+\mathrm{SlopeUB} = \|A\|_\infty.
+\]
+The contraction gap is then
+\[
+\mathrm{GapLB} = 1 - \mathrm{SlopeUB}.
+\]
+When $\mathrm{GapLB} > 0$, the system is a strict contraction under the chosen norm. The README states the standard consequences: unique bounded trajectory, exponential convergence to fixed point, and stable rollback/replay.
+
+This is central to the Sigma Kernel publication because it provides a mathematically checkable admissibility certificate for execution itself. A kernel whose transition map is required to satisfy a contraction certificate is qualitatively different from a kernel that only checks type or permission constraints.
+
+\subsection{Relation to PIRTM Recurrence}
+The PIRTM README also provides the foundational recurrence
+\[
+X_{t+1} = P\big(\Xi_t X_t + \Lambda_t T(X_t) + G_t\big).
+\]
+The $\pi$-kernel can be read as a refinement of this philosophy. Here, the global projection $P$ is replaced by per-atom projection with local proposer structure and certified coupling. Thus Sigma can be formally described as a kernelization of the recurrence principle under decomposed, audited, and certificate-bearing channels.
+
+\section{Category-Theoretic Interpretation}
+The $\pi$-kernel README states that the kernel is a strong monoidal functor
+\[
+F : (\mathcal{A}, \otimes) \to (\mathcal{C}, \oplus),
+\]
+from an atom category to a prime-channel category. This is a notable and publishable architectural abstraction.
+
+In concrete terms, tensor-factorized semantic structure is mapped into channelized execution structure. The decomposition into atoms is not merely a data partition; it is a structural morphism that preserves compositional meaning while changing the operational codomain. This creates a principled bridge from semantic decomposition to safe execution and is precisely the kind of high-level architectural claim that benefits from prior art disclosure.
+
+\section{Residue Number System Aspect}
+The RNS module implements lane-wise arithmetic over coprime moduli and CRT reconstruction. Given pairwise coprime moduli $m_1,\dots,m_r$, the encoder maps an integer $x$ to
+\[
+(x \bmod m_1, \dots, x \bmod m_r).
+\]
+The decoder reconstructs $x$ modulo $M = \prod_i m_i$ using the Chinese Remainder Theorem.
+
+For Sigma-Kernel purposes, the architectural significance is larger than the arithmetic routine itself. RNS supplies a natural substrate for carry-free, lane-separated execution, which aligns closely with multiplicity, prime decomposition, and channelized operation. In a defensive publication, this supports the claim that Sigma is not limited to abstract proof semantics; it admits concrete arithmetic embodiments compatible with prime-indexed execution lanes.
+
+\section{Ledger and Audit Semantics}
+The kernel implementation emits per-atom ledger entries whenever a projected atom changes beyond tolerance. Each entry includes step index, atom identifier, mixing parameter, budget, soft-threshold multiplier, weighted $\ell_1$ sum, and change norm. This is conceptually important for two reasons.
+
+First, the state transition is accompanied by a proof-relevant audit object. Second, the audit granularity is local to the decomposition, which is stronger than merely logging global state snapshots. A defensive publication should emphasize that the disclosed system couples execution and certifiable provenance at the atom level.
+
+\section{Session Spectral Gating}
+Although the visible Sigma package only re-exports session spectral gate symbols, their names are significant. \texttt{SupermoduleCertificate} suggests certification not merely of local modules but of higher-order compositions. \texttt{SessionLevelInstabilityError} indicates that session instability is treated as an explicit first-class failure mode. Together with the PIRTM linker's spectral-small-gain checks and the $\pi$-kernel contraction certificates, this supports disclosure of a multi-scale stability regime: local contractivity, supermodule certification, and session-level instability detection.
+
+\section{Formal Prior Art Claims}
+The following claims are defensibly disclosed by the repository evidence and this synthesis:
+\begin{enumerate}[leftmargin=2em]
+    \item A kernel architecture in which execution proceeds by decomposition into prime-indexed or atom-indexed components, local proposal, safety projection, and global recomposition.
+    \item A kernel admission rule based on contraction certification using an induced matrix norm and a positive contraction gap.
+    \item The use of weighted $\ell_1$ projection as a kernel safety operator governing admissible local state evolution.
+    \item Per-component audit ledger emission as part of the execution path rather than as an external observability layer.
+    \item A structural bridge from semantic tensor decomposition to channelized execution via a strong monoidal functor.
+    \item Residue-number-system lane arithmetic as a compatible substrate for carry-free multiplicity-aware kernel execution.
+    \item Session-level spectral gating and supermodule certification as higher-order stability controls.
+\end{enumerate}
+
+These claims should be sufficient to block later attempts to patent the broad combination of projection-first multiplicity kernels, contraction-certified state evolution, and atom-ledgered runtime safety, provided this report is publicly disseminated in a timestamped, discoverable medium.
+
+\section{Code Snippets for Publication}
+The following excerpts are small enough to illustrate the architecture without depending on repository access.
+
+\subsection{Contraction Certificate Formula}
+\begin{lstlisting}[language=Python]
+def slope_upper_bound(alphas, K):
+    A = np.diag(1.0 - alphas) + np.diag(alphas) @ np.abs(K)
+    row_sums = np.sum(np.abs(A), axis=1)
+    return float(np.max(row_sums))
+
+def gap_lower_bound(slopeUB):
+    return 1.0 - float(slopeUB)
+\end{lstlisting}
+
+\subsection{Kernel Step Skeleton}
+\begin{lstlisting}[language=Python]
+for pi in piids:
+    c = x[grid.indices(pi)]
+    prop = proposer(c)
+    csafe, lam = project_weighted_l1_ball(prop, weights[pi], taus[pi])
+    if np.linalg.norm(csafe - c) > 1e-14:
+        ledger.append({...})
+    xnew[grid.indices(pi)] = csafe
+\end{lstlisting}
+
+\subsection{Residue-Lane Arithmetic}
+\begin{lstlisting}[language=Python]
+def rns_encode(x, moduli):
+    return [x % m for m in moduli]
+
+def rns_add(a_residues, b_residues, moduli):
+    return [(a + b) % m for a, b, m in zip(a_residues, b_residues, moduli)]
+\end{lstlisting}
+
+These snippets are publication-friendly because they show the architecture's essence: certification, projection, and prime-lane arithmetic.
+
+\section{Architectural Critique}
+The repository also reveals an important incompleteness. Sigma is named as a kernel layer, but the visible Sigma package does not yet contain the substantive kernel logic one would expect from that designation. Instead, the concrete logic currently lives in adjacent or experimental namespaces. This is not fatal for defensive publication, but it does matter for product architecture.
+
+The immediate risk is semantic fragmentation. If Sigma remains only a re-export namespace while the real logic lives in experimental packages and the L0 runtime evolves independently, then the system will continue to present multiple partial kernels rather than one canonical kernel. That weakens onboarding, verification boundaries, and eventual claims of architectural completion.
+
+\section{Recommended Canonicalization Path}
+I recommend the following canonicalization sequence.
+\begin{enumerate}[leftmargin=2em]
+    \item Promote the mathematically mature kernel primitives from \texttt{packages/experiments/apex/pikernel/} into a canonical Sigma implementation tree.
+    \item Replace Sigma re-export stubs with actual module definitions and stable boundary APIs.
+    \item Define a formal interface between L0 PIRTM contractivity artifacts and L1 Sigma execution certificates.
+    \item Publish an ADR specifying the Sigma Kernel object model: state fragment, proposer, projector, certificate, ledger event, and session gate.
+    \item Add tests that prove that every Sigma step either preserves or improves certified admissibility margins.
+    \item Align terminology across \texttt{Sigma}, \texttt{pi-kernel}, \texttt{pirtm}, and any mirror-dissonance variants so that the architecture is externally legible.
+\end{enumerate}
+
+\section{Suggested Publication Package}
+For a strong defensive-publication release, I recommend publishing the following set together:
+\begin{enumerate}[leftmargin=2em]
+    \item this LaTeX report as a PDF,
+    \item a public markdown mirror with exact equations and figures omitted only for formatting convenience,
+    \item timestamped GitHub release notes linking to the repository paths,
+    \item an ADR or whitepaper appendix naming the novelty cluster and intended claims,
+    \item a minimal runnable demo showing contraction-certified per-atom updates and ledger output.
+\end{enumerate}
+
+That package maximizes discoverability, technical credibility, and legal utility.
+
+\section{Suggested Figures and Appendices}
+For a later revision, the following additions would materially strengthen the publication:
+\begin{itemize}[leftmargin=2em]
+    \item a layer diagram from PIRTM L0 through Sigma L1 to higher layers,
+    \item a commutative diagram for the functor from atom category to channel category,
+    \item a flowchart of the projection-first kernel step,
+    \item a worked numerical example of weighted $\ell_1$ projection,
+    \item a small theorem appendix proving that positive GapLB implies a contraction map under the chosen norm,
+    \item a terminology appendix distinguishing $\pi$-kernel, Sigma Kernel, PIRTM runtime, and multiplicity channels.
+\end{itemize}
+
+\section{Defensive Publication Statement}
+This document publicly discloses an architecture for a Sigma Kernel and closely related kernel-multiplicity runtime bridge in which prime-indexed or atom-indexed decomposition, projection-first safe updates, contraction certificates, per-atom ledger emission, residue-lane arithmetic, and session-level spectral gating are combined into a unified execution model. The disclosed material includes update laws, certificate formulas, interface structure, and implementation-aligned module decomposition sufficient to place the architecture into the public domain of technical knowledge for prior art purposes.
+
+\section{Conclusion}
+The repository already contains enough mathematical, architectural, and code-level disclosure to support a meaningful defensive publication on the Sigma Kernel. The strongest present formulation is not that Sigma is already fully implemented as a finished monolithic kernel, but that its architectural identity is clearly disclosed and its substantive mechanics are already instantiated in adjacent packages that exhibit the relevant update, safety, certificate, ledger, and arithmetic structures. This is enough to publish now, and strong enough to guide the next canonicalization phase.
+\section*{Appendix}
+\appendix
+This Mathematical Appendix contains the explicit definitions, operator norm
+bounds, and full proofs underpinning the Sigma Kernel architecture as
+disclosed in the companion report.  It is self-contained and intended to serve
+simultaneously as a rigorous technical reference and as part of the prior-art
+defensive publication record.  All definitions are grounded in repository
+source code; all theorems are either quoted from repository documentation with
+proofs supplied here, or are novel synthesis derived directly from the
+architectural invariants of the codebase.
+
+%=============================================================================
+\section{Notation and Conventions}
+%=============================================================================
+
+Throughout this appendix, scalars are lower-case Roman letters, vectors are
+bold lower-case ($\bm{x},\bm{v}$), and matrices are upper-case Roman
+($A,K,P$).  The ambient dimension is $n \in \mathbb{N}$.  The set of primes is
+$\PP$.  We write $[m] = \{1,\dots,m\}$ for a positive integer $m$.  The
+$\ell^p$ norm of a vector $\bm{x}\in\R^n$ is
+$\norm{\bm{x}}_p = \bigl(\sum_i |x_i|^p\bigr)^{1/p}$ for $p\geq 1$ and
+$\norm{\bm{x}}_\infty = \max_i |x_i|$.  The induced (operator) $\ell^\infty$
+norm of a matrix $A\in\R^{m\times m}$ is the maximum absolute row sum:
+\[
+  \norm{A}_\infty = \max_{i\in[m]} \sum_{j=1}^m |A_{ij}|.
+\]
+Soft-thresholding at level $\lambda\geq 0$ applied coordinate-wise is
+\[
+  \mathcal{T}_\lambda(v)_i = \sign(v_i)\max\{\abs{v_i}-\lambda,\,0\}.
+\]
+A map $\Phi:\R^n\to\R^n$ is a \emph{contraction} under a norm
+$\norm{\cdot}$ if there exists $\rho \in [0,1)$ such that
+$\norm{\Phi(\bm{x})-\Phi(\bm{y})} \leq \rho\norm{\bm{x}-\bm{y}}$
+for all $\bm{x},\bm{y}\in\R^n$.
+
+%=============================================================================
+\section{Projector Families and $\pi$-Atoms}
+%=============================================================================
+
+\begin{definition}[Projector Family]
+A \emph{projector family} $\mathcal{F}$ with ambient dimension $n$ is a
+collection of disjoint index sets $\{S_0,\dots,S_{k-1}\}$ with
+$S_i \subset [n]$, $S_i \cap S_j = \emptyset$ for $i\neq j$, and
+$\bigcup_i S_i \subseteq [n]$.  The associated coordinate projector
+$R_i : \R^n \to \R^{|S_i|}$ extracts the coordinates indexed by $S_i$:
+\[
+  (R_i \bm{x})_\ell = x_{S_i(\ell)}, \qquad \ell\in[|S_i|].
+\]
+\end{definition}
+
+\begin{definition}[$\pi$-Atom Grid]
+Given $d$ projector families $\mathcal{F}^{(1)},\dots,\mathcal{F}^{(d)}$, all
+with the same ambient dimension $n$, the associated \emph{$\pi$-atom grid}
+$\Gamma$ has atoms indexed by tuples
+$\bm{\pi} = (\pi_1,\dots,\pi_d)\in\prod_j[k_j]$
+where $k_j$ is the number of blocks in $\mathcal{F}^{(j)}$.  The
+\emph{support} of atom $\bm{\pi}$ is the intersection
+\[
+  I_{\bm{\pi}} = \bigcap_{j=1}^d S^{(j)}_{\pi_j}.
+\]
+A $\pi$-atom is \emph{non-empty} if $I_{\bm{\pi}} \neq \emptyset$.  Let
+$\piset$ denote the set of non-empty $\pi$-atoms.
+\end{definition}
+
+\begin{proposition}[Orthogonality and Completeness]
+\label{prop:ortho}
+If the projector families share the same ambient dimension and each family
+is a partition of $[n]$, then:
+\begin{enumerate}[label=(\roman*)]
+  \item Distinct $\pi$-atoms have disjoint supports:
+    $I_{\bm{\pi}} \cap I_{\bm{\pi}'} = \emptyset$ for $\bm{\pi}\neq\bm{\pi}'$.
+  \item The atoms cover all coordinates: $\bigcup_{\bm{\pi}\in\piset} I_{\bm{\pi}} = [n]$.
+  \item The associated coordinate projectors satisfy the partition-of-unity:
+    \[
+      \sum_{\bm{\pi}\in\piset} P_{\bm{\pi}} = I_n,
+    \]
+    where $P_{\bm{\pi}}\in\R^{n\times n}$ embeds $R_{\bm{\pi}}\bm{x}$ back
+    into the ambient space.
+  \item The recomposition error
+    $\norm{\bm{x} - \sum_{\bm{\pi}} P_{\bm{\pi}}\bm{x}}_2 = 0$
+    for all $\bm{x}\in\R^n$.
+\end{enumerate}
+\end{proposition}
+
+\begin{proof}
+(i) Suppose $\bm{\pi}\neq\bm{\pi}'$.  Then there exists index $j$ with
+$\pi_j \neq \pi_j'$.  Because $\mathcal{F}^{(j)}$ is a partition,
+$S^{(j)}_{\pi_j}\cap S^{(j)}_{\pi_j'}=\emptyset$.  Hence
+$I_{\bm{\pi}}\cap I_{\bm{\pi}'} \subseteq S^{(j)}_{\pi_j}\cap S^{(j)}_{\pi_j'}=\emptyset$.
+\smallskip
+
+(ii) Fix any coordinate $\ell\in[n]$.  For each family $j$, there is a unique
+block $\pi_j$ with $\ell\in S^{(j)}_{\pi_j}$ (partition property).  Hence
+$\ell \in I_{\bm{\pi}}$ for $\bm{\pi}=(\pi_1,\dots,\pi_d)$, so every
+coordinate is covered.
+\smallskip
+
+(iii) By (i) and (ii) the atoms form an orthogonal partition of $[n]$, so
+$P_{\bm{\pi}}P_{\bm{\pi}'}=0$ for $\bm{\pi}\neq\bm{\pi}'$ and
+$\sum_{\bm{\pi}} P_{\bm{\pi}} = I_n$.
+\smallskip
+
+(iv) Immediate from (iii).
+\end{proof}
+
+%=============================================================================
+\section{The ACE Safety Projection}
+%=============================================================================
+
+\begin{definition}[ACE Safety Set]
+Given a weight vector $\bm{w}\in\R^n_{>0}$ and budget $\tau>0$, the
+\emph{ACE safety set} is the weighted $\ell^1$ ball
+\[
+  \mathcal{S}(\bm{w},\tau)
+  = \bigl\{\bm{x}\in\R^n : \textstyle\sum_{i=1}^n w_i|x_i| \leq \tau\bigr\}.
+\]
+\end{definition}
+
+\begin{theorem}[Weighted $\ell^1$ Projection]
+\label{thm:l1proj}
+For any $\bm{v}\in\R^n$ the unique projection
+$\bm{x}^* = \operatorname{proj}_{\mathcal{S}(\bm{w},\tau)}\bm{v}$
+is given by
+\[
+  x^*_i = \sign(v_i)\max\{\abs{v_i} - \lambda^* w_i,\,0\},
+\]
+where $\lambda^* \geq 0$ satisfies
+\[
+  f(\lambda^*) := \sum_{i=1}^n w_i\max\{\abs{v_i}-\lambda^* w_i,\,0\} = \tau
+\]
+if $\sum_i w_i|v_i| > \tau$, and $\lambda^* = 0$ (i.e.\ $\bm{x}^*=\bm{v}$)
+otherwise.
+\end{theorem}
+
+\begin{proof}
+The problem
+$\min_{\bm{x}}\tfrac12\norm{\bm{x}-\bm{v}}_2^2$
+subject to $\sum_i w_i|x_i|\leq\tau$
+is a convex program with differentiable objective and convex constraint.
+
+If $\bm{v}\in\mathcal{S}(\bm{w},\tau)$ then $\bm{x}^*=\bm{v}$ and
+$\lambda^*=0$.
+
+Otherwise, the KKT conditions at optimality yield, for each $i$:
+\[
+  x^*_i - v_i + \lambda^* w_i \sign(x^*_i) = 0
+  \quad \text{if } x^*_i \neq 0,
+  \qquad \abs{v_i} \leq \lambda^* w_i
+  \quad \text{if } x^*_i = 0,
+\]
+with $\lambda^*\geq 0$ and complementary slackness
+$\lambda^*\bigl(\sum_i w_i\abs{x^*_i}-\tau\bigr)=0$.
+Solving the active constraint case: $x^*_i = v_i - \lambda^* w_i \sign(x^*_i)$.
+For $x^*_i\neq 0$, $\sign(x^*_i)=\sign(v_i)$ and
+$x^*_i = \sign(v_i)(|v_i|-\lambda^* w_i)$, positive iff $\abs{v_i}>\lambda^* w_i$.
+Hence $x^*_i = \sign(v_i)\max\{\abs{v_i}-\lambda^* w_i,0\}$.
+
+The function $f(\lambda)=\sum_i w_i\max\{\abs{v_i}-\lambda w_i,0\}$
+is continuous, non-increasing, and satisfies $f(0)=\sum_i w_i\abs{v_i}>\tau$
+and $\lim_{\lambda\to\infty}f(\lambda)=0<\tau$.
+By the intermediate value theorem there exists $\lambda^*>0$ with
+$f(\lambda^*)=\tau$.  Since $f$ is strictly decreasing on its support,
+$\lambda^*$ is unique.
+\end{proof}
+
+\begin{corollary}[Non-expansiveness of ACE Projection]
+\label{cor:nonexp}
+The map $\bm{v}\mapsto\operatorname{proj}_{\mathcal{S}(\bm{w},\tau)}\bm{v}$
+is non-expansive in the Euclidean norm:
+\[
+  \norm{\operatorname{proj}_\mathcal{S}\bm{v}
+        - \operatorname{proj}_\mathcal{S}\bm{u}}_2
+  \leq \norm{\bm{v}-\bm{u}}_2.
+\]
+\end{corollary}
+
+\begin{proof}
+Standard: the projection onto any closed convex set is a non-expansive map
+under the Hilbert-space norm (Moreau, 1962).
+\end{proof}
+
+%=============================================================================
+\section{Bisection Convergence for the Projection Algorithm}
+%=============================================================================
+
+\begin{proposition}[Bisection Convergence]
+\label{prop:bisect}
+The bisection procedure to find $\lambda^*$ in Theorem~\ref{thm:l1proj}
+converges in $O(\log_2(\epsilon_0/\epsilon))$ iterations, where $\epsilon_0$
+is the initial bracket width and $\epsilon>0$ is the target tolerance.
+\end{proposition}
+
+\begin{proof}
+The initial bracket is $[0,\,\lambda_{\mathrm{hi}}]$ where
+$\lambda_{\mathrm{hi}} = \max_i\{|v_i|/w_i\}$, making the initial width
+$\epsilon_0 = \lambda_{\mathrm{hi}}$.  At each bisection step the bracket
+halves.  After $k$ steps the bracket width is $\epsilon_0/2^k$.  Setting
+$\epsilon_0/2^k \leq \epsilon$ gives $k \geq \log_2(\epsilon_0/\epsilon)$.
+\end{proof}
+
+%=============================================================================
+\section{The $\pi$-Kernel Update and Contraction Theory}
+%=============================================================================
+
+\subsection{Iteration Matrix and Slope Bound}
+
+\begin{definition}[Coupling Matrix and Iteration Matrix]
+Given atoms $\bm{\pi}_1,\dots,\bm{\pi}_m\in\piset$, per-atom mixing
+parameters $\bm{\alpha}\in(0,1]^m$, and a coupling matrix
+$K\in\R^{m\times m}$, define the \emph{iteration matrix}
+\[
+  A = \diag(\bm{1}-\bm{\alpha}) + \diag(\bm{\alpha})\abs{K},
+\]
+where $\abs{K}$ denotes element-wise absolute value.
+\end{definition}
+
+\begin{definition}[Slope Upper Bound]
+The \emph{slope upper bound} is
+\[
+  \mathrm{SlopeUB} = \norm{A}_\infty = \max_{i\in[m]}\sum_{j=1}^m A_{ij}.
+\]
+The \emph{contraction gap lower bound} is
+\[
+  \mathrm{GapLB} = 1 - \mathrm{SlopeUB}.
+\]
+\end{definition}
+
+\begin{remark}
+The iteration matrix $A$ models the Lipschitz behavior of the coupled
+per-atom update.  The $(i,j)$ entry is the weight that atom $j$
+contributes to atom $i$'s evolution: a self-damping term
+$(1-\alpha_i)\delta_{ij}$ plus a coupling term $\alpha_i|K_{ij}|$.
+\end{remark}
+
+\subsection{Contraction Theorem}
+
+\begin{theorem}[Global Contraction --- Theorem 3.1]
+\label{thm:contraction}
+Let $\bm{c}^{(i)}_t\in\R^{|I_{\bm{\pi}_i}|}$ be the coefficient vector of
+atom $\bm{\pi}_i$ at time $t$.  Suppose the per-atom proposer satisfies
+\[
+  \norm{F_{\bm{\pi}_i}(\bm{c}) - F_{\bm{\pi}_i}(\bm{c}')}_\infty
+  \leq \alpha_i \norm{\bm{c}-\bm{c}'}_\infty
+\]
+and the coupling satisfies
+$\norm{K_{ij}(\bm{c}_j-\bm{c}_j')}_\infty \leq |K_{ij}|\norm{\bm{c}_j-\bm{c}_j'}_\infty$.
+If $\mathrm{GapLB} > 0$, then the $\pi$-kernel step map
+$\Phi:\R^n\to\R^n$ is a contraction with ratio $\rho = \mathrm{SlopeUB} < 1$
+under the $\ell^\infty$ norm on the concatenated coefficient vector.
+\end{theorem}
+
+\begin{proof}
+Let $\bm{x},\bm{y}\in\R^n$.  Decompose by atoms:
+$\bm{c}^{(i)} = R_{\bm{\pi}_i}\bm{x}$ and
+$\bm{d}^{(i)} = R_{\bm{\pi}_i}\bm{y}$.
+
+For atom $i$, the proposed update from $\bm{c}^{(i)}$ includes a coupling
+contribution from all other atoms $j$.  By the coupling bound and the
+proposer Lipschitz condition,
+\[
+  \norm{F_{\bm{\pi}_i}(\bm{c}^{(i)}) - F_{\bm{\pi}_i}(\bm{d}^{(i)})}_\infty
+  \leq (1-\alpha_i)\norm{\bm{c}^{(i)}-\bm{d}^{(i)}}_\infty
+       + \alpha_i \sum_j |K_{ij}|\norm{\bm{c}^{(j)}-\bm{d}^{(j)}}_\infty.
+\]
+By Corollary~\ref{cor:nonexp}, the ACE projection $\Pi_{\mathcal{S}}$ is
+non-expansive, so
+\[
+  \norm{\Pi_{\mathcal{S}}\bigl(F_{\bm{\pi}_i}(\bm{c}^{(i)})\bigr)
+        - \Pi_{\mathcal{S}}\bigl(F_{\bm{\pi}_i}(\bm{d}^{(i)})\bigr)}_\infty
+  \leq (A\bm{e})_i,
+\]
+where $\bm{e}_j = \norm{\bm{c}^{(j)}-\bm{d}^{(j)}}_\infty$.  Taking the
+max over all $i$:
+\[
+  \norm{\Phi(\bm{x})-\Phi(\bm{y})}_\infty
+  \leq \norm{A}_\infty \norm{\bm{x}-\bm{y}}_\infty
+  = \mathrm{SlopeUB}\cdot\norm{\bm{x}-\bm{y}}_\infty.
+\]
+Since $\mathrm{SlopeUB} < 1$ when $\mathrm{GapLB}>0$, the map $\Phi$ is a
+contraction with ratio $\rho = \mathrm{SlopeUB}$.
+\end{proof}
+
+\begin{corollary}[Fixed Point and Exponential Convergence]
+\label{cor:fixedpoint}
+Under the conditions of Theorem~\ref{thm:contraction}, the Banach fixed-point
+theorem guarantees:
+\begin{enumerate}[label=(\roman*)]
+  \item a unique fixed point $\bm{x}^*\in\R^n$,
+  \item exponential convergence: $\norm{\bm{x}_t - \bm{x}^*}_\infty \leq \rho^t\norm{\bm{x}_0-\bm{x}^*}_\infty$,
+  \item stable rollback: trajectories from any two initial states converge to the same fixed point at the same rate.
+\end{enumerate}
+\end{corollary}
+
+\begin{proof}
+All three claims follow immediately from the Banach contraction mapping
+theorem applied to the complete metric space $(\R^n,\norm{\cdot}_\infty)$
+with contraction $\Phi$ and ratio $\rho\in[0,1)$.
+\end{proof}
+
+\begin{corollary}[Local-to-Global Stability]
+If each atom satisfies its per-atom contraction condition and all pairwise
+coupling terms satisfy $\sum_j |K_{ij}|\leq 1$ for all $i$, then
+$\mathrm{SlopeUB} \leq \max_i\alpha_i + (1-\min_i\alpha_i)\leq 1$, and
+the condition $\mathrm{GapLB}>0$ is equivalent to
+$\max_i\bigl(1-\alpha_i + \alpha_i \textstyle\sum_j|K_{ij}|\bigr) < 1$,
+which is satisfied when $\sum_j|K_{ij}|<1$ for all $i$.
+\end{corollary}
+
+%=============================================================================
+\section{Multiplicity-LWE Contractivity Bound}
+%=============================================================================
+
+\begin{definition}[Multiplicity-LWE Parameters]
+A Multiplicity-LWE parameter record consists of:
+\begin{itemize}[leftmargin=2em]
+  \item $\mathcal{P} = \{p_1,\dots,p_r\}\subset\PP$: the prime set,
+  \item $\alpha > 1$: the scale exponent,
+  \item $\lambda_m > 0$: the multiplicity gain,
+  \item $\gamma\in(0,1)$: the contraction target,
+  \item $q\in\PP$, $q > \max\mathcal{P}$: the LWE modulus,
+  \item noise parameters $(k, \mathrm{type})$.
+\end{itemize}
+\end{definition}
+
+\begin{definition}[Contractivity Bound]
+The \emph{Multiplicity-LWE contractivity bound} is
+\[
+  \beta = \lambda_m \cdot \max_{p\in\mathcal{P}} p^\alpha.
+\]
+The \emph{contractivity margin} is $\mu = \gamma - \beta$.
+\end{definition}
+
+\begin{theorem}[Gate K Admissibility]
+\label{thm:gatek}
+A Multiplicity-LWE parameter record is \emph{Gate-K admissible} if and only
+if $\beta < \gamma$, i.e.\ $\mu > 0$.  Under this condition, the
+Multiplicity-Core engine's state transitions are bounded by $\gamma$ and the
+engine satisfies the K-02 empirical contraction harness condition
+\[
+  x_{t+1}^{(i)} = \gamma x_t^{(i)} + (1-\gamma) u_t^{(i)},
+  \quad u_t^{(i)}\in[-\delta,\delta],
+\]
+which is a contraction in $\ell^\infty$ with ratio $\gamma$.
+\end{theorem}
+
+\begin{proof}
+The empirical harness \texttt{simulate\_state\_trajectory} from
+\texttt{core/multiplicity\_core.py} implements the affine update
+$x_{t+1}^{(i)} = \gamma x_t^{(i)} + (1-\gamma) u_t^{(i)}$ with bounded
+drive $\abs{u_t^{(i)}}\leq\delta$.  For two initial states $\bm{x}_0,\bm{y}_0$
+with the same drive sequence,
+\[
+  \abs{x_{t+1}^{(i)}-y_{t+1}^{(i)}} = \gamma\abs{x_t^{(i)}-y_t^{(i)}}.
+\]
+Taking the max over coordinates,
+$\norm{\bm{x}_{t+1}-\bm{y}_{t+1}}_\infty = \gamma\norm{\bm{x}_t-\bm{y}_t}_\infty$.
+Since $\gamma<1$ (Gate-K admissibility), this is a contraction with ratio $\gamma$.
+
+The Gate-K admission check \texttt{validate\_contractivity} requires
+$\beta = \lambda_m\max_p p^\alpha < \gamma$, which ensures $\gamma < 1$ is
+achievable with a positive margin $\mu>0$.
+\end{proof}
+
+\begin{proposition}[Contractivity Margin as Safety Reserve]
+Let $\mu = \gamma - \beta$.  For any perturbation $\Delta\lambda_m\geq 0$
+such that $(\lambda_m + \Delta\lambda_m)\max_p p^\alpha < \gamma$, i.e.\
+$\Delta\lambda_m < \mu / \max_p p^\alpha$, Gate-K admissibility is preserved.
+\end{proposition}
+
+\begin{proof}
+Direct substitution: $(\lambda_m+\Delta\lambda_m)\max_p p^\alpha < \gamma$
+iff $\Delta\lambda_m < (\gamma - \lambda_m\max_p p^\alpha)/\max_p p^\alpha = \mu/\max_p p^\alpha$.
+\end{proof}
+
+%=============================================================================
+\section{Spectral Stability: Session-Level Small-Gain Bound}
+%=============================================================================
+
+\begin{definition}[Session Graph Gain Matrix]
+A session graph on $m$ modules has a gain matrix $G\in\R^{m\times m}_{\geq 0}$
+where $G_{ij}$ is the $\ell^\infty$ operator norm of the coupling from module
+$j$ to module $i$.  The \emph{spectral radius} is
+$\rho(G) = \lim_{k\to\infty}\norm{G^k}^{1/k}$.
+\end{definition}
+
+\begin{theorem}[Small-Gain Stability]
+\label{thm:smallgain}
+If $\rho(G) < 1$, the interconnected session is input-to-state stable.
+In the $\ell^\infty$ setting, a sufficient condition is
+$\norm{G}_\infty < 1$,
+which corresponds to $\mathrm{SlopeUB} < 1$ in the $\pi$-kernel coupling
+matrix.
+\end{theorem}
+
+\begin{proof}
+Standard small-gain theorem for interconnected input-output systems.  Since
+$\norm{G}_\infty < 1$ implies $\rho(G) \leq \norm{G}_\infty < 1$, the
+Neumann series $(I-G)^{-1} = \sum_{k=0}^\infty G^k$ converges, guaranteeing
+bounded output for bounded input and thus input-to-state stability.
+\end{proof}
+
+%=============================================================================
+\section{Residue Number System Arithmetic Properties}
+%=============================================================================
+
+\begin{theorem}[CRT Uniqueness]
+Let $m_1,\dots,m_r$ be pairwise coprime positive integers with
+$M=\prod_i m_i$.  For any $x\in[0,M)$, the residue tuple
+$(x\bmod m_1,\dots,x\bmod m_r)$ uniquely determines $x$.
+The reconstruction is
+\[
+  x \equiv \sum_{i=1}^r r_i M_i y_i \pmod{M}, \qquad
+  M_i = M/m_i, \quad y_i = M_i^{-1} \bmod m_i.
+\]
+\end{theorem}
+
+\begin{proof}
+By the Chinese Remainder Theorem.  The map
+$x\mapsto (x\bmod m_1,\dots,x\bmod m_r)$ is a ring isomorphism
+$\Z/M\Z \to \Z/m_1\Z \times\cdots\times\Z/m_r\Z$
+(since $\gcd(m_i,m_j)=1$), hence bijective.  Inversion by the standard
+CRT formula yields the stated reconstruction.
+\end{proof}
+
+\begin{proposition}[Lane-Wise Arithmetic Carries No Cross-Lane Information]
+For pairwise coprime moduli, addition and multiplication in RNS are
+lane-local:
+\[
+  (a+b)\bmod M \leftrightarrow
+  \bigl((a_1+b_1)\bmod m_1,\dots,(a_r+b_r)\bmod m_r\bigr),
+\]
+and similarly for multiplication.  No carry or borrow propagates across lanes.
+\end{proposition}
+
+\begin{proof}
+Immediate from the ring isomorphism: the isomorphism is a ring homomorphism,
+so $\phi(a+b)=\phi(a)+\phi(b)$ and $\phi(ab)=\phi(a)\phi(b)$ component-wise.
+\end{proof}
+
+%=============================================================================
+\section{Spectral Band Projector Properties}
+%=============================================================================
+
+\begin{theorem}[Spectral Projection Idempotence]
+\label{thm:specproj}
+Let $A\in\R^{n\times n}$ be symmetric with eigendecomposition
+$A = U\Lambda U^\top$.  For a band $B = [\lambda_{\min},\lambda_{\max}]$, the
+spectral projector
+\[
+  P_B = U\diag(\bm{m}) U^\top, \qquad m_k = \mathbf{1}[\lambda_k\in B],
+\]
+satisfies $P_B^2 = P_B$, $P_B^\top = P_B$, and
+$\norm{P_B}_2 = 1$ if $B$ contains at least one eigenvalue.
+\end{theorem}
+
+\begin{proof}
+$P_B^2 = U\diag(\bm{m})U^\top U\diag(\bm{m})U^\top
+        = U\diag(\bm{m}^2)U^\top = U\diag(\bm{m})U^\top = P_B$
+since $m_k^2 = m_k\in\{0,1\}$.  Symmetry is immediate.  Since $U$ is
+orthogonal and $\diag(\bm{m})$ has singular values in $\{0,1\}$,
+$\norm{P_B}_2 = \norm{\diag(\bm{m})}_2 = 1$ when $B$ is non-empty.
+\end{proof}
+
+\begin{corollary}[Orthogonal Band Decomposition]
+For non-overlapping bands $B_1,\dots,B_s$ that partition the spectrum of $A$,
+\[
+  \sum_{k=1}^s P_{B_k} = I_n, \qquad P_{B_i}P_{B_j} = 0 \text{ for } i\neq j.
+\]
+\end{corollary}
+
+%=============================================================================
+\section{Prime-Indexed Feedback Stabilization}
+%=============================================================================
+
+\begin{definition}[Prime-Indexed Feedback Rule]
+Let $\mathcal{P}=\{p_0,\dots,p_{r-1}\}\subset\PP$, index $k\in[r]$, and
+let $\mu>0$ be the contractivity margin.  The \emph{prime-indexed feedback
+rule} for a state index $s_t\in\Z/N\Z$ (with $N=2^{16}$) is:
+\[
+  s_{t+1} = \bigl(s_t + p_k \cdot \mathbf{1}[\mu < \epsilon]\bigr) \bmod N,
+\]
+where $\epsilon>0$ is a contractivity alert threshold.
+\end{definition}
+
+\begin{proposition}[Bounded Prime-Indexed Transitions]
+Under the prime-indexed feedback rule, the state increment per step satisfies
+$\Delta s_t \in \{0, p_k\}$, so transitions are bounded by
+$\max_{p\in\mathcal{P}} p$.  The rule reduces to the identity when
+$\mu \geq \epsilon$ and performs a prime-valued transition when the
+contractivity margin is critically low.
+\end{proposition}
+
+\begin{proof}
+$\mathbf{1}[\mu<\epsilon]\in\{0,1\}$, so
+$s_{t+1}-s_t \equiv p_k\cdot\mathbf{1}[\mu<\epsilon] \pmod{N}$,
+which is either $0$ or $p_k$.
+\end{proof}
+
+\begin{remark}
+This rule replaces the flat bang-bang controller (increment by 1 on any
+error) present in the current \texttt{src/feedback.ts} with a
+contractivity-aware, prime-bounded, and therefore mathematically certifiable
+control law.  The prime-valued increment ensures that the transition is not
+a unit step but carries the multiplicity signature of the kernel.
+\end{remark}
+
+%=============================================================================
+\section{QKD-Grounded Key Derivation}
+%=============================================================================
+
+\begin{definition}[LWE-Seeded HKDF]
+Let $\mathrm{public\_sample}(M_t)\in\{0,1\}^{256}$ be the deterministic
+public sample produced by the Multiplicity-LWE engine indexed by the current
+$\pi$-profile $M_t$.  The \emph{LWE-seeded QKD key derivation} is:
+\[
+  K = \mathrm{HKDF}\!\bigl(\mathrm{public\_sample}(M_t),\; M_t,\; \mathrm{role}\bigr).
+\]
+\end{definition}
+
+\begin{proposition}[Informational Coupling to LWE Hardness]
+Under this derivation, the derived key $K$ is computationally indistinguishable
+from uniform if the LWE problem over $\Z_q$ with parameters
+$(q, \alpha, \lambda_m, \mathcal{P})$ is hard.  Concretely, any adversary
+that distinguishes $K$ from uniform can be used to distinguish LWE samples
+from random, violating the LWE assumption.
+\end{proposition}
+
+\begin{proof}[Proof Sketch]
+$\mathrm{public\_sample}(M_t)$ is constructed as an HKDF output seeded by
+an internal LWE sample $(a,b)$ where $b = as + e \bmod q$ for secret $s$
+and noise $e$.  The public output is a deterministic hash of $(a,b)$, so
+its distribution is computationally coupled to the LWE instance.  HKDF with
+a pseudorandom input is a pseudorandom function under the random oracle model,
+so $K$ is computationally indistinguishable from uniform given LWE hardness.
+\end{proof}
+
+%=============================================================================
+\section{Summary of Formal Guarantees}
+%=============================================================================
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\textbf{Theorem / Proposition} & \textbf{Claim} & \textbf{Condition} \\
+\midrule
+Prop.~\ref{prop:ortho} & Atoms orthogonal \& complete & Partition families \\
+Thm.~\ref{thm:l1proj} & ACE projection formula & KKT optimality \\
+Cor.~\ref{cor:nonexp} & ACE projector non-expansive & Convexity \\
+Prop.~\ref{prop:bisect} & Bisection in $O(\log 1/\epsilon)$ & Monotone $f$ \\
+Thm.~\ref{thm:contraction} & $\pi$-kernel contraction ($\rho=\mathrm{SlopeUB}$) & $\mathrm{GapLB}>0$ \\
+Cor.~\ref{cor:fixedpoint} & Unique fixed point, exponential convergence & $\rho<1$ \\
+Thm.~\ref{thm:gatek} & Gate-K: harness contraction ratio $\gamma$ & $\mu>0$ \\
+Thm.~\ref{thm:smallgain} & Session-level ISS & $\rho(G)<1$ \\
+Thm.~\ref{thm:specproj} & Spectral projector idempotent & Symmetry of $A$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\nocite{*}
+\bibliographystyle{unsrt}  
+\bibliography{references}  
+
+
+\end{document}

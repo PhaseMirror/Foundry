@@ -1,0 +1,127 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: -D warnings
+
+jobs:
+  # Format, lint, docs, the whole test suite (unit + integration + the cucumber BDD binary),
+  # and the honesty meta-gate — all gating.
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+      - name: fmt
+        run: cargo fmt --all --check
+      - name: clippy
+        run: cargo clippy --workspace --all-targets --all-features -- -D warnings
+      - name: doc
+        run: cargo doc --workspace --no-deps --all-features
+        env:
+          RUSTDOCFLAGS: -D warnings
+      - name: test (unit + integration + honesty gate)
+        run: cargo test --workspace --all-features
+      - name: bdd (cucumber, fails on any skipped/undefined step)
+        run: cargo test -p tqc-conformance --test bdd
+
+  # Every committed oracle artifact matches its recorded checksum.
+  oracles:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: oracle integrity
+        run: cargo run -p xtask -- oracle-verify
+      - name: conformance ledger
+        run: cargo run -p xtask -- report
+
+  # The pinned F1 commit exists upstream and the artifact digest matches (online).
+  atlas-pin:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: F1 pin check
+        run: cargo run -p xtask -- atlas-pin-check
+
+  # The parametric core stays no_std / portable (matches the holospaces substrate posture).
+  portability:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown, thumbv7em-none-eabi
+      - uses: Swatinem/rust-cache@v2
+      - name: build tqc-core for wasm32
+        run: cargo build -p tqc-core --target wasm32-unknown-unknown
+      - name: build tqc-core for thumbv7em (bare-metal, no_std)
+        run: cargo build -p tqc-core --target thumbv7em-none-eabi
+
+  # MSRV: the declared minimum supported Rust version must build.
+  msrv:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.83.0
+      - uses: Swatinem/rust-cache@v2
+      - name: check the pure framework crates on MSRV
+        # The substrate graph (holospaces/hologram/uor-addr) sets its own MSRV; the TQC
+        # framework crates are what we pin.
+        run: cargo check -p tqc-core -p tqc-model -p tqc-atlas --all-features
+
+  # Focused integration check that the substrate facade resolves, builds, and tests at the
+  # pinned revs (holospaces f2415624…, uor-addr 0.2.0). The `gate` job also builds this graph
+  # transitively (tqc-vv depends on tqc-substrate); this job isolates the substrate surface.
+  substrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: build + test the substrate facade
+        run: cargo test -p tqc-substrate
+
+  # Supply-chain: licenses + advisories.
+  deny:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: taiki-e/install-action@cargo-deny
+      - name: cargo-deny
+        run: cargo deny check
+
+  # Compile the whitepaper using LaTeX.
+  paper:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install chktex
+        run: sudo apt-get update && sudo apt-get install -y chktex
+      - name: Lint LaTeX
+        working-directory: docs/paper
+        run: chktex main.tex -q -n 1 -n 18 -n 22 -n 24 -n 30 -n 46
+      - name: Compile LaTeX
+        uses: xu-cheng/latex-action@v3
+        with:
+          root_file: main.tex
+          working_directory: docs/paper/
+          args: -Werror -pdf -file-line-error -halt-on-error -interaction=nonstopmode
+

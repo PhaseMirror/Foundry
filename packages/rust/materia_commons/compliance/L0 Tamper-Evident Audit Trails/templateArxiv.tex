@@ -1,0 +1,745 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage[T1]{fontenc}
+\usepackage[scaled]{beramono}
+\usepackage{courier}
+\usepackage{microtype}
+
+\lstdefinestyle{code}{
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  frame=single,
+  columns=fullflexible,
+  keepspaces=true,
+  showstringspaces=false
+}
+
+\title{%
+  L0 Scope-Bound Non-Repudiation \\ and Tamper-Evident Audit Trails\\
+  in Phase Mirror ACE and Witness Protocols\\[0.5ex]
+  \large Defensive Publication and Design Report
+}
+\author{Citizen Gardens \\ The Foundation of Multiplicity}
+\date{April 25, 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This report describes two tightly coupled design developments in the
+Phase Mirror ecosystem:
+
+\begin{enumerate}[label=(\alph*)]
+  \item a Level~0 (\emph{L0}) scope-binding invariant for Ed25519 witness
+        signatures, including a stratified non-repudiation model and a
+        two-root trust architecture based on SPIFFE SVIDs; and
+  \item a tamper-evident, testable audit trail for the Arithmetic Control
+        Engine (ACE) in the PIRTM project, including HMAC chaining,
+        deterministic testing under clock injection, float-normalization
+        gates, and thread-safety.
+\end{enumerate}
+
+The intent is explicitly defensive: to place in the public domain a
+precise combination of invariants, message formats, and code patterns
+that enable provable non-repudiation and tamper-evidence in a
+governance-grade system. The text is written as a comprehensive
+prior-art publication and as a design reference for implementers.
+\end{abstract}
+\newpage
+\tableofcontents
+\newpage
+\section{Executive Summary}
+
+This report documents a sequence of design decisions in two domains:
+
+\begin{itemize}
+  \item \textbf{Scope-bound signatures (L0-SIG-SCOPE).} Ed25519 witness
+        signatures are required to be cryptographically bound to a
+        well-defined \emph{scope}: domain, intent class, audience
+        (both class and instance), governance surface (tenant/jurisdiction),
+        time window, replay protection, and key purpose. Signatures that
+        lack these bindings are rejected at the verifier. The scope
+        enforcement is stratified by a non-repudiation level (\texttt{NRLevel}),
+        and executor identity is anchored in a platform attestation
+        trust root (SPIFFE SVIDs).
+
+  \item \textbf{Tamper-evident audit trails (ADR-012 for ACE).}
+        The ACE subsystem maintains an append-only, HMAC-chained log
+        of certificates, with the HMAC key derived from the previous
+        chain hash. The design eliminates non-determinism sources
+        (clock and session identifier) via constructor injection,
+        normalizes float fields at the serialization boundary, rejects
+        non-finite values loudly, and achieves thread-safe atomic
+        updates of the chain head.
+\end{itemize}
+
+Both threads share the same central tension: the boundary between
+\emph{validity} (what actions and values are acceptable in the first
+place) and \emph{defense in depth} (how failures are surfaced and
+made tamper-evident). The key principle is that upstream gate failures
+(e.g.\ loss of spectral gap, missing scope bindings) must be detected
+at the earliest possible layer, and that downstream cryptographic
+mechanisms (HMAC, signatures, anchors) must never silently encode
+invalid state.
+
+\section{Mathematical and Cryptographic Overview}
+
+\subsection{HMAC-Chained Audit Trail}
+
+The ACE audit trail is an append-only log of certificate entries
+\(\{e_i\}_{i=1}^n\) with the following fields:
+\[
+  e_i = \bigl(\text{prime\_index}_i,\ \text{cert}_i,\ \text{wall\_clock}_i,\
+         \text{session\_id},\ \text{chain\_hash}_i\bigr).
+\]
+
+Let \(\mathcal{H}\) denote HMAC-SHA256. The chain is defined by:
+\begin{align}
+  k_0 &= \underbrace{\text{bytes.fromhex}(\text{``0''}\times 64)}_{\text{32 zero bytes}},\\
+  k_i &= \text{bytes.fromhex}(\text{chain\_hash}_{i-1}), \quad i \ge 1,\\
+  m_i &= \text{JSON\_CANONICAL}\left(
+           \text{prime\_index}_i,\ \text{cert}_i,\ \text{wall\_clock}_i,\ \text{session\_id}
+        \right), \\
+  d_i &= \mathcal{H}(k_i, m_i), \\
+  \text{chain\_hash}_i &= \text{hex}(d_i).
+\end{align}
+
+Here \(\text{JSON\_CANONICAL}\) denotes UTF-8 JSON encoding with
+sorted keys and \texttt{allow\_nan=False}, so that non-finite floats
+(\(\pm\infty, \text{NaN}\)) are rejected with a \texttt{ValueError}
+at the encoder boundary rather than silently encoded.\footnote{See
+Python's \texttt{json.dumps} and \texttt{allow\_nan} semantics
+\cite{web:32,web:34}.}
+
+Verification replays the chain from the fixed genesis key \(k_0\).
+Any modification to a logged entry \(e_j\) changes the recomputed
+digest \(d_j\), causing a mismatch at or before index \(j\).
+
+\subsection{Scope-Bound Signatures}
+
+We model the signed message \(M\) for an Ed25519 witness signature as
+a concatenation of length-prefixed byte strings:
+\[
+  M = \bigl\|_{i=1}^k \ell_i \parallel x_i,
+\]
+where each field \(x_i\) is a UTF-8 string, and \(\ell_i\) is a fixed
+size length prefix (e.g.\ 4-byte big-endian). This avoids ambiguity
+in boundary parsing.
+
+The fields in order are:
+
+\begin{enumerate}[label=(\roman*)]
+  \item Domain separator with IntentClass Registry (ICR) pin:
+        \(\texttt{"PHASE\_MIRROR/WITNESS/v1/icr:}\langle \texttt{icr\_version}\rangle\texttt{"}\).
+  \item \(\texttt{intentClass}\): a closed enum from the ICR.
+  \item \(\texttt{scopeHash} = \text{SHA256}(\text{RFC8785}(\text{scope\_object}))\),
+        where the scope object includes tenant, project, jurisdiction,
+        consent, and policy version.
+  \item \(\texttt{aud.class}\) and \(\texttt{aud.version}\), always present.
+  \item \(\texttt{aud.instance}\): present and non-empty if and only if
+        the non-repudiation level \( \texttt{NRLevel} = \texttt{NR\_FULL} \).
+  \item \(\texttt{intentHash} = \text{SHA256}(\text{RFC8785}(\text{cap\_object}))\).
+  \item \(\texttt{traceHash}\): hash of the trace atom being witnessed.
+  \item Temporal and anti-replay fields: \(\texttt{iat}, \texttt{exp}, \texttt{nonce}\).
+  \item \(\texttt{kid}\): key identifier carrying key purpose.
+\end{enumerate}
+
+The witness signature is then:
+\[
+  \sigma = \text{Ed25519.Sign}(sk, M),
+\]
+and the verifier reconstructs \(M\) and checks
+\(\text{Ed25519.Verify}(pk, M, \sigma)\) after enforcing the structural
+and trust-root invariants described in Section~\ref{sec:l0-scope}.
+
+\subsection{Stratified Non-Repudiation via NRLevel}
+
+We introduce an enum \(\texttt{NRLevel} \in
+\{\texttt{NR\_FULL},\ \texttt{NR\_CLASS},\ \texttt{NR\_NONE}\}\)
+assigned per capability action (\(\texttt{cap.action}\)) by a versioned,
+governed registry (the ICR). This field determines which non-repudiation
+invariants are required.
+
+\begin{itemize}
+  \item \(\texttt{NR\_FULL}\): governance-relevant actuation; requires
+        SPIFFE SVID-based executor identity, instance-level audience
+        binding, and historical SVID key archival.
+  \item \(\texttt{NR\_CLASS}\): non-governance actuation; class-level
+        binding suffices; instance binding is not enforced.
+  \item \(\texttt{NR\_NONE}\): witness, receipt, or trace-only operations;
+        no instance binding, evidentiary only.
+\end{itemize}
+
+The verifier enforces different invariants depending on \(\texttt{NRLevel}\);
+see Section~\ref{sec:l0-scope}.
+
+\section{ACE Audit Trail Design (ADR-012)}
+
+\subsection{Design Invariants}
+
+The ACE audit trail implementation, \texttt{AceAuditTrail}, enforces
+the following invariants:
+
+\begin{enumerate}[label=(I\arabic*)]
+  \item \textbf{NO\_CONTEXT\_MUTATION:} entries are never modified after
+        \texttt{append()}.
+  \item \textbf{DETERMINISTIC\_UNDER\_INJECTION:} all non-determinism
+        sources relevant to the HMAC chain (wall-clock, session ID)
+        are injectable at construction so that tests can compute exact
+        chain hashes via equality.
+  \item \textbf{TAMPER\_EVIDENT:} \texttt{verify\_chain()} replays the
+        HMAC chain from the genesis hash and returns \texttt{False} on
+        any single-field modification.
+  \item \textbf{HKDF\_COMPOSABLE:} the HMAC key at each step is
+        \texttt{bytes.fromhex(\_prev\_hash)}, i.e.\ raw 32-byte digest
+        material with full byte-value range \([0x00,\dots,0xFF]\),
+        zero-padded by the HMAC block schedule. Hex encoding is used
+        only for storage and display.
+  \item \textbf{THREAD-SAFE:} concurrent \texttt{append()} and
+        \texttt{verify\_chain()} calls are serialized around the
+        \((\_entries, \_prev\_hash)\) mutation pair with a lock;
+        verification uses a snapshot.
+\end{enumerate}
+
+\subsection{Clock Injection and Determinism}
+
+In naive implementations, \texttt{datetime.now(timezone.utc)} is called
+inside \texttt{append()}, making both the wall-clock and the derived
+\texttt{chain\_hash} non-deterministic. This prevents exact equality
+tests on the HMAC chain.
+
+The corrected design injects a clock callable at construction:
+
+\begin{lstlisting}[style=code,language=Python]
+class AceAuditTrail:
+    def __init__(
+        self,
+        session_id: Optional[str] = None,
+        *,
+        clock: Optional[Callable[[], datetime]] = None,
+    ) -> None:
+        self.session_id = session_id or str(uuid.uuid4())
+        self._clock = clock or (lambda: datetime.now(timezone.utc))
+        self._entries: list[AuditEntry] = []
+        self._prev_hash: str = _GENESIS_HASH
+        self._lock = threading.Lock()
+\end{lstlisting}
+
+Tests construct the trail with a fixed clock and session ID, enabling
+exact \texttt{==} assertions on \texttt{chain\_hash}.
+
+\subsection{HMAC Key Material and One-Shot Digest}
+
+The HMAC key is derived from the previous chain hash via
+\texttt{bytes.fromhex()}, not via UTF-8 encoding of a hex string:
+
+\begin{lstlisting}[style=code,language=Python]
+chain_hash = hmac.digest(
+    bytes.fromhex(self._prev_hash),   # 32 raw bytes
+    entry_json.encode(),
+    hashlib.sha256,
+).hex()
+\end{lstlisting}
+
+Using \texttt{bytes.fromhex()} ensures the key bytes span the full
+range and interact with HMAC's block-size reduction as intended,
+preserving compatibility with HKDF-Extract when the trail tail is
+used as input key material \cite{web:16,web:22}.
+
+\subsection{Float Normalization and Non-Finite Values}
+
+\texttt{AceCertificate} carries several float fields
+(lipschitz bounds, gap lower bounds, tail bounds). To ensure JSON
+encoding is both deterministic and standards-compliant, the
+serialization layer enforces finiteness:
+
+\begin{lstlisting}[style=code,language=Python]
+class AuditSerializationError(ValueError):
+    ...
+
+def _assert_finite(value: float, field: str) -> float:
+    if not math.isfinite(value):
+        raise AuditSerializationError(
+            f"certificate_to_dict(): field '{field}' is non-finite "
+            f"({value!r}). ... Root cause: upstream certifier gate "
+            f"condition did not return certified=False when gap_lb < delta."
+        )
+    return value
+
+_FLOAT_FIELDS = (..., "tail_bound", ...)
+
+def certificate_to_dict(cert: AceCertificate) -> dict:
+    d = dataclasses.asdict(cert)
+    if "level" in d and isinstance(d["level"], CertLevel):
+        d["level"] = d["level"].value
+    for field in _FLOAT_FIELDS:
+        if field in d and d[field] is not None:
+            d[field] = _assert_finite(d[field], field)
+    return d
+\end{lstlisting}
+
+At the audit trail boundary, \texttt{json.dumps} is called with
+\texttt{allow\_nan=False}, ensuring any non-finite float that escaped
+\texttt{\_assert\_finite} (e.g.\ inside a nested \texttt{details}
+dictionary) triggers a \texttt{ValueError}:
+
+\begin{lstlisting}[style=code,language=Python]
+entry_json = json.dumps(entry_data, sort_keys=True, allow_nan=False)
+\end{lstlisting}
+
+Upstream certifier functions (\texttt{certify\_l3}, \texttt{certify\_l4},
+\texttt{certify\_l5}) are responsible for returning
+\texttt{certified=False} when gap conditions fail, and the
+\texttt{AceProtocol} layer omits uncertified certificates from the
+trail entirely.
+
+\subsection{Thread Safety and Immutability}
+
+The audit trail uses a \texttt{threading.Lock} to serialize the
+critical region:
+
+\begin{lstlisting}[style=code,language=Python]
+def append(self, cert: AceCertificate, prime_index: int) -> AuditEntry:
+    ...
+    entry_json = json.dumps(entry_data, sort_keys=True, allow_nan=False)
+
+    with self._lock:
+        chain_hash = hmac.digest(
+            bytes.fromhex(self._prev_hash),
+            entry_json.encode(),
+            hashlib.sha256,
+        ).hex()
+        entry = AuditEntry(..., chain_hash=chain_hash)
+        self._entries.append(entry)
+        self._prev_hash = chain_hash
+    return entry
+\end{lstlisting}
+
+Verification obtains a snapshot of entries under the lock, then
+replays HMACs without holding the lock:
+
+\begin{lstlisting}[style=code,language=Python]
+def verify_chain(self) -> bool:
+    with self._lock:
+        snapshot = list(self._entries)
+    prev = _GENESIS_HASH
+    for e in snapshot:
+        entry_data = {...}
+        entry_json = json.dumps(entry_data, sort_keys=True, allow_nan=False)
+        expected = hmac.digest(bytes.fromhex(prev), entry_json.encode(),
+                               hashlib.sha256).hex()
+        if not hmac.compare_digest(expected, e.chain_hash):
+            return False
+        prev = e.chain_hash
+    return True
+\end{lstlisting}
+
+The \texttt{AuditEntry} dataclass is made \emph{frozen} to prevent
+accidental mutation in production, but tamper tests deliberately
+bypass this via \texttt{object.\_\_setattr\_\_} to demonstrate that
+the integrity boundary is the HMAC chain, not Python's object model.
+
+\section{L0 Scope-Bound Signatures and Executor Identity}
+\label{sec:l0-scope}
+
+\subsection{Decomposing Audience and Intent}
+
+The initial invariant treated \texttt{aud} as a single policy dial.
+This is insufficient. The correct abstraction decomposes audience
+into:
+\begin{itemize}
+  \item \texttt{aud.class}: logical adapter type (e.g.\ text executor).
+  \item \texttt{aud.instance}: concrete executor instance identity.
+  \item \texttt{aud.version}: adapter API contract version.
+\end{itemize}
+
+At the same time, the \emph{intent} being authorized is classified
+into an \texttt{intentClass} drawn from a versioned registry:
+
+\begin{itemize}
+  \item \texttt{actuation}: state-changing operation.
+  \item \texttt{witness}: observation only.
+  \item \texttt{receipt}: acknowledgement only.
+  \item \texttt{trace-atom}: pure telemetry/provenance.
+\end{itemize}
+
+The key insight is that the requirement for instance-level binding
+depends on \texttt{intentClass}: it is mandatory for actuation but
+not for witness-only operations.
+
+\subsection{IntentClass Registry and Non-Repudiation Level}
+
+The IntentClass Registry (ICR) is a JSON artifact mapping
+\(\texttt{cap.action}\) to \(\texttt{intentClass}\) and \(\texttt{NRLevel}\).
+Crucially, the registry is versioned and its version is embedded in
+the domain separator of the signed message.
+
+Each action is assigned one of:
+\begin{itemize}
+  \item \texttt{NR\_FULL}: instance-level non-repudiation with
+        SPIFFE SVID required.
+  \item \texttt{NR\_CLASS}: class-level non-repudiation; instance
+        binding optional.
+  \item \texttt{NR\_NONE}: evidentiary-only.
+\end{itemize}
+
+The ICR also includes a governed field
+\texttt{unclassified\_action\_default} with allowed values
+\{\texttt{REJECT}, \texttt{NR\_CLASS}, \texttt{NR\_FULL}\},
+which determines the fail-safe behavior when a \texttt{cap.action}
+has no explicit entry. The default shipped value is \texttt{REJECT}.
+
+\subsection{Sub-Invariants L0-SIG-SCOPE-*}
+
+The original L0-SIG-SCOPE invariant unfolds into the following
+sub-invariants:
+
+\begin{description}
+  \item[L0-SIG-SCOPE-CLASS] applies to all signatures. The verifier
+    rejects any token with missing or mismatched \texttt{aud.class}
+    or \texttt{aud.version}.
+
+  \item[L0-SIG-SCOPE-INSTANCE] applies when
+    \(\texttt{intentClass} = \texttt{actuation}\) and
+    \(\texttt{NRLevel} = \texttt{NR\_FULL}\). The executor (or a
+    gate on its behalf) rejects tokens if \texttt{aud.instance}
+    is absent or does not match the executor's SPIFFE ID.
+
+  \item[L0-SIG-SCOPE-INTENTCLASS] applies to all signatures. The
+    verifier uses the ICR to determine the canonical
+    \(\texttt{intentClass}\) for \(\texttt{cap.action}\), and rejects
+    tokens where the signer-declared \texttt{intentClass} differs.
+    This closes the classification oracle attack in which a signer
+    might mislabel an actuation as a witness to evade stricter
+    checks.
+
+  \item[L0-SIG-SCOPE-SVID] applies when
+    \(\texttt{NRLevel} = \texttt{NR\_FULL}\). The executor's SVID
+    must validate against the SPIRE trust bundle at the time of
+    execution (using the certificate valid at \texttt{iat}), and
+    the key purpose \texttt{kid.type} must match
+    \(\texttt{intentClass}\).
+\end{description}
+
+\subsection{Two-Root Trust Architecture via SPIFFE SVIDs}
+
+Non-repudiation is anchored in two independent trust roots:
+
+\begin{itemize}
+  \item \textbf{Principal trust root:} a DID-based key hierarchy
+        used to sign class-scoped delegation tokens. This root governs
+        which actions are authorized and for which adapter classes.
+
+  \item \textbf{Executor trust root:} a platform attestation authority
+        (e.g.\ SPIRE) which issues short-lived SVIDs binding a
+        SPIFFE ID to a workload instance based on runtime attestation
+        (node, workload, TEE, etc.) \cite{web:77,web:90,web:104}.
+\end{itemize}
+
+The principal cannot safely assert instance identity, because it has
+no direct observation of runtime placement. The executor cannot
+self-assert instance identity without circularity. SPIRE breaks this
+impasse by issuing identities to workloads based on attested runtime
+properties, independent of the principal and the workload code.
+
+Execution receipts bind both roots together by including:
+
+\begin{itemize}
+  \item the executor's SPIFFE ID and SVID key identifier;
+  \item a hash of the delegation token;
+  \item the non-repudiation level; and
+  \item the Ed25519 signature over the scope-bound message.
+\end{itemize}
+
+\subsection{Verifier Algorithm}
+
+The verifier executes the checks in the following order:
+
+\begin{enumerate}[label=Step~\arabic*:]
+  \item \textbf{Intent class and ICR version.} Resolve
+        \(\texttt{intentClass}\) from the ICR using \(\texttt{cap.action}\).
+        Reject if the token's declared \(\texttt{intentClass}\) does
+        not match, or if the domain separator's ICR version differs
+        from the registry.
+
+  \item \textbf{Audience class and version.} Reject if
+        \(\texttt{aud.class}\) or \(\texttt{aud.version}\) are absent
+        or not in the verifier's supported set.
+
+  \item \textbf{Instance binding (NR\_FULL).} If the action's
+        \(\texttt{NRLevel} = \texttt{NR\_FULL}\), reject if
+        \(\texttt{aud.instance}\) is absent or does not equal the
+        executor's SPIFFE ID.
+
+  \item \textbf{SVID validation (NR\_FULL).} Validate the executor's
+        SVID against the SPIRE trust bundle and historical key archive
+        using \(\texttt{svid\_key\_id}\) and \(\texttt{iat}\).
+        Reject if expired at execution time, if issued by a different
+        trust domain, or if \(\texttt{kid.type}\) does not match
+        the ICR-specified purpose for the \(\texttt{intentClass}\).
+
+  \item \textbf{Signature and replay.} Reconstruct the signed message
+        \(M\); verify the Ed25519 signature with the appropriate key;
+        reject on signature failure, replay (seen \texttt{nonce}), or
+        invalid time window (\(\texttt{exp} < \texttt{now}\) or
+        \(\texttt{iat}\) too far in the future).
+\end{enumerate}
+
+\subsection{ICR Governance and Empty Registry Semantics}
+
+The IntentClass Registry includes a governance field
+\texttt{unclassified\_action\_default} controlling how unlisted
+\(\texttt{cap.action}\) values are treated:
+
+\begin{itemize}
+  \item \texttt{REJECT}: fail-safe default. Any unlisted action is
+        rejected; CI gates fail if the registry has no classified
+        actions and the default is \texttt{REJECT}.
+
+  \item \texttt{NR\_CLASS}: explicit declaration that unlisted actions
+        are treated as \texttt{NR\_CLASS}. An empty \texttt{actions[]}
+        with this default describes an intentional NR\_CLASS-only
+        deployment, which CI gates may allow.
+
+  \item \texttt{NR\_FULL}: strict default; any unlisted action is
+        treated as requiring SVID and instance binding.
+\end{itemize}
+
+CI gates read this field to distinguish between a truly unclassified
+registry and an intentional NR\_CLASS-only deployment, preventing
+the ``empty registry passes by accident'' failure mode.
+
+\section{Defensive Publication Impact}
+
+The combination of patterns described here is the subject of this
+defensive publication:
+
+\begin{itemize}
+  \item A specific HMAC-chained audit trail that:
+    \begin{itemize}
+      \item injects time and session non-determinism at construction,
+            not at append time;
+      \item uses \texttt{bytes.fromhex} of prior chain hash as the
+            HMAC key and \texttt{hmac.digest} as the one-shot form;
+      \item enforces float finiteness and rejects non-finite values
+            before JSON encoding;
+      \item uses \texttt{allow\_nan=False} as a defense-of-last-resort;
+      \item achieves thread-safe atomicity of log append and chain head
+            update using a narrow lock.
+    \end{itemize}
+  \item A scope-bound Ed25519 signature scheme that:
+    \begin{itemize}
+      \item encodes domain, ICR version, intent class, audience
+            class, audience instance, scope hash, intent hash, trace
+            hash, time window, nonce, and key ID;
+      \item uses a closed, versioned intent-class registry with
+            a non-repudiation level per action;
+      \item stratifies SPIFFE SVID requirements based on non-repudiation
+            level;
+      \item prevents classification oracle attacks by cross-checking
+            declared intent class against registry-resolved class; and
+      \item ties executor identity to a platform attestation authority
+            rather than to either the principal or the workload.
+    \end{itemize}
+\end{itemize}
+
+These elements, taken together, constitute prior art for any system
+that claims an identical combination of invariants, message fields,
+and code-level patterns in a governance-grade context.
+
+\section{Recommendations and Future Work}
+
+\begin{itemize}
+  \item \textbf{CBOR migration for audit trail.} When cross-runtime
+        verifiers (e.g.\ Go or Rust) are introduced, the audit trail
+        should migrate from JSON to canonical CBOR (CTAP2 profile) for
+        float encoding and cross-language determinism.
+
+  \item \textbf{Air-gapped SPIRE deployments.} For environments without
+        internet access, deploy SPIRE in an air-gapped configuration
+        and document SVID trust-bundle distribution and archival.
+
+  \item \textbf{Formal verification hooks.} Both the audit trail and
+        the signature scope invariants lend themselves to formalization
+        (e.g.\ in TLA+ or Coq), particularly the replay and
+        non-repudiation properties.
+
+  \item \textbf{Plane boundary enforcement.} The separation between
+        Plane A (compute) and Plane C (FP calibration) identity models
+        should be monitored as new features are added, ensuring that
+        organizational identity (Plane C) is never conflated with
+        executor identity (Plane A).
+\end{itemize}
+
+\appendix
+\section{Mathematical Appendix}
+\label{app:math}
+
+This appendix collects the explicit proofs and norm bounds that were
+referenced in the main text but omitted for brevity.
+
+\subsection{Lyapunov decrease condition (L5)}
+\begin{theorem}[Asymptotic stability from Lyapunov decrease]\label{thm:lyap}
+Let a discrete-time system be described by
+\[
+  x_{k+1}=K\,x_k,
+\]
+with state $x_k\in\mathbb{R}^n$ and constant matrix $K$.
+Suppose there exists a symmetric positive-definite matrix $P\succ0$
+such that
+\[
+  \Delta V(x)=x_k^\top\!\bigl(K^\top P K-P\bigr)\,x_k<0
+\quad\text{for all }x_k\neq0.
+\tag{1}
+\]
+Then the origin $x=0$ is asymptotically stable.
+\end{theorem}
+\begin{proof}
+Define the quadratic Lyapunov function $V(x)=x^\top P x$.
+Because $P\succ0$, $V(x)$ is positive definite and radially unbounded.
+From (1) we have $V(x_{k+1})-V(x_k)=\Delta V(x_k)<0$ for all $x_k\neq0$,
+so $V$ is strictly decreasing along non‑zero trajectories.
+Thus $V(x_k)$ is a monotonically decreasing sequence bounded below by
+$0$, hence converges.  LaSalle’s invariance principle then implies that
+the only invariant set where $\Delta V(x)=0$ is $\{0\}$; consequently
+$x_k\to0$ as $k\to\infty$.  Hence the origin is asymptotically stable.
+\end{proof}
+
+The certificate returned by \texttt{certify\_l5} uses the scalar
+\[
+  \lambda_{\max}\bigl(K^\top P K-P\bigr)
+\]
+as a certificate of decrease.  The following norm bound is useful for
+implementation.
+
+\begin{lemma}[Operator‑norm bound on the Lyapunov decrease]\label{lem:lyapnorm}
+Let $\|\cdot\|_2$ denote the spectral (operator) norm.
+If
+\[
+  \|K\|_2 < \frac{1}{\sqrt{\|P\|_2\,\|P^{-1}\|_2}},
+\tag{2}
+\]
+then $K^\top P K-P\prec0$.
+\end{lemma}
+\begin{proof}
+From the sub‑multiplicativity of the spectral norm,
+\[
+  \|K^\top P K\|_2\le \|K\|_2^2\,\|P\|_2 .
+\]
+Using $\|P^{-1}\|_2 = 1/\lambda_{\min}(P)$ and
+$\lambda_{\min}(P)\,\|P^{-1}\|_2=1$, we obtain
+\[
+  \lambda_{\max}(K^\top P K)\le \|K\|_2^2\,\|P\|_2 .
+\]
+Since $P\succ0$,
+\[
+  \lambda_{\max}(K^\top P K-P)\le
+  \|K\|_2^2\,\|P\|_2-\lambda_{\min}(P)
+  =\|P\|_2\Bigl(\|K\|_2^2-\frac{1}{\|P^{-1}\|_2}\Bigr).
+\]
+Thus the right‑hand side of (2) guarantees the eigenvalues of
+$K^\top P K-P$ are strictly negative. ∎
+\end{lemma}
+
+\subsection{Tamper‑evidence of the HMAC‑chained audit trail}
+\begin{theorem}[Tamper detection]\label{thm:tamper}
+Let an audit trail consist of entries
+$e_i=(\text{prime}_i,\text{cert}_i,w_i,s_i,h_i)$ with
+$h_i=\mathrm{HMAC}_{k_i}(m_i)$,
+$k_i=\mathtt{bytes.fromhex}(h_{i-1})$,
+$m_i=\mathtt{JSON\_CANONICAL}(\text{prime}_i,\text{cert}_i,w_i,s_i)$,
+and $h_0$ the fixed genesis hash.  If any field of a single entry
+$e_j$ is altered, then
+$\mathtt{verify\_chain}()$ returns \texttt{False}.
+\end{theorem}
+\begin{proof}
+Assume a modification occurs at entry $j$, producing a
+modified entry $\tilde e_j\neq e_j$ while all other entries remain
+unchanged.  The verifier recomputes the message $\tilde m_j$ from
+$\tilde e_j$ and the corresponding digest
+$\tilde h_j=\mathrm{HMAC}_{\tilde k_j}(\tilde m_j)$ where
+$\tilde k_j=\mathtt{bytes.fromhex}(h_{j-1})$ (unchanged because
+$h_{j-1}$ depends only on earlier entries).  Since the HMAC function
+is deterministic and the key $\tilde k_j$ is unchanged,
+$\tilde h_j\neq h_j$ iff $\tilde m_j\neq m_j$.  Because the
+modification changed at least one field of $e_j$, the canonical
+JSON representation differs, hence $\tilde m_j\neq m_j$ and thus
+$\tilde h_j\neq h_j$.  When the verifier reaches entry $j+1$ it uses
+the stored hash $h_j$ as the key material for the next step; the
+mismatch propagates and causes a comparison failure at the latest
+by the verification of entry $j+1$.  Therefore
+$\mathtt{verify\_chain}()=\texttt{False}$. ∎
+\end{proof}
+
+\begin{remark}
+The theorem relies on the collision resistance of HMAC‑SHA256: for a
+fixed key, finding two distinct messages with the same digest is
+computationally infeasible.  This is the standard security assumption
+for HMAC \cite{web:16}.
+\end{remark}
+
+\subsection{Operator‑norm bounds for the Level‑0 to Level‑4 certifiers}
+The ACE levels L0–L4 each return a certificate with a Lipschitz
+upper bound equal to the operator norm of the contraction matrix
+$K$ (or a related matrix).  The following lemma guarantees that the
+certified Lipschitz constant is an upper bound on the true gain.
+
+\begin{lemma}[Spectral norm bounds the induced $2$-gain]\label{lem:opnorm}
+For any matrix $M\in\mathbb{R}^{n\times n}$ and any vector $x$,
+\[
+  \|Mx\|_2\le\|M\|_2\,\|x\|_2 .
+\]
+Consequently, if a certificate reports
+$\texttt{lipschitz\_upper}=\|K\|_2$, then for all inputs
+\[
+  \frac{\|\,Kx\,\|_2}{\|x\|_2}\le\texttt{lipschitz\_upper}.
+\]
+\end{lemma}
+\begin{proof}
+Immediate from the definition of the spectral norm as the
+maximum singular value. ∎
+\end{lemma}
+
+\subsection{Scope binding and collision resistance}
+The witness signature message $M$ (see Section~\ref{sec:l0-scope}) is a
+concatenation of length‑prefixed fields.  The following lemma shows
+that altering any scope‑binding field without detection would require
+finding a collision in the underlying hash function.
+
+\begin{lemma}[Binding via cryptographic hash]\label{lem:hashbind}
+Let $H$ be a collision‑resistant hash function (e.g. SHA‑256).
+If a signer produces a valid signature $\sigma=\mathrm{Sign}_{sk}(M)$
+on a message $M$ that contains a field $F$ (such as \texttt{scopeHash},
+\texttt{aud.class}, \texttt{nonce}, etc.), then any verifier that
+reconstructs $M'$ from the signature and accepts $\sigma$ must have
+$F'=F$ with overwhelming probability; otherwise a collision in $H$
+would have been found.
+\end{lemma}
+\begin{proof}
+The signature verification checks $\mathrm{Verify}_{pk}(M,\sigma)=\texttt{True}$.
+Since the signature scheme is existentially unforgeable under
+chosen‑message attacks, the only way to produce a valid signature on a
+message $M'\neq M$ is to find a collision in the hash that the
+signature scheme internally uses (or to forge the signature directly,
+which is assumed infeasible).  All scope‑binding fields are fed
+into $M$ via a cryptographic hash (either directly as a field or as
+part of a larger hash such as \texttt{intentHash} or \texttt{scopeHash}).
+Thus changing any of those fields without detection would yield a
+collision in $H$, contradicting its collision resistance. ∎
+\end{lemma}
+
+These lemmas and theorems together constitute the mathematical
+foundations of the claims made in the main text regarding stability,
+audit‑trail integrity, and scope‑bound non‑repudiation.  They can be
+included verbatim in a formal specification or security proof
+artifact. 
+
+\nocite{*}
+\bibliographystyle{unsrt}  
+\bibliography{references}
+\end{document}

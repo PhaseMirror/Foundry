@@ -1,0 +1,339 @@
+name: WASM Multi-Platform CI
+
+on:
+  push:
+    branches: [Multiplicity, develop, feature/*, feat/*]
+    paths:
+      - 'crates/hologram-backends/**'
+      - 'crates/**'
+      - 'hologram/**'
+  pull_request:
+    branches: [Multiplicity, develop]
+    paths:
+      - 'crates/hologram-backends/**'
+      - 'crates/**'
+      - 'hologram/**'
+  workflow_dispatch:
+
+env:
+  RUST_BACKTRACE: 1
+  CARGO_TERM_COLOR: always
+
+jobs:
+  detect:
+    name: Detect WASM changes
+    runs-on: ubuntu-latest
+    outputs:
+      wasm: ${{ steps.filter.outputs.wasm }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Filter paths for WASM
+        id: filter
+        uses: dorny/paths-filter@v2
+        with:
+          filters: |
+            wasm:
+              - 'crates/hologram-backends/**'
+              - 'crates/**'
+              - 'hologram/**'
+
+  wasm-build-and-test:
+    name: WASM Build & Test (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # macOS ARM64 (Apple Silicon)
+          - os: macos-14
+            arch: arm64
+            rust: stable
+
+          # macOS x86-64 (Intel)
+          - os: macos-13
+            arch: x86_64
+            rust: stable
+
+          # Linux x86-64
+          - os: ubuntu-latest
+            arch: x86_64
+            rust: stable
+
+          # Windows x86-64
+          - os: windows-latest
+            arch: x86_64
+            rust: stable
+
+    runs-on: ${{ matrix.os }}
+
+    needs: detect
+    if: needs.detect.outputs.wasm == 'true' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust ${{ matrix.rust }}
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ matrix.rust }}
+          targets: wasm32-unknown-unknown
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/registry/index
+          key: ${{ runner.os }}-${{ matrix.arch }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.arch }}-cargo-registry-
+
+      - name: Cache cargo git
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-${{ matrix.arch }}-cargo-git-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.arch }}-cargo-git-
+
+      - name: Cache cargo build
+        uses: actions/cache@v4
+        with:
+          path: target
+          key: ${{ runner.os }}-${{ matrix.arch }}-cargo-wasm-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.arch }}-cargo-wasm-
+
+      - name: Verify platform architecture
+        shell: bash
+        run: |
+          echo "Platform: ${{ matrix.os }}"
+          echo "Architecture: ${{ matrix.arch }}"
+          if [ "$RUNNER_OS" == "macOS" ]; then
+            uname -m
+            sysctl -n machdep.cpu.brand_string || true
+          elif [ "$RUNNER_OS" == "Linux" ]; then
+            uname -m
+            cat /proc/cpuinfo | grep "model name" | head -1 || true
+          elif [ "$RUNNER_OS" == "Windows" ]; then
+            echo "Windows architecture: $env:PROCESSOR_ARCHITECTURE"
+          fi
+
+      - name: Check Rust and WASM target
+        run: |
+          rustc --version --verbose
+          rustup target list --installed
+
+      - name: Install protobuf compiler (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y protobuf-compiler
+
+      - name: Install protobuf compiler (macOS)
+        if: runner.os == 'macOS'
+        run: brew install protobuf
+
+      - name: Install protobuf compiler (Windows)
+        if: runner.os == 'Windows'
+        run: choco install protoc
+
+      - name: Run workspace tests
+        run: cargo test --workspace --verbose
+
+      - name: Build WASM (hologram-backends)
+        run: cargo build --target wasm32-unknown-unknown -p hologram-backends --verbose
+
+      - name: Build WASM with WebGPU feature
+        run: cargo build --target wasm32-unknown-unknown -p hologram-backends --features webgpu --verbose
+
+      - name: Build release WASM
+        run: cargo build --target wasm32-unknown-unknown -p hologram-backends --release --verbose
+
+      - name: Check WASM binary size
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          WASM_FILE="target/wasm32-unknown-unknown/release/hologram_backends.wasm"
+          if [ -f "$WASM_FILE" ]; then
+            SIZE=$(stat -f%z "$WASM_FILE" 2>/dev/null || stat -c%s "$WASM_FILE")
+            SIZE_MB=$((SIZE / 1024 / 1024))
+            echo "WASM binary size: $SIZE bytes ($SIZE_MB MB)"
+            if [ $SIZE -gt 10485760 ]; then
+              echo "::warning::WASM binary size exceeds 10MB ($SIZE_MB MB)"
+            fi
+            echo "wasm_size=$SIZE" >> $GITHUB_OUTPUT
+          else
+            echo "::error::WASM binary not found at $WASM_FILE"
+            exit 1
+          fi
+
+      - name: Upload WASM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: wasm-binary-${{ matrix.os }}-${{ matrix.arch }}
+          path: target/wasm32-unknown-unknown/release/*.wasm
+          if-no-files-found: warn
+
+  browser-tests:
+    name: Browser Tests (Chrome)
+    runs-on: ubuntu-latest
+    needs: wasm-build-and-test
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Install wasm-pack
+        run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+
+      - name: Install Chrome
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: stable
+
+      - name: Verify Chrome installation
+        run: |
+          chrome --version
+          which chrome || which google-chrome || which chromium
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry/index
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-browser-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Run WASM tests in headless Chrome
+        run: |
+          cd crates/hologram-backends
+          wasm-pack test --headless --chrome --features webgpu
+
+      - name: Run WASM tests without WebGPU (fallback)
+        run: |
+          cd crates/hologram-backends
+          wasm-pack test --headless --chrome
+
+  performance-benchmarks:
+    name: WASM Performance Benchmarks
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/Multiplicity'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry/index
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-bench-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Run CPU baseline benchmarks
+        run: |
+          cargo bench --bench webgpu_baseline -- --output-format bencher | tee bench-results.txt
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: |
+            bench-results.txt
+            target/criterion/
+
+      - name: Check for performance regressions
+        if: github.event_name == 'pull_request'
+        run: |
+          echo "Performance regression detection (placeholder)"
+          echo "TODO: Compare against baseline and fail if >10% regression"
+
+  compare-artifacts:
+    name: Compare Platform Binaries
+    needs: wasm-build-and-test
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Download all WASM artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: wasm-binary-*
+          path: artifacts
+
+      - name: Compare binary sizes
+        run: |
+          echo "=== WASM Binary Size Comparison ==="
+          echo ""
+          for dir in artifacts/wasm-binary-*; do
+            if [ -d "$dir" ]; then
+              platform=$(basename "$dir" | sed 's/wasm-binary-//')
+              for file in "$dir"/*.wasm; do
+                if [ -f "$file" ]; then
+                  size=$(stat -c%s "$file" 2>/dev/null || stat -f%z "$file")
+                  size_mb=$(echo "scale=2; $size / 1024 / 1024" | bc)
+                  echo "Platform: $platform"
+                  echo "  File: $(basename $file)"
+                  echo "  Size: $size bytes ($size_mb MB)"
+                  echo ""
+                fi
+              done
+            fi
+          done
+
+      - name: Generate comparison report
+        run: |
+          echo "# WASM Build Comparison" > comparison-report.md
+          echo "" >> comparison-report.md
+          echo "| Platform | File | Size (MB) |" >> comparison-report.md
+          echo "|----------|------|-----------|" >> comparison-report.md
+          for dir in artifacts/wasm-binary-*; do
+            if [ -d "$dir" ]; then
+              platform=$(basename "$dir" | sed 's/wasm-binary-//')
+              for file in "$dir"/*.wasm; do
+                if [ -f "$file" ]; then
+                  size=$(stat -c%s "$file" 2>/dev/null || stat -f%z "$file")
+                  size_mb=$(echo "scale=2; $size / 1024 / 1024" | bc)
+                  filename=$(basename "$file")
+                  echo "| $platform | $filename | $size_mb |" >> comparison-report.md
+                fi
+              done
+            fi
+          done
+
+      - name: Upload comparison report
+        uses: actions/upload-artifact@v4
+        with:
+          name: wasm-comparison-report
+          path: comparison-report.md
+
+  summary:
+    name: CI Summary
+    needs: [wasm-build-and-test, browser-tests]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Check all jobs status
+        run: |
+          echo "WASM Build & Test: ${{ needs.wasm-build-and-test.result }}"
+          echo "Browser Tests: ${{ needs.browser-tests.result }}"
+
+          if [ "${{ needs.wasm-build-and-test.result }}" != "success" ]; then
+            echo "::error::WASM build/test failed"
+            exit 1
+          fi
+
+          if [ "${{ needs.browser-tests.result }}" != "success" ]; then
+            echo "::error::Browser tests failed"
+            exit 1
+          fi
+
+          echo "✅ All WASM CI checks passed!"

@@ -28,11 +28,11 @@ namespace MTPI.ADR0013
 
 open MTPI.ADR
 
-initialize adrAttr : TagAttribute ←
-  registerTagAttribute `adr { descr := "marks a formal ADR-0013 artifact" }
+initialize adrAttr : Lean.TagAttribute ←
+  Lean.registerTagAttribute `adr { descr := "marks a formal ADR-0013 artifact" }
 
-initialize proofAttr : TagAttribute ←
-  registerTagAttribute `proof { descr := "marks a machine-checked ADR-0013 proof" }
+initialize proofAttr : Lean.TagAttribute ←
+  Lean.registerTagAttribute `proof { descr := "marks a machine-checked ADR-0013 proof" }
 
 /-! ## Meta: the ADR record itself -/
 
@@ -80,11 +80,11 @@ def minEnvelopeLen : Nat := fixedWidth + prefixWidth
 
 @[proof]
 theorem fixedWidth_eq : fixedWidth = 184 := by
-  norm_num [fixedWidth]
+  rfl
 
 @[proof]
 theorem minEnvelopeLen_eq : minEnvelopeLen = 188 := by
-  norm_num [minEnvelopeLen, fixedWidth, prefixWidth]
+  rfl
 
 /-- Byte index helper: byte `exponent` (0 = least significant) of `n`. -/
 @[adr]
@@ -165,8 +165,7 @@ theorem canonicalBytes_field_order (e : UnsignedCrmfEnvelope) :
 theorem fixedPrefix_widths (e : UnsignedCrmfEnvelope) (h : canonicalWidths e) :
     (fixedPrefix e).length = fixedWidth := by
   rcases h with ⟨h_id, h_pose, h_sha, h_sig⟩
-  simp [fixedPrefix, be8, List.length_append, h_id, h_pose, h_sha, h_sig]
-  norm_num [fixedWidth]
+  simp [fixedPrefix, be8, List.length_append, fixedWidth, h_id, h_pose, h_sha, h_sig]
 
 /-- Total canonical length is a deterministic function of the metadata length:
 `len = 184 + 4 + |metadata|`. This is the Lean mirror of the Rust
@@ -176,8 +175,7 @@ theorem canonicalBytes_length (e : UnsignedCrmfEnvelope) (h : canonicalWidths e)
     (canonicalBytes e).length = minEnvelopeLen + e.metadata.length := by
   rcases h with ⟨h_id, h_pose, h_sha, h_sig⟩
   simp [canonicalBytes, fixedPrefix, lenPrefix, be8, be4, List.length_append,
-        h_id, h_pose, h_sha, h_sig]
-  norm_num [minEnvelopeLen, fixedWidth, prefixWidth]
+        minEnvelopeLen, fixedWidth, prefixWidth, h_id, h_pose, h_sha, h_sig]
 
 /-! ## Contractivity gate and fail-closed interlocks -/
 
@@ -283,7 +281,7 @@ the two operator orders bind to distinct integrity inputs. -/
 @[proof]
 theorem order_ab_ne_ba :
     PwehBind.mk 2 9 27 5 ≠ PwehBind.mk 9 2 27 5 := by
-  exact pweh_bind_swap (b := 9) (c := 27) (d := 5) (by norm_num)
+  exact pweh_bind_swap (a := 2) (b := 9) (c := 27) (d := 5) (by decide)
 
 /-- Fixed-width byte preimage of a binding (8 bytes per field, ADR-0013
 fixed-width fields). -/
@@ -297,7 +295,6 @@ sees a canonical-length digest input. -/
 theorem pweh_preimage_length (b : PwehBind) :
     (pweh_preimage_bytes b).length = 32 := by
   simp [pweh_preimage_bytes, be8, List.length_append]
-  norm_num
 
 /-! ## Canonical example (runtime witness) -/
 

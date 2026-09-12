@@ -24,12 +24,16 @@ pub mod seal;
 pub mod ledger;
 pub mod bcs;
 pub mod poseidon2;
+pub mod canonical;
+pub mod failgate;
+pub mod pweh;
 
 pub use envelope::{CrmfEnvelope, EnvelopePayload, EnvelopeMetadata};
 pub use seal::{CrmfSeal, DualAnchor};
 pub use poseidon2::Poseidon2Commitment;
 pub use bcs::BcsError;
 pub use ledger::CrmfLedger;
+pub use failgate::{FailLatch, GovSignal, is_contractive, is_associator_defect};
 
 // ---------------------------------------------------------------------------
 // CRMF Error types

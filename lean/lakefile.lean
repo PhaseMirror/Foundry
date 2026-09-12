@@ -13,11 +13,14 @@ package adr_scaffold {
 -- Active default target:
 @[default_target]
 lean_lib MTPI where
-  roots := #[`MTPI.Core, `MTPI.ADR, `MTPI.Proofs, `MTPI.Examples, `MTPI.Export]
+  roots := #[`MTPI.Core, `MTPI.ADR, `MTPI.ADR0013, `MTPI.Proofs, `MTPI.Examples, `MTPI.Export]
 
 @[test_driver]
 lean_exe adr_test where
   root := `MTPI.Test
+
+lean_exe adr0013_test where
+  root := `MTPI.ADR0013Test
 
 lean_exe mtpi_test where
   root := `tests.Test

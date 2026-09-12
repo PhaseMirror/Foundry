@@ -1,0 +1,106 @@
+name: PrismPM reusable SDK
+
+on:
+  workflow_call:
+    inputs:
+      sdk-image:
+        required: true
+        type: string
+      command:
+        required: true
+        type: string
+      context:
+        default: .
+        type: string
+      reference:
+        default: ""
+        type: string
+      release:
+        default: ""
+        type: string
+      target:
+        default: ""
+        type: string
+      plan:
+        default: ""
+        type: string
+      backup:
+        default: ""
+        type: string
+      restore-target:
+        default: ""
+        type: string
+      detach:
+        default: false
+        type: boolean
+      authorized:
+        default: false
+        type: boolean
+      secret-directory:
+        default: .prismpm/secrets
+        type: string
+      bundle:
+        default: ""
+        type: string
+      trusted-root:
+        default: ""
+        type: string
+      policy:
+        default: ""
+        type: string
+      promotion-to:
+        default: ""
+        type: string
+      environment:
+        default: ""
+        type: string
+    outputs:
+      release-digest:
+        value: ${{ jobs.invoke.outputs.release-digest }}
+      plan-digest:
+        value: ${{ jobs.invoke.outputs.plan-digest }}
+      evidence-digest:
+        value: ${{ jobs.invoke.outputs.evidence-digest }}
+      policy-path:
+        value: ${{ jobs.invoke.outputs.policy-path }}
+      trusted-root-path:
+        value: ${{ jobs.invoke.outputs.trusted-root-path }}
+      signature-referrer:
+        value: ${{ jobs.invoke.outputs.signature-referrer }}
+
+permissions: {}
+
+jobs:
+  invoke:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    outputs:
+      release-digest: ${{ steps.prism.outputs.release-digest }}
+      plan-digest: ${{ steps.prism.outputs.plan-digest }}
+      evidence-digest: ${{ steps.prism.outputs.evidence-digest }}
+      policy-path: ${{ steps.prism.outputs.policy-path }}
+      trusted-root-path: ${{ steps.prism.outputs.trusted-root-path }}
+      signature-referrer: ${{ steps.prism.outputs.signature-referrer }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - id: prism
+        uses: ./action
+        with:
+          sdk-image: ${{ inputs.sdk-image }}
+          command: ${{ inputs.command }}
+          context: ${{ inputs.context }}
+          reference: ${{ inputs.reference }}
+          release: ${{ inputs.release }}
+          target: ${{ inputs.target }}
+          plan: ${{ inputs.plan }}
+          backup: ${{ inputs.backup }}
+          restore-target: ${{ inputs.restore-target }}
+          detach: ${{ inputs.detach }}
+          authorized: ${{ inputs.authorized }}
+          secret-directory: ${{ inputs.secret-directory }}
+          bundle: ${{ inputs.bundle }}
+          trusted-root: ${{ inputs.trusted-root }}
+          policy: ${{ inputs.policy }}
+          promotion-to: ${{ inputs.promotion-to }}
+          environment: ${{ inputs.environment }}

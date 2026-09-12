@@ -1,0 +1,39 @@
+package net.openid.conformance.openid.federation;
+
+import com.google.gson.JsonElement;
+import net.openid.conformance.testmodule.PublishTestModule;
+import net.openid.conformance.variant.FAPIAuthRequestMethod;
+import org.springframework.http.HttpMethod;
+
+@PublishTestModule(
+	testName = "openid-federation-automatic-client-registration-with-par-and-trust-chain",
+	displayName = "OpenID Federation OP test: Automatic client registration with PAR and " +
+		"including the trust_chain as a header parameter",
+	summary = "The test acts as an RP wanting to perform automatic client registration with an OP, with PAR. " +
+		"with JAR and HTTP GET to the authorization endpoint. The authorization request will contain " +
+		"the trust_chain header parameter.",
+	profile = "OIDFED"
+)
+@SuppressWarnings("unused")
+public class OpenIDFederationAutomaticClientRegistrationWithParAndTrustChainTest extends OpenIDFederationAutomaticClientRegistrationTest {
+
+	@Override
+	protected FAPIAuthRequestMethod getRequestMethod() {
+		return FAPIAuthRequestMethod.PUSHED;
+	}
+
+	@Override
+	protected HttpMethod getHttpMethodForAuthorizeRequest() {
+		return HttpMethod.GET;
+	}
+
+	@Override
+	protected void verifyTestConditions() {
+		JsonElement parEndpoint = env.getElementFromObject("primary_entity_statement_jwt", "claims.metadata.openid_provider.pushed_authorization_request_endpoint");
+		if (parEndpoint == null) {
+			fireTestSkipped("The server does not support the 'pushed authorization request' endpoint");
+		}
+
+		includeTrustChainInAuthorizationRequest = true;
+	}
+}

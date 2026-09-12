@@ -1,0 +1,125 @@
+{{- if .Values.service.enabled -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ template "fullname" . }}
+  labels:
+    app: {{ template "appname" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version| replace "+" "_" }}"
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    kubernetes.io/tls-acme: "true"
+    kubernetes.io/ingress.class: "nginx"
+    acme.cert-manager.io/http01-edit-in-place: "true"
+    # Allow large response headers from upstream (e.g. Location header on the
+    # post-OAuth-login redirect, which echoes the original URL including any
+    # long configJson query string supplied to schedule-test.html).
+    nginx.org/proxy-buffer-size: "32k"
+    nginx.org/proxy-buffers: "8 32k"
+    nginx.org/proxy-busy-buffers-size: "64k"
+    httpd-server-snippet: |
+      RequestHeader set X-Ssl-Cipher "%{SSL_CIPHER}s"
+      RequestHeader set X-Ssl-Protocol "%{SSL_PROTOCOL}s"
+      RequestHeader set X-Forwarded-Proto https
+      RequestHeader set X-Forwarded-Port 443
+      <Location "/test-mtls/">
+        RequestHeader set X-Test-Mtls-Called-On-Wrong-Host: true
+      </Location>
+    nginx.org/location-snippets: |
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto $scheme;
+      proxy_set_header X-Forwarded-Host $host;
+      proxy_set_header X-Forwarded-Port 443;
+      proxy_set_header X-Forwarded-Uri $request_uri;
+      proxy_set_header X-Ssl-Cipher $ssl_cipher;
+      proxy_set_header X-Ssl-Protocol $ssl_protocol;
+      proxy_set_header X-Ssl-Cert $ssl_client_cert;
+      proxy_set_header Forwarded 'by=10.0.0.1;for=$remote_addr;host=$host;proto=$scheme';
+      set $mtls_wrong_host "";
+      if ($request_uri ~* "^/test-mtls") {
+        set $mtls_wrong_host "true";
+      }
+      proxy_set_header X-Test-Mtls-Called-On-Wrong-Host $mtls_wrong_host;
+      proxy_pass_request_headers on;
+    nginx.org/server-snippets: |
+      client_header_buffer_size 32k;
+      large_client_header_buffers 4 32k;
+spec:
+  ingressClassName: 'nginx'
+  tls:
+  - hosts:
+    - {{ template "hostname" .Values.service.url }}
+    secretName: {{ template "fullname" . }}-tls
+  rules:
+  - host: {{ template "hostname" .Values.service.url }}
+    http:
+      paths:
+      - path: /
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: {{ template "fullname" . }}
+            port:
+              number: {{ .Values.service.externalPort }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ template "mtlsfullname" . }}
+  labels:
+    app: {{ template "appname" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version| replace "+" "_" }}"
+  annotations:
+    acme.cert-manager.io/http01-edit-in-place: "true"
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    kubernetes.io/tls-acme: "true"
+    kubernetes.io/ingress.class: "nginx"
+    nginx.org/location-snippets: |
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto $scheme;
+      proxy_set_header X-Forwarded-Host $host;
+      proxy_set_header X-Forwarded-Port $server_port;
+      proxy_set_header X-Forwarded-Uri $request_uri;
+      proxy_set_header X-Ssl-Cipher $ssl_cipher;
+      proxy_set_header X-Ssl-Protocol $ssl_protocol;
+      proxy_set_header X-Ssl-Cert $ssl_client_cert;
+      proxy_set_header Forwarded 'by=10.0.0.1;for=$remote_addr;host=$host;proto=$scheme';
+      proxy_pass_request_headers on;
+    nginx.org/server-snippets: |
+      ssl_verify_client   optional_no_ca;
+      client_header_buffer_size 32k;
+      large_client_header_buffers 4 32k;
+    httpd-server-snippet: |
+      RequestHeader set X-Ssl-Cipher "%{SSL_CIPHER}s"
+      RequestHeader set X-Ssl-Protocol "%{SSL_PROTOCOL}s"
+      RequestHeader set X-Forwarded-Proto https
+      RequestHeader set X-Forwarded-Port 443
+      <If "%{HTTPS} == 'on'">
+        SSLVerifyClient optional_no_ca
+        SSLVerifyDepth 5
+        RequestHeader set X-Ssl-Cert "%{SSL_CLIENT_CERT}s"
+        RequestHeader set X-Ssl-Cert-Chain-0 "%{SSL_CLIENT_CERT_CHAIN_0}s"
+        RequestHeader set X-Ssl-Cert-Chain-1 "%{SSL_CLIENT_CERT_CHAIN_1}s"
+        RequestHeader set X-Ssl-Cert-Chain-2 "%{SSL_CLIENT_CERT_CHAIN_2}s"
+        RequestHeader set X-Ssl-Cert-Chain-3 "%{SSL_CLIENT_CERT_CHAIN_3}s"
+        RequestHeader set X-Ssl-Cert-Chain-4 "%{SSL_CLIENT_CERT_CHAIN_4}s"
+        RequestHeader set X-Ssl-Cert-Chain-5 "%{SSL_CLIENT_CERT_CHAIN_5}s"
+      </If>
+spec:
+  ingressClassName: 'nginx'
+  tls:
+    - hosts:
+        - {{ template "hostname" .Values.service.mtls }}
+      secretName: {{ template "fullname" . }}-mtls
+  rules:
+    - host: {{ template "hostname" .Values.service.mtls }}
+      http:
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: {{ template "fullname" . }}
+                port:
+                  number: {{ .Values.service.externalPort }}
+{{- end -}}

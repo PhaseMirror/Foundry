@@ -1,0 +1,33 @@
+package net.openid.conformance.fapi2spfinal;
+
+import com.google.gson.JsonObject;
+import net.openid.conformance.condition.client.AddDpopJktToAuthorizationEndpointRequest;
+import net.openid.conformance.condition.client.GenerateDpopKey;
+import net.openid.conformance.sequence.ConditionSequence;
+import net.openid.conformance.testmodule.PublishTestModule;
+import net.openid.conformance.variant.FAPI2FinalOPProfile;
+import net.openid.conformance.variant.FAPI2SenderConstrainMethod;
+import net.openid.conformance.variant.VariantNotApplicable;
+
+@PublishTestModule(
+	testName = "fapi2-security-profile-final-ensure-dpop-auth-code-binding-success",
+	displayName = "FAPI2-Security-Profile-Final: ensure authorization request with a 'dpop_jkt' value that  matches the DPoP proof sent with the PAR and token endpoint requests succeeds",
+	summary = "This test makes an authentication request that includes a 'dpop_jkt' which matches the DPOP proof's JWK sent with the PAR and token endpoints to ensure authorization code binding is working correctly.",
+	profile = "FAPI2-Security-Profile-Final"
+)
+@VariantNotApplicable(parameter = FAPI2SenderConstrainMethod.class, values = { "mtls" })
+@VariantNotApplicable(parameter = FAPI2FinalOPProfile.class, values = { "fapi_client_credentials_grant" })
+public class FAPI2SPFinalEnsureDpopAuthCodeBindingSuccess extends AbstractFAPI2SPFinalServerTestModule {
+	@Override
+	protected void onConfigure(JsonObject config, String baseUrl) {
+		useDpopAuthCodeBinding = true;
+		callAndStopOnFailure(GenerateDpopKey.class);
+	}
+
+	@Override
+	protected ConditionSequence makeCreateAuthorizationRequestSteps() {
+		return super.makeCreateAuthorizationRequestSteps()
+				.then(condition(AddDpopJktToAuthorizationEndpointRequest.class));
+	}
+
+}

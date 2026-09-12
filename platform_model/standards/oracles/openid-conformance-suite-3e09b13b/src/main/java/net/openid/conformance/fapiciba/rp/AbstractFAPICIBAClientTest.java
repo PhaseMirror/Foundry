@@ -1,0 +1,1152 @@
+package net.openid.conformance.fapiciba.rp;
+
+import com.google.gson.JsonObject;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+import net.openid.conformance.condition.Condition;
+import net.openid.conformance.condition.Condition.ConditionResult;
+import net.openid.conformance.condition.as.AddAtHashToIdTokenClaims;
+import net.openid.conformance.condition.as.AddIdTokenSigningAlgsToServerConfiguration;
+import net.openid.conformance.condition.as.AddJwksUriToServerConfiguration;
+import net.openid.conformance.condition.as.AddTLSClientAuthToServerConfiguration;
+import net.openid.conformance.condition.as.AddTlsCertificateBoundAccessTokensTrueSupportedToServerConfiguration;
+import net.openid.conformance.condition.as.AddUnusableKeysToServerPublicJwks;
+import net.openid.conformance.condition.as.CalculateAtHash;
+import net.openid.conformance.condition.as.CheckClientIdMatchesOnTokenRequestIfPresent;
+import net.openid.conformance.condition.as.CheckForClientCertificate;
+import net.openid.conformance.condition.as.CopyAccessTokenToClientCredentialsField;
+import net.openid.conformance.condition.as.CreateEffectiveAuthorizationRequestParameters;
+import net.openid.conformance.condition.as.CreateFapiInteractionIdIfNeeded;
+import net.openid.conformance.condition.as.CreateRefreshToken;
+import net.openid.conformance.condition.as.EnsureClientCertificateMatches;
+import net.openid.conformance.condition.as.EnsureMatchingClientId;
+import net.openid.conformance.condition.as.EnsureNumericRequestObjectClaimsAreNotNull;
+import net.openid.conformance.condition.as.EnsureOpenIDInScopeRequest;
+import net.openid.conformance.condition.as.EnsureOptionalAuthorizationRequestParametersMatchRequestObject;
+import net.openid.conformance.condition.as.EnsureRequestObjectDoesNotContainRequestOrRequestUri;
+import net.openid.conformance.condition.as.EnsureRequestObjectDoesNotContainSubWithClientId;
+import net.openid.conformance.condition.as.ExtractClientCertificateFromRequestHeaders;
+import net.openid.conformance.condition.as.ExtractRequestedScopes;
+import net.openid.conformance.condition.as.FAPI1AdvancedValidateRequestObjectNBFClaim;
+import net.openid.conformance.condition.as.FAPIBrazilExtractConsentRequest;
+import net.openid.conformance.condition.as.FAPIBrazilExtractPaymentInitiationRequest;
+import net.openid.conformance.condition.as.FAPIBrazilExtractPaymentsConsentRequest;
+import net.openid.conformance.condition.as.FAPIBrazilSignPaymentConsentResponse;
+import net.openid.conformance.condition.as.FAPIBrazilSignPaymentInitiationResponse;
+import net.openid.conformance.condition.as.FAPIEnsureMinimumClientKeyLength;
+import net.openid.conformance.condition.as.FAPIEnsureMinimumServerKeyLength;
+import net.openid.conformance.condition.as.FAPIValidateRequestObjectExp;
+import net.openid.conformance.condition.as.FAPIValidateRequestObjectMediaType;
+import net.openid.conformance.condition.as.FAPIValidateRequestObjectSigningAlg;
+import net.openid.conformance.condition.as.FilterUserInfoForScopes;
+import net.openid.conformance.condition.as.GenerateBearerAccessToken;
+import net.openid.conformance.condition.as.GenerateIdTokenClaimsWith181DayExp;
+import net.openid.conformance.condition.as.LoadServerJWKs;
+import net.openid.conformance.condition.as.SetRsaAltServerJwks;
+import net.openid.conformance.condition.as.SetTokenEndpointAuthMethodsSupportedToPrivateKeyJWTOnly;
+import net.openid.conformance.condition.as.ValidateFAPIInteractionIdInResourceRequest;
+import net.openid.conformance.condition.as.ValidateRefreshToken;
+import net.openid.conformance.condition.as.ValidateRequestObjectMaxAge;
+import net.openid.conformance.condition.as.ValidateRequestObjectSignature;
+import net.openid.conformance.condition.client.AddCibaTokenDeliveryModePingToTokenDeliveryModesSupported;
+import net.openid.conformance.condition.client.ExtractJWKsFromStaticClientConfiguration;
+import net.openid.conformance.condition.client.FAPIValidateRequestObjectIdTokenACRClaims;
+import net.openid.conformance.condition.client.GetStaticClientConfiguration;
+import net.openid.conformance.condition.common.CheckDistinctKeyIdValueInClientJWKs;
+import net.openid.conformance.condition.common.EnsureIncomingTls12WithSecureCipherOrTls13;
+import net.openid.conformance.condition.common.EnsureIncomingTls13;
+import net.openid.conformance.condition.rs.ClearAccessTokenFromRequest;
+import net.openid.conformance.condition.rs.CreateFAPIAccountEndpointResponse;
+import net.openid.conformance.condition.rs.CreateFAPIResourcesEndpointResponse;
+import net.openid.conformance.condition.rs.EnsureBearerAccessTokenNotInParams;
+import net.openid.conformance.condition.rs.EnsureIncomingRequestContentTypeIsApplicationJwt;
+import net.openid.conformance.condition.rs.EnsureIncomingRequestMethodIsPost;
+import net.openid.conformance.condition.rs.ExtractBearerAccessTokenFromHeader;
+import net.openid.conformance.condition.rs.ExtractFapiDateHeader;
+import net.openid.conformance.condition.rs.ExtractFapiInteractionIdHeader;
+import net.openid.conformance.condition.rs.ExtractFapiIpAddressHeader;
+import net.openid.conformance.condition.rs.ExtractXIdempotencyKeyHeader;
+import net.openid.conformance.condition.rs.FAPIBrazilEnsureAuthorizationRequestScopesContainPayments;
+import net.openid.conformance.condition.rs.FAPIBrazilEnsureAuthorizationRequestScopesContainResources;
+import net.openid.conformance.condition.rs.FAPIBrazilEnsureClientCredentialsScopeContainedConsents;
+import net.openid.conformance.condition.rs.FAPIBrazilEnsureClientCredentialsScopeContainedPayments;
+import net.openid.conformance.condition.rs.FAPIBrazilEnsureConsentRequestIssEqualsOrganizationId;
+import net.openid.conformance.condition.rs.FAPIBrazilEnsureConsentRequestJtiIsUUIDv4;
+import net.openid.conformance.condition.rs.FAPIBrazilEnsurePaymentInitiationRequestIssEqualsOrganizationId;
+import net.openid.conformance.condition.rs.FAPIBrazilEnsurePaymentInitiationRequestJtiIsUUIDv4;
+import net.openid.conformance.condition.rs.FAPIBrazilExtractCertificateSubjectFromIncomingMTLSCertifiate;
+import net.openid.conformance.condition.rs.FAPIBrazilExtractCertificateSubjectFromServerJwks;
+import net.openid.conformance.condition.rs.FAPIBrazilFetchClientOrganizationJwksFromDirectory;
+import net.openid.conformance.condition.rs.FAPIBrazilGenerateGetConsentResponse;
+import net.openid.conformance.condition.rs.FAPIBrazilGenerateGetPaymentConsentResponse;
+import net.openid.conformance.condition.rs.FAPIBrazilGenerateNewConsentResponse;
+import net.openid.conformance.condition.rs.FAPIBrazilGenerateNewPaymentInitiationResponse;
+import net.openid.conformance.condition.rs.FAPIBrazilGenerateNewPaymentsConsentResponse;
+import net.openid.conformance.condition.rs.FAPIBrazilValidateConsentRequestIat;
+import net.openid.conformance.condition.rs.FAPIBrazilValidateJwtSignatureUsingOrganizationJwks;
+import net.openid.conformance.condition.rs.FAPIBrazilValidatePaymentConsentRequestAud;
+import net.openid.conformance.condition.rs.FAPIBrazilValidatePaymentInitiationRequestAud;
+import net.openid.conformance.condition.rs.FAPIBrazilValidatePaymentInitiationRequestIat;
+import net.openid.conformance.condition.rs.LoadUserInfo;
+import net.openid.conformance.condition.rs.RequireBearerAccessToken;
+import net.openid.conformance.condition.rs.RequireBearerClientCredentialsAccessToken;
+import net.openid.conformance.sequence.ConditionSequence;
+import net.openid.conformance.sequence.ValidateJwksSequence;
+import net.openid.conformance.sequence.as.ValidateClientAuthenticationWithMTLS;
+import net.openid.conformance.sequence.as.ValidateClientAuthenticationWithPrivateKeyJWT;
+import net.openid.conformance.testmodule.AbstractTestModule;
+import net.openid.conformance.testmodule.Environment;
+import net.openid.conformance.testmodule.TestFailureException;
+import net.openid.conformance.variant.CIBAMode;
+import net.openid.conformance.variant.ClientAuthType;
+import net.openid.conformance.variant.ConfigurationFields;
+import net.openid.conformance.variant.FAPICIBAProfile;
+import net.openid.conformance.variant.VariantConfigurationFields;
+import net.openid.conformance.variant.VariantHidesConfigurationFields;
+import net.openid.conformance.variant.VariantNotApplicable;
+import net.openid.conformance.variant.VariantParameters;
+import net.openid.conformance.variant.VariantSetup;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+
+@VariantParameters({
+	ClientAuthType.class,
+	FAPICIBAProfile.class,
+	CIBAMode.class
+})
+@VariantNotApplicable(parameter = ClientAuthType.class, values = {
+	"none", "client_secret_basic", "client_secret_post", "client_secret_jwt", "client_attestation"
+})
+@VariantNotApplicable(parameter = CIBAMode.class, values = {
+	"push"
+})
+@VariantHidesConfigurationFields(parameter = FAPICIBAProfile.class, value = "openbanking_brazil", configurationFields = {
+	"client.scope"
+})
+@VariantConfigurationFields(parameter = FAPICIBAProfile.class, value = "openbanking_brazil", configurationFields = {
+	"directory.keystore",
+	"client.brazil_ciba_maximum_expiry"
+})
+@VariantHidesConfigurationFields(parameter = CIBAMode.class, value = "poll", configurationFields = {
+	"client.backchannel_client_notification_endpoint"
+})
+@ConfigurationFields({
+	"server.jwks",
+	"client.client_id",
+	"client.scope",
+	"client.backchannel_client_notification_endpoint",
+	"client.certificate",
+	"client.jwks"
+})
+public abstract class AbstractFAPICIBAClientTest extends AbstractTestModule {
+
+	public static final String ACCOUNTS_PATH = "open-banking/v1.1/accounts";
+	private static final String CLIENT_PING_RESPONSE_VALIDATED = "client_ping_response_validated";
+	private static final String RESOURCE_ENDPOINT_COMPLETION_PENDING_AFTER_PING_RESPONSE_VALIDATION = "resource_endpoint_completion_pending_after_ping_response_validation";
+
+	protected FAPICIBAProfile profile;
+	protected ClientAuthType clientAuthType;
+	protected CIBAMode cibaMode;
+
+	protected boolean startingShutdown = false;
+
+	private Class<? extends Condition> addTokenEndpointAuthMethodSupported;
+	private Class<? extends ConditionSequence> validateTokenEndpointClientAuthenticationSteps;
+	private Class<? extends ConditionSequence> validateBackchannelClientAuthenticationSteps;
+
+	@VariantSetup(parameter = ClientAuthType.class, value = "mtls")
+	public void setupMTLS() {
+		addTokenEndpointAuthMethodSupported = AddTLSClientAuthToServerConfiguration.class;
+		validateTokenEndpointClientAuthenticationSteps = ValidateClientAuthenticationWithMTLS.class;
+		validateBackchannelClientAuthenticationSteps = BackchannelValidateClientAuthenticationWithMTLS.class;
+	}
+
+	@VariantSetup(parameter = ClientAuthType.class, value = "private_key_jwt")
+	public void setupPrivateKeyJwt() {
+		addTokenEndpointAuthMethodSupported = SetTokenEndpointAuthMethodsSupportedToPrivateKeyJWTOnly.class;
+		validateTokenEndpointClientAuthenticationSteps = ValidateClientAuthenticationWithPrivateKeyJWT.class;
+		validateBackchannelClientAuthenticationSteps = BackchannelValidateClientAuthenticationWithPrivateKeyJWT.class;
+	}
+
+	@VariantSetup(parameter = FAPICIBAProfile.class, value = "plain_fapi")
+	public void setupPlainFapi() {
+		profileBehavior = new FAPICIBARPProfileBehavior();
+		profileBehavior.setModule(this);
+	}
+
+	@VariantSetup(parameter = FAPICIBAProfile.class, value = "connectid_au")
+	public void setupConnectID() {
+		profileBehavior = new ConnectIdAuCibaRPProfileBehavior();
+		profileBehavior.setModule(this);
+	}
+
+	@VariantSetup(parameter = FAPICIBAProfile.class, value = "openbanking_uk")
+	public void setupOpenBankingUk() {
+		profileBehavior = new OpenBankingUkCibaRPProfileBehavior();
+		profileBehavior.setModule(this);
+	}
+
+	@VariantSetup(parameter = FAPICIBAProfile.class, value = "openbanking_brazil")
+	public void setupOpenBankingBrazil() {
+		profileBehavior = new OpenBankingBrazilCibaRPProfileBehavior();
+		profileBehavior.setModule(this);
+	}
+
+	protected FAPICIBARPProfileBehavior profileBehavior;
+
+	public Environment getEnv() {
+		return env;
+	}
+
+	protected void addCustomValuesToIdToken() {	}
+
+	protected void addCustomSignatureOfIdToken() { }
+
+	protected void onConfigurationCompleted() { }
+
+	protected void validateClientConfiguration() {
+		call(profileBehavior.applyProfileSpecificClientConfigurationValidation());
+	}
+
+	protected void backchannelEndpointCallComplete() {
+		setStatus(Status.WAITING);
+	}
+
+	protected void tokenEndpointCallComplete() {
+		callAndStopOnFailure(SetNextAllowedTokenRequest.class);
+		setStatus(Status.WAITING);
+	}
+
+	protected void cibaTokenEndpointCallComplete(HttpStatus statusCode) {
+		if (HttpStatus.OK.equals(statusCode)) {
+			setStatus(Status.WAITING);
+		} else {
+			tokenEndpointCallComplete();
+		}
+	}
+
+	protected HttpStatus createBackchannelResponse() {
+		callAndStopOnFailure(CreateBackchannelEndpointResponse.class);
+		return HttpStatus.OK;
+	}
+
+	protected final HttpStatus createProfileSpecificBackchannelResponse() {
+		call(profileBehavior.applyProfileSpecificBackchannelEndpointResponse());
+		return createBackchannelResponse();
+	}
+
+	protected void createIntermediateTokenResponse() {
+		callAndStopOnFailure(CreateAuthorizationPendingResponse.class);
+	}
+
+	protected void createFinalTokenResponse() {
+		callAndStopOnFailure(CreateTokenEndpointResponse.class);
+	}
+
+	protected void customizeTokenEndpointResponseHeaders() { }
+
+	protected void customizeUserInfoEndpointResponseHeaders() { }
+
+	protected void sendPingRequestAndVerifyResponse() {
+		call(profileBehavior.getPingNotificationEndpointCallSteps());
+		callAndStopOnFailure(VerifyPingHttpResponseStatusCodeIsNot3XX.class, Condition.ConditionResult.FAILURE, "CIBA-10.2");
+		callAndContinueOnFailure(VerifyPingHttpResponseStatusCodeIs204.class, Condition.ConditionResult.WARNING, "CIBA-10.2");
+	}
+
+	protected boolean shouldSendPingNotification() {
+		return true;
+	}
+
+	protected boolean shouldValidateConfiguredNotificationEndpoint() {
+		return true;
+	}
+
+	@Override
+	public void configure(JsonObject config, String baseUrl, String externalUrlOverride, String baseMtlsUrl) {
+		env.putString("base_url", baseUrl);
+		env.putString("base_mtls_url", baseMtlsUrl);
+		env.putString("external_url_override", externalUrlOverride);
+		env.putObject("config", config);
+
+		profile = getVariant(FAPICIBAProfile.class);
+		clientAuthType = getVariant(ClientAuthType.class);
+		cibaMode = getVariant(CIBAMode.class);
+		env.putString("ciba_mode", cibaMode.name());
+
+		callAndStopOnFailure(GenerateServerConfiguration.class);
+		call(condition(AddJwksUriToServerConfiguration.class));
+		callAndStopOnFailure(GenerateServerConfigurationMTLS.class);
+
+		callAndStopOnFailure(LoadServerJWKs.class);
+		callAndStopOnFailure(SetRsaAltServerJwks.class);
+		call(new ValidateJwksSequence("server_jwks", null, "server signing keys", "RFC7517-1.1").allowingPrivateKeys());
+		// published in all RP tests so the check does not depend on when the client last fetched/cached
+		// the JWKS; must stay after SetRsaAltServerJwks, which rebuilds server_public_jwks
+		callAndStopOnFailure(AddUnusableKeysToServerPublicJwks.class, "RFC7517-5");
+
+		callAndStopOnFailure(AddCibaTokenDeliveryModePingToTokenDeliveryModesSupported.class);
+		call(profileBehavior.applyProfileSpecificServerConfigurationSetup());
+
+		callAndStopOnFailure(AddIdTokenSigningAlgsToServerConfiguration.class);
+		callAndStopOnFailure(AddTlsCertificateBoundAccessTokensTrueSupportedToServerConfiguration.class, "FAPI2-4.3.1-9");
+
+		callAndStopOnFailure(addTokenEndpointAuthMethodSupported);
+
+		call(profileBehavior.applyProfileSpecificServerAuthAlgSetup());
+
+		exposeEnvString("discoveryUrl");
+		exposeEnvString("issuer");
+
+		profileBehavior.exposeProfileSpecificEndpoints();
+
+		callAndStopOnFailure(CheckServerConfiguration.class);
+		if (shouldValidateConfiguredNotificationEndpoint()) {
+			callAndStopOnFailure(CheckNotificationEndpointServerConfiguration.class, "CIBA-9");
+		}
+
+		callAndStopOnFailure(FAPIEnsureMinimumServerKeyLength.class, "FAPI1-BASE-5.2.2-5", "FAPI1-BASE-5.2.2-6");
+
+		callAndStopOnFailure(LoadUserInfo.class);
+
+		configureClient();
+
+		onConfigurationCompleted();
+		setStatus(Status.CONFIGURED);
+		fireSetupDone();
+	}
+
+	@Override
+	public void start() {
+		setStatus(Status.RUNNING);
+		setStatus(Status.WAITING);
+	}
+
+	@Override
+	public Object handleHttp(String path, HttpServletRequest req, HttpServletResponse res, HttpSession session, JsonObject requestParts) {
+		setStatus(Status.RUNNING);
+
+		String requestId = "incoming_request_" + RandomStringUtils.secure().nextAlphanumeric(37);
+		env.putObject(requestId, requestParts);
+		call(exec().mapKey("client_request", requestId));
+
+		callAndContinueOnFailure(EnsureIncomingTls12WithSecureCipherOrTls13.class, ConditionResult.WARNING, "FAPI1-BASE-7.1", "FAPI1-ADV-8.5");
+		callAndContinueOnFailure(EnsureIncomingTls13.class, ConditionResult.WARNING, "RFC9325-3.1.1");
+
+		call(exec().unmapKey("client_request"));
+		setStatus(Status.WAITING);
+
+		switch (path) {
+			case ".well-known/openid-configuration":
+				return discoveryEndpoint();
+			case "jwks":
+				return jwksEndpoint();
+			case "token/obtain":
+				return obtainIdToken();
+			case "backchannel":
+				if (startingShutdown) {
+					throw new TestFailureException(getId(), "Client has incorrectly called '%s' after receiving a response that must cause it to stop interacting with the server".formatted(path));
+				}
+				if (ClientAuthType.MTLS.equals(clientAuthType)) {
+					throw new TestFailureException(
+						getId(),
+						"In MTLS mode, the backchannel endpoint must be called over an mTLS secured connection using the backchannel_authentication_endpoint found in mtls_endpoint_aliases."
+					);
+				}
+				return backchannelEndpoint(requestId);
+			case "token":
+				if (startingShutdown) {
+					throw new TestFailureException(getId(), "Client has incorrectly called '%s' after receiving a response that must cause it to stop interacting with the server".formatted(path));
+				}
+				throw new TestFailureException(
+					getId(),
+					"Token endpoint must be called over an mTLS secured connection using the token_endpoint found in mtls_endpoint_aliases."
+				);
+			case "userinfo":
+				if (startingShutdown) {
+					throw new TestFailureException(getId(), "Client has incorrectly called '%s' after receiving a response that must cause it to stop interacting with the server".formatted(path));
+				}
+				if (profileBehavior.userInfoEndpointRequiresMTLS()) {
+					throw new TestFailureException(getId(), "Userinfo endpoint must be called over an mTLS secured connection using the userinfo_endpoint found in mtls_endpoint_aliases.");
+				}
+				return userinfoEndpoint(requestId);
+			default:
+				throw new TestFailureException(getId(), "Got unexpected HTTP call to " + path);
+		}
+	}
+
+	@Override
+	public Object handleHttpMtls(String path, HttpServletRequest req, HttpServletResponse res, HttpSession session, JsonObject requestParts) {
+		setStatus(Status.RUNNING);
+
+		String requestId = "incoming_request_" + RandomStringUtils.secure().nextAlphanumeric(37);
+		env.putObject(requestId, requestParts);
+		call(exec().mapKey("client_request", requestId));
+
+		callAndContinueOnFailure(EnsureIncomingTls12WithSecureCipherOrTls13.class, ConditionResult.WARNING, "FAPI1-BASE-7.1", "FAPI1-ADV-8.5-1");
+		callAndContinueOnFailure(EnsureIncomingTls13.class, ConditionResult.WARNING, "RFC9325-3.1.1");
+
+		call(exec().unmapKey("client_request"));
+		setStatus(Status.WAITING);
+
+		if (startingShutdown) {
+			throw new TestFailureException(getId(), "Client has incorrectly called '%s' after receiving a response that must cause it to stop interacting with the server".formatted(path));
+		}
+
+		switch (path) {
+			case "backchannel":
+				return backchannelEndpoint(requestId);
+			case "token":
+				return tokenEndpoint(requestId);
+			case "userinfo":
+				return userinfoEndpoint(requestId);
+			case ACCOUNTS_PATH:
+				if (!profileBehavior.acceptsGenericAccountsEndpoint()) {
+					throw new TestFailureException(getId(), "Got unexpected HTTP (using mtls) call to " + path);
+				}
+				return accountsEndpoint(requestId);
+			default:
+				if (profileBehavior.claimsProfileSpecificMtlsPath(path)) {
+					return profileBehavior.handleProfileSpecificMtlsPath(requestId, path);
+				}
+				throw new TestFailureException(getId(), "Got unexpected HTTP (using mtls) call to " + path);
+		}
+	}
+
+	public void exposeMtlsPath(String name, String path) {
+		String baseUrlMtls = env.getString("base_mtls_url");
+		env.putString(name, baseUrlMtls + "/" + path);
+		exposeEnvString(name);
+	}
+
+	protected void checkMtlsCertificate() {
+		callAndContinueOnFailure(ExtractClientCertificateFromRequestHeaders.class, ConditionResult.FAILURE);
+		callAndStopOnFailure(CheckForClientCertificate.class, ConditionResult.FAILURE, "FAPI1-ADV-5.2.2-5");
+		callAndContinueOnFailure(EnsureClientCertificateMatches.class, ConditionResult.FAILURE);
+	}
+
+	protected void startWaitingForTimeout() {
+		if (shouldRejectFurtherClientInteractionsWhileWaitingForTimeout()) {
+			rejectFurtherClientInteractions();
+		}
+		getTestExecutionManager().runInBackground(() -> {
+			Thread.sleep(5 * 1000);
+			if (getStatus().equals(Status.WAITING)) {
+				setStatus(Status.RUNNING);
+				//As the client hasn't called the token endpoint after 5 seconds, assume it has correctly detected the error and aborted.
+				fireTestFinished();
+			}
+			return "done";
+		});
+	}
+
+	protected boolean shouldRejectFurtherClientInteractionsWhileWaitingForTimeout() {
+		return true;
+	}
+
+	protected void rejectFurtherClientInteractions() {
+		this.startingShutdown = true;
+	}
+
+	protected void configureClient() {
+		eventLog.startBlock("Verify configuration of client");
+		callAndStopOnFailure(GetStaticClientConfiguration.class);
+
+		validateClientJwks();
+		validateClientConfiguration();
+
+		eventLog.endBlock();
+	}
+
+	protected void unmapClient() {
+		env.unmapKey("client");
+		env.unmapKey("client_jwks");
+		env.unmapKey("client_public_jwks");
+	}
+
+	protected void validateClientJwks() {
+		call(new ValidateJwksSequence("client", "jwks", "client configuration", "RFC7517-1.1"));
+
+		callAndStopOnFailure(ExtractJWKsFromStaticClientConfiguration.class);
+		callAndContinueOnFailure(CheckDistinctKeyIdValueInClientJWKs.class, ConditionResult.FAILURE, "RFC7517-4.5");
+
+		callAndStopOnFailure(FAPIEnsureMinimumClientKeyLength.class,"FAPI1-BASE-5.2.4-2", "FAPI1-BASE-5.2.4-3");
+	}
+
+	protected Object discoveryEndpoint() {
+		setStatus(Status.RUNNING);
+
+		JsonObject serverConfiguration = env.getObject("server");
+
+		setStatus(Status.WAITING);
+		return new ResponseEntity<Object>(serverConfiguration, HttpStatus.OK);
+	}
+
+	protected Object jwksEndpoint() {
+		setStatus(Status.RUNNING);
+
+		JsonObject jwks = env.getObject("server_public_jwks");
+		setStatus(Status.WAITING);
+
+		return new ResponseEntity<Object>(jwks, HttpStatus.OK);
+	}
+
+	protected Object tokenEndpoint(String requestId) {
+		setStatus(Status.RUNNING);
+
+		call(exec().startBlock("Token endpoint")
+			.mapKey("token_endpoint_request", requestId)
+			.mapKey("incoming_request", requestId));
+
+		callAndStopOnFailure(CheckClientIdMatchesOnTokenRequestIfPresent.class, ConditionResult.FAILURE, "RFC6749-3.2.1");
+
+		checkMtlsCertificate();
+		call(sequence(validateTokenEndpointClientAuthenticationSteps));
+
+		return handleTokenEndpointGrantType();
+	}
+
+	protected Object handleTokenEndpointGrantType(){
+		String grantType = env.getString("token_endpoint_request", "body_form_params.grant_type");
+		if (grantType == null) {
+			throw new TestFailureException(getId(), "Token endpoint body does not contain the mandatory 'grant_type' parameter");
+		}
+
+		switch (grantType) {
+			case "client_credentials":
+				ConditionSequence profileSpecificClientCredentialsGrantSteps = profileBehavior.getClientCredentialsGrantTypeSteps();
+				if (profileSpecificClientCredentialsGrantSteps != null) {
+					call(profileSpecificClientCredentialsGrantSteps);
+					return clientCredentialsGrantType();
+				}
+				break;
+			case "refresh_token":
+				return refreshTokenGrantType();
+			case "urn:openid:params:grant-type:ciba":
+				return cibaGrantType();
+		}
+		throw new TestFailureException(getId(), "Got an unexpected grant type on the token endpoint: " + grantType);
+	}
+
+	protected Object refreshTokenGrantType() {
+		callAndStopOnFailure(ValidateRefreshToken.class);
+
+		issueAccessToken();
+		issueRefreshToken(); // rotate refresh token
+		env.removeNativeValue("id_token");
+
+		call(profileBehavior.prepareNonResourceEndpointFapiInteractionId());
+		callAndStopOnFailure(CreateTokenEndpointResponse.class);
+
+		call(profileBehavior.addFapiInteractionIdToTokenEndpointResponse());
+		customizeTokenEndpointResponseHeaders();
+
+		JsonObject headerJson = env.getObject("token_endpoint_response_headers");
+
+		call(exec().unmapKey("token_endpoint_request").unmapKey("incoming_request").endBlock());
+		setStatus(Status.WAITING);
+
+		return new ResponseEntity<Object>(env.getObject("token_endpoint_response"), headersFromJson(headerJson), HttpStatus.OK);
+
+	}
+
+	protected Object clientCredentialsGrantType() {
+		callAndStopOnFailure(GenerateBearerAccessToken.class);
+
+		call(profileBehavior.prepareNonResourceEndpointFapiInteractionId());
+		callAndStopOnFailure(CreateTokenEndpointResponse.class);
+
+		// this puts the client credentials specific token into its own box for later
+		callAndStopOnFailure(CopyAccessTokenToClientCredentialsField.class);
+		call(profileBehavior.addFapiInteractionIdToTokenEndpointResponse());
+		customizeTokenEndpointResponseHeaders();
+
+		JsonObject headerJson = env.getObject("token_endpoint_response_headers");
+
+		call(exec().unmapKey("token_endpoint_request").unmapKey("incoming_request").endBlock());
+		setStatus(Status.WAITING);
+
+		return new ResponseEntity<Object>(env.getObject("token_endpoint_response"), headersFromJson(headerJson), HttpStatus.OK);
+	}
+
+	protected Object cibaGrantType() {
+		callAndStopOnFailure(VerifyAuthReqId.class, ConditionResult.FAILURE, "CIBA-10.1");
+
+		HttpStatus statusCode;
+
+		if(VerifyAuthReqIdExpiration.isAuthReqIdExpired(env)) {
+			callAndContinueOnFailure(VerifyAuthReqIdExpiration.class, ConditionResult.INFO);
+			throw new TestFailureException(getId(), "expired_token", "The auth_req_id has expired. The client will need to make a new authentication request.");
+		} else {
+			callAndStopOnFailure(VerifyThatPollingIntervalIsRespected.class, ConditionResult.FAILURE, "CIBA-7.3");
+
+			call(profileBehavior.prepareNonResourceEndpointFapiInteractionId());
+			statusCode = createTokenEndpointResponseForCiba();
+		}
+
+		call(profileBehavior.addFapiInteractionIdToTokenEndpointResponse());
+		customizeTokenEndpointResponseHeaders();
+		cibaTokenEndpointCallComplete(statusCode);
+
+		JsonObject headerJson = env.getObject("token_endpoint_response_headers");
+
+		call(exec().unmapKey("token_endpoint_request").unmapKey("incoming_request").endBlock());
+
+		return new ResponseEntity<Object>(env.getObject("token_endpoint_response"), headersFromJson(headerJson), statusCode);
+	}
+
+	private HttpStatus createTokenEndpointResponseForCiba() {
+		callAndStopOnFailure(IncrementTokenEndpointPollCount.class);
+		int tokenPollCount = env.getInteger("token_poll_count");
+		if (shouldIssueFinalCibaTokenResponse(tokenPollCount)) {
+			issueAccessToken();
+			issueRefreshToken();
+			issueIdToken();
+
+			createFinalTokenResponse();
+
+			call(profileBehavior.applyProfileSpecificTokenEndpointChecks());
+
+			callAndContinueOnFailure(RedeemAuthReqId.class, ConditionResult.INFO);
+			return HttpStatus.OK;
+		} else {
+			createIntermediateTokenResponse();
+			return HttpStatus.BAD_REQUEST;
+		}
+	}
+
+	// To facilitate id_token_hint testing
+	private Object obtainIdToken() {
+		setStatus(Status.RUNNING);
+
+		callAndStopOnFailure(GenerateIdTokenClaimsWith181DayExp.class);
+
+		callAndStopOnFailure(profileBehavior.getSignIdTokenCondition());
+
+		JsonObject response = new JsonObject();
+		response.addProperty("id_token", env.getString("id_token"));
+
+		env.removeObject("id_token_claims");
+		env.removeObject("id_token");
+
+		setStatus(Status.WAITING);
+		return new ResponseEntity<Object>(response, HttpStatus.OK);
+	}
+
+	protected void issueIdToken() {
+		prepareIdTokenClaims();
+		signIdToken();
+		encryptIdToken();
+	}
+
+	protected void issueAccessToken() {
+		callAndStopOnFailure(GenerateBearerAccessToken.class);
+		callAndStopOnFailure(CalculateAtHash.class, "OIDCC-3.3.2.11");
+	}
+
+	protected void issueRefreshToken() {
+		callAndStopOnFailure(CreateRefreshToken.class);
+	}
+
+	protected void prepareIdTokenClaims() {
+
+		env.mapKey("authorization_request_object", "backchannel_request_object");
+
+		call(profileBehavior.applyProfileSpecificIdTokenClaims());
+
+		skipIfMissing(null, new String[] {"at_hash"}, ConditionResult.INFO,
+			AddAtHashToIdTokenClaims.class, ConditionResult.FAILURE, "OIDCC-3.3.2.11");
+
+		addCustomValuesToIdToken();
+
+		call(profileBehavior.applyProfileSpecificAcrClaim());
+
+		env.unmapKey("authorization_request_object");
+
+	}
+
+	protected void signIdToken() {
+		callAndStopOnFailure(profileBehavior.getSignIdTokenCondition());
+		addCustomSignatureOfIdToken();
+	}
+
+	/**
+	 * The default FAPI-CIBA profile does not encrypt id_tokens, even when id_token_encrypted_response_alg is set
+	 * "5.2.3.1.  ID Token as detached signature" reads:
+	 *  "5. shall support both signed and signed & encrypted ID Tokens."
+	 *  So an implementation MUST support non-encrypted id_tokens too and we do NOT allow testers to run all tests with id_token
+	 *  encryption enabled. Profiles that require encrypted id_tokens can override this with profile-specific steps.
+	 */
+	protected void encryptIdToken() {
+		call(profileBehavior.applyProfileSpecificIdTokenEncryption());
+	}
+
+	protected boolean clientHasPolledEnough(int tokenPollCount) {
+		return tokenPollCount > 2;
+	}
+
+	protected boolean shouldIssueFinalCibaTokenResponse(int tokenPollCount) {
+		return clientPingAttempted()
+			|| clientWasPinged()
+			|| clientHasPolledEnough(tokenPollCount);
+	}
+
+	private boolean clientPingAttempted() {
+		Boolean clientPingAttempted = env.getBoolean(PingClientNotificationEndpoint.CLIENT_PING_ATTEMPTED);
+		return CIBAMode.PING.equals(cibaMode) && clientPingAttempted != null && clientPingAttempted;
+	}
+
+	private boolean clientWasPinged() {
+		Boolean clientWasPinged = env.getBoolean("client_was_pinged");
+		return CIBAMode.PING.equals(cibaMode) && clientWasPinged != null && clientWasPinged;
+	}
+
+	protected boolean clientPingResponseValidated() {
+		return Boolean.TRUE.equals(env.getBoolean(CLIENT_PING_RESPONSE_VALIDATED));
+	}
+
+	protected Object userinfoEndpoint(String requestId) {
+		setStatus(Status.RUNNING);
+
+		call(exec().startBlock("Userinfo endpoint").mapKey("incoming_request", requestId));
+
+		callAndStopOnFailure(EnsureBearerAccessTokenNotInParams.class, "FAPI1-BASE-6.2.2-1");
+		callAndStopOnFailure(ExtractBearerAccessTokenFromHeader.class, "FAPI1-BASE-6.2.2-1");
+
+		callAndStopOnFailure(RequireBearerAccessToken.class);
+
+		callAndStopOnFailure(FilterUserInfoForScopes.class);
+		call(profileBehavior.applyProfileSpecificUserInfoChecks());
+
+		call(profileBehavior.prepareNonResourceEndpointFapiInteractionId());
+		call(profileBehavior.addFapiInteractionIdToUserInfoEndpointResponse());
+		customizeUserInfoEndpointResponseHeaders();
+
+		JsonObject user = env.getObject("user_info_endpoint_response");
+		JsonObject headerJson = env.getObject("user_info_endpoint_response_headers");
+
+		callAndStopOnFailure(ClearAccessTokenFromRequest.class);
+
+		call(exec().unmapKey("incoming_request").endBlock());
+
+		resourceEndpointCallComplete();
+
+		return new ResponseEntity<Object>(user, headersFromJson(headerJson), HttpStatus.OK);
+	}
+
+	protected ResponseEntity<?> backchannelEndpoint(String requestId) {
+		setStatus(Status.RUNNING);
+
+		call(exec().startBlock("RP calls the backchannel endpoint").mapKey("backchannel_endpoint_http_request", requestId));
+
+		call(sequence(VerifyPostedFormData.class));
+
+		if(clientAuthType == ClientAuthType.MTLS || profileBehavior.requiresMtlsForBackchannelEndpoint()) {
+			env.mapKey("token_endpoint_request", requestId);
+			checkMtlsCertificate();
+			env.unmapKey("token_endpoint_request");
+		}
+		call(sequence(validateBackchannelClientAuthenticationSteps));
+
+		JsonObject httpRequestObj = env.getObject("backchannel_endpoint_http_request");
+		env.putObject("backchannel_endpoint_http_request_params", httpRequestObj.getAsJsonObject("body_form_params"));
+
+		callAndStopOnFailure(EnsureBackchannelRequestObjectWasNotEncrypted.class, ConditionResult.FAILURE, "CIBA-7.1.1");
+		callAndStopOnFailure(ExtractRequestObjectFromBackchannelEndpointRequest.class, "FAPI-CIBA-5.2.3.1");
+
+		env.mapKey("authorization_request_object", "backchannel_request_object");
+		validateRequestObjectForBackchannelEndpointRequest();
+		call(profileBehavior.applyProfileSpecificBackchannelRequestChecks());
+		env.unmapKey("authorization_request_object");
+
+		callAndContinueOnFailure(EnsureBackchannelRequestParametersDoNotAppearOutsideJwt.class, ConditionResult.FAILURE, "CIBA-7.1.1");
+		callAndContinueOnFailure(BackchannelRequestHasExactlyOneOfTheHintParameters.class, ConditionResult.FAILURE, "CIBA-7.1");
+
+		skipIfElementMissing("backchannel_request_object", "claims.id_token_hint", ConditionResult.SUCCESS, IdTokenIsSignedWithServerKey.class, ConditionResult.FAILURE, "CIBA-7.1");
+
+		call(exec().mapKey("incoming_request", requestId));
+		call(profileBehavior.prepareNonResourceEndpointFapiInteractionId());
+
+		HttpStatus httpStatus = createProfileSpecificBackchannelResponse();
+		call(profileBehavior.addFapiInteractionIdToBackchannelEndpointResponse());
+
+		if(CIBAMode.PING.equals(cibaMode)) {
+			call(sequence(VerifyClientNotificationToken.class));
+			if (shouldSendPingNotification()) {
+				spawnThreadForPing();
+			}
+		}
+
+		JsonObject headerJson = env.getObject("backchannel_endpoint_response_headers");
+
+		call(exec().unmapKey("backchannel_endpoint_http_request").unmapKey("incoming_request").endBlock());
+		backchannelEndpointCallComplete();
+
+		return new ResponseEntity<>(env.getObject("backchannel_endpoint_response"), headersFromJson(headerJson), httpStatus);
+	}
+
+	private void spawnThreadForPing() {
+		getTestExecutionManager().runInBackground(() -> {
+			waitBeforePing();
+
+			call(exec().startBlock("OP calls the client notification endpoint"));
+			setStatus(Status.RUNNING);
+
+			try {
+				sendPingRequestAndVerifyResponse();
+			} finally {
+				call(exec().endBlock());
+			}
+
+			if (!ensurePingCompletionCanRun()) {
+				return "done";
+			}
+			pingRequestComplete();
+
+			return "done";
+		});
+	}
+
+	protected void waitBeforePing() throws InterruptedException {
+		int secondsUntilPing = 10;
+		Thread.sleep(secondsUntilPing * 1000L);
+	}
+
+	/**
+	 * The outbound notification condition releases the test lock while it waits for the client's
+	 * HTTP response. The client can synchronously redeem the {@code auth_req_id} and call a resource
+	 * endpoint during that interval, and that endpoint can leave the test in {@link Status#WAITING}
+	 * or finish it. Continue the ping thread only while it still owns the lock, or when it can
+	 * atomically resume a waiting test. A terminal test must not be changed back to RUNNING.
+	 */
+	private boolean ensurePingCompletionCanRun() {
+		return env.getLock().isHeldByCurrentThread() || setStatusRunningIfWaiting();
+	}
+
+	protected void pingRequestComplete() {
+		markPingResponseValidatedAndFinishPendingResourceEndpoint();
+	}
+
+	protected void markPingResponseValidatedAndFinishPendingResourceEndpoint() {
+		markPingResponseValidated();
+		if (resourceEndpointCompletionPendingAfterPingResponseValidation()) {
+			finishAfterResourceEndpointCompletion();
+			return;
+		}
+		setStatus(Status.WAITING);
+	}
+
+	protected void markPingResponseValidated() {
+		env.putBoolean(CLIENT_PING_RESPONSE_VALIDATED, true);
+	}
+
+	private boolean resourceEndpointCompletionPendingAfterPingResponseValidation() {
+		return Boolean.TRUE.equals(env.getBoolean(RESOURCE_ENDPOINT_COMPLETION_PENDING_AFTER_PING_RESPONSE_VALIDATION));
+	}
+
+	// This method is for the most part a copy of validateRequestObjectForAuthorizationEndpointRequest() in AbstractFAPI1AdvancedFinalClientTest.
+	protected void validateRequestObjectForBackchannelEndpointRequest() {
+
+		validateRequestObjectCommonChecks();
+
+		callAndStopOnFailure(ValidateBackchannelRequestObjectClaims.class);
+		callAndStopOnFailure(ValidateRequestObjectMaxAge.class, "OIDCC-13.3");
+		callAndStopOnFailure(ValidateBackchannelRequestObjectSigningAlgMatchesSupported.class, "CIBA-4");
+
+		env.mapKey("authorization_endpoint_http_request_params", "backchannel_endpoint_http_request_params");
+
+		if(ClientAuthType.MTLS.equals(clientAuthType)) {
+			callAndContinueOnFailure(EnsureRequiredBackchannelRequestParametersMatchRequestObject.class, ConditionResult.FAILURE, "OIDCC-6.1", "FAPI1-ADV-5.2.3-9");
+			callAndContinueOnFailure(EnsureOptionalAuthorizationRequestParametersMatchRequestObject.class, ConditionResult.WARNING, "OIDCC-6.1", "OIDCC-6.2");
+		}
+
+		callAndContinueOnFailure(CreateEffectiveAuthorizationRequestParameters.class, ConditionResult.WARNING);
+		callAndStopOnFailure(ExtractRequestedScopes.class);
+
+		call(profileBehavior.applyProfileSpecificBackchannelScopeChecks());
+
+		callAndStopOnFailure(EnsureOpenIDInScopeRequest.class, "FAPI1-BASE-5.2.3-7");
+
+		if(ClientAuthType.MTLS.equals(clientAuthType)) {
+			// client_id is required as a parameter in MTLS mode
+			callAndStopOnFailure(EnsureMatchingClientId.class, "OIDCC-3.1.2.1");
+		} else {
+			skipIfElementMissing(
+				CreateEffectiveAuthorizationRequestParameters.ENV_KEY,
+				CreateEffectiveAuthorizationRequestParameters.CLIENT_ID,
+				ConditionResult.INFO, EnsureMatchingClientId.class, ConditionResult.FAILURE, "OIDCC-3.1.2.1");
+		}
+
+		env.unmapKey("authorization_endpoint_http_request_params");
+	}
+
+	protected void validateRequestObjectCommonChecks() {
+		callAndStopOnFailure(FAPIValidateRequestObjectSigningAlg.class, "FAPI1-ADV-8.6");
+		callAndContinueOnFailure(FAPIValidateRequestObjectMediaType.class, Condition.ConditionResult.WARNING, "JAR-4");
+		callAndContinueOnFailure(FAPIValidateRequestObjectIdTokenACRClaims.class, ConditionResult.INFO, "FAPI1-ADV-5.2.3-5", "OIDCC-5.5.1.1");
+		callAndStopOnFailure(FAPIValidateRequestObjectExp.class, "RFC7519-4.1.4", "FAPI1-ADV-5.2.2-13");
+		callAndContinueOnFailure(FAPI1AdvancedValidateRequestObjectNBFClaim.class, ConditionResult.FAILURE, "FAPI1-ADV-5.2.2-17");
+		callAndContinueOnFailure(NonIssuerAsAudClaim.class, ConditionResult.WARNING, "CIBA-7.1");
+		callAndContinueOnFailure(EnsureNumericRequestObjectClaimsAreNotNull.class, ConditionResult.WARNING, "OIDCC-13.3");
+		callAndContinueOnFailure(EnsureRequestObjectDoesNotContainRequestOrRequestUri.class, ConditionResult.FAILURE, "OIDCC-6.1");
+		callAndContinueOnFailure(EnsureRequestObjectDoesNotContainSubWithClientId.class, ConditionResult.FAILURE, "JAR-10.8");
+		callAndStopOnFailure(ValidateRequestObjectSignature.class, "FAPI1-ADV-5.2.2-1");
+	}
+
+	protected Object accountsEndpoint(String requestId) {
+		setStatus(Status.RUNNING);
+		call(exec().startBlock("Accounts endpoint"));
+		call(exec().mapKey("token_endpoint_request", requestId));
+
+		checkMtlsCertificate();
+
+		call(exec().unmapKey("token_endpoint_request"));
+		call(exec().mapKey("incoming_request", requestId));
+
+		checkResourceEndpointRequest(false);
+
+		call(profileBehavior.applyProfileSpecificAccountsEndpointChecks());
+
+		callAndStopOnFailure(CreateFapiInteractionIdIfNeeded.class, "FAPI1-BASE-6.2.1-11");
+		callAndStopOnFailure(CreateFAPIAccountEndpointResponse.class);
+
+		Class<? extends ConditionSequence> profileAccountsResponseSteps = profileBehavior.getAccountsEndpointResponseSteps();
+		if (profileAccountsResponseSteps != null) {
+			call(sequence(profileAccountsResponseSteps));
+		}
+
+		callAndStopOnFailure(ClearAccessTokenFromRequest.class);
+
+		call(exec().unmapKey("incoming_request").endBlock());
+
+		JsonObject accountsEndpointResponse = env.getObject("accounts_endpoint_response");
+		JsonObject headerJson = env.getObject("accounts_endpoint_response_headers");
+
+		resourceEndpointCallComplete();
+
+		return new ResponseEntity<>(accountsEndpointResponse, headersFromJson(headerJson), HttpStatus.OK);
+	}
+
+	protected Object resourcesEndpoint(String requestId) {
+		setStatus(Status.RUNNING);
+		call(exec().startBlock("Resources endpoint"));
+
+		call(exec().mapKey("token_endpoint_request", requestId));
+		checkMtlsCertificate();
+		call(exec().unmapKey("token_endpoint_request"));
+
+		call(exec().mapKey("incoming_request", requestId));
+		checkResourceEndpointRequest(false);
+		callAndStopOnFailure(FAPIBrazilEnsureAuthorizationRequestScopesContainResources.class);
+		callAndStopOnFailure(CreateFapiInteractionIdIfNeeded.class, "FAPI1-BASE-6.2.1-11");
+		callAndStopOnFailure(CreateFAPIResourcesEndpointResponse.class);
+		callAndStopOnFailure(ClearAccessTokenFromRequest.class);
+		call(exec().unmapKey("incoming_request").endBlock());
+
+		JsonObject endpointResponse = env.getObject("resources_endpoint_response");
+		JsonObject headerJson = env.getObject("resources_endpoint_response_headers");
+
+		resourceEndpointCallComplete();
+		return new ResponseEntity<>(endpointResponse, headersFromJson(headerJson), HttpStatus.OK);
+	}
+
+	protected void validateResourceEndpointHeaders() {
+		skipIfElementMissing("incoming_request", "headers.x-fapi-auth-date", ConditionResult.INFO,
+			ExtractFapiDateHeader.class, ConditionResult.FAILURE, "FAPI1-BASE-6.2.2-3");
+
+		skipIfElementMissing("incoming_request", "headers.x-fapi-customer-ip-address", ConditionResult.INFO,
+			ExtractFapiIpAddressHeader.class, ConditionResult.FAILURE, "FAPI1-BASE-6.2.2-4");
+
+		skipIfElementMissing("incoming_request", "headers.x-fapi-interaction-id", ConditionResult.INFO,
+			ExtractFapiInteractionIdHeader.class, ConditionResult.FAILURE, "FAPI1-BASE-6.2.2-5");
+
+		callAndContinueOnFailure(ValidateFAPIInteractionIdInResourceRequest.class, ConditionResult.FAILURE, "FAPI1-BASE-6.2.2-5");
+	}
+
+	protected void checkResourceEndpointRequest(boolean useClientCredentialsAccessToken) {
+		callAndContinueOnFailure(EnsureBearerAccessTokenNotInParams.class, ConditionResult.FAILURE, "FAPI1-BASE-6.2.2-1");
+		callAndContinueOnFailure(ExtractBearerAccessTokenFromHeader.class, ConditionResult.FAILURE,  "FAPI1-BASE-6.2.2-1");
+		if(useClientCredentialsAccessToken) {
+			callAndContinueOnFailure(RequireBearerClientCredentialsAccessToken.class, ConditionResult.FAILURE);
+		} else {
+			callAndContinueOnFailure(RequireBearerAccessToken.class, ConditionResult.FAILURE);
+		}
+		validateResourceEndpointHeaders();
+	}
+
+	protected void resourceEndpointCallComplete() {
+		if (shouldDeferResourceEndpointCompletionUntilPingResponseValidated()) {
+			env.putBoolean(RESOURCE_ENDPOINT_COMPLETION_PENDING_AFTER_PING_RESPONSE_VALIDATION, true);
+			setStatus(Status.WAITING);
+			return;
+		}
+		finishAfterResourceEndpointCompletion();
+	}
+
+	protected void finishAfterResourceEndpointCompletion() {
+		fireTestFinished();
+	}
+
+	protected boolean shouldDeferResourceEndpointCompletionUntilPingResponseValidated() {
+		return clientPingAttempted() && !clientPingResponseValidated();
+	}
+
+	protected Object brazilHandleNewConsentRequest(String requestId, boolean isPayments) {
+		setStatus(Status.RUNNING);
+		call(exec().startBlock("New consent endpoint").mapKey("incoming_request", requestId));
+		env.putBoolean("payments_consent_endpoint_called", isPayments);
+		call(exec().mapKey("token_endpoint_request", requestId));
+		checkMtlsCertificate();
+		call(exec().unmapKey("token_endpoint_request"));
+
+		//Requires method=POST. defined in API docs
+		callAndStopOnFailure(EnsureIncomingRequestMethodIsPost.class);
+
+		checkResourceEndpointRequest(true);
+
+		if(isPayments) {
+			callAndStopOnFailure(FAPIBrazilExtractCertificateSubjectFromServerJwks.class);
+			callAndContinueOnFailure(FAPIBrazilEnsureClientCredentialsScopeContainedPayments.class, ConditionResult.FAILURE);
+			callAndContinueOnFailure(FAPIBrazilExtractPaymentsConsentRequest.class, ConditionResult.FAILURE, "BrazilOB-5.2.2.2");
+			callAndContinueOnFailure(EnsureIncomingRequestContentTypeIsApplicationJwt.class, ConditionResult.FAILURE, "BrazilOB-6.1-4");
+			callAndContinueOnFailure(ExtractXIdempotencyKeyHeader.class, ConditionResult.FAILURE);
+			//ensure aud equals endpoint url	"BrazilOB-6.1"
+			callAndContinueOnFailure(FAPIBrazilValidatePaymentConsentRequestAud.class, ConditionResult.FAILURE,"RFC7519-4.1.3", "BrazilOB-6.1-3");
+			//ensure ISS equals TLS certificate organizational unit
+			callAndContinueOnFailure(FAPIBrazilExtractCertificateSubjectFromIncomingMTLSCertifiate.class, ConditionResult.FAILURE,"BrazilOB-6.1-3");
+			callAndContinueOnFailure(FAPIBrazilEnsureConsentRequestIssEqualsOrganizationId.class, ConditionResult.FAILURE, "BrazilOB-6.1-3");
+			//ensure jti is uuid	"BrazilOB-6.1"
+			callAndContinueOnFailure(FAPIBrazilEnsureConsentRequestJtiIsUUIDv4.class, ConditionResult.FAILURE,"BrazilOB-6.1-3");
+			callAndContinueOnFailure(FAPIBrazilValidateConsentRequestIat.class, ConditionResult.FAILURE, "BrazilOB-6.1-3");
+
+			callAndContinueOnFailure(FAPIBrazilFetchClientOrganizationJwksFromDirectory.class, ConditionResult.FAILURE, "BrazilOB-6.1-6");
+			env.mapKey("parsed_client_request_jwt", "new_consent_request");
+			callAndContinueOnFailure(FAPIBrazilValidateJwtSignatureUsingOrganizationJwks.class, ConditionResult.FAILURE, "BrazilOB-6.1-6");
+			env.unmapKey("parsed_client_request_jwt");
+
+		} else {
+			callAndContinueOnFailure(FAPIBrazilEnsureClientCredentialsScopeContainedConsents.class, ConditionResult.FAILURE);
+			callAndContinueOnFailure(FAPIBrazilExtractConsentRequest.class, ConditionResult.FAILURE,"BrazilOB-5.2.2.2");
+		}
+
+		callAndContinueOnFailure(CreateFapiInteractionIdIfNeeded.class, ConditionResult.FAILURE,"FAPI1-BASE-6.2.1-11");
+
+		ResponseEntity<Object> responseEntity = null;
+		if(isPayments) {
+			callAndContinueOnFailure(FAPIBrazilGenerateNewPaymentsConsentResponse.class, ConditionResult.FAILURE,"BrazilOB-5.2.2.2");
+			callAndContinueOnFailure(FAPIBrazilSignPaymentConsentResponse.class, ConditionResult.FAILURE,"BrazilOB-6.1-2");
+			String signedConsentResponse = env.getString("signed_consent_response");
+			JsonObject headerJson = env.getObject("consent_response_headers");
+
+			HttpHeaders headers = headersFromJson(headerJson);
+			headers.setContentType(DATAUTILS_MEDIATYPE_APPLICATION_JWT);
+			responseEntity = new ResponseEntity<>(signedConsentResponse, headers, HttpStatus.CREATED);
+		} else {
+			callAndContinueOnFailure(FAPIBrazilGenerateNewConsentResponse.class, ConditionResult.FAILURE,"BrazilOB-5.2.2.2");
+			JsonObject response = env.getObject("consent_response");
+			JsonObject headerJson = env.getObject("consent_response_headers");
+			responseEntity = new ResponseEntity<>(response, headersFromJson(headerJson), HttpStatus.CREATED);
+		}
+		callAndContinueOnFailure(ClearAccessTokenFromRequest.class, ConditionResult.FAILURE);
+
+		call(exec().unmapKey("incoming_request").endBlock());
+
+		setStatus(Status.WAITING);
+
+		return responseEntity;
+	}
+
+	protected Object brazilHandleGetConsentRequest(String requestId, String path, boolean isPayments) {
+		setStatus(Status.RUNNING);
+		call(exec().startBlock("Get consent endpoint").mapKey("incoming_request", requestId));
+		call(exec().mapKey("token_endpoint_request", requestId));
+		checkMtlsCertificate();
+		call(exec().unmapKey("token_endpoint_request"));
+
+		checkResourceEndpointRequest(true);
+		callAndContinueOnFailure(CreateFapiInteractionIdIfNeeded.class, ConditionResult.FAILURE, "FAPI1-BASE-6.2.1-11");
+
+		String requestedConsentId = path.substring(path.lastIndexOf('/')+1);
+		env.putString("requested_consent_id", requestedConsentId);
+
+		ResponseEntity<Object> responseEntity = null;
+		if(isPayments) {
+			callAndContinueOnFailure(FAPIBrazilGenerateGetPaymentConsentResponse.class, ConditionResult.FAILURE, "BrazilOB-6.1-3");
+			callAndContinueOnFailure(FAPIBrazilSignPaymentConsentResponse.class, ConditionResult.FAILURE, "BrazilOB-6.1-2");
+			String signedConsentResponse = env.getString("signed_consent_response");
+			JsonObject headerJson = env.getObject("consent_response_headers");
+
+			HttpHeaders headers = headersFromJson(headerJson);
+			headers.setContentType(DATAUTILS_MEDIATYPE_APPLICATION_JWT);
+			responseEntity = new ResponseEntity<>(signedConsentResponse, headers, HttpStatus.OK);
+
+		} else {
+			callAndContinueOnFailure(FAPIBrazilGenerateGetConsentResponse.class, ConditionResult.FAILURE, "BrazilOB-5.2.2.2");
+			JsonObject response = env.getObject("consent_response");
+			JsonObject headerJson = env.getObject("consent_response_headers");
+			responseEntity = new ResponseEntity<>(response, headersFromJson(headerJson), HttpStatus.OK);
+		}
+
+		callAndContinueOnFailure(ClearAccessTokenFromRequest.class, ConditionResult.FAILURE);
+
+		call(exec().unmapKey("incoming_request").endBlock());
+
+		setStatus(Status.WAITING);
+
+		return responseEntity;
+	}
+
+	protected Object brazilHandleNewPaymentInitiationRequest(String requestId) {
+		setStatus(Status.RUNNING);
+
+		call(exec().mapKey("token_endpoint_request", requestId));
+		checkMtlsCertificate();
+		call(exec().unmapKey("token_endpoint_request"));
+
+		call(exec().startBlock("Payment initiation endpoint").mapKey("incoming_request", requestId));
+		//Requires method=POST. defined in API docs
+		callAndContinueOnFailure(EnsureIncomingRequestMethodIsPost.class, ConditionResult.FAILURE);
+
+		checkResourceEndpointRequest(false);
+
+		callAndContinueOnFailure(FAPIBrazilEnsureAuthorizationRequestScopesContainPayments.class, ConditionResult.FAILURE);
+
+		callAndContinueOnFailure(FAPIBrazilExtractPaymentInitiationRequest.class, ConditionResult.FAILURE, "BrazilOB-5.2.2.2");
+		env.mapKey("parsed_client_request_jwt", "payment_initiation_request");
+		callAndContinueOnFailure(FAPIBrazilValidateJwtSignatureUsingOrganizationJwks.class, ConditionResult.FAILURE, "BrazilOB-6.1-6");
+		env.unmapKey("parsed_client_request_jwt");
+
+		callAndContinueOnFailure(EnsureIncomingRequestContentTypeIsApplicationJwt.class, ConditionResult.FAILURE, "BrazilOB-6.1-4");
+
+		callAndContinueOnFailure(ExtractXIdempotencyKeyHeader.class, ConditionResult.FAILURE);
+
+		callAndContinueOnFailure(CreateFapiInteractionIdIfNeeded.class, ConditionResult.FAILURE, "FAPI1-BASE-6.2.1-11");
+
+		//ensure aud equals endpoint url	"BrazilOB-6.1"
+		callAndContinueOnFailure(FAPIBrazilValidatePaymentInitiationRequestAud.class, ConditionResult.FAILURE, "BrazilOB-6.1-3");
+		//ensure ISS equals TLS certificate organizational unit
+		callAndContinueOnFailure(FAPIBrazilExtractCertificateSubjectFromIncomingMTLSCertifiate.class, ConditionResult.FAILURE, "BrazilOB-6.1-3");
+		callAndContinueOnFailure(FAPIBrazilEnsurePaymentInitiationRequestIssEqualsOrganizationId.class, ConditionResult.FAILURE, "BrazilOB-6.1-3");
+		callAndContinueOnFailure(FAPIBrazilEnsurePaymentInitiationRequestJtiIsUUIDv4.class, ConditionResult.FAILURE, "BrazilOB-6.1-3");
+		callAndContinueOnFailure(FAPIBrazilValidatePaymentInitiationRequestIat.class, ConditionResult.FAILURE, "BrazilOB-6.1-3");
+
+		callAndContinueOnFailure(FAPIBrazilGenerateNewPaymentInitiationResponse.class, ConditionResult.FAILURE, "BrazilOB-5.2.2.2");
+		callAndContinueOnFailure(FAPIBrazilSignPaymentInitiationResponse.class, ConditionResult.FAILURE, "BrazilOB-6.1-2");
+		String signedConsentResponse = env.getString("signed_payment_initiation_response");
+		JsonObject headerJson = env.getObject("payment_initiation_response_headers");
+
+		HttpHeaders headers = headersFromJson(headerJson);
+		headers.setContentType(DATAUTILS_MEDIATYPE_APPLICATION_JWT);
+		ResponseEntity<Object> responseEntity = new ResponseEntity<>(signedConsentResponse, headers, HttpStatus.CREATED);
+
+		callAndContinueOnFailure(ClearAccessTokenFromRequest.class, ConditionResult.FAILURE);
+
+		call(exec().unmapKey("incoming_request").endBlock());
+		resourceEndpointCallComplete();
+
+		return responseEntity;
+	}
+
+}

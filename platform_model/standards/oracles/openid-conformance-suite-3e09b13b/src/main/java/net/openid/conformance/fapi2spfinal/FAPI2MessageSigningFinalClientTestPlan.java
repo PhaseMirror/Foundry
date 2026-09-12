@@ -1,0 +1,287 @@
+package net.openid.conformance.fapi2spfinal;
+
+import net.openid.conformance.plan.PublishTestPlan;
+import net.openid.conformance.plan.TestPlan;
+import net.openid.conformance.testmodule.TestModule;
+import net.openid.conformance.variant.FAPI2FinalOPProfile;
+import net.openid.conformance.variant.VariantSelection;
+
+import java.lang.invoke.MethodHandles;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+@PublishTestPlan (
+	testPlanName = "fapi2-message-signing-final-client-test-plan",
+	displayName = "FAPI2-Message-Signing-Final: Relying Party (client) test",
+	profile = TestPlan.ProfileNames.rptest,
+	specFamily = TestPlan.SpecFamilyNames.fapi2MessageSigning,
+	specVersion = TestPlan.SpecVersionNames.fapi2MsFinal
+)
+public class FAPI2MessageSigningFinalClientTestPlan implements TestPlan {
+	public static final List<Class<? extends TestModule>> testModules = List.of(
+		FAPI2SPFinalClientTestHappyPath.class,
+		FAPI2SPFinalClientTestDiscoveryIssuerMismatch.class,
+		FAPI2SPFinalClientTestInvalidIss.class,
+		FAPI2SPFinalClientTestInvalidAud.class,
+		FAPI2SPFinalClientTestInvalidSecondaryAud.class,
+		FAPI2SPFinalClientTestInvalidNullAlg.class,
+		FAPI2SPFinalClientTestInvalidAlternateAlg.class,
+		FAPI2SPFinalClientTestInvalidExpiredExp.class,
+		FAPI2SPFinalClientTestInvalidMissingExp.class,
+		FAPI2SPFinalClientTestInvalidMissingAud.class,
+		FAPI2SPFinalClientTestInvalidMissingIss.class,
+		FAPI2SPFinalClientTestValidAudAsArray.class,
+		FAPI2SPFinalClientTestInvalidNonce.class,
+		FAPI2SPFinalClientTestInvalidMissingNonce.class,
+		FAPI2SPFinalClientTestInvalidAuthorizationResponseIss.class,
+		FAPI2SPFinalClientTestRemoveAuthorizationResponseIss.class,
+		FAPI2SPFinalClientTestEnsureAuthorizationResponseWithInvalidStateFails.class,
+		FAPI2SPFinalClientTestEnsureAuthorizationResponseWithInvalidMissingStateFails.class,
+		FAPI2SPFinalClientTestTokenEndpointResponseWithoutExpiresIn.class,
+		FAPI2SPFinalClientTestTokenTypeCaseInsenstivity.class,
+		FAPI2SPFinalClientTestRSDpopAuthSchemeCaseInsenstivity.class,
+
+		// Happy path for DPoP sender constrained without DPoP nonce
+		FAPI2SPFinalClientTestHappyPathNoDpopNonce.class,
+
+		// JARM tests
+		FAPI2SPFinalClientTestEnsureJarmWithoutIssFails.class,
+		FAPI2SPFinalClientTestEnsureJarmWithInvalidIssFails.class,
+		FAPI2SPFinalClientTestEnsureJarmWithoutAudFails.class,
+		FAPI2SPFinalClientTestEnsureJarmWithInvalidAudFails.class,
+		FAPI2SPFinalClientTestEnsureJarmWithoutExpFails.class,
+		FAPI2SPFinalClientTestEnsureJarmWithExpiredExpFails.class,
+		FAPI2SPFinalClientTestEnsureJarmWithInvalidSigFails.class,
+		FAPI2SPFinalClientTestEnsureJarmSignatureAlgIsNotNone.class,
+
+		//Brazil specific
+		FAPI2SPFinalClientRefreshTokenTest.class,
+
+		// Grant Management tests
+		FAPI2SPFinalClientTestGrantManagementHappyPath.class,
+		FAPI2SPFinalClientTestGrantManagementQueryAndRevoke.class,
+		FAPI2SPFinalClientTestGrantManagementInvalidGrantIdFails.class
+	);
+
+	@Override
+	public List<Variant> variantsNotApplicable() {
+		List<Variant> variants = new ArrayList<>(FAPI2SPFinalTestPlan.FAPI2_VARIANTS_NOT_APPLICABLE);
+		// Message signing adds JAR/JARM which are authorization-endpoint features;
+		// client credentials grant has no authorization endpoint.
+		variants.add(new Variant(FAPI2FinalOPProfile.class, "fapi_client_credentials_grant"));
+		return variants;
+	}
+
+	@Override
+	public List<ModuleListEntry> testModulesWithVariants() {
+		List<Variant> variant = List.of(
+		);
+
+		return List.of(
+			new ModuleListEntry(testModules, variant)
+		);
+
+	}
+
+	@Override
+	public List<String> certificationProfileName(VariantSelection variant) {
+
+		List<String> profiles = new ArrayList<>();
+		Map<String, String> v = variant.getVariant();
+		String profile = v.get("fapi_profile");
+		String clientAuth = v.get("client_auth_type");
+		String requestMethod = v.get("fapi_request_method");
+		String responseMode = v.get("fapi_response_mode");
+		String senderConstrain = v.get("sender_constrain");
+		String authRequestType = v.get("authorization_request_type");
+		boolean jarm = responseMode.equals("jarm");
+		boolean privateKey = clientAuth.equals("private_key_jwt");
+		boolean dpop = senderConstrain.equals("dpop");
+		boolean mtlsBounded = senderConstrain.equals("mtls");
+		boolean signedRequest = requestMethod.equals("signed_non_repudiation");
+		String clientType = v.get("fapi_client_type");
+		boolean openid = clientType.equals("oidc");
+		boolean rar = "rar".equals(authRequestType);
+		boolean grantManagement = "enabled".equals(v.get("grant_management"));
+
+		String certProfile = "FAPI2SP RP ";
+
+		if (openid) {
+			profiles.add(certProfile + "OpenID Connect");
+		}
+
+		switch (profile) {
+			case "plain_fapi":
+				break;
+			case "consumerdataright_au":
+				if (!privateKey) {
+					throw new RuntimeException("Invalid configuration for %s: Only private_key_jwt is used for AU-CDR".formatted(
+						MethodHandles.lookup().lookupClass().getSimpleName()));
+				}
+				if (!signedRequest) {
+					throw new RuntimeException("Invalid configuration for %s: Only signed requests are used for AU-CDR".formatted(
+						MethodHandles.lookup().lookupClass().getSimpleName()));
+				}
+				if (!mtlsBounded) {
+					throw new RuntimeException("Invalid configuration for %s: Only MTLS sender constraining is used for AU-CDR".formatted(
+						MethodHandles.lookup().lookupClass().getSimpleName()));
+				}
+				if (!jarm) {
+					throw new RuntimeException("Invalid configuration for %s: JARM responses are required for AU-CDR".formatted(
+						MethodHandles.lookup().lookupClass().getSimpleName()));
+				}
+				if (rar) {
+					throw new RuntimeException("Invalid configuration for %s: RAR is not used for AU-CDR".formatted(
+						MethodHandles.lookup().lookupClass().getSimpleName()));
+				}
+				if (!openid) {
+					throw new RuntimeException("Invalid configuration for %s: OpenID must be selected for AU-CDR".formatted(
+						MethodHandles.lookup().lookupClass().getSimpleName()));
+				}
+				// as there's only one possible correct configuration, stop here and return just the name
+				return List.of("FAPI2MS RP AU-CDR");
+			case "openbanking_brazil":
+				return List.of( "FAPI2MS RP BR-OF");
+			case "connectid_au":
+				if (!privateKey) {
+					throw new RuntimeException("Invalid configuration for %s: Only private_key_jwt is used for ConnectID".formatted(
+						MethodHandles.lookup().lookupClass().getSimpleName()));
+				}
+				if (!signedRequest) {
+					throw new RuntimeException("Invalid configuration for %s: Only signed requests are required for ConnectID".formatted(
+						MethodHandles.lookup().lookupClass().getSimpleName()));
+				}
+				if (dpop) {
+					throw new RuntimeException("Invalid configuration for %s: DPoP sender constraining is not used for ConnectID".formatted(
+						MethodHandles.lookup().lookupClass().getSimpleName()));
+				}
+				if (jarm) {
+					throw new RuntimeException("Invalid configuration for %s: JARM responses are not used for ConnectID".formatted(
+						MethodHandles.lookup().lookupClass().getSimpleName()));
+				}
+				// as there's only one possible correct configuration, stop here and return just the name
+				return List.of( "FAPI2MS RP with ConnectId support");
+			case "cbuae":
+				if (!privateKey) {
+					throw new RuntimeException("Invalid configuration for %s: Only private_key_jwt is used for CBUAE".formatted(
+							MethodHandles.lookup().lookupClass().getSimpleName()));
+				}
+				if (!signedRequest) {
+					throw new RuntimeException("Invalid configuration for %s: Only signed requests are supported for CBUAE".formatted(
+							MethodHandles.lookup().lookupClass().getSimpleName()));
+				}
+				if (!rar) {
+					throw new RuntimeException("Invalid configuration for %s: Only signed requests are supported for CBUAE".formatted(
+							MethodHandles.lookup().lookupClass().getSimpleName()));
+				}
+				if (!mtlsBounded) {
+					throw new RuntimeException("Invalid configuration for %s: Only MTLS sender constraining is supported for CBUAE".formatted(
+							MethodHandles.lookup().lookupClass().getSimpleName()));
+				}
+				if (jarm) {
+					throw new RuntimeException("Invalid configuration for %s: JARM responses are not used for CBUAE".formatted(
+							MethodHandles.lookup().lookupClass().getSimpleName()));
+				}
+
+					return List.of( "FAPI2MS RP CBUAE");
+			case "ksa":
+				if (!signedRequest) {
+					throw new RuntimeException("Invalid configuration for %s: Only signed requests are supported for KSA".formatted(
+						MethodHandles.lookup().lookupClass().getSimpleName()));
+				}
+				if (rar) {
+					throw new RuntimeException("Invalid configuration for %s: RAR is not supported for KSA".formatted(
+						MethodHandles.lookup().lookupClass().getSimpleName()));
+				}
+				if (!mtlsBounded) {
+					throw new RuntimeException("Invalid configuration for %s: Only MTLS sender constraining is supported for KSA".formatted(
+						MethodHandles.lookup().lookupClass().getSimpleName()));
+				}
+				if (jarm) {
+					throw new RuntimeException("Invalid configuration for %s: JARM responses are not used for KSA".formatted(
+						MethodHandles.lookup().lookupClass().getSimpleName()));
+				}
+				if (!openid) {
+					throw new RuntimeException("Invalid configuration for %s: OpenID must be selected for KSA".formatted(
+						MethodHandles.lookup().lookupClass().getSimpleName()));
+				}
+				return List.of("FAPI2MS RP KSA");
+			case "openbanking_chile":
+				if (privateKey) {
+					throw new RuntimeException("Invalid configuration for %s: Only MTLS client authentication is used for Chile".formatted(
+							MethodHandles.lookup().lookupClass().getSimpleName()));
+				}
+				if (!mtlsBounded) {
+					throw new RuntimeException("Invalid configuration for %s: Only MTLS sender constraining is supported for Chile".formatted(
+							MethodHandles.lookup().lookupClass().getSimpleName()));
+				}
+				if (!signedRequest) {
+					throw new RuntimeException("Invalid configuration for %s: Only signed requests are supported for Chile".formatted(
+							MethodHandles.lookup().lookupClass().getSimpleName()));
+				}
+				if (!rar) {
+					throw new RuntimeException("Invalid configuration for %s: RAR is required for Chile".formatted(
+							MethodHandles.lookup().lookupClass().getSimpleName()));
+				}
+				if (jarm) {
+					throw new RuntimeException("Invalid configuration for %s: JARM responses are not used for Chile".formatted(
+							MethodHandles.lookup().lookupClass().getSimpleName()));
+				}
+				if (!grantManagement) {
+					throw new RuntimeException("Invalid configuration for %s: Grant Management is required for Chile".formatted(
+							MethodHandles.lookup().lookupClass().getSimpleName()));
+				}
+				return List.of("FAPI2MS RP CL-OF");
+			default:
+				throw new RuntimeException("Unknown profile %s for %s".formatted(
+					profile, MethodHandles.lookup().lookupClass().getSimpleName()));
+		}
+
+		switch (clientAuth) {
+			case "private_key_jwt":
+				certProfile += " private key";
+				break;
+			case "mtls":
+				certProfile += " MTLS";
+				break;
+			default:
+				throw new RuntimeException("Unknown client auth type %s for %s".formatted(
+					clientAuth, MethodHandles.lookup().lookupClass().getSimpleName()));
+		}
+		switch (senderConstrain) {
+			case "mtls":
+				certProfile += " + MTLS";
+				break;
+			case "dpop":
+				certProfile += " + DPoP";
+				break;
+			default:
+				throw new RuntimeException("Unknown sender constrain method %s for %s".formatted(
+					senderConstrain, MethodHandles.lookup().lookupClass().getSimpleName()));
+		}
+		profiles.add( certProfile );
+
+		switch (requestMethod) {
+			case "unsigned":
+				break;
+			case "signed_non_repudiation":
+				profiles.add( "FAPI2MS RP JAR" );
+				break;
+		}
+
+		if (grantManagement) {
+			profiles.add( "FAPI2MS RP GM" );
+		}
+		switch (responseMode) {
+			case "plain_response":
+				// nothing
+				break;
+			case "jarm":
+				profiles.add( "FAPI2MS RP JARM" );
+				break;
+		}
+
+		return profiles;
+	}
+}

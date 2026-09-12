@@ -1,0 +1,61 @@
+package net.openid.conformance.fapi2spfinal;
+
+import com.google.common.base.Strings;
+import net.openid.conformance.condition.as.CreateEffectiveAuthorizationPARRequestParameters;
+import net.openid.conformance.condition.as.RemoveNonceFromIdToken;
+import net.openid.conformance.testmodule.PublishTestModule;
+import net.openid.conformance.variant.FAPIClientType;
+import net.openid.conformance.variant.FAPI2FinalOPProfile;
+import net.openid.conformance.variant.VariantNotApplicable;
+
+@VariantNotApplicable(parameter = FAPIClientType.class, values = {"plain_oauth"})
+@VariantNotApplicable(parameter = FAPI2FinalOPProfile.class, values = { "fapi_client_credentials_grant" })
+@PublishTestModule(
+	testName = "fapi2-security-profile-final-client-test-invalid-missing-nonce",
+	displayName = "FAPI2-Security-Profile-Final: client test - missing nonce in id_token from token_endpoint, should be rejected",
+	summary = "This test should end with the client displaying an error message that the nonce in the id_token is missing if the authorization request supplied one. If the client does not send a nonce value the test result will be SKIPPED.",
+	profile = "FAPI2-Security-Profile-Final",
+	configurationFields = {
+		"client.client_id",
+		"client.scope",
+		"client.redirect_uri",
+		"client.certificate",
+		"client.jwks",
+		"waitTimeoutSeconds"
+	}
+)
+
+public class FAPI2SPFinalClientTestInvalidMissingNonce extends AbstractFAPI2SPFinalClientTest {
+	protected boolean issuedMissingNonce = false;
+
+	@Override
+	protected void endTestIfRequiredParametersAreMissing() {
+		String nonce = env.getString(CreateEffectiveAuthorizationPARRequestParameters.ENV_KEY, CreateEffectiveAuthorizationPARRequestParameters.NONCE);
+		if(Strings.isNullOrEmpty(nonce)) {
+			fireTestSkipped("This test is being skipped as it relies on the client supplying an OPTIONAL nonce value - since none is supplied, this can not be tested. PKCE prevents CSRF so this is acceptable and will not prevent certification.");
+		}
+	}
+
+	@Override
+	protected void addCustomValuesToIdToken() {
+		String nonce = env.getString("id_token_claims", "nonce");
+		if(!Strings.isNullOrEmpty(nonce)) {
+			callAndStopOnFailure(RemoveNonceFromIdToken.class, "OIDCC-3.1.3.7-11");
+			issuedMissingNonce = true;
+		}
+	}
+
+	@Override
+	protected void issueIdToken(boolean isAuthorizationEndpoint) {
+		super.issueIdToken(isAuthorizationEndpoint);
+		if(issuedMissingNonce) {
+			// after this the request routers refuse all endpoints
+			startWaitingForTimeout();
+		}
+	}
+
+	@Override
+	protected String getResponseClientMustStopAfter() {
+		return "an invalid id_token (missing nonce value)";
+	}
+}

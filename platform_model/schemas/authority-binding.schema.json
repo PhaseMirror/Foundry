@@ -1,0 +1,55 @@
+{
+  "$id": "https://schemas.uor.foundation/prismpm/authority-binding/1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "canonical_id": {"maxLength": 256, "minLength": 1, "type": "string"},
+    "edition": {"maxLength": 128, "minLength": 1, "type": "string"},
+    "id": {"pattern": "^[A-Z0-9][A-Z0-9._/-]{0,127}$", "type": "string"},
+    "issuer": {"maxLength": 256, "minLength": 1, "type": "string"},
+    "name": {"maxLength": 256, "minLength": 1, "type": "string"},
+    "oracle_ids": {"items": {"maxLength": 128, "minLength": 1, "type": "string"}, "maxItems": 64, "type": "array", "uniqueItems": true},
+    "realized_by": {"items": {"pattern": "^[A-Z]{2}-[0-9]{2}$", "type": "string"}, "maxItems": 128, "minItems": 1, "type": "array", "uniqueItems": true},
+    "retrieval_date": {"pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$", "type": "string"},
+    "schema": {"const": "prismpm/authority-binding/1"},
+    "source": {"$ref": "#/$defs/source"},
+    "source_role": {"enum": ["binding-only", "informative", "normative"]},
+    "signature_trust_root": {"oneOf": [{"$ref": "#/$defs/signatureTrustRoot"}, {"type": "null"}]},
+    "statement": {"maxLength": 4096, "minLength": 1, "type": "string"},
+    "supersession": {"const": "explicit-lock-update-only"}
+  },
+  "required": ["canonical_id", "edition", "id", "issuer", "name", "oracle_ids", "realized_by", "retrieval_date", "schema", "source", "source_role", "signature_trust_root", "statement", "supersession"],
+  "type": "object",
+  "$defs": {
+    "signatureTrustRoot": {
+      "additionalProperties": false,
+      "properties": {
+        "algorithm": {"enum": ["openpgp", "ssh"]},
+        "fingerprint": {"maxLength": 128, "minLength": 40, "type": "string"},
+        "license": {"const": "public-key-material-published-for-verification"},
+        "owner": {"maxLength": 128, "minLength": 1, "type": "string"},
+        "path": {"pattern": "^standards/trust/github-.*\\.(asc|pub)$", "type": "string"},
+        "redistribution": {"const": "verification-use"},
+        "sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+        "source_record_id": {"pattern": "^[0-9]+$", "type": "string"},
+        "source_url": {"format": "uri", "maxLength": 2048, "type": "string"}
+      },
+      "required": ["algorithm", "fingerprint", "license", "owner", "path", "redistribution", "sha256", "source_record_id", "source_url"],
+      "type": "object"
+    },
+    "source": {
+      "additionalProperties": false,
+      "properties": {
+        "license": {"maxLength": 128, "minLength": 1, "type": "string"},
+        "media_type": {"maxLength": 256, "minLength": 1, "type": "string"},
+        "redistribution": {"enum": ["citation-only", "redistributable"]},
+        "revision": {"oneOf": [{"maxLength": 128, "minLength": 1, "type": "string"}, {"type": "null"}]},
+        "sha256": {"oneOf": [{"pattern": "^[0-9a-f]{64}$", "type": "string"}, {"type": "null"}]},
+        "signature": {"maxLength": 1024, "minLength": 1, "type": "string"},
+        "url": {"format": "uri", "maxLength": 2048, "type": "string"}
+      },
+      "required": ["license", "media_type", "redistribution", "revision", "sha256", "signature", "url"],
+      "type": "object"
+    }
+  }
+}

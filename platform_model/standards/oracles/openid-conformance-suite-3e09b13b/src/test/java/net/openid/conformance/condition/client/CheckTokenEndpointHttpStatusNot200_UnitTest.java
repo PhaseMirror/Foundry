@@ -1,0 +1,60 @@
+package net.openid.conformance.condition.client;
+
+import net.openid.conformance.condition.Condition.ConditionResult;
+import net.openid.conformance.condition.ConditionError;
+import net.openid.conformance.logging.BsonEncoding;
+import net.openid.conformance.logging.TestInstanceEventLog;
+import net.openid.conformance.testmodule.Environment;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+@ExtendWith(MockitoExtension.class)
+public class CheckTokenEndpointHttpStatusNot200_UnitTest {
+
+	@Spy
+	private Environment env = new Environment();
+
+	private final TestInstanceEventLog eventLog = BsonEncoding.testInstanceEventLog();
+
+	private CheckTokenEndpointHttpStatusNot200 cond;
+
+	/**
+	 * @throws Exception
+	 */
+	@BeforeEach
+	public void setUp() throws Exception {
+		cond = new CheckTokenEndpointHttpStatusNot200();
+		cond.setProperties("UNIT-TEST", eventLog, ConditionResult.INFO);
+	}
+
+	@Test
+	public void testEvaluate_HttpStatusCodeNullError() {
+		assertThrows(ConditionError.class, () -> {
+
+			cond.execute(env);
+		});
+	}
+
+	@Test
+	public void testEvaluate_HttpStatusCode200() {
+		assertThrows(ConditionError.class, () -> {
+
+			env.putInteger("token_endpoint_response_http_status", 200);
+
+			cond.execute(env);
+		});
+	}
+
+	@Test
+	public void testEvaluate_HttpStatusCode400() {
+
+		env.putInteger("token_endpoint_response_http_status", 400);
+
+		cond.execute(env);
+	}
+}

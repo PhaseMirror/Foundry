@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity3">
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+</head>
+<body>
+
+<script type="application/javascript">
+    var client_id = "[[${client_id}]]";
+    var session_state = "[[${session_state}]]";
+    console.log("RP session state: " + session_state);
+    var issuer = "[[${issuer}]]";
+    console.log("issuer: " + issuer);
+    var targetOrigin = new URL(issuer).origin;
+
+    var mes = client_id + " " + session_state;
+
+    window.addEventListener("message", receiveMessage, false);
+
+    function checkSession() {
+        console.log("checkSession started")
+        var win = window.parent.document.getElementById("op_iframe").contentWindow;
+        win.postMessage(mes, "*");
+    }
+
+    function receiveMessage(e) {
+        // when using browser automation, the log statements here can be viewed in the frontend by enabling
+        // browser_verbose as per https://gitlab.com/openid/conformance-suite/-/wikis/Design/BrowserControl
+        console.log("receiveMessage: origin: " + e.origin + " expected: " + targetOrigin);
+        if (e.origin !== targetOrigin) {
+            console.log("origin & targetOrigin mismatch");
+            return;
+        }
+        console.log("setting window.parent.window.location.href to [[${service_url}]]?state="+e.data);
+        window.parent.window.location.href = "[[${service_url}]]" + "?state=" + e.data;
+    }
+    setTimeout(checkSession, 500);
+</script>
+
+</body>
+</html>

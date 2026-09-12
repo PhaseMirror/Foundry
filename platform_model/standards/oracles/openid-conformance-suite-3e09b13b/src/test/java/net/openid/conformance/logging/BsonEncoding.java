@@ -1,0 +1,171 @@
+package net.openid.conformance.logging;
+
+import com.google.gson.JsonObject;
+import com.mongodb.MongoClientSettings;
+import net.openid.conformance.MongoConversionSupport;
+import org.bson.BsonBinaryWriter;
+import org.bson.Document;
+import org.bson.codecs.DocumentCodec;
+import org.bson.codecs.EncoderContext;
+import org.bson.codecs.configuration.CodecConfigurationException;
+import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.io.BasicOutputBuffer;
+import org.mockito.Mockito;
+import org.springframework.data.mongodb.core.convert.MappingMongoConverter;
+import org.springframework.data.mongodb.core.convert.MongoCustomConversions;
+import org.springframework.data.mongodb.core.convert.NoOpDbRefResolver;
+import org.springframework.data.mongodb.core.mapping.MongoMappingContext;
+
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.fail;
+
+/**
+ * Test helper that drives the same encode path {@code DBEventLog} uses, without a live MongoDB.
+ *
+ * <p>Catches the class of regression where a value placed into a log payload (via
+ * {@code args(...)} / {@code log(String, Map)} / {@code log(String, JsonObject)}) has no BSON
+ * codec. In production that blows up inside {@code mongoTemplate.insert(...)}; here we reproduce
+ * the same encode step so it fails at unit-test time instead.
+ *
+ * <p>Production's {@code mongoTemplate.insert(dbObject, collection)} calls
+ * {@code MappingMongoConverter.write(dbObject, document)} to apply the
+ * {@link MongoCustomConversions} registered in
+ * {@link MongoConversionSupport#createMongoCustomConversions()} before the MongoDB driver encodes
+ * the resulting {@link Document} via {@link DocumentCodec}. This helper uses the real
+ * {@link MappingMongoConverter} with that same shared conversion setup, so it stays aligned with
+ * production over time.
+ */
+public final class BsonEncoding {
+
+	private static final MappingMongoConverter MAPPING_MONGO_CONVERTER = buildMappingMongoConverter();
+
+	private BsonEncoding() {}
+
+	/**
+	 * Build a {@link TestInstanceEventLog} for use in a condition's {@code _UnitTest} instead of
+	 * a Mockito mock. Every {@code log(...)} call made by the condition under test is routed
+	 * through {@link #assertEncodable(Map)} / {@link #assertEncodable(JsonObject)}, so any
+	 * un-encodable value in a log payload fails the test immediately with a clear message.
+	 *
+	 * <p>The returned instance is a Mockito spy wrapping a real {@link TestInstanceEventLog} —
+	 * that way test code can still call {@code verify(eventLog).log(...)} (e.g. via
+	 * {@code AbstractVciUnitTest.assertValidationError}) and Mockito-based argument captors
+	 * continue to work, while the underlying log call is actually dispatched and its payload
+	 * BSON-encoded.
+	 *
+	 * <p>Adoption in an existing {@code _UnitTest}: remove the {@code @Mock TestInstanceEventLog}
+	 * field and replace it with
+	 * <pre>
+	 *   private final TestInstanceEventLog eventLog = BsonEncoding.testInstanceEventLog();
+	 * </pre>
+	 * The rest of the test class (including the {@code cond.setProperties(..., eventLog, ...)}
+	 * call) stays identical.
+	 */
+	public static TestInstanceEventLog testInstanceEventLog() {
+		TestInstanceEventLog real = new TestInstanceEventLog("UNIT-TEST", Map.of(), new EventLog() {
+			@Override
+			public void log(String testId, String source, Map<String, String> owner, String msg) {
+				// Plain-string log entries don't exercise BSON codec lookup beyond strings.
+			}
+
+			@Override
+			public void log(String testId, String source, Map<String, String> owner, JsonObject obj) {
+				assertEncodable(obj);
+			}
+
+			@Override
+			public void log(String testId, String source, Map<String, String> owner, Map<String, Object> map) {
+				assertEncodable(map);
+			}
+
+			@Override
+			public void createIndexes() {
+			}
+		});
+		return Mockito.spy(real);
+	}
+
+	/**
+	 * Mirror of {@code DBEventLog.log(String, String, Map, Map)} minus the
+	 * {@code mongoTemplate.insert(...)}. Runs the supplied map through
+	 * {@link GsonArrayToBsonArrayConverter#convertUnloggableValuesInMap(Map)} (the pre-pass
+	 * {@code DBEventLog} applies before insertion), then through a real
+	 * {@link MappingMongoConverter} configured with the same {@link MongoCustomConversions} as
+	 * production, then encodes the resulting {@link Document} via {@link DocumentCodec}.
+	 *
+	 * <p>Fails the test with a message naming the offending Java type if any value in the map
+	 * has no registered BSON codec.
+	 */
+	public static void assertEncodable(Map<String, Object> input) {
+		toDocument(input);
+	}
+
+	/**
+	 * Like {@link #assertEncodable(Map)} but returns the encoded {@link Document} so tests can
+	 * inspect the resulting field types (e.g. assert an integer JsonPrimitive round-trips as a
+	 * BSON int32 rather than a double). Encoding is still verified end-to-end.
+	 */
+	public static Document toDocument(Map<String, Object> input) {
+		Document raw = input == null ? new Document() : DBEventLog.fieldsToDocument(input);
+		Document encoded = new Document();
+		MAPPING_MONGO_CONVERTER.write(raw, encoded);
+		encodeAsBson(encoded, input);
+		return encoded;
+	}
+
+	/**
+	 * Mirror of {@code DBEventLog.log(String, String, Map, JsonObject)} minus the
+	 * {@code mongoTemplate.insert(...)}. Routes through the same {@code jsonObjectToFieldMap} +
+	 * {@code fieldsToDocument} helpers production uses, so this test path stays faithful as
+	 * those helpers evolve.
+	 */
+	public static void assertEncodable(JsonObject input) {
+		toDocument(input);
+	}
+
+	/**
+	 * Like {@link #assertEncodable(JsonObject)} but returns the encoded {@link Document} so tests
+	 * can inspect the resulting field types.
+	 */
+	public static Document toDocument(JsonObject input) {
+		Map<String, Object> fields = input == null ? Map.of() : DBEventLog.jsonObjectToFieldMap(input);
+		return toDocument(fields);
+	}
+
+	private static void encodeAsBson(Document doc, Object originalInput) {
+		// Use the same default codec registry MongoClient/MongoTemplate use in production —
+		// this includes providers like EnumCodecProvider that a bare `new DocumentCodec()`
+		// would miss, keeping the helper faithful to the production encode path.
+		CodecRegistry registry = MongoClientSettings.getDefaultCodecRegistry();
+		BasicOutputBuffer buffer = new BasicOutputBuffer();
+		try (BsonBinaryWriter writer = new BsonBinaryWriter(buffer)) {
+			new DocumentCodec(registry).encode(writer, doc, EncoderContext.builder().build());
+		} catch (CodecConfigurationException ex) {
+			fail("BSON encoding failed for log payload " + describe(originalInput)
+				+ " (same DocumentCodec path as DBEventLog.log): " + ex.getMessage(), ex);
+		}
+	}
+
+	private static MappingMongoConverter buildMappingMongoConverter() {
+		MongoCustomConversions conversions = MongoConversionSupport.createMongoCustomConversions();
+		MongoMappingContext mappingContext = new MongoMappingContext();
+		mappingContext.setSimpleTypeHolder(conversions.getSimpleTypeHolder());
+		mappingContext.afterPropertiesSet();
+		MappingMongoConverter converter = new MappingMongoConverter(NoOpDbRefResolver.INSTANCE, mappingContext);
+		converter.setCustomConversions(conversions);
+		converter.afterPropertiesSet();
+		return converter;
+	}
+
+	private static String describe(Object input) {
+		if (input == null) {
+			return "<null>";
+		}
+		String rendered = input.toString();
+		if (rendered.length() > 500) {
+			rendered = rendered.substring(0, 500) + "...";
+		}
+		return rendered;
+	}
+}

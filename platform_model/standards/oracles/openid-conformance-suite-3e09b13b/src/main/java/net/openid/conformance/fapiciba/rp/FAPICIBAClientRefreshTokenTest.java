@@ -1,0 +1,74 @@
+package net.openid.conformance.fapiciba.rp;
+
+import com.google.gson.JsonObject;
+import net.openid.conformance.condition.as.LogAccessTokenAlwaysRejectedToForceARefreshGrant;
+import net.openid.conformance.testmodule.PublishTestModule;
+import net.openid.conformance.variant.FAPICIBAProfile;
+import net.openid.conformance.variant.VariantNotApplicable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+
+@PublishTestModule(
+	testName = "fapi-ciba-id1-client-refresh-token-test",
+	displayName = "FAPI-CIBA-ID1: client refresh token test",
+	summary = "Tests a refresh token flow; " +
+	"The client should perform OpenID discovery from the displayed " +
+	"discoveryUrl, call the backchannel endpoint and then retrieve an " +
+	"access token at the token endpoint and make a request to the " +
+	"resources endpoint displayed. This call will always return a 401 " +
+	"error, the client must call the token endpoint again using " +
+	"refresh_token grant type twice (the first call will return a new " +
+	"refresh token) to obtain a new access token and call the resources " +
+	"endpoint again with the new access token obtained using the " +
+	"refresh_token.",
+	profile = "FAPI-CIBA-ID1"
+)
+@VariantNotApplicable(parameter = FAPICIBAProfile.class, values = {"plain_fapi", "openbanking_uk", "connectid_au"})
+public class FAPICIBAClientRefreshTokenTest extends AbstractFAPICIBAClientTest {
+
+	private int numberOfTimesRefreshTokenUsed = 0;
+
+	@Override
+	protected void addCustomValuesToIdToken(){
+		//Do nothing
+	}
+
+	@Override
+	protected Object refreshTokenGrantType() {
+		Object superResult = super.refreshTokenGrantType();
+		numberOfTimesRefreshTokenUsed += 1;
+		return superResult;
+	}
+
+	@Override
+	protected Object accountsEndpoint(String requestId) {
+		if(numberOfTimesRefreshTokenUsed < 2) {
+			return rejectAccessToken("Accounts endpoint (deliberately rejected)");
+		}
+		return super.accountsEndpoint(requestId);
+	}
+
+	@Override
+	protected Object resourcesEndpoint(String requestId) {
+		if(numberOfTimesRefreshTokenUsed < 2) {
+			return rejectAccessToken("Resources endpoint (deliberately rejected)");
+		}
+		return super.resourcesEndpoint(requestId);
+	}
+
+	protected ResponseEntity<Object> rejectAccessToken(String blockLabel) {
+		setStatus(Status.RUNNING);
+		call(exec().startBlock(blockLabel));
+
+		callAndStopOnFailure(LogAccessTokenAlwaysRejectedToForceARefreshGrant.class);
+		JsonObject wwwAuthHeader = new JsonObject();
+		wwwAuthHeader.addProperty("WWW-Authenticate",
+			"Bearer realm=\"conformancesuite\", " +
+				"error=\"invalid_token\", " +
+				"error_description=\"Invalid access token. This test requires you to obtain a new access token twice using the refresh_token\"");
+
+		setStatus(Status.WAITING);
+		return new ResponseEntity<>(headersFromJson(wwwAuthHeader), HttpStatus.UNAUTHORIZED);
+	}
+
+}

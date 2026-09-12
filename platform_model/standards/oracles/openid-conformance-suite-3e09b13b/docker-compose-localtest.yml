@@ -1,0 +1,79 @@
+services:
+  oidcc-provider:
+    # To start just the provider to run tests against for dev use:
+    # docker-compose -f docker-compose-localtest.yml up oidcc-provider
+    # and add an entry to /etc/hosts '127.0.0.1 oidcc-provider'
+    # To run the tests, start java suite in IDE & run:
+    # ./.gitlab-ci/run-tests.sh --local-provider-tests
+    image: panvafs/oidc-provider-oidc-core-sample
+    ports:
+      - "3000:3000"
+    volumes:
+      - "./.gitlab-ci/local-provider-oidcc.json:/home/node/app/config.json"
+      - "./.gitlab-ci/local-provider.key:/home/node/app/server.key"
+      - "./.gitlab-ci/local-provider-oidcc.crt:/home/node/app/server.crt"
+      - "./:/conformance-suite/"
+    entrypoint:
+      - "/bin/sh"
+      - "-c"
+      - "( [ -f /conformance-suite/.gitlab-ci/local-provider-oidcc-conformance-config.json ] || docker-entrypoint.sh plan > /conformance-suite/.gitlab-ci/local-provider-oidcc-conformance-config.json ) && exec docker-entrypoint.sh server"
+  mongodb:
+    image: mongo:6.0.13
+    volumes:
+     - ./mongo/data:/data/db
+  nginx:
+    build:
+      context: ./nginx
+    ports:
+     - "8443:8443"
+     - "8444:8444"
+     - "8445:8445"
+    depends_on:
+     - server
+  server:
+    build:
+      context: ./server-dev
+    ports:
+     - "9999:9999"
+    volumes:
+     - ./target/:/server/
+    environment:
+     - DEVMODE=${DEVMODE:-true}
+    entrypoint: /bin/sh
+    command:
+     - -c
+     - >
+       java
+       -Xdebug -Xrunjdwp:transport=dt_socket,address=*:9999,server=y,suspend=n
+       -jar /server/fapi-test-suite.jar
+       -Djdk.tls.maxHandshakeMessageSize=65536
+       --fintechlabs.base_url=https://nginx:8443
+       --fintechlabs.base_mtls_url=https://nginx:8444
+       --fintechlabs.devmode=$$DEVMODE
+       --fintechlabs.startredir=true
+    links:
+     - mongodb:mongodb
+    depends_on:
+     - mongodb
+     - oidcc-provider
+    logging:
+      # make sure we keep a reasonable amount of logs, as there's no other way to see results on the CI
+      driver: "json-file"
+      options:
+        max-size: "500m"
+        max-file: "1"
+  test:
+    depends_on:
+      - nginx
+    build:
+      context: ./test
+    environment:
+      CONFORMANCE_SERVER: https://nginx:8443/
+      CONFORMANCE_SERVER_MTLS: https://nginx:8444/
+      CONFORMANCE_DEV_MODE: 1
+    volumes:
+      - "./:/conformance-suite/"
+    working_dir: "/conformance-suite"
+    entrypoint:
+      - "../conformance-suite/.gitlab-ci/run-tests.sh"
+      - "--local-provider-tests"

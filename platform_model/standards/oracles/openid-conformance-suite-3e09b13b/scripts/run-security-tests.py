@@ -1,0 +1,1551 @@
+#!/usr/bin/env python3
+"""
+E2E security tests for the conformance suite's authentication and authorization.
+
+Runs against a live server in non-dev mode (no DummyUserFilter) with API token
+authentication. Tests cover:
+- Share link (private link) access control for plan sharing
+- Share link access control for test-level sharing
+- Share-link JWT used directly as Authorization: Bearer on the API chain
+- Unauthenticated access rejection
+- Public access to published plans
+- Plan deletion: cross-user rejection, the EVENT_LOG delete cascade, and
+  that deleting a plan stops any still-running module (no re-orphaning)
+- Cross-user isolation for a second full user (info/plan/log/runner/token)
+- Certification package: owner success, immutable-plan rules, and that
+  unauthenticated / another user cannot prepare a package
+- Public list/export endpoints return only published results
+- Runner running-list, start, and cancel, /lastconfig, and plan metadata
+- API token lifecycle
+
+Not yet covered (the exposed API surface these do NOT touch):
+- POST /token (creating a new token; only listing/deleting is covered)
+- POST /log/{id}/images and /log/{id}/images/{placeholder} (image upload;
+  only GET /log/{id}/images cross-user denial is covered — not owner
+  success, private-link, or deleted-test behaviour)
+- POST /runner with an inline config (standalone test creation; only
+  plan-based creation is covered)
+- GET /runner/browser/{id} and POST /runner/browser/{id}/visit
+  (front-channel browser endpoints)
+- Expiry: expired API tokens and expired share JWTs
+- GET /jwks (intentionally public / low value)
+
+Usage:
+    python3 scripts/run-security-tests.py
+
+Environment variables:
+    CONFORMANCE_SERVER  Base URL of the server (default: https://localhost.emobix.co.uk:8443/)
+    CONFORMANCE_TOKEN   API token of the user owning the test data (required; API tokens are never admin)
+    CONFORMANCE_TOKEN_2 API token for a second, unrelated user (cross-user checks)
+"""
+
+import io
+import json
+import os
+import sys
+import time
+import traceback
+import urllib.parse
+import zipfile
+
+import httpx
+
+# Add parent dir to path so we can import conformance.py
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+
+def get_config():
+    """Get server URL and token from environment."""
+    base_url = os.environ.get("CONFORMANCE_SERVER", "https://localhost.emobix.co.uk:8443/")
+    if not base_url.endswith("/"):
+        base_url += "/"
+    token = os.environ.get("CONFORMANCE_TOKEN")
+    token_2 = os.environ.get("CONFORMANCE_TOKEN_2")
+    verify_ssl = os.environ.get("CONFORMANCE_SSL_VERIFY", "false").lower() != "false"
+    return base_url, token, token_2, verify_ssl
+
+
+def wait_for_server(base_url, token, verify_ssl, timeout=120):
+    """Wait for the server to become ready."""
+    print(f"  Waiting for server at {base_url} ...")
+    headers = {}
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        try:
+            resp = httpx.get(f"{base_url}api/currentuser", verify=verify_ssl,
+                             timeout=5, headers=headers)
+            if resp.status_code < 500:
+                print(f"  Server ready (HTTP {resp.status_code})")
+                return
+        except (httpx.ConnectError, httpx.ReadTimeout, httpx.ConnectTimeout):
+            pass
+        time.sleep(2)
+    raise Exception(f"Server at {base_url} did not become ready within {timeout}s")
+
+
+def create_test_plan(owner_client, base_url, plan_name, config_json, variant=None):
+    """Create a test plan and return the plan ID and first module name."""
+    api_url = f"{base_url}api/plan"
+    params = {"planName": plan_name}
+    if variant is not None:
+        params["variant"] = json.dumps(variant)
+    response = owner_client.post(api_url, params=params, content=config_json,
+                                 headers={"Content-Type": "application/json"})
+    if response.status_code != 201:
+        raise Exception(f"Failed to create plan: HTTP {response.status_code} {response.text[:300]}")
+    body = response.json()
+    plan_id = body["id"]
+    modules = body.get("modules", [])
+    first_module_name = modules[0]["testModule"] if modules else None
+    return plan_id, first_module_name
+
+
+def create_test_from_plan(owner_client, base_url, plan_id, module_name):
+    """Create a test instance from a plan module, return the test ID."""
+    api_url = f"{base_url}api/runner"
+    params = {"test": module_name, "plan": plan_id}
+    response = owner_client.post(api_url, params=params)
+    if response.status_code != 201:
+        raise Exception(f"Failed to create test: HTTP {response.status_code} {response.text[:300]}")
+    body = response.json()
+    return body["id"]
+
+
+def _extract_share_token(response):
+    """Pull the JWT from a /share response and sanity-check it matches the `link`."""
+    body = response.json()
+    token = body["token"]
+    link_token = urllib.parse.parse_qs(urllib.parse.urlparse(body["link"]).query)["token"][0]
+    if token != link_token:
+        raise Exception("Share response inconsistency: token field does not match link query parameter")
+    return token
+
+
+def generate_plan_share_link(owner_client, base_url, plan_id, exp_days="1"):
+    """Generate a share link for a plan, return the JWT token."""
+    api_url = f"{base_url}api/plan/{plan_id}/share"
+    response = owner_client.post(api_url, params={"exp": exp_days})
+    if response.status_code != 200:
+        raise Exception(f"Failed to generate plan share link: HTTP {response.status_code} {response.text[:300]}")
+    return _extract_share_token(response)
+
+
+def generate_test_share_link(owner_client, base_url, test_id, exp_days="1"):
+    """Generate a share link for a test, return the JWT token."""
+    api_url = f"{base_url}api/info/{test_id}/share"
+    response = owner_client.post(api_url, params={"exp": exp_days})
+    if response.status_code != 200:
+        raise Exception(f"Failed to generate test share link: HTTP {response.status_code} {response.text[:300]}")
+    return _extract_share_token(response)
+
+
+def bearer_client(base_url, jwt_token, verify_ssl):
+    """Return an httpx.Client that sends the share JWT as Authorization: Bearer.
+
+    Stateless: no cookies, no session. The server's API filter chain must recognise
+    the JWT purely from the Authorization header via ShareJwtBearerAuthenticationProvider.
+    """
+    return httpx.Client(
+        verify=verify_ssl,
+        timeout=20,
+        headers={"Authorization": f"Bearer {jwt_token}"})
+
+
+def assert_valid_export_zip(runner, name, response, expected_test_ids):
+    """Validate an export response: HTTP 200, application/zip Content-Type,
+    body is a valid zip with intact CRCs, and contains a test-log-*.json for
+    each expected test id."""
+    runner.check_status(f"{name}: HTTP 200", response, 200)
+    if response.status_code != 200:
+        return
+    content_type = response.headers.get("Content-Type", "")
+    runner.check(f"{name}: Content-Type is application/zip",
+                 content_type.startswith("application/zip"),
+                 f"got Content-Type={content_type!r}")
+    try:
+        zf = zipfile.ZipFile(io.BytesIO(response.content))
+    except zipfile.BadZipFile as e:
+        runner.check(f"{name}: response body is a valid zip", False, str(e))
+        return
+    runner.check(f"{name}: response body is a valid zip", True)
+    bad_entry = zf.testzip()
+    runner.check(f"{name}: zip CRCs valid", bad_entry is None,
+                 f"first bad entry: {bad_entry}")
+    names = zf.namelist()
+    for test_id in expected_test_ids:
+        matches = [n for n in names if n.endswith(f"-{test_id}.json")]
+        runner.check(f"{name}: zip contains test-log JSON for {test_id}",
+                     len(matches) > 0, f"namelist sample: {names[:10]}")
+
+
+def authenticate_private_link(base_url, jwt_token, verify_ssl):
+    """
+    Authenticate as a private link user via the OTT login flow.
+
+    POST /login/ott with the token, follow the redirect to establish a session.
+    Returns an httpx.Client with the authenticated session cookie.
+    """
+    client = httpx.Client(verify=verify_ssl, follow_redirects=False, timeout=20)
+
+    ott_url = f"{base_url}login/ott"
+    response = client.post(ott_url, data={"token": jwt_token})
+
+    if response.status_code not in (302, 303):
+        raise Exception(
+            f"OTT login failed: expected redirect, got HTTP {response.status_code}. "
+            f"Body: {response.text[:300]}")
+
+    redirect_url = response.headers.get("Location", "")
+    if redirect_url:
+        if redirect_url.startswith("/"):
+            redirect_url = base_url.rstrip("/") + redirect_url
+        client.get(redirect_url)
+
+    return client
+
+
+class TestRunner:
+    """Runs security tests and collects results."""
+
+    def __init__(self):
+        self.results = []
+        self.failures = 0
+
+    def check(self, name, condition, detail=""):
+        if condition:
+            self.results.append(("PASS", name, detail))
+            print(f"  PASS: {name}")
+        else:
+            self.results.append(("FAIL", name, detail))
+            self.failures += 1
+            print(f"  FAIL: {name} -- {detail}")
+
+    def check_status(self, name, response, expected_status):
+        actual = response.status_code
+        self.check(name, actual == expected_status,
+                   f"expected HTTP {expected_status}, got {actual}")
+
+    def check_status_in(self, name, response, expected_statuses):
+        actual = response.status_code
+        self.check(name, actual in expected_statuses,
+                   f"expected HTTP status in {expected_statuses}, got {actual}")
+
+    def summary(self):
+        total = len(self.results)
+        passed = total - self.failures
+        print(f"\n{'=' * 60}")
+        print(f"Security tests: {passed}/{total} passed, {self.failures} failed")
+        if self.failures > 0:
+            print("\nFailed tests:")
+            for status, name, detail in self.results:
+                if status == "FAIL":
+                    print(f"  - {name}: {detail}")
+        print(f"{'=' * 60}")
+        return 1 if self.failures else 0
+
+
+def _json_len(resp):
+    """Length of a JSON array response, or -1 if the body is not a JSON array."""
+    try:
+        body = resp.json()
+        return len(body) if isinstance(body, list) else -1
+    except ValueError:
+        return -1
+
+
+def _row_ids(resp):
+    """The _id values from a listing response (DataTables envelope or plain array)."""
+    try:
+        body = resp.json()
+    except ValueError:
+        return None
+    rows = body.get("data") if isinstance(body, dict) else body
+    if not isinstance(rows, list):
+        return None
+    return [row.get("_id") for row in rows if isinstance(row, dict)]
+
+
+def wait_for_test_finished(client, base_url, test_id, label="test", timeout=30):
+    """Wait until a test instance reaches a final state and stops writing log entries.
+
+    Prints a NOTE and returns False if the deadline passes without a final state.
+    """
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        resp = client.get(f"{base_url}api/info/{test_id}")
+        if resp.status_code == 200 and resp.json().get("status") in ("FINISHED", "INTERRUPTED"):
+            return True
+        time.sleep(1)
+    print(f"  NOTE: {label} did not reach a final state within {timeout}s")
+    return False
+
+
+def dump_failing_conditions(client, base_url, test_id):
+    """Print a test's FAILURE/WARNING log conditions, to diagnose a red CI run."""
+    resp = client.get(f"{base_url}api/log/{test_id}")
+    for entry in (resp.json() if resp.status_code == 200 else []):
+        if entry.get("result") in ("FAILURE", "WARNING"):
+            print(f"    {entry.get('result')}: {entry.get('src')}: {entry.get('msg')}")
+
+
+def unauthenticated_get(base_url, path, verify_ssl, params=None):
+    """One-shot GET with no Authorization header, for 'requires auth -> 401' probes."""
+    with httpx.Client(verify=verify_ssl, timeout=10) as client:
+        return client.get(f"{base_url}{path}", params=params)
+
+
+def run_tests():
+    base_url, token, token_2, verify_ssl = get_config()
+    print(f"Server: {base_url}")
+    print(f"SSL verify: {verify_ssl}")
+
+    if not token:
+        print("ERROR: CONFORMANCE_TOKEN not set. Required for security tests.")
+        print("Run via: ./scripts/run-integration-tests.sh --security-tests")
+        return 1
+
+    def second_user_client():
+        """A bearer client for the second, unrelated user (CONFORMANCE_TOKEN_2)."""
+        return bearer_client(base_url, token_2, verify_ssl)
+
+    runner = TestRunner()
+
+    wait_for_server(base_url, token, verify_ssl)
+
+    # --- Precondition: verify server is NOT in dev mode ---
+    # In dev mode, DummyUserFilter auto-authenticates all requests, which would
+    # make unauthenticated rejection tests pass incorrectly (200 instead of 401).
+    print("\n--- Precondition: verifying server is not in dev mode ---")
+    probe = httpx.Client(verify=verify_ssl, timeout=10)
+    probe_resp = probe.get(f"{base_url}api/currentuser")
+    probe.close()
+    if probe_resp.status_code == 200:
+        print("  FATAL: Unauthenticated request returned 200.")
+        print("  The server appears to be running in dev mode (DummyUserFilter active).")
+        print("  Security tests require --fintechlabs.devmode=false.")
+        return 1
+    print(f"  OK: unauthenticated request returned HTTP {probe_resp.status_code}")
+
+    # --- Setup phase: create test data as the owning user (API tokens only ever get ROLE_USER) ---
+    print("\n--- Setup: Creating test data as the owning user ---")
+
+    owner_client = httpx.Client(verify=verify_ssl, timeout=20)
+    owner_client.headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {token}",
+    }
+
+    # Verify the API token works
+    resp = owner_client.get(f"{base_url}api/currentuser")
+    if resp.status_code != 200:
+        print(f"ERROR: API token rejected (HTTP {resp.status_code}). Check CONFORMANCE_TOKEN.")
+        owner_client.close()
+        return 1
+    user_info = resp.json()
+    print(f"  Token user: {user_info.get('displayName', 'unknown')}")
+
+    # Minimal config for the OIDC config test plan
+    config = json.dumps({
+        "description": "security-test",
+        "server": {
+            "discoveryUrl": "https://example.com/.well-known/openid-configuration"
+        }
+    })
+    plan_name = "oidcc-config-certification-test-plan"
+
+    plan_id, first_module = create_test_plan(owner_client, base_url, plan_name, config)
+    print(f"  Created plan: {plan_id} (module: {first_module})")
+
+    test_id = create_test_from_plan(owner_client, base_url, plan_id, first_module)
+    print(f"  Created test: {test_id}")
+
+    # Publish the plan (needed for public access tests)
+    publish_resp = owner_client.post(
+        f"{base_url}api/plan/{plan_id}/publish",
+        content=json.dumps({"publish": "everything"}),
+        headers={"Content-Type": "application/json"})
+    if publish_resp.status_code != 200:
+        raise Exception(f"Failed to publish plan: HTTP {publish_resp.status_code} {publish_resp.text[:300]}")
+    print(f"  Published plan: {plan_id}")
+
+    # Create a second (unpublished) plan for "cannot access other plans" tests
+    other_plan_id, other_module = create_test_plan(owner_client, base_url, plan_name, config)
+    other_test_id = create_test_from_plan(owner_client, base_url, other_plan_id, other_module)
+    print(f"  Created other plan: {other_plan_id} (test: {other_test_id})")
+
+    # Generate plan-level share link
+    plan_jwt = generate_plan_share_link(owner_client, base_url, plan_id)
+    print(f"  Generated plan share link (length: {len(plan_jwt)})")
+
+    # Generate test-level share link
+    test_jwt = generate_test_share_link(owner_client, base_url, test_id)
+    print(f"  Generated test share link (length: {len(test_jwt)})")
+
+    # ===================================================================
+    # 1. PLAN SHARING TESTS
+    # ===================================================================
+    print("\n--- 1. Plan sharing: authenticating as private link user ---")
+    pl_client = authenticate_private_link(base_url, plan_jwt, verify_ssl)
+    print("  Authenticated successfully")
+
+    # Precondition check
+    print("\n--- 1. Plan sharing: precondition check ---")
+    resp = pl_client.get(f"{base_url}api/currentuser")
+    if resp.status_code == 200:
+        user_info = resp.json()
+        is_guest = user_info.get("isGuest", False)
+        is_admin = user_info.get("isAdmin", True)
+        runner.check("Plan share: user is guest", is_guest,
+                     f"isGuest={is_guest}")
+        runner.check("Plan share: user is not admin", not is_admin,
+                     f"isAdmin={is_admin}")
+        if not is_guest or is_admin:
+            print("\n  FATAL: Private link user has wrong identity. Skipping.")
+            pl_client.close()
+            owner_client.close()
+            return runner.summary()
+    else:
+        runner.check("Plan share: can access currentuser", False,
+                     f"HTTP {resp.status_code}")
+        print("  FATAL: Cannot verify identity. Skipping.")
+        pl_client.close()
+        owner_client.close()
+        return runner.summary()
+
+    # Allowed access
+    print("\n--- 1. Plan sharing: allowed access ---")
+    resp = pl_client.get(f"{base_url}api/plan/{plan_id}")
+    runner.check_status("Plan share: can view shared plan", resp, 200)
+
+    resp = pl_client.get(f"{base_url}api/info/{test_id}")
+    runner.check_status("Plan share: can view test info", resp, 200)
+
+    resp = pl_client.get(f"{base_url}api/log/{test_id}")
+    runner.check_status("Plan share: can view test log", resp, 200)
+
+    resp = pl_client.get(f"{base_url}plan-detail.html?plan={plan_id}")
+    runner.check_status("Plan share: can view plan-detail page", resp, 200)
+
+    resp = pl_client.get(f"{base_url}log-detail.html?log={test_id}")
+    runner.check_status("Plan share: can view log-detail page", resp, 200)
+
+    # The export endpoints are NOT in the private-link allowlist
+    # (WebSecurityResourceServerConfig.java:75-83 only allows /api/plan/{id},
+    # /api/info/{id}, /api/log/{id} as single-segment URIs). Private-link
+    # users therefore get 403 from the security layer regardless of which plan
+    # they target — even the one their share covers.
+    resp = pl_client.get(f"{base_url}api/plan/exporthtml/{plan_id}")
+    runner.check_status("Plan share: cannot export shared plan (not in allowlist)", resp, 403)
+
+    resp = pl_client.get(f"{base_url}api/log/exporthtml/{test_id}")
+    runner.check_status("Plan share: cannot export shared test html (not in allowlist)", resp, 403)
+
+    resp = pl_client.get(f"{base_url}api/log/export/{test_id}")
+    runner.check_status("Plan share: cannot export shared test zip (not in allowlist)", resp, 403)
+
+    # Denied access
+    print("\n--- 1. Plan sharing: denied access ---")
+    resp = pl_client.get(f"{base_url}api/plan/{other_plan_id}")
+    runner.check_status("Plan share: cannot view other plan", resp, 404)
+
+    # /api/log/{id} is in the private-link allowlist, so the security layer doesn't
+    # reject the request; the controller must enforce that the test is in the
+    # shared plan. A previous bug filtered by "currentUser" in the deny branch,
+    # which for private-link users equals the shared-asset owner and so leaked
+    # logs of any other test owned by that owner.
+    resp = pl_client.get(f"{base_url}api/log/{other_test_id}")
+    runner.check("Plan share: log of test in other plan returns no entries",
+                 resp.status_code == 200 and resp.json() == [],
+                 f"HTTP {resp.status_code} body={resp.text[:200]}")
+
+    resp = pl_client.get(f"{base_url}api/plan/exporthtml/{other_plan_id}")
+    runner.check_status("Plan share: cannot export other plan", resp, 403)
+
+    resp = pl_client.get(f"{base_url}api/log/exporthtml/{other_test_id}")
+    runner.check_status("Plan share: cannot export other test html", resp, 403)
+
+    resp = pl_client.get(f"{base_url}api/log/export/{other_test_id}")
+    runner.check_status("Plan share: cannot export other test zip", resp, 403)
+
+    resp = pl_client.post(f"{base_url}api/info/{test_id}/publish",
+                          content=json.dumps({"publish": "summary"}),
+                          headers={"Content-Type": "application/json"})
+    runner.check_status("Plan share: cannot publish test", resp, 403)
+
+    resp = pl_client.post(f"{base_url}api/plan/{plan_id}/share", params={"exp": "1"})
+    runner.check_status("Plan share: cannot create share link", resp, 403)
+
+    resp = pl_client.post(f"{base_url}api/info/{test_id}/share", params={"exp": "1"})
+    runner.check_status("Plan share: cannot share test", resp, 403)
+
+    resp = pl_client.post(f"{base_url}api/plan/{plan_id}/publish")
+    runner.check_status("Plan share: cannot publish", resp, 403)
+
+    resp = pl_client.post(f"{base_url}api/plan/{plan_id}/makemutable")
+    runner.check_status("Plan share: cannot make mutable", resp, 403)
+
+    resp = pl_client.delete(f"{base_url}api/plan/{plan_id}")
+    runner.check_status("Plan share: cannot delete", resp, 403)
+
+    resp = pl_client.post(f"{base_url}api/plan",
+                          params={"planName": plan_name},
+                          content=config,
+                          headers={"Content-Type": "application/json"})
+    runner.check_status("Plan share: cannot create new plan", resp, 403)
+
+    resp = pl_client.get(f"{base_url}plan-detail.html?plan={other_plan_id}")
+    runner.check_status_in("Plan share: cannot view other plan page", resp, {403, 302})
+
+    # Token API denied for private link users
+    resp = pl_client.get(f"{base_url}api/token")
+    runner.check_status("Plan share: cannot list tokens", resp, 403)
+
+    # Favorite-plans API denied for private link users (not in the small
+    # allowlist above; the same denyAll branch that blocks /api/token).
+    resp = pl_client.get(f"{base_url}api/favorite-plans")
+    runner.check_status("Plan share: cannot list favorite plans", resp, 403)
+
+    # Invalid tokens
+    print("\n--- 1. Plan sharing: invalid tokens ---")
+    tampered = list(plan_jwt)
+    last_dot = plan_jwt.rfind(".")
+    tampered[last_dot + 1] = "B" if tampered[last_dot + 1] == "A" else "A"
+
+    bad_client = httpx.Client(verify=verify_ssl, follow_redirects=False, timeout=20)
+    resp = bad_client.post(f"{base_url}login/ott", data={"token": "".join(tampered)})
+    runner.check("Tampered token rejected",
+                 resp.status_code != 302 or "error" in resp.headers.get("Location", ""),
+                 f"HTTP {resp.status_code}, Location: {resp.headers.get('Location', 'none')}")
+    bad_client.close()
+
+    garbage_client = httpx.Client(verify=verify_ssl, follow_redirects=False, timeout=20)
+    resp = garbage_client.post(f"{base_url}login/ott", data={"token": "not-a-jwt"})
+    runner.check("Garbage token rejected",
+                 resp.status_code != 302 or "error" in resp.headers.get("Location", ""),
+                 f"HTTP {resp.status_code}, Location: {resp.headers.get('Location', 'none')}")
+    garbage_client.close()
+
+    pl_client.close()
+
+    # ===================================================================
+    # 2. TEST-LEVEL SHARING TESTS
+    # ===================================================================
+    print("\n--- 2. Test sharing: authenticating ---")
+    tl_client = authenticate_private_link(base_url, test_jwt, verify_ssl)
+    print("  Authenticated successfully")
+
+    resp = tl_client.get(f"{base_url}api/currentuser")
+    if resp.status_code == 200:
+        tl_info = resp.json()
+        runner.check("Test share: user is guest", tl_info.get("isGuest", False),
+                     f"isGuest={tl_info.get('isGuest')}")
+
+    print("\n--- 2. Test sharing: access control ---")
+    resp = tl_client.get(f"{base_url}api/info/{test_id}")
+    runner.check_status("Test share: can view shared test info", resp, 200)
+
+    resp = tl_client.get(f"{base_url}api/log/{test_id}")
+    runner.check_status("Test share: can view shared test log", resp, 200)
+
+    resp = tl_client.get(f"{base_url}log-detail.html?log={test_id}")
+    runner.check_status("Test share: can view log-detail page", resp, 200)
+
+    resp = tl_client.get(f"{base_url}api/plan/{plan_id}")
+    runner.check_status("Test share: can view plan containing test", resp, 200)
+
+    resp = tl_client.get(f"{base_url}api/plan/{other_plan_id}")
+    runner.check_status("Test share: cannot view other plan", resp, 404)
+
+    resp = tl_client.get(f"{base_url}api/info/{other_test_id}")
+    runner.check_status("Test share: cannot view other test", resp, 404)
+
+    resp = tl_client.get(f"{base_url}api/log/{other_test_id}")
+    runner.check("Test share: log of test in other plan returns no entries",
+                 resp.status_code == 200 and resp.json() == [],
+                 f"HTTP {resp.status_code} body={resp.text[:200]}")
+
+    # Same allowlist applies to test-level shares: export endpoints not allowed.
+    resp = tl_client.get(f"{base_url}api/log/exporthtml/{test_id}")
+    runner.check_status("Test share: cannot export shared test html (not in allowlist)", resp, 403)
+
+    resp = tl_client.get(f"{base_url}api/log/export/{test_id}")
+    runner.check_status("Test share: cannot export shared test zip (not in allowlist)", resp, 403)
+
+    resp = tl_client.get(f"{base_url}api/log/exporthtml/{other_test_id}")
+    runner.check_status("Test share: cannot export other test html", resp, 403)
+
+    resp = tl_client.get(f"{base_url}api/log/export/{other_test_id}")
+    runner.check_status("Test share: cannot export other test zip", resp, 403)
+
+    resp = tl_client.post(f"{base_url}api/info/{test_id}/publish",
+                          content=json.dumps({"publish": "summary"}),
+                          headers={"Content-Type": "application/json"})
+    runner.check_status("Test share: cannot publish test", resp, 403)
+
+    tl_client.close()
+
+    # ===================================================================
+    # 2b. SHARE-LINK JWT AS API BEARER TOKEN (plan-level)
+    # ===================================================================
+    # Same allow/deny matrix as the session flow above, but the JWT is sent
+    # directly as Authorization: Bearer on the /api/* filter chain — no
+    # /login/ott dance, no session cookie.
+    print("\n--- 2b. Plan JWT as Bearer: precondition check ---")
+    plan_bearer = bearer_client(base_url, plan_jwt, verify_ssl)
+
+    resp = plan_bearer.get(f"{base_url}api/currentuser")
+    runner.check_status("Plan JWT Bearer: currentuser reachable", resp, 200)
+    if resp.status_code == 200:
+        info = resp.json()
+        runner.check("Plan JWT Bearer: user is guest",
+                     info.get("isGuest", False),
+                     f"isGuest={info.get('isGuest')}")
+        runner.check("Plan JWT Bearer: user is not admin",
+                     not info.get("isAdmin", True),
+                     f"isAdmin={info.get('isAdmin')}")
+
+    print("\n--- 2b. Plan JWT as Bearer: allowed access ---")
+    resp = plan_bearer.get(f"{base_url}api/plan/{plan_id}")
+    runner.check_status("Plan JWT Bearer: can view shared plan", resp, 200)
+
+    resp = plan_bearer.get(f"{base_url}api/info/{test_id}")
+    runner.check_status("Plan JWT Bearer: can view test info", resp, 200)
+
+    resp = plan_bearer.get(f"{base_url}api/log/{test_id}")
+    runner.check_status("Plan JWT Bearer: can view test log", resp, 200)
+
+    print("\n--- 2b. Plan JWT as Bearer: denied access ---")
+    resp = plan_bearer.get(f"{base_url}api/plan/{other_plan_id}")
+    runner.check_status("Plan JWT Bearer: cannot view other plan", resp, 404)
+
+    resp = plan_bearer.get(f"{base_url}api/log/{other_test_id}")
+    runner.check("Plan JWT Bearer: log of test in other plan returns no entries",
+                 resp.status_code == 200 and resp.json() == [],
+                 f"HTTP {resp.status_code} body={resp.text[:200]}")
+
+    resp = plan_bearer.post(f"{base_url}api/plan/{plan_id}/share", params={"exp": "1"})
+    runner.check_status("Plan JWT Bearer: cannot create share link", resp, 403)
+
+    resp = plan_bearer.post(f"{base_url}api/info/{test_id}/share", params={"exp": "1"})
+    runner.check_status("Plan JWT Bearer: cannot share test", resp, 403)
+
+    resp = plan_bearer.post(f"{base_url}api/plan/{plan_id}/publish")
+    runner.check_status("Plan JWT Bearer: cannot publish", resp, 403)
+
+    resp = plan_bearer.delete(f"{base_url}api/plan/{plan_id}")
+    runner.check_status("Plan JWT Bearer: cannot delete plan", resp, 403)
+
+    resp = plan_bearer.post(f"{base_url}api/plan",
+                            params={"planName": plan_name},
+                            content=config,
+                            headers={"Content-Type": "application/json"})
+    runner.check_status("Plan JWT Bearer: cannot create new plan", resp, 403)
+
+    resp = plan_bearer.get(f"{base_url}api/token")
+    runner.check_status("Plan JWT Bearer: cannot list tokens", resp, 403)
+
+    resp = plan_bearer.get(f"{base_url}api/favorite-plans")
+    runner.check_status("Plan JWT Bearer: cannot list favorite plans", resp, 403)
+
+    # Collection endpoints are not in the private-link allow-list
+    resp = plan_bearer.get(f"{base_url}api/log")
+    runner.check_status_in("Plan JWT Bearer: cannot list all logs", resp, {401, 403})
+
+    # Other /api/* endpoints not in the private-link allow-list
+    resp = plan_bearer.get(f"{base_url}api/runner/available")
+    runner.check_status_in("Plan JWT Bearer: cannot hit runner", resp, {401, 403})
+
+    resp = plan_bearer.get(f"{base_url}api/server")
+    runner.check_status_in("Plan JWT Bearer: cannot hit api/server", resp, {401, 403})
+
+    # HTML pages are served by the non-API filter chain which has no BearerTokenAuthenticationFilter.
+    # The Bearer JWT therefore cannot reach log-detail.html / plan-detail.html — those require a
+    # /login/ott-established session. Expect redirect to login or 401/403.
+    plan_bearer_no_redirect = httpx.Client(
+        verify=verify_ssl, timeout=20, follow_redirects=False,
+        headers={"Authorization": f"Bearer {plan_jwt}"})
+    resp = plan_bearer_no_redirect.get(f"{base_url}plan-detail.html?plan={plan_id}")
+    runner.check_status_in("Plan JWT Bearer: cannot access plan-detail.html",
+                           resp, {302, 401, 403})
+    resp = plan_bearer_no_redirect.get(f"{base_url}log-detail.html?log={test_id}")
+    runner.check_status_in("Plan JWT Bearer: cannot access log-detail.html",
+                           resp, {302, 401, 403})
+    plan_bearer_no_redirect.close()
+
+    plan_bearer.close()
+
+    # ===================================================================
+    # 2c. SHARE-LINK JWT AS API BEARER TOKEN (test-level)
+    # ===================================================================
+    print("\n--- 2c. Test JWT as Bearer: access control ---")
+    test_bearer = bearer_client(base_url, test_jwt, verify_ssl)
+
+    resp = test_bearer.get(f"{base_url}api/currentuser")
+    runner.check_status("Test JWT Bearer: currentuser reachable", resp, 200)
+    if resp.status_code == 200:
+        runner.check("Test JWT Bearer: user is guest",
+                     resp.json().get("isGuest", False),
+                     f"isGuest={resp.json().get('isGuest')}")
+
+    resp = test_bearer.get(f"{base_url}api/info/{test_id}")
+    runner.check_status("Test JWT Bearer: can view shared test info", resp, 200)
+
+    resp = test_bearer.get(f"{base_url}api/log/{test_id}")
+    runner.check_status("Test JWT Bearer: can view shared test log", resp, 200)
+
+    resp = test_bearer.get(f"{base_url}api/plan/{plan_id}")
+    runner.check_status("Test JWT Bearer: can view containing plan", resp, 200)
+
+    resp = test_bearer.get(f"{base_url}api/info/{other_test_id}")
+    runner.check_status("Test JWT Bearer: cannot view other test", resp, 404)
+
+    resp = test_bearer.get(f"{base_url}api/plan/{other_plan_id}")
+    runner.check_status("Test JWT Bearer: cannot view other plan", resp, 404)
+
+    resp = test_bearer.get(f"{base_url}api/log/{other_test_id}")
+    runner.check("Test JWT Bearer: log of test in other plan returns no entries",
+                 resp.status_code == 200 and resp.json() == [],
+                 f"HTTP {resp.status_code} body={resp.text[:200]}")
+
+    test_bearer.close()
+
+    # ===================================================================
+    # 2d. INVALID BEARER JWTs
+    # ===================================================================
+    print("\n--- 2d. Invalid Bearer JWTs ---")
+
+    tampered_jwt = list(plan_jwt)
+    last_dot = plan_jwt.rfind(".")
+    tampered_jwt[last_dot + 1] = "B" if tampered_jwt[last_dot + 1] == "A" else "A"
+    tamper_client = bearer_client(base_url, "".join(tampered_jwt), verify_ssl)
+    resp = tamper_client.get(f"{base_url}api/plan/{plan_id}")
+    runner.check_status("Bearer JWT: tampered signature rejected", resp, 401)
+    tamper_client.close()
+
+    garbage_client = bearer_client(base_url, "not-a-jwt", verify_ssl)
+    resp = garbage_client.get(f"{base_url}api/plan/{plan_id}")
+    runner.check_status("Bearer JWT: malformed token rejected", resp, 401)
+    garbage_client.close()
+
+    # Regression: the admin API token used throughout these tests is presented
+    # as Authorization: Bearer and continues to work — this validates the
+    # two-provider chain order in WebSecurityResourceServerConfig.
+    api_token_bearer = bearer_client(base_url, token, verify_ssl)
+    resp = api_token_bearer.get(f"{base_url}api/currentuser")
+    runner.check_status("Bearer regression: opaque API token still authenticates", resp, 200)
+    api_token_bearer.close()
+
+    # ===================================================================
+    # 2e. RUNNER WAIT-STATE LONG-POLL ENDPOINT (/api/runner/{id}/wait-state)
+    # ===================================================================
+    # The long-poll endpoint mirrors getTestStatus auth: getRunningTestById
+    # applies owner/admin filtering and returns null (-> 404) for both unknown
+    # and not-authorized tests, so existence is never leaked. It lives under
+    # /api/runner/** which is NOT in the private-link allow-list, so share-link
+    # users must be rejected by the security layer. timeoutMs=1 keeps every call
+    # fast: the server clamps to >=1ms and returns {"timeout":true} promptly
+    # instead of holding the connection for the default 30s.
+    print("\n--- 2e. Runner wait-state endpoint ---")
+
+    # Owner/admin can wait on their own test (200 regardless of current state).
+    resp = owner_client.get(f"{base_url}api/runner/{test_id}/wait-state",
+                            params={"states": "FINISHED", "timeoutMs": 1})
+    runner.check_status("Wait-state: owner/admin can wait on own test", resp, 200)
+
+    # Unknown test id -> 404 carrying a JSON {"error":"test not found"} body (not
+    # Spring's generic HTML 404), so the error is machine-readable and consistent
+    # with the success responses. Same 404 for unknown and not-authorized: no leak.
+    resp = owner_client.get(f"{base_url}api/runner/does-not-exist-xyz/wait-state",
+                            params={"states": "FINISHED", "timeoutMs": 1})
+    runner.check_status("Wait-state: unknown test returns 404", resp, 404)
+    runner.check("Wait-state: 404 carries JSON 'test not found' marker",
+                 resp.headers.get("content-type", "").startswith("application/json")
+                 and resp.json().get("error") == "test not found",
+                 f"content-type={resp.headers.get('content-type')!r} body={resp.text[:200]}")
+
+    # Share-link (private-link) users must NOT reach runner endpoints at all:
+    # /api/runner/** is outside the private-link allow-list, so both a plan-level
+    # and a test-level share token are rejected (401/403) — even the test-level
+    # token that legitimately grants info/log access to this very test cannot use
+    # it to drive the runner.
+    ws_test_bearer = bearer_client(base_url, test_jwt, verify_ssl)
+    resp = ws_test_bearer.get(f"{base_url}api/runner/{test_id}/wait-state",
+                              params={"states": "FINISHED", "timeoutMs": 1})
+    runner.check_status_in("Wait-state: test-share token cannot reach runner", resp, {401, 403})
+    ws_test_bearer.close()
+
+    ws_plan_bearer = bearer_client(base_url, plan_jwt, verify_ssl)
+    resp = ws_plan_bearer.get(f"{base_url}api/runner/{test_id}/wait-state",
+                              params={"states": "FINISHED", "timeoutMs": 1})
+    runner.check_status_in("Wait-state: plan-share token cannot reach runner", resp, {401, 403})
+    ws_plan_bearer.close()
+
+    # ===================================================================
+    # 3. UNAUTHENTICATED ACCESS REJECTION
+    # ===================================================================
+    print("\n--- 3. Unauthenticated access rejection ---")
+    noauth_client = httpx.Client(verify=verify_ssl, timeout=20)
+
+    resp = noauth_client.get(f"{base_url}api/plan")
+    runner.check_status("Unauth: plan list rejected", resp, 401)
+
+    resp = noauth_client.get(f"{base_url}api/plan/{plan_id}")
+    runner.check_status("Unauth: plan detail rejected", resp, 401)
+
+    resp = noauth_client.get(f"{base_url}api/info/{test_id}")
+    runner.check_status("Unauth: test info rejected", resp, 401)
+
+    resp = noauth_client.get(f"{base_url}api/log/{test_id}")
+    runner.check_status("Unauth: test log rejected", resp, 401)
+
+    resp = noauth_client.get(f"{base_url}api/runner/available")
+    runner.check_status("Unauth: runner rejected", resp, 401)
+
+    resp = noauth_client.get(f"{base_url}api/runner/{test_id}/wait-state",
+                             params={"states": "FINISHED", "timeoutMs": 1})
+    runner.check_status("Unauth: wait-state rejected", resp, 401)
+
+    resp = noauth_client.post(f"{base_url}api/plan",
+                              params={"planName": plan_name},
+                              content=config,
+                              headers={"Content-Type": "application/json"})
+    runner.check_status("Unauth: create plan rejected", resp, 401)
+
+    resp = noauth_client.get(f"{base_url}api/currentuser")
+    runner.check_status("Unauth: currentuser rejected", resp, 401)
+
+    resp = noauth_client.get(f"{base_url}api/token")
+    runner.check_status("Unauth: token list rejected", resp, 401)
+
+    resp = noauth_client.request("DELETE", f"{base_url}api/plan",
+                                 params={"owner": "nobody", "confirm": "0"})
+    runner.check_status("Unauth: bulk plan delete rejected", resp, 401)
+
+    resp = noauth_client.get(f"{base_url}api/plan/delete-preview", params={"owner": "nobody"})
+    runner.check_status("Unauth: bulk delete preview rejected", resp, 401)
+
+    resp = noauth_client.get(f"{base_url}api/plan/delete-status")
+    runner.check_status("Unauth: bulk delete status rejected", resp, 401)
+
+    resp = noauth_client.post(f"{base_url}api/plan/delete-cancel")
+    runner.check_status("Unauth: bulk delete cancel rejected", resp, 401)
+
+    # `?public=true` is a way PAST the security chain for these two: the public matcher is
+    # GET /api/plan/?*, and `?*` is any one segment - delete-preview and delete-status
+    # included - so the chain permits them and TestPlanApi's isAdmin() is what refuses them.
+    # The 401s above therefore do not prove these are unreachable; these do.
+    resp = noauth_client.get(f"{base_url}api/plan/delete-preview",
+                             params={"public": "true", "owner": "nobody",
+                                     "owner_iss": "https://accounts.google.com"})
+    runner.check_status("Unauth: bulk delete preview rejected as a public request too", resp, 403)
+
+    resp = noauth_client.get(f"{base_url}api/plan/delete-status", params={"public": "true"})
+    runner.check_status("Unauth: bulk delete status rejected as a public request too", resp, 403)
+
+    # filter-options rides the same matcher, and is deliberately left there: it answers with
+    # the plan REGISTRY - family names, plan names and variant values, the same material
+    # /api/plan/available carries - and with nothing about anybody's data. Pinned so that
+    # stays a decision rather than an accident, body and all.
+    resp = noauth_client.get(f"{base_url}api/plan/filter-options")
+    runner.check_status("Unauth: filter options need authentication", resp, 401)
+
+    resp = noauth_client.get(f"{base_url}api/plan/filter-options", params={"public": "true"})
+    options = resp.json() if resp.status_code == 200 else {}
+    runner.check("Unauth: filter options are public, and are registry data only",
+                 resp.status_code == 200 and set(options) == {"families", "plans", "variants"},
+                 f"HTTP {resp.status_code}, keys={sorted(options)}")
+
+    resp = noauth_client.get(f"{base_url}api/favorite-plans")
+    runner.check_status("Unauth: favorite plans list rejected", resp, 401)
+
+    resp = noauth_client.post(f"{base_url}api/favorite-plans",
+                              content=json.dumps({"plan": plan_name}),
+                              headers={"Content-Type": "application/json"})
+    runner.check_status("Unauth: add favorite plan rejected", resp, 401)
+
+    resp = noauth_client.delete(f"{base_url}api/favorite-plans/{plan_name}")
+    runner.check_status("Unauth: remove favorite plan rejected", resp, 401)
+
+    noauth_client.close()
+
+    # ===================================================================
+    # 4. PUBLIC ACCESS
+    # ===================================================================
+    print("\n--- 4. Public access ---")
+    pub_client = httpx.Client(verify=verify_ssl, timeout=20)
+
+    resp = pub_client.get(f"{base_url}api/plan/{plan_id}?public=true")
+    runner.check_status("Public: published plan visible", resp, 200)
+
+    resp = pub_client.get(f"{base_url}api/log/{test_id}?public=true")
+    runner.check_status("Public: published test log visible", resp, 200)
+
+    resp = pub_client.get(f"{base_url}api/plan/{other_plan_id}?public=true")
+    runner.check_status("Public: unpublished plan not visible", resp, 404)
+
+    resp = pub_client.get(f"{base_url}plan-detail.html?plan={plan_id}&public=true")
+    runner.check_status("Public: published plan-detail page accessible", resp, 200)
+
+    # Only the JSON-only export endpoints (/api/log/export/?* and
+    # /api/plan/export/?*) are in the public matcher. The html-zip variants
+    # /api/{plan,log}/exporthtml/?* require auth regardless of ?public=true,
+    # by design — the UI hides their download buttons in public-mode views so
+    # this 401 should never be reached from the rendered pages.
+    resp = pub_client.get(f"{base_url}api/plan/exporthtml/{plan_id}?public=true")
+    runner.check_status("Public: plan/exporthtml needs auth even with ?public", resp, 401)
+
+    resp = pub_client.get(f"{base_url}api/log/exporthtml/{test_id}?public=true")
+    runner.check_status("Public: log/exporthtml needs auth even with ?public", resp, 401)
+
+    resp = pub_client.get(f"{base_url}api/log/export/{test_id}?public=true")
+    assert_valid_export_zip(runner, "Public: can export published test zip", resp, [test_id])
+
+    resp = pub_client.get(f"{base_url}api/log/export/{other_test_id}?public=true")
+    runner.check_status("Public: cannot export unpublished test zip", resp, 404)
+
+    # /api/plan/export/{id} zip: public for a published plan, denied without ?public
+    resp = pub_client.get(f"{base_url}api/plan/export/{plan_id}?public=true")
+    assert_valid_export_zip(runner, "Public: can export published plan zip", resp, [test_id])
+
+    resp = pub_client.get(f"{base_url}api/plan/export/{plan_id}")
+    runner.check_status("Public: plan/export without ?public requires auth", resp, 401)
+
+    # the public LIST endpoints must return only published results: assert every returned row
+    # carries a publish level, which is pagination-independent (a leak would surface an
+    # unpublished row here). The lists are non-empty because we just published a plan and test.
+    resp = pub_client.get(f"{base_url}api/plan?public=true")
+    rows = resp.json().get("data", []) if resp.status_code == 200 else []
+    runner.check("Public: plan list returns only published plans",
+                 resp.status_code == 200 and len(rows) > 0
+                 and all(r.get("publish") in ("summary", "everything") for r in rows),
+                 f"HTTP {resp.status_code}, {len(rows)} rows")
+
+    resp = pub_client.get(f"{base_url}api/log?public=true")
+    rows = resp.json().get("data", []) if resp.status_code == 200 else []
+    runner.check("Public: test log list returns only published tests",
+                 resp.status_code == 200 and len(rows) > 0
+                 and all(r.get("publish") in ("summary", "everything") for r in rows),
+                 f"HTTP {resp.status_code}, {len(rows)} rows")
+
+    # Without ?public=true, published plan still requires auth
+    resp = pub_client.get(f"{base_url}api/plan/{plan_id}")
+    runner.check_status("Public: plan without ?public requires auth", resp, 401)
+
+    resp = pub_client.get(f"{base_url}api/plan/exporthtml/{plan_id}")
+    runner.check_status("Public: export without ?public requires auth", resp, 401)
+
+    resp = pub_client.get(f"{base_url}api/log/exporthtml/{test_id}")
+    runner.check_status("Public: log/exporthtml without ?public requires auth", resp, 401)
+
+    resp = pub_client.get(f"{base_url}api/log/export/{test_id}")
+    runner.check_status("Public: log/export without ?public requires auth", resp, 401)
+
+    resp = pub_client.post(f"{base_url}api/info/{test_id}/publish",
+                           content=json.dumps({"publish": "summary"}),
+                           headers={"Content-Type": "application/json"})
+    runner.check_status("Public: unauth cannot publish test", resp, 401)
+
+    pub_client.close()
+
+    # ===================================================================
+    # 4b. PLAN EXPORT — owner path
+    # ===================================================================
+    # Smoke test for the bulk-load path in LogApi.exportPlanAsZip when the
+    # caller owns the plan (the path every CI test job exercises). Asserts
+    # the response is a well-formed zip containing the expected test logs.
+    print("\n--- 4b. Plan export (owner) ---")
+    resp = owner_client.get(f"{base_url}api/plan/exporthtml/{plan_id}")
+    assert_valid_export_zip(runner, "Export: owner can export own plan", resp, [test_id])
+
+    resp = owner_client.get(f"{base_url}api/plan/exporthtml/does-not-exist")
+    runner.check_status("Export: missing plan id returns 404", resp, 404)
+
+    resp = owner_client.get(f"{base_url}api/log/exporthtml/{test_id}")
+    assert_valid_export_zip(runner, "Export: owner can export own test html", resp, [test_id])
+
+    resp = owner_client.get(f"{base_url}api/log/export/{test_id}")
+    assert_valid_export_zip(runner, "Export: owner can export own test zip", resp, [test_id])
+
+    resp = owner_client.get(f"{base_url}api/plan/export/{plan_id}")
+    assert_valid_export_zip(runner, "Export: owner can export own plan zip", resp, [test_id])
+
+    resp = owner_client.get(f"{base_url}api/log/exporthtml/does-not-exist")
+    runner.check_status("Export: missing test id html returns 404", resp, 404)
+
+    resp = owner_client.get(f"{base_url}api/log/export/does-not-exist")
+    runner.check_status("Export: missing test id zip returns 404", resp, 404)
+
+    # ===================================================================
+    # 4c. PER-TEST PUBLISH (/api/info/{id}/publish)
+    # ===================================================================
+    # other_test_id was created against an unpublished plan, so it starts
+    # with publish=null. Admin can change its publish level via this
+    # endpoint without going through /plan/{id}/publish.
+    print("\n--- 4c. Per-test publish ---")
+    resp = owner_client.post(f"{base_url}api/info/{other_test_id}/publish",
+                             content=json.dumps({"publish": "summary"}),
+                             headers={"Content-Type": "application/json"})
+    runner.check_status("Publish: owner can publish test as summary", resp, 200)
+
+    if resp.status_code == 200:
+        # Confirm the change is observable to public callers.
+        check_client = httpx.Client(verify=verify_ssl, timeout=20)
+        resp = check_client.get(f"{base_url}api/info/{other_test_id}?public=true")
+        runner.check_status("Publish: published test now visible publicly", resp, 200)
+        check_client.close()
+
+    resp = owner_client.post(f"{base_url}api/info/{other_test_id}/publish",
+                             content=json.dumps({"publish": "everything"}),
+                             headers={"Content-Type": "application/json"})
+    runner.check_status("Publish: owner can raise level to everything", resp, 200)
+
+    resp = owner_client.post(f"{base_url}api/info/{other_test_id}/publish",
+                             content=json.dumps({"publish": "garbage-value"}),
+                             headers={"Content-Type": "application/json"})
+    runner.check_status_in("Publish: invalid publish value rejected", resp, {400, 403})
+
+    resp = owner_client.post(f"{base_url}api/info/{other_test_id}/publish",
+                             content=json.dumps({}),
+                             headers={"Content-Type": "application/json"})
+    runner.check_status("Publish: missing publish field rejected", resp, 400)
+
+    # non-admins may only raise the publish level, never lower it
+    resp = owner_client.post(f"{base_url}api/info/{other_test_id}/publish",
+                             content=json.dumps({"publish": "summary"}),
+                             headers={"Content-Type": "application/json"})
+    runner.check_status("Publish: non-admin cannot lower publish level", resp, 403)
+
+    # ===================================================================
+    # 4d. PLAN DELETION & EVENT_LOG CASCADE
+    # ===================================================================
+    # Deleting a plan must remove the plan, its tests AND their EVENT_LOG
+    # entries. The log delete silently matched nothing for non-admin users
+    # until the owner/testOwner field fix, orphaning every log entry.
+    # /api/log/{id} reads EVENT_LOG directly (no TEST_INFO gating), so
+    # orphans stay visible to their owner after a broken delete - making
+    # the post-delete log check a true discriminator for the cascade.
+    print("\n--- 4d. Plan deletion & EVENT_LOG cascade ---")
+
+    del_plan_id, del_module = create_test_plan(owner_client, base_url, plan_name, config)
+    del_test_id = create_test_from_plan(owner_client, base_url, del_plan_id, del_module)
+
+    # a still-running test keeps writing log entries, which would race the counts below
+    wait_for_test_finished(owner_client, base_url, del_test_id)
+
+    resp = owner_client.get(f"{base_url}api/log/{del_test_id}")
+    runner.check_status("Delete: owner can read log entries before delete", resp, 200)
+    entries_before = _json_len(resp)
+    runner.check("Delete: test has log entries before delete", entries_before > 0,
+                 f"got {entries_before} entries")
+
+    if token_2:
+        user_b = second_user_client()
+
+        resp = user_b.get(f"{base_url}api/currentuser")
+        runner.check_status("Delete: second user's token is accepted", resp, 200)
+
+        resp = user_b.get(f"{base_url}api/plan/{del_plan_id}")
+        runner.check_status("Delete: another user cannot see the plan", resp, 404)
+
+        resp = user_b.get(f"{base_url}api/log/{del_test_id}")
+        n = _json_len(resp)
+        runner.check("Delete: another user sees no log entries",
+                     resp.status_code == 200 and n == 0,
+                     f"HTTP {resp.status_code}, {n} entries")
+
+        resp = user_b.delete(f"{base_url}api/plan/{del_plan_id}")
+        runner.check_status("Delete: another user cannot delete the plan", resp, 404)
+
+        resp = owner_client.get(f"{base_url}api/plan/{del_plan_id}")
+        runner.check_status("Delete: plan still present after another user's attempt", resp, 200)
+
+        resp = owner_client.get(f"{base_url}api/log/{del_test_id}")
+        n = _json_len(resp)
+        runner.check("Delete: log entries still present after another user's attempt",
+                     resp.status_code == 200 and n > 0,
+                     f"HTTP {resp.status_code}, {n} entries")
+
+        user_b.close()
+    else:
+        print("  NOTE: CONFORMANCE_TOKEN_2 not set; skipping second-user delete checks")
+
+    resp = owner_client.delete(f"{base_url}api/plan/{del_plan_id}")
+    runner.check_status("Delete: owner can delete their own plan", resp, 204)
+
+    resp = owner_client.get(f"{base_url}api/plan/{del_plan_id}")
+    runner.check_status("Delete: plan is gone after delete", resp, 404)
+
+    resp = owner_client.get(f"{base_url}api/info/{del_test_id}")
+    runner.check_status("Delete: test info is gone after delete", resp, 404)
+
+    resp = owner_client.get(f"{base_url}api/log/{del_test_id}")
+    n = _json_len(resp)
+    runner.check("Delete: no orphaned EVENT_LOG entries after delete",
+                 resp.status_code == 200 and n == 0,
+                 f"HTTP {resp.status_code}, {n} entries")
+
+    resp = owner_client.delete(f"{base_url}api/plan/{del_plan_id}")
+    runner.check_status("Delete: deleting an already-deleted plan returns 404", resp, 404)
+
+    # ===================================================================
+    # 4e. CROSS-USER ISOLATION (two full users)
+    # ===================================================================
+    # Share-link principals are rejected by the URL allowlist layer before the
+    # controllers run; a second full ROLE_USER passes the same filter chain as
+    # the owner, so these checks exercise the owner-scoping in the service/DB
+    # layer itself.
+    print("\n--- 4e. Cross-user isolation (two full users) ---")
+
+    if token_2:
+        user_b = second_user_client()
+
+        iso_plan_id, iso_module = create_test_plan(owner_client, base_url, plan_name, config)
+        iso_test_id = create_test_from_plan(owner_client, base_url, iso_plan_id, iso_module)
+        wait_for_test_finished(owner_client, base_url, iso_test_id)
+
+        resp = user_b.get(f"{base_url}api/info/{iso_test_id}")
+        runner.check_status("Isolation: cannot read another user's test info", resp, 404)
+
+        resp = user_b.get(f"{base_url}api/plan")
+        ids = _row_ids(resp)
+        runner.check("Isolation: plan listing excludes another user's plan",
+                     resp.status_code == 200 and ids is not None and iso_plan_id not in ids,
+                     f"HTTP {resp.status_code}, ids={ids}")
+
+        resp = user_b.get(f"{base_url}api/log")
+        ids = _row_ids(resp)
+        runner.check("Isolation: test listing excludes another user's test",
+                     resp.status_code == 200 and ids is not None and iso_test_id not in ids,
+                     f"HTTP {resp.status_code}, ids={ids}")
+
+        resp = user_b.get(f"{base_url}api/log/export/{iso_test_id}")
+        runner.check_status("Isolation: cannot export another user's test log", resp, 404)
+
+        resp = user_b.get(f"{base_url}api/plan/exporthtml/{iso_plan_id}")
+        runner.check_status("Isolation: cannot export another user's plan html", resp, 404)
+
+        resp = user_b.post(f"{base_url}api/plan/{iso_plan_id}/share", params={"exp": "1"})
+        runner.check_status("Isolation: cannot share another user's plan", resp, 404)
+
+        resp = user_b.post(f"{base_url}api/info/{iso_test_id}/share", params={"exp": "1"})
+        runner.check_status("Isolation: cannot share another user's test", resp, 404)
+
+        resp = user_b.post(f"{base_url}api/plan/{iso_plan_id}/publish",
+                           content=json.dumps({"publish": "everything"}),
+                           headers={"Content-Type": "application/json"})
+        runner.check_status("Isolation: cannot publish another user's plan", resp, 403)
+
+        resp = user_b.post(f"{base_url}api/info/{iso_test_id}/publish",
+                           content=json.dumps({"publish": "everything"}),
+                           headers={"Content-Type": "application/json"})
+        runner.check_status("Isolation: cannot publish another user's test", resp, 403)
+
+        resp = user_b.post(f"{base_url}api/plan/{iso_plan_id}/makemutable", data={"unused": "1"})
+        runner.check_status("Isolation: cannot make another user's plan mutable", resp, 403)
+
+        # regression: this NPE'd into a 500 before createTest null-checked the plan lookup
+        resp = user_b.post(f"{base_url}api/runner", params={"test": iso_module, "plan": iso_plan_id})
+        runner.check_status("Isolation: cannot create a test on another user's plan", resp, 404)
+
+        resp = user_b.get(f"{base_url}api/runner/{iso_test_id}")
+        runner.check_status("Isolation: cannot read another user's runner state", resp, 404)
+
+        resp = user_b.get(f"{base_url}api/runner/{iso_test_id}/wait-state",
+                          params={"states": "FINISHED", "timeoutMs": 1})
+        runner.check_status("Isolation: cannot wait on another user's test", resp, 404)
+
+        resp = user_b.get(f"{base_url}api/log/{iso_test_id}/images")
+        runner.check_status("Isolation: cannot list another user's test images", resp, 403)
+
+        user_b.close()
+    else:
+        print("  NOTE: CONFORMANCE_TOKEN_2 not set; skipping cross-user isolation checks")
+
+    # ===================================================================
+    # 4f. CERTIFICATION PACKAGE & IMMUTABLE PLANS
+    # ===================================================================
+    # 'Prepare certification package' publishes the plan and marks it
+    # immutable - the only API route to an immutable plan. Certification
+    # refuses plans with failed/incomplete tests, so to get a passing test we
+    # start a client test (the suite acting as OP) and point a config plan's
+    # discovery check at the suite's own discovery endpoint.
+    print("\n--- 4f. Certification package & immutable plans ---")
+
+    op_alias = "security-test-cert-op"
+    op_config = json.dumps({
+        "alias": op_alias,
+        "description": "security-test OP for certification checks",
+        "client": {"client_id": "cl1", "client_secret": "clsecret", "scope": "openid",
+                   "redirect_uri": "http://localhost:44444/", "client_name": "cli"},
+    })
+    op_variant = {"client_auth_type": "client_secret_basic", "response_type": "code",
+                  "response_mode": "default", "request_type": "plain_http_request",
+                  "client_registration": "dynamic_client"}
+    op_plan_id, op_module = create_test_plan(owner_client, base_url, "oidcc-client-test-plan",
+                                             op_config, variant=op_variant)
+    op_test_id = create_test_from_plan(owner_client, base_url, op_plan_id, op_module)
+
+    # creating only configures the module; it must be started to go WAITING and expose the OP
+    resp = owner_client.post(f"{base_url}api/runner/{op_test_id}")
+    runner.check_status("Certification: helper OP test started", resp, 200)
+
+    # the start is asynchronous; wait server-side until the OP is WAITING. Do NOT poll
+    # the OP's public endpoints for this - a front-channel request arriving before the
+    # module is WAITING fails the client test.
+    op_discovery_url = f"{base_url}test/a/{op_alias}/.well-known/openid-configuration"
+    resp = owner_client.get(f"{base_url}api/runner/{op_test_id}/wait-state",
+                            params={"states": "WAITING", "timeoutMs": 30000})
+    op_ready = resp.status_code == 200 and resp.json().get("state") == "WAITING"
+    runner.check("Certification: helper OP reached WAITING",
+                 op_ready, f"HTTP {resp.status_code}, {resp.text[:120]}")
+    if not op_ready:
+        dump_failing_conditions(owner_client, base_url, op_test_id)
+
+    # the OP test is now a live WAITING (in-memory) test: use it to cover the running-test
+    # endpoints, which are owner-scoped inside TestRunnerSupport rather than at the URL layer
+    if op_ready:
+        resp = owner_client.get(f"{base_url}api/runner/running")
+        runner.check("Running: owner's running list includes their test",
+                     resp.status_code == 200 and op_test_id in resp.json(),
+                     f"HTTP {resp.status_code}, {resp.text[:120]}")
+
+        if token_2:
+            user_b = second_user_client()
+
+            resp = user_b.get(f"{base_url}api/runner/running")
+            runner.check("Running: another user's running list excludes it",
+                         resp.status_code == 200 and op_test_id not in resp.json(),
+                         f"HTTP {resp.status_code}, {resp.text[:120]}")
+
+            resp = user_b.post(f"{base_url}api/runner/{op_test_id}")
+            runner.check_status("Running: another user cannot start the test", resp, 404)
+
+            resp = user_b.delete(f"{base_url}api/runner/{op_test_id}")
+            runner.check_status("Running: another user cannot cancel the test", resp, 404)
+
+            resp = owner_client.get(f"{base_url}api/runner/running")
+            runner.check("Running: test still running after another user's attempts",
+                         resp.status_code == 200 and op_test_id in resp.json(),
+                         f"HTTP {resp.status_code}")
+
+            user_b.close()
+
+    cert_config = json.dumps({
+        "description": "security-test certification plan",
+        "server": {"discoveryUrl": op_discovery_url},
+    })
+    cert_plan_id, cert_module = create_test_plan(owner_client, base_url, plan_name, cert_config)
+    cert_test_id = create_test_from_plan(owner_client, base_url, cert_plan_id, cert_module)
+    wait_for_test_finished(owner_client, base_url, cert_test_id, label="certification test")
+
+    resp = owner_client.get(f"{base_url}api/info/{cert_test_id}")
+    cert_result = resp.json().get("result") if resp.status_code == 200 else None
+    runner.check("Certification: discovery test against the suite's own OP passes",
+                 cert_result in ("PASSED", "WARNING", "REVIEW"),
+                 f"result={cert_result}")
+    if cert_result not in ("PASSED", "WARNING", "REVIEW"):
+        dump_failing_conditions(owner_client, base_url, cert_test_id)
+
+    # owner_client pins Content-Type: application/json, which would override the
+    # multipart/form encodings on these requests (httpx keeps explicit client headers),
+    # so form and multipart calls go through a client that only sets Authorization
+    owner_form = bearer_client(base_url, token, verify_ssl)
+
+    # multipart with an unrelated field: clientSideData stays absent (only needed for RP tests)
+    resp = owner_form.post(f"{base_url}api/plan/{cert_plan_id}/certificationpackage",
+                           files={"ignored": ("ignored.txt", b"x")})
+    runner.check_status("Certification: owner can prepare certification package", resp, 200)
+
+    resp = owner_client.get(f"{base_url}api/plan/{cert_plan_id}")
+    cert_immutable = resp.json().get("immutable") if resp.status_code == 200 else None
+    runner.check("Certification: plan is now immutable",
+                 resp.status_code == 200 and cert_immutable is True,
+                 f"HTTP {resp.status_code}, immutable={cert_immutable}")
+
+    # nobody but the owner may prepare a certification package (which publishes + freezes a plan)
+    cert_pkg = f"{base_url}api/plan/{cert_plan_id}/certificationpackage"
+    with httpx.Client(verify=verify_ssl, timeout=10) as c:
+        resp = c.post(cert_pkg, files={"ignored": ("ignored.txt", b"x")})
+    runner.check_status("Certification: unauthenticated cannot prepare package", resp, 401)
+    if token_2:
+        user_b = second_user_client()
+        resp = user_b.post(cert_pkg, files={"ignored": ("ignored.txt", b"x")})
+        # owner-scoped plan lookup returns null -> the 'invalid_plan_id' 422 path, no cross-user access
+        runner.check_status("Certification: another user cannot prepare package", resp, 422)
+        user_b.close()
+
+    resp = owner_client.delete(f"{base_url}api/plan/{cert_plan_id}")
+    runner.check_status("Certification: immutable plan cannot be deleted", resp, 405)
+
+    resp = owner_client.post(f"{base_url}api/runner",
+                             params={"test": cert_module, "plan": cert_plan_id})
+    runner.check_status("Certification: cannot create new test on immutable plan", resp, 401)
+
+    if token_2:
+        user_b = second_user_client()
+        resp = user_b.post(f"{base_url}api/plan/{cert_plan_id}/makemutable", data={"unused": "1"})
+        runner.check_status("Certification: another user cannot make the plan mutable", resp, 403)
+        user_b.close()
+
+    # reverting immutability is admin-only, so even the owner is refused
+    resp = owner_form.post(f"{base_url}api/plan/{cert_plan_id}/makemutable", data={"unused": "1"})
+    runner.check_status("Certification: even the owner cannot make the plan mutable", resp, 403)
+    owner_form.close()
+
+    # stop-on-delete: the helper OP test is still WAITING (running). Deleting its plan must
+    # stop the module, otherwise it would keep writing EVENT_LOG rows after its logs are
+    # deleted and re-orphan them. The runner status is served from the in-memory module, so
+    # it is still readable right after the plan (and TEST_INFO) are gone.
+    resp = owner_client.get(f"{base_url}api/runner/{op_test_id}")
+    updated_before = resp.json().get("updated") if resp.status_code == 200 else None
+    runner.check("Stop-on-delete: helper OP is running before delete",
+                 resp.status_code == 200 and updated_before is not None,
+                 f"HTTP {resp.status_code}")
+
+    resp = owner_client.delete(f"{base_url}api/plan/{op_plan_id}")
+    runner.check_status("Stop-on-delete: can delete the plan of a running test", resp, 204)
+
+    # stop() moves the module to INTERRUPTED, bumping its status-updated timestamp; had the
+    # delete not stopped it, the still-WAITING module's timestamp would be unchanged. (The
+    # runner status map exposes no 'status' field, so the timestamp is the observable here.)
+    resp = owner_client.get(f"{base_url}api/runner/{op_test_id}")
+    updated_after = resp.json().get("updated") if resp.status_code == 200 else None
+    runner.check("Stop-on-delete: deleting the plan stopped the running module",
+                 updated_after is not None and updated_after != updated_before,
+                 f"before={updated_before}, after={updated_after}")
+
+    # no re-orphaning: because the module was stopped BEFORE its logs were deleted, nothing
+    # remains to read. A regression that stopped it after deleteTests would leave the stop
+    # log here as an orphan, which the timestamp check above would not catch.
+    resp = owner_client.get(f"{base_url}api/log/{op_test_id}")
+    n = _json_len(resp)
+    runner.check("Stop-on-delete: no orphaned log entries remain after delete",
+                 resp.status_code == 200 and n == 0,
+                 f"HTTP {resp.status_code}, {n} entries")
+
+    resp = owner_client.get(f"{base_url}api/info/{op_test_id}")
+    runner.check_status("Stop-on-delete: test info is gone after delete", resp, 404)
+
+    # ===================================================================
+    # 4g. METADATA & LISTING ENDPOINTS
+    # ===================================================================
+    print("\n--- 4g. Metadata & listing endpoints ---")
+
+    # /info (list all) is intentionally disabled for performance
+    resp = owner_client.get(f"{base_url}api/info")
+    runner.check_status("Metadata: bulk test listing is disabled (400)", resp, 400)
+
+    # /lastconfig returns the current user's most recent saved config. Creating a plan
+    # saves its config, so two successive creates prove the endpoint returns the *latest*.
+    marker_a = f"lastconfig-marker-A-{time.time()}"
+    create_test_plan(owner_client, base_url, plan_name,
+                     json.dumps({"description": marker_a,
+                                 "server": {"discoveryUrl": "https://example.com/.well-known/openid-configuration"}}))
+    resp = owner_client.get(f"{base_url}api/lastconfig")
+    runner.check("Lastconfig: returns the just-saved config",
+                 resp.status_code == 200 and marker_a in resp.text,
+                 f"HTTP {resp.status_code}")
+
+    marker_b = f"lastconfig-marker-B-{time.time()}"
+    create_test_plan(owner_client, base_url, plan_name,
+                     json.dumps({"description": marker_b,
+                                 "server": {"discoveryUrl": "https://example.com/.well-known/openid-configuration"}}))
+    resp = owner_client.get(f"{base_url}api/lastconfig")
+    runner.check("Lastconfig: returns the latest config, not the previous one",
+                 resp.status_code == 200 and marker_b in resp.text and marker_a not in resp.text,
+                 f"HTTP {resp.status_code}")
+
+    if token_2:
+        user_b = second_user_client()
+        resp = user_b.get(f"{base_url}api/lastconfig")
+        runner.check("Lastconfig: does not leak another user's config",
+                     resp.status_code == 200 and marker_a not in resp.text and marker_b not in resp.text,
+                     f"HTTP {resp.status_code}")
+        user_b.close()
+
+    resp = unauthenticated_get(base_url, "api/lastconfig", verify_ssl)
+    runner.check_status("Lastconfig: requires authentication", resp, 401)
+
+    # plan metadata endpoints (authenticated, data-bearing)
+    resp = owner_client.get(f"{base_url}api/plan/available")
+    body = resp.json() if resp.status_code == 200 else None
+    runner.check("Metadata: available plans list is non-empty",
+                 isinstance(body, list) and len(body) > 0,
+                 f"HTTP {resp.status_code}")
+
+    resp = unauthenticated_get(base_url, "api/plan/available", verify_ssl)
+    runner.check_status("Metadata: available plans requires authentication", resp, 401)
+
+    # owner-success for the two endpoints otherwise only covered as denial cases
+    resp = owner_client.get(f"{base_url}api/server")
+    runner.check_status("Metadata: server info readable by an authenticated user", resp, 200)
+
+    resp = owner_client.get(f"{base_url}api/runner/available")
+    body = resp.json() if resp.status_code == 200 else None
+    runner.check("Metadata: available test modules list is non-empty",
+                 isinstance(body, list) and len(body) > 0,
+                 f"HTTP {resp.status_code}")
+
+    resp = owner_client.get(f"{base_url}api/plan/info/{plan_name}")
+    runner.check("Metadata: plan info returns the requested plan",
+                 resp.status_code == 200 and resp.json().get("planName") == plan_name,
+                 f"HTTP {resp.status_code}, {resp.text[:120]}")
+
+    resp = owner_client.get(f"{base_url}api/plan/info/this-plan-does-not-exist")
+    runner.check_status("Metadata: unknown plan name returns 404", resp, 404)
+
+    # spec_links is public only with ?public — probe it unauthenticated to prove that
+    resp = unauthenticated_get(base_url, "api/ui/spec_links", verify_ssl, params={"public": "true"})
+    body = resp.json() if resp.status_code == 200 else None
+    runner.check("Metadata: spec_links?public is publicly reachable and returns a mapping",
+                 isinstance(body, dict) and len(body) > 0,
+                 f"HTTP {resp.status_code}")
+
+    resp = unauthenticated_get(base_url, "api/ui/spec_links", verify_ssl)
+    runner.check_status("Metadata: spec_links without ?public is denied", resp, 401)
+
+    # the mdoc IACA root is deliberately public: testers configure it as a trust anchor
+    resp = unauthenticated_get(base_url, "mdoc-iaca-root.pem", verify_ssl)
+    runner.check("Metadata: mdoc IACA root cert is publicly reachable as PEM",
+                 resp.status_code == 200 and "BEGIN CERTIFICATE" in resp.text,
+                 f"HTTP {resp.status_code}")
+
+    # ===================================================================
+    # 4h. BULK PLAN DELETE (ADMIN ONLY)
+    # ===================================================================
+    # Only the denials can be proved here: an API token never carries ROLE_ADMIN
+    # (ApiTokenAuthenticationProvider grants ROLE_USER, and TokenApi refuses to mint a token
+    # for an admin at all), so this harness cannot reach the allowed path however it
+    # authenticates. That half is covered by the Java session tests.
+    print("\n--- 4h. Bulk plan delete (admin only) ---")
+
+    # both halves of the account: a sub names one only within the issuer that minted it, and
+    # this is the scope the delete runs on, so the server refuses a half pair outright
+    bulk_owner = {"owner": user_info.get("sub", "nobody"),
+                  "owner_iss": user_info.get("iss", "https://accounts.google.com")}
+    bulk_params = {**bulk_owner, "confirm": "0"}
+
+    resp = owner_client.request("DELETE", f"{base_url}api/plan", params=bulk_params)
+    runner.check_status("Bulk delete: token user cannot delete plans in bulk", resp, 403)
+
+    resp = owner_client.get(f"{base_url}api/plan/delete-preview", params=bulk_owner)
+    runner.check_status("Bulk delete: token user cannot preview a bulk delete", resp, 403)
+
+    resp = owner_client.get(f"{base_url}api/plan/filter-options")
+    runner.check_status("Filter options: readable by any authenticated user", resp, 200)
+
+    resp = owner_client.get(f"{base_url}api/plan/delete-status")
+    runner.check_status("Bulk delete: token user cannot read the job status", resp, 403)
+
+    resp = owner_client.post(f"{base_url}api/plan/delete-cancel")
+    runner.check_status("Bulk delete: token user cannot cancel a job", resp, 403)
+
+    # a private link user is denied everything outside its allowlist, and this is not in it
+    bulk_pl_client = authenticate_private_link(base_url, plan_jwt, verify_ssl)
+    resp = bulk_pl_client.request("DELETE", f"{base_url}api/plan", params=bulk_params)
+    runner.check_status("Bulk delete: private link user cannot delete plans in bulk", resp, 403)
+    bulk_pl_client.close()
+
+    # none of that deleted anything
+    resp = owner_client.get(f"{base_url}api/plan/{plan_id}")
+    runner.check_status("Bulk delete: the plan is still there after every denial", resp, 200)
+
+    # half an account is refused rather than half applied, on the listing and the delete
+    # alike: a bare sub would mean "everyone with that sub, whoever logged them in"
+    resp = owner_client.get(f"{base_url}api/plan", params={"owner": bulk_owner["owner"]})
+    runner.check_status("Owner filter: a sub without its issuer is refused", resp, 400)
+
+    resp = owner_client.get(f"{base_url}api/plan", params={"owner_iss": bulk_owner["owner_iss"]})
+    runner.check_status("Owner filter: an issuer without a sub is refused", resp, 400)
+
+    # the owner filter narrows a listing and can never widen it
+    if token_2:
+        user_b = second_user_client()
+        resp = user_b.get(f"{base_url}api/plan", params=bulk_owner)
+        ids = _row_ids(resp)
+        runner.check("Bulk delete: ?owner= cannot list another user's plans",
+                     resp.status_code == 200 and ids is not None and plan_id not in ids,
+                     f"HTTP {resp.status_code}, ids={ids}")
+        user_b.close()
+
+    # ===================================================================
+    # 5. API TOKEN LIFECYCLE
+    # ===================================================================
+    print("\n--- 5. API token lifecycle ---")
+
+    resp = owner_client.get(f"{base_url}api/token")
+    runner.check_status("Token: user can list their tokens", resp, 200)
+    own_token_ids = []
+    if resp.status_code == 200:
+        token_list = resp.json()
+        runner.check("Token: list contains the auth token", len(token_list) > 0,
+                     f"got {len(token_list)} tokens")
+        own_token_ids = [t["_id"] for t in token_list]
+
+    # regression: deleteToken returned wasAcknowledged(), so a matched-nothing
+    # delete reported 200 while deleting nothing
+    resp = owner_client.delete(f"{base_url}api/token/does-not-exist-xyz")
+    runner.check_status("Token: deleting a nonexistent token returns 404", resp, 404)
+
+    if token_2 and own_token_ids:
+        user_b = second_user_client()
+
+        resp = user_b.get(f"{base_url}api/token")
+        b_token_ids = _row_ids(resp) if resp.status_code == 200 else None
+        runner.check("Token: another user's listing excludes this user's tokens",
+                     resp.status_code == 200 and not (set(own_token_ids) & set(b_token_ids or [])),
+                     f"HTTP {resp.status_code}")
+
+        resp = user_b.delete(f"{base_url}api/token/{own_token_ids[0]}")
+        runner.check_status("Token: another user cannot delete this user's token", resp, 404)
+
+        resp = owner_client.get(f"{base_url}api/currentuser")
+        runner.check_status("Token: owner's token still valid after the attempt", resp, 200)
+
+        user_b.close()
+
+    # ===================================================================
+    # 6. FAVORITE PLANS (owner access)
+    # ===================================================================
+    print("\n--- 6. Favorite plans (owner access) ---")
+
+    fav_plan_name = "security-test-favorite-plan"
+
+    resp = owner_client.get(f"{base_url}api/favorite-plans")
+    runner.check_status("Favorites: owner can list favorites", resp, 200)
+
+    resp = owner_client.post(f"{base_url}api/favorite-plans",
+                             content=json.dumps({"plan": fav_plan_name}),
+                             headers={"Content-Type": "application/json"})
+    runner.check_status("Favorites: owner can add a favorite", resp, 200)
+    if resp.status_code == 200:
+        runner.check("Favorites: added plan appears in the list",
+                     fav_plan_name in resp.json().get("plans", []),
+                     f"got {resp.json()}")
+
+    resp = owner_client.delete(f"{base_url}api/favorite-plans/{fav_plan_name}")
+    runner.check_status("Favorites: owner can remove a favorite", resp, 200)
+    if resp.status_code == 200:
+        runner.check("Favorites: removed plan no longer in the list",
+                     fav_plan_name not in resp.json().get("plans", []),
+                     f"got {resp.json()}")
+
+    owner_client.close()
+
+    return runner.summary()
+
+
+def main():
+    try:
+        exit_code = run_tests()
+    except Exception:
+        traceback.print_exc()
+        print("\nSecurity tests failed with an exception")
+        exit_code = 1
+    sys.exit(exit_code)
+
+
+if __name__ == "__main__":
+    main()

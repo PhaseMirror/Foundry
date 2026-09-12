@@ -1,0 +1,37 @@
+package net.openid.conformance.info;
+
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.mongodb.repository.Query;
+import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.PagingAndSortingRepository;
+
+import java.util.Map;
+import java.util.Optional;
+
+public interface PlanRepository extends PagingAndSortingRepository<Plan, String>, CrudRepository<Plan, String> {
+
+	@Query("{}")
+	Slice<Plan> findAllAsSlice(Pageable pageable);
+
+	@Query("{ $text: { $search: ?0 } }")
+	Slice<Plan> findAllSearchAsSlice(String search, Pageable pageable);
+
+	@Query("{ owner: ?0 }")
+	Slice<Plan> findAllByOwnerAsSlice(Map<String, String> owner, Pageable pageable);
+
+	@Query("{ owner: ?0, $text: { $search: ?1 } }")
+	Slice<Plan> findAllByOwnerSearchAsSlice(Map<String, String> owner, String search, Pageable pageable);
+
+	@Query("{ publish: { $in: [ 'summary', 'everything' ] } }")
+	Slice<PublicPlan> findAllPublicAsSlice(Pageable pageable);
+
+	@Query("{ publish: { $in: [ 'summary', 'everything' ] }, $text: { $search: ?0 } }")
+	Slice<PublicPlan> findAllPublicSearchAsSlice(String search, Pageable pageable);
+
+	@Query("{ _id: ?0, owner: ?1 }")
+	Optional<Plan> findByIdAndOwner(String id, Map<String, String> owner);
+
+	@Query("{ _id: ?0, publish: { $in: [ 'summary', 'everything' ] } }")
+	Optional<PublicPlan> findByIdPublic(String id);
+}

@@ -1,0 +1,32 @@
+[package]
+name = "uor-r4-graph-compiler"
+license = "MIT"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+uor-r4-model-source = { version = "0.1.0", path = "../uor-r4-model-source" }
+uor-r4-graph-format = { version = "0.1.0", path = "../uor-r4-graph-format" }
+uor-r4-core = { version = "0.1.0", path = "../uor-r4-core" }
+uor-r4-router = { version = "0.1.0", path = "../uor-r4-router" }
+rayon = "1.10.0"
+libm = "0.2"
+blake3 = "1.5.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+log = "0.4"
+env_logger = "0.11"
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
+
+[features]
+# #515 preserve-and-gate: dormant compiler surfaces with NO default-build
+# reference (code or tests) are compile-toggled here, default OFF. Modules that
+# the root BDD validation suite (tests/bdd.rs) exercises — quantum_cover,
+# rate_distortion_compression, monograph, reference_compiler_ir,
+# behavioral_probes — are NOT gated: they carry live default-suite coverage and
+# stay registered-but-compiled, like the CLI-reachable bott_fock/cd_space.
+graph-construction = []
+patch-induction = []
+perturbation = []

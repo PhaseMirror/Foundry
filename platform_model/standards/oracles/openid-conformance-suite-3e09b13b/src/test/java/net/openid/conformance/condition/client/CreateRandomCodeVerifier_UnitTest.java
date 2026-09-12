@@ -1,0 +1,54 @@
+package net.openid.conformance.condition.client;
+
+import net.openid.conformance.condition.Condition.ConditionResult;
+import net.openid.conformance.logging.BsonEncoding;
+import net.openid.conformance.logging.TestInstanceEventLog;
+import net.openid.conformance.testmodule.Environment;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+@ExtendWith(MockitoExtension.class)
+public class CreateRandomCodeVerifier_UnitTest {
+
+	@Spy
+	private Environment env = new Environment();
+
+	private final TestInstanceEventLog eventLog = BsonEncoding.testInstanceEventLog();
+
+	private CreateRandomCodeVerifier cond;
+
+	/**
+	 * @throws java.lang.Exception
+	 */
+	@BeforeEach
+	public void setUp() throws Exception {
+		cond = new CreateRandomCodeVerifier();
+		cond.setProperties("UNIT-TEST", eventLog, ConditionResult.INFO);
+	}
+
+	/**
+	 */
+	@Test
+	public void testEvaluate() {
+
+		cond.execute(env);
+
+		String res1 = env.getString("code_verifier");
+
+		assertThat(res1).isNotNull();
+		assertThat(res1).isNotEmpty();
+
+		// call it twice to make sure we get a different value
+		cond.execute(env);
+
+		String res2 = env.getString("code_verifier");
+
+		assertThat(res2).isNotEmpty();
+		assertThat(res1).isNotEqualTo(res2);
+	}
+}

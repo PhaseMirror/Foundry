@@ -1,0 +1,164 @@
+<?xml version="1.0"?>
+
+<ruleset name="Custom Rules"
+		 xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+		 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		 xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.io/ruleset_2_0_0.xsd">
+
+	<description>
+		Custom rules used for conformance suite java
+	</description>
+
+	<rule ref="category/java/multithreading.xml">
+		<!-- UseConcurrentHashMap is quite noisy, and PMD developers don't necessarily recommend
+		 using it - https://github.com/pmd/pmd/issues/1022#issuecomment-378687539 -->
+		<exclude name="UseConcurrentHashMap"/>
+		<!-- The use of Runnable in FutureWatcher seems to trigger DoNotUseThreads -->
+		<exclude name="DoNotUseThreads"/>
+		<!-- "Use block level rather than method level
+			  synchronization." is triggered by TestRunner /
+			  TestInstanceEventLog -->
+		<exclude name="AvoidSynchronizedAtMethodLevel"/>
+		<!-- AbstractTestModule getStatus uses volatile, see
+		     https://gitlab.com/openid/conformance-suite/-/merge_requests/888#note_317415222
+		     Do be careful about using volatile elsewhere as per
+		     https://docs.oracle.com/javase/specs/jls/se8/html/jls-8.html#jls-8.3.1.4 -->
+		<exclude name="AvoidUsingVolatile"/>
+		<exclude name="AvoidSynchronizedStatement"/>
+	</rule>
+	<rule ref="category/java/documentation.xml/CommentContent"
+		  message="Please don't use the @author annotation, reliable authorship information can already be found in git">
+		<properties>
+			<property name="forbiddenRegex" value="@author"/>
+		</properties>
+	</rule>
+
+	<rule ref="category/java/errorprone.xml">
+		<!-- AbstractCondition triggers this for not closing BasicHttpClientConnectionManager. It doesn't appear to
+		be vital to close it. -->
+		<exclude name="CloseResource"/>
+		<!-- We do this in a few places, some of which look very intentional. -->
+		<exclude name="ReturnEmptyCollectionRatherThanNull"/>
+
+		<!-- These are excluded just because the codebase, at the time PMD was added, raised a number of these
+		  warnings. No analysis has been done on whether they're good checks to exclude. -->
+		<exclude name="AvoidDuplicateLiterals"/>
+		<exclude name="NullAssignment"/>
+		<exclude name="AvoidInstanceofChecksInCatchClause"/>
+		<exclude name="UseLocaleWithCaseConversions"/>
+		<exclude name="AvoidFieldNameMatchingMethodName"/>
+		<exclude name="AvoidLiteralsInIfCondition"/>
+		<exclude name="EmptyCatchBlock"/>
+		<exclude name="NonStaticInitializer"/>
+		<exclude name="TestClassWithoutTestCases"/>
+		<exclude name="ConstructorCallsOverridableMethod"/>
+		<exclude name="ReplaceJavaUtilDate"/>
+		<exclude name="AvoidCatchingGenericException"/>
+		<exclude name="UnconditionalIfStatement"/>
+		<exclude name="ReplaceJavaUtilCalendar"/>
+	</rule>
+
+	<rule ref="category/java/codestyle.xml">
+		<!-- These are excluded mainly because the codebase, at the time this ruleset was added, raised a number of these
+		  warnings. No indepth analysis was done. -->
+		<exclude name="MethodArgumentCouldBeFinal"/>
+		<exclude name="LocalVariableCouldBeFinal"/>
+		<exclude name="LongVariable"/>
+		<exclude name="CommentDefaultAccessModifier"/>
+		<exclude name="ShortVariable"/>
+		<exclude name="ShortClassName"/>
+		<exclude name="OnlyOneReturn"/>
+		<exclude name="UnnecessaryLocalBeforeReturn"/>
+		<exclude name="PrematureDeclaration"/>
+		<exclude name="ShortMethodName"/>
+		<exclude name="UnnecessaryAnnotationValueElement"/>
+		<exclude name="EmptyMethodInAbstractClassShouldBeAbstract"/>
+		<exclude name="FieldNamingConventions"/>
+		<exclude name="LinguisticNaming"/>
+		<exclude name="UnnecessaryModifier"/>
+		<exclude name="FieldDeclarationsShouldBeAtStartOfClass"/>
+		<exclude name="UselessParentheses"/>
+		<exclude name="AtLeastOneConstructor"/>
+		<exclude name="ConfusingTernary"/>
+		<exclude name="LocalVariableNamingConventions"/>
+		<exclude name="CallSuperInConstructor"/>
+		<exclude name="ClassNamingConventions"/>
+		<exclude name="UseUnderscoresInNumericLiterals"/>
+		<exclude name="EmptyControlStatement"/>
+		<exclude name="UseExplicitTypes"/>
+		<exclude name="UnnecessaryCast"/>
+		<exclude name="UnnecessaryBoxing"/>
+		<exclude name="BooleanGetMethodName"/>
+		<exclude name="UseDiamondOperator"/>
+		<exclude name="LambdaCanBeMethodReference"/>
+		<exclude name="UnnecessaryFullyQualifiedName"/>
+		<exclude name="VariableCanBeInlined"/>
+		<exclude name="VariableDeclarationUsageDistance"/>
+	</rule>
+
+	<rule ref="category/java/bestpractices.xml">
+		<exclude name="GuardLogStatement"/>
+		<exclude name="LiteralsFirstInComparisons"/>
+		<exclude name="ConstantsInInterface"/>
+		<exclude name="UnusedAssignment"/>
+		<exclude name="PreserveStackTrace"/>
+		<exclude name="ReplaceHashtableWithMap"/>
+		<exclude name="AvoidUsingHardCodedIP"/>
+		<exclude name="MethodReturnsInternalArray"/>
+		<exclude name="ReplaceVectorWithList"/>
+		<exclude name="AvoidReassigningParameters"/>
+		<exclude name="UseTryWithResources"/>
+		<exclude name="DoubleBraceInitialization"/>
+		<exclude name="ArrayIsStoredDirectly"/>
+		<exclude name="UseCollectionIsEmpty"/>
+		<exclude name="LooseCoupling"/>
+		<exclude name="NonExhaustiveSwitch"/>
+		<exclude name="ExhaustiveSwitchHasDefault"/>
+		<exclude name="UnitTestShouldUseTestAnnotation"/>
+		<exclude name="EnumComparison"/>
+		<exclude name="RelianceOnDefaultCharset"/>
+	</rule>
+	<!--
+	   We should probably enable more rules one day
+	<rule ref="category/java/design.xml"></rule>
+	<rule ref="category/java/documentation.xml"></rule>
+	<rule ref="category/java/performance.xml"></rule>
+	<rule ref="category/java/security.xml"></rule>
+	-->
+
+	<!-- https://stackoverflow.com/a/48679770/292166
+		 Avoid flagging private @PostConstruct methods as unused
+	-->
+	<rule ref="category/java/bestpractices.xml/UnusedPrivateMethod">
+		<properties>
+			<property name="violationSuppressXPath"
+					  value="ancestor::ClassOrInterfaceBodyDeclaration/Annotation/MarkerAnnotation/Name[@Image='PostConstruct']" />
+		</properties>
+	</rule>
+
+	<!--
+		Reject '.' in args() map keys. args() takes (key, value, key, value, ...); a string
+		literal at an even-indexed position (1st, 3rd, ... in 1-based XPath) is a map key.
+		Dotted map keys crash Spring Data's MappingMongoConverter with "Map key X contains
+		dots but no replacement was configured" when the log payload is inserted into MongoDB.
+		Use '_' instead (or restructure the args).
+	-->
+	<rule name="NoDottedKeysInArgsCall"
+		  language="java"
+		  message="args(...) map keys must not contain '.': MongoDB/MappingMongoConverter rejects dotted map keys."
+		  class="net.sourceforge.pmd.lang.rule.xpath.XPathRule">
+		<description>
+			Catches every string literal in a key position of an args(...) call, at any
+			nesting depth or line layout — closes the gaps the simpler Checkstyle regex
+			has (same-line only, first key only).
+		</description>
+		<priority>3</priority>
+		<properties>
+			<property name="xpath">
+				<value><![CDATA[
+//MethodCall[@MethodName='args']/ArgumentList/*[position() mod 2 = 1][self::StringLiteral][contains(@Image, '.')]
+]]></value>
+			</property>
+		</properties>
+	</rule>
+</ruleset>

@@ -1,0 +1,20 @@
+version: '3'
+services:
+  mongodb:
+    image: mongo:6.0.13
+    volumes:
+     - ./mongo/data:/data/db
+  server:
+    build:
+      context: ./server
+    links:
+     - mongodb:mongodb
+    depends_on:
+     - mongodb
+  nginx:
+    build:
+      context: ./nginx
+    ports:
+     - "8443:8443"
+    depends_on:
+     - server

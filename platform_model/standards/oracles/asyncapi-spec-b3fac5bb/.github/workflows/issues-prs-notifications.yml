@@ -1,0 +1,85 @@
+# This action is centrally managed in https://github.com/asyncapi/.github/
+# Don't make changes to this file in this repo as they will be overwritten with changes made to the same file in above mentioned repo
+
+# This action notifies community on slack whenever there is a new issue, PR or discussion started in given repository
+name: Notify slack
+
+on:
+  issues:
+    types: [opened, reopened]
+
+  pull_request_target:
+    types: [opened, reopened, ready_for_review]
+
+  discussion:
+    types: [created]
+
+jobs:
+  issue:
+    if: github.event_name == 'issues' && github.actor != 'asyncapi-bot' && github.actor != 'dependabot[bot]' && github.actor != 'dependabot-preview[bot]'
+    name: Notify slack on every new issue
+    runs-on: ubuntu-latest
+    steps:
+      - name: Convert markdown to slack markdown for issue
+        # This workflow is from our own org repo and safe to reference by 'master'.
+        uses: asyncapi/.github/.github/actions/slackify-markdown@master # //NOSONAR
+        id: issuemarkdown
+        env:
+          ISSUE_TITLE: ${{github.event.issue.title}}
+          ISSUE_URL: ${{github.event.issue.html_url}}
+          ISSUE_BODY: ${{github.event.issue.body}}
+        with:
+          markdown: "[${{ env.ISSUE_TITLE }}](${{ env.ISSUE_URL }}) \n ${{ env.ISSUE_BODY }}"
+      - name: Send info about issue
+        uses: rtCamp/action-slack-notify@c33737706dea87cd7784c687dadc9adf1be59990 # Using v2.3.2
+        env:
+          SLACK_WEBHOOK: ${{secrets.SLACK_GITHUB_NEWISSUEPR}}
+          SLACK_TITLE: 🐛 New Issue in ${{github.repository}} 🐛
+          SLACK_MESSAGE: ${{steps.issuemarkdown.outputs.text}}
+          MSG_MINIMAL: true
+
+  pull_request:
+    if: github.event_name == 'pull_request_target' && github.actor != 'asyncapi-bot' && github.actor != 'dependabot[bot]' && github.actor != 'dependabot-preview[bot]'
+    name: Notify slack on every new pull request
+    runs-on: ubuntu-latest
+    steps:
+      - name: Convert markdown to slack markdown for pull request
+        # This workflow is from our own org repo and safe to reference by 'master'.
+        uses: asyncapi/.github/.github/actions/slackify-markdown@master # //NOSONAR
+        id: prmarkdown
+        env:
+          PR_TITLE: ${{github.event.pull_request.title}}
+          PR_URL: ${{github.event.pull_request.html_url}}
+          PR_BODY: ${{github.event.pull_request.body}}
+        with:
+          markdown: "[${{ env.PR_TITLE }}](${{ env.PR_URL }}) \n ${{ env.PR_BODY }}"
+      - name: Send info about pull request
+        uses: rtCamp/action-slack-notify@c33737706dea87cd7784c687dadc9adf1be59990 # Using v2.3.2
+        env:
+          SLACK_WEBHOOK: ${{secrets.SLACK_GITHUB_NEWISSUEPR}}
+          SLACK_TITLE: 💪 New Pull Request in ${{github.repository}} 💪
+          SLACK_MESSAGE: ${{steps.prmarkdown.outputs.text}}
+          MSG_MINIMAL: true
+
+  discussion:
+    if: github.event_name == 'discussion' && github.actor != 'asyncapi-bot' && github.actor != 'dependabot[bot]' && github.actor != 'dependabot-preview[bot]'
+    name: Notify slack on every new pull request
+    runs-on: ubuntu-latest
+    steps:
+      - name: Convert markdown to slack markdown for pull request
+        # This workflow is from our own org repo and safe to reference by 'master'.
+        uses: asyncapi/.github/.github/actions/slackify-markdown@master # //NOSONAR
+        id: discussionmarkdown
+        env:
+          DISCUSSION_TITLE: ${{github.event.discussion.title}}
+          DISCUSSION_URL: ${{github.event.discussion.html_url}}
+          DISCUSSION_BODY: ${{github.event.discussion.body}}
+        with:
+          markdown: "[${{ env.DISCUSSION_TITLE }}](${{ env.DISCUSSION_URL }}) \n ${{ env.DISCUSSION_BODY }}"
+      - name: Send info about pull request
+        uses: rtCamp/action-slack-notify@c33737706dea87cd7784c687dadc9adf1be59990 # Using v2.3.2
+        env:
+          SLACK_WEBHOOK: ${{secrets.SLACK_GITHUB_NEWISSUEPR}}
+          SLACK_TITLE: 💬 New Discussion in ${{github.repository}} 💬
+          SLACK_MESSAGE: ${{steps.discussionmarkdown.outputs.text}}
+          MSG_MINIMAL: true

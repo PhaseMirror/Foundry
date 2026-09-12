@@ -1,0 +1,152 @@
+package net.openid.conformance.sequence.client;
+
+import net.openid.conformance.condition.Condition;
+import net.openid.conformance.condition.client.AddFAPIAuthDateToResourceEndpointRequest;
+import net.openid.conformance.condition.client.AddFAPIFinancialIdToResourceEndpointRequest;
+import net.openid.conformance.condition.client.CallKSAAccountRequestsEndpointWithBearerToken;
+import net.openid.conformance.condition.client.CallKSASignedAccountRequestsEndpointWithBearerToken;
+import net.openid.conformance.condition.client.CreateKSAConsentRequest;
+import net.openid.conformance.condition.client.CreateKSAConsentRequestWithExpiration;
+import net.openid.conformance.condition.client.SignKSAConsentRequest;
+import net.openid.conformance.condition.client.CallTokenEndpointAndReturnFullResponse;
+import net.openid.conformance.condition.client.CheckTokenEndpointHttpStatus200;
+import net.openid.conformance.condition.client.CheckForAccessTokenValue;
+import net.openid.conformance.condition.client.CheckForFAPIInteractionIdInResourceResponse;
+import net.openid.conformance.condition.client.CheckIfAccountRequestsEndpointResponseError;
+import net.openid.conformance.condition.client.CheckIfTokenEndpointResponseError;
+import net.openid.conformance.condition.client.CreateEmptyResourceEndpointRequestHeaders;
+import net.openid.conformance.condition.client.CreateKSACreateAccountRequestRequest;
+import net.openid.conformance.condition.client.CreateKSACreateAccountRequestRequestWithExpiration;
+import net.openid.conformance.condition.client.CreateTokenEndpointRequestForClientCredentialsGrant;
+import net.openid.conformance.condition.client.ExtractAccessTokenFromTokenResponse;
+import net.openid.conformance.condition.client.ExtractAccountRequestIdFromKSAAccountRequestsEndpointResponse;
+import net.openid.conformance.condition.client.ExtractExpiresInFromTokenEndpointResponse;
+import net.openid.conformance.condition.client.FAPIKSASetClientScopeToAccountsConsentIdOpenId;
+import net.openid.conformance.condition.client.KsaValidateAccessTokenExpiresIn;
+import net.openid.conformance.condition.client.SetAccountScopeOnTokenEndpointRequest;
+import net.openid.conformance.condition.client.ValidateExpiresIn;
+import net.openid.conformance.sequence.AbstractConditionSequence;
+import net.openid.conformance.sequence.ConditionSequence;
+
+public class OpenBankingKSAPreAuthorizationSteps extends AbstractConditionSequence {
+
+	private boolean secondClient;
+	private boolean includeXFapiFinancialId;
+	private String currentClient;
+	private Class<? extends ConditionSequence> addClientAuthenticationToTokenEndpointRequest;
+	private boolean signedConsent;
+	private boolean enforceTenMinuteTokenLifetime;
+
+	public OpenBankingKSAPreAuthorizationSteps(boolean secondClient, Class<? extends ConditionSequence> addClientAuthenticationToTokenEndpointRequest) {
+		this(secondClient,
+			true, // for FAPIID2 tests
+			addClientAuthenticationToTokenEndpointRequest);
+	}
+
+	public OpenBankingKSAPreAuthorizationSteps(boolean secondClient, boolean includeXFapiFinancialId, Class<? extends ConditionSequence> addClientAuthenticationToTokenEndpointRequest) {
+		this(secondClient, includeXFapiFinancialId, addClientAuthenticationToTokenEndpointRequest, false);
+	}
+
+	public OpenBankingKSAPreAuthorizationSteps(boolean secondClient, boolean includeXFapiFinancialId, Class<? extends ConditionSequence> addClientAuthenticationToTokenEndpointRequest, boolean signedConsent) {
+		this(secondClient, includeXFapiFinancialId, addClientAuthenticationToTokenEndpointRequest, signedConsent, false);
+	}
+
+	/**
+	 * @param enforceTenMinuteTokenLifetime whether the KSA requirement that the access token
+	 *   expiry is no longer than 10 minutes applies. This comes from the FAPI2-based KSA
+	 *   security profile, so the FAPI1 KSA tests leave it off.
+	 */
+	public OpenBankingKSAPreAuthorizationSteps(boolean secondClient, boolean includeXFapiFinancialId, Class<? extends ConditionSequence> addClientAuthenticationToTokenEndpointRequest, boolean signedConsent, boolean enforceTenMinuteTokenLifetime) {
+		this.secondClient = secondClient;
+		this.currentClient = secondClient ? "Second client: " : "";
+		this.includeXFapiFinancialId = includeXFapiFinancialId;
+		this.addClientAuthenticationToTokenEndpointRequest = addClientAuthenticationToTokenEndpointRequest;
+		this.signedConsent = signedConsent;
+		this.enforceTenMinuteTokenLifetime = enforceTenMinuteTokenLifetime;
+	}
+
+	@Override
+	public void evaluate() {
+		call(exec().startBlock(currentClient + "Use client_credentials grant to obtain OpenBanking KSA consent scope"));
+
+		/* create client credentials request */
+
+		callAndStopOnFailure(CreateTokenEndpointRequestForClientCredentialsGrant.class);
+
+		callAndStopOnFailure(SetAccountScopeOnTokenEndpointRequest.class);
+
+		call(exec().mapKey("request_form_parameters", "token_endpoint_request_form_parameters")
+			.mapKey("request_headers", "token_endpoint_request_headers"));
+		call(sequence(addClientAuthenticationToTokenEndpointRequest));
+		call(exec().unmapKey("request_form_parameters").unmapKey("request_headers"));
+
+		/* get an openbanking intent id */
+
+		callAndStopOnFailure(CallTokenEndpointAndReturnFullResponse.class);
+		callAndStopOnFailure(CheckTokenEndpointHttpStatus200.class);
+
+		callAndStopOnFailure(CheckIfTokenEndpointResponseError.class);
+
+		callAndStopOnFailure(CheckForAccessTokenValue.class);
+
+		callAndStopOnFailure(ExtractAccessTokenFromTokenResponse.class);
+
+		callAndContinueOnFailure(ExtractExpiresInFromTokenEndpointResponse.class, Condition.ConditionResult.WARNING, "RFC6749-4.4.3", "RFC6749-5.1");
+
+		call(condition(ValidateExpiresIn.class)
+			.skipIfObjectMissing("expires_in")
+			.onSkip(Condition.ConditionResult.INFO)
+			.requirements("RFC6749-5.1")
+			.onFail(Condition.ConditionResult.FAILURE)
+			.dontStopOnFailure());
+
+		if (enforceTenMinuteTokenLifetime) {
+			call(condition(KsaValidateAccessTokenExpiresIn.class)
+				.skipIfObjectMissing("expires_in")
+				.onSkip(Condition.ConditionResult.INFO)
+				.requirements("KSA-OF-1")
+				.onFail(Condition.ConditionResult.FAILURE)
+				.dontStopOnFailure());
+		}
+
+		/* create account request */
+
+		callAndStopOnFailure(CreateEmptyResourceEndpointRequestHeaders.class);
+
+		callAndStopOnFailure(AddFAPIAuthDateToResourceEndpointRequest.class);
+
+		if (includeXFapiFinancialId) {
+			// This header is no longer mentioned in the FAPI standard as of ID2, however the UK OB spec most banks are
+			// using (v3.1.1) erroneously requires that this header is sent in all cases. We send it in the ID2 tests,
+			// but not in FAPI1-Final
+			callAndStopOnFailure(AddFAPIFinancialIdToResourceEndpointRequest.class);
+		}
+
+		if (signedConsent) {
+			if (secondClient) {
+				callAndStopOnFailure(CreateKSAConsentRequestWithExpiration.class, "KSA");
+			} else {
+				callAndStopOnFailure(CreateKSAConsentRequest.class, "KSA");
+			}
+			callAndStopOnFailure(SignKSAConsentRequest.class, "KSA");
+			callAndStopOnFailure(CallKSASignedAccountRequestsEndpointWithBearerToken.class, "KSA");
+		} else {
+			if (secondClient) {
+				callAndStopOnFailure(CreateKSACreateAccountRequestRequestWithExpiration.class);
+			} else {
+				callAndStopOnFailure(CreateKSACreateAccountRequestRequest.class);
+			}
+			callAndStopOnFailure(CallKSAAccountRequestsEndpointWithBearerToken.class);
+		}
+
+		callAndStopOnFailure(CheckIfAccountRequestsEndpointResponseError.class);
+
+		callAndContinueOnFailure(CheckForFAPIInteractionIdInResourceResponse.class, Condition.ConditionResult.FAILURE, "FAPI-R-6.2.1-11", "FAPI1-BASE-6.2.1-11");
+
+		callAndStopOnFailure(ExtractAccountRequestIdFromKSAAccountRequestsEndpointResponse.class);
+
+		callAndStopOnFailure(FAPIKSASetClientScopeToAccountsConsentIdOpenId.class);
+
+		call(exec().endBlock());
+	}
+}

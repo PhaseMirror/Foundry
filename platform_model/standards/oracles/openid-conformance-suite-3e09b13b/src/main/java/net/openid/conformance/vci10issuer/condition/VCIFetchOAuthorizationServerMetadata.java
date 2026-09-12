@@ -1,0 +1,111 @@
+package net.openid.conformance.vci10issuer.condition;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import net.openid.conformance.condition.AbstractCondition;
+import net.openid.conformance.condition.PreEnvironment;
+import net.openid.conformance.testmodule.Environment;
+import net.openid.conformance.testmodule.OIDFJSON;
+import net.openid.conformance.util.OAuthUriUtil;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
+
+import java.io.IOException;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
+import java.security.spec.InvalidKeySpecException;
+
+public class VCIFetchOAuthorizationServerMetadata extends AbstractCondition {
+
+	@PreEnvironment(required = {"vci"})
+	@Override
+	public Environment evaluate(Environment env) {
+
+		JsonElement credentialIssuerMetadataEl = env.getElementFromObject("vci", "credential_issuer_metadata");
+		JsonObject credentialIssuerMetadata = credentialIssuerMetadataEl.getAsJsonObject();
+
+		JsonElement authorizationServersEL = credentialIssuerMetadata.get("authorization_servers");
+		if (authorizationServersEL == null) {
+			// derive oauth server metadata from issuer
+			String credentialIssuer = OIDFJSON.getString(credentialIssuerMetadata.get("credential_issuer"));
+			String authorizationServerMetadataUrl = createAuthorizationServerMetadataUrl(credentialIssuer);
+			log("Derived authorization server metadata endpoint URL from credential issuer.", args("credential_issuer", credentialIssuer, "authorization_server_metadata_url", authorizationServerMetadataUrl));
+			JsonObject authorizationServerMetadataResponse = tryFetchAuthorizationServerMetadataFromUrl(0, env, credentialIssuer, authorizationServerMetadataUrl);
+
+			env.putString("vci", "authorization_servers.count", "1");
+			JsonObject authorizationServerMetadata = JsonParser.parseString(OIDFJSON.getString(authorizationServerMetadataResponse.get("body"))).getAsJsonObject();
+			env.putObject("vci", "authorization_servers.server0.authorization_server_metadata", authorizationServerMetadata);
+
+			logSuccess("Fetched authorization server metadata (derived from credential issuer)", args("credential_issuer", credentialIssuer, "authorization_server_metadata", authorizationServerMetadata));
+			return env;
+		}
+
+		if (!authorizationServersEL.isJsonArray()) {
+			throw error("Expected authorization_servers field to be an array", args("authorization_servers", authorizationServersEL));
+		}
+
+		// use given oauth server issuer uris to derive metadata
+		JsonArray authorizationServerMetadataDataList = new JsonArray();
+		JsonArray authorizationServerArray = authorizationServersEL.getAsJsonArray();
+
+		log(String.format("Found explicit authorization_servers list with %d entries.", authorizationServerArray.size()), args("authorization_servers", authorizationServerArray));
+
+		int i = 0;
+		for (var element : authorizationServerArray) {
+			String authorizationServerIssuer = OIDFJSON.getString(element);
+			String authorizationServerMetadataUrl = createAuthorizationServerMetadataUrl(authorizationServerIssuer);
+			log(String.format("Derived authorization server %d metadata endpoint URL from OAuth authorization server issuer.", i), args("authorization_server_issuer", authorizationServerIssuer, "authorization_server_metadata_url", authorizationServerMetadataUrl));
+			JsonObject authorizationServerMetadataResponse = tryFetchAuthorizationServerMetadataFromUrl(i, env, authorizationServerIssuer, authorizationServerMetadataUrl);
+			JsonObject authorizationServerMetadata = JsonParser.parseString(OIDFJSON.getString(authorizationServerMetadataResponse.get("body"))).getAsJsonObject();
+			authorizationServerMetadataDataList.add(authorizationServerMetadata);
+			env.putObject("vci", "authorization_servers.server" + i + ".authorization_server_metadata", authorizationServerMetadata);
+			i++;
+		}
+
+		if (i == 1) {
+			logSuccess("Fetched authorization server metadata from single server", args("authorization_server", authorizationServerArray.get(0), "authorization_server_metadata_list", authorizationServerMetadataDataList));
+		} else {
+			logSuccess("Fetched authorization server metadata from multiple servers", args("authorization_servers", authorizationServerArray, "authorization_server_metadata_list", authorizationServerMetadataDataList));
+		}
+
+		return env;
+	}
+
+	protected JsonObject tryFetchAuthorizationServerMetadataFromUrl(int authServerIndex, Environment env, String authorizationServerIssuer, String authorizationServerMetadataEndpointUrl) {
+
+		log("Fetching metadata from authorization server: " + authServerIndex, args("authorization_server_issuer", authorizationServerIssuer, "authorization_server_metadata_url", authorizationServerMetadataEndpointUrl));
+		JsonObject authorizationServerMetadataResponse = fetchAuthorizationServerMetadata(env, authorizationServerMetadataEndpointUrl);
+		env.putObject("oauth_authorization_server_metadata_response", authorizationServerMetadataResponse);
+		log("Fetched metadata from authorization server: " + authServerIndex, args("authorization_server_issuer", authorizationServerIssuer, "authorization_server_metadata_url", authorizationServerMetadataEndpointUrl));
+		return authorizationServerMetadataResponse;
+	}
+
+	protected String createAuthorizationServerMetadataUrl(String authServerIssuer) {
+		return OAuthUriUtil.generateWellKnownUrlForPath(authServerIssuer, "oauth-authorization-server");
+	}
+
+	protected JsonObject fetchAuthorizationServerMetadata(Environment env, String metadataEndpointUrl) {
+		try {
+			RestTemplate restTemplate = createRestTemplateWithCache(env);
+			ResponseEntity<String> response = restTemplate.exchange(metadataEndpointUrl, HttpMethod.GET, null, String.class);
+			JsonObject responseInfo = convertResponseForEnvironment("oauth-authorization-server", response);
+			return responseInfo;
+		} catch (UnrecoverableKeyException | KeyManagementException | CertificateException | InvalidKeySpecException |
+				 NoSuchAlgorithmException | KeyStoreException | IOException e) {
+			throw error("Error creating HTTP client", e);
+		} catch (Exception e) {
+			String msg = "Unable to fetch authorization server metadata from " + metadataEndpointUrl;
+			if (e.getCause() != null) {
+				msg += " - " + e.getCause().getMessage();
+			}
+			throw error(msg, e);
+		}
+	}
+
+}

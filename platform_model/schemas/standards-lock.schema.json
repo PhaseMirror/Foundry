@@ -1,0 +1,109 @@
+{
+  "$id": "https://schemas.uor.foundation/prismpm/standards-lock/1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "authorities": {"items": {"$ref": "#/$defs/authority"}, "maxItems": 4096, "minItems": 1, "type": "array", "uniqueItems": true},
+    "lock_id": {"pattern": "^sha256:[0-9a-f]{64}$", "type": "string"},
+    "oracles": {"items": {"$ref": "#/$defs/oracle"}, "maxItems": 4096, "minItems": 1, "type": "array", "uniqueItems": true},
+    "schema": {"const": "prismpm/standards-lock/1"}
+  },
+  "required": ["authorities", "lock_id", "oracles", "schema"],
+  "type": "object",
+  "$defs": {
+    "authority": {
+      "additionalProperties": false,
+      "properties": {
+        "canonical_id": {"maxLength": 256, "minLength": 1, "type": "string"},
+        "edition": {"maxLength": 128, "minLength": 1, "type": "string"},
+        "id": {"pattern": "^[A-Z0-9][A-Z0-9._/-]{0,127}$", "type": "string"},
+        "issuer": {"maxLength": 256, "minLength": 1, "type": "string"},
+        "name": {"maxLength": 256, "minLength": 1, "type": "string"},
+        "oracle_ids": {"items": {"maxLength": 128, "minLength": 1, "type": "string"}, "maxItems": 64, "type": "array", "uniqueItems": true},
+        "realized_by": {"items": {"pattern": "^[A-Z]{2}-[0-9]{2}$", "type": "string"}, "maxItems": 128, "minItems": 1, "type": "array", "uniqueItems": true},
+        "retrieval_date": {"pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$", "type": "string"},
+        "schema": {"const": "prismpm/authority-binding/1"},
+        "source": {"$ref": "#/$defs/source"},
+        "source_role": {"enum": ["binding-only", "informative", "normative"]},
+        "signature_trust_root": {"oneOf": [{"$ref": "#/$defs/signatureTrustRoot"}, {"type": "null"}]},
+        "statement": {"maxLength": 4096, "minLength": 1, "type": "string"},
+        "supersession": {"const": "explicit-lock-update-only"}
+      },
+      "required": ["canonical_id", "edition", "id", "issuer", "name", "oracle_ids", "realized_by", "retrieval_date", "schema", "source", "source_role", "signature_trust_root", "statement", "supersession"],
+      "type": "object"
+    },
+    "oracle": {
+      "additionalProperties": false,
+      "properties": {
+        "arguments": {"items": {"maxLength": 1024, "minLength": 1, "type": "string"}, "maxItems": 32, "minItems": 1, "type": "array"},
+        "authority_ids": {"items": {"pattern": "^[A-Z0-9][A-Z0-9._/-]{0,127}$", "type": "string"}, "maxItems": 64, "minItems": 1, "type": "array", "uniqueItems": true},
+        "covers": {"items": {"maxLength": 4096, "minLength": 1, "type": "string"}, "maxItems": 4096, "minItems": 1, "type": "array", "uniqueItems": true},
+        "corpus": {"anyOf": [{"type": "null"}, {"additionalProperties": false, "properties": {"path": {"pattern": "^standards/[A-Za-z0-9._/-]+$", "type": "string"}, "sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"}}, "required": ["path", "sha256"], "type": "object"}]},
+        "does_not_cover": {"items": {"maxLength": 4096, "minLength": 1, "type": "string"}, "maxItems": 4096, "minItems": 1, "type": "array", "uniqueItems": true},
+        "edition": {"maxLength": 128, "minLength": 1, "type": "string"},
+        "executable": {"maxLength": 128, "minLength": 1, "type": "string"},
+        "expected_exits": {"items": {"maxLength": 128, "minLength": 1, "type": "string"}, "maxItems": 32, "minItems": 1, "type": "array", "uniqueItems": true},
+        "failure_mapping": {"additionalProperties": false, "properties": {"invalid": {"const": "PP5404"}, "unavailable-or-untrusted": {"const": "PP5403"}}, "required": ["invalid", "unavailable-or-untrusted"], "type": "object"},
+        "id": {"maxLength": 128, "minLength": 1, "type": "string"},
+        "input_media_types": {"items": {"maxLength": 256, "minLength": 1, "type": "string"}, "maxItems": 64, "minItems": 1, "type": "array", "uniqueItems": true},
+        "network": {"enum": ["deny", "isolated-subject"]},
+        "normalization": {"const": "prismpm/oracle-diagnostics/1"},
+        "output_bytes": {"minimum": 1024, "type": "integer"},
+        "output_schema": {"const": "prismpm/validation-result/1"},
+        "supported_platforms": {"const": ["linux/amd64", "linux/arm64"]},
+        "subject": {"oneOf": [{"pattern": "^[^@\\s]+@sha256:[0-9a-f]{64}$", "type": "string"}, {"type": "null"}]},
+        "memory_bytes": {"minimum": 1048576, "type": "integer"},
+        "timeout_ms": {"minimum": 1, "type": "integer"},
+        "trusted_root": {
+          "anyOf": [
+            {"type": "null"},
+            {
+              "additionalProperties": false,
+              "properties": {
+                "path": {"pattern": "^standards/trust/[A-Za-z0-9._/-]+$", "type": "string"},
+                "role": {"const": "sigstore-verification-root"},
+                "sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"}
+              },
+              "required": ["path", "role", "sha256"],
+              "type": "object"
+            }
+          ]
+        },
+        "upstream_payload_sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+        "wrapper_sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"}
+      },
+      "required": ["arguments", "authority_ids", "corpus", "covers", "does_not_cover", "edition", "executable", "expected_exits", "failure_mapping", "id", "input_media_types", "memory_bytes", "network", "normalization", "output_bytes", "output_schema", "subject", "supported_platforms", "timeout_ms", "trusted_root", "upstream_payload_sha256", "wrapper_sha256"],
+      "type": "object"
+    },
+    "signatureTrustRoot": {
+      "additionalProperties": false,
+      "properties": {
+        "algorithm": {"enum": ["openpgp", "ssh"]},
+        "fingerprint": {"maxLength": 128, "minLength": 40, "type": "string"},
+        "license": {"const": "public-key-material-published-for-verification"},
+        "owner": {"maxLength": 128, "minLength": 1, "type": "string"},
+        "path": {"pattern": "^standards/trust/github-.*\\.(asc|pub)$", "type": "string"},
+        "redistribution": {"const": "verification-use"},
+        "sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+        "source_record_id": {"pattern": "^[0-9]+$", "type": "string"},
+        "source_url": {"format": "uri", "maxLength": 2048, "type": "string"}
+      },
+      "required": ["algorithm", "fingerprint", "license", "owner", "path", "redistribution", "sha256", "source_record_id", "source_url"],
+      "type": "object"
+    },
+    "source": {
+      "additionalProperties": false,
+      "properties": {
+        "license": {"maxLength": 128, "minLength": 1, "type": "string"},
+        "media_type": {"maxLength": 256, "minLength": 1, "type": "string"},
+        "redistribution": {"enum": ["citation-only", "redistributable"]},
+        "revision": {"oneOf": [{"maxLength": 128, "minLength": 1, "type": "string"}, {"type": "null"}]},
+        "sha256": {"oneOf": [{"pattern": "^[0-9a-f]{64}$", "type": "string"}, {"type": "null"}]},
+        "signature": {"maxLength": 1024, "minLength": 1, "type": "string"},
+        "url": {"format": "uri", "maxLength": 2048, "type": "string"}
+      },
+      "required": ["license", "media_type", "redistribution", "revision", "sha256", "signature", "url"],
+      "type": "object"
+    }
+  }
+}

@@ -1,0 +1,123 @@
+{
+  "$id": "https://schemas.uor.foundation/prismpm/oracle-validation-attestation/1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "_type": {
+      "const": "https://in-toto.io/Statement/v1"
+    },
+    "predicate": {
+      "additionalProperties": false,
+      "properties": {
+        "authority_ids": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "covered": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "edition": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "normalized_result": {
+          "enum": [
+            "invalid",
+            "valid"
+          ]
+        },
+        "oracle": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "oracle_digest": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "runner_image": {
+          "oneOf": [
+            {
+              "pattern": "^[a-z0-9.-]+(?::[0-9]{1,5})?/[a-z0-9./_-]+@sha256:[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "uncovered": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "authority_ids",
+        "covered",
+        "edition",
+        "normalized_result",
+        "oracle",
+        "oracle_digest",
+        "runner_image",
+        "uncovered"
+      ],
+      "type": "object"
+    },
+    "predicateType": {
+      "const": "https://schemas.uor.foundation/prismpm/oracle-validation/v1"
+    },
+    "subject": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "digest": {
+            "additionalProperties": false,
+            "properties": {
+              "sha256": {
+                "pattern": "^[0-9a-f]{64}$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "sha256"
+            ],
+            "type": "object"
+          },
+          "name": {
+            "const": "projected-artifact"
+          }
+        },
+        "required": [
+          "digest",
+          "name"
+        ],
+        "type": "object"
+      },
+      "maxItems": 1,
+      "minItems": 1,
+      "type": "array"
+    }
+  },
+  "required": [
+    "_type",
+    "predicate",
+    "predicateType",
+    "subject"
+  ],
+  "type": "object"
+}

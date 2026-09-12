@@ -1,0 +1,465 @@
+#!/usr/bin/env python3
+#
+# python wrapper for conformance suite API
+
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
+import asyncio
+import json
+import random
+import re
+import httpx
+import os
+import shutil
+import time
+import traceback
+import zipfile
+
+
+class ServerUnavailableError(Exception):
+    """Raised when the server is unreachable after exhausting retries."""
+    pass
+
+
+class UnrecoverableHTTPError(Exception):
+    """Raised on HTTP errors that cannot be resolved by retrying (e.g. 401)."""
+    pass
+
+
+class RetryTransport(httpx.AsyncHTTPTransport):
+    async def handle_async_request(
+        self,
+        request: httpx.Request,
+    ) -> httpx.Response:
+        retry_timeout = float(os.getenv('CONFORMANCE_RETRY_TIMEOUT', '360'))
+        start_time = time.time()
+        deadline = start_time + retry_timeout
+        attempt = 0
+        resp = None
+        last_exception = None
+        while True:
+            attempt += 1
+            if attempt > 1:
+                delay = min(2 * 1.5 ** (attempt - 2), 15) + random.uniform(0, 1)
+                remaining = deadline - time.time()
+                if remaining <= 0:
+                    break
+                await asyncio.sleep(min(delay, remaining))
+            try:
+                if resp is not None:
+                    await resp.aclose()
+                resp = await super().handle_async_request(request)
+                last_exception = None
+            except Exception as e:
+                elapsed = time.time() - start_time
+                print("httpx {} exception {} caught (attempt {}, {:.0f}s elapsed) - retrying".format(
+                    request.url, e, attempt, elapsed))
+                last_exception = e
+                if time.time() >= deadline:
+                    raise
+                continue
+            if resp.status_code >= 500 and resp.status_code < 600:
+                elapsed = time.time() - start_time
+                print("httpx {} {} response (attempt {}, {:.0f}s elapsed) - retrying".format(
+                    request.url, resp.status_code, attempt, elapsed))
+                if time.time() >= deadline:
+                    break
+                continue
+            content_type = resp.headers.get("Content-Type")
+            if content_type is not None:
+                mime_type, _, _ = content_type.partition(";")
+                if mime_type == 'application/json':
+                    try:
+                        await resp.aread()
+                        resp.json()
+                    except Exception as e:
+                        traceback.print_exc()
+                        print("httpx {} response not decodable as json '{}' - retrying".format(request.url, e))
+                        if time.time() >= deadline:
+                            break
+                        continue
+            break
+        if last_exception is not None:
+            raise last_exception
+        return resp
+
+class Conformance(object):
+    def __init__(self, api_url_base, api_token, verify_ssl):
+        if not api_url_base.endswith('/'):
+            api_url_base += "/"
+        self.api_url_base = api_url_base
+        transport = RetryTransport(verify=verify_ssl)
+        self.httpclient = httpx.AsyncClient(verify=verify_ssl, transport=transport, timeout=20)
+        headers = {'Content-Type': 'application/json'}
+        if api_token is not None:
+            headers['Authorization'] = 'Bearer {0}'.format(api_token)
+        self.httpclient.headers = headers
+
+    async def get_all_test_modules(self):
+        """ Returns an array containing a dictionary per test module """
+        api_url = '{0}api/runner/available'.format(self.api_url_base)
+        response = await self.httpclient.get(api_url)
+
+        if response.status_code != 200:
+            raise Exception("get_all_test_modules failed - HTTP {:d} {}".format(response.status_code, response.content))
+        return response.json()
+
+    async def _download_plan_export(self, kind, plan_id, path):
+        """Stream a plan-export zip from the given `kind` endpoint (one of
+        'exporthtml' or 'export') into `path`. Returns the saved file path.
+        Retries up to 5 times with exponential backoff on transient errors;
+        validates that the response is a parseable zip before returning."""
+        attempts = 5
+        last_exception = None
+        api_url = '{0}api/plan/{1}/{2}'.format(self.api_url_base, kind, plan_id)
+        for attempt in range(attempts):
+            full_path = None
+            content_type = '<unknown>'
+            try:
+                async with self.httpclient.stream("GET", api_url) as response:
+                    content_type = response.headers.get('content-type', '<missing>')
+                    if response.status_code != 200:
+                        body = await response.aread()
+                        raise Exception("{} HTTP {} content-type={} body[:500]={!r}".format(
+                            kind, response.status_code, content_type, body[:500]))
+                    disposition = response.headers.get('content-disposition', '')
+                    match = re.findall("filename=\"(.+)\"", disposition)
+                    if not match:
+                        body = await response.aread()
+                        raise Exception("{} missing filename in content-disposition={!r} content-type={} body[:200]={!r}".format(
+                            kind, disposition, content_type, body[:200]))
+                    local_filename = match[0]
+                    full_path = os.path.join(path, local_filename)
+                    with open(full_path, 'wb') as f:
+                        async for chunk in response.aiter_bytes():
+                            f.write(chunk)
+                file_size = os.path.getsize(full_path)
+                try:
+                    zip_file = zipfile.ZipFile(full_path)
+                    bad_entry = zip_file.testzip()
+                except zipfile.BadZipFile as e:
+                    with open(full_path, 'rb') as f:
+                        head = f.read(500)
+                    raise Exception("{} for {} got non-zip response (content-type={}, size={} bytes, first bytes={!r}): {}".format(
+                        kind, plan_id, content_type, file_size, head, e)) from e
+                if bad_entry is not None:
+                    raise Exception("{} for {} downloaded corrupt zip {} (content-type={}, size={} bytes) - testzip reports {}".format(
+                        kind, plan_id, full_path, content_type, file_size, bad_entry))
+                return full_path
+            except Exception as e:
+                last_exception = e
+                if attempt < attempts - 1:
+                    backoff = 1 << attempt  # 1, 2, 4, 8s between attempts
+                    print("{} {} attempt {}/{} failed: {} - retrying in {}s".format(
+                        kind, api_url, attempt + 1, attempts, e, backoff))
+                    await asyncio.sleep(backoff)
+                else:
+                    print("{} {} attempt {}/{} failed: {} - giving up".format(
+                        kind, api_url, attempt + 1, attempts, e))
+        raise Exception("{} for {} failed after {} attempts".format(kind, plan_id, attempts)) from last_exception
+
+    async def exporthtml(self, plan_id, path):
+        """Download a plan's results as a Thymeleaf-rendered HTML zip (for
+        human consumption / certification packages)."""
+        return await self._download_plan_export('exporthtml', plan_id, path)
+
+    async def exportjson(self, plan_id, path):
+        """Download a plan's results as a JSON-plus-RSA-signature zip
+        (much cheaper server-side than exporthtml — skips Thymeleaf).
+        Use this in CI where the human-readable HTML isn't needed; JFR
+        profiling showed exporthtml at ~4.4% of CI JVM wall."""
+        return await self._download_plan_export('export', plan_id, path)
+
+    async def create_certification_package(self, plan_id, *, rp_logs_zip_path = None, output_zip_directory = "./"):
+        """
+        Create a complete certification package zip file which is written
+        to the directory specified by the 'output_zip_directory' parameter.
+        Calling this function will additionally publish and mark the test plan as immutable.
+
+        The signed Certification of Conformance PDF is no longer part of the package
+        and is submitted through the certification request form instead, so this no
+        longer takes a path to one. The remaining arguments are keyword-only, so a
+        call written against the old signature fails rather than silently sending the
+        PDF as the client logs zip.
+
+        :param plan_id:         The plan id for which to create the package.
+        :rp_logs_zip_path:      Required for RP tests and is the path to the client logs zip file.
+        :output_zip_directory:  The (already existing) directory to which the certification package zip file is written.
+        """
+        clientSideData = open(rp_logs_zip_path, 'rb') if rp_logs_zip_path is not None else open(os.devnull, 'rb')
+        files = { 'clientSideData': clientSideData}
+        try:
+            async with httpx.AsyncClient() as multipartClient:
+                multipartClient.headers = self.httpclient.headers.copy()
+                multipartClient.headers.pop('content-type')
+                api_url = '{0}api/plan/{1}/certificationpackage'.format(self.api_url_base, plan_id)
+
+                response = await multipartClient.post(api_url, files = files)
+                if response.status_code != 200:
+                    raise Exception("certificationpackage failed - HTTP {:d} {}".format(response.status_code, response.content))
+
+                d = response.headers['content-disposition']
+                local_filename = re.findall('filename="(.+)"', d)[0]
+                full_path = os.path.join(output_zip_directory, local_filename)
+                with open(full_path, 'wb') as f:
+                    for chunk in response.iter_bytes():
+                        f.write(chunk)
+                print("Certification package zip for plan id {} written to {}".format(plan_id, full_path))
+        finally:
+            clientSideData.close();
+
+    async def create_test_plan(self, name, configuration, variant=None):
+        api_url = '{0}api/plan'.format(self.api_url_base)
+        payload = {'planName': name}
+        if variant != None:
+            payload['variant'] = json.dumps(variant)
+        response = await self.httpclient.post(api_url, params=payload, data=configuration)
+
+        if response.status_code != 201:
+            error_msg = self._extract_error_message(response)
+            raise Exception("Failed to create plan '{}': {}".format(name, error_msg))
+        return response.json()
+
+    @staticmethod
+    def _extract_error_message(response):
+        """Extract a concise error message from an error response."""
+        try:
+            body = response.json()
+            # Prefer 'error' field, fall back to 'message'
+            msg = body.get('error') or body.get('message')
+            if msg:
+                return msg
+        except Exception:
+            pass
+        return "HTTP {:d} {}".format(response.status_code, response.text[:200])
+
+    async def create_test(self, test_name, configuration):
+        api_url = '{0}api/runner'.format(self.api_url_base)
+        payload = {'test': test_name}
+        response = await self.httpclient.post(api_url, params=payload, data=configuration)
+
+        if response.status_code != 201:
+            raise Exception("create_test failed - HTTP {:d} {}".format(response.status_code, response.content))
+        return response.json()
+
+    async def create_test_from_plan(self, plan_id, test_name):
+        api_url = '{0}api/runner'.format(self.api_url_base)
+        payload = {'test': test_name, 'plan': plan_id}
+        response = await self.httpclient.post(api_url, params=payload)
+
+        if response.status_code != 201:
+            raise Exception("create_test_from_plan failed - HTTP {:d} {}".format(response.status_code, response.content))
+        return response.json()
+
+    async def _request(self, method, label, expected_status, **kwargs):
+        """Make an HTTP request, raising ServerUnavailableError on connection failures or 502."""
+        try:
+            response = await method(**kwargs)
+        except Exception as e:
+            raise ServerUnavailableError("{} failed - {}".format(label, e)) from e
+        if response.status_code == 502:
+            raise ServerUnavailableError("{} failed - HTTP {:d} {}".format(label, response.status_code, response.content))
+        if response.status_code == 401:
+            raise UnrecoverableHTTPError("{} failed - HTTP 401 (auth token is invalid, server may have been redeployed)".format(label))
+        if response.status_code != expected_status:
+            raise Exception("{} failed - HTTP {:d} {}".format(label, response.status_code, response.content))
+        return response
+
+    async def create_test_from_plan_with_variant(self, plan_id, test_name, variant):
+        api_url = '{0}api/runner'.format(self.api_url_base)
+        payload = {'test': test_name, 'plan': plan_id}
+        if variant != None:
+            payload['variant'] = json.dumps(variant)
+        response = await self._request(self.httpclient.post, "create_test_from_plan", 201,
+                                       url=api_url, params=payload)
+        return response.json()
+
+    async def get_module_info(self, module_id):
+        api_url = '{0}api/info/{1}'.format(self.api_url_base, module_id)
+        response = await self._request(self.httpclient.get, "get_module_info", 200,
+                                       url=api_url)
+        return response.json()
+
+    async def get_test_log(self, module_id):
+        api_url = '{0}api/log/{1}'.format(self.api_url_base, module_id)
+        response = await self.httpclient.get(api_url)
+
+        if response.status_code != 200:
+            raise Exception("get_test_log failed - HTTP {:d} {}".format(response.status_code, response.content))
+        return response.json()
+
+    async def start_test(self, module_id):
+        api_url = '{0}api/runner/{1}'.format(self.api_url_base, module_id)
+        response = await self._request(self.httpclient.post, "start_test", 200,
+                                       url=api_url)
+        return response.json()
+
+    async def wait_for_state(self, module_id, required_states, timeout=240):
+        # The /api/runner/{id}/wait-state long-poll endpoint ships with the server in this
+        # repo and is deployed alongside it, so we always use it — there is no capability
+        # probe or per-second-polling fallback.
+        #
+        # The server resolves as soon as the test's status is one of these. We always
+        # add INTERRUPTED so an interrupted test releases the long-poll immediately
+        # rather than hanging until the overall timeout; we re-raise on it below to
+        # preserve the previous behavior. The server has no terminal-state knowledge
+        # of its own — it just matches the status against this set.
+        states = ','.join(list(required_states) + ['INTERRUPTED'])
+        timeout_at = time.time() + timeout
+
+        while True:
+            remaining = timeout_at - time.time()
+            if remaining <= 0:
+                raise Exception(
+                    "Timed out waiting for test module {} to be in one of states: {}".format(
+                        module_id, required_states))
+            # Cap each long-poll at 30s so we recover from server restarts or dropped
+            # connections without exceeding the overall budget; the server clamps to the
+            # same bound. On a per-call timeout the server returns {"timeout": true} and
+            # we simply re-issue until a wanted state is reached or the budget runs out.
+            per_call_timeout_ms = min(int(remaining * 1000), 30000)
+            api_url = '{0}api/runner/{1}/wait-state'.format(self.api_url_base, module_id)
+            # Connection-level + status handling matches conformance._request
+            # so callers that catch ServerUnavailableError (e.g. for retry on
+            # server restart) keep working. The +10s on the httpx timeout is
+            # a safety margin over the server-side long-poll budget; if it
+            # fires that's a real network problem, not normal long-poll
+            # behavior, so it propagates as ServerUnavailableError too.
+            try:
+                resp = await self.httpclient.get(
+                    api_url, params={'states': states, 'timeoutMs': per_call_timeout_ms},
+                    timeout=per_call_timeout_ms / 1000.0 + 10)
+            except Exception as e:
+                raise ServerUnavailableError(
+                    "wait_for_state {} long-poll failed - {}".format(module_id, e)) from e
+            if resp.status_code == 502:
+                raise ServerUnavailableError(
+                    "wait_for_state {} long-poll failed - HTTP 502 {}".format(
+                        module_id, resp.content))
+            if resp.status_code == 401:
+                raise UnrecoverableHTTPError(
+                    "wait_for_state {} long-poll failed - HTTP 401 (auth token is invalid, "
+                    "server may have been redeployed)".format(module_id))
+            if resp.status_code == 404:
+                # The wait-state endpoint resolves the test from the in-memory runner
+                # map, which is lost on a server restart; /api/info/{id} reads persisted
+                # test info, which is not. So a 404 here means the in-memory entry is
+                # gone — but whether that's recoverable depends on the persisted status.
+                # The old per-second polling path read /api/info/{id} directly and was
+                # naturally restart-resilient; this restores that for the long-poll path.
+                persisted = await self._get_persisted_status(module_id)
+                if persisted is None:
+                    # No persisted info either: genuinely unknown/unauthorized test.
+                    raise Exception("Test module {} not found".format(module_id))
+                # Terminal states are resolvable from persisted info: the test finished
+                # its lifecycle before the in-memory entry vanished (e.g. the long-poll
+                # response was lost to a restart). Do NOT rerun an already-completed test.
+                if persisted == 'FINISHED':
+                    if 'FINISHED' in required_states:
+                        print("module id {} status changed to {}".format(module_id, persisted))
+                        return persisted
+                    raise Exception(
+                        "Test module {} finished without reaching one of states: {}".format(
+                            module_id, required_states))
+                if persisted == 'INTERRUPTED':
+                    # Same INTERRUPTED rule as the 200 path: return it if the caller asked
+                    # to stop on it, otherwise it's a permanent failure.
+                    if 'INTERRUPTED' in required_states:
+                        print("module id {} status changed to {}".format(module_id, persisted))
+                        return persisted
+                    raise Exception("Test module {} has moved to INTERRUPTED".format(module_id))
+                # Non-terminal persisted status (RUNNING/WAITING/CONFIGURED/...): the runner
+                # lost an in-progress test, almost certainly a restart. Even if this status
+                # is in required_states, we must NOT return it — the test no longer exists in
+                # the runner, so the caller couldn't drive it forward. Retry the module.
+                raise ServerUnavailableError(
+                    "wait_for_state {} long-poll returned 404 but persisted test info shows "
+                    "non-terminal state {} - server likely restarted, retrying".format(
+                        module_id, persisted))
+            if resp.status_code != 200:
+                raise Exception(
+                    "wait_for_state {} failed - HTTP {:d} {}".format(
+                        module_id, resp.status_code, resp.content[:200]))
+            body = resp.json()
+            if body.get('timeout'):
+                # Per-call budget elapsed before a wanted state was reached; re-issue.
+                continue
+            state = body.get('state')
+            if state is None:
+                # 200 with neither a state nor the timeout flag shouldn't happen with
+                # our endpoint; back off briefly and re-issue rather than return None.
+                await asyncio.sleep(1)
+                continue
+            # Status diagnostic for the CI log.
+            print("module id {} status changed to {}".format(module_id, state))
+            # INTERRUPTED is a permanent failure: raise immediately so the caller doesn't
+            # sit until timeout — UNLESS the caller explicitly asked to stop on INTERRUPTED
+            # (it's in required_states), in which case we return it as a normal wanted state.
+            if state == 'INTERRUPTED' and 'INTERRUPTED' not in required_states:
+                raise Exception("Test module {} has moved to INTERRUPTED".format(module_id))
+            return state
+
+    async def _get_persisted_status(self, module_id):
+        """Return the persisted status string for module_id from /api/info/{id}, or None
+        if the server reports it absent (404). /api/info reads persisted test info, which
+        survives a server restart (unlike the in-memory runner the wait-state endpoint
+        uses), so this disambiguates a wait-state 404: a terminal persisted status means
+        the test completed before its in-memory entry vanished, while a non-terminal one
+        means an in-progress test was lost. Raises ServerUnavailableError on connection
+        failure / 502 so a transient outage is treated as retryable, not misread as
+        'absent'; raises UnrecoverableHTTPError on 401 to match the long-poll path."""
+        api_url = '{0}api/info/{1}'.format(self.api_url_base, module_id)
+        try:
+            resp = await self.httpclient.get(api_url)
+        except Exception as e:
+            raise ServerUnavailableError(
+                "wait_for_state {} status check failed - {}".format(module_id, e)) from e
+        if resp.status_code == 502:
+            raise ServerUnavailableError(
+                "wait_for_state {} status check failed - HTTP 502".format(module_id))
+        if resp.status_code == 401:
+            raise UnrecoverableHTTPError(
+                "wait_for_state {} status check failed - HTTP 401 (auth token is invalid, "
+                "server may have been redeployed)".format(module_id))
+        if resp.status_code == 404:
+            return None
+        if resp.status_code != 200:
+            raise Exception(
+                "wait_for_state {} status check failed - HTTP {:d}".format(
+                    module_id, resp.status_code))
+        return resp.json().get('status')
+
+    async def wait_for_server_ready(self, timeout=360):
+        """Poll until the server responds successfully, or raise after timeout.
+
+        Deliberately probes the plan listing (a MongoDB query) rather than a
+        static endpoint like api/runner/available, so that a server whose JVM
+        is up but whose MongoDB is down/flapping does not report as ready.
+        Note the helm chart's k8s readiness/liveness probes still hit an
+        in-memory endpoint; mid-run mongo outages are handled by the test
+        runner's consecutive-failure circuit breaker, not by kubernetes."""
+        start = time.time()
+        attempt = 0
+        api_url = '{0}api/plan?length=1'.format(self.api_url_base)
+        while True:
+            attempt += 1
+            elapsed = time.time() - start
+            try:
+                response = await self.httpclient.get(api_url, timeout=10)
+                if response.status_code == 200:
+                    print('Server is ready after {:.0f}s ({} attempts)'.format(elapsed, attempt))
+                    return
+                print('Server returned {} on attempt {} ({:.0f}s elapsed)'.format(
+                    response.status_code, attempt, elapsed))
+            except Exception as e:
+                print('Server not ready on attempt {} ({:.0f}s elapsed): {}'.format(
+                    attempt, elapsed, e))
+            if elapsed >= timeout:
+                raise ServerUnavailableError(
+                    'Server did not become ready within {}s'.format(timeout))
+            await asyncio.sleep(10)
+
+    async def close_client(self):
+        await self.httpclient.aclose()

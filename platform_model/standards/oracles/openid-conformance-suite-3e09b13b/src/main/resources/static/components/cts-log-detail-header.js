@@ -1,0 +1,2204 @@
+import { LitElement, html, nothing, css } from "lit";
+import { createRef, ref } from "lit/directives/ref.js";
+import { ifDefined } from "lit/directives/if-defined.js";
+import "./cts-icon.js";
+import "./cts-badge.js";
+import "./cts-button.js";
+import "./cts-link-button.js";
+import "./cts-alert.js";
+import "./cts-json-view.js";
+import "./cts-modal.js";
+import "./cts-test-nav-controls.js";
+import "./cts-failure-summary.js";
+import "./cts-action-overflow.js";
+import "./cts-time.js";
+import { formatDescription } from "./format-description.js";
+import { selectFindings } from "./log-findings.js";
+import { splitTestSummary } from "./test-summary-split.js";
+import { flashCopyConfirmed } from "../js/cts-copy-flash.js";
+
+/**
+ * Top-level test result -> canonical cts-badge variant. INTERRUPTED maps to
+ * `fail` because an interrupted run did not complete successfully and we
+ * surface that alongside the FINISHED/INTERRUPTED status badge.
+ * Lookup table per components/AGENTS.md §7 (no dynamic class concatenation).
+ * @type {Object.<string, string>}
+ */
+const RESULT_BADGE_VARIANTS = {
+  PASSED: "pass",
+  FAILED: "fail",
+  WARNING: "warn",
+  REVIEW: "review",
+  SKIPPED: "skip",
+  INTERRUPTED: "fail",
+};
+
+/**
+ * Test running-state -> canonical cts-badge variant. FINISHED is neutral
+ * (`skip`) because the sibling result badge carries the outcome; WAITING
+ * uses `warn` because the run is paused on an external event or user
+ * action; CONFIGURED uses `warn` because the runner is waiting for the
+ * user to press Start (#1862); INTERRUPTED matches RESULT_BADGE_VARIANTS.
+ * @type {Object.<string, string>}
+ */
+const STATUS_BADGE_VARIANTS = {
+  CONFIGURED: "warn",
+  RUNNING: "running",
+  WAITING: "warn",
+  FINISHED: "skip",
+  INTERRUPTED: "fail",
+};
+
+/**
+ * Per-condition result keys (lowercase, mirroring backend log entries) used
+ * to aggregate counts in the sticky bar's pill cluster. These keys must
+ * match `entry.result.toLowerCase()` from the backend (success/failure/
+ * warning/review/info), so they are intentionally NOT the canonical badge
+ * variant names — see RESULT_TYPE_BADGE_VARIANTS for the key -> variant
+ * mapping.
+ * @type {ReadonlyArray<string>}
+ */
+const RESULT_TYPES = ["success", "failure", "warning", "review", "info"];
+
+/**
+ * Per-condition result key -> canonical cts-badge variant.
+ * @type {Object.<string, string>}
+ */
+const RESULT_TYPE_BADGE_VARIANTS = {
+  success: "pass",
+  failure: "fail",
+  warning: "warn",
+  review: "review",
+  info: "info-subtle",
+};
+
+/**
+ * Per-condition result key -> compact glyph used in the sticky status bar's
+ * result-pill cluster (e.g. `✓ 47`, `✗ 3`). Lookup table per
+ * components/AGENTS.md §7 (no dynamic class concatenation).
+ * @type {Object.<string, string>}
+ */
+const RESULT_TYPE_PILL_GLYPHS = {
+  success: "✓",
+  failure: "✗",
+  warning: "⚠",
+  review: "?",
+  info: "ⓘ",
+};
+
+/**
+ * Lifecycle-driven hero region keys. Drives `_renderHero()`'s dispatch
+ * and the visual eyebrow / divider treatment per state.
+ * @type {Object.<string, string>}
+ */
+const HERO_MODES = {
+  PASSED: "summary",
+  SKIPPED: "summary",
+  FAILED: "failures",
+  WARNING: "failures",
+  REVIEW: "failures",
+  INTERRUPTED: "interrupted",
+  WAITING: "waiting",
+  RUNNING: "running",
+};
+
+/**
+ * Phase → terminal-banner palette + headline + explanation. Palette keys map
+ * 1:1 to the `.ctsTerminalBanner--*` modifier classes defined in STYLE_TEXT;
+ * headline strings are the "did my test pass?" answer in plain English
+ * (MR 1998 findings A2 + A7). `detail` is a one-line plain-English explanation
+ * rendered under the headline (#1883) — the redesign dropped the legacy UI's
+ * hover-help when the terminal banner replaced the old status/result pills,
+ * leaving "Test needs review" etc. with no explanation of what it means or
+ * what happens next. Text is copied from the legacy/pre-redesign
+ * `FAPI_UI.getResultHelp`/`getStatusHelp` (static/js/fapi.ui.js:95-128, an
+ * exact carry-over of static-legacy/js/fapi.ui.js:478-511) rather than
+ * reworded, so the explanation matches what the old UI's tooltip already
+ * said — with one deliberate deviation: "behaviour" → "behavior" in the
+ * finished-warn entry, to match this codebase's American-English convention
+ * (the legacy source uses British spelling). Optional per phase (guarded in
+ * `_renderTerminalBanner`) so a future phase can omit it without a second
+ * render path.
+ *
+ * REVIEW result uses the warn palette: a reviewer needs to act, so the
+ * banner reads as "needs attention", not as a verdict failure.
+ * @type {Object.<string, { palette: string, headline: string, icon: string, detail?: string }>}
+ */
+const TERMINAL_BANNER_BY_PHASE = {
+  "finished-pass": {
+    palette: "pass",
+    headline: "Test passed",
+    icon: "circle-check",
+    detail: "The test has passed all conditions.",
+  },
+  "finished-fail": {
+    palette: "fail",
+    headline: "Test failed",
+    icon: "close-circle",
+    detail:
+      "The test has failed at least one critical condition. This means an important error has been detected and the system under test cannot be certified.",
+  },
+  "finished-warn": {
+    palette: "warn",
+    headline: "Test passed with warnings",
+    icon: "warning",
+    detail:
+      "The test has generated some warnings during its execution, see the log for details. Test results with warnings are accepted for certification, but they generally indicate that the software under test is behaving unexpected or not following recommendations, and the tester should check the results to ensure any warnings are expected behavior of the software being tested.",
+  },
+  "finished-review": {
+    palette: "warn",
+    headline: "Test needs review",
+    icon: "warning",
+    detail:
+      "The test requires manual review, for example it contains images that need to be manually checked. These images will be checked by the certification team when a certification request is submitted.",
+  },
+  "finished-skip": {
+    palette: "skip",
+    headline: "Test skipped",
+    icon: "info",
+    detail:
+      "The test could not be completed due to configuration or optional features. Please check if the feature being tested is supported, if it is please check the configuration of the test and of the software under test. If the feature being tested is not supported by the software under test then skipped tests do not prevent certification.",
+  },
+  interrupted: {
+    palette: "fail",
+    headline: "Test interrupted",
+    icon: "close-circle",
+    detail:
+      "The test failed to run to completion as a critical element failed. Please see the log, fix the error and run the test again to get a complete set of results.",
+  },
+};
+
+const STYLE_ID = "cts-log-detail-header-styles";
+
+// Scoped CSS for the log-detail header. All values flow from oidf-tokens.css.
+//
+// Visual structure (top-to-bottom inside the host element):
+//
+//   ┌───────────────────────────────────────────────────────────┐
+//   │ Nav row (.ctsNavRow — plan progress + Continue Plan)      │
+//   ├───────────────────────────────────────────────────────────┤
+//   │ Sticky status bar (Region A — U2; unchanged)              │  shadow-1
+//   ├───────────────────────────────────────────────────────────┤
+//   │ Terminal-state banner (PASSED/FAILED/WARN/REVIEW/SKIP/    │  status palette
+//   │ INTERRUPTED only; absent during RUNNING / WAITING)        │
+//   ├───────────────────────────────────────────────────────────┤
+//   │ Objective summary ("About this test")                     │  fs-15 body
+//   ├───────────────────────────────────────────────────────────┤
+//   │ Hero (lifecycle-driven dominant zone)                     │  no chrome
+//   │   FAILED/WARNING/REVIEW       → count headline + failure  │  fs-20 head
+//   │   INTERRUPTED                 → error slot + failure list │
+//   │   PASSED/SKIPPED              → no separate hero           │
+//   │   CONFIGURED                  → "Click Start Test" prompt │
+//   │                                 (Start in sticky bar)     │
+//   │   WAITING                     → R24 instructions + browser│
+//   │                                 slot (never a Start CTA)  │
+//   │   RUNNING                     → info alert + browser slot │
+//   ├───────────────────────────────────────────────────────────┤
+//   │ Drawer (Region C — <details> disclosures)                 │
+//   │   ▸ Test details (metadata table; closed by default)      │
+//   │   ▸ Exported values (live tests only; closed by default)  │
+//   └───────────────────────────────────────────────────────────┘
+//
+// The nav row leads so plan-level orientation sits immediately under
+// the page-level breadcrumb (cts-crumb in log-detail.html). The
+// terminal banner follows the sticky bar so the verdict is the first
+// thing the eye lands on after the bar's pill cluster, with the bar
+// still pinning at top: 0 on scroll. Each section is divided by a 1px
+// border (no card-within-card chrome). The sticky bar carries the
+// only shadow; the rest reads as a flat document under the bar.
+const STYLE_TEXT = css`
+  cts-log-detail-header {
+    /* display: contents removes the host from the box tree so the
+       sticky .ctsStatusBar below sticks within the page-level
+       containing block (.log-page-main) instead of being clipped at
+       the bottom of the header's intrinsic content height. The host
+       paints no background / border / padding itself, so the swap is
+       visually invisible. */
+    display: contents;
+  }
+
+  /* Sticky status bar (Region A — unchanged from U2). Sticks at tablet
+     and above; on mobile it scrolls away. Z-index 10 keeps the bar
+     above the connection-lost banner (z-index 9 in cts-log-viewer's
+     own styles).
+     'position: relative' is set unconditionally (not just inside the
+     >=640px sticky branch) so the ::after gradient — used as the
+     bar's elevation effect in place of a 'box-shadow' — has a
+     positioning ancestor at every viewport. The pseudo itself only
+     paints when sticky kicks in (see the >=640px branch below); on
+     mobile it stays display:none so no fake shadow streaks across the
+     hero as the bar scrolls past with the page. */
+  cts-log-detail-header .ctsStatusBar {
+    position: relative;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    grid-template-areas:
+      "left    middle  primary"
+      "created created created";
+    column-gap: var(--space-3);
+    align-items: center;
+    padding: 20px;
+    margin-inline: -20px;
+    background: var(--bg-elev);
+    border-bottom: 1px solid var(--border);
+    z-index: 10;
+  }
+  /* Faux drop-shadow for the sticky bar. A real 'box-shadow' bleeds
+     past the bar's left/right edges (the rule's spread fades outward
+     in every direction), which reads as two grey wings poking out of
+     a page that has no other floating chrome. Substituting an
+     absolutely-positioned ::after with a top-to-bottom gradient
+     constrains the shadow to exactly the bar's width — 'left: 0;
+     right: 0' matches the bar's content box, and the gradient fades
+     from a low-opacity ink to transparent over a few pixels so the
+     elevation cue still reads at a glance.
+     'pointer-events: none' keeps the pseudo from blocking clicks on
+     the section directly below the bar (failure summary chips,
+     drawer summaries, log entry rows). The pseudo is hidden by
+     default and only painted on the sticky branch below — no fake
+     shadow on mobile, where the bar scrolls with the content. */
+  cts-log-detail-header .ctsStatusBar::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    height: var(--space-2);
+    pointer-events: none;
+    display: none;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.07), rgba(0, 0, 0, 0));
+  }
+  cts-log-detail-header .ctsStatusBarLeft {
+    grid-area: left;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+    /* Grid items default to min-width: auto, so the bar's 'auto' left
+       track grows to the nowrap test name's full max-content width
+       instead of letting the span's ellipsis engage — at phone widths
+       that inflated the whole page to ~644px of horizontal scroll.
+       min-width: 0 lets the track shrink below max-content so the
+       name truncates and the page never overflows the viewport. */
+    min-width: 0;
+  }
+  cts-log-detail-header .ctsStatusBarMiddle {
+    grid-area: middle;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+    min-width: 0;
+  }
+  cts-log-detail-header .ctsStatusBarSupport {
+    color: var(--fg-muted);
+    font-size: var(--fs-13);
+  }
+  cts-log-detail-header .ctsStatusBarPrimary {
+    grid-area: primary;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+  cts-log-detail-header .ctsStatusBarOverflow {
+    display: contents;
+  }
+  /* Test name leads the bar's left cluster (Row 1, ahead of the status
+     pill and result-count badges) so the bar's title — "which test is
+     this?" — reads before the badges that describe it. Slightly larger
+     than the surrounding chrome (--fs-14 vs --fs-13) and weighted as
+     the bar's title, truncating with ellipsis when long names would
+     wrap the badges onto a new visual line. */
+  cts-log-detail-header .ctsStatusBarTestNameText {
+    color: var(--fg);
+    font-size: var(--fs-14);
+    font-weight: var(--fw-medium);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+    flex: 0 1 auto;
+  }
+  /* Row 2 carries the created timestamp alone. Promoted out of the
+     drawer (where it used to be) because operators glance at "when
+     did this run?" constantly — hiding it behind a disclosure was a
+     hierarchy regression. */
+  cts-log-detail-header .ctsStatusBarCreated {
+    grid-area: created;
+    color: var(--fg-muted);
+    font-size: var(--fs-13);
+    white-space: nowrap;
+  }
+  @media (min-width: 640px) {
+    cts-log-detail-header .ctsStatusBar {
+      position: sticky;
+      top: 0;
+    }
+    /* Reveal the faux drop-shadow only when the bar is sticky. A
+       static bar at mobile widths gets no shadow — it sits flush with
+       the hero below it and the 1px border-bottom is the only
+       elevation cue needed. */
+    cts-log-detail-header .ctsStatusBar::after {
+      display: block;
+    }
+  }
+
+  /* Nav row — the first zone inside the header, carrying the plan
+     navigation cluster (#testNavControls). Sits between the page-level
+     breadcrumb (cts-crumb in log-detail.html) and the sticky status
+     bar so the page reads "plan link → plan progress → this test"
+     top-to-bottom. Always visible at every viewport so the user can
+     step Previous / Next without opening a drawer.
+     The cts-test-nav-controls component was originally designed for
+     the legacy vertical action stack (column layout, card chrome,
+     full-width buttons). Overriding its inner layout here makes it
+     read as a horizontal control row inside the new structure
+     without touching the component itself — the override is scoped
+     to the .ctsNavRow descendant context only. */
+  cts-log-detail-header .ctsNavRow {
+    padding: var(--space-4) 0;
+    border-bottom: 1px solid var(--border);
+  }
+  /* Hide the nav row when the embedded cts-test-nav-controls renders
+     nothing — for example, an ad-hoc test (no planId) or the brief
+     window before /api/plan resolves (empty modules, slim mode, no
+     Continue). Without this, the row's padding + border-bottom would
+     paint as an empty divider between the breadcrumb and the sticky
+     status bar, reading as a broken section break. */
+  cts-log-detail-header .ctsNavRow:has(cts-test-nav-controls:empty) {
+    display: none;
+  }
+  /* The cluster keeps its own column flow here (the .cts-tnc-progress-row owns
+     the bar+button row; the "Module N of M" label sits below it), so the nav
+     row only strips the standalone card chrome — the row provides its own
+     divider — and tightens the column gap between the bar row and the label.
+     The bar's flex-to-fill sizing lives on .cts-tnc-progress-row in the
+     component's own CSS. The legacy single-track cts-tnc-progress overrides are
+     gone with the orange position bar. */
+  cts-log-detail-header .ctsNavRow cts-test-nav-controls .cts-tnc-group {
+    gap: var(--space-2);
+    padding: 0;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+  }
+  cts-log-detail-header .ctsNavRow cts-test-nav-controls .cts-tnc-buttons {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+  cts-log-detail-header .ctsNavRow cts-test-nav-controls .cts-tnc-buttons cts-button,
+  cts-log-detail-header .ctsNavRow cts-test-nav-controls .cts-tnc-buttons cts-link-button {
+    width: auto;
+  }
+
+  /* Terminal-state banner — the verdict, shown as a full-width band
+     between the sticky status bar and the hero whenever a test has
+     reached a terminal phase (PASSED / FAILED / WARNING / REVIEW /
+     SKIPPED / INTERRUPTED). Closes MR 1998 findings A2 + A7: without this,
+     the only "did my test pass?" signal was a small chip among the
+     log filters, which both reviewers flagged as too subtle.
+     The bleed-out margins match the sticky bar's so the banner
+     reads as the same horizontal section as the page chrome above.
+     align-items is flex-start (not center) so the icon lines up with the
+     headline's cap-height rather than the vertical center of the whole
+     two-line block once the #1883 explanation line is present. */
+  cts-log-detail-header .ctsTerminalBanner {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-2);
+    padding: var(--space-3);
+    font-family: var(--font-sans);
+    line-height: var(--lh-tight);
+    border-radius: var(--radius-3);
+    margin-top: var(--space-5);
+  }
+  cts-log-detail-header .ctsTerminalBanner cts-icon {
+    flex: 0 0 auto;
+  }
+  cts-log-detail-header .ctsTerminalBannerText {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+  cts-log-detail-header .ctsTerminalBannerHeadline {
+    font-weight: var(--fw-bold);
+    font-size: var(--fs-16);
+  }
+  /* #1883 — the plain-English "what does this mean / what happens next"
+     line under the headline. Regular weight and a step down in size so it
+     reads as supporting copy, not a second verdict. */
+  cts-log-detail-header .ctsTerminalBannerDetail {
+    font-weight: var(--fw-regular);
+    font-size: var(--fs-13);
+    line-height: 1.5;
+    margin: 0;
+  }
+  cts-log-detail-header .ctsTerminalBanner--pass {
+    background: var(--status-pass-bg);
+    color: var(--status-pass);
+  }
+  cts-log-detail-header .ctsTerminalBanner--fail {
+    background: var(--status-fail-bg);
+    color: var(--status-fail);
+  }
+  cts-log-detail-header .ctsTerminalBanner--warn {
+    background: var(--status-warning-bg);
+    color: var(--status-warning);
+  }
+  cts-log-detail-header .ctsTerminalBanner--skip {
+    background: var(--status-skipped-bg);
+    color: var(--status-skipped);
+  }
+
+  /* Hero — the lifecycle-driven dominant zone. Flat section on the
+     page background; no card chrome. Generous padding gives the
+     hero its weight. The eyebrow / headline / body type-scale ramp
+     replaces the legacy card's internal grid. */
+  cts-log-detail-header .ctsHero {
+    /* Horizontal padding is owned by the page wrapper (.log-page
+       padding-inline). Vertical padding gives the hero its own
+       breathing room as a section so it never sits flush against the
+       nav row's border above or the drawer summaries below. */
+    padding-inline: 0;
+    padding-block: var(--space-2);
+    display: flex;
+    flex-direction: column;
+  }
+  /* Page-injected slots ([data-slot="error"], [data-slot="browser"])
+     are empty until log-detail.js injects an alert or browser-URL
+     prompt. 'display: contents' makes the slot disappear from the
+     flex flow while empty, so it adds no stray box. The moment
+     log-detail.js appends a child element, :not(:has(*)) stops
+     matching and the slot rejoins the flex flow; the populated-only
+     :has(*) rules below give it the separating margin (the hero has
+     no blanket 'gap', so each populated slot owns its own spacing). */
+  cts-log-detail-header .ctsHero > [data-slot]:not(:has(*)) {
+    display: contents;
+  }
+  /* Once the error slot is populated by log-detail.js, separate the
+     injected FINAL_ERROR alert from the sibling "interrupted" alert
+     that follows it. Margin lives on the slot (not on the parent as a
+     blanket 'gap') so the rest of the hero — running/waiting/summary
+     variants — remains visually unchanged. */
+  cts-log-detail-header .ctsHero > [data-slot="error"]:has(*) {
+    margin-bottom: var(--space-3);
+  }
+  /* Once the browser slot is populated by log-detail.js, separate the
+     injected browser-URL prompt from the hero body (instructions / info
+     alert) above it. Without this the prompt sits flush against the body,
+     since the hero carries no blanket 'gap'. */
+  cts-log-detail-header .ctsHero > [data-slot="browser"]:has(*) {
+    margin-top: var(--space-4);
+  }
+  /* Eyebrow + headline read as one tight title group (Gestalt
+     proximity): the headline's margin is 0 and the hero has no
+     blanket gap, so nothing separates them. The eyebrow's margin-top
+     is what sets the title group apart from the content above it. */
+  cts-log-detail-header .ctsHeroEyebrow {
+    font-size: var(--fs-12);
+    font-weight: var(--fw-bold);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--fg-soft);
+    margin-top: var(--space-4);
+  }
+  cts-log-detail-header .ctsHeroHeadline {
+    font-size: var(--fs-20);
+    font-weight: var(--fw-bold);
+    color: var(--fg);
+    line-height: 1.3;
+    margin: 0;
+    font-variant-numeric: tabular-nums;
+  }
+  cts-log-detail-header .ctsHeroBody {
+    font-size: var(--fs-13);
+    line-height: 1.6;
+    color: var(--fg);
+  }
+  cts-log-detail-header .ctsHeroBody p {
+    margin: 0 0 var(--space-3);
+  }
+  cts-log-detail-header .ctsHeroBody p:last-child {
+    margin-bottom: 0;
+  }
+  cts-log-detail-header .ctsHeroBody code {
+    font-family: var(--font-mono);
+    font-size: 0.92em;
+    background: var(--bg-muted);
+    color: var(--fg);
+    padding: 0 var(--space-1);
+    border-radius: var(--radius-1);
+  }
+  cts-log-detail-header .ctsHeroPlaceholder {
+    color: var(--fg-faint);
+    font-style: italic;
+    font-size: var(--fs-14);
+  }
+  /* Failure hero — wraps cts-failure-summary and elevates each row's
+     type / spacing so the failure list reads as the page's primary
+     affordance. Hide cts-failure-summary's own accordion title (the
+     hero's count headline replaces it) and drop the section's
+     border-top since the hero is already a bordered section. */
+  cts-log-detail-header .ctsHero--failures cts-failure-summary .failureSummaryTitle {
+    display: none;
+  }
+  cts-log-detail-header .ctsHero--failures cts-failure-summary .failureSummary {
+    margin-top: 0;
+    border-top: none;
+    padding-top: 0;
+  }
+  cts-log-detail-header .ctsHero--failures cts-failure-summary .failureItem {
+    font-size: var(--fs-14);
+    padding: var(--space-2) 0;
+  }
+  cts-log-detail-header .ctsHero--failures cts-failure-summary .failureText {
+    font-weight: var(--fw-medium);
+  }
+
+  /* Exported runtime values (ssf_*, redirect_uri, client_id, tokens) as a
+     scannable key/value grid inside the drawer's "Exported values"
+     disclosure (restores the legacy templates/exported.html grid the design
+     refresh dropped). Key column hugs its content and reads as normal label
+     text; value column fills and wraps long URLs, rendered monospace with a
+     per-row copy button pinned to its right. Values stay text-selectable as a
+     copy fallback — set user-select explicitly because the light-DOM render
+     root could otherwise inherit user-select: none. */
+  cts-log-detail-header .ctsExposedGrid {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: var(--space-2) var(--space-3);
+    align-items: start;
+    margin: 0;
+  }
+  cts-log-detail-header .ctsExposedKey {
+    margin: 0;
+    font-size: var(--fs-13);
+    color: var(--fg);
+  }
+  cts-log-detail-header .ctsExposedValue {
+    margin: 0;
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-2);
+    font-size: var(--fs-13);
+  }
+  cts-log-detail-header .ctsExposedValueText {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-family: var(--font-mono);
+    overflow-wrap: anywhere;
+    user-select: text;
+  }
+  cts-log-detail-header .ctsExposedCopy {
+    flex: 0 0 auto;
+  }
+
+  /* Drawer (Region C) — two <details> disclosures. Native semantics +
+     keyboard a11y; the chevron rotates 90° when [open]. No card chrome;
+     borders between disclosures are 1px dividers continuing the
+     section rhythm.
+     The drawer is an inline-size container so the metadata table below
+     can key its layout on the drawer's actual available width (correct
+     under the ≥1440px TOC rail and in Storybook isolation, where
+     viewport width and component width diverge). Named to avoid
+     colliding with the ctsLogViewer container that cts-log-entry keys
+     on. */
+  cts-log-detail-header .ctsDrawer {
+    padding: 0;
+    margin-bottom: 20px;
+    container: ctsLogDrawer / inline-size;
+  }
+  cts-log-detail-header .ctsDrawer details {
+    border-bottom: 1px solid var(--border);
+  }
+  cts-log-detail-header .ctsDrawer details:last-child {
+    border-bottom: none;
+  }
+  cts-log-detail-header .ctsDrawer summary {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-3) 0;
+    cursor: pointer;
+    list-style: none;
+    color: var(--fg-soft);
+    font-size: var(--fs-13);
+    font-weight: var(--fw-medium);
+    border-radius: var(--radius-2);
+  }
+  cts-log-detail-header .ctsDrawer summary::-webkit-details-marker {
+    display: none;
+  }
+  cts-log-detail-header .ctsDrawer summary:hover {
+    color: var(--fg);
+  }
+  cts-log-detail-header .ctsDrawer summary:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+  cts-log-detail-header .ctsDrawer summary cts-icon {
+    transition: transform 150ms ease;
+    color: var(--fg-faint);
+  }
+  cts-log-detail-header .ctsDrawer details[open] summary cts-icon {
+    transform: rotate(90deg);
+  }
+  /* Stacked (narrow) default: no left indent — at phone widths the
+     24px indent is ~7% of the viewport and the metadata needs every
+     pixel. The ≥640px container branch below restores the indent so
+     the body aligns with the summary label text on wide layouts. */
+  cts-log-detail-header .ctsDrawer .ctsDrawerBody {
+    padding: 0 0 var(--space-4) 0;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    cts-log-detail-header .ctsDrawer summary cts-icon {
+      transition: none;
+    }
+  }
+
+  /* Metadata table inside the Test details disclosure. Mobile-first:
+     the default is a stacked single column (label above value) so
+     values always get the drawer's full width — the legacy two-column
+     grid crushed values to ~100px at phone widths, wrapping variant
+     values one character per line. The two-column layout is restored
+     by the ≥640px container branch below (stack-up pattern, mirroring
+     cts-running-test-card / cts-log-entry). Within a pair the label
+     hugs its value (4px row gap); pairs are separated by the label's
+     12px margin-top so each label+value group reads as one block. */
+  cts-log-detail-header .logMetaTable {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-1);
+    font-size: var(--fs-13);
+  }
+  cts-log-detail-header .logMetaLabel {
+    color: var(--fg-soft);
+    font-weight: var(--fw-bold);
+  }
+  cts-log-detail-header .logMetaLabel:not(:first-child) {
+    margin-top: var(--space-3);
+  }
+  cts-log-detail-header .logMetaValue {
+    color: var(--fg);
+    overflow-wrap: anywhere;
+  }
+  @container ctsLogDrawer (min-width: 640px) {
+    cts-log-detail-header .ctsDrawer .ctsDrawerBody {
+      padding-left: var(--space-6);
+    }
+    /* Two-column label/value layout. fit-content(180px) sizes the
+       label track to the longest label, clamped at 180px — unlike the
+       previous minmax(120px, 180px), which always maximized to 180px
+       before the fr track received leftovers (track maximization runs
+       before fr distribution). minmax(0, 1fr) drops the value track's
+       implicit min-width: auto so long unbreakable values wrap (the
+       cts-log-entry R31 idiom) instead of expanding the grid. */
+    cts-log-detail-header .logMetaTable {
+      grid-template-columns: fit-content(180px) minmax(0, 1fr);
+      gap: var(--space-2) var(--space-4);
+    }
+    cts-log-detail-header .logMetaLabel:not(:first-child) {
+      margin-top: 0;
+    }
+  }
+  /* Mirror cts-plan-header's .mono chip — small monospace pill for
+     IDs, versions, and variant strings so a reader comparing the
+     plan-detail header with the test-detail drawer sees the same
+     visual treatment for the same kind of data. */
+  cts-log-detail-header .logMetaValue .mono {
+    font-family: var(--font-mono);
+    font-size: var(--fs-12);
+    color: var(--fg);
+    background: var(--ink-50);
+    padding: 1px 6px;
+    border-radius: var(--radius-1);
+  }
+  /* Variant key/value pairs render as a nested definition list inside
+     the value cell so each entry sits on its own row instead of the
+     legacy comma-joined string the maintainers flagged as a
+     "comma-soup" (MR 1998 review pass, finding C2). Row gap is tighter
+     than the outer metadata gap so the inner list reads as one block.
+     minmax(0, 1fr) on the value track (not bare 1fr) keeps long
+     variant values wrapping inside the cell instead of letting the
+     implicit min-width: auto expand the nested grid past its cell. */
+  cts-log-detail-header .logMetaValue .variantList {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: var(--space-1) var(--space-3);
+    margin: 0;
+  }
+  cts-log-detail-header .logMetaValue .variantList dt {
+    margin: 0;
+  }
+  cts-log-detail-header .logMetaValue .variantList dd {
+    margin: 0;
+  }
+
+  /* Configuration JSON inside the View Configuration modal. min-height
+     guarantees a sensible floor for tiny configs; max-height caps the
+     view at 60 vh so the modal does not overflow on large configs —
+     cts-json-view scrolls within those bounds (overflow:auto on the host). */
+  cts-log-detail-header .ctsConfigJson {
+    display: block;
+    min-height: calc(var(--space-6) * 14);
+    max-height: 60vh;
+  }
+  cts-log-detail-header .ctsConfigToolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    margin-bottom: var(--space-2);
+  }
+  cts-log-detail-header .ctsConfigToolbar code {
+    font-family: var(--font-mono);
+    font-size: var(--fs-12);
+    color: var(--fg-soft);
+    background: var(--ink-50);
+    padding: 1px 6px;
+    border-radius: var(--radius-1);
+  }
+  cts-log-detail-header .ctsConfigToolbarRight {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+  cts-log-detail-header .ctsConfigToolbar .copy-feedback {
+    font-size: var(--fs-12);
+    color: var(--rust-400);
+  }
+`;
+
+function ensureStylesInjected() {
+  if (document.getElementById(STYLE_ID)) return;
+  const style = document.createElement("style");
+  style.id = STYLE_ID;
+  style.textContent = STYLE_TEXT.cssText;
+  document.head.appendChild(style);
+}
+
+/**
+ * @typedef {object} TestInfo
+ * @property {string} testId - Test instance ID.
+ * @property {string} testName - Module class name.
+ * @property {string} status - One of: CREATED, CONFIGURED, RUNNING, WAITING,
+ *   FINISHED, INTERRUPTED. CONFIGURED means the runner is waiting for the
+ *   user to start the test (only oidcc-server-rotate-keys does not
+ *   auto-start); WAITING means the test is mid-run, waiting on an incoming
+ *   request or a user action such as visiting a URL (#1862).
+ * @property {string} result - Final result (PASSED/FAILED/WARNING/REVIEW/SKIPPED).
+ * @property {Array} results - Log entries used for the result/failure summary.
+ * @property {string} created - ISO timestamp of test creation.
+ * @property {string} description - Human-readable description.
+ * @property {string} version - Test module version.
+ * @property {object} variant - Variant parameters map.
+ * @property {string} planId - Parent plan ID, if the test belongs to one.
+ * @property {object} owner - `{ sub, iss }` owner identity (admin only).
+ * @property {object} config - Test configuration JSON.
+ * @property {string|boolean} publish - Publish mode ("summary", "everything") or falsy.
+ * @property {string} summary - Test-level summary. May contain the
+ *   `\n\n---\n\n` marker exposed by `./test-summary-split.js` to split
+ *   into a description (persistent objective summary) and instructions
+ *   (WAITING hero).
+ *   R24 origin: `docs/brainstorms/2026-04-13-cts-ux-improvement-plan-requirements.md`.
+ */
+
+/**
+ * Header for the log-detail page. Five vertical zones inside the host:
+ *
+ *   1. Nav row — plan navigation cluster (Plan progress label +
+ *      Continue Plan button). Sits immediately below the page-level
+ *      breadcrumb (cts-crumb in log-detail.html) so the IA reads
+ *      breadcrumb → plan progress → this test's verdict top-to-bottom.
+ *   2. Sticky status bar (Region A; unchanged from U2). Verdict + status
+ *      pills, count pills, primary action, kebab popover.
+ *   3. Terminal-state banner — full-width band immediately below the
+ *      sticky bar carrying the verdict ("Test passed" / "Test failed" /
+ *      "Test interrupted") on the matching status palette. Rendered
+ *      only when the test has reached a terminal phase (PASSED /
+ *      FAILED / WARNING / REVIEW / SKIPPED / INTERRUPTED).
+ *   4. Objective summary — the module-level "About this test" copy.
+ *      Rendered independently of the lifecycle hero so it survives
+ *      failures, waiting states, running states, and successful terminal
+ *      states.
+ *   5. Hero — the lifecycle-driven dominant zone. Per
+ *      `docs/brainstorms/2026-04-26-cts-log-detail-header-hierarchy-requirements.md`:
+ *      FAILED / WARNING / REVIEW render the failure list as the hero;
+ *      PASSED / SKIPPED use the persistent objective summary and do not
+ *      need a separate hero; CONFIGURED renders the "Click Start Test"
+ *      prompt (the Start CTA itself lives in the sticky status bar);
+ *      WAITING renders R24 instructions + the browser slot and never
+ *      offers Start (#1862); RUNNING renders the running-test info
+ *      alert + browser slot; INTERRUPTED renders the failure list with
+ *      the FINAL_ERROR alert pinned at the top of the hero.
+ *   6. Region C drawer — `<details>` disclosures: "Test details"
+ *      (metadata, closed by default) and, for a live test that has
+ *      exported runtime values, "Exported values" (closed by default).
+ *
+ * Light DOM. Scoped CSS is injected once on first render. All visual
+ * styling routes through the OIDF tokens vendored in `oidf-tokens.css`;
+ * no Bootstrap classes are emitted.
+ *
+ * Page-integration contracts preserved verbatim from U1–U8:
+ *   - `<cts-test-nav-controls id="testNavControls">` lives in the nav
+ *     row directly above the sticky bar (was inside the legacy
+ *     vertical action stack; promoted so it stays visible at every
+ *     viewport width). The nav row is the first zone rendered by
+ *     this component so the page reads "breadcrumb → plan progress
+ *     → this test's verdict + actions" top-to-bottom.
+ *   - `[data-slot="browser"]` and `[data-slot="error"]` placeholders
+ *     remain inside the WAITING / RUNNING / INTERRUPTED hero so
+ *     `js/log-detail.js` can inject the browser-URL prompt and the
+ *     FINAL_ERROR alert.
+ *   - `[data-slot="action-overflow"]` remains inside the sticky bar
+ *     for the kebab-popover host.
+ *   - `cts-failure-summary` still renders inside the host, fed by the
+ *     `findings` and `references` properties `log-detail.js` sets on
+ *     this component (it used to reach through the render output with
+ *     `querySelector`, which raced the summary's own first render).
+ *
+ * @property {TestInfo} testInfo - The test info object fetched from
+ *   `/api/info`. Reflects the `test-info` attribute when set as a string.
+ * @property {Array<object>|null} findings - Log entries the failure hero
+ *   summarises, sourced by `log-detail.js` from the `/api/log` stream the
+ *   `cts-log-viewer` loads. Set via JS only. `/api/info` carries no per-entry
+ *   `results` array (GitLab #1866), so this is the only production source;
+ *   `null` means "not supplied", and the component falls back to
+ *   `testInfo.results` (how the stories and e2e fixtures drive it).
+ * @property {Object.<string, string>} references - `entry._id` → `LOG-NNNN`
+ *   map shipped by `cts-log-viewer` (U6), forwarded to the in-hero
+ *   `cts-failure-summary` so each finding row renders its reference chip.
+ *   Set via JS only, by `log-detail.js`'s `applyReferences`.
+ * @property {boolean} isAdmin - Reveals admin-only rows and actions.
+ *   Reflects the `is-admin` attribute.
+ * @property {boolean} isPublic - Public (read-only) view hides repeat /
+ *   upload / publish actions. Reflects the `is-public` attribute.
+ * @property {Array<object>} planModules - Plan modules (in plan order, each
+ *   with its full `instances` array + resolved status) sourced by
+ *   `log-detail.js` from `/api/plan`, forwarded to the nav row's
+ *   `cts-test-nav-controls` → `cts-plan-status` so the progress bar renders
+ *   one segment per module with the "you are here" marker. Set via JS only.
+ * @property {string} currentInstanceId - The instance currently being
+ *   viewed (`?log=…`), forwarded to the nav row so the progress bar marks
+ *   the matching segment and derives "Module N of M". Reflects the
+ *   `current-instance-id` attribute.
+ * @property {{[key: string]: unknown}|null} exposed - Runtime values a running
+ *   test exports (generated URLs, issuer identifiers, access tokens). Sourced
+ *   from the `/api/runner` poll by `log-detail.js` — NOT from `/api/info`,
+ *   which never carries it — and set via JS only (`attribute: false`).
+ *   Rendered as the in-hero key/value grid during WAITING / RUNNING; a `null`
+ *   write clears the grid when the runner flushes the test (live-only). Kept
+ *   orthogonal to `testInfo` so an `/api/info` refresh can never clobber it.
+ * @fires cts-scroll-to-entry - Bubbled up from the embedded
+ *   `cts-failure-summary` child when a failure row is activated, with
+ *   `{ detail: { entryId } }`. Bubbles AND is composed.
+ * @fires cts-repeat-test - When the Repeat Test button is clicked, with
+ *   `{ detail: { testId } }`; bubbles.
+ * @fires cts-upload-images - When the Upload Images button is clicked, with
+ *   `{ detail: { testId } }`; bubbles.
+ * @fires cts-edit-config - When the Edit configuration button is clicked,
+ *   with `{ detail: { testId, planId, config } }`; bubbles. The page-level
+ *   handler navigates to schedule-test.html seeded with the supplied
+ *   `planId` (preferred) or `config`.
+ * @fires cts-share-link - When the Private link button is clicked, with
+ *   `{ detail: { testId } }`; bubbles. The page-level handler opens the
+ *   private-link expiration modal and POSTs to `/api/info/{testId}/share`.
+ * @fires cts-download-log - When the Download Logs button is clicked, with
+ *   `{ detail: { testId } }`; bubbles.
+ * @fires cts-publish - When a Publish (summary / everything) or Unpublish
+ *   button is clicked, with `{ detail: { testId, action, mode? } }` where
+ *   `action` is `publish` or `unpublish` and `mode` is `summary` or
+ *   `everything` (omitted for unpublish); bubbles.
+ * @fires cts-start-test - When the Start Test button is clicked on a
+ *   CONFIGURED (not-yet-started) test, with `{ detail: { testId } }`; bubbles.
+ * @fires cts-stop-test - When the Stop button is clicked on a running
+ *   test, with `{ detail: { testId } }`; bubbles.
+ */
+class CtsLogDetailHeader extends LitElement {
+  static properties = {
+    testInfo: { type: Object, attribute: "test-info" },
+    findings: { type: Array, attribute: false },
+    resultCounts: { type: Object, attribute: false },
+    references: { type: Object, attribute: false },
+    isAdmin: { type: Boolean, attribute: "is-admin" },
+    isPublic: { type: Boolean, attribute: "is-public" },
+    planModules: { type: Array, attribute: false },
+    exposed: { type: Object, attribute: false },
+    uploadsRequired: { type: Number, attribute: false },
+    currentInstanceId: { type: String, attribute: "current-instance-id" },
+    _copyFeedback: { state: true },
+  };
+
+  constructor() {
+    super();
+    this.testInfo = null;
+    this.findings = null;
+    this.resultCounts = null;
+    this.references = {};
+    this.isAdmin = false;
+    this.isPublic = false;
+    this.planModules = [];
+    this.exposed = null;
+    this.uploadsRequired = 0;
+    this.currentInstanceId = "";
+    this._configModalRef = createRef();
+    this._copyFeedback = "";
+    this._copyFeedbackTimer = null;
+  }
+
+  createRenderRoot() {
+    ensureStylesInjected();
+    return this;
+  }
+
+  /**
+   * Key/value definition-list grid renderer for the variant list (Test details
+   * drawer). Emits a `<dl>`/`<dt>`/`<dd>` grid with one row per entry, with the
+   * CSS classes, accessible name, and `.mono` key pill parameterized.
+   * (The exported-values grid was once a second caller, but it diverged — its
+   * keys are plain text and its values carry a copy button — so it now renders
+   * bespoke in `_renderExposedDisclosure`.)
+   * @param {Array<[string, unknown]>} entries - Pre-ordered `[key, value]` pairs.
+   * @param {object} opts - Per-call-site presentation.
+   * @param {string} opts.dlClass - Class on the wrapping `<dl>`.
+   * @param {string} [opts.keyClass] - Class on each `<dt>` (omit for none).
+   * @param {string} [opts.valueClass] - Class on each `<dd>` (omit for none).
+   * @param {string} [opts.ariaLabel] - Accessible name for the `<dl>` (omit for none).
+   * @param {string} [opts.dataTestid] - `data-testid` on the `<dl>` (omit for none).
+   * @param {boolean} [opts.monoKey] - Wrap each key in a `.mono` pill (variant list).
+   * @returns {ReturnType<typeof html>} The `<dl>` grid template.
+   */
+  _renderKvList(entries, { dlClass, keyClass, valueClass, ariaLabel, dataTestid, monoKey }) {
+    return html`
+      <dl class=${dlClass} aria-label=${ifDefined(ariaLabel)} data-testid=${ifDefined(dataTestid)}>
+        ${entries.map(
+          ([key, value]) => html`
+            <dt class=${ifDefined(keyClass)}>
+              ${monoKey ? html`<span class="mono">${key}</span>` : key}
+            </dt>
+            <dd class=${ifDefined(valueClass)}>${value}</dd>
+          `,
+        )}
+      </dl>
+    `;
+  }
+
+  /**
+   * Render the variant map as a nested definition list so each key/value
+   * pair sits on its own row, replacing the legacy comma-joined string
+   * the MR 1998 review pass flagged as a "comma-soup" (finding C2). Keys
+   * render as `.mono` pills; entries keep their insertion order.
+   * @param {Record<string, string> | null | undefined} variant - Variant
+   *   selections from the runner payload, keyed by parameter name.
+   * @returns {ReturnType<typeof html> | typeof nothing} A `<dl>` template
+   *   with one `<dt>`/`<dd>` per variant entry, or `nothing` when the
+   *   map is empty / not an object.
+   */
+  _renderVariantList(variant) {
+    if (!variant || typeof variant !== "object") return nothing;
+    const entries = Object.entries(variant);
+    if (entries.length === 0) return nothing;
+    return this._renderKvList(entries, {
+      dlClass: "variantList",
+      dataTestid: "variant-list",
+      monoKey: true,
+    });
+  }
+
+  /**
+   * Counts for the sticky status bar's pill cluster (`_renderResultPills`).
+   *
+   * `resultCounts` (set by `js/log-detail.js` from the `cts-log-viewer`'s
+   * `resultCounts` getter, itself tallied over the `/api/log` entries the
+   * viewer has already loaded) is the real source, for the same reason
+   * `findings` is: `/api/info` never serializes `testInfo.results` in
+   * production (#1866, #1915), so a tally over it was always all-zero.
+   * `testInfo.results` is kept as a fallback for the same two reasons
+   * `_getFailures` keeps it — existing stories/e2e fixtures drive the
+   * component that way, and it's the only source before the log stream's
+   * first poll resolves.
+   * @returns {Record<string, number>} Counts keyed by lowercase result type.
+   */
+  _getResultCounts() {
+    if (this.resultCounts) return this.resultCounts;
+    /** @type {Record<string, number>} */
+    const counts = {};
+    for (const type of RESULT_TYPES) {
+      counts[type] = 0;
+    }
+    if (this.testInfo && Array.isArray(this.testInfo.results)) {
+      for (const entry of this.testInfo.results) {
+        const key = (entry.result || "").toLowerCase();
+        if (key in counts) {
+          counts[key]++;
+        }
+      }
+    }
+    return counts;
+  }
+
+  /**
+   * The findings rendered by the failure hero.
+   *
+   * `findings` (set by `js/log-detail.js` from the `/api/log` entries the
+   * `cts-log-viewer` has already loaded) is the real source: `/api/info`
+   * serializes the `TestInfo` document, which has no `results` field at all
+   * (see `net.openid.conformance.info.TestInfo` — `result` is singular), so
+   * `testInfo.results` is always absent in production and the hero always fell
+   * through to its placeholder (GitLab #1866). `testInfo.results` is kept as a
+   * fallback because it is how every existing story and e2e fixture drives
+   * this component, and because it is still the source before the log stream's
+   * first poll resolves.
+   *
+   * Both sources run back through `selectFindings`, so `findings` accepts
+   * either a pre-filtered list (what `log-detail.js` sets) or a raw entry
+   * array (convenient for stories). The filter is idempotent, so the extra
+   * pass over an already-filtered handful of rows costs nothing and removes a
+   * "who filtered this?" contract question from every call site.
+   * @returns {Array<{result?: string}>} Finding entries, stream order.
+   */
+  _getFailures() {
+    if (Array.isArray(this.findings)) return selectFindings(this.findings);
+    return selectFindings(this.testInfo && this.testInfo.results);
+  }
+
+  /**
+   * Count for the overflow menu's "Upload Images (N)" label — outstanding
+   * image-upload placeholders for this test (#1884, and the upload-count
+   * half of #1915). Previously tallied `this.testInfo.results`, which
+   * `/api/info` never serializes in production (`TestInfo.result` is
+   * singular — same phantom-field bug #1866 hit for findings), so this count
+   * never rendered. `uploadsRequired` is fed live by `log-detail.js` from the
+   * `/api/runner` poll's `browser.uploadsRequired` (`TestRunner.java`,
+   * `ImageService.getRemainingPlaceholders`) — orthogonal to `testInfo`, same
+   * pattern as `exposed` (KTD2, #1861). This supersedes the log-stream tally
+   * (`cts-log-viewer`'s `uploadCount` getter, also #1915): that counted every
+   * entry that ever carried an `upload` placeholder across the whole test,
+   * not what is still outstanding, which is what the actionable CTA needs.
+   * @returns {number} Outstanding upload placeholder count.
+   */
+  _getUploadCount() {
+    return this.uploadsRequired || 0;
+  }
+
+  _isReadonly() {
+    return this.isPublic;
+  }
+
+  /**
+   * Severity buckets for the failure-hero count headline (e.g.
+   * "3 failures, 1 warning"). Lower-cased keys mirror the backend
+   * `entry.result` values used everywhere else in the component.
+   * @param {Array<{result?: string}>} failures - Failure log entries to bucket.
+   * @returns {{failure: number, warning: number, review: number, skipped: number, interrupted: number}} Counts keyed by severity.
+   */
+  _countFailureSeverities(failures) {
+    const counts = {
+      failure: 0,
+      warning: 0,
+      review: 0,
+      skipped: 0,
+      interrupted: 0,
+    };
+    for (const entry of failures || []) {
+      const key = (entry.result || "").toLowerCase();
+      if (key in counts) counts[key]++;
+    }
+    return counts;
+  }
+
+  _formatFailureCountHeadline(counts) {
+    const parts = [];
+    if (counts.failure > 0) {
+      parts.push(`${counts.failure} ${counts.failure === 1 ? "failure" : "failures"}`);
+    }
+    if (counts.warning > 0) {
+      parts.push(`${counts.warning} ${counts.warning === 1 ? "warning" : "warnings"}`);
+    }
+    if (counts.review > 0) {
+      parts.push(`${counts.review} ${counts.review === 1 ? "needs review" : "need review"}`);
+    }
+    if (counts.skipped > 0) {
+      parts.push(`${counts.skipped} skipped`);
+    }
+    if (counts.interrupted > 0) {
+      parts.push(`${counts.interrupted} interrupted`);
+    }
+    return parts.length > 0 ? parts.join(", ") : "Issues found";
+  }
+
+  // ──────────────────────────── event handlers ────────────────────────────
+
+  _handleRepeatTest() {
+    this.dispatchEvent(
+      new CustomEvent("cts-repeat-test", {
+        bubbles: true,
+        detail: { testId: this.testInfo.testId },
+      }),
+    );
+  }
+
+  _handleUploadImages() {
+    this.dispatchEvent(
+      new CustomEvent("cts-upload-images", {
+        bubbles: true,
+        detail: { testId: this.testInfo.testId },
+      }),
+    );
+  }
+
+  _handleDownloadLog() {
+    this.dispatchEvent(
+      new CustomEvent("cts-download-log", {
+        bubbles: true,
+        detail: { testId: this.testInfo.testId },
+      }),
+    );
+  }
+
+  _handleEditConfig() {
+    this.dispatchEvent(
+      new CustomEvent("cts-edit-config", {
+        bubbles: true,
+        detail: {
+          testId: this.testInfo.testId,
+          planId: this.testInfo.planId || null,
+          config: this.testInfo.config || null,
+        },
+      }),
+    );
+  }
+
+  _handleShareLink() {
+    this.dispatchEvent(
+      new CustomEvent("cts-share-link", {
+        bubbles: true,
+        detail: { testId: this.testInfo.testId },
+      }),
+    );
+  }
+
+  _dispatchPublish(action, mode) {
+    this.dispatchEvent(
+      new CustomEvent("cts-publish", {
+        bubbles: true,
+        detail: {
+          testId: this.testInfo.testId,
+          action,
+          ...(mode ? { mode } : {}),
+        },
+      }),
+    );
+  }
+
+  _handlePublishSummary() {
+    this._dispatchPublish("publish", "summary");
+  }
+
+  _handlePublishEverything() {
+    this._dispatchPublish("publish", "everything");
+  }
+
+  _handleUnpublish() {
+    this._dispatchPublish("unpublish", null);
+  }
+
+  _handleStartTest() {
+    this.dispatchEvent(
+      new CustomEvent("cts-start-test", {
+        bubbles: true,
+        detail: { testId: this.testInfo.testId },
+      }),
+    );
+  }
+
+  _handleStopTest() {
+    this.dispatchEvent(
+      new CustomEvent("cts-stop-test", {
+        bubbles: true,
+        detail: { testId: this.testInfo.testId },
+      }),
+    );
+  }
+
+  /**
+   * Open the Configuration disclosure in the drawer and scroll it
+   * into view. Replaces the legacy `_toggleConfig()` standalone
+   * panel — the kebab "View configuration" item now routes to the
+   * drawer disclosure that lives at the bottom of the host. Smooth
+   * scroll honours `prefers-reduced-motion: reduce` automatically
+   * (modern browsers fall back to instant when the user opts out).
+   */
+  _openConfigDisclosure() {
+    /** @type {any} */ (this._configModalRef.value)?.show();
+  }
+
+  async _handleCopyConfig(event) {
+    const trigger = event && event.currentTarget;
+    if (!this.testInfo || !this.testInfo.config) return;
+    const text = JSON.stringify(this.testInfo.config, null, 4);
+    if (!navigator.clipboard) {
+      this._showCopyFeedback("Clipboard not available — please copy the JSON below manually.");
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch (err) {
+      console.warn("[cts-log-detail-header] clipboard.writeText failed:", err);
+      this._showCopyFeedback("Copy failed — please copy the JSON below manually.");
+      return;
+    }
+    flashCopyConfirmed(trigger);
+  }
+
+  _showCopyFeedback(message) {
+    this._copyFeedback = message;
+    if (this._copyFeedbackTimer) clearTimeout(this._copyFeedbackTimer);
+    this._copyFeedbackTimer = setTimeout(() => {
+      this._copyFeedback = "";
+      this._copyFeedbackTimer = null;
+    }, 5000);
+  }
+
+  _renderConfigModal() {
+    const test = this.testInfo;
+    if (!test) return nothing;
+    const configJson = JSON.stringify(test.config || {}, null, 4);
+    return html`
+      <cts-modal
+        ${ref(this._configModalRef)}
+        heading="View Configuration"
+        size="lg"
+        data-testid="config-modal"
+      >
+        <div class="ctsConfigToolbar">
+          <strong>Configuration for <code>${test.testId}</code></strong>
+          <div class="ctsConfigToolbarRight">
+            ${this._copyFeedback
+              ? html`<span
+                  class="copy-feedback"
+                  role="status"
+                  aria-live="polite"
+                  data-testid="copy-feedback"
+                  >${this._copyFeedback}</span
+                >`
+              : nothing}
+            <cts-button
+              class="copy-config-btn"
+              variant="secondary"
+              size="sm"
+              icon="copy"
+              label="Copy"
+              title="Copy config to clipboard"
+              @cts-click=${this._handleCopyConfig}
+            ></cts-button>
+          </div>
+        </div>
+        <cts-json-view
+          class="ctsConfigJson"
+          data-testid="config-json"
+          aria-label="Test configuration JSON"
+          .value=${configJson}
+        ></cts-json-view>
+      </cts-modal>
+    `;
+  }
+
+  /**
+   * Derive a lifecycle phase from `(status, result)`. Used by the
+   * status bar, hero, and terminal banner so all three agree on
+   * "what kind of state is this?".
+   *
+   * Two rules, applied in this order:
+   *
+   *   1. **A live status wins over a settled result** (GitLab #1895 /
+   *      #1896). `AbstractTestModule.updateResultFromConditionFailure`
+   *      writes `result` the moment a condition fails, long before the
+   *      run ends — so `{status: WAITING, result: FAILED}` is a normal,
+   *      long-lived state (common in OID4VP browser-API tests: an early
+   *      condition fails and the test keeps waiting for the wallet).
+   *      Rendering the finished-fail hero there dropped the WAITING
+   *      hero's `[data-slot="browser"]`, silently removing the
+   *      "Proceed with test via browser API" button and making an
+   *      active test look aborted. CREATED / CONFIGURED / RUNNING /
+   *      WAITING are the live statuses.
+   *   2. **Within a terminal status, the verdict wins** (GitLab
+   *      #1858 / #1859). A failed test is reported as
+   *      status=INTERRUPTED, result=FAILED and must read "Test failed"
+   *      (phase `finished-fail`), never "Test interrupted". The
+   *      `interrupted` phase is reserved for an interruption with no
+   *      concrete verdict (an admin force-stop, or an exception before
+   *      any result was assigned).
+   *
+   * The runner auto-starts every test module on creation except the
+   * rare `autoStart() == false` modules (currently only
+   * oidcc-server-rotate-keys — see TestRunner.createTest). So status
+   * CONFIGURED means "the runner is waiting for the user to press
+   * Start" (phase `needs-start`), while WAITING always means "the test
+   * is mid-run and paused on something else" — an incoming request
+   * from the system under test, the user visiting a URL, or an image
+   * upload — and must never offer a Start button (#1862). That #1862
+   * split is also what keeps rule 1 safe: MR 1998 finding A1 (a
+   * polling-lagged WAITING test still offering Start) is now
+   * structurally impossible because the WAITING bar has no Start
+   * button to leak, whatever the result says.
+   *
+   * Rule 1 is deliberately NOT mirrored into `js/module-status.js`,
+   * which colors the plan-level module badges and progress segments.
+   * The two surfaces have different refresh semantics: this page polls
+   * `/api/info` until `isFullyTerminal`, so a live phase always
+   * self-corrects within one 3s cycle. `plan-detail.html` fans out
+   * `/api/info` once per module and sets `_statusResolved` for the rest
+   * of the session, so a module snapshotted mid-run at
+   * `{WAITING, FAILED}` would sit neutral-grey until a manual reload —
+   * exactly the "a failed module does not read as failed" complaint
+   * #1858/#1859 was filed about. On a one-shot surface the settled
+   * verdict is the most useful thing to show; on a polled one the live
+   * status is. Do not "unify" these without giving the plan surfaces a
+   * re-resolve path first.
+   * @param {TestInfo} test - Test info with `status` and `result`.
+   * @returns {string} One of: `needs-start`, `waiting`, `running`,
+   *   `interrupted`, `finished-pass`, `finished-fail`, `finished-warn`,
+   *   `finished-review`, `finished-skip`, `unknown`.
+   */
+  _derivePhase(test) {
+    const status = (test.status || "").toUpperCase();
+    const result = (test.result || "").toUpperCase();
+    // Rule 1 — a live status wins over whatever verdict has been written so
+    // far (#1895). CREATED is a transient mid-setup blip between creation and
+    // the runner's auto-start/auto-configure; render it like RUNNING rather
+    // than flashing a Start prompt for a sub-second state.
+    if (status === "CONFIGURED") return "needs-start";
+    if (status === "WAITING") return "waiting";
+    if (status === "RUNNING" || status === "CREATED") return "running";
+    // Rule 2 — terminal status: the concrete verdict wins over INTERRUPTED
+    // (#1859), so dispatch on the verdict before falling back to the status.
+    if (result === "PASSED") return "finished-pass";
+    if (result === "FAILED") return "finished-fail";
+    if (result === "WARNING") return "finished-warn";
+    if (result === "REVIEW") return "finished-review";
+    if (result === "SKIPPED") return "finished-skip";
+    // No concrete verdict: a genuine interruption — status INTERRUPTED, or the
+    // INTERRUPTED sentinel some paths write into `result` — reads as interrupted.
+    if (status === "INTERRUPTED" || result === "INTERRUPTED") return "interrupted";
+    return "unknown";
+  }
+
+  // ──────────────────────────── status bar (Region A) ────────────────────────────
+
+  _renderStatusBar(test) {
+    const phase = this._derivePhase(test);
+    if (phase === "needs-start") return this._renderNeedsStartBar(test);
+    if (phase === "waiting") return this._renderWaitingBar(test);
+    if (phase === "running") return this._renderRunningBar(test);
+    return this._renderFinishedBar(test);
+  }
+
+  _renderStatusPill(status) {
+    if (!status) return nothing;
+    return html`<cts-badge
+      variant="${STATUS_BADGE_VARIANTS[status] || "skip"}"
+      label="${status}"
+    ></cts-badge>`;
+  }
+
+  _renderResultPills(counts) {
+    return RESULT_TYPES.filter((type) => counts[type] > 0).map(
+      (type) =>
+        html`<cts-badge
+          variant="${RESULT_TYPE_BADGE_VARIANTS[type]}"
+          label="${RESULT_TYPE_PILL_GLYPHS[type]} ${counts[type]}"
+          data-testid="status-bar-pill-${type}"
+        ></cts-badge>`,
+    );
+  }
+
+  /**
+   * Test module name span — placed as the first child of the bar's
+   * left cluster (Row 1) so it leads the badges that describe it.
+   * Truncates with ellipsis when long names would push the badges
+   * onto a new visual line.
+   * @param {TestInfo} test - Test info used to source the name.
+   * @returns {import('lit').TemplateResult|typeof nothing} The test-name span, or `nothing` when no name is set.
+   */
+  _renderStatusBarTestNameText(test) {
+    const name = test.testName || "";
+    if (!name) return nothing;
+    return html`<span class="ctsStatusBarTestNameText" title="${name}">${name}</span>`;
+  }
+
+  /**
+   * Bar row 2 — created datetime, alone. Promoted out of the drawer
+   * because it's a "when did this run?" anchor operators glance at
+   * constantly; hiding it behind a click would force a disclosure
+   * for a fact that should read at a glance.
+   * @param {TestInfo} test - Test info used to source the created timestamp.
+   * @returns {import('lit').TemplateResult|typeof nothing} The row 2 template, or `nothing` when no created timestamp is set.
+   */
+  _renderStatusBarCreated(test) {
+    if (!test.created) return nothing;
+    // The span is the grid item carrying `grid-area: created`; cts-time is
+    // display:contents, so it must sit *inside* a placed element rather than
+    // being the grid item itself.
+    return html`<span class="ctsStatusBarCreated tabular-nums">
+      <cts-time mode="compact" value=${test.created}></cts-time>
+    </span>`;
+  }
+
+  _renderStatusBarOverflowSlot() {
+    if (!this.testInfo) return nothing;
+    const actions = this._buildOverflowActions();
+    if (actions.length === 0) return nothing;
+    return html`<div class="ctsStatusBarOverflow" data-slot="action-overflow">
+      <cts-action-overflow
+        data-testid="status-bar-overflow"
+        .actions=${actions}
+        @cts-overflow-action=${this._handleOverflowAction}
+      ></cts-action-overflow>
+    </div>`;
+  }
+
+  _buildOverflowActions() {
+    const test = this.testInfo;
+    if (!test) return [];
+    const readonly = this._isReadonly();
+    // Previously this suppressed the whole overflow menu for any WAITING
+    // test on the assumption that a fresh, pre-run test has nothing
+    // actionable — but a WAITING test can also be paused mid-run for
+    // external input (e.g. a manual screenshot/error-page upload when no
+    // browser automation is configured, gitlab#1868), and every action
+    // below already gates itself on `readonly`/`isAdmin` independently, so
+    // there is no status for which the menu should be unconditionally
+    // empty. Do not reintroduce a WAITING-status special case here without
+    // a real signal — `testInfo.results` (used by a former "has this test
+    // already produced results" check) is never populated by /api/info in
+    // production, so any such check silently degrades to "always false".
+
+    const uploadCount = this._getUploadCount();
+    /** @type {Array<{ id: string, label: string, icon?: string, hidden?: boolean, variant?: string }>} */
+    const actions = [
+      {
+        id: "upload-images",
+        label: uploadCount ? `Upload Images (${uploadCount})` : "Upload Images",
+        icon: "image-01",
+        hidden: readonly,
+      },
+      {
+        id: "view-config",
+        label: "View configuration",
+        icon: "settings",
+      },
+      {
+        id: "edit-config",
+        label: "Edit configuration",
+        icon: "edit-pencil-01",
+        hidden: readonly,
+      },
+      {
+        id: "download-log",
+        label: "Download Logs",
+        icon: "save",
+        hidden: readonly && test.publish !== "everything",
+      },
+    ];
+    if (!readonly && this.isAdmin && !test.publish) {
+      actions.push({
+        id: "publish-summary",
+        label: "Publish summary",
+        icon: "bookmark",
+      });
+      actions.push({
+        id: "publish-everything",
+        label: "Publish everything",
+        icon: "bookmark",
+      });
+    }
+    if (!readonly && this.isAdmin && test.publish) {
+      actions.push({
+        id: "unpublish",
+        label: "Unpublish",
+        icon: "close-circle",
+      });
+    }
+    if (!readonly) {
+      actions.push({
+        id: "share-link",
+        label: "Private link",
+        icon: "lock",
+      });
+    }
+    return actions;
+  }
+
+  _handleOverflowAction(event) {
+    const id = event.detail && event.detail.actionId;
+    switch (id) {
+      case "upload-images":
+        this._handleUploadImages();
+        break;
+      case "view-config":
+        this._openConfigDisclosure();
+        break;
+      case "edit-config":
+        this._handleEditConfig();
+        break;
+      case "download-log":
+        this._handleDownloadLog();
+        break;
+      case "publish-summary":
+        this._handlePublishSummary();
+        break;
+      case "publish-everything":
+        this._handlePublishEverything();
+        break;
+      case "unpublish":
+        this._handleUnpublish();
+        break;
+      case "share-link":
+        this._handleShareLink();
+        break;
+      default:
+        break;
+    }
+  }
+
+  /**
+   * The Repeat Test action, rendered by every bar that can offer it.
+   *
+   * Before GitLab #1903 this lived only in `_renderFinishedBar`, so a live
+   * test had no rerun affordance anywhere on the page: the WAITING / RUNNING
+   * bars omitted it, `_buildOverflowActions` never carried it, and
+   * `cts-test-nav-controls` deliberately drops its own copy in `slim` mode
+   * precisely because the header is supposed to own this action. A WAITING
+   * test that has timed out waiting for an incoming request is exactly when a
+   * user reaches for "run it again", so the live bars carry it too — at
+   * `secondary` prominence, since on a live bar the phase's own action (Stop
+   * while running) is itself secondary and rerunning must not out-shout it.
+   * Only the finished bar, where rerunning IS the obvious next step, renders
+   * it as the `primary`.
+   *
+   * Known residual: on a live bar this abandons the in-flight run without
+   * confirmation — `handleRepeat` in `js/log-detail.js` POSTs a new instance
+   * and navigates away, leaving the old one running server-side. That matches
+   * the finished bar's long-standing behavior, so it is deliberately not
+   * special-cased here; a confirm step would belong on both.
+   *
+   * `needs-start` is deliberately excluded: that test has not run yet, so
+   * Start Test is the only meaningful action and a sibling "Repeat" would just
+   * be a confusing second way to launch it.
+   *
+   * `data-action="repeat-test"` is the stable hook for the page-level
+   * Cmd/Ctrl+Shift+X shortcut in `js/log-detail.js`, which must not depend on
+   * `status-bar-primary` (that testid is Start Test on the needs-start bar and
+   * Stop on the running bar).
+   * @param {"primary"|"secondary"} variant - cts-button prominence.
+   * @param {string} testid - `data-testid` for the button.
+   * @returns {import('lit').TemplateResult|typeof nothing} The button, or
+   *   `nothing` in the read-only (public) view.
+   */
+  _renderRepeatButton(variant, testid) {
+    if (this._isReadonly()) return nothing;
+    return html`<cts-button
+      variant="${variant}"
+      size="sm"
+      icon="arrows-reload-01"
+      label="Repeat Test"
+      data-action="repeat-test"
+      data-testid="${testid}"
+      @cts-click=${this._handleRepeatTest}
+    ></cts-button>`;
+  }
+
+  /**
+   * WAITING bar — the test is mid-run and paused on something else: an
+   * incoming request from the system under test, the user visiting a
+   * URL, or an image upload. It has already been started (the runner
+   * auto-starts everything except CONFIGURED `autoStart() == false`
+   * modules), so offering a Start button here is always wrong (#1862) —
+   * clicking it would just reload or 404. The hero below the bar
+   * carries any concrete action (visit-URL prompt, instructions).
+   * @param {TestInfo} test - Test info driving the bar.
+   * @returns {import('lit').TemplateResult} The WAITING bar template.
+   */
+  _renderWaitingBar(test) {
+    return html`
+      <div class="ctsStatusBar" id="ctsLogStatusBar" data-testid="status-bar">
+        <div class="ctsStatusBarLeft">
+          ${this._renderStatusBarTestNameText(test)} ${this._renderStatusPill("WAITING")}
+          <span class="ctsStatusBarSupport" data-testid="status-bar-support"
+            >Waiting — see below for any action required</span
+          >
+        </div>
+        <div class="ctsStatusBarMiddle"></div>
+        <div class="ctsStatusBarPrimary">
+          ${this._renderRepeatButton("secondary", "status-bar-repeat")}
+          ${this._renderStatusBarOverflowSlot()}
+        </div>
+        ${this._renderStatusBarCreated(test)}
+      </div>
+    `;
+  }
+
+  /**
+   * CONFIGURED ("needs-start") bar — the runner created the test but is
+   * waiting for the user to press Start. Only reachable for the rare
+   * `autoStart() == false` modules (currently oidcc-server-rotate-keys);
+   * every other module leaves CONFIGURED automatically on creation.
+   * This is the only phase whose primary action is Start Test (#1862).
+   * @param {TestInfo} test - Test info driving the bar.
+   * @returns {import('lit').TemplateResult} The needs-start bar template.
+   */
+  _renderNeedsStartBar(test) {
+    const readonly = this._isReadonly();
+    return html`
+      <div class="ctsStatusBar" id="ctsLogStatusBar" data-testid="status-bar">
+        <div class="ctsStatusBarLeft">
+          ${this._renderStatusBarTestNameText(test)} ${this._renderStatusPill("CONFIGURED")}
+          <span class="ctsStatusBarSupport" data-testid="status-bar-support"
+            >Waiting for you to start the test</span
+          >
+        </div>
+        <div class="ctsStatusBarMiddle"></div>
+        <div class="ctsStatusBarPrimary">
+          ${!readonly
+            ? html`<cts-button
+                variant="primary"
+                size="sm"
+                icon="play"
+                label="Start Test"
+                data-testid="status-bar-primary"
+                @cts-click=${this._handleStartTest}
+              ></cts-button>`
+            : nothing}
+          ${this._renderStatusBarOverflowSlot()}
+        </div>
+        ${this._renderStatusBarCreated(test)}
+      </div>
+    `;
+  }
+
+  _renderRunningBar(test) {
+    const counts = this._getResultCounts();
+    return html`
+      <div class="ctsStatusBar" id="ctsLogStatusBar" data-testid="status-bar">
+        <div class="ctsStatusBarLeft">
+          ${this._renderStatusBarTestNameText(test)} ${this._renderStatusPill("RUNNING")}
+          <span class="ctsStatusBarSupport">Test running</span>
+        </div>
+        <div class="ctsStatusBarMiddle" data-testid="status-bar-pills">
+          ${this._renderResultPills(counts)}
+        </div>
+        <div class="ctsStatusBarPrimary">
+          <cts-button
+            variant="secondary"
+            size="sm"
+            icon="stop"
+            label="Stop"
+            data-testid="status-bar-primary"
+            @cts-click=${this._handleStopTest}
+          ></cts-button>
+          ${this._renderRepeatButton("secondary", "status-bar-repeat")}
+          ${this._renderStatusBarOverflowSlot()}
+        </div>
+        ${this._renderStatusBarCreated(test)}
+      </div>
+    `;
+  }
+
+  _renderFinishedBar(test) {
+    const counts = this._getResultCounts();
+    const resultVariant = RESULT_BADGE_VARIANTS[test.result] || "skip";
+    return html`
+      <div class="ctsStatusBar" id="ctsLogStatusBar" data-testid="status-bar">
+        <div class="ctsStatusBarLeft">
+          ${this._renderStatusBarTestNameText(test)}
+          ${test.result
+            ? html`<cts-badge variant="${resultVariant}" label="${test.result}"></cts-badge>`
+            : nothing}
+          ${this._renderStatusPill(test.status)}
+        </div>
+        <div class="ctsStatusBarMiddle" data-testid="status-bar-pills">
+          ${this._renderResultPills(counts)}
+        </div>
+        <div class="ctsStatusBarPrimary">
+          ${this._renderRepeatButton("primary", "status-bar-primary")}
+          ${this._renderStatusBarOverflowSlot()}
+        </div>
+        ${this._renderStatusBarCreated(test)}
+      </div>
+    `;
+  }
+
+  // ──────────────────────────── nav row ────────────────────────────
+
+  _renderTestNavControlsRow(test) {
+    // `slim` removes the cluster's Return-to-Plan and Repeat-Test
+    // buttons. The page-level breadcrumb (cts-crumb in
+    // log-detail.html) — which sits immediately above this nav row
+    // — already links back to the plan, and the sticky status bar
+    // (rendered directly below this row) carries Repeat Test in every
+    // phase that can offer it (#1903) — so emitting them again here
+    // would duplicate two prominent affordances inside one viewport.
+    return html`
+      <div class="ctsNavRow" data-testid="nav-row">
+        <cts-test-nav-controls
+          id="testNavControls"
+          data-testid="test-nav-controls"
+          test-id="${test.testId}"
+          plan-id="${test.planId || ""}"
+          .modules=${Array.isArray(this.planModules) ? this.planModules : []}
+          current-instance-id=${this.currentInstanceId}
+          ?readonly=${this._isReadonly()}
+          ?public-view=${this.isPublic}
+          slim
+        ></cts-test-nav-controls>
+      </div>
+    `;
+  }
+
+  // ──────────────────────────── hero (lifecycle-driven) ────────────────────────────
+
+  /**
+   * Lifecycle dispatcher for the hero zone. Routes by the derived
+   * phase — see `_derivePhase` for the two precedence rules (a live
+   * status beats a mid-run verdict; within a terminal status the
+   * verdict beats the status). So a test still reporting WAITING
+   * renders the WAITING hero, verdict or not, and keeps the browser
+   * slot the page injects into. A PASSED test that produced informational WARNING
+   * entries still reads as "passed" at the top of the page; the warning
+   * surfaces in the log entries below. The hero is the verdict; the
+   * warning is annotation.
+   *
+   * (This used to also claim the warning count surfaces in the sticky
+   * bar's pill cluster. For a while it did not: `_getResultCounts` read
+   * `testInfo.results`, which `/api/info` never serializes — the same
+   * dead field #1866 fixed for the findings list. #1915 fixed the pills
+   * the same way, via `resultCounts`.)
+   * @param {TestInfo} test - Test info that drives phase routing.
+   * @returns {import('lit').TemplateResult|typeof nothing} The hero template for the current lifecycle state,
+   *   or `nothing` when the persistent objective summary is enough.
+   */
+  _renderHero(test) {
+    const phase = this._derivePhase(test);
+
+    if (phase === "needs-start") return this._renderNeedsStartHero(test);
+    if (phase === "waiting") return this._renderWaitingHero(test);
+    if (phase === "running") return this._renderRunningHero();
+    if (phase === "interrupted") return this._renderInterruptedHero();
+
+    const result = (test.result || "").toUpperCase();
+    const mode = HERO_MODES[result] || "summary";
+    if (mode === "failures") {
+      return this._renderFailureHero(this._getFailures());
+    }
+    return nothing;
+  }
+
+  /**
+   * Terminal-state banner shown immediately above the hero whenever the
+   * test has reached a terminal phase. Closes MR 1998 findings A2 + A7
+   * (Thomas, Almgren): the previous design surfaced the verdict only
+   * via a small chip among the log filters, which neither reviewer
+   * spotted at a glance. The banner is a sibling of the hero — not
+   * nested inside it — so the hero's own content (description for
+   * PASSED, failure list for FAILED, etc.) keeps its full vertical
+   * weight as the page's primary detail surface.
+   * @param {TestInfo} test - Test info used to derive the phase.
+   * @returns {import('lit').TemplateResult|typeof nothing} The banner template,
+   *   or `nothing` for non-terminal phases (waiting / running / unknown).
+   */
+  _renderTerminalBanner(test) {
+    const phase = this._derivePhase(test);
+    const config = TERMINAL_BANNER_BY_PHASE[phase];
+    if (!config) return nothing;
+    return html`
+      <div
+        class="ctsTerminalBanner ctsTerminalBanner--${config.palette}"
+        role="status"
+        data-testid="terminal-banner"
+        data-phase="${phase}"
+      >
+        <cts-icon name="${config.icon}" size="24"></cts-icon>
+        <div class="ctsTerminalBannerText">
+          <span class="ctsTerminalBannerHeadline">${config.headline}</span>
+          ${config.detail ? html`<p class="ctsTerminalBannerDetail">${config.detail}</p>` : nothing}
+        </div>
+      </div>
+    `;
+  }
+
+  _renderFailureHero(failures) {
+    const counts = this._countFailureSeverities(failures);
+    const headline = this._formatFailureCountHeadline(counts);
+    return html`
+      <div class="ctsHero ctsHero--failures" data-testid="hero-failures">
+        <!-- A FAILED test reaches this hero (it is INTERRUPTED+FAILED, now phase
+             finished-fail — #1859). It may carry a FINAL_ERROR, so it needs the
+             same error slot the interrupted hero exposes; log-detail.js's
+             /api/runner poll injects into [data-slot="error"] (located by that
+             attribute, not by id — so this copy intentionally omits the
+             interrupted hero's id to avoid a duplicate-id across the two
+             mutually-exclusive heroes). WARNING/REVIEW also use this hero; the
+             slot is harmless there — renderErrorIntoSlot no-ops with no error. -->
+        <div data-slot="error" data-testid="running-error-slot"></div>
+        <div class="ctsHeroEyebrow">Findings</div>
+        <h2 class="ctsHeroHeadline">${headline}</h2>
+        ${failures.length > 0
+          ? html`<cts-failure-summary
+              data-testid="header-failure-summary"
+              .failures=${failures}
+              .references=${this.references}
+              .testId=${this.testInfo ? this.testInfo.testId : ""}
+            ></cts-failure-summary>`
+          : html`<div class="ctsHeroPlaceholder" data-testid="hero-findings-placeholder">
+              No findings were recorded for this test.
+            </div>`}
+      </div>
+    `;
+  }
+
+  /**
+   * INTERRUPTED hero — failure-list pattern with the FINAL_ERROR alert
+   * pinned at the top via the existing `[data-slot="error"]` placeholder.
+   * When the findings list is empty the headline reads "No findings were
+   * recorded" — scoped to the absence of findings, and deliberately NOT a
+   * claim about whether conditions ran (an empty *filtered* list is not
+   * evidence that nothing executed, GitLab #1866). The interruption itself
+   * is already established by the terminal banner above the hero.
+   * Reads findings via `this._getFailures()`, so no test arg is needed.
+   * @returns {import('lit').TemplateResult} The INTERRUPTED hero template.
+   */
+  _renderInterruptedHero() {
+    const failures = this._getFailures();
+    const counts = this._countFailureSeverities(failures);
+    const headline =
+      failures.length > 0 ? this._formatFailureCountHeadline(counts) : "No findings were recorded";
+    return html`
+      <div class="ctsHero ctsHero--failures" data-testid="hero-interrupted">
+        <div id="runningTestError" data-slot="error" data-testid="running-error-slot"></div>
+        <div class="ctsHeroEyebrow">Findings</div>
+        <h2 class="ctsHeroHeadline">${headline}</h2>
+        ${failures.length > 0
+          ? html`<cts-failure-summary
+              data-testid="header-failure-summary"
+              .failures=${failures}
+              .references=${this.references}
+              .testId=${this.testInfo ? this.testInfo.testId : ""}
+            ></cts-failure-summary>`
+          : nothing}
+      </div>
+    `;
+  }
+
+  /**
+   * Persistent objective summary. Rendered independently of the lifecycle
+   * hero so the module description remains visible for failures, waiting
+   * states, running states, and successful terminal states alike.
+   * @param {TestInfo} test - Test info sourcing `summary` and `description`.
+   * @returns {import('lit').TemplateResult}
+   */
+  _renderObjectiveSummary(test) {
+    const summarySplit = splitTestSummary(test.summary || "");
+    const description = summarySplit.description || test.description || "";
+
+    if (!description) {
+      return html`
+        <div class="ctsHero ctsHero--summary ctsObjectiveSummary" data-testid="hero-summary">
+          <div class="ctsHeroEyebrow">About this test</div>
+          <div class="ctsHeroPlaceholder"> No description available for this test. </div>
+        </div>
+      `;
+    }
+
+    return html`
+      <div class="ctsHero ctsHero--summary ctsObjectiveSummary" data-testid="hero-summary">
+        <div class="ctsHeroEyebrow" data-testid="about-test-zone"> About this test </div>
+        <div class="ctsHeroBody">${formatDescription(description)}</div>
+      </div>
+    `;
+  }
+
+  /**
+   * WAITING hero — R24 instructions ("What you need to do") + the
+   * browser-URL slot. A WAITING test is mid-run and paused on something
+   * external — an incoming request from the system under test, the user
+   * visiting a URL, or an image upload — never on a Start click, so the
+   * fallback copy is a neutral "waiting for something to happen"
+   * explanation (#1862; wording modeled on the legacy UI's WAITING
+   * explanation). The slot remains so page-level JS can inject
+   * browser-URL prompts during the WAITING window.
+   * @param {TestInfo} test - Test info sourcing `summary`. Exported values
+   *   render in the drawer's "Exported values" disclosure, not in this hero.
+   * @returns {import('lit').TemplateResult} The WAITING hero template.
+   */
+  _renderWaitingHero(test) {
+    const summarySplit = splitTestSummary(test.summary || "");
+    const fallbackInstructions =
+      "The test is waiting for something to happen — for example an incoming request " +
+      "from the system under test, for you to visit a link shown below, or for you to " +
+      "upload an image (see the test description for details).";
+    const instructions = summarySplit.instructions || fallbackInstructions;
+    return html`
+      <div class="ctsHero ctsHero--waiting" data-testid="hero-waiting">
+        <div class="ctsHeroEyebrow" data-testid="user-instructions-zone"> Test waiting </div>
+        <div class="ctsHeroBody"> ${formatDescription(instructions)} </div>
+        <div id="runningTestBrowser" data-slot="browser" data-testid="running-browser-slot"></div>
+      </div>
+    `;
+  }
+
+  /**
+   * CONFIGURED ("needs-start") hero — the one lifecycle state where
+   * "Action required / Click Start Test" is the correct advice (#1862):
+   * the runner has created the test and is waiting for the user to
+   * press the bar's Start Test primary. Marker-split summary
+   * instructions take precedence over the generic prompt, mirroring
+   * the WAITING hero (pre-start steps like "trigger a key rotation
+   * first" belong here).
+   * @param {TestInfo} test - Test info sourcing `summary`.
+   * @returns {import('lit').TemplateResult} The needs-start hero template.
+   */
+  _renderNeedsStartHero(test) {
+    const summarySplit = splitTestSummary(test.summary || "");
+    const instructions = summarySplit.instructions || "Click Start Test when you're ready.";
+    return html`
+      <div class="ctsHero ctsHero--waiting" data-testid="hero-needs-start">
+        <div class="ctsHeroEyebrow" data-testid="user-instructions-zone"> Action required </div>
+        <div class="ctsHeroBody"> ${formatDescription(instructions)} </div>
+      </div>
+    `;
+  }
+
+  /**
+   * RUNNING hero — info alert + browser slot. Exported values now render in the
+   * drawer's "Exported values" disclosure (see `_renderExposedDisclosure`), not
+   * in the hero, so this hero takes no `test` argument.
+   * @returns {import('lit').TemplateResult} The RUNNING hero template.
+   */
+  _renderRunningHero() {
+    return html`
+      <div class="ctsHero ctsHero--running" data-testid="hero-running">
+        <div class="ctsHeroEyebrow">Test running</div>
+        <cts-alert variant="info">
+          This test is running. Any URLs that need to be visited interactively are shown below.
+        </cts-alert>
+        <div id="runningTestBrowser" data-slot="browser" data-testid="running-browser-slot"></div>
+      </div>
+    `;
+  }
+
+  /**
+   * Exported runtime values (`exposeEnvString` / `expose`) a test publishes
+   * while live — generated URLs, issuer identifiers, access tokens. Rendered as
+   * a collapsible drawer disclosure (beside "Test details") containing a
+   * key/value grid: keys read as normal label text, values render monospace
+   * with a per-row copy button to their right (values also stay text-selectable
+   * as a copy fallback). Reads the dedicated `this.exposed` reactive property
+   * (fed by the `/api/runner` poll in `log-detail.js`, never by `/api/info`),
+   * so an `/api/info` refresh can never clear it. Live-only: the disclosure
+   * vanishes once the runner flushes a finished test from memory. Entries
+   * render in alphabetical key order (`localeCompare`) — a stable, scannable
+   * order in place of the backend `HashMap`'s arbitrary serialization order.
+   * @returns {ReturnType<typeof html> | typeof nothing} A `<details>`
+   *   disclosure, or `nothing` when no values are exposed.
+   */
+  _renderExposedDisclosure() {
+    if (!this.exposed || Object.keys(this.exposed).length === 0) return nothing;
+    const entries = Object.entries(this.exposed).sort(([a], [b]) => a.localeCompare(b));
+    return html`
+      <details data-testid="exposed-values">
+        <summary>
+          <cts-icon name="chevron-right" size="16"></cts-icon>
+          Exported values
+        </summary>
+        <div class="ctsDrawerBody">
+          <dl class="ctsExposedGrid" aria-label="Exported values">
+            ${entries.map(
+              ([key, value]) => html`
+                <dt class="ctsExposedKey">${key}</dt>
+                <dd class="ctsExposedValue">
+                  <span class="ctsExposedValueText">${value}</span>
+                  <cts-button
+                    class="ctsExposedCopy"
+                    variant="ghost"
+                    size="xxs"
+                    icon="copy"
+                    aria-label="Copy ${key}"
+                    title="Copy ${key}"
+                    data-copy-value=${value == null ? "" : String(value)}
+                    @cts-click=${this._handleCopyExposedValue}
+                  ></cts-button>
+                </dd>
+              `,
+            )}
+          </dl>
+        </div>
+      </details>
+    `;
+  }
+
+  /**
+   * Copy one exported value to the clipboard and flash the originating copy
+   * button. Mirrors `_handleCopyConfig`'s clipboard + `flashCopyConfirmed`
+   * pattern. The value is read from the button's `data-copy-value` (so the
+   * handler can be passed directly, per `lit/no-template-arrow`); the value
+   * text also stays `user-select: text` as a manual fallback when the
+   * Clipboard API is unavailable.
+   * @param {Event} event - The `cts-click` from the per-row copy button; its
+   *   `currentTarget` carries `data-copy-value` and is flashed on success.
+   */
+  async _handleCopyExposedValue(event) {
+    const trigger = /** @type {HTMLElement | null} */ (event && event.currentTarget);
+    const value = (trigger && trigger.dataset && trigger.dataset.copyValue) || "";
+    if (!navigator.clipboard) {
+      console.warn("[cts-log-detail-header] clipboard unavailable; the value is text-selectable.");
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(value);
+    } catch (err) {
+      console.warn("[cts-log-detail-header] copy exported value failed:", err);
+      return;
+    }
+    if (trigger) flashCopyConfirmed(trigger);
+  }
+
+  // ──────────────────────────── drawer (Region C) ────────────────────────────
+
+  _renderDrawer(test) {
+    return html`
+      <div class="ctsDrawer" data-testid="drawer">
+        <details data-testid="drawer-test-details">
+          <summary>
+            <cts-icon name="chevron-right" size="16"></cts-icon>
+            Test details
+          </summary>
+          <div class="ctsDrawerBody"> ${this._renderMetadataTable(test)} </div>
+        </details>
+        ${this._renderExposedDisclosure()}
+      </div>
+    `;
+  }
+
+  _renderMetadataTable(test) {
+    const variantList = this._renderVariantList(test.variant);
+    return html`
+      <div class="logMetaTable" data-instance-id="${test.testId}" id="logHeader">
+        <div class="logMetaLabel">Test Name:</div>
+        <div class="logMetaValue">${test.testName}</div>
+        ${variantList !== nothing
+          ? html`
+              <div class="logMetaLabel">Variant:</div>
+              <div class="logMetaValue">${variantList}</div>
+            `
+          : nothing}
+        <div class="logMetaLabel">Test ID:</div>
+        <div class="logMetaValue">
+          <span class="mono">${test.testId}</span>
+        </div>
+        <div class="logMetaLabel">Created:</div>
+        <div class="logMetaValue tabular-nums">
+          <cts-time mode="absolute" value=${test.created}></cts-time>
+        </div>
+        ${test.description
+          ? html`
+              <div class="logMetaLabel">Description:</div>
+              <div class="logMetaValue">${test.description}</div>
+            `
+          : nothing}
+        ${test.version
+          ? html`
+              <div class="logMetaLabel">Test Version:</div>
+              <div class="logMetaValue">
+                <span class="mono">${test.version}</span>
+              </div>
+            `
+          : nothing}
+        ${this.isAdmin && test.owner
+          ? html`
+              <div class="logMetaLabel" data-testid="owner-row"> Test Owner: </div>
+              <div class="logMetaValue">
+                ${test.owner.sub}${test.owner.iss ? ` (${test.owner.iss})` : ""}
+              </div>
+            `
+          : nothing}
+        ${test.planId
+          ? html`
+              <div class="logMetaLabel">Plan ID:</div>
+              <div class="logMetaValue">
+                <span class="mono">${test.planId}</span>
+              </div>
+            `
+          : nothing}
+      </div>
+    `;
+  }
+
+  // ──────────────────────────── render + lifecycle ────────────────────────────
+
+  render() {
+    if (!this.testInfo) return nothing;
+    // Order: nav row (plan progress / Continue Plan) → sticky status
+    // bar → verdict banner → objective summary → hero → drawer. The nav row carries
+    // plan-level orientation ("Plan progress: Module N of M"), which
+    // sits one level UP the IA hierarchy from the sticky bar's
+    // per-test verdict + actions; reading the page top-to-bottom
+    // matches the page-level breadcrumb's own scope (plan link →
+    // this test) and tightens the visual proximity between
+    // breadcrumb and plan-progress orientation.
+    return html`
+      ${this._renderTestNavControlsRow(this.testInfo)} ${this._renderStatusBar(this.testInfo)}
+      ${this._renderTerminalBanner(this.testInfo)} ${this._renderObjectiveSummary(this.testInfo)}
+      ${this._renderHero(this.testInfo)} ${this._renderDrawer(this.testInfo)}
+      ${this._renderConfigModal()}
+    `;
+  }
+
+  firstUpdated() {
+    this._observeStatusBar();
+  }
+
+  updated(changed) {
+    super.updated?.(changed);
+    // testInfo flips from null to non-null after the first /api/info fetch
+    // resolves, so the bar may not exist on the first render. Re-attempt
+    // the observer attach on every update until the bar is in the DOM.
+    if (!this._resizeObserver) this._observeStatusBar();
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    if (this._resizeObserver) {
+      this._resizeObserver.disconnect();
+      this._resizeObserver = null;
+    }
+    if (this._copyFeedbackTimer) {
+      clearTimeout(this._copyFeedbackTimer);
+      this._copyFeedbackTimer = null;
+    }
+    // Clear the published custom property so a different page mounted
+    // afterwards does not inherit a stale measurement.
+    document.documentElement.style.removeProperty("--status-bar-height");
+  }
+
+  _observeStatusBar() {
+    const bar = this.querySelector(".ctsStatusBar");
+    if (!bar) return;
+    if (this._resizeObserver) return;
+    this._publishStatusBarHeight();
+    this._resizeObserver = new ResizeObserver(() => this._publishStatusBarHeight());
+    this._resizeObserver.observe(bar);
+  }
+
+  _publishStatusBarHeight() {
+    const bar = this.querySelector(".ctsStatusBar");
+    if (!bar) return;
+    const height = bar.getBoundingClientRect().height;
+    document.documentElement.style.setProperty("--status-bar-height", `${Math.ceil(height)}px`);
+  }
+}
+
+customElements.define("cts-log-detail-header", CtsLogDetailHeader);
+
+export {};

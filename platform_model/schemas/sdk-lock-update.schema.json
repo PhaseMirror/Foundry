@@ -1,0 +1,144 @@
+{
+  "$id": "https://schemas.uor.foundation/prismpm/sdk-lock-update/1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "changes": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "from": {
+            "type": "string"
+          },
+          "op": {
+            "const": "replace"
+          },
+          "path": {
+            "enum": [
+              "/sdk_image",
+              "/standards_lock"
+            ]
+          },
+          "to": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "from",
+          "op",
+          "path",
+          "to"
+        ],
+        "type": "object"
+      },
+      "maxItems": 2,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "compatibility_review": {
+      "const": "required"
+    },
+    "generated_output_diff": {
+      "const": "required"
+    },
+    "proposed_lock": {
+      "$ref": "#/$defs/sdkLock"
+    },
+    "schema": {
+      "const": "prismpm/sdk-lock-update/1"
+    },
+    "security_review": {
+      "const": "required"
+    }
+  },
+  "required": [
+    "changes",
+    "compatibility_review",
+    "generated_output_diff",
+    "proposed_lock",
+    "schema",
+    "security_review"
+  ],
+  "title": "PrismPM SDK-lock update proposal",
+  "type": "object",
+  "$defs": {
+    "digest": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "inventoryRow": {
+      "additionalProperties": false,
+      "properties": {
+        "digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "binary",
+            "crate",
+            "image",
+            "adapter",
+            "oracle",
+            "schema",
+            "workflow",
+            "base-image",
+            "dependency-lock",
+            "trust-root",
+            "test-corpus"
+          ]
+        },
+        "version": {
+          "maxLength": 128,
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "digest",
+        "id",
+        "kind",
+        "version"
+      ],
+      "type": "object"
+    },
+    "sdkLock": {
+      "additionalProperties": false,
+      "properties": {
+        "inventory": {
+          "items": {
+            "$ref": "#/$defs/inventoryRow"
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "sdk_image": {
+          "pattern": "^[a-z0-9.-]+(?::[0-9]{1,5})?/[a-z0-9./_-]+@sha256:[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "sdk_version": {
+          "const": "0.3.0"
+        },
+        "schema": {
+          "const": "prismpm/sdk-lock/1"
+        },
+        "standards_lock": {
+          "$ref": "#/$defs/digest"
+        }
+      },
+      "required": [
+        "inventory",
+        "schema",
+        "sdk_image",
+        "sdk_version",
+        "standards_lock"
+      ],
+      "type": "object"
+    }
+  }
+}

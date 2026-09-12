@@ -1,0 +1,202 @@
+{
+  "$defs": {
+    "digest": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "gitCommit": {
+      "pattern": "^[0-9a-f]{40}$",
+      "type": "string"
+    },
+    "uri": {
+      "format": "uri",
+      "maxLength": 2048,
+      "type": "string"
+    },
+    "artifact": {
+      "additionalProperties": false,
+      "properties": {
+        "digest": { "$ref": "#/$defs/digest" },
+        "media_type": { "maxLength": 256, "minLength": 1, "type": "string" },
+        "name": { "maxLength": 128, "minLength": 1, "type": "string" },
+        "public_url": { "$ref": "#/$defs/uri" },
+        "size": { "maximum": 10737418240, "minimum": 0, "type": "integer" }
+      },
+      "required": ["digest", "media_type", "name", "public_url", "size"],
+      "type": "object"
+    },
+    "evidence": {
+      "additionalProperties": false,
+      "properties": {
+        "ci_run": {
+          "oneOf": [
+            { "additionalProperties": false, "properties": { "id": { "pattern": "^[0-9]+$", "type": "string" }, "url": { "$ref": "#/$defs/uri" } }, "required": ["id", "url"], "type": "object" },
+            { "type": "null" }
+          ]
+        },
+        "digest": { "$ref": "#/$defs/digest" },
+        "kind": { "enum": ["acceptance", "backup-restore", "conformance", "deployment", "drift", "falsification", "migration", "provenance", "recovery", "rollback", "sbom", "signature", "slo", "verification"] },
+        "path": { "maxLength": 1024, "minLength": 1, "type": "string" },
+        "subject_digest": { "$ref": "#/$defs/digest" }
+      },
+      "required": ["ci_run", "digest", "kind", "path", "subject_digest"],
+      "type": "object"
+    },
+    "ociReference": {
+      "pattern": "^[a-z0-9.-]+(?::[0-9]+)?/[a-z0-9._/-]+@sha256:[0-9a-f]{64}$",
+      "type": "string"
+    }
+  },
+  "$id": "https://schemas.uor.foundation/prismpm/ecosystem-release/2",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "actions": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "path": { "maxLength": 1024, "minLength": 1, "type": "string" },
+          "repository": { "maxLength": 256, "minLength": 1, "type": "string" },
+          "revision": { "$ref": "#/$defs/gitCommit" },
+          "sdk_digest": { "$ref": "#/$defs/digest" }
+        },
+        "required": ["path", "repository", "revision", "sdk_digest"],
+        "type": "object"
+      },
+      "maxItems": 128,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "artifacts": {
+      "items": { "$ref": "#/$defs/artifact" },
+      "maxItems": 4096,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "calculator": {
+      "additionalProperties": false,
+      "properties": {
+        "application_baseline_digest": { "$ref": "#/$defs/digest" },
+        "coverage_digest": { "$ref": "#/$defs/digest" },
+        "pages": {
+          "additionalProperties": false,
+          "properties": {
+            "assets": { "items": { "$ref": "#/$defs/artifact" }, "maxItems": 64, "minItems": 6, "type": "array", "uniqueItems": true },
+            "commit": { "$ref": "#/$defs/gitCommit" },
+            "url": { "$ref": "#/$defs/uri" }
+          },
+          "required": ["assets", "commit", "url"],
+          "type": "object"
+        },
+        "system_releases": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "deployment_evidence": { "$ref": "#/$defs/digest" },
+              "label": { "enum": ["A", "B"] },
+              "product_digest": { "$ref": "#/$defs/digest" },
+              "reference": { "$ref": "#/$defs/ociReference" },
+              "referrers": { "items": { "$ref": "#/$defs/digest" }, "maxItems": 256, "minItems": 1, "type": "array", "uniqueItems": true }
+            },
+            "required": ["deployment_evidence", "label", "product_digest", "reference", "referrers"],
+            "type": "object"
+          },
+          "maxItems": 2,
+          "minItems": 2,
+          "type": "array",
+          "uniqueItems": true
+        }
+      },
+      "required": ["application_baseline_digest", "coverage_digest", "pages", "system_releases"],
+      "type": "object"
+    },
+    "evidence": {
+      "items": { "$ref": "#/$defs/evidence" },
+      "maxItems": 8192,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "packages": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "checksum": { "pattern": "^[0-9a-f]{64}$", "type": "string" },
+          "name": { "maxLength": 128, "minLength": 1, "type": "string" },
+          "registry": { "$ref": "#/$defs/uri" },
+          "version": { "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?$", "type": "string" }
+        },
+        "required": ["checksum", "name", "registry", "version"],
+        "type": "object"
+      },
+      "maxItems": 1024,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "repositories": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "commit": { "$ref": "#/$defs/gitCommit" },
+          "name": { "maxLength": 128, "minLength": 1, "type": "string" },
+          "source_archive": { "$ref": "#/$defs/artifact" },
+          "tag": { "maxLength": 128, "minLength": 1, "type": "string" },
+          "url": { "$ref": "#/$defs/uri" }
+        },
+        "required": ["commit", "name", "source_archive", "tag", "url"],
+        "type": "object"
+      },
+      "maxItems": 128,
+      "minItems": 5,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "schema": { "const": "prismpm/ecosystem-release/2" },
+    "sdk": {
+      "additionalProperties": false,
+      "properties": {
+        "index_digest": { "$ref": "#/$defs/digest" },
+        "inventory_digest": { "$ref": "#/$defs/digest" },
+        "native_archives": { "items": { "$ref": "#/$defs/artifact" }, "maxItems": 2, "minItems": 2, "type": "array", "uniqueItems": true },
+        "platform_manifests": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "architecture": { "enum": ["amd64", "arm64"] },
+              "digest": { "$ref": "#/$defs/digest" },
+              "os": { "const": "linux" }
+            },
+            "required": ["architecture", "digest", "os"],
+            "type": "object"
+          },
+          "maxItems": 2,
+          "minItems": 2,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "reference": { "$ref": "#/$defs/ociReference" },
+        "version": { "const": "0.3.0" }
+      },
+      "required": ["index_digest", "inventory_digest", "native_archives", "platform_manifests", "reference", "version"],
+      "type": "object"
+    },
+    "standards_lock_digest": { "$ref": "#/$defs/digest" },
+    "status": { "const": "accepted" },
+    "template": {
+      "additionalProperties": false,
+      "properties": {
+        "contract_digest": { "$ref": "#/$defs/digest" },
+        "instantiation_evidence": { "$ref": "#/$defs/digest" },
+        "repository_commit": { "$ref": "#/$defs/gitCommit" }
+      },
+      "required": ["contract_digest", "instantiation_evidence", "repository_commit"],
+      "type": "object"
+    },
+    "version": { "const": "2" }
+  },
+  "required": ["actions", "artifacts", "calculator", "evidence", "packages", "repositories", "schema", "sdk", "standards_lock_digest", "status", "template", "version"],
+  "type": "object"
+}

@@ -1,0 +1,89 @@
+{
+  "$defs": {
+    "authorities": {
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "ids": { "items": { "pattern": "^[A-Z][A-Z0-9-]{2,127}$", "type": "string" }, "minItems": 1, "type": "array", "uniqueItems": true },
+            "kind": { "const": "present" }
+          },
+          "required": ["ids", "kind"],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "const": "none" },
+            "reason": { "maxLength": 1024, "minLength": 1, "type": "string" }
+          },
+          "required": ["kind", "reason"],
+          "type": "object"
+        }
+      ]
+    },
+    "digest": { "pattern": "^sha256:[0-9a-f]{64}$", "type": "string" },
+    "evidence": { "maxLength": 1024, "minLength": 1, "type": "string" },
+    "generated_outputs": { "items": { "maxLength": 1024, "minLength": 1, "type": "string" }, "minItems": 1, "type": "array", "uniqueItems": true },
+    "id": { "pattern": "^[A-Z]{2}-[0-9]{2}$", "type": "string" },
+    "model_source": { "pattern": "^model/(ids|errors)\\.toml#[A-Z0-9-]+$", "type": "string" },
+    "scenario": { "pattern": "^[a-z][a-z0-9-]{0,127}$", "type": "string" }
+  },
+  "$id": "https://uor.foundation/schemas/prismpm/capability-coverage/1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "diagnostics": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "class": { "maxLength": 128, "minLength": 1, "type": "string" },
+          "code": { "pattern": "^PP[0-9]{4}$", "type": "string" },
+          "command": { "maxLength": 2048, "minLength": 1, "type": "string" },
+          "evidence": { "$ref": "#/$defs/evidence" },
+          "generated_outputs": { "$ref": "#/$defs/generated_outputs" },
+          "model_source": { "$ref": "#/$defs/model_source" },
+          "scenario": { "$ref": "#/$defs/scenario" },
+          "standard_authorities": { "$ref": "#/$defs/authorities" },
+          "statement": { "maxLength": 4096, "minLength": 1, "type": "string" },
+          "visibility": { "const": "public" }
+        },
+        "required": ["class", "code", "command", "evidence", "generated_outputs", "model_source", "scenario", "standard_authorities", "statement", "visibility"],
+        "type": "object"
+      },
+      "maxItems": 4096,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "features": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "command": { "maxLength": 2048, "minLength": 1, "type": "string" },
+          "feature_id": { "$ref": "#/$defs/id" },
+          "generated_outputs": { "$ref": "#/$defs/generated_outputs" },
+          "model_source": { "$ref": "#/$defs/model_source" },
+          "negative_evidence": { "$ref": "#/$defs/evidence" },
+          "negative_scenario": { "$ref": "#/$defs/scenario" },
+          "positive_evidence": { "$ref": "#/$defs/evidence" },
+          "positive_scenario": { "$ref": "#/$defs/scenario" },
+          "standard_authorities": { "$ref": "#/$defs/authorities" },
+          "statement": { "maxLength": 4096, "minLength": 1, "type": "string" },
+          "suite": { "maxLength": 128, "minLength": 1, "type": "string" },
+          "visibility": { "const": "public" }
+        },
+        "required": ["command", "feature_id", "generated_outputs", "model_source", "negative_evidence", "negative_scenario", "positive_evidence", "positive_scenario", "standard_authorities", "statement", "suite", "visibility"],
+        "type": "object"
+      },
+      "maxItems": 65536,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "model_digest": { "$ref": "#/$defs/digest" },
+    "schema": { "const": "prismpm/capability-coverage/1" }
+  },
+  "required": ["diagnostics", "features", "model_digest", "schema"],
+  "type": "object"
+}

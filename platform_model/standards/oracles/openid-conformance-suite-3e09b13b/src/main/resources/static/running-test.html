@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <title>OIDF Conformance: Running tests</title>
+
+    <!-- Boostrap Icons -->
+    <link rel="preload" as="font" type="font/woff2" href="/fonts/inter/Inter-Variable.woff2" crossorigin>
+    <link rel="stylesheet" href="/css/oidf-tokens.css">
+    <link rel="stylesheet" type="text/css" href="css/layout.css">
+    <link rel="stylesheet" href="/css/oidf-app.css">
+
+    <script src="/vendor/lodash/js/lodash.min.js"></script>
+
+    <script type="text/javascript" src="js/fapi.ui.js"></script>
+    <script>window.litDisableBundleWarning = true;</script>
+    <script type="importmap">{"imports":{"lit":"/vendor/lit/lit.js","lit/":"/vendor/lit/","lit/directives/async-append.js":"/vendor/lit/lit.js","lit/directives/async-replace.js":"/vendor/lit/lit.js","lit/directives/cache.js":"/vendor/lit/lit.js","lit/directives/choose.js":"/vendor/lit/lit.js","lit/directives/class-map.js":"/vendor/lit/lit.js","lit/directives/guard.js":"/vendor/lit/lit.js","lit/directives/if-defined.js":"/vendor/lit/lit.js","lit/directives/join.js":"/vendor/lit/lit.js","lit/directives/keyed.js":"/vendor/lit/lit.js","lit/directives/live.js":"/vendor/lit/lit.js","lit/directives/map.js":"/vendor/lit/lit.js","lit/directives/range.js":"/vendor/lit/lit.js","lit/directives/ref.js":"/vendor/lit/lit.js","lit/directives/repeat.js":"/vendor/lit/lit.js","lit/directives/style-map.js":"/vendor/lit/lit.js","lit/directives/template-content.js":"/vendor/lit/lit.js","lit/directives/unsafe-html.js":"/vendor/lit/lit.js","lit/directives/unsafe-svg.js":"/vendor/lit/lit.js","lit/directives/until.js":"/vendor/lit/lit.js","lit/directives/when.js":"/vendor/lit/lit.js","@lit/reactive-element":"/vendor/lit/lit.js","@lit/reactive-element/":"/vendor/lit/","lit-html":"/vendor/lit/lit.js","lit-html/":"/vendor/lit/","lit-element/":"/vendor/lit/","marked":"/vendor/marked/marked.esm.js","dompurify":"/vendor/dompurify/purify.es.mjs"}}</script>
+    <script type="module" src="/components/cts-navbar.js"></script>
+    <script type="module" src="/components/cts-modal.js"></script>
+    <script type="module" src="/components/cts-spinner.js"></script>
+    <script type="module" src="/components/cts-button.js"></script>
+    <script type="module" src="/components/cts-link-button.js"></script>
+    <script type="module" src="/components/cts-badge.js"></script>
+    <script type="module" src="/components/cts-icon.js"></script>
+    <script type="module" src="/components/cts-page-head.js"></script>
+    <script type="module" src="/components/cts-running-test-card.js"></script>
+    <script type="module" src="/components/cts-empty-state.js"></script>
+    <script type="module" src="/js/cts-toast-api.js"></script>
+    <script type="module" src="/components/cts-footer.js"></script>
+
+    <style>
+        .oidf-running-tests-page {
+            padding: var(--space-5) var(--space-6);
+            max-width: 1320px;
+            margin: 0 auto;
+            font-family: var(--font-sans);
+        }
+        .oidf-running-tests-list {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-4);
+        }
+    </style>
+
+</head>
+<body>
+    <a class="oidf-skip-link" href="#viewRunningTestPage">Skip to main content</a>
+
+    <cts-navbar current-page=""></cts-navbar>
+
+    <cts-modal id="errorModal" heading="Error">
+        Error: <span id="errorMessage"></span>
+    </cts-modal>
+
+    <cts-modal id="loadingModal" heading="Loading..." static-backdrop no-keyboard>
+        <cts-spinner size="lg" label="Loading"></cts-spinner>
+        <div aria-live="polite">
+            <span id="loadingMessage"></span>
+        </div>
+    </cts-modal>
+
+    <main id="viewRunningTestPage" class="oidf-running-tests-page">
+        <cts-page-head title="Running tests">
+            <cts-button slot="actions" id="refresh" icon="arrow-reload-02" label="Refresh"></cts-button>
+        </cts-page-head>
+
+        <div id="running-tests" class="oidf-running-tests-list">
+            <!-- running tests get attached here -->
+        </div>
+    </main>
+
+    <script type="text/javascript">
+        document.addEventListener("DOMContentLoaded", () => {
+
+            FAPI_UI.loadRunningTestPageTemplates()
+            .then(function() {
+                return FAPI_UI.getUserInfo();
+            }).then(function() {
+                return loadRunningTest();
+            });
+        });
+
+        function loadRunningTest() {
+            // The Refresh control is a <cts-button> — it dispatches a bubbling
+            // `cts-click` event when activated. Native click also bubbles, but
+            // listening on `cts-click` matches the design-system contract and
+            // honours the disabled/loading guard inside cts-button.
+            document.getElementById('refresh').addEventListener('cts-click', function() {
+                updateRunningTable();
+            });
+
+            // refresh the running table right now
+            updateRunningTable();
+        }
+
+        /**
+         * Adapts the /api/runner/:testId payload (which uses `id` and `name`)
+         * to the shape <cts-running-test-card> expects (`_id` and `testName`).
+         * Field renames live here so the Mustache template stays a thin
+         * placeholder and the card receives a stable contract.
+         */
+        function adaptRunnerDetailToCardTest(data) {
+            return {
+                _id: data.id,
+                testName: data.name,
+                created: data.created,
+                updated: data.updated,
+                owner: data.owner,
+                variant: data.variant,
+                version: data.version,
+                status: data.status,
+                result: data.result,
+            };
+        }
+
+        /**
+         *
+         */
+        function updateRunningTable() {
+            return fetch('/api/runner/running')
+                .then((response) => response.json())
+                .then((data) => {
+                    //console.log('running: ', JSON.stringify(data));
+                    var container = document.getElementById('running-tests');
+                    container.replaceChildren();
+
+                    if (!data || data.length === 0) {
+                        var empty = document.createElement('cts-empty-state');
+                        empty.setAttribute('icon', 'play-circle');
+                        empty.setAttribute('heading', 'No tests are currently running');
+                        empty.setAttribute('body', 'Schedule a test to see it appear here while it runs.');
+                        empty.setAttribute('cta-label', 'Schedule a test');
+                        empty.setAttribute('cta-href', 'schedule-test.html');
+                        container.appendChild(empty);
+                        return;
+                    }
+
+                    var promise = Promise.resolve();
+
+                    _.each(data, function(testId) {
+                        //console.log('getting: ' + testId);
+                        promise = promise.then(() => {
+                            return getRunningTest(testId);
+                        });
+                    });
+
+                })
+        }
+
+        function getRunningTest(testId) {
+            return fetch('/api/runner/' + encodeURIComponent(testId))
+                .then((response) => response.json())
+                .then((data) => {
+                    var runningTest = FAPI_UI.logTemplates.RUNNING_TEST({
+                        test: data
+                    });
+
+                    var runningTestsElement = document.getElementById('running-tests');
+                    runningTestsElement.insertAdjacentHTML('beforeend', runningTest);
+
+                    var card = runningTestsElement.querySelector('cts-running-test-card[data-instance-id="' + testId + '"]');
+
+                    // Hand the runner payload to the card. It will render the
+                    // status badge from `test.status` once the /api/info
+                    // follow-up below merges status/result into this object.
+                    card.test = adaptRunnerDetailToCardTest(data);
+                    card.isAdmin = !!(FAPI_UI.currentUser && FAPI_UI.currentUser.isAdmin);
+
+                    // The card emits cts-download-log when the Download Logs
+                    // button is clicked — replaces the legacy .downloadBtn
+                    // onclick wiring on the rendered template markup.
+                    card.addEventListener('cts-download-log', function(evt) {
+                        var id = evt.detail && evt.detail.testId;
+                        if (id) {
+                            window.open('/api/log/' + encodeURIComponent(id) + '?dl=true');
+                        }
+                    });
+
+                }).then(function() {
+                    return fetch('/api/info/' + encodeURIComponent(testId))
+                    .then((response) => {
+                        if (!response.ok) {
+                            return Promise.reject(response);
+                        }
+
+                        return response.json();
+                    })
+                    .then((data) => {
+                        var card = document.querySelector('cts-running-test-card[data-instance-id="' + testId + '"]');
+                        if (!card) return;
+
+                        // Merge the fresher status/result/variant/version from
+                        // /api/info into the card. Reassign `test` (rather than
+                        // mutating in place) so Lit observes the change and
+                        // re-renders the status badge.
+                        card.test = Object.assign({}, card.test, {
+                            status: data.status,
+                            result: data.result,
+                            variant: data.variant,
+                            version: data.version,
+                        });
+                    })
+                    .catch((error) => {
+                        if (error instanceof Response) {
+                            // We have a 'Respose' object.
+                            var message = error.statusText;
+                            var responseClone = error.clone();
+
+                            error.text()
+                            .then(textError => {
+                                // Text error thrown by the app
+                                messageParsed = true;
+
+                                try {
+                                    const errorObj = JSON.parse(textError);
+
+                                    if (errorObj.error.length != 0) {
+                                        message = errorObj.error;
+                                    }
+                                }
+                                catch (e) {
+                                }
+
+                                FAPI_UI.showError({code: error.status.toString(), error: message});
+                            })
+                            .catch(error1 => {
+                                // JSON error thrown by the app
+                                responseClone.json()
+                                .then(jsonError => {
+                                    if (typeof (jsonError) === 'string' && jsonError.length != 0) {
+                                        message = jsonError;
+                                    }
+
+                                    FAPI_UI.showError({code: error.status.toString(), error: message});
+                                })
+                                .catch(genericError => {
+                                    // Error thrown by the server
+                                    FAPI_UI.showError({code: error.status.toString(), error: error.statusText});
+                                });
+                            });
+                        } else {
+                            // Network error automatically detected by fetch.
+                            FAPI_UI.showError({code: "", error: error});
+                        }
+                    });
+                });
+        }
+    </script>
+
+    <cts-footer></cts-footer>
+
+    <cts-toast-host></cts-toast-host>
+</body>
+</html>

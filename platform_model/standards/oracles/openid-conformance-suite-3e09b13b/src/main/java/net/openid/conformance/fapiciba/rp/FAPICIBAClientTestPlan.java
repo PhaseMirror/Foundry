@@ -1,0 +1,128 @@
+package net.openid.conformance.fapiciba.rp;
+
+import net.openid.conformance.plan.PublishTestPlan;
+import net.openid.conformance.plan.TestPlan;
+import net.openid.conformance.variant.CIBAMode;
+import net.openid.conformance.variant.ClientAuthType;
+import net.openid.conformance.variant.VariantSelection;
+
+import java.lang.invoke.MethodHandles;
+import java.util.List;
+import java.util.Map;
+
+@PublishTestPlan (
+	testPlanName = "fapi-ciba-id1-client-test-plan",
+	displayName = "FAPI-CIBA-ID1: Relying Party (client test) (alpha version - may be incomplete or incorrect, please email certification@oidf.org)",
+	profile = TestPlan.ProfileNames.rptest,
+	specFamily = TestPlan.SpecFamilyNames.fapiCiba,
+	testModules = {
+		// Happy path test
+		FAPICIBAClientTest.class,
+		FAPICIBAClientBrazilDCRHappyPathTest.class,
+
+		// Happy refresh token test
+		FAPICIBAClientRefreshTokenTest.class,
+
+		// Happy aud as array test
+		FAPICIBAClientValidAudAsArrayTest.class,
+
+		// Happy no scope in token endpoint + no access token expiration
+		FAPICIBAClientNoScopeInTokenEndpointResponseTest.class,
+
+		// Happy polling interval tests
+		FAPICIBAClientRespectsPollingIntervalTest.class,
+		FAPICIBAClientSlowDownTest.class,
+
+		// Negative tests for backchannel endpoint response
+		FAPICIBAClientBackchannelResponseInvalidMissingAuthReqIdTest.class,
+		FAPICIBAClientBackchannelResponseInvalidMissingExpiresInTest.class,
+		FAPICIBAClientBackchannelInvalidUnknownUserIdTest.class,
+
+		// Negative tests for token endpoint response
+		FAPICIBAClientTokenInvalidRequestTest.class,
+		FAPICIBAClientInvalidAccessDeniedTest.class,
+		FAPICIBAClientInvalidExpiredTokenTest.class,
+
+		// Negative tests for id_token in token endpoint response
+		FAPICIBAClientInvalidIssTest.class,
+		FAPICIBAClientInvalidAudTest.class,
+		FAPICIBAClientInvalidSecondaryAudTest.class,
+		FAPICIBAClientInvalidSignatureTest.class,
+		FAPICIBAClientInvalidNullAlgTest.class,
+		FAPICIBAClientInvalidAlternateAlgTest.class,
+		FAPICIBAClientInvalidExpiredExpTest.class,
+		FAPICIBAClientInvalidIatIsWeekInPastTest.class,
+		FAPICIBAClientInvalidMissingAudTest.class,
+		FAPICIBAClientInvalidMissingExpTest.class,
+		FAPICIBAClientInvalidMissingIssTest.class,
+		FAPICIBAClientConnectIdInvalidMissingTxnTest.class,
+		FAPICIBAClientConnectIdInvalidMissingTrustFrameworkTest.class,
+		FAPICIBAClientConnectIdInvalidWrongTrustFrameworkTest.class,
+
+		// Negative test for ping mode
+		FAPICIBAClientPingWithInvalidBearerTokenTest.class,
+		FAPICIBAClientPingWithoutBearerTokenTest.class,
+		FAPICIBAClientPingWithWrongAuthReqIdTest.class,
+		FAPICIBAClientPingDuplicateNotificationTest.class,
+		FAPICIBAClientPingModePollFallbackTest.class
+	}
+)
+public class FAPICIBAClientTestPlan implements TestPlan {
+
+	@Override
+	public List<String> certificationProfileName(VariantSelection variant) {
+
+		String certProfile = null;
+
+		Map<String, String> v = variant.getVariant();
+		String profile = v.get("fapi_ciba_profile");
+		String clientAuth = v.get("client_auth_type");
+		String cibaMode = v.get("ciba_mode");
+		boolean privateKey = ClientAuthType.PRIVATE_KEY_JWT.toString().equals(clientAuth);
+
+		switch (profile) {
+			case "plain_fapi":
+			case "openbanking_uk":
+				certProfile = "FAPI-CIBA";
+				break;
+			case "openbanking_brazil":
+				certProfile = "BR-OF-CIBA";
+				if (!privateKey || !CIBAMode.PING.toString().equals(cibaMode)) {
+					throw new RuntimeException("Invalid configuration for %s: Client Authentication Type must be private_key_jwt and CIBA Mode must be ping for Brazil Open Banking".formatted(
+						MethodHandles.lookup().lookupClass().getSimpleName()));
+				}
+				break;
+			case "connectid_au":
+				certProfile = "ConnectID-CIBA";
+				if (!privateKey || !CIBAMode.POLL.toString().equals(cibaMode)) {
+					throw new RuntimeException("Invalid configuration for %s: Client Authentication Type must be private_key_jwt and CIBA Mode must be poll for ConnectID".formatted(
+						MethodHandles.lookup().lookupClass().getSimpleName()));
+				}
+				break;
+			default:
+				throw new RuntimeException("Unknown FAPI CIBA profile [%s]".formatted(profile));
+		}
+
+		certProfile += " RP ";
+		switch (cibaMode) {
+			case "poll":
+				certProfile += "poll";
+				break;
+			case "ping":
+				certProfile += "ping";
+				break;
+		}
+
+		certProfile += " w/ ";
+		switch (clientAuth) {
+			case "private_key_jwt":
+				certProfile += "Private Key";
+				break;
+			case "mtls":
+				certProfile += "MTLS";
+				break;
+		}
+
+		return List.of(certProfile);
+	}
+}

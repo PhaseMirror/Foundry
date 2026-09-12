@@ -1,0 +1,51 @@
+package net.openid.conformance.condition.client;
+
+import com.google.gson.JsonObject;
+import net.openid.conformance.condition.Condition;
+import net.openid.conformance.logging.BsonEncoding;
+import net.openid.conformance.logging.TestInstanceEventLog;
+import net.openid.conformance.testmodule.Environment;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.time.Instant;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+@ExtendWith(MockitoExtension.class)
+public class RemoveNbfFromRequestObject_UnitTest {
+
+	@Spy
+	private Environment env = new Environment();
+
+	private final TestInstanceEventLog eventLog = BsonEncoding.testInstanceEventLog();
+
+	private RemoveNbfFromRequestObject cond;
+
+	@BeforeEach
+	public void setUp() throws Exception {
+		cond = new RemoveNbfFromRequestObject();
+		cond.setProperties("UNIT-TEST", eventLog, Condition.ConditionResult.INFO);
+	}
+
+	@Test
+	public void testEvaluate_notPresentNbfValue() {
+
+		JsonObject requestObjectClaims = new JsonObject();
+
+		Instant nbf = Instant.now();
+
+		requestObjectClaims.addProperty("nbf", nbf.getEpochSecond());
+
+		env.putObject("request_object_claims", requestObjectClaims);
+
+		cond.execute(env);
+
+		assertThat(env.getObject("request_object_claims").has("nbf")).isFalse();
+
+	}
+
+}

@@ -1,0 +1,374 @@
+[
+    {
+        "test-name": "fapi1-advanced-final-discovery-end-point-verification",
+        "variant": {
+            "fapi_profile": "openbanking_uk"
+        },
+        "configuration-filename": "authlete-*.json",
+        "current-block": "",
+        "condition": "CheckJwksUriIsHostedOnOpenBankingDirectory",
+        "expected-result": "warning",
+        "comment": "this occurs on everything except production bank deployments"
+    },
+    {
+        "test-name": "fapi1-advanced-final-attempt-reuse-authorisation-code-after-one-second",
+        "variant": "*",
+        "configuration-filename": "authlete*.json",
+        "current-block": "Testing if access token was revoked after authorization code reuse (the AS 'should' have revoked the access token)",
+        "condition": "EnsureHttpStatusCodeIs4xx",
+        "expected-result": "warning",
+        "comment": "known case where authlete doesn't implement a 'should'"
+    },
+    {
+        "test-name": "fapi1-advanced-final-refresh-token",
+        "variant": {
+            "client_auth_type": "private_key_jwt",
+            "fapi_profile": "openbanking_uk",
+            "fapi_response_mode": "plain_response"
+        },
+        "configuration-filename": "authlete-fapi1-adv-final-ob-privatekey.json",
+        "current-block": "Second client: Check for refresh token",
+        "condition": "FAPIEnsureServerConfigurationDoesNotSupportRefreshToken",
+        "expected-result": "warning",
+        "comment": "The second client in this configuration does not get issued a refresh token, which is now a warning"
+    },
+    {
+        "test-name": "fapi2-security-profile-id2-client-test-happy-path",
+        "variant": {
+            "client_auth_type": "private_key_jwt",
+            "fapi_request_method": "signed_non_repudiation",
+            "fapi_client_type": "oidc",
+            "sender_constrain": "mtls",
+            "fapi_profile": "connectid_au",
+            "fapi_response_mode": "plain_response"
+        },
+        "configuration-filename": "*fapi-au-connectid-rp-test-config-1.json",
+        "current-block": "Authorization endpoint",
+        "condition": "CheckRequestClaimsParameterMemberValues",
+        "expected-result": "failure",
+        "comment": "allow intentional unknown value in authorization request object"
+    },
+    {
+        "test-name": "fapi2-security-profile-id2-client-test-happy-path",
+        "variant": {
+            "client_auth_type": "private_key_jwt",
+            "sender_constrain": "mtls",
+            "fapi_request_method": "signed_non_repudiation",
+            "fapi_client_type": "oidc",
+            "fapi_profile": "connectid_au",
+            "fapi_response_mode": "plain_response"
+        },
+        "configuration-filename": "*fapi-au-connectid-rp-test-config.json",
+        "current-block": "Authorization endpoint",
+        "condition": "AustraliaConnectIdCheckForFAPI2ClaimsInRequestObject",
+        "expected-result": "failure",
+        "comment": "Ignore missing txn claim in CI environment"
+    },
+    {
+        "test-name": "fapi2-security-profile-final-attempt-reuse-authorization-code-after-one-second",
+        "variant": "*",
+        "configuration-filename": "authlete*.json",
+        "current-block": "Testing if access token was revoked after authorization code reuse (the AS 'should' have revoked the access token)",
+        "condition": "EnsureHttpStatusCodeIs4xx",
+        "expected-result": "warning",
+        "comment": "known case where authlete doesn't implement a 'should'"
+    },
+    {
+        "test-name": "fapi2-security-profile-final-client-test-happy-path",
+        "variant": {
+            "client_auth_type": "private_key_jwt",
+            "sender_constrain": "mtls",
+            "fapi_request_method": "signed_non_repudiation",
+            "fapi_client_type": "oidc",
+            "fapi_profile": "connectid_au",
+            "fapi_response_mode": "plain_response"
+        },
+        "configuration-filename": "*fapi-au-connectid-rp-test-config-1.json",
+        "current-block": "Authorization endpoint",
+        "condition": "CheckRequestClaimsParameterMemberValues",
+        "expected-result": "failure",
+        "comment": "allow intentional unknown value in authorization request object"
+    },
+    {
+        "test-name": "fapi2-security-profile-final-client-test-happy-path",
+        "variant": {
+            "client_auth_type": "private_key_jwt",
+            "sender_constrain": "mtls",
+            "fapi_request_method": "signed_non_repudiation",
+            "fapi_client_type": "oidc",
+            "fapi_profile": "connectid_au",
+            "fapi_response_mode": "plain_response"
+        },
+        "configuration-filename": "*fapi-au-connectid-rp-test-config.json",
+        "current-block": "Authorization endpoint",
+        "condition": "AustraliaConnectIdCheckForFAPI2ClaimsInRequestObject",
+        "expected-result": "failure",
+        "comment": "Ignore missing txn claim in CI environment"
+    },
+    {
+        "test-name": "fapi2-security-profile-final-dpop-negative-tests",
+        "variant": {
+            "client_auth_type": "private_key_jwt",
+            "sender_constrain": "dpop",
+            "openid": "openid_connect",
+            "fapi_request_method": "unsigned",
+            "fapi_profile": "openbanking_brazil",
+            "fapi_response_mode": "plain_response"
+        },
+        "configuration-filename": "authlete-fapi2securityprofile-brazil-privatekey-dpop.json",
+        "current-block": "DPoP reuse, Second use of the same jti, this 'should' fail",
+        "condition": "EnsureHttpStatusCodeIs400or401",
+        "expected-result": "warning",
+        "comment": "Authlete doesn't support jti uniqueness"
+    },
+    {
+        "test-name": "fapi2-security-profile-final-dpop-negative-tests",
+        "variant": {
+            "client_auth_type": "private_key_jwt",
+            "sender_constrain": "dpop",
+            "authorization_request_type": "simple",
+            "openid": "plain_oauth",
+            "fapi_request_method": "unsigned",
+            "fapi_profile": "fapi_client_credentials_grant",
+            "fapi_response_mode": "plain_response"
+        },
+        "configuration-filename": "authlete-fapi2securityprofile-client-credentials-privatekey-dpop.json",
+        "current-block": "DPoP reuse, Second use of the same jti, this 'should' fail",
+        "condition": "EnsureHttpStatusCodeIs400or401",
+        "expected-result": "warning",
+        "comment": "Authlete doesn't support jti uniqueness"
+    },
+    {
+        "test-name": "fapi2-security-profile-final-australia-connectid-test-claims-parameter-idtoken-identity-claims",
+        "variant": {
+            "client_auth_type": "private_key_jwt",
+            "sender_constrain": "mtls",
+            "openid": "openid_connect",
+            "fapi_request_method": "signed_non_repudiation",
+            "fapi_profile": "connectid_au",
+            "fapi_response_mode": "plain_response"
+        },
+        "configuration-filename": "authlete-fapi2securityprofile-connectid-privatekey.json",
+        "current-block": "",
+        "condition": "AustraliaConnectIdEnsureIdTokenContainsTrustFramework",
+        "expected-result": "failure",
+        "comment": "Authlete doesn't support the trust framework claim"
+    },
+    {
+        "test-name": "fapi2-security-profile-final-australia-connectid-test-claims-parameter-idtoken-identity-claims",
+        "variant": {
+            "client_auth_type": "private_key_jwt",
+            "sender_constrain": "mtls",
+            "openid": "openid_connect",
+            "fapi_request_method": "signed_non_repudiation",
+            "fapi_profile": "connectid_au",
+            "fapi_response_mode": "plain_response"
+        },
+        "configuration-filename": "authlete-fapi2securityprofile-connectid-privatekey.json",
+        "current-block": "",
+        "condition": "AustraliaConnectIdEnsureIdTokenContainsVerifiedClaims",
+        "expected-result": "failure",
+        "comment": "Authlete doesn't support verified claims"
+    },
+    {
+        "test-name": "fapi2-security-profile-final-australia-connectid-ensure-request-object-with-exp-over-10-fails",
+        "variant": {
+            "client_auth_type": "private_key_jwt",
+            "sender_constrain": "mtls",
+            "openid": "openid_connect",
+            "fapi_request_method": "signed_non_repudiation",
+            "fapi_profile": "connectid_au",
+            "fapi_response_mode": "plain_response"
+        },
+        "configuration-filename": "authlete-fapi2securityprofile-connectid-privatekey.json",
+        "current-block": "Verify authorization endpoint response",
+        "condition": "CheckForUnexpectedParametersInErrorResponseFromAuthorizationEndpoint",
+        "expected-result": "warning",
+        "comment": "Authlete does not throw an error for request objects with an nbf 15 minutes in the past"
+    },
+    {
+        "test-name": "fapi2-security-profile-final-australia-connectid-ensure-request-object-with-exp-over-10-fails",
+        "variant": {
+            "client_auth_type": "private_key_jwt",
+            "sender_constrain": "mtls",
+            "openid": "openid_connect",
+            "fapi_request_method": "signed_non_repudiation",
+            "fapi_profile": "connectid_au",
+            "fapi_response_mode": "plain_response"
+        },
+        "configuration-filename": "authlete-fapi2securityprofile-connectid-privatekey.json",
+        "current-block": "Verify authorization endpoint response",
+        "condition": "EnsureErrorFromAuthorizationEndpointResponse",
+        "expected-result": "failure",
+        "comment": "Authlete does not throw an error for request objects with an nbf 15 minutes in the past"
+    },
+    {
+        "test-name": "fapi2-security-profile-final-australia-connectid-ensure-request-object-with-exp-over-10-fails",
+        "variant": {
+            "client_auth_type": "private_key_jwt",
+            "sender_constrain": "mtls",
+            "openid": "openid_connect",
+            "fapi_request_method": "signed_non_repudiation",
+            "fapi_profile": "connectid_au",
+            "fapi_response_mode": "plain_response"
+        },
+        "configuration-filename": "authlete-fapi2securityprofile-connectid-privatekey.json",
+        "current-block": "Verify authorization endpoint response",
+        "condition": "EnsureInvalidRequestUriError",
+        "expected-result": "failure",
+        "comment": "Authlete does not throw an error for request objects with an nbf 15 minutes in the past"
+    },
+    {
+        "test-name": "fapi2-security-profile-final-australia-connectid-ensure-request-object-with-nbf-over-15-fails",
+        "variant": {
+            "client_auth_type": "private_key_jwt",
+            "sender_constrain": "mtls",
+            "openid": "openid_connect",
+            "fapi_request_method": "signed_non_repudiation",
+            "fapi_profile": "connectid_au",
+            "fapi_response_mode": "plain_response"
+        },
+        "configuration-filename": "authlete-fapi2securityprofile-connectid-privatekey.json",
+        "current-block": "Verify authorization endpoint response",
+        "condition": "CheckForUnexpectedParametersInErrorResponseFromAuthorizationEndpoint",
+        "expected-result": "warning",
+        "comment": "Authlete does not throw an error for request objects with an nbf 15 minutes in the past"
+    },
+    {
+        "test-name": "fapi2-security-profile-final-australia-connectid-ensure-request-object-with-nbf-over-15-fails",
+        "variant": {
+            "client_auth_type": "private_key_jwt",
+            "sender_constrain": "mtls",
+            "openid": "openid_connect",
+            "fapi_request_method": "signed_non_repudiation",
+            "fapi_profile": "connectid_au",
+            "fapi_response_mode": "plain_response"
+        },
+        "configuration-filename": "authlete-fapi2securityprofile-connectid-privatekey.json",
+        "current-block": "Verify authorization endpoint response",
+        "condition": "EnsureErrorFromAuthorizationEndpointResponse",
+        "expected-result": "failure",
+        "comment": "Authlete does not throw an error for request objects with an nbf 15 minutes in the past"
+    },
+    {
+        "test-name": "fapi2-security-profile-final-australia-connectid-ensure-request-object-with-nbf-over-15-fails",
+        "variant": {
+            "client_auth_type": "private_key_jwt",
+            "sender_constrain": "mtls",
+            "openid": "openid_connect",
+            "fapi_request_method": "signed_non_repudiation",
+            "fapi_profile": "connectid_au",
+            "fapi_response_mode": "plain_response"
+        },
+        "configuration-filename": "authlete-fapi2securityprofile-connectid-privatekey.json",
+        "current-block": "Verify authorization endpoint response",
+        "condition": "EnsureInvalidRequestUriError",
+        "expected-result": "failure",
+        "comment": "Authlete does not throw an error for request objects with an nbf 15 minutes in the past"
+    },
+    {
+        "test-name": "fapi2-security-profile-final-client-test-invalid-authorization-response-iss",
+        "variant": {
+            "fapi_profile": "ksa"
+        },
+        "configuration-filename": "*ksa-fapi2-rp.json",
+        "current-block": "",
+        "condition": "fapi2-security-profile-final-client-test-invalid-authorization-response-iss",
+        "expected-result": "failure",
+        "comment": "Expected by design, not a suite bug. This RP test requires the client to stop after the invalid iss, but the client here is our own OP test module, which calls RequireIssInAuthorizationResponse with callAndContinueOnFailure (AbstractFAPI2SPFinalServerTestModule) so that it can report every finding - it logs the bad iss and then calls the token endpoint anyway. No op-against-rp pairing can pass an ExpectNothingAfter* module until the driver stops on the fault. The pairing is run for the compare_fapi diff: it exercises the KSA client_credentials + consent preamble before the fault, which issue #1933 broke, and a regression there removes ~35 conditions from this module's log."
+    },
+    {
+        "test-name": "fapi1-advanced-final-ensure-request-object-with-multiple-aud-succeeds",
+        "variant": "*",
+        "configuration-filename": "*test-configs-rp-against-op/*.json",
+        "current-block": "Validate the JWK set in server JWKS",
+        "condition": "WarnOnUnusableJwksKeys",
+        "expected-result": "warning",
+        "comment": "the paired client test under test deliberately publishes unusable keys in its jwks_uri (AddUnusableKeysToServerPublicJwks, RFC 7517 section 5)"
+    },
+    {
+        "test-name": "fapi1-advanced-final-brazildcr-happy-flow",
+        "variant": "*",
+        "configuration-filename": "*test-configs-rp-against-op/*.json",
+        "current-block": "Validate the JWK set in server JWKS",
+        "condition": "WarnOnUnusableJwksKeys",
+        "expected-result": "warning",
+        "comment": "the paired client test under test deliberately publishes unusable keys in its jwks_uri (AddUnusableKeysToServerPublicJwks, RFC 7517 section 5)"
+    },
+    {
+        "test-name": "fapi1-advanced-final-brazildcr-payment-consent-request-aud-as-array",
+        "variant": "*",
+        "configuration-filename": "*test-configs-rp-against-op/*.json",
+        "current-block": "Validate the JWK set in server JWKS",
+        "condition": "WarnOnUnusableJwksKeys",
+        "expected-result": "warning",
+        "comment": "the paired client test under test deliberately publishes unusable keys in its jwks_uri (AddUnusableKeysToServerPublicJwks, RFC 7517 section 5)"
+    },
+    {
+        "test-name": "fapi2-security-profile-final-ensure-request-object-with-multiple-aud-succeeds",
+        "variant": "*",
+        "configuration-filename": "*test-configs-rp-against-op/*.json",
+        "current-block": "Validate the JWK set in server JWKS",
+        "condition": "WarnOnUnusableJwksKeys",
+        "expected-result": "warning",
+        "comment": "the paired client test under test deliberately publishes unusable keys in its jwks_uri (AddUnusableKeysToServerPublicJwks, RFC 7517 section 5)"
+    },
+    {
+        "test-name": "fapi2-security-profile-final-par-without-duplicate-parameters",
+        "variant": "*",
+        "configuration-filename": "*test-configs-rp-against-op/*.json",
+        "current-block": "Validate the JWK set in server JWKS",
+        "condition": "WarnOnUnusableJwksKeys",
+        "expected-result": "warning",
+        "comment": "the paired client test under test deliberately publishes unusable keys in its jwks_uri (AddUnusableKeysToServerPublicJwks, RFC 7517 section 5)"
+    },
+    {
+        "test-name": "fapi2-security-profile-final-australia-connectid-test-claims-parameter-idtoken-identity-claims",
+        "variant": "*",
+        "configuration-filename": "*test-configs-rp-against-op/*.json",
+        "current-block": "Validate the JWK set in server JWKS",
+        "condition": "WarnOnUnusableJwksKeys",
+        "expected-result": "warning",
+        "comment": "the paired client test under test deliberately publishes unusable keys in its jwks_uri (AddUnusableKeysToServerPublicJwks, RFC 7517 section 5)"
+    },
+    {
+        "test-name": "fapi2-security-profile-final-grant-management-ensure-invalid-grant-id-fails",
+        "variant": "*",
+        "configuration-filename": "*test-configs-rp-against-op/*.json",
+        "current-block": "Validate the JWK set in server JWKS",
+        "condition": "WarnOnUnusableJwksKeys",
+        "expected-result": "warning",
+        "comment": "the paired client test under test deliberately publishes unusable keys in its jwks_uri (AddUnusableKeysToServerPublicJwks, RFC 7517 section 5)"
+    },
+    {
+        "test-name": "fapi2-security-profile-final-par-without-duplicate-parameters",
+        "variant": {
+            "fapi_profile": "ksa"
+        },
+        "configuration-filename": "*ksa-fapi2-op-1.json",
+        "current-block": "Verify authorization endpoint response",
+        "condition": "RequireIssInAuthorizationResponse",
+        "expected-result": "failure",
+        "comment": "Expected by design, not a suite bug. This is the OP-side driver for the fapi2-security-profile-final-client-test-invalid-authorization-response-iss pairing: the 'OP' it talks to is that client test module, which deliberately returns a bad 'iss' in the authorization response. Whether this failure is reported at all is a race - run-test-plan.py only propagates a nested op_plan's results when the outer client test module does not throw, and the outer module ends INTERRUPTED (results dropped) or FINISHED (results reported) depending on whether the driver's token call lands inside the client test's wait window. Listing it here makes the pairing deterministic either way."
+    },
+    {
+        "test-name": "fapi2-security-profile-final-par-without-duplicate-parameters",
+        "variant": {
+            "fapi_profile": "ksa"
+        },
+        "configuration-filename": "*ksa-fapi2-op-1.json",
+        "current-block": "Verify token endpoint response",
+        "condition": "CheckTokenEndpointHttpStatus200",
+        "expected-result": "failure",
+        "comment": "Expected by design, not a suite bug, and always co-occurs with the RequireIssInAuthorizationResponse entry above. The driver logs the bad 'iss' and (by AbstractFAPI2SPFinalServerTestModule's callAndContinueOnFailure) carries on to the token endpoint. In the only case where these results get reported, the client test module acting as the OP has already reached FINISHED, so the token request is rejected with 400 'Illegal test state change: FINISHED -> RUNNING'."
+    },
+    {
+        "test-name": "fapi2-security-profile-final-grant-management-ensure-wrong-client-cannot-revoke-grant",
+        "variant": "*",
+        "configuration-filename": "authlete*.json",
+        "current-block": "Client 2 attempts to revoke Client 1's grant",
+        "condition": "EnsureGrantManagementEndpointReturns403Or404",
+        "expected-result": "failure",
+        "comment": "Authlete returns 204 when a client revokes another client's grant; GM-6.6 requires 403 or 404 (wrong-client query is correctly rejected, only revoke lacks the ownership check)"
+    }
+]

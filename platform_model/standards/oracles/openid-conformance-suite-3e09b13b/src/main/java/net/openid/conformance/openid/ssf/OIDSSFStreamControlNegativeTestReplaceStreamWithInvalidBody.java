@@ -1,0 +1,39 @@
+package net.openid.conformance.openid.ssf;
+
+import net.openid.conformance.condition.Condition;
+import net.openid.conformance.condition.client.EnsureHttpStatusCodeIs400;
+import net.openid.conformance.openid.ssf.conditions.streams.OIDSSFInsertBrokenStreamConfigJsonOverride;
+import net.openid.conformance.openid.ssf.conditions.streams.OIDSSFReplaceStreamConditionSequence;
+import net.openid.conformance.openid.ssf.variant.SsfProfile;
+import net.openid.conformance.testmodule.PublishTestModule;
+import net.openid.conformance.variant.VariantNotApplicable;
+
+@PublishTestModule(
+	testName = "openid-ssf-stream-control-error-replace-stream-with-invalid-body",
+	displayName = "Attempt to replace Stream Configuration with invalid body.",
+	summary = """
+		This test verifies that the transmitter rejects a stream replacement with a malformed request body.
+		The testsuite expects to observe the following interactions:
+		 * create a stream
+		 * attempt to replace the stream with a malformed request body
+		 * transmitter rejects the request with a 400 response
+		""",
+	profile = "OIDSSF"
+)
+@VariantNotApplicable(parameter = SsfProfile.class, values = "caep_interop")
+public class OIDSSFStreamControlNegativeTestReplaceStreamWithInvalidBody extends AbstractStreamControlErrorTest {
+
+	@Override
+	protected void testTransmitter() {
+
+		// Expect 400	if the request body cannot be parsed, a Transmitter-Supplied property is incorrect, or if the request is otherwise invalid
+		eventLog.runBlock("Replace Stream: Attempt to replace a Stream Configuration with invalid body", () -> {
+			callAndStopOnFailure(OIDSSFInsertBrokenStreamConfigJsonOverride.class);
+			call(sequence(OIDSSFReplaceStreamConditionSequence.class));
+			OIDSSFInsertBrokenStreamConfigJsonOverride.undo(env);
+			call(exec().mapKey("endpoint_response", "resource_endpoint_response_full"));
+			callAndContinueOnFailure(EnsureHttpStatusCodeIs400.class, Condition.ConditionResult.FAILURE, "OIDSSF-8.1.1.4");
+			call(exec().unmapKey("endpoint_response"));
+		});
+	}
+}

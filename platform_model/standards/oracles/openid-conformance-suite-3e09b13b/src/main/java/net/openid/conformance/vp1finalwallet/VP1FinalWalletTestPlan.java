@@ -1,0 +1,104 @@
+package net.openid.conformance.vp1finalwallet;
+
+import net.openid.conformance.plan.PublishTestPlan;
+import net.openid.conformance.plan.TestPlan;
+import net.openid.conformance.testmodule.TestModule;
+import net.openid.conformance.variant.VariantSelection;
+
+import java.lang.invoke.MethodHandles;
+import java.util.List;
+import java.util.Map;
+
+@PublishTestPlan(
+	testPlanName = "oid4vp-1final-wallet-test-plan",
+	displayName = "OpenID for Verifiable Presentations 1.0 Final: Test a wallet - alpha tests (not part of certification program - use the HAIP wallet plan to certify)",
+	profile = TestPlan.ProfileNames.wallettest,
+	specFamily = TestPlan.SpecFamilyNames.oid4vp,
+	specVersion = TestPlan.SpecVersionNames.oid4vp1Final
+)
+public class VP1FinalWalletTestPlan implements TestPlan {
+
+	public static final List<Class<? extends TestModule>> testModules = List.of(
+		// positive tests
+		VP1FinalWalletHappyFlow.class,
+		VP1FinalWalletAlternateHappyFlow.class,
+		VP1FinalWalletRequestUriMethodPost.class,
+		VP1FinalWalletIgnoresUnusableEncryptionKey.class,
+
+		// DCQL variation tests
+		VP1FinalWalletAllMandatoryClaims.class,
+		VP1FinalWalletFewerClaimsThanAvailable.class,
+		VP1FinalWalletOptionalCredentialSet.class,
+		VP1FinalWalletNoClaimsInDcqlQuery.class,
+
+		// negative tests
+		VP1FinalWalletResponseUriNotClientId.class,
+		VP1FinalWalletInvalidRequestObjectSignature.class,
+		VP1FinalWalletMultiSignedOneInvalidSignature.class,
+		VP1FinalWalletMismatchedClientIdInRequestObject.class,
+		VP1FinalWalletRedirectUriWithDirectPost.class,
+		VP1FinalWalletMissingNonce.class,
+		VP1FinalWalletWrongExpectedOrigins.class,
+		VP1FinalWalletInvalidClientIdPrefix.class,
+		VP1FinalWalletUnknownTransactionDataType.class,
+		VP1FinalWalletRequiredNonMatchingCredential.class
+	);
+
+	@Override
+	public List<ModuleListEntry> testModulesWithVariants() {
+		return List.of(
+			new ModuleListEntry(
+				testModules,
+				List.of(
+				)
+			)
+		);
+	}
+
+	/**
+	 * This plan is not part of the certification program - the HAIP wallet plan is what
+	 * wallets certify against - so no profile name is returned. The method is still overridden
+	 * because it is the only hook that runs at plan creation time, and it is where the variant
+	 * combinations this plan cannot support are rejected.
+	 */
+	@Override
+	public List<String> certificationProfileName(VariantSelection variant) {
+
+		Map<String, String> v = variant.getVariant();
+		String responseMode = v.get("response_mode");
+		String requestMethod = v.get("request_method");
+		String clientIDPrefix = v.get("client_id_prefix");
+
+		if (requestMethod.equals(VP1FinalWalletRequestMethod.REQUEST_URI_SIGNED.toString()) ||
+			requestMethod.equals(VP1FinalWalletRequestMethod.REQUEST_URI_MULTISIGNED.toString())) {
+			if (clientIDPrefix.equals(VP1FinalWalletClientIdPrefix.REDIRECT_URI.toString())) {
+				throw new RuntimeException(String.format("Invalid configuration for %s: Signed request methods do not permit the 'redirect_uri' Client ID Prefix.",
+					MethodHandles.lookup().lookupClass().getSimpleName()));
+			}
+			if (clientIDPrefix.equals(VP1FinalWalletClientIdPrefix.WEB_ORIGIN.toString())) {
+				throw new RuntimeException(String.format("Invalid configuration for %s: Signed request methods do not permit the 'web-origin' Client ID Prefix.",
+					MethodHandles.lookup().lookupClass().getSimpleName()));
+			}
+		}
+
+		if (responseMode.equals(VP1FinalWalletResponseMode.DC_API.toString()) ||
+			responseMode.equals(VP1FinalWalletResponseMode.DC_API_JWT.toString())) {
+			if (requestMethod.equals(VP1FinalWalletRequestMethod.REQUEST_URI_UNSIGNED.toString())) {
+				if (!clientIDPrefix.equals(VP1FinalWalletClientIdPrefix.WEB_ORIGIN.toString())) {
+					throw new RuntimeException(String.format("Invalid configuration for %s: When using unsigned DC API requests the Client ID Prefix must be 'web_origin'.",
+						MethodHandles.lookup().lookupClass().getSimpleName()));
+				}
+			} else if (requestMethod.equals(VP1FinalWalletRequestMethod.REQUEST_URI_SIGNED.toString())) {
+				// signed DC API uses the generic signed-request-method validation above
+			} else if (requestMethod.equals(VP1FinalWalletRequestMethod.REQUEST_URI_MULTISIGNED.toString())) {
+				// multi-signed DC API uses the generic signed-request-method validation above
+			}
+		} else if (requestMethod.equals(VP1FinalWalletRequestMethod.REQUEST_URI_MULTISIGNED.toString())) {
+			throw new RuntimeException(String.format("Invalid configuration for %s: Multi-signed requests are only supported with DC API response modes (dc_api, dc_api.jwt).",
+				MethodHandles.lookup().lookupClass().getSimpleName()));
+		}
+
+		return List.of();
+	}
+
+}

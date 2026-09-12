@@ -1,0 +1,569 @@
+{
+    "$id": "https://bitbucket.org/openid/ekyc-ida/raw/master/schema/verified_claims_request.json",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$defs": {
+        "check_details": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                    "check_id": {
+                        "$ref": "#/$defs/constrainable_element"
+                    },
+                    "check_method": {
+                        "$ref": "#/$defs/constrainable_element"
+                    },
+                    "organization": {
+                        "$ref": "#/$defs/constrainable_element"
+                    },
+                    "time": {
+                        "$ref": "#/$defs/datetime_element"
+                    }
+                },
+                "required": [
+                    "check_method"
+                ]
+            },
+            "minItems": 1
+        },
+        "claims_element": {
+            "oneOf": [
+                {
+                    "type": "null"
+                },
+                {
+                    "type": "object",
+                    "additionalProperties": {
+                        "anyOf": [
+                            {
+                                "type": "null"
+                            },
+                            {
+                                "type": "object",
+                                "properties": {
+                                    "essential": {
+                                        "type": "boolean"
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    "minProperties": 1
+                }
+            ]
+        },
+        "constrainable_element": {
+            "oneOf": [
+                {
+                    "type": "null"
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "essential": {
+                            "type": "boolean"
+                        },
+                        "value": {
+                            "type": "string"
+                        },
+                        "values": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            },
+                            "minItems": 1
+                        }
+                    },
+                    "unevaluatedProperties": false
+                }
+            ]
+        },
+        "datetime_element": {
+            "oneOf": [
+                {
+                    "type": "null"
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "essential": {
+                            "type": "boolean"
+                        },
+                        "max_age": {
+                            "type": "integer",
+                            "minimum": 0
+                        }
+                    },
+                    "unevaluatedProperties": false
+                }
+            ]
+        },
+        "document_details": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "type": {
+                    "$ref": "#/$defs/constrainable_element"
+                },
+                "date_of_expiry": {
+                    "$ref": "#/$defs/datetime_element"
+                },
+                "date_of_issuance": {
+                    "$ref": "#/$defs/datetime_element"
+                },
+                "document_number": {
+                    "$ref": "#/$defs/simple_element"
+                },
+                "issuer": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "country": {
+                            "$ref": "#/$defs/simple_element"
+                        },
+                        "country_code": {
+                            "$ref": "#/$defs/simple_element"
+                        },
+                        "formatted": {
+                            "$ref": "#/$defs/simple_element"
+                        },
+                        "jurisdiction": {
+                            "$ref": "#/$defs/simple_element"
+                        },
+                        "locality": {
+                            "$ref": "#/$defs/simple_element"
+                        },
+                        "name": {
+                            "$ref": "#/$defs/simple_element"
+                        },
+                        "postal_code": {
+                            "$ref": "#/$defs/simple_element"
+                        },
+                        "region": {
+                            "$ref": "#/$defs/simple_element"
+                        },
+                        "street_address": {
+                            "$ref": "#/$defs/simple_element"
+                        }
+                    }
+                },
+                "serial_number": {
+                    "$ref": "#/$defs/simple_element"
+                }
+            }
+        },
+        "evidence": {
+            "type": "object",
+            "required": [
+                "type"
+            ],
+            "properties": {
+                "type": {
+                    "type": "object",
+                    "required": [
+                        "value"
+                    ],
+                    "properties": {
+                        "value": {
+                            "enum": [
+                                "document",
+                                "electronic_record",
+                                "vouch",
+                                "electronic_signature"
+                            ]
+                        },
+                        "essential": {
+                            "type": "boolean"
+                        },
+                        "values": false
+                    },
+                    "unevaluatedProperties": false
+                },
+                "attachments": {
+                    "$ref": "#/$defs/simple_element"
+                }
+            },
+            "allOf": [
+                {
+                    "if": {
+                        "properties": {
+                            "type": {
+                                "type": "object",
+                                "properties": {
+                                    "value": {
+                                        "const": "electronic_signature"
+                                    }
+                                },
+                                "required": [
+                                    "value"
+                                ]
+                            }
+                        }
+                    },
+                    "then": {
+                        "properties": {
+                            "created_at": {
+                                "$ref": "#/$defs/datetime_element"
+                            },
+                            "issuer": {
+                                "$ref": "#/$defs/simple_element"
+                            },
+                            "serial_number": {
+                                "$ref": "#/$defs/simple_element"
+                            },
+                            "signature_type": {
+                                "$ref": "#/$defs/simple_element"
+                            },
+                            "derived_claims": {
+                                "$ref": "#/$defs/claims_element"
+                            }
+                        }
+                    },
+                    "else": true
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "type": {
+                                "type": "object",
+                                "properties": {
+                                    "value": {
+                                        "const": "document"
+                                    }
+                                },
+                                "required": [
+                                    "value"
+                                ]
+                            }
+                        }
+                    },
+                    "then": {
+                        "properties": {
+                            "check_details": {
+                                "$ref": "#/$defs/check_details"
+                            },
+                            "document_details": {
+                                "$ref": "#/$defs/document_details"
+                            },
+                            "derived_claims": {
+                                "$ref": "#/$defs/claims_element"
+                            }
+                        }
+                    },
+                    "else": true
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "type": {
+                                "type": "object",
+                                "properties": {
+                                    "value": {
+                                        "const": "electronic_record"
+                                    }
+                                },
+                                "required": [
+                                    "value"
+                                ]
+                            }
+                        }
+                    },
+                    "then": {
+                        "properties": {
+                            "check_details": {
+                                "$ref": "#/$defs/check_details"
+                            },
+                            "record": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "properties": {
+                                    "type": {
+                                        "$ref": "#/$defs/constrainable_element"
+                                    },
+                                    "created_at": {
+                                        "$ref": "#/$defs/datetime_element"
+                                    },
+                                    "date_of_expiry": {
+                                        "$ref": "#/$defs/datetime_element"
+                                    },
+                                    "source": {
+                                        "type": "object",
+                                        "additionalProperties": false,
+                                        "properties": {
+                                            "country": {
+                                                "$ref": "#/$defs/simple_element"
+                                            },
+                                            "country_code": {
+                                                "$ref": "#/$defs/simple_element"
+                                            },
+                                            "formatted": {
+                                                "$ref": "#/$defs/simple_element"
+                                            },
+                                            "jurisdiction": {
+                                                "$ref": "#/$defs/simple_element"
+                                            },
+                                            "locality": {
+                                                "$ref": "#/$defs/simple_element"
+                                            },
+                                            "name": {
+                                                "$ref": "#/$defs/simple_element"
+                                            },
+                                            "postal_code": {
+                                                "$ref": "#/$defs/simple_element"
+                                            },
+                                            "region": {
+                                                "$ref": "#/$defs/simple_element"
+                                            },
+                                            "street_address": {
+                                                "$ref": "#/$defs/simple_element"
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            "derived_claims": {
+                                "$ref": "#/$defs/claims_element"
+                            }
+                        }
+                    },
+                    "else": true
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "type": {
+                                "type": "object",
+                                "properties": {
+                                    "value": {
+                                        "const": "vouch"
+                                    }
+                                },
+                                "required": [
+                                    "value"
+                                ]
+                            }
+                        }
+                    },
+                    "then": {
+                        "properties": {
+                            "attestation": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "properties": {
+                                    "type": {
+                                        "$ref": "#/$defs/constrainable_element"
+                                    },
+                                    "date_of_expiry": {
+                                        "$ref": "#/$defs/datetime_element"
+                                    },
+                                    "date_of_issuance": {
+                                        "$ref": "#/$defs/datetime_element"
+                                    },
+                                    "reference_number": {
+                                        "$ref": "#/$defs/simple_element"
+                                    },
+                                    "voucher": {
+                                        "type": "object",
+                                        "additionalProperties": false,
+                                        "properties": {
+                                            "birthdate": {
+                                                "$ref": "#/$defs/datetime_element"
+                                            },
+                                            "country_code": {
+                                                "$ref": "#/$defs/simple_element"
+                                            },
+                                            "country": {
+                                                "$ref": "#/$defs/simple_element"
+                                            },
+                                            "formatted": {
+                                                "$ref": "#/$defs/simple_element"
+                                            },
+                                            "locality": {
+                                                "$ref": "#/$defs/simple_element"
+                                            },
+                                            "name": {
+                                                "$ref": "#/$defs/simple_element"
+                                            },
+                                            "occupation": {
+                                                "$ref": "#/$defs/simple_element"
+                                            },
+                                            "organization": {
+                                                "$ref": "#/$defs/simple_element"
+                                            },
+                                            "postal_code": {
+                                                "$ref": "#/$defs/simple_element"
+                                            },
+                                            "region": {
+                                                "$ref": "#/$defs/simple_element"
+                                            },
+                                            "street_address": {
+                                                "$ref": "#/$defs/simple_element"
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            "check_details": {
+                                "$ref": "#/$defs/check_details"
+                            },
+                            "derived_claims": {
+                                "$ref": "#/$defs/claims_element"
+                            }
+                        }
+                    },
+                    "else": true
+                }
+            ],
+            "unevaluatedProperties": false
+        },
+        "simple_element": {
+            "oneOf": [
+                {
+                    "type": "null"
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "essential": {
+                            "type": "boolean"
+                        }
+                    },
+                    "unevaluatedProperties": false
+                }
+            ]
+        },
+        "verified_claims": {
+            "oneOf": [
+                {
+                    "type": "array",
+                    "items": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/$defs/verified_claims_def"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "$ref": "#/$defs/verified_claims_def"
+                }
+            ]
+        },
+        "verified_claims_def": {
+            "type": "object",
+            "required": [
+                "verification",
+                "claims"
+            ],
+            "additionalProperties": false,
+            "properties": {
+                "claims": {
+                    "$ref": "#/$defs/claims_element"
+                },
+                "verification": {
+                    "type": "object",
+                    "required": [
+                        "trust_framework"
+                    ],
+                    "additionalProperties": true,
+                    "properties": {
+                        "assurance_level": {
+                            "$ref": "#/$defs/constrainable_element"
+                        },
+                        "assurance_process": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                                "assurance_details": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "additionalProperties": false,
+                                        "properties": {
+                                            "assurance_classification": {
+                                                "$ref": "#/$defs/constrainable_element"
+                                            },
+                                            "assurance_type": {
+                                                "$ref": "#/$defs/constrainable_element"
+                                            },
+                                            "evidence_ref": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "object",
+                                                    "additionalProperties": false,
+                                                    "properties": {
+                                                        "check_id": {
+                                                            "$ref": "#/$defs/constrainable_element"
+                                                        },
+                                                        "evidence_metadata": {
+                                                            "type": "object",
+                                                            "additionalProperties": false,
+                                                            "properties": {
+                                                                "evidence_classification": {
+                                                                    "$ref": "#/$defs/constrainable_element"
+                                                                }
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "check_id"
+                                                    ]
+                                                },
+                                                "minItems": 1
+                                            }
+                                        }
+                                    },
+                                    "minItems": 1
+                                },
+                                "policy": {
+                                    "$ref": "#/$defs/constrainable_element"
+                                },
+                                "procedure": {
+                                    "$ref": "#/$defs/constrainable_element"
+                                }
+                            }
+                        },
+                        "evidence": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/$defs/evidence"
+                            },
+                            "minItems": 1
+                        },
+                        "time": {
+                            "$ref": "#/$defs/datetime_element"
+                        },
+                        "trust_framework": {
+                            "$ref": "#/$defs/constrainable_element"
+                        },
+                        "verification_process": {
+                            "$ref": "#/$defs/simple_element"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "properties": {
+        "id_token": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+                "verified_claims": {
+                    "$ref": "#/$defs/verified_claims"
+                }
+            }
+        },
+        "userinfo": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+                "verified_claims": {
+                    "$ref": "#/$defs/verified_claims"
+                }
+            }
+        }
+    },
+    "unevaluatedProperties": false
+}

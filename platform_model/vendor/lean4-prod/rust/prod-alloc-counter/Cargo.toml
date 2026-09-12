@@ -1,0 +1,17 @@
+[package]
+name = "prod-alloc-counter"
+version = "0.1.0"
+edition = "2021"
+authors = ["UOR Foundation"]
+license = "MIT"
+publish = false
+description = "Test-only global allocator that counts heap activity, so prod-core can certify it performs none."
+
+# Deliberately NOT `[lints] workspace = true`: implementing `GlobalAlloc` is
+# inherently unsafe, and the workspace forbids unsafe code. Quarantining that
+# one `unsafe impl` here is what lets `prod-core` keep `unsafe_code = "forbid"`
+# across all of its targets, tests included.
+[lints.rust]
+unused_must_use = "deny"
+
+[dependencies]

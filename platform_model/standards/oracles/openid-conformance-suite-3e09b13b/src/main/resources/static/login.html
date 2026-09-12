@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>OIDF Conformance: Login</title>
+
+    <!-- Boostrap Icons -->
+    <link rel="preload" as="font" type="font/woff2" href="/fonts/inter/Inter-Variable.woff2" crossorigin>
+    <link rel="stylesheet" href="/css/oidf-tokens.css">
+    <link rel="stylesheet" type="text/css" href="/css/layout.css">
+    <link rel="stylesheet" href="/css/oidf-app.css">
+
+    <script>window.litDisableBundleWarning = true;</script>
+    <script type="importmap">{"imports":{"lit":"/vendor/lit/lit.js","lit/":"/vendor/lit/","lit/directives/async-append.js":"/vendor/lit/lit.js","lit/directives/async-replace.js":"/vendor/lit/lit.js","lit/directives/cache.js":"/vendor/lit/lit.js","lit/directives/choose.js":"/vendor/lit/lit.js","lit/directives/class-map.js":"/vendor/lit/lit.js","lit/directives/guard.js":"/vendor/lit/lit.js","lit/directives/if-defined.js":"/vendor/lit/lit.js","lit/directives/join.js":"/vendor/lit/lit.js","lit/directives/keyed.js":"/vendor/lit/lit.js","lit/directives/live.js":"/vendor/lit/lit.js","lit/directives/map.js":"/vendor/lit/lit.js","lit/directives/range.js":"/vendor/lit/lit.js","lit/directives/ref.js":"/vendor/lit/lit.js","lit/directives/repeat.js":"/vendor/lit/lit.js","lit/directives/style-map.js":"/vendor/lit/lit.js","lit/directives/template-content.js":"/vendor/lit/lit.js","lit/directives/unsafe-html.js":"/vendor/lit/lit.js","lit/directives/unsafe-svg.js":"/vendor/lit/lit.js","lit/directives/until.js":"/vendor/lit/lit.js","lit/directives/when.js":"/vendor/lit/lit.js","@lit/reactive-element":"/vendor/lit/lit.js","@lit/reactive-element/":"/vendor/lit/","lit-html":"/vendor/lit/lit.js","lit-html/":"/vendor/lit/","lit-element/":"/vendor/lit/","marked":"/vendor/marked/marked.esm.js","dompurify":"/vendor/dompurify/purify.es.mjs"}}</script>
+    <script type="module" src="/components/cts-navbar.js"></script>
+    <script type="module" src="/components/cts-login-page.js"></script>
+    <script type="module" src="/js/cts-toast-api.js"></script>
+    <script type="module" src="/components/cts-footer.js"></script>
+</head>
+<body>
+    <a class="oidf-skip-link" href="#loginContent">Skip to main content</a>
+
+    <cts-navbar current-page=""></cts-navbar>
+
+    <cts-login-page id="loginPage"></cts-login-page>
+
+    <cts-footer></cts-footer>
+
+    <script type="text/javascript">
+        document.addEventListener("DOMContentLoaded", () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const loginPage = document.getElementById("loginPage");
+
+            const error = urlParams.get("error");
+            if (error) {
+                loginPage.setAttribute("error", error);
+            }
+
+            const logout = urlParams.get("logout");
+            if (logout) {
+                loginPage.setAttribute("logout-message", "");
+            }
+
+            const token = urlParams.get("token");
+            if (token) {
+                // Hide the normal login UI while the private link is being processed.
+                // The cts-login-page renders a hidden iframe pointing at token-auth-url;
+                // we still need to drive the form submit / navigation lifecycle here
+                // because it depends on cross-frame access to the contentWindow.
+                loginPage.style.display = "none";
+
+                const iframe = document.createElement("iframe");
+                iframe.style.display = "none";
+
+                let submitted = false;
+
+                iframe.addEventListener("load", () => {
+                    const win = iframe.contentWindow;
+                    const doc = win.document;
+
+                    if (!submitted) {
+                        const form = doc.querySelector("form");
+                        if (!form) {
+                            // no form, already at redirect target
+                            window.location = win.location.href;
+                            return;
+                        }
+
+                        submitted = true;
+                        form.submit(); // trigger auto login action
+                        return;
+                    }
+
+                    // second load, after submit finished navigation
+                    window.location = win.location.href;
+                });
+
+                iframe.src = "/login/ott?token=" + encodeURIComponent(token);
+                document.body.appendChild(iframe);
+            }
+        });
+    </script>
+
+    <cts-toast-host></cts-toast-host>
+</body>
+</html>

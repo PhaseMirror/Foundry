@@ -1,0 +1,39 @@
+{
+  "name": "PrismPM",
+  "build": {
+    "context": "..",
+    "dockerfile": "Dockerfile"
+  },
+  "mounts": [
+    "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
+  ],
+  "remoteUser": "vscode",
+  "overrideCommand": false,
+  "postCreateCommand": "toolchain=$(tr -d '\\n' < lean-toolchain); if ! elan toolchain list | grep -Fqx \"$toolchain\"; then elan toolchain install \"$toolchain\"; fi; lean --version; ./scripts/fetch.sh",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "rust-lang.rust-analyzer",
+        "leanprover.lean4"
+      ],
+      "settings": {
+        "editor.formatOnSave": true,
+        "[rust]": {
+          "editor.defaultFormatter": "rust-lang.rust-analyzer"
+        },
+        "rust-analyzer.check.command": "clippy",
+        "rust-analyzer.procMacro.enable": true,
+        "rust-analyzer.cargo.allFeatures": true,
+        "search.exclude": {
+          "**/target": true
+        },
+        "files.watcherExclude": {
+          "**/target/**": true
+        }
+      }
+    }
+  },
+  "remoteEnv": {
+    "PATH": "/usr/local/elan/bin:/home/vscode/.cargo/bin:${containerEnv:PATH}"
+  }
+}

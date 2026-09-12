@@ -1,0 +1,360 @@
+{
+  "$id": "https://schemas.uor.foundation/prismpm/calculator-baseline/1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "baseline_date": {"pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$", "type": "string"},
+    "bootstrap_sdk": {"$ref": "#/$defs/bootstrapSdk"},
+    "formatting_correction": {"$ref": "#/$defs/formattingCorrection"},
+    "historical": {"$ref": "#/$defs/historical"},
+    "remediation": {"$ref": "#/$defs/remediation"},
+    "repositories": {
+      "items": {"$ref": "#/$defs/repository"},
+      "maxItems": 16,
+      "minItems": 5,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "schema": {"const": "prismpm/calculator-baseline/1"},
+    "status": {"enum": ["unsealed", "sealed"]},
+    "verification_runs": {
+      "items": {"$ref": "#/$defs/verificationRun"},
+      "maxItems": 64,
+      "minItems": 5,
+      "type": "array",
+      "uniqueItems": true
+    }
+  },
+  "required": [
+    "baseline_date",
+    "bootstrap_sdk",
+    "formatting_correction",
+    "historical",
+    "remediation",
+    "repositories",
+    "schema",
+    "status",
+    "verification_runs"
+  ],
+  "type": "object",
+  "allOf": [
+    {
+      "if": {"properties": {"status": {"const": "sealed"}}, "required": ["status"]},
+      "then": {
+        "properties": {
+          "formatting_correction": {
+            "properties": {"corrected_projection": {"$ref": "#/$defs/presentArtifact"}},
+            "type": "object"
+          },
+          "remediation": {
+            "properties": {
+              "current_closure": {"$ref": "#/$defs/currentClosurePresent"},
+              "publications": {
+                "items": {
+                  "properties": {"public_registry": {"$ref": "#/$defs/presentArtifact"}},
+                  "type": "object"
+                },
+                "type": "array"
+              }
+            },
+            "type": "object"
+          },
+          "verification_runs": {
+            "items": {
+              "properties": {
+                "availability": {"const": "present"},
+                "evidence_digest": {"$ref": "#/$defs/taggedDigest"}
+              },
+              "type": "object"
+            },
+            "type": "array"
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "plainDigest": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+    "taggedDigest": {"pattern": "^sha256:[0-9a-f]{64}$", "type": "string"},
+    "blake3Digest": {"pattern": "^blake3:[0-9a-f]{64}$", "type": "string"},
+    "commit": {"pattern": "^[0-9a-f]{40}$", "type": "string"},
+    "repository": {
+      "additionalProperties": false,
+      "properties": {
+        "commit": {"$ref": "#/$defs/commit"},
+        "repository": {"pattern": "^https://[^ ]+$", "type": "string"}
+      },
+      "required": ["commit", "repository"],
+      "type": "object"
+    },
+    "presentArtifact": {
+      "additionalProperties": false,
+      "properties": {
+        "availability": {"const": "present"},
+        "checked_on": {"pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$", "type": "string"},
+        "location": {"pattern": "^https://[^ ]+$", "type": "string"},
+        "sha256": {"$ref": "#/$defs/plainDigest"},
+        "size": {"maximum": 10737418240, "minimum": 0, "type": "integer"}
+      },
+      "required": ["availability", "checked_on", "location", "sha256", "size"],
+      "type": "object"
+    },
+    "absentArtifact": {
+      "additionalProperties": false,
+      "properties": {
+        "availability": {"const": "absent"},
+        "checked_on": {"pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$", "type": "string"},
+        "http_status": {"maximum": 599, "minimum": 100, "type": "integer"},
+        "location": {"pattern": "^https://[^ ]+$", "type": "string"},
+        "reason": {"maxLength": 1024, "minLength": 1, "type": "string"}
+      },
+      "required": ["availability", "checked_on", "location", "reason"],
+      "type": "object"
+    },
+    "availability": {
+      "oneOf": [
+        {"$ref": "#/$defs/presentArtifact"},
+        {"$ref": "#/$defs/absentArtifact"}
+      ]
+    },
+    "identity": {
+      "additionalProperties": false,
+      "properties": {
+        "application_acceptance_sha256": {"$ref": "#/$defs/plainDigest"},
+        "archive_fingerprint": {"$ref": "#/$defs/plainDigest"},
+        "archive_kappa": {"$ref": "#/$defs/blake3Digest"},
+        "application_kappa": {"$ref": "#/$defs/blake3Digest"},
+        "build_id": {"$ref": "#/$defs/plainDigest"},
+        "build_manifest_sha256": {"$ref": "#/$defs/plainDigest"},
+        "core_wasm_sha256": {"$ref": "#/$defs/plainDigest"},
+        "generated_core_sha256": {"$ref": "#/$defs/plainDigest"},
+        "guest_content_kappa": {"$ref": "#/$defs/blake3Digest"},
+        "holo_sha256": {"$ref": "#/$defs/plainDigest"},
+        "model_content_kappa": {"$ref": "#/$defs/blake3Digest"},
+        "model_id": {"$ref": "#/$defs/plainDigest"},
+        "source_id": {"$ref": "#/$defs/plainDigest"},
+        "source_sha256": {"$ref": "#/$defs/plainDigest"},
+        "view_content_kappa": {"$ref": "#/$defs/blake3Digest"},
+        "view_manifest_sha256": {"$ref": "#/$defs/plainDigest"},
+        "view_model_id": {"$ref": "#/$defs/plainDigest"}
+      },
+      "required": [
+        "application_acceptance_sha256",
+        "application_kappa",
+        "archive_fingerprint",
+        "archive_kappa",
+        "build_id",
+        "build_manifest_sha256",
+        "core_wasm_sha256",
+        "generated_core_sha256",
+        "guest_content_kappa",
+        "holo_sha256",
+        "model_content_kappa",
+        "model_id",
+        "source_id",
+        "source_sha256",
+        "view_content_kappa",
+        "view_manifest_sha256",
+        "view_model_id"
+      ],
+      "type": "object"
+    },
+    "packageAudit": {
+      "additionalProperties": false,
+      "properties": {
+        "committed_archive_sha256": {"$ref": "#/$defs/plainDigest"},
+        "name": {"pattern": "^[a-z][a-z0-9-]*$", "type": "string"},
+        "public_registry": {"$ref": "#/$defs/availability"},
+        "version": {"pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$", "type": "string"}
+      },
+      "required": ["committed_archive_sha256", "name", "public_registry", "version"],
+      "type": "object"
+    },
+    "pageAsset": {
+      "additionalProperties": false,
+      "properties": {
+        "committed_sha256": {"$ref": "#/$defs/plainDigest"},
+        "path": {"pattern": "^[A-Za-z0-9_.-]+$", "type": "string"},
+        "served_sha256": {"$ref": "#/$defs/plainDigest"}
+      },
+      "required": ["committed_sha256", "path", "served_sha256"],
+      "type": "object"
+    },
+    "pages": {
+      "additionalProperties": false,
+      "properties": {
+        "assets": {
+          "items": {"$ref": "#/$defs/pageAsset"},
+          "maxItems": 6,
+          "minItems": 6,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "checked_on": {"pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$", "type": "string"},
+        "commit": {"$ref": "#/$defs/commit"},
+        "url": {"const": "https://uor-foundation.github.io/calculator-example/"}
+      },
+      "required": ["assets", "checked_on", "commit", "url"],
+      "type": "object"
+    },
+    "historical": {
+      "additionalProperties": false,
+      "properties": {
+        "identities": {"$ref": "#/$defs/identity"},
+        "packages": {
+          "items": {"$ref": "#/$defs/packageAudit"},
+          "maxItems": 2,
+          "minItems": 2,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "pages": {"$ref": "#/$defs/pages"},
+        "plan_record": {"$ref": "#/$defs/historicalPlanRecord"},
+        "release_candidate_record": {"$ref": "#/$defs/historicalReleaseCandidateRecord"}
+      },
+      "required": [
+        "identities",
+        "packages",
+        "pages",
+        "plan_record",
+        "release_candidate_record"
+      ],
+      "type": "object"
+    },
+    "historicalPlanRecord": {
+      "additionalProperties": false,
+      "properties": {
+        "preserved_path": {"const": "artifacts/historical-plan-05sep26.md"},
+        "sha256": {"$ref": "#/$defs/plainDigest"},
+        "title": {"const": "PrismPM Holo/1 and Calculator completion plan"}
+      },
+      "required": ["preserved_path", "sha256", "title"],
+      "type": "object"
+    },
+    "historicalReleaseCandidateRecord": {
+      "additionalProperties": false,
+      "properties": {
+        "hologram_live_commit": {"$ref": "#/$defs/commit"},
+        "preserved_path": {"const": "artifacts/historical-release-candidate.json"},
+        "production_manifest_sha256": {"$ref": "#/$defs/plainDigest"},
+        "schema": {"const": "calculator-example/release-candidate/1"},
+        "sha256": {"$ref": "#/$defs/plainDigest"},
+        "uor_hologram_commit": {"$ref": "#/$defs/commit"},
+        "verification_manifest_sha256": {"$ref": "#/$defs/plainDigest"}
+      },
+      "required": [
+        "hologram_live_commit",
+        "preserved_path",
+        "production_manifest_sha256",
+        "schema",
+        "sha256",
+        "uor_hologram_commit",
+        "verification_manifest_sha256"
+      ],
+      "type": "object"
+    },
+    "publication": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {"pattern": "^[a-z][a-z0-9-]*$", "type": "string"},
+        "public_registry": {"$ref": "#/$defs/availability"},
+        "version": {"pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$", "type": "string"}
+      },
+      "required": ["name", "public_registry", "version"],
+      "type": "object"
+    },
+    "remediation": {
+      "additionalProperties": false,
+      "properties": {
+        "current_closure": {
+          "oneOf": [
+            {"$ref": "#/$defs/currentClosurePresent"},
+            {"$ref": "#/$defs/currentClosureAbsent"}
+          ]
+        },
+        "publications": {
+          "items": {"$ref": "#/$defs/publication"},
+          "maxItems": 2,
+          "minItems": 2,
+          "type": "array",
+          "uniqueItems": true
+        }
+      },
+      "required": ["current_closure", "publications"],
+      "type": "object"
+    },
+    "currentClosurePresent": {
+      "additionalProperties": false,
+      "properties": {
+        "availability": {"const": "present"},
+        "identities": {"$ref": "#/$defs/identity"},
+        "pages": {"$ref": "#/$defs/pages"},
+        "release_commit": {"$ref": "#/$defs/commit"}
+      },
+      "required": ["availability", "identities", "pages", "release_commit"],
+      "type": "object"
+    },
+    "currentClosureAbsent": {
+      "additionalProperties": false,
+      "properties": {
+        "availability": {"const": "absent"},
+        "reason": {"maxLength": 1024, "minLength": 1, "type": "string"}
+      },
+      "required": ["availability", "reason"],
+      "type": "object"
+    },
+    "formattingCorrection": {
+      "additionalProperties": false,
+      "properties": {
+        "corrected_projection": {"$ref": "#/$defs/availability"},
+        "origin": {
+          "additionalProperties": false,
+          "properties": {
+            "kind": {"const": "generic-renderer"},
+            "repository": {"const": "https://github.com/auser/lean4-prod"},
+            "source_path": {"const": "rust/prod-codegen/src/view.rs"}
+          },
+          "required": ["kind", "repository", "source_path"],
+          "type": "object"
+        },
+        "statement": {"maxLength": 1024, "minLength": 1, "type": "string"}
+      },
+      "required": ["corrected_projection", "origin", "statement"],
+      "type": "object"
+    },
+    "bootstrapSdk": {
+      "additionalProperties": false,
+      "properties": {
+        "binary": {"$ref": "#/$defs/presentArtifact"},
+        "source_commit": {"$ref": "#/$defs/commit"},
+        "tag": {"const": "v0.2.0"},
+        "tag_object": {"$ref": "#/$defs/commit"},
+        "version": {"const": "0.2.0"}
+      },
+      "required": ["binary", "source_commit", "tag", "tag_object", "version"],
+      "type": "object"
+    },
+    "verificationRun": {
+      "additionalProperties": false,
+      "properties": {
+        "availability": {"enum": ["absent", "present"]},
+        "command": {"maxLength": 2048, "minLength": 1, "type": "string"},
+        "evidence_digest": {
+          "oneOf": [{"$ref": "#/$defs/taggedDigest"}, {"type": "null"}]
+        },
+        "reason": {"maxLength": 1024, "minLength": 1, "type": "string"},
+        "repository": {"pattern": "^https://[^ ]+$", "type": "string"},
+        "repeat": {"maximum": 2, "minimum": 1, "type": "integer"}
+      },
+      "required": ["availability", "command", "evidence_digest", "reason", "repository", "repeat"],
+      "type": "object",
+      "allOf": [
+        {
+          "if": {"properties": {"availability": {"const": "present"}}, "required": ["availability"]},
+          "then": {"properties": {"evidence_digest": {"$ref": "#/$defs/taggedDigest"}}},
+          "else": {"properties": {"evidence_digest": {"type": "null"}}}
+        }
+      ]
+    }
+  }
+}

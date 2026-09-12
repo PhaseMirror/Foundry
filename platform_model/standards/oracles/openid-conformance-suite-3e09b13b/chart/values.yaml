@@ -1,0 +1,67 @@
+# Default values for chart.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+replicaCount: 1
+image:
+  repository: gitlab.example.com/group/project
+  tag: stable
+  pullPolicy: Always
+application:
+  track: stable
+  tier: web
+  env_slug: ""
+  path_slug: ""
+# Serve the frozen pre-redesign UI (the `legacy-ui` Spring profile). Off by default.
+# The deploy script in .gitlab-ci.yml enables it for the demo + production environments
+# (via `--set legacyUi.enabled=true`) while the new UI stabilises. Requires the deployed
+# image to include the legacy-ui code (static-legacy/ etc.); otherwise the profile is a no-op.
+legacyUi:
+  enabled: false
+nodeSelector: {}
+tolerations: {}
+service:
+  enabled: true
+  name: web
+  type: ClusterIP
+  url: http://my.host.com/
+  mtls: http://my.host.com/
+  externalPort: 8080
+  internalPort: 8080
+resources:
+  limits:
+    memory: 2Gi
+  requests:
+    cpu: 100m
+# showing the external IP address uses an external server to retrieve
+# the external API; this is useful on the cloud production
+# environments but you may want to disable it if deploying internally
+javaArgs: "-Xmx724M -Djdk.tls.maxHandshakeMessageSize=65536 -Dfintechlabs.show_external_ip_address=true -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/dump/"
+mongodb:
+  image:
+    # this is currently the latest 6.0.x according to https://hub.docker.com/r/bitnami/mongodb/tags and https://www.mongodb.com/docs/manual/release-notes/6.0/
+    # it should be kept in sync with the version we're using for dev in the docker compose files
+    repository: bitnamilegacy/mongodb
+    tag: 6.0.13
+  auth:
+      enabled: false
+  usePassword: false
+  extraFlags:
+   - "--wiredTigerCacheSizeGB=0.25"
+   - "--setParameter maxIndexBuildMemoryUsageMegabytes=250"
+  livenessProbe:
+    initialDelaySeconds: 30
+    periodSeconds: 60
+    failureThreshold: 60
+  readinessProbe:
+    enabled: false
+  # memory / persistence storage size are increased for production/staging in .gitlab-ci.yml
+  resources:
+    limits:
+      memory: 1Gi
+    requests:
+      cpu: 100m
+  persistence:
+    size: 5Gi
+    storageClass: premium-rwo
+  updateStrategy:
+    type: Recreate

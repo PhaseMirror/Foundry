@@ -1,0 +1,54 @@
+package net.openid.conformance.authzen;
+
+import com.google.gson.JsonObject;
+import net.openid.conformance.authzen.condition.CreateAuthzenEvaluationApiRequestSteps;
+import net.openid.conformance.authzen.condition.EnsureAuthzenDecisionResponseValMatchesExpected;
+import net.openid.conformance.authzen.condition.EnsureDecisionResponseTrue;
+import net.openid.conformance.authzen.condition.EnsureValidDecisionResponse;
+import net.openid.conformance.authzen.condition.ExtractAuthzenApiEndpointDecisionResponse;
+import net.openid.conformance.authzen.condition.ExtractAuthzenDecisionExpectedResponse;
+import net.openid.conformance.authzen.condition.SetAuthzenApiEndpointToAccessEvaluationEndpoint;
+import net.openid.conformance.condition.Condition.ConditionResult;
+import net.openid.conformance.sequence.ConditionSequence;
+
+public abstract class AbstractAuthzenPDPEvaluationTest extends AbstractAuthzenPDPTest {
+
+	@Override
+	protected ConditionSequence createAuthzenApiRequestSequence() {
+		JsonObject request = parseRequest();
+		return new CreateAuthzenEvaluationApiRequestSteps(request.getAsJsonObject("subject"), request.getAsJsonObject("resource"), request.getAsJsonObject("action"), request.getAsJsonObject("context"));
+	}
+
+	/**
+	 * Override to supply the expected decision response JSON (e.g. {"decision": true}).
+	 * When null, the test only checks that the decision is true. When non-null, the
+	 * actual decision value is compared against the expected value.
+	 */
+	protected String getExpectedDecisionResponseJson() {
+		return null;
+	}
+
+	@Override
+	protected void validateAuthApiEndpointResponse() {
+		String expectedJson = getExpectedDecisionResponseJson();
+		if (expectedJson == null) {
+			callAndContinueOnFailure(EnsureDecisionResponseTrue.class, ConditionResult.FAILURE);
+		} else {
+			callAndContinueOnFailure(new ExtractAuthzenDecisionExpectedResponse(expectedJson), ConditionResult.FAILURE);
+			callAndContinueOnFailure(EnsureAuthzenDecisionResponseValMatchesExpected.class, ConditionResult.FAILURE);
+		}
+	}
+
+	@Override
+	protected void setAuthzenApiEndpoint() {
+		callAndStopOnFailure(SetAuthzenApiEndpointToAccessEvaluationEndpoint.class);
+	}
+
+	@Override
+	protected void processAuthApiEndpointResponse() {
+		callAndStopOnFailure(ExtractAuthzenApiEndpointDecisionResponse.class, "AUTHZEN-6.2");
+		callAndStopOnFailure(EnsureValidDecisionResponse.class, "AUTHZEN-6.2");
+	}
+
+
+}

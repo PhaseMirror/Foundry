@@ -1,0 +1,39 @@
+package net.openid.conformance.openid.ssf;
+
+import net.openid.conformance.condition.Condition;
+import net.openid.conformance.condition.client.EnsureHttpStatusCodeIs400;
+import net.openid.conformance.openid.ssf.conditions.streams.OIDSSFInsertBrokenStreamConfigJsonOverride;
+import net.openid.conformance.openid.ssf.conditions.streams.OIDSSFUpdateStreamConditionSequence;
+import net.openid.conformance.openid.ssf.variant.SsfProfile;
+import net.openid.conformance.testmodule.PublishTestModule;
+import net.openid.conformance.variant.VariantNotApplicable;
+
+@PublishTestModule(
+	testName = "openid-ssf-stream-control-error-update-stream-with-invalid-body",
+	displayName = "Attempt to update Stream Configuration with invalid body.",
+	summary = """
+		This test verifies that the transmitter rejects a stream update with a malformed request body.
+		The testsuite expects to observe the following interactions:
+		 * create a stream
+		 * attempt to update the stream with a malformed request body
+		 * transmitter rejects the request with a 400 response
+		""",
+	profile = "OIDSSF"
+)
+@VariantNotApplicable(parameter = SsfProfile.class, values = "caep_interop")
+public class OIDSSFStreamControlNegativeTestUpdateStreamWithInvalidBody extends AbstractStreamControlErrorTest {
+
+	@Override
+	protected void testTransmitter() {
+
+		// expect 400	if the request body cannot be parsed, a Transmitter-Supplied property is incorrect, or if the request is otherwise invalid
+		eventLog.runBlock("Attempt to update Stream Configuration with invalid body", () -> {
+			callAndStopOnFailure(OIDSSFInsertBrokenStreamConfigJsonOverride.class);
+			call(sequence(OIDSSFUpdateStreamConditionSequence.class));
+			OIDSSFInsertBrokenStreamConfigJsonOverride.undo(env);
+			call(exec().mapKey("endpoint_response", "resource_endpoint_response_full"));
+			callAndContinueOnFailure(EnsureHttpStatusCodeIs400.class, Condition.ConditionResult.FAILURE, "OIDSSF-8.1.1.3");
+			call(exec().unmapKey("endpoint_response"));
+		});
+	}
+}

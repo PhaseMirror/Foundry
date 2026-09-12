@@ -1,0 +1,218 @@
+package net.openid.conformance.fapiciba;
+
+import net.openid.conformance.condition.Condition;
+import net.openid.conformance.condition.as.CheckCIBAModeIsPing;
+import net.openid.conformance.condition.as.FAPIEnsureClientJwksContainsAnEncryptionKey;
+import net.openid.conformance.condition.client.CheckDiscEndpointAcrClaimSupported;
+import net.openid.conformance.condition.client.CheckDiscEndpointClaimsParameterSupported;
+import net.openid.conformance.condition.client.CheckDiscEndpointUserinfoEndpoint;
+import net.openid.conformance.condition.client.ClientManagementEndpointAndAccessTokenRequired;
+import net.openid.conformance.condition.client.CopyOrgJwksFromDynamicRegistrationTemplateToClientConfiguration;
+import net.openid.conformance.condition.client.EnsureAccessTokenValuesAreDifferent;
+import net.openid.conformance.condition.client.FAPIBrazilAddRequiredIdTokenEncryptionToDynamicRegistrationRequest;
+import net.openid.conformance.condition.client.FAPIBrazilCheckDiscEndpointAcrValuesSupportedShould;
+import net.openid.conformance.condition.client.FAPIBrazilCibaCheckTokenDeliveryModesSupportedOnlyPing;
+import net.openid.conformance.condition.client.FAPIBrazilCibaCheckUserCodeParameterNotSupported;
+import net.openid.conformance.condition.client.FAPIBrazilOpenBankingCheckDiscEndpointAcrValuesSupported;
+import net.openid.conformance.condition.client.FAPIBrazilValidateExpiresIn;
+import net.openid.conformance.condition.client.FAPICheckDiscEndpointGrantTypesSupportedContainsCiba;
+import net.openid.conformance.condition.client.FAPICheckDiscEndpointGrantTypesSupportedContainsClientCredentialsAndRefreshToken;
+import net.openid.conformance.condition.client.FAPICheckDiscEndpointRequestObjectEncryptionAlgValuesSupportedContainsRsaOaep;
+import net.openid.conformance.condition.client.FAPICheckDiscEndpointRequestObjectEncryptionEncValuesSupportedContainsA256gcm;
+import net.openid.conformance.condition.client.FAPIBrazilValidateIdTokenEncryptedUsingRSAOAEPA256GCM;
+import net.openid.conformance.condition.client.SetHintTypeToLoginHint;
+import net.openid.conformance.condition.client.ValidateIdTokenEncrypted;
+import net.openid.conformance.condition.client.ValidateOpenBankingBrazilCibaAuthenticationRequestExpiresIn;
+import net.openid.conformance.condition.client.ValidateOpenBankingBrazilCibaDynamicRegistrationResponse;
+import net.openid.conformance.sequence.AbstractConditionSequence;
+import net.openid.conformance.sequence.ConditionSequence;
+import net.openid.conformance.sequence.client.OpenBankingBrazilDynamicClientRegistrationCredentialSetup;
+import net.openid.conformance.sequence.client.OpenBankingBrazilDynamicClientRegistrationKeyPublication;
+import net.openid.conformance.sequence.client.OpenBankingBrazilPreAuthorizationSteps;
+import net.openid.conformance.sequence.client.RefreshTokenRequestSteps;
+import net.openid.conformance.variant.ClientAuthType;
+
+import java.util.function.Supplier;
+
+public class OpenBankingBrazilCibaServerProfileBehavior extends FAPICIBAServerProfileBehavior {
+
+	@Override
+	public ConditionSequence getClientRegistrationCredentialSetupSteps(boolean secondClient) {
+		return new OpenBankingBrazilDynamicClientRegistrationCredentialSetup(secondClient);
+	}
+
+	@Override
+	public ConditionSequence getClientRegistrationKeyPublicationSteps() {
+		return new OpenBankingBrazilDynamicClientRegistrationKeyPublication();
+	}
+
+	@Override
+	public boolean shouldUseInitialAccessTokenForRegistration() {
+		return false;
+	}
+
+	@Override
+	public Class<? extends ConditionSequence> getAdditionalClientRegistrationSteps() {
+		return OpenBankingBrazilClientRegistrationSteps.class;
+	}
+
+	public static class OpenBankingBrazilClientRegistrationSteps extends AbstractConditionSequence {
+		@Override
+		public void evaluate() {
+			callAndStopOnFailure(FAPIBrazilAddRequiredIdTokenEncryptionToDynamicRegistrationRequest.class,
+				"BrazilOB22-5.1.1-1", "BrazilOB22-6.3");
+		}
+	}
+
+	@Override
+	public ConditionSequence getClientRegistrationResponseValidationSteps() {
+		return new AbstractConditionSequence() {
+			@Override
+			public void evaluate() {
+				callAndContinueOnFailure(ClientManagementEndpointAndAccessTokenRequired.class,
+					Condition.ConditionResult.FAILURE, "BrazilOBDCR-7.1", "RFC7592-2");
+				callAndContinueOnFailure(ValidateOpenBankingBrazilCibaDynamicRegistrationResponse.class,
+					Condition.ConditionResult.FAILURE,
+					"CIBA-4",
+					"BrazilCIBA-6.2.2",
+					"BrazilCIBA-6.2.4",
+					"BrazilOB22-5.1.1-1",
+					"BrazilOB22-6.2",
+					"BrazilOB22-6.3",
+					"BrazilOBDCR-7.1");
+				callAndStopOnFailure(CopyOrgJwksFromDynamicRegistrationTemplateToClientConfiguration.class);
+				callAndStopOnFailure(FAPIEnsureClientJwksContainsAnEncryptionKey.class,
+					"FAPI1-ADV-5.2.3.1-5", "FAPI1-ADV-8.6.1-1", "BrazilOB22-5.1.1-2");
+			}
+		};
+	}
+
+	@Override
+	public Supplier<? extends ConditionSequence> getProfileSpecificDiscoveryChecks() {
+		return OpenBankingBrazilDiscoveryEndpointChecks::new;
+	}
+
+	public static class OpenBankingBrazilDiscoveryEndpointChecks extends AbstractConditionSequence {
+		@Override
+		public void evaluate() {
+			callAndContinueOnFailure(FAPIBrazilCibaCheckTokenDeliveryModesSupportedOnlyPing.class,
+				Condition.ConditionResult.FAILURE, "BrazilCIBA-6.2.2");
+			callAndContinueOnFailure(FAPIBrazilCibaCheckUserCodeParameterNotSupported.class,
+				Condition.ConditionResult.FAILURE, "BrazilCIBA-6.2.4");
+			callAndContinueOnFailure(CheckDiscEndpointClaimsParameterSupported.class,
+				Condition.ConditionResult.FAILURE, "OIDCD-3", "BrazilOB22-5.1-4");
+			callAndContinueOnFailure(CheckDiscEndpointAcrClaimSupported.class,
+				Condition.ConditionResult.FAILURE, "BrazilOB22-5.1-5", "BrazilOB22-5.1-6");
+			callAndContinueOnFailure(FAPICheckDiscEndpointGrantTypesSupportedContainsCiba.class, Condition.ConditionResult.FAILURE);
+			callAndContinueOnFailure(FAPICheckDiscEndpointGrantTypesSupportedContainsClientCredentialsAndRefreshToken.class, Condition.ConditionResult.FAILURE);
+			callAndContinueOnFailure(FAPIBrazilOpenBankingCheckDiscEndpointAcrValuesSupported.class,
+				Condition.ConditionResult.FAILURE, "BrazilOB22-5.1-5");
+			callAndContinueOnFailure(FAPIBrazilCheckDiscEndpointAcrValuesSupportedShould.class,
+				Condition.ConditionResult.WARNING, "BrazilOB22-5.1-6");
+			callAndContinueOnFailure(CheckDiscEndpointUserinfoEndpoint.class,
+				Condition.ConditionResult.FAILURE, "BrazilOB22-5.1-7");
+			callAndContinueOnFailure(
+				FAPICheckDiscEndpointRequestObjectEncryptionAlgValuesSupportedContainsRsaOaep.class,
+				Condition.ConditionResult.FAILURE, "BrazilOB22-6.3");
+			callAndContinueOnFailure(
+				FAPICheckDiscEndpointRequestObjectEncryptionEncValuesSupportedContainsA256gcm.class,
+				Condition.ConditionResult.FAILURE, "BrazilOB22-6.3");
+		}
+	}
+
+	@Override
+	public boolean shouldKeepBackchannelAuthenticationEndpointAlias(ClientAuthType authType) {
+		return true;
+	}
+
+	@Override
+	public boolean shouldCallTokenEndpointBeforePingNotification() {
+		return false;
+	}
+
+	@Override
+	public boolean shouldAddBindingMessageToAuthorizationEndpointRequest() {
+		return false;
+	}
+
+	@Override
+	public Supplier<? extends ConditionSequence> getPreAuthorizationSteps() {
+		return () -> {
+			boolean isSecondClient = module.isSecondClient();
+			boolean isDpop = false;
+			boolean stopAfterConsentEndpoint = false;
+			return new OpenBankingBrazilPreAuthorizationSteps(
+				isSecondClient, isDpop, module.addTokenEndpointClientAuthentication, false, false, stopAfterConsentEndpoint, false
+			);
+		};
+	}
+
+	@Override
+	public Class<? extends ConditionSequence> getProfileAuthorizationEndpointSetupSteps() {
+		return AbstractFAPICIBAID1.OpenBankingBrazilProfileAuthorizationEndpointSetupSteps.class;
+	}
+
+	@Override
+	public Class<? extends ConditionSequence> getProfileIdTokenValidationSteps() {
+		return AbstractFAPICIBAID1.OpenBankingBrazilProfileIdTokenValidationSteps.class;
+	}
+
+	@Override
+	public ConditionSequence onConfigure() {
+		return new AbstractConditionSequence() {
+			@Override
+			public void evaluate() {
+				callAndStopOnFailure(CheckCIBAModeIsPing.class, "BrazilCIBA-6.2.2");
+				callAndStopOnFailure(SetHintTypeToLoginHint.class, "BrazilCIBA-6.2.3");
+			}
+		};
+	}
+
+	@Override
+	public ConditionSequence validateExpiresIn() {
+		return new AbstractConditionSequence() {
+			@Override
+			public void evaluate() {
+				call(condition(FAPIBrazilValidateExpiresIn.class)
+					.skipIfObjectsMissing("expires_in")
+					.onSkip(Condition.ConditionResult.INFO)
+					.onFail(Condition.ConditionResult.FAILURE)
+					.requirements("BrazilOB-5.2.2-13")
+					.dontStopOnFailure());
+			}
+		};
+	}
+
+	@Override
+	public ConditionSequence validateBackchannelAuthenticationEndpointResponse() {
+		return new AbstractConditionSequence() {
+			@Override
+			public void evaluate() {
+				callAndContinueOnFailure(
+					ValidateOpenBankingBrazilCibaAuthenticationRequestExpiresIn.class,
+					Condition.ConditionResult.FAILURE,
+					"BrazilCIBA-6.2.6");
+			}
+		};
+	}
+
+	@Override
+	public ConditionSequence validateTokenEndpointIdToken() {
+		return new AbstractConditionSequence() {
+			@Override
+			public void evaluate() {
+				callAndContinueOnFailure(ValidateIdTokenEncrypted.class,
+					Condition.ConditionResult.FAILURE, "BrazilOB22-5.1.1-1");
+				callAndContinueOnFailure(FAPIBrazilValidateIdTokenEncryptedUsingRSAOAEPA256GCM.class,
+					Condition.ConditionResult.FAILURE, "BrazilOB22-6.3");
+			}
+		};
+	}
+
+	@Override
+	public ConditionSequence createUpdateResourceRequestSteps(boolean isSecondClient, Class<? extends ConditionSequence> addTokenEndpointClientAuthentication) {
+		return new RefreshTokenRequestSteps(isSecondClient, addTokenEndpointClientAuthentication)
+				.skip(EnsureAccessTokenValuesAreDifferent.class, "");
+	}
+
+}

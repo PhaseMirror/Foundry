@@ -1,0 +1,434 @@
+package net.openid.conformance.util;
+
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.nimbusds.jose.Algorithm;
+import com.nimbusds.jose.EncryptionMethod;
+import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JWEAlgorithm;
+import com.nimbusds.jose.JWEDecrypter;
+import com.nimbusds.jose.JWEEncrypter;
+import com.nimbusds.jose.JWEObject;
+import com.nimbusds.jose.KeyLengthException;
+import com.nimbusds.jose.crypto.AESDecrypter;
+import com.nimbusds.jose.crypto.AESEncrypter;
+import com.nimbusds.jose.crypto.DirectDecrypter;
+import com.nimbusds.jose.crypto.DirectEncrypter;
+import com.nimbusds.jose.crypto.ECDHDecrypter;
+import com.nimbusds.jose.crypto.ECDHEncrypter;
+import com.nimbusds.jose.crypto.RSADecrypter;
+import com.nimbusds.jose.crypto.RSAEncrypter;
+import com.nimbusds.jose.crypto.X25519Decrypter;
+import com.nimbusds.jose.crypto.X25519Encrypter;
+import com.nimbusds.jose.jwk.Curve;
+import com.nimbusds.jose.jwk.ECKey;
+import com.nimbusds.jose.jwk.JWK;
+import com.nimbusds.jose.jwk.JWKMatcher;
+import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.jose.jwk.KeyType;
+import com.nimbusds.jose.jwk.KeyUse;
+import com.nimbusds.jose.jwk.OctetKeyPair;
+import com.nimbusds.jose.jwk.OctetSequenceKey;
+import com.nimbusds.jose.jwk.RSAKey;
+import com.nimbusds.jose.util.Base64URL;
+import com.nimbusds.jose.util.JSONObjectUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.text.ParseException;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+public class JWEUtil {
+
+	private static Logger logger = LoggerFactory.getLogger(JWEUtil.class);
+
+	/**
+	 * Selects the first key in a JWK set JSON object that the recipient of the set could
+	 * actually use for encrypting to its owner: the first key that parses as a supported JOSE
+	 * key type and is not restricted to signing. The set may contain unusable keys (e.g.
+	 * post-quantum keys advertised for crypto agility) that a conformant recipient skips -
+	 * RFC 7517 section 5. Each skipped key is recorded in {@code skippedKeys} - with the reason
+	 * it was skipped - so the calling condition can log it into the test log.
+	 * Returns null when the set contains no usable key (or has no "keys" array at all).
+	 */
+	public static JWK selectFirstUsableEncKey(JsonObject jwksJsonObject, List<JWKUtil.SkippedJwk> skippedKeys) {
+		if (jwksJsonObject == null) {
+			return null;
+		}
+		JWKSet jwkSet;
+		try {
+			jwkSet = JWKUtil.parseJWKSetLeniently(jwksJsonObject.toString(), skippedKeys);
+		} catch (ParseException e) {
+			// not a JWK set object with a "keys" array - no usable key in it
+			return null;
+		}
+		for (JWK jwk : jwkSet.getKeys()) {
+			if (!KeyUse.SIGNATURE.equals(jwk.getKeyUse())) {
+				return jwk;
+			}
+			skippedKeys.add(new JWKUtil.SkippedJwk(
+				JsonParser.parseString(jwk.toJSONString()), "key is restricted to signing (\"use\":\"sig\")"));
+		}
+		return null;
+	}
+
+	/**
+	 * Returns a key that has the correct key type and optionally use=enc,
+	 * or null if no key was found.
+	 * Only for RSA or EC keys.
+	 * @param jwkSet
+	 * @param alg
+	 * @return
+	 */
+	public static JWK selectAsymmetricKeyForEncryption(JWKSet jwkSet, JWEAlgorithm alg) {
+		return selectAsymmetricKeyForEncryption(jwkSet, alg, null);
+	}
+
+	/**
+	 * Returns a key that has the correct key type and optionally use=enc,
+	 * preferring an exact kid match when one is available from the JWE header.
+	 * Only for RSA or EC keys.
+	 * @param jwkSet
+	 * @param alg
+	 * @param kid
+	 * @return
+	 */
+	public static JWK selectAsymmetricKeyForEncryption(JWKSet jwkSet, JWEAlgorithm alg, String kid) {
+		if(jwkSet==null) {
+			return null;
+		}
+
+		KeyType keyType = null;
+		if(JWEAlgorithm.Family.RSA.contains(alg)) {
+			keyType = KeyType.RSA;
+		} else if(JWEAlgorithm.Family.ECDH_ES.contains(alg)) {
+			keyType = KeyType.EC;
+		}
+
+		JWKMatcher jwkMatcher = new JWKMatcher.Builder().keyType(keyType).keyUses(KeyUse.ENCRYPTION, null).build();
+		boolean requiresKidMatch = kid != null && !kid.isBlank();
+		JWK currentMatch = null;
+		for(JWK jwk : jwkSet.getKeys()) {
+			if(jwkMatcher.matches(jwk)) {
+				if (requiresKidMatch) {
+					if (kid.equals(jwk.getKeyID())) {
+						return jwk;
+					}
+					continue;
+				}
+				if(currentMatch==null) {
+					currentMatch = jwk;
+				} else {
+					if(!KeyUse.ENCRYPTION.equals(currentMatch.getKeyUse()) && KeyUse.ENCRYPTION.equals(jwk.getKeyUse())) {
+						//this is a better match
+						currentMatch = jwk;
+					}
+				}
+			}
+		}
+		return currentMatch;
+	}
+
+	/**
+	 * https://openid.net/specs/openid-connect-core-1_0.html#Encryption
+	 * The symmetric encryption key is derived from the client_secret value by using a left truncated SHA-2
+	 * hash of the octets of the UTF-8 representation of the client_secret.
+	 * For keys of 256 or fewer bits, SHA-256 is used; for keys of 257-384 bits, SHA-384 is used;
+	 * for keys of 385-512 bits, SHA-512 is used. The hash value MUST be left truncated to the appropriate
+	 * bit length for the AES key wrapping or direct encryption algorithm used, for instance,
+	 * truncating the SHA-256 hash to 128 bits for A128KW.
+	 *
+	 * @param algorithm
+	 * @param inputString
+	 * @return
+	 */
+	public static byte[] deriveEncryptionKey(String algorithm, String inputString)
+	{
+		MessageDigest digester;
+		int targetLength = 16;
+		String digestAlgorithm = "SHA-256";
+
+		String matchedNumber = getKeyLengthFromAlg(algorithm);
+		if (matchedNumber == null) {
+			throw new RuntimeException("Unable to parse key bit length from algorithm " + algorithm);
+		}
+
+		switch (matchedNumber) {
+			case "128":
+				targetLength = 16;
+				break;
+			case "192":
+				targetLength = 24;
+				break;
+			case "256":
+				targetLength = 32;
+				break;
+			default:
+				throw new RuntimeException("Unexpected algorithm:" + algorithm);
+		}
+
+		try {
+			digester = MessageDigest.getInstance(digestAlgorithm);
+		} catch (NoSuchAlgorithmException e) {
+			//should not happen in practice. possible only if sha256 is not available
+			throw new RuntimeException(e);
+		}
+
+		byte[] digest = digester.digest(inputString.getBytes(StandardCharsets.UTF_8));
+
+		byte[] keyBytes = new byte[targetLength];
+		System.arraycopy(digest, 0, keyBytes, 0, targetLength);
+
+		if(logger.isDebugEnabled()) {
+			logger.debug("Derived Key:" + Base64URL.encode(keyBytes).toJSONString());
+		}
+
+		return keyBytes;
+	}
+
+	private static String getKeyLengthFromAlg(String algorithm) {
+		// Regexes and logic from Filip's openid-client, "secretForAlg(alg)" in client.js
+		Matcher matcher = Pattern.compile("^A(\\d{3})(?:GCM)?KW$").matcher(algorithm);
+		if (matcher.matches()) {
+			return matcher.group(1);
+		}
+
+		matcher = Pattern.compile("^A(\\d{3})(?:GCM|CBC-HS(\\d{3}))").matcher(algorithm);
+		if(matcher.matches()) {
+				return matcher.group(2) != null ? matcher.group(2) : matcher.group(1);
+		}
+
+		return null;
+	}
+
+	/**
+	 * AES or "dir" only
+	 * @param secret
+	 * @param algorithm
+	 * @param encMethod
+	 * @param keyId
+	 * @return
+	 * @throws KeyLengthException
+	 */
+	public static JWK createSymmetricJWKForAlgAndSecret(String secret, JWEAlgorithm algorithm, EncryptionMethod encMethod, String keyId) throws KeyLengthException {
+		OctetSequenceKey key = null;
+		if(JWEAlgorithm.Family.AES_GCM_KW.contains(algorithm) || JWEAlgorithm.Family.AES_KW.contains(algorithm)) {
+			byte[] secretBytes = deriveEncryptionKey(algorithm.getName(), secret);
+			OctetSequenceKey.Builder builder = new OctetSequenceKey.Builder(secretBytes).
+				keyUse(KeyUse.ENCRYPTION).algorithm(algorithm);
+			if(keyId != null) {
+				builder.keyID(keyId);
+			}
+			key = builder.build();
+		} else if(JWEAlgorithm.DIR.equals(algorithm)) {
+			byte[] secretBytes = deriveEncryptionKey(encMethod.getName(), secret);
+			OctetSequenceKey.Builder builder = new OctetSequenceKey.Builder(secretBytes).
+				keyUse(KeyUse.ENCRYPTION).algorithm(algorithm);
+			if(keyId != null) {
+				builder.keyID(keyId);
+			}
+			key = builder.build();
+		}
+		return key;
+	}
+
+	/**
+	 * may return null when it doesn't know how to handle the key
+	 * @param key
+	 * @return AESEncrypter or DirectEncrypter or RSAEncrypter or ECDHEncrypter
+	 * @throws JOSEException
+	 */
+	public static JWEEncrypter createEncrypter(JWK key) throws JOSEException
+	{
+		if(key==null) {
+			return null;
+		}
+		if(KeyType.OCT.equals(key.getKeyType())) {
+			if(AESEncrypter.SUPPORTED_ALGORITHMS.contains(key.getAlgorithm()) ) {
+				AESEncrypter aesEncrypter = new AESEncrypter((OctetSequenceKey)key);
+				return aesEncrypter;
+			} else if(DirectEncrypter.SUPPORTED_ALGORITHMS.contains(key.getAlgorithm())) {
+				DirectEncrypter directEncrypter = new DirectEncrypter((OctetSequenceKey)key);
+				return directEncrypter;
+			} else {
+				throw new RuntimeException("Unexpected algorithm:" + key.getAlgorithm());
+			}
+		} else if(KeyType.RSA.equals(key.getKeyType())) {
+			RSAEncrypter rsaEncrypter = new RSAEncrypter((RSAKey)key);
+			return rsaEncrypter;
+		} else if(KeyType.EC.equals(key.getKeyType())) {
+			ECDHEncrypter ecdhEncrypter = new ECDHEncrypter((ECKey)key);
+			return ecdhEncrypter;
+		} else if(KeyType.OKP.equals(key.getKeyType())) {
+			OctetKeyPair octetKeyPair = (OctetKeyPair)key;
+			if(Curve.Ed25519.equals(octetKeyPair.getCurve())) {
+				X25519Encrypter edEncrypter = new X25519Encrypter(octetKeyPair);
+				return edEncrypter;
+			}
+		}
+		throw new RuntimeException("Unexpected key type:" + key.getKeyType());
+	}
+
+	/**
+	 * @param key
+	 * @return AESDecrypter or DirectDecrypter or RSADecrypter or ECDHDecrypter or X25519Decrypter or null
+	 * @throws JOSEException
+	 */
+	public static JWEDecrypter createDecrypter(JWK key) throws JOSEException
+	{
+		Algorithm algorithm = key.getAlgorithm();
+		if (algorithm == null) {
+			throw new RuntimeException("No 'alg' in key: " + key.toJSONString());
+		}
+		return createDecrypter(algorithm, key);
+	}
+
+	public static JWEDecrypter createDecrypter(String algStr, JWK key) throws JOSEException
+	{
+		Algorithm algorithm = new Algorithm(algStr);
+		if (algorithm == null) {
+			throw new RuntimeException("No 'alg' in key: " + key.toJSONString());
+		}
+		return createDecrypter(algorithm, key);
+	}
+
+	public static JWEDecrypter createDecrypter(Algorithm algorithm, JWK key) throws JOSEException
+	{
+		if (key == null) {
+			throw new RuntimeException("Private key is required for "+algorithm.toString());
+		}
+		if(AESDecrypter.SUPPORTED_ALGORITHMS.contains(algorithm)) {
+			AESDecrypter decrypter = new AESDecrypter((OctetSequenceKey)key);
+			return decrypter;
+		} else if(DirectDecrypter.SUPPORTED_ALGORITHMS.contains(algorithm)) {
+			DirectDecrypter directDecrypter = new DirectDecrypter((OctetSequenceKey)key);
+			return directDecrypter;
+		} else if(RSADecrypter.SUPPORTED_ALGORITHMS.contains(algorithm)) {
+			RSADecrypter rsaDecrypter = new RSADecrypter((RSAKey)key);
+			return rsaDecrypter;
+		} else if(ECDHDecrypter.SUPPORTED_ALGORITHMS.contains(algorithm)) {
+			ECDHDecrypter ecdhDecrypter = new ECDHDecrypter((ECKey) key);
+			return ecdhDecrypter;
+		} else if(X25519Decrypter.SUPPORTED_ALGORITHMS.contains(algorithm)) {
+			X25519Decrypter decrypter = new X25519Decrypter((OctetKeyPair) key);
+			return decrypter;
+		} else {
+			throw new RuntimeException("Unknown algorithm '"+algorithm.toString()+"' for key: " + key.toJSONString());
+		}
+	}
+
+	public static boolean isAsymmetricJWEAlgorithm(String algorithmName) {
+		JWEAlgorithm algorithm = JWEAlgorithm.parse(algorithmName);
+		return JWEAlgorithm.Family.ASYMMETRIC.contains(algorithm);
+	}
+
+	public static boolean isSymmetricJWEAlgorithm(String algorithmName) {
+		JWEAlgorithm algorithm = JWEAlgorithm.parse(algorithmName);
+		return JWEAlgorithm.Family.SYMMETRIC.contains(algorithm);
+	}
+
+	/**
+	 * Checks if alg is a JWE algorithm registered in either the asymmetric or
+	 * symmetric Nimbus JWEAlgorithm families. Used to validate published
+	 * {@code alg_values_supported} metadata entries.
+	 */
+	public static boolean isValidJWEAlgorithm(String algorithmName) {
+		JWEAlgorithm algorithm = JWEAlgorithm.parse(algorithmName);
+		return JWEAlgorithm.Family.ASYMMETRIC.contains(algorithm)
+			|| JWEAlgorithm.Family.SYMMETRIC.contains(algorithm);
+	}
+
+	/**
+	 * Returns the names of asymmetric JWE algorithms only — the set of
+	 * {@code alg} values that can be used in flows where the recipient publishes
+	 * its public key (e.g. OID4VCI credential response encryption).
+	 */
+	public static List<String> validAsymmetricJWEAlgorithms() {
+		return JWEAlgorithm.Family.ASYMMETRIC
+			.stream()
+			.map(JWEAlgorithm::getName)
+			.collect(Collectors.toList());
+	}
+
+	/**
+	 * Checks if {@code enc} names a JWA content encryption algorithm registered in
+	 * the IANA JOSE registry. Restricted to the RFC 7518 §5 set
+	 * ({@code A128CBC-HS256}, {@code A192CBC-HS384}, {@code A256CBC-HS512},
+	 * {@code A128GCM}, {@code A192GCM}, {@code A256GCM}); other Nimbus-defined
+	 * extras (e.g. deprecated aliases, {@code XC20P}) are intentionally excluded
+	 * because they are not in the JWA registry and would not interoperate.
+	 */
+	public static boolean isValidEncryptionMethod(String enc) {
+		EncryptionMethod method = EncryptionMethod.parse(enc);
+		return EncryptionMethod.Family.AES_CBC_HMAC_SHA.contains(method)
+			|| EncryptionMethod.Family.AES_GCM.contains(method);
+	}
+
+	public static List<String> validEncryptionMethods() {
+		return Stream.of(
+				EncryptionMethod.Family.AES_CBC_HMAC_SHA,
+				EncryptionMethod.Family.AES_GCM
+			)
+			.flatMap(family -> family.stream())
+			.map(EncryptionMethod::getName)
+			.collect(Collectors.toList());
+	}
+
+	/**
+	 * Returns the header of an encrypted or parsed {@link JWEObject} as a JsonObject.
+	 * Mirrors {@code JWTUtil.jwtHeaderAsJsonObject} but for bare JWEs. Nimbus always
+	 * strips null-valued header parameters.
+	 *
+	 * @param jweObject the JWE — either freshly encrypted via
+	 *                  {@link JWEObject#encrypt(JWEEncrypter)} or parsed via
+	 *                  {@link JWEObject#parse(String)}
+	 * @return the JWE header as a JsonObject
+	 */
+	public static JsonObject jweHeaderAsJsonObject(JWEObject jweObject) {
+		return JsonParser.parseString(
+			JSONObjectUtils.toJSONString(jweObject.getHeader().toJSONObject())).getAsJsonObject();
+	}
+
+	/**
+	 * Parses a compact-serialized JWE whose payload is a plain JSON object and returns a
+	 * log-friendly JsonObject with the same field names used by
+	 * {@code JWTUtil.jwtStringToJsonObjectForEnvironment(String, JsonObject, JsonObject)}
+	 * so test logs render JWT-wrapped and JSON-wrapped encrypted content the same way:
+	 *
+	 * <ul>
+	 *   <li>{@code value} — plaintext serialized as a string (mirroring the JWT variant
+	 *       where {@code value} is the decrypted inner JWT compact string, not the outer
+	 *       JWE)</li>
+	 *   <li>{@code claims} — plaintext parsed as a JsonObject</li>
+	 *   <li>{@code jwe_header} — header of the outer JWE</li>
+	 * </ul>
+	 *
+	 * <p>Unlike the JWT variant, there is no {@code header} entry because OID4VCI JWEs
+	 * wrap a plain JSON body rather than a nested signed JWT — there is no inner JWT
+	 * header to report.
+	 *
+	 * <p>This method does not attempt to decrypt the JWE — the caller is expected to
+	 * already have the plaintext and passes it as {@code payload}.
+	 *
+	 * @param jweAsString compact serialization of the JWE
+	 * @param payload     the plaintext JSON payload
+	 * @return JsonObject with {@code value}, {@code claims} and {@code jwe_header} entries
+	 * @throws ParseException if the compact JWE cannot be parsed
+	 */
+	public static JsonObject jweStringToJsonObjectForEnvironment(String jweAsString, JsonObject payload) throws ParseException {
+		JWEObject jweObject = JWEObject.parse(jweAsString);
+		JsonObject out = new JsonObject();
+		out.addProperty("value", payload.toString());
+		out.add("claims", payload);
+		out.add("jwe_header", jweHeaderAsJsonObject(jweObject));
+		return out;
+	}
+
+}

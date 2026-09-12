@@ -1,0 +1,103 @@
+name: PrismPM SDK
+description: Run one PrismPM command through an immutable SDK image
+inputs:
+  sdk-image:
+    description: Registry-qualified PrismPM SDK manifest-list digest
+    required: true
+  command:
+    description: PrismPM command
+    required: true
+  context:
+    description: Repository-relative project context
+    default: .
+  reference:
+    description: Immutable product reference, or tagged destination for build
+    default: ""
+  release:
+    description: Named modeled release selected for build (for example A or B)
+    default: ""
+  target:
+    description: Modeled target ID for lifecycle commands
+    default: ""
+  plan:
+    description: Exact deployment-plan digest required by a state-bound deploy
+    default: ""
+  backup:
+    description: Project-relative canonical backup metadata for restore
+    default: ""
+  restore-target:
+    description: Distinct clean target used to prove restore
+    default: ""
+  detach:
+    description: Leave a successful local run active
+    default: "false"
+  authorized:
+    description: Explicit protected-environment authorization for destroy
+    default: "false"
+  secret-directory:
+    description: Repository-relative directory containing modeled external secret files
+    default: .prismpm/secrets
+  bundle:
+    description: Project-relative standard Sigstore bundle for verify-signature; sign creates its own verified bundle
+    default: ""
+  trusted-root:
+    description: Project-relative canonical Sigstore trusted-root JSON
+    default: ""
+  policy:
+    description: Project-relative canonical PrismPM promotion-policy JSON
+    default: ""
+  promotion-to:
+    description: Immediate promotion destination (candidate or accepted)
+    default: ""
+  environment:
+    description: Protected GitHub environment authorizing production signing and promotion
+    default: ""
+outputs:
+  result:
+    description: Canonical PrismPM result JSON
+    value: ${{ steps.run.outputs.result }}
+  release-digest:
+    description: Immutable product-release digest when returned
+    value: ${{ steps.run.outputs.release-digest }}
+  plan-digest:
+    description: Immutable deployment-plan digest when returned
+    value: ${{ steps.run.outputs.plan-digest }}
+  evidence-digest:
+    description: Immutable deployment-evidence digest when returned
+    value: ${{ steps.run.outputs.evidence-digest }}
+  transcript-digest:
+    description: Immutable production-conformance transcript digest when returned
+    value: ${{ steps.run.outputs.transcript-digest }}
+  policy-path:
+    description: SDK-owned project-relative canonical promotion policy when prepared
+    value: ${{ steps.run.outputs.policy-path }}
+  trusted-root-path:
+    description: SDK-owned project-relative canonical Sigstore trusted root when prepared
+    value: ${{ steps.run.outputs.trusted-root-path }}
+  signature-referrer:
+    description: OCI referrer digest of a verified signature result when returned
+    value: ${{ steps.run.outputs.signature-referrer }}
+runs:
+  using: composite
+  steps:
+    - id: run
+      shell: bash
+      env:
+        PRISMPM_ACTION_COMMAND: ${{ inputs.command }}
+        PRISMPM_ACTION_BUNDLE: ${{ inputs.bundle }}
+        PRISMPM_ACTION_BACKUP: ${{ inputs.backup }}
+        PRISMPM_ACTION_CONTEXT: ${{ inputs.context }}
+        PRISMPM_ACTION_DETACH: ${{ inputs.detach }}
+        PRISMPM_ACTION_AUTHORIZED: ${{ inputs.authorized }}
+        PRISMPM_ACTION_PLAN: ${{ inputs.plan }}
+        PRISMPM_ACTION_REFERENCE: ${{ inputs.reference }}
+        PRISMPM_ACTION_RELEASE: ${{ inputs.release }}
+        PRISMPM_ACTION_POLICY: ${{ inputs.policy }}
+        PRISMPM_ACTION_PROMOTION_TO: ${{ inputs.promotion-to }}
+        PRISMPM_ACTION_ENVIRONMENT: ${{ inputs.environment }}
+        PRISMPM_ACTION_RESTORE_TARGET: ${{ inputs.restore-target }}
+        PRISMPM_ACTION_SECRET_DIRECTORY: ${{ inputs.secret-directory }}
+        PRISMPM_ACTION_SDK_IMAGE: ${{ inputs.sdk-image }}
+        PRISMPM_ACTION_TARGET: ${{ inputs.target }}
+        PRISMPM_ACTION_TRUSTED_ROOT: ${{ inputs.trusted-root }}
+      run: ${{ github.action_path }}/entrypoint.sh

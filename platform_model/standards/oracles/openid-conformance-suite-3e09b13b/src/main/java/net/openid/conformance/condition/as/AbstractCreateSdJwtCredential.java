@@ -1,0 +1,333 @@
+package net.openid.conformance.condition.as;
+
+import com.authlete.sd.Disclosure;
+import com.authlete.sd.SDJWT;
+import com.authlete.sd.SDObjectBuilder;
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JOSEObjectType;
+import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.JWSHeader;
+import com.nimbusds.jose.JWSSigner;
+import com.nimbusds.jose.crypto.ECDSASigner;
+import com.nimbusds.jose.jwk.ECKey;
+import com.nimbusds.jose.jwk.JWK;
+import com.nimbusds.jose.produce.JWSSignerFactory;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.SignedJWT;
+import net.openid.conformance.condition.AbstractCondition;
+import net.openid.conformance.condition.client.DcqlQueryUtils;
+import net.openid.conformance.condition.client.ValidateSdJwtKbSdHash;
+import net.openid.conformance.extensions.MultiJWSSignerFactory;
+import net.openid.conformance.testmodule.Environment;
+
+import java.security.NoSuchAlgorithmException;
+import java.text.ParseException;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+public abstract class AbstractCreateSdJwtCredential extends AbstractCondition {
+
+	private static final Gson gson = new Gson();
+
+	/**
+	 * The PID picture (portrait) claim: a data URL containing a base64-encoded JPEG as required by
+	 * the PID Rulebook. A tiny generated placeholder image rather than a real portrait.
+	 */
+	private static final String PLACEHOLDER_PORTRAIT_DATA_URL = "data:image/jpeg;base64,"
+		+ "/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDABALDA4MChAODQ4SERATGCgaGBYWGDEjJR0oOjM9PDkzODdASFxOQERXRTc4"
+		+ "UG1RV19iZ2hnPk1xeXBkeFxlZ2P/2wBDARESEhgVGC8aGi9jQjhCY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2Nj"
+		+ "Y2NjY2NjY2NjY2NjY2NjY2NjY2P/wAARCAAFAAQDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcI"
+		+ "CQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRol"
+		+ "JicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ip"
+		+ "qrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAA"
+		+ "AAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLR"
+		+ "ChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaX"
+		+ "mJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEA"
+		+ "PwCnRRRWZqf/2Q==";
+
+	protected final Map<String, Object> additionalClaims;
+
+	protected AbstractCreateSdJwtCredential() {
+		this(null);
+	}
+
+	protected AbstractCreateSdJwtCredential(Map<String, Object> additionalClaims) {
+		this.additionalClaims = additionalClaims;
+	}
+
+	public String keyBindingJwt(ECKey privateKey, String aud, String nonce, String sdHash) {
+		return keyBindingJwtWithIat(privateKey, aud, nonce, sdHash, Instant.now().getEpochSecond());
+	}
+
+	public String keyBindingJwtWithIat(ECKey privateKey, String aud, String nonce, String sdHash, long iat) {
+		// as per https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-14.html#section-4.3
+		JWSHeader header = new JWSHeader.Builder(JWSAlgorithm.ES256).type(new JOSEObjectType("kb+jwt")).build();
+
+		Map<String, Object> claims = new HashMap<>();
+		claims.put("iat", iat);
+		claims.put("aud", aud);
+		claims.put("nonce", nonce);
+		claims.put("sd_hash", sdHash);
+
+		JWTClaimsSet claimsSet;
+		try {
+			claimsSet = JWTClaimsSet.parse(claims);
+		} catch (ParseException e) {
+			throw error("Failed to parse key binding JWT claims", e);
+		}
+
+		SignedJWT jwt = new SignedJWT(header, claimsSet);
+
+		try {
+			JWSSigner signer = new ECDSASigner(privateKey);
+			jwt.sign(signer);
+		} catch (JOSEException e) {
+			throw error("Failed to sign key binding JWT", e);
+		}
+
+		return jwt.serialize();
+	}
+
+	/**
+	 * The issuance time (epoch seconds) embedded as the credential's {@code iat} (and the base for
+	 * {@code exp}). Defaults to the precise current time. The VCI issuer emulator overrides this to
+	 * round to the hour so that a batch (or several same-dataset credentials) do not share a precise,
+	 * high-entropy timestamp that lets verifiers correlate them — see RFC 9901 §10.1.
+	 */
+	protected long issuanceTimeSeconds() {
+		return Instant.now().getEpochSecond();
+	}
+
+	protected String createSdJwt(Environment env, JWK publicJWK, ECKey privateKey, String credentialType) {
+		return createSdJwt(env, publicJWK, privateKey, credentialType, additionalClaims);
+	}
+
+	protected String createSdJwt(Environment env, JWK publicJWK, ECKey privateKey, String credentialType,
+								 Map<String, Object> credentialClaims) {
+		JsonElement credentialSigningJwkEl = env.getElementFromObject("config", "credential.signing_jwk");
+		if (credentialSigningJwkEl == null) {
+			throw error("'Signing JWK' field is missing from the 'Credential Issuer' section in the test configuration");
+		}
+		JWK credentialSigningJwk = null;
+		try {
+			credentialSigningJwk = JWK.parse(credentialSigningJwkEl.toString());
+		} catch (ParseException e) {
+			throw error("Failed to parse the 'Signing JWK' field in the 'Credential Issuer' section of the test configuration", e, args("signing_jwk", credentialSigningJwkEl));
+		}
+
+		// tries to generate a credential that's valid as per https://bmi.usercontent.opencode.de/eudi-wallet/eidas-2.0-architekturkonzept/functions/00-pid-issuance-and-presentation/#pid-contents
+
+		SDObjectBuilder builder = new SDObjectBuilder();
+		ArrayList<Disclosure> disclosures = new ArrayList<>();
+
+		builder.putClaim("vct", credentialType);
+
+		switch (credentialType) {
+			case "urn:openid:example:certification:1":
+				disclosures.add(builder.putSDClaim("product", "Some Product"));
+				disclosures.add(builder.putSDClaim("version", "1.2.3"));
+				disclosures.add(builder.putSDClaim("issuance_date", LocalDate.now(ZoneId.of("UTC")).toString()));
+				break;
+			// as per https://github.com/eu-digital-identity-wallet/eudi-doc-attestation-rulebooks-catalog/blob/main/rulebooks/pid/pid-rulebook.md#42-note-on-vct
+			case "urn:eudi:pid:1": // fall-through
+			default:
+			{
+				/*
+				 * contents as per https://github.com/eu-digital-identity-wallet/eudi-doc-attestation-rulebooks-catalog/blob/main/rulebooks/pid/pid-rulebook.md#41-encoding-of-pid-attributes-and-metadata
+				 * mandatory elements are defined here:
+				 * https://github.com/eu-digital-identity-wallet/eudi-doc-attestation-rulebooks-catalog/blob/main/rulebooks/pid/pid-rulebook.md#22-mandatory-attributes-specified-in-cir-20242977
+				 *
+				 * We aim to include all mandatory elements
+				 */
+
+				disclosures.add(builder.putSDClaim("given_name", "Jean"));
+				disclosures.add(builder.putSDClaim("family_name", "Dupont"));
+				disclosures.add(builder.putSDClaim("birthdate", "1980-05-23"));
+
+				Disclosure disclosure0 = new Disclosure("FR");
+				disclosures.add(disclosure0);
+				Map<String, Object> element = disclosure0.toArrayElement();
+				disclosures.add(builder.putSDClaim("nationalities", List.of(element)));
+
+				SDObjectBuilder pobBuilder = new SDObjectBuilder();
+				disclosures.add(pobBuilder.putSDClaim("country", "FR"));
+				Map<String, Object> placeOfBirth = pobBuilder.build();
+
+				disclosures.add(builder.putSDClaim("place_of_birth", placeOfBirth));
+
+				disclosures.add(builder.putSDClaim("issuing_authority", "Test Issuing Authority"));
+				disclosures.add(builder.putSDClaim("issuing_country", "FR"));
+				disclosures.add(builder.putSDClaim("picture", PLACEHOLDER_PORTRAIT_DATA_URL));
+			}
+		}
+
+
+		// Only add cnf claim if cryptographic binding is required (publicJWK is not null)
+		if (publicJWK != null) {
+			Map<String, Object> cnf = new HashMap<>();
+			cnf.put("jwk", publicJWK.toJSONObject());
+			builder.putClaim("cnf", cnf);
+		}
+
+		long iat = issuanceTimeSeconds();
+		builder.putClaim("iat", iat);
+		builder.putClaim("exp", Instant.ofEpochSecond(iat).plus(14, ChronoUnit.DAYS).getEpochSecond());
+		String baseUrl = env.getString("base_url");
+		builder.putClaim("iss", baseUrl);
+
+		// add support for adding additional claims from env if present
+		if (credentialClaims != null) {
+			for(var additionalClaim : credentialClaims.entrySet()) {
+				builder.putClaim(additionalClaim.getKey(), additionalClaim.getValue());
+			}
+		}
+
+		builder.putDecoyDigests(3);
+
+		Map<String, Object> claims = builder.build();
+		JWSAlgorithm signingAlgorithm = getSigningAlgorithm(credentialSigningJwk);
+		JWSHeader.Builder headerBuilder = new JWSHeader.Builder(signingAlgorithm)
+			.type(new JOSEObjectType("dc+sd-jwt"));
+		if (credentialSigningJwk.getX509CertChain() != null) {
+			headerBuilder.x509CertChain(credentialSigningJwk.getX509CertChain());
+		}
+		JWSHeader header =
+			headerBuilder.build();
+
+		JWTClaimsSet claimsSet;
+		try {
+			claimsSet = JWTClaimsSet.parse(claims);
+		} catch (ParseException e) {
+			throw error("Failed to parse SD-JWT claims", e);
+		}
+
+		SignedJWT jwt = new SignedJWT(header, claimsSet);
+
+		try {
+			JWSSignerFactory signerFactory = MultiJWSSignerFactory.getInstance();
+			JWSSigner signer = signerFactory.createJWSSigner(credentialSigningJwk, signingAlgorithm);
+			jwt.sign(signer);
+		} catch (JOSEException e) {
+			throw error("Failed to sign SD-JWT credential", e, args("signing_jwk", credentialSigningJwkEl));
+		}
+
+		// Filter disclosures to only include claims requested in the DCQL query (data minimization)
+		List<Disclosure> filteredDisclosures = filterDisclosuresToDcqlRequest(env, disclosures);
+
+		String bindingJwt = null;
+
+		if (privateKey != null) {
+			String aud = env.getString("client", "client_id");
+			String sd_hash = null;
+			try {
+				sd_hash = ValidateSdJwtKbSdHash.getCalculatedSdHash(new SDJWT(jwt.serialize(), filteredDisclosures).toString());
+			} catch (NoSuchAlgorithmException e) {
+				throw error("Failed to create hash", e);
+			}
+			String nonce = env.getString("nonce");
+			bindingJwt = keyBindingJwt(privateKey, aud, nonce, sd_hash);
+		}
+		SDJWT sdJwt = new SDJWT(jwt.serialize(), filteredDisclosures, bindingJwt);
+
+		return sdJwt.toString();
+	}
+
+	/**
+	 * Filter disclosures to only include claims requested in the DCQL query.
+	 * If no DCQL query is present, returns all disclosures. If the DCQL credential
+	 * query omits claims entirely, returns no selectively-disclosable claims.
+	 *
+	 * Reachability-based: starts from object property disclosures whose claim name is
+	 * requested, then transitively keeps any nested SD claim or array element disclosure
+	 * referenced from a kept disclosure's value. Array element disclosures whose parent
+	 * was filtered out are dropped, since leaking them without their parent is itself an
+	 * over-disclosure.
+	 */
+	private List<Disclosure> filterDisclosuresToDcqlRequest(Environment env, List<Disclosure> disclosures) {
+		JsonObject dcqlQuery = env.getObject(ExtractDCQLQueryFromAuthorizationRequest.ENV_KEY);
+		if (dcqlQuery == null) {
+			// No DCQL in env: VCI issuance flows have no presentation request, and VPID3 with the
+			// Presentation Exchange query language never extracts a DCQL object. Return the full set.
+			return disclosures;
+		}
+
+		// TODO: This currently inherits DcqlQueryUtils' "flatten all claims" behavior and therefore
+		// does not yet minimize disclosures based on DCQL claim_sets semantics.
+		Set<String> requestedClaims = DcqlQueryUtils.extractRequestedClaimNames(dcqlQuery);
+
+		if (requestedClaims.isEmpty()) {
+			log("DCQL query did not request any claims, omitting all selectively-disclosable disclosures",
+				args("total_disclosures", disclosures.size()));
+			return List.of();
+		}
+
+		Map<String, Disclosure> byDigest = new HashMap<>();
+		for (Disclosure d : disclosures) {
+			byDigest.put(d.digest(), d);
+		}
+
+		Set<Disclosure> kept = new LinkedHashSet<>();
+		Deque<Disclosure> toScan = new ArrayDeque<>();
+		for (Disclosure d : disclosures) {
+			String claimName = d.getClaimName();
+			if (claimName != null && requestedClaims.contains(claimName)) {
+				kept.add(d);
+				toScan.add(d);
+			}
+		}
+
+		while (!toScan.isEmpty()) {
+			Disclosure current = toScan.poll();
+			Set<String> referencedDigests = new HashSet<>();
+			DcqlQueryUtils.collectReferencedDigests(gson.toJsonTree(current.getClaimValue()), referencedDigests);
+			for (String digest : referencedDigests) {
+				Disclosure child = byDigest.get(digest);
+				if (child != null && kept.add(child)) {
+					toScan.add(child);
+				}
+			}
+		}
+
+		List<Disclosure> filtered = new ArrayList<>();
+		for (Disclosure d : disclosures) {
+			if (kept.contains(d)) {
+				filtered.add(d);
+			}
+		}
+
+		log("Filtered SD-JWT disclosures to DCQL requested claims",
+			args("requested_claims", requestedClaims,
+				"total_disclosures", disclosures.size(),
+				"filtered_disclosures", filtered.size()));
+
+		return filtered;
+	}
+
+	private JWSAlgorithm getSigningAlgorithm(JWK signingJwk) {
+		if (signingJwk.getAlgorithm() != null) {
+			return JWSAlgorithm.parse(signingJwk.getAlgorithm().getName());
+		}
+
+		// Keep historical behavior for EC signing keys if alg is omitted.
+		if (signingJwk instanceof ECKey) {
+			return JWSAlgorithm.ES256;
+		}
+
+		throw error("'Signing JWK' field in the 'Credential Issuer' section of the test configuration must include an 'alg' claim specifying the signing algorithm, as there is no default for this key type",
+			args("kty", signingJwk.getKeyType().getValue(), "kid", signingJwk.getKeyID()));
+	}
+}

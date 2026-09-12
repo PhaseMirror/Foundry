@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta charset="UTF-8">
+    <title>OIDF Conformance: Test Plans</title>
+
+    <link rel="preload" as="font" type="font/woff2" href="/fonts/inter/Inter-Variable.woff2" crossorigin>
+    <link rel="stylesheet" href="/css/oidf-tokens.css">
+    <link rel="stylesheet" type="text/css" href="css/layout.css">
+    <link rel="stylesheet" href="/css/oidf-app.css">
+
+    <script>window.litDisableBundleWarning = true;</script>
+    <script type="importmap">{"imports":{"lit":"/vendor/lit/lit.js","lit/":"/vendor/lit/","lit/directives/async-append.js":"/vendor/lit/lit.js","lit/directives/async-replace.js":"/vendor/lit/lit.js","lit/directives/cache.js":"/vendor/lit/lit.js","lit/directives/choose.js":"/vendor/lit/lit.js","lit/directives/class-map.js":"/vendor/lit/lit.js","lit/directives/guard.js":"/vendor/lit/lit.js","lit/directives/if-defined.js":"/vendor/lit/lit.js","lit/directives/join.js":"/vendor/lit/lit.js","lit/directives/keyed.js":"/vendor/lit/lit.js","lit/directives/live.js":"/vendor/lit/lit.js","lit/directives/map.js":"/vendor/lit/lit.js","lit/directives/range.js":"/vendor/lit/lit.js","lit/directives/ref.js":"/vendor/lit/lit.js","lit/directives/repeat.js":"/vendor/lit/lit.js","lit/directives/style-map.js":"/vendor/lit/lit.js","lit/directives/template-content.js":"/vendor/lit/lit.js","lit/directives/unsafe-html.js":"/vendor/lit/lit.js","lit/directives/unsafe-svg.js":"/vendor/lit/lit.js","lit/directives/until.js":"/vendor/lit/lit.js","lit/directives/when.js":"/vendor/lit/lit.js","@lit/reactive-element":"/vendor/lit/lit.js","@lit/reactive-element/":"/vendor/lit/","lit-html":"/vendor/lit/lit.js","lit-html/":"/vendor/lit/","lit-element/":"/vendor/lit/","marked":"/vendor/marked/marked.esm.js","dompurify":"/vendor/dompurify/purify.es.mjs"}}</script>
+    <script type="module" src="/components/cts-navbar.js"></script>
+    <script type="module" src="/components/cts-view-tabs.js"></script>
+    <script type="module">
+      // A link into this page can carry the listing filters (owner / immutable
+      // / family / plan / variant.<k> / cert / from / to) in the query string.
+      // They are resolved here and handed to the component as a property,
+      // because they are an object and cannot be an attribute.
+      //
+      // This block MUST stay ABOVE the cts-plan-list module: deferred module
+      // scripts run in document order after parsing, so running first is what
+      // puts the property on the element BEFORE customElements.define()
+      // upgrades it — Lit re-applies own properties it finds at upgrade, so
+      // the connect-time /api/plan fetch already carries the filter and the
+      // listing never paints an unfiltered set it then has to correct.
+      import { planListFilterFromUrl } from "/components/plan-list-filter.js";
+      const listing = document.getElementById("plansListing");
+      if (listing) listing.filters = planListFilterFromUrl(window.location.search);
+    </script>
+    <script type="module" src="/components/cts-plan-list.js"></script>
+    <script type="module" src="/js/cts-toast-api.js"></script>
+    <script type="module" src="/components/cts-footer.js"></script>
+</head>
+
+<body>
+    <a class="oidf-skip-link" href="#main-content">Skip to main content</a>
+
+    <cts-navbar current-page="plans"></cts-navbar>
+
+    <main id="main-content" class="listing-page">
+        <!-- The Published-view descriptor (R22) lives as a help tooltip on the
+             Published tab inside cts-view-tabs (published-help), not as a page
+             heading or persistent paragraph. -->
+        <cts-view-tabs id="viewTabs" dataset-noun="Test Plans" create-test-href="schedule-test.html" published-help="Published test plans are conformance test configurations that implementers have chosen to make public. Browse them to see how others set up certification tests, or schedule your own."></cts-view-tabs>
+        <cts-plan-list id="plansListing"></cts-plan-list>
+        <script>
+            // First-paint gating (KTD3). This runs SYNCHRONOUSLY, before the
+            // deferred component modules evaluate — i.e. before cts-plan-list's
+            // connectedCallback fires its initial /api/plan fetch.
+            //
+            // - ?public=true present → Published is anonymous-permitted and
+            //   unambiguous, so fetch it now at connect (no auth gate). This
+            //   keeps the no-flash contract: exactly one /api/plan request and
+            //   it carries public=true (AE4).
+            // - No public param → the default My view depends on auth, which
+            //   resolves async. Suppress the
+            //   connect-time fetch (defer-initial-fetch) and show the list
+            //   loading state; the auth probe below resolves the dataset and
+            //   triggers the fetch (AE5: no premature Published fetch; R17).
+            (function () {
+                var params = new URLSearchParams(window.location.search);
+                var listing = document.getElementById('plansListing');
+                var tabs = document.getElementById('viewTabs');
+                // Cache-first auth guess avoids a My-tab flash for returning
+                // authed users; the authoritative value is set by the async
+                // /api/currentuser probe below. Reuses cts-navbar's
+                // sessionStorage cache key (shared contract).
+                var cachedUser = null;
+                try { cachedUser = sessionStorage.getItem('cts-navbar:user'); } catch (e) {}
+                // Seed the My tab from the cache so a returning authed user does
+                // not see it flash in after the async probe; the probe below is
+                // authoritative. (The Schedule-test CTA is unconditional, so it
+                // needs no auth seeding.)
+                if (cachedUser) {
+                    tabs.setAttribute('authenticated', '');
+                }
+                if (params.get('public') === 'true') {
+                    listing.setAttribute('is-public', '');
+                } else {
+                    listing.setAttribute('defer-initial-fetch', '');
+                }
+            })();
+        </script>
+    </main>
+
+    <script type="text/javascript">
+        // cts-plan-list owns fetch/render/modal/copy wiring. The page resolves
+        // session-derived state (auth + isAdmin via /api/currentuser), drives
+        // the My/Published tabs, and routes the component's cts-plan-navigate
+        // event into a real page navigation. The is-public / defer-initial-fetch
+        // attributes are set synchronously in the inline block above because
+        // they must land before the component's connectedCallback fires (KTD3).
+        document.addEventListener('DOMContentLoaded', () => {
+            const planList = document.querySelector('cts-plan-list');
+            const viewTabs = document.getElementById('viewTabs');
+            if (!planList) return;
+
+            // A single handler serves BOTH the tab click and the back/forward
+            // popstate — cts-view-tabs emits the same event for both.
+            if (viewTabs) {
+                viewTabs.addEventListener('cts-view-tab-change', (evt) => {
+                    const isPublic = !!(evt.detail && evt.detail.isPublic);
+                    if (isPublic) {
+                        planList.setAttribute('is-public', '');
+                    } else {
+                        planList.removeAttribute('is-public');
+                    }
+                    planList.fetchPlans();
+                });
+            }
+
+            fetch('/api/currentuser')
+                .then((response) => {
+                    // A successful /api/currentuser means authenticated; a 401
+                    // means anonymous (R23). Resolve to the user object or null.
+                    if (!response.ok) return null;
+                    return response.json();
+                })
+                .then((user) => {
+                    const authenticated = !!user;
+                    if (viewTabs) {
+                        if (authenticated) {
+                            viewTabs.setAttribute('authenticated', '');
+                        } else {
+                            viewTabs.removeAttribute('authenticated');
+                        }
+                    }
+                    if (user && user.isAdmin) {
+                        planList.setAttribute('is-admin', '');
+                    }
+                    // Resolve the deferred (no-public-param) first-paint fetch.
+                    // In production, anonymous bare /plans.html is intercepted
+                    // by Spring Security before this page loads and replayed
+                    // after login. The anonymous fallback is kept for static
+                    // harnesses and degraded deployments that serve this shell
+                    // directly.
+                    if (planList.hasAttribute('defer-initial-fetch')) {
+                        if (!authenticated) {
+                            planList.setAttribute('is-public', '');
+                            // Canonicalise the anonymous bare URL to
+                            // ?public=true: the URL then reflects public mode
+                            // (shareable) and the plan-detail link built below
+                            // carries the param so anon click-through does not
+                            // 401. This branch only runs when the URL had no
+                            // public param (defer-initial-fetch); replaceState
+                            // (no reload) keeps the single-fetch no-flash
+                            // contract (KTD3). Authed users never reach here.
+                            const url = new URL(window.location.href);
+                            url.searchParams.set('public', 'true');
+                            window.history.replaceState(window.history.state, '', url);
+                        }
+                        planList.removeAttribute('defer-initial-fetch');
+                        planList.fetchPlans();
+                    }
+                })
+                .catch(() => {
+                    // Network failure: fall back to a fetch so the user still
+                    // sees a plan list rather than a stuck loading state. Leave
+                    // the default (non-admin, My) view. Mirrors the
+                    // tokens.html auth-probe fallback.
+                    if (planList.hasAttribute('defer-initial-fetch')) {
+                        planList.removeAttribute('defer-initial-fetch');
+                        planList.fetchPlans();
+                    }
+                });
+
+            planList.addEventListener('cts-plan-navigate', (evt) => {
+                const planId = evt.detail && evt.detail.planId;
+                if (!planId) return;
+                // In public mode (anonymous, or the Published tab), thread
+                // public=true so plan-detail.html resolves for anonymous
+                // visitors — it is public ONLY with the param, otherwise the
+                // navigation 401-redirects to login. Mirrors cts-log-list's
+                // detail-link handling for logs.
+                const publicSuffix = planList.hasAttribute('is-public') ? '&public=true' : '';
+                window.location.href = 'plan-detail.html?plan=' + encodeURIComponent(planId) + publicSuffix;
+            });
+        });
+    </script>
+
+    <cts-footer></cts-footer>
+
+    <cts-toast-host></cts-toast-host>
+</body>
+
+</html>

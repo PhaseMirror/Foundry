@@ -1,0 +1,2155 @@
+/**
+ * Bootstrap for log-detail.html — the Lit-triad-based replacement for
+ * log-detail.html. This module:
+ *
+ *   1. Fetches `/api/info`, `/api/plan`, and `/api/runner` for the test
+ *      whose ID is in `?log=…`, populating the cts-log-detail-header,
+ *      cts-log-viewer, and the cts-test-nav-controls cluster the header
+ *      renders inside itself.
+ *   2. Wires the header's bubbling action events (cts-edit-config,
+ *      cts-share-link, cts-publish, cts-upload-images, cts-download-log,
+ *      cts-start-test, cts-stop-test) plus the cluster's cts-repeat /
+ *      cts-continue events to page-level handlers.
+ *   3. Renders the running-test browser-URL prompt (QR code + "Visit"
+ *      button + clipboard copy) into the header's [data-slot="browser"]
+ *      placeholder. Renders the FINAL_ERROR alert into [data-slot="error"]
+ *      when the test is INTERRUPTED.
+ *   4. Registers a single document-level cts-scroll-to-entry listener so
+ *      U4's failure-summary, U6's hash navigation, and U8's TOC rail can
+ *      all bubble to the same handler.
+ *   5. Binds Cmd/Ctrl+Shift+X (Repeat Test) and Cmd/Ctrl+Shift+U
+ *      (Continue Plan) keyboard shortcuts.
+ *
+ * No FAPI_UI.logTemplates.* references: this page is the new render path,
+ * full stop. The legacy log-detail.html keeps its template loaders alive
+ * for cookie-less visitors during the rollout window only.
+ *
+ * Plan: docs/plans/2026-04-26-002-refactor-log-detail-page-to-lit-triad-plan.md
+ */
+
+import { renderErrorIntoSlot } from "./log-detail-error-slot.js";
+import { scrollEntryIntoView, flashEntryArrival } from "../components/cts-log-entry.js";
+import { tryGetStorage } from "../components/guided-wizard.js";
+import { selectFindings } from "../components/log-findings.js";
+
+const POLL_INTERVAL_MS = 3000;
+
+/**
+ * Statuses that mean "this test has not settled yet". Used only by
+ * `syncCurrentSegmentStatus` to keep the live progress bar from announcing a
+ * mid-run verdict — see the comment there. Mirrors the live set in
+ * `cts-log-detail-header._derivePhase`; deliberately NOT shared with
+ * `js/module-status.js`, which serves the one-shot plan surfaces where the
+ * opposite precedence is correct.
+ * @type {ReadonlySet<string>}
+ */
+const LIVE_STATUSES = new Set(["CREATED", "CONFIGURED", "RUNNING", "WAITING"]);
+
+/**
+ * The `result` a progress segment should carry for one instance, dropping a
+ * mid-run verdict on the test this page is actually watching.
+ *
+ * Scoped to `instanceId === testId` on purpose. The viewed test is the only one
+ * whose liveness this page tracks: it polls `/api/info` until terminal, so a
+ * suppressed verdict lands within one 3s cycle. Every OTHER module's segment
+ * shows a historical instance that nothing here re-polls — suppressing a
+ * verdict there would strand it neutral-grey for the session, which is the
+ * #1858/#1859 complaint. So they keep their verdict colour.
+ *
+ * Used by both writers of the viewed segment — the page-load fan-out
+ * (`resolveOneSegment`) and the 3s live sync (`syncCurrentSegmentStatus`) —
+ * because the fan-out is awaited BEFORE polling starts, so without it a
+ * WAITING+FAILED test painted its own segment red for one `/api/info`
+ * round-trip before the first sync cleared it.
+ * @param {string} instanceId - The instance whose segment is being coloured.
+ * @param {{status?: string, result?: string}} info - Its `/api/info` slice.
+ * @returns {string|null|undefined} The result to store, or null while live.
+ */
+function liveSegmentResult(instanceId, info) {
+  if (instanceId !== testId) return info.result;
+  return LIVE_STATUSES.has(String(info.status).toUpperCase()) ? null : info.result;
+}
+
+/**
+ * localStorage key for the Test-structure rail collapse preference
+ * (feat/log-toc-collapsible). Stored as the string "true" / "false". Read
+ * pre-paint by the inline <head> script in log-detail.html and again here so
+ * the toggle's label + aria state match the rendered rail. Global (one key),
+ * so the choice carries across logs.
+ */
+const TOC_COLLAPSE_STORAGE_KEY = "oidf-log-toc-collapsed";
+
+/** @type {string} */
+let testId = "";
+/** @type {boolean} */
+let isPublic = false;
+/** @type {boolean} */
+let isAdmin = false;
+/** @type {boolean} */
+let isGuest = false;
+
+/**
+ * Runner-poll lifecycle.
+ *
+ * `generation` is what actually enforces "one loop at a time". Clearing
+ * `active` cannot: a `pollOnce` suspended at an `await` owns no timer handle,
+ * so stop/start while it is in flight leaves it running, and it then arms a
+ * timer of its own alongside the freshly started loop — two loops polling
+ * /api/info and /api/runner forever, with no handle to either. Every cycle
+ * captures the generation it started under and bails the moment it changes,
+ * so a straggler from a previous generation retires itself.
+ * @type {{ active: number | null, abandoned: boolean, generation: number }}
+ */
+const runnerPollState = { active: null, abandoned: false, generation: 0 };
+
+/**
+ * Shut the runner poll down for good. Called when `cts-log-viewer` reports
+ * that it has stopped polling for a reason no retry can fix — an expired
+ * session, denied access, or an exhausted give-up budget (#1890). Without
+ * this the log stream stops and shows an honest banner while the page
+ * quietly keeps firing /api/info and /api/runner at a server that has
+ * already refused it.
+ * @returns {void}
+ */
+function abandonRunnerPolling() {
+  runnerPollState.abandoned = true;
+  runnerPollState.generation += 1;
+  if (runnerPollState.active !== null) {
+    window.clearTimeout(runnerPollState.active);
+    runnerPollState.active = null;
+  }
+}
+
+/**
+ * Restart the runner poll after the user takes the viewer's "Try again".
+ * The counterpart to `abandonRunnerPolling` — without it a successful retry
+ * would resume the log stream while the header's verdict, progress segment,
+ * and exported values stayed frozen at whatever they showed when the
+ * connection died.
+ * @returns {void}
+ */
+function resumeRunnerPolling() {
+  if (!runnerPollState.abandoned) return;
+  runnerPollState.abandoned = false;
+  // Bump again so any cycle still suspended from the abandoned generation
+  // retires instead of arming a second timer next to the one below.
+  runnerPollState.generation += 1;
+  // startRunnerPolling re-checks the terminal-verdict condition itself, so a
+  // test that finished during the outage correctly stays un-polled.
+  startRunnerPolling(latestTestInfo);
+}
+
+/**
+ * Latest /api/info payload (testName, planId, variant). Read by
+ * handleRepeat/handleContinue to build the correct /api/runner URL —
+ * the components emit `{ testId }` as their action-event detail because
+ * the runtime test instance is all they own, but the runner endpoint's
+ * `test=` query param wants the *module name* (e.g. `oidcc-server`),
+ * not the runtime ID. Cache it module-scope so the action handlers can
+ * resolve testName + variant without re-fetching.
+ *
+ * @type {any}
+ */
+let latestTestInfo = null;
+
+/**
+ * Modules list from /api/plan/{planId}, cached at fetch time so
+ * handleContinue can find the *next* module without a second roundtrip.
+ * Each entry has { testModule: string, variant: object }.
+ *
+ * @type {Array<any>}
+ */
+let cachedPlanModules = [];
+
+/** Resolve query string params we care about exactly once. */
+function readUrlParams() {
+  const params = new URLSearchParams(window.location.search);
+  testId = params.get("log") || "";
+  isPublic = params.get("public") === "true";
+}
+
+/** ──────────── Modal helpers (replacing FAPI_UI.showError/showBusy) ──────────── */
+
+function showError(message) {
+  const modal = document.getElementById("errorModal");
+  const text = document.getElementById("errorMessage");
+  if (text) text.textContent = String(message || "An error occurred");
+  if (modal && typeof modal.show === "function") modal.show();
+}
+
+function showBusy(message) {
+  const modal = document.getElementById("loadingModal");
+  const text = document.getElementById("loadingMessage");
+  if (text) text.textContent = String(message || "Loading…");
+  if (modal && typeof modal.show === "function") modal.show();
+}
+
+function hideBusy() {
+  const modal = document.getElementById("loadingModal");
+  if (modal && typeof modal.hide === "function") modal.hide();
+}
+
+/** ──────────── /api/currentuser ──────────── */
+
+async function fetchCurrentUser() {
+  try {
+    const response = await fetch("/api/currentuser");
+    if (!response.ok) return;
+    const user = await response.json();
+    isAdmin = !!(user && user.isAdmin);
+    // `isGuest` marks a private-link (share-JWT) viewer. They never signed
+    // in, so if their session dies the log viewer must not tell them to
+    // "sign in again" — see cts-log-viewer's private-link-expired copy.
+    isGuest = !!(user && user.isGuest);
+  } catch (err) {
+    console.warn("[log-detail] /api/currentuser failed:", err);
+  }
+}
+
+/** ──────────── testInfo fan-out ──────────── */
+
+/**
+ * The findings the three failure summaries on this page render.
+ *
+ * Sourced from the `/api/log` stream the `cts-log-viewer` has already loaded
+ * (`viewer.findings`), because `/api/info` has no per-condition `results`
+ * array to filter: it serializes `net.openid.conformance.info.TestInfo`, whose
+ * `result` is a single verdict string. Reading `testInfo.results` therefore
+ * always produced an empty list in production and every "Findings" section
+ * fell through to its empty-state copy (GitLab #1866).
+ *
+ * `testInfo.results` is still honoured as a fallback: it is what the e2e
+ * fixtures and Storybook stories supply, and it covers the window before the
+ * viewer's first poll resolves.
+ *
+ * The "log stream wins" test is deliberately `length > 0`, not "the viewer
+ * exists": at first paint the viewer is in the DOM with an empty buffer, and
+ * treating that as authoritative would blank the summaries for a frame. The
+ * cost is that a genuinely finding-free stream cannot override a non-empty
+ * `testInfo.results` — which is unreachable in production (the field is never
+ * serialized) and only ever surfaces in a fixture that supplies both.
+ *
+ * @param {any} testInfo
+ * @returns {Array<any>}
+ */
+function selectFailures(testInfo) {
+  /** @type {any} */
+  const viewer = document.getElementById("logViewer");
+  const fromLog = viewer && viewer.findings;
+  if (Array.isArray(fromLog) && fromLog.length > 0) return fromLog;
+  return selectFindings(testInfo && testInfo.results);
+}
+
+/**
+ * Push the current findings to every failure-summary surface on the page:
+ * the header's in-hero instance, the page-level `#ctsTopFailureSummary`
+ * (mobile / tablet), and the wide-viewport `#ctsLogToc` rail. Called both
+ * when a fresh `/api/info` payload lands and when the log stream grows.
+ */
+function applyFindings() {
+  const findings = selectFailures(latestTestInfo);
+  /** @type {any} */
+  const header = document.getElementById("logDetailHeader");
+  if (header) {
+    header.findings = findings;
+    // #1915: same log-stream-wins contract as findings above, but the
+    // sticky bar's pill cluster needs a tally over the WHOLE stream
+    // (including SUCCESS/INFO entries, which selectFindings deliberately
+    // excludes), so this reads the viewer's own getter directly rather
+    // than routing through selectFailures. (The overflow menu's upload
+    // count used to be tallied the same way; #1884 replaced it with the
+    // live `/api/runner` uploadsRequired count — see applyUploadsRequired
+    // below — since outstanding placeholders is what the actionable CTA
+    // needs, not a historical tally.)
+    /** @type {any} */
+    const viewer = document.getElementById("logViewer");
+    if (viewer) {
+      header.resultCounts = viewer.resultCounts;
+    }
+  }
+  /** @type {any} */
+  const topFailureSummary = document.getElementById("ctsTopFailureSummary");
+  if (topFailureSummary) {
+    topFailureSummary.failures = findings;
+    topFailureSummary.testId = testId;
+  }
+  /** @type {any} */
+  const rail = document.getElementById("ctsLogToc");
+  if (rail) {
+    // U8 — keep the rail's compact failure summary in lockstep with the
+    // page-level instance. The viewer-driven blocks list arrives via the
+    // cts-blocks-updated event in setupLogToc().
+    rail.failures = findings;
+    rail.testId = testId;
+  }
+}
+
+/**
+ * Push a fresh `testInfo` to the header and refresh every failure summary.
+ * Single update site so any future re-fetch path (runner-poll state
+ * changes, etc.) keeps all instances in sync without duplicating the
+ * filter.
+ *
+ * @param {any} testInfo
+ */
+function applyTestInfo(testInfo) {
+  latestTestInfo = testInfo;
+  /** @type {any} */
+  const header = document.getElementById("logDetailHeader");
+  if (header) header.testInfo = testInfo;
+  applyFindings();
+  // Live-sync the current segment when a poll returns a fresh verdict (#1857);
+  // safe no-op until fetchAndApplyPlanState seeds the bar. See the helper's JSDoc.
+  syncCurrentSegmentStatus(testInfo);
+}
+
+/**
+ * Push the runner-sourced `exposed` map to the header's dedicated reactive
+ * property. Exported values (#1861) are carried ONLY by the /api/runner poll,
+ * never by /api/info, so they live on `header.exposed` — orthogonal to
+ * `header.testInfo` — which means an /api/info refresh can never clobber the
+ * grid (the cache/merge/change-guard the first cut needed are gone). A `null`
+ * write clears the grid when the runner flushes the test (live-only, KTD2).
+ *
+ * @param {Object<string, unknown> | null | undefined} exposed
+ */
+function applyExposed(exposed) {
+  /** @type {any} */
+  const header = document.getElementById("logDetailHeader");
+  if (header) header.exposed = exposed || null;
+}
+
+/**
+ * Push the runner-sourced outstanding-upload count to the header's dedicated
+ * reactive property (#1884). Mirrors applyExposed()'s KTD2 pattern exactly:
+ * `browser.uploadsRequired` is carried ONLY by the /api/runner poll, never by
+ * /api/info, so it lives on `header.uploadsRequired` — orthogonal to
+ * `header.testInfo` — and a falsy write resets it to 0 when the runner
+ * flushes the test (live-only).
+ *
+ * @param {number | null | undefined} count
+ */
+function applyUploadsRequired(count) {
+  /** @type {any} */
+  const header = document.getElementById("logDetailHeader");
+  if (header) header.uploadsRequired = count || 0;
+}
+
+/**
+ * Apply the latest `entry._id` → `LOG-NNNN` map (U6) to every failure
+ * summary instance on the page so reference chips render alongside each
+ * failure row. Two instances: the page-level `#ctsTopFailureSummary`
+ * (mobile / tablet position) and the in-header instance the
+ * cts-log-detail-header renders inside its card. Both consume the same
+ * map; missing entries simply omit the chip.
+ *
+ * @param {Object.<string, string>} references
+ */
+function applyReferences(references) {
+  /** @type {any} */
+  const topFailureSummary = document.getElementById("ctsTopFailureSummary");
+  if (topFailureSummary) {
+    topFailureSummary.references = references;
+    topFailureSummary.testId = testId;
+  }
+  /** @type {any} */
+  const header = document.getElementById("logDetailHeader");
+  // Set the property, don't reach into the render output: the in-hero
+  // cts-failure-summary is created by the header's own Lit template, so a
+  // querySelector here lost the map whenever the summary had not been
+  // rendered yet (which, before #1866, was every production page load).
+  if (header) header.references = references;
+}
+
+/** ──────────── /api/info ──────────── */
+
+async function fetchTestInfo() {
+  const url = `/api/info/${encodeURIComponent(testId)}` + (isPublic ? "?public=true" : "");
+  const response = await fetch(url);
+  if (!response.ok) {
+    // Surface the server's own error message when the body carries one
+    // (e.g. {"error": "log not found"}) rather than the leaky API path —
+    // the URL is an implementation detail; the message is what the user
+    // can act on. Falls back to a generic status string when parsing fails.
+    let message = `Could not load test info (HTTP ${response.status}).`;
+    try {
+      const body = await response.json();
+      if (body && typeof body.error === "string" && body.error.trim()) {
+        message = body.error;
+      }
+    } catch {
+      /* response wasn't JSON — keep the generic message */
+    }
+    throw new Error(message);
+  }
+  return response.json();
+}
+
+/**
+ * Update breadcrumb with the orientation trail.
+ * Planned test → `Plans > <planName | "Plan"> > <testName | testId>`.
+ * Ad-hoc test → `Logs > <testName | testId>`.
+ *
+ * `planName` is optional and resolved asynchronously from `/api/plan/<id>`
+ * (see fetchAndApplyPlanState). Call once before the fetch lands with
+ * planName=null for an optimistic render, then a second time once the
+ * plan-name is available.
+ *
+ * @param {any} testInfo - /api/info payload (testName, planId, testId).
+ * @param {string | null | undefined} [planName] - Resolved plan name, or
+ *   null/undefined to render the literal "Plan" label as a fallback.
+ */
+function updateBreadcrumb(testInfo, planName) {
+  const crumb = document.getElementById("logDetailCrumb");
+  if (!crumb) return;
+  const terminalLabel = testInfo.testName || testInfo.testId;
+  const publicSuffix = isPublic ? "?public=true" : "";
+  const items = [];
+  if (testInfo.planId) {
+    items.push({ label: "Plans", target: "/plans.html" + publicSuffix });
+    items.push({
+      label: planName || "Plan",
+      target:
+        "/plan-detail.html?plan=" +
+        encodeURIComponent(testInfo.planId) +
+        (isPublic ? "&public=true" : ""),
+    });
+  } else {
+    items.push({ label: "Logs", target: "/logs.html" + publicSuffix });
+  }
+  items.push({ label: terminalLabel, target: "" });
+  crumb.items = items;
+  if (!crumb.dataset.navWired) {
+    crumb.addEventListener("cts-crumb-navigate", (evt) => {
+      if (evt.detail && evt.detail.target) {
+        window.location.assign(evt.detail.target);
+      }
+    });
+    crumb.dataset.navWired = "true";
+  }
+}
+
+/** ──────────── /api/plan ──────────── */
+
+/**
+ * Fetch the plan record and apply it to:
+ *   - the header's `planModules` (forwarded to the nav row's
+ *     cts-test-nav-controls → cts-plan-status progress bar) plus the
+ *     nav-controls `nextEnabled` flag (Continue Plan visibility)
+ *   - the page-level breadcrumb's middle label (planName)
+ *   - the post-paint per-sibling /api/info fan-out that colours segments
+ * Returns the parsed plan JSON on success, or null on any failure / missing planId.
+ *
+ * @param {any} testInfo - /api/info payload.
+ * @returns {Promise<any | null>} Parsed `/api/plan/<id>` response, or null.
+ */
+async function fetchAndApplyPlanState(testInfo) {
+  if (!testInfo.planId) return null;
+  try {
+    // Same public threading as fetchTestInfo: anonymous viewers only pass
+    // the security filter's public matcher with public=true, and the
+    // public branch returns the published PublicPlan (planName included).
+    const response = await fetch(
+      "/api/plan/" + encodeURIComponent(testInfo.planId) + (isPublic ? "?public=true" : ""),
+    );
+    if (!response.ok) return null;
+    const planData = await response.json();
+    if (planData && planData.planName) {
+      updateBreadcrumb(testInfo, planData.planName);
+    }
+    const modules = Array.isArray(planData.modules) ? planData.modules : [];
+    cachedPlanModules = modules;
+
+    // Locate the current module in the plan. The /api/plan modules list
+    // carries only the *constraint* keys per module (e.g. client_auth_type,
+    // response_type), while /api/info's testInfo.variant carries the full
+    // resolved variant including plan-level defaults (server_metadata,
+    // client_registration). Match by subset — every key the module
+    // constrains must equal the test's value; the test may carry extra
+    // keys. This both gives Continue Plan a correct `next module` lookup
+    // AND removes the silent currentIndex=0 fallback the legacy
+    // equality check relied on.
+    const thisModuleIndex = modules.findIndex(
+      (m) => m.testModule === testInfo.testName && variantsMatch(m.variant, testInfo.variant),
+    );
+    const safeIndex = thisModuleIndex >= 0 ? thisModuleIndex : 0;
+
+    // Seed the nav row's progress bar from the cached plan modules. Copy
+    // each module's `instances` into a fresh array so the fan-out below can
+    // mutate the working set without aliasing the cached `/api/plan` data.
+    // Segments render instantly (topology + the "you are here" marker +
+    // sibling navigation, KTD5/R17); per-sibling status colours arrive from
+    // the post-paint /api/info fan-out (R5/R18).
+    //
+    // `href` is the per-segment navigation target cts-plan-status renders as a
+    // real link. Off the public view every sibling with an instance is reachable
+    // immediately, so seed its href here for navigation at first paint. On the
+    // public view href is withheld until the fan-out confirms the target
+    // instance returns 200 (set in resolveOneSegment), so a published-plan viewer
+    // never dead-ends on an unpublished sibling.
+    const navModules = modules.map((mod) => {
+      const instances = Array.isArray(mod.instances) ? mod.instances.slice() : [];
+      const entry = { ...mod, instances };
+      if (!isPublic) {
+        const last = instances.length ? instances[instances.length - 1] : null;
+        if (last) entry.href = buildSiblingHref(last);
+      }
+      return entry;
+    });
+
+    /** @type {any} */
+    const header = document.getElementById("logDetailHeader");
+    if (header) {
+      header.planModules = navModules;
+    }
+
+    // `nextEnabled` lives on the nav-controls element itself (the header
+    // does not bind it as a Lit attribute, so an imperative assignment
+    // survives the header's re-renders). Continue Plan shows when a next
+    // module exists.
+    const navControls = document.querySelector("cts-test-nav-controls");
+    if (navControls) {
+      navControls.nextEnabled = safeIndex >= 0 && safeIndex + 1 < modules.length;
+    }
+
+    // After first paint, colour each sibling segment by fetching its most-
+    // recent instance's status (KTD5). Frontend-only, public-flag-threaded,
+    // concurrency-capped, and memoized per instance.
+    resolveSegmentStatuses(navModules);
+
+    return planData;
+  } catch (err) {
+    console.warn("[log-detail] /api/plan failed:", err);
+    return null;
+  }
+}
+
+/** ──────────── plan-status segment colouring (KTD5) ──────────── */
+
+/**
+ * Memo of resolved `/api/info/<instance>` payloads keyed by instance id, so
+ * re-navigating between siblings never refetches a status already in hand.
+ * Stores the `{ status, result }` slice (or `null` for a settled 404 / error,
+ * which still counts as "resolved" so the segment stops pulsing — R18/KTD3).
+ * @type {Map<string, { status?: string, result?: string } | null>}
+ */
+const segmentStatusMemo = new Map();
+
+/** Max concurrent `/api/info` fan-out requests (KTD5 — bound the burst). */
+const SEGMENT_FANOUT_CONCURRENCY = 6;
+
+/**
+ * Whether a memoized `/api/info` slice is a settled terminal verdict — the
+ * runner has stopped the test (`FINISHED` for a completed run, `INTERRUPTED`
+ * for a failed/aborted one). Used to stop a late page-load fan-out response from
+ * downgrading a segment the live poll (`syncCurrentSegmentStatus`) already
+ * settled to terminal while that fetch was in flight (#1857 race): once the poll
+ * has stopped, nothing would re-correct the stale running fill.
+ * @param {{status?: string} | null | undefined} slice
+ * @returns {boolean}
+ */
+function isTerminalSlice(slice) {
+  return !!slice && (slice.status === "FINISHED" || slice.status === "INTERRUPTED");
+}
+
+/**
+ * Fetch one sibling module's most-recent-instance status and merge it into
+ * the working module entry, setting `_statusResolved` in BOTH the success
+ * and the error/404 branches so the segment settles (colours, or falls back
+ * to the neutral skip) instead of pulsing pending forever (R18/KTD3). Threads
+ * the public flag exactly like the page's other `/api/info` calls.
+ *
+ * @param {{instances?: string[], status?: string, result?: string,
+ *   _statusResolved?: boolean, href?: string}} mod - The working module entry to
+ *   mutate. On the public view a 200 means the target instance is publicly
+ *   reachable, so its `href` is set and cts-plan-status renders the segment as a
+ *   navigable link; a 404/error leaves `href` unset (inert). Off public, `href`
+ *   was already seeded at map time, so this only resolves the status colour.
+ * @returns {Promise<void>}
+ */
+async function resolveOneSegment(mod) {
+  const instances = Array.isArray(mod.instances) ? mod.instances : [];
+  const lastInstance = instances.length ? instances[instances.length - 1] : null;
+  if (!lastInstance) return; // never-run module → static skip, no fetch
+  if (segmentStatusMemo.has(lastInstance)) {
+    const cached = segmentStatusMemo.get(lastInstance);
+    if (cached) {
+      mod.status = cached.status;
+      mod.result = cached.result;
+      // A cached 200 means the target instance is publicly reachable, so on the
+      // public view the segment becomes a navigable link (R1). A cached 404 is
+      // `null`, leaving `href` unset so the segment stays inert (R2). Only set on
+      // the public view — off public the href was seeded at map time.
+      if (isPublic) mod.href = buildSiblingHref(lastInstance);
+    }
+    mod._statusResolved = true;
+    return;
+  }
+  try {
+    const response = await fetch(
+      "/api/info/" + encodeURIComponent(lastInstance) + (isPublic ? "?public=true" : ""),
+    );
+    if (!response.ok) {
+      // Settle without colour (e.g. a 404 for an unpublished sibling). The
+      // segment lands on the neutral skip fill rather than pulsing forever.
+      segmentStatusMemo.set(lastInstance, null);
+      mod._statusResolved = true;
+      return;
+    }
+    const info = await response.json();
+    // While this fetch was in flight, the live poll (syncCurrentSegmentStatus)
+    // may have settled this instance to a terminal verdict — the viewed test is
+    // a module's last instance, so the fan-out and the poll race for the same
+    // memo key. Never let a now-stale fan-out response downgrade a settled
+    // terminal slice back to its running fill: the poll stops on the verdict, so
+    // nothing would re-correct it, re-creating the #1857 stuck-segment symptom.
+    const settled = segmentStatusMemo.get(lastInstance);
+    const slice = isTerminalSlice(settled)
+      ? settled
+      : { status: info.status, result: liveSegmentResult(lastInstance, info) };
+    segmentStatusMemo.set(lastInstance, slice);
+    mod.status = slice.status;
+    mod.result = slice.result;
+    // 200 → the target instance is publicly reachable, so on the public view
+    // the segment becomes a navigable link (R1). The 404 branch above leaves
+    // `href` unset, so unreachable siblings stay inert (R2). Only set on the
+    // public view — off public the href was seeded at map time.
+    if (isPublic) mod.href = buildSiblingHref(lastInstance);
+    mod._statusResolved = true;
+  } catch (err) {
+    // Network / parse failure: settle the segment too (R18). Do NOT memoize a
+    // transient failure — a later navigation may retry the fetch (and `href`
+    // stays unset, so on a public view the segment is inert until that retry
+    // succeeds).
+    console.warn("[log-detail] segment status fetch failed:", err);
+    mod._statusResolved = true;
+  }
+}
+
+/**
+ * Fan out `/api/info/<lastInstance>` per sibling module to colour the
+ * plan-status segments after first paint (KTD5). Concurrency is capped via a
+ * fixed-size worker pool; each instance is memoized so re-navigating siblings
+ * does not refetch. When the pool drains, re-assigns `header.planModules`
+ * with a FRESH array so Lit's reference-equality `hasChanged` fires and the
+ * pending segments settle to their colours.
+ *
+ * @param {Array<{instances?: string[], status?: string, result?: string,
+ *   _statusResolved?: boolean}>} navModules - The working module set, mutated
+ *   in place as each sibling resolves.
+ * @returns {Promise<void>}
+ */
+async function resolveSegmentStatuses(navModules) {
+  const queue = navModules.slice();
+  async function worker() {
+    for (;;) {
+      const mod = queue.shift();
+      if (!mod) return;
+      await resolveOneSegment(mod);
+    }
+  }
+  const poolSize = Math.min(SEGMENT_FANOUT_CONCURRENCY, queue.length);
+  await Promise.all(Array.from({ length: poolSize }, worker));
+
+  // Reassign with a fresh array so cts-plan-status observes the change (Lit's
+  // default hasChanged is reference equality). A slice suffices — the workers
+  // mutated the module objects in place, so the existing element references
+  // already carry the resolved status; no per-element copy is needed (mirrors
+  // plan-detail.html's fan-out reassign).
+  /** @type {any} */
+  const header = document.getElementById("logDetailHeader");
+  if (header) {
+    header.planModules = navModules.slice();
+  }
+}
+
+/**
+ * Build the log-detail URL for a sibling instance, threading the public flag so
+ * an anonymous viewer stays in the public view. cts-plan-status renders a
+ * segment with this href as a real `<a>` link the browser navigates natively —
+ * no event round-trip — so middle-click / Cmd-click / copy-link all work (R15).
+ *
+ * @param {string} instanceId - The sibling module's most-recent instance id.
+ * @returns {string} The `/log-detail.html?log=…` href.
+ */
+function buildSiblingHref(instanceId) {
+  return (
+    "/log-detail.html?log=" + encodeURIComponent(instanceId) + (isPublic ? "&public=true" : "")
+  );
+}
+
+/**
+ * Live-sync the *current* module's plan-status segment from a fresh `/api/info`
+ * payload. The post-paint fan-out (`resolveSegmentStatuses`) colours every
+ * segment exactly once, at page load; while the user watches a running test the
+ * poll loop (`startRunnerPolling`) keeps re-fetching the current test's
+ * `/api/info` but only fed the header banner — never the bar. So a test that
+ * finished live left its own segment frozen at the running/pending fill it had
+ * at first paint, even as the banner flipped to "Test passed" (#1857). Pushing
+ * the poll's payload into the segment here keeps the bar in lockstep with the
+ * terminal banner. Reusing the payload the poll already holds also sidesteps the
+ * `segmentStatusMemo`, which still caches the stale (e.g. RUNNING) slice from
+ * page load and would short-circuit a naive fan-out re-run.
+ *
+ * Matches on the module's MOST-RECENT instance (`instances[last] === testId`),
+ * NOT `currentModuleIndex` (which matches the full instance list for the "you
+ * are here" marker): a segment's colour is driven by its module's latest
+ * instance, so when the viewer is reading an *older* re-run that segment must
+ * keep showing the newest run's status rather than be clobbered by the old
+ * instance's poll. The last-instance match restricts the repaint to the normal
+ * live case (watching the most recent run).
+ *
+ * No-ops safely before the bar is seeded (the first `applyTestInfo` at bootstrap
+ * runs before `fetchAndApplyPlanState`), when the payload carries no status, or
+ * when the viewed instance is not any module's most-recent instance.
+ *
+ * @param {{status?: string, result?: string} | null | undefined} testInfo - The
+ *   latest `/api/info` payload for the viewed test.
+ * @returns {void}
+ */
+function syncCurrentSegmentStatus(testInfo) {
+  if (!testInfo || !testInfo.status) return;
+  /** @type {any} */
+  const header = document.getElementById("logDetailHeader");
+  const modules = header && header.planModules;
+  if (!Array.isArray(modules)) return; // pre-seed (bar not yet seeded) → no-op
+  const mod = modules.find((m) => {
+    const instances = Array.isArray(m.instances) ? m.instances : [];
+    return instances.length > 0 && instances[instances.length - 1] === testId;
+  });
+  if (!mod) return; // older re-run, or current test not in this plan → leave the segment
+  // While the test is still live, drop the mid-run verdict before it reaches
+  // the segment. The runner writes `result` on the first failing condition, so
+  // a WAITING test can already carry FAILED — and `statusBadgeVariant` lets any
+  // settled verdict win, which painted a red FAILED segment three rows above
+  // this page's own "Test waiting" hero (#1895). Suppressing it here makes the
+  // bar agree with the hero without touching module-status.js, whose
+  // verdict-wins rule is still right for the plan surfaces: they fan out
+  // /api/info once and never refresh, so there a settled verdict is the most
+  // useful thing to show (#1858/#1859). See liveSegmentResult for why this is
+  // scoped to the viewed instance; `resolveOneSegment` shares the helper so the
+  // page-load fan-out cannot paint the flash this then has to clear.
+  const status = testInfo.status;
+  const result = liveSegmentResult(testId, testInfo);
+  if (mod.status === status && mod.result === result) return; // unchanged
+  mod.status = status;
+  mod.result = result;
+  mod._statusResolved = true;
+  // Keep the fan-out memo consistent so any later read of the current instance
+  // never reintroduces the stale slice it cached at page load (KTD1).
+  segmentStatusMemo.set(testId, { status, result });
+  // Fresh array so cts-plan-status observes the change (Lit's default hasChanged
+  // is reference equality) and repaints the segment — mirrors resolveSegmentStatuses.
+  header.planModules = modules.slice();
+}
+
+/** ──────────── /api/runner — running-test card slot rendering ──────────── */
+
+/**
+ * "Has this test reached a verdict?" — true only when /api/info reports
+ * a terminal status AND a result has been assigned. Used to gate the
+ * polling loop's exit: a test in `{status: "FINISHED", result: null}`
+ * is the transient state where the runner has flagged terminal but the
+ * verdict hasn't been persisted yet, and polling should continue until
+ * the verdict lands. Any non-empty `result` qualifies as a verdict —
+ * PASSED, FAILED, WARNING, REVIEW, and SKIPPED all count.
+ * @param {{status?: string, result?: string} | null | undefined} testInfo
+ * @returns {boolean}
+ */
+function isFullyTerminal(testInfo) {
+  if (!testInfo) return false;
+  const status = (testInfo.status || "").toUpperCase();
+  const result = (testInfo.result || "").toUpperCase();
+  return (status === "FINISHED" || status === "INTERRUPTED") && result !== "";
+}
+
+/**
+ * Polls /api/info AND /api/runner on a 3s cadence until the test
+ * reaches a fully terminal verdict (status terminal + result set).
+ *
+ * - /api/info is the source of truth for status / result. Pushing the
+ *   fresh payload through `applyTestInfo` re-runs the Lit reactive
+ *   render path on cts-log-detail-header, which surfaces the result
+ *   pill, the terminal banner, and the lifecycle-driven hero in
+ *   lockstep. The header reads test.status / test.result via
+ *   `_derivePhase`, so the banner appears for PASSED, FAILED, WARNING,
+ *   REVIEW, SKIPPED, and INTERRUPTED — every TERMINAL_BANNER_BY_PHASE
+ *   key, not just PASSED.
+ * - /api/runner is best-effort and only feeds the in-card slots
+ *   ([data-slot="browser"] for the visit-URL prompt and
+ *   [data-slot="error"] for the FINAL_ERROR alert). A 404 means the
+ *   runner has flushed the test from memory — that's expected on
+ *   long-finished tests, not an error condition.
+ *
+ * The two endpoints are independently fault-tolerant within each
+ * cycle: an /api/info hiccup doesn't stop the slot refresh, and an
+ * /api/runner outage doesn't stop the verdict refresh. The loop ends
+ * only when /api/info confirms a verdict has landed.
+ *
+ * The polling lives on the page (not inside the Lit header) because
+ * the QR-code generator and clipboard.js wiring are page-specific
+ * external libraries; the header just exposes the slot positions.
+ */
+function startRunnerPolling(testInfo) {
+  if (isFullyTerminal(testInfo)) return;
+  if (runnerPollState.abandoned) return;
+
+  // The generation this loop belongs to. Any stop or restart bumps the
+  // counter, which is how a cycle suspended mid-await learns it has been
+  // superseded — see runnerPollState.
+  const generation = runnerPollState.generation;
+  const superseded = () => runnerPollState.abandoned || runnerPollState.generation !== generation;
+
+  async function pollOnce() {
+    if (superseded()) return;
+    /** @type {any} */
+    let fresh = null;
+
+    // /api/info — verdict refresh. Fault-isolated so a transient
+    // outage doesn't stall the /api/runner slot rendering below.
+    try {
+      fresh = await fetchTestInfo();
+      // Re-check before writing, not just before re-arming. A superseded
+      // cycle that skipped straight to the arm guard would still have
+      // published its payload on the way — and its payload is old. After a
+      // "Try again" that means a stale RUNNING landing on top of the live
+      // loop's terminal PASSED, and since this cycle does not re-arm,
+      // nothing would ever correct it: the status stays wrong for good.
+      if (superseded()) return;
+      applyTestInfo(fresh);
+    } catch (err) {
+      console.warn("[log-detail] /api/info refresh failed:", err);
+    }
+
+    // /api/runner — slot rendering. Fault-isolated; 404 is benign
+    // (the runner has flushed a long-finished test from memory), so
+    // only non-404 non-2xx responses trigger a back-off.
+    //
+    // Skipped entirely in public mode: /api/runner has no public matcher
+    // entry (anonymous GETs 401 on every cycle), and the slots it feeds
+    // (visit-URL prompt, FINAL_ERROR alert) are interaction affordances
+    // public viewers don't get. The /api/info refresh above keeps live
+    // status updates working for public viewers of a running test.
+    let runnerFailed = false;
+    if (!isPublic) {
+      try {
+        const response = await fetch("/api/runner/" + encodeURIComponent(testId));
+        // Same rule as the /api/info write above — every branch below
+        // mutates the header, so a superseded cycle stops here rather than
+        // repainting slots the live loop has already moved on from.
+        if (superseded()) return;
+        if (response.status === 404) {
+          // Runner flushed the test from memory. Clear the exported-values grid
+          // so a stale grid doesn't linger if /api/info is briefly still
+          // non-terminal (live-only, KTD2). applyExposed(null) is idempotent,
+          // so an always-404 poll stays a no-op on the header. Same reasoning
+          // for the upload-required count (#1884).
+          applyExposed(null);
+          applyUploadsRequired(0);
+        } else {
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const data = await response.json();
+          if (superseded()) return;
+          renderBrowserSlot(data.browser);
+          renderErrorSlot(data.error);
+          // Exported values (#1861): feed the runner's `exposed` map straight
+          // to the header's dedicated property. No cache or change-guard needed
+          // — `header.exposed` is orthogonal to `header.testInfo`, so the
+          // /api/info refresh above can't clobber the grid.
+          applyExposed(data.exposed);
+          // Outstanding image-upload placeholders (#1884) — same orthogonal
+          // pattern, feeds the overflow-menu count and the hero CTA below.
+          applyUploadsRequired(data.browser && data.browser.uploadsRequired);
+        }
+      } catch (err) {
+        console.warn("[log-detail] /api/runner failed:", err);
+        runnerFailed = true;
+      }
+    }
+
+    // Stop only when /api/info confirms a verdict. Until then keep
+    // polling — this catches every non-terminal lifecycle state
+    // (CREATED, RUNNING, WAITING, the transient FINISHED-but-no-result
+    // race, INTERRUPTED-but-no-result race) without enumerating them.
+    if (isFullyTerminal(fresh)) return;
+    // The viewer may have stopped — or stopped and been retried — while this
+    // cycle was awaiting. Either way this loop is no longer the live one and
+    // must not arm a timer beside whichever loop is.
+    if (superseded()) return;
+
+    const delay = runnerFailed ? POLL_INTERVAL_MS * 2 : POLL_INTERVAL_MS;
+    runnerPollState.active = window.setTimeout(pollOnce, delay);
+  }
+
+  runnerPollState.active = window.setTimeout(pollOnce, 0);
+}
+
+function findSlot(name) {
+  return document.querySelector(`cts-log-detail-header [data-slot="${name}"]`);
+}
+
+/** Empty a slot's children — used before re-rendering on each poll. */
+function clearSlot(slot) {
+  while (slot.firstChild) slot.removeChild(slot.firstChild);
+}
+
+/**
+ * JSON snapshot of the last-rendered runner `browser` payload. The runner
+ * poll calls renderBrowserSlot every cycle; skipping identical payloads
+ * keeps user state in the slot alive between polls — most importantly the
+ * focus and text of the paste-URI textarea that uriInputRequests renders.
+ * @type {string | undefined}
+ */
+let lastRenderedBrowserJson;
+
+/**
+ * The slot element `lastRenderedBrowserJson` was rendered into. The RUNNING
+ * and WAITING heroes are separate Lit templates, each with its own
+ * [data-slot="browser"] node — a status flip swaps in a brand-new empty slot
+ * while the browser payload stays identical, so the JSON snapshot alone
+ * would skip the render and leave the prompt blank for the rest of the run.
+ * @type {Element | undefined}
+ */
+let lastRenderedBrowserSlot;
+
+/**
+ * Parse a URL into a POST-form-ready shape: the origin+pathname to submit to
+ * (the form `action`, no query string) and the query string's params as
+ * name/value pairs (the hidden `<input>`s the query string becomes). Mirrors
+ * legacy log-detail.html's `parseUrl()` — the backend's UrlWithMethod only
+ * carries `url`/`method`, so this parsing has to happen client-side.
+ * @param {string} urlString
+ * @returns {{baseUrl: string, params: Array<{name: string, value: string}>}}
+ */
+function parseUrlForForm(urlString) {
+  const url = new URL(urlString);
+  const baseUrl = url.origin + url.pathname;
+  const params = Array.from(url.searchParams.entries()).map(([name, value]) => ({ name, value }));
+  return { baseUrl, params };
+}
+
+/**
+ * Normalize a browser-URL list into `{url, method}` entries. Prefers the
+ * `-WithMethod` list (always populated 1:1 alongside its plain-string
+ * sibling by `BrowserControl.goToUrl()`); falls back to the plain string
+ * list as GET-only entries so an older/partial payload still renders.
+ * @param {Array<{url: string, method?: string}> | undefined} withMethodList
+ * @param {Array<string> | undefined} plainList
+ * @returns {Array<{url: string, method: string}>}
+ */
+function normalizeUrlEntries(withMethodList, plainList) {
+  if (Array.isArray(withMethodList) && withMethodList.length > 0) {
+    return withMethodList.map((entry) => ({
+      url: typeof entry === "string" ? entry : entry.url,
+      method: typeof entry === "string" ? "GET" : entry.method || "GET",
+    }));
+  }
+  return (Array.isArray(plainList) ? plainList : []).map((url) => ({ url, method: "GET" }));
+}
+
+/**
+ * Build one browser-URL row. GET entries show the bare URL (optionally with
+ * a QR code); POST entries show an HTTP-request preview and carry a hidden
+ * `<form method="POST">` (built from the URL's own query string, mirroring
+ * legacy's approach) that `handleVisitUrl` submits on click — scoped to this
+ * row's own form, not a global `document.querySelector`, so multiple pending
+ * POST rows can't cross-submit each other's form (a latent bug in the
+ * legacy implementation this port does not need to keep).
+ * @param {string} url - Full original URL (query string included) — also
+ *   what must be sent to the `/visit` endpoint verbatim (it matches by exact
+ *   string equality server-side).
+ * @param {string} method - "GET" or "POST".
+ * @param {{visited: boolean, showQr?: boolean}} opts
+ * @returns {HTMLElement}
+ */
+function buildUrlRow(url, method, { visited, showQr }) {
+  const row = document.createElement("div");
+  row.className = "v2-browser-row";
+  row.style.display = "flex";
+  row.style.flexDirection = "column";
+  row.style.gap = "var(--space-2)";
+
+  if (method === "POST") {
+    const { baseUrl, params } = parseUrlForForm(url);
+    const queryString = params
+      .map((p) => `${encodeURIComponent(p.name)}=${encodeURIComponent(p.value)}`)
+      .join("&");
+    const pre = document.createElement("pre");
+    pre.style.fontFamily = "var(--font-mono)";
+    pre.style.fontSize = "var(--fs-13)";
+    pre.style.wordBreak = "break-all";
+    pre.style.whiteSpace = "pre-wrap";
+    pre.style.background = "var(--bg-sunken)";
+    pre.style.border = "1px solid var(--border)";
+    pre.style.borderRadius = "var(--radius-1)";
+    pre.style.padding = "var(--space-3)";
+    pre.style.margin = "0";
+    pre.textContent = `POST ${baseUrl} HTTP 1.1\nContent-Type: application/x-www-form-urlencoded\n\n${queryString}`;
+    row.appendChild(pre);
+
+    if (!visited) {
+      const form = document.createElement("form");
+      form.className = "redirect";
+      form.method = "POST";
+      form.action = baseUrl;
+      form.target = "_blank";
+      form.hidden = true;
+      for (const { name, value } of params) {
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = name;
+        input.value = value;
+        form.appendChild(input);
+      }
+      row.appendChild(form);
+    }
+  } else {
+    const urlLabel = document.createElement("code");
+    urlLabel.textContent = url;
+    urlLabel.style.fontFamily = "var(--font-mono)";
+    urlLabel.style.fontSize = "var(--fs-13)";
+    urlLabel.style.wordBreak = "break-all";
+    row.appendChild(urlLabel);
+  }
+
+  const btn = document.createElement("cts-button");
+  btn.setAttribute("size", "sm");
+  if (visited) {
+    btn.setAttribute("variant", "secondary");
+    btn.setAttribute("icon", "check");
+    btn.setAttribute("label", "Visited");
+    btn.setAttribute("disabled", "");
+  } else {
+    btn.classList.add("visitUrlBtn");
+    btn.setAttribute("variant", "primary");
+    btn.setAttribute("icon", "external-link");
+    btn.setAttribute("label", "Visit URL");
+    btn.dataset.url = url;
+    btn.dataset.method = method;
+    btn.addEventListener("cts-click", handleVisitUrl);
+  }
+  row.appendChild(btn);
+
+  // QR only makes sense for a GET a wallet can scan and act on directly —
+  // matches legacy, which never offered a QR code for a POST row.
+  if (!visited && method !== "POST" && showQr) {
+    const qrHost = document.createElement("div");
+    qrHost.className = "qr";
+    qrHost.dataset.url = url;
+    qrHost.style.padding = "var(--space-2)";
+    qrHost.style.background = "white";
+    qrHost.style.display = "inline-block";
+    row.appendChild(qrHost);
+    // QRCode is loaded as a global by /vendor/qrcode/js/qrcode.min.js.
+    // The library mutates the host in-place; safe to call after append.
+    if (typeof window.QRCode === "function") {
+      // eslint-disable-next-line no-new
+      new window.QRCode(qrHost, {
+        text: url,
+        // eslint-disable-next-line no-undef
+        correctLevel: window.QRCode.CorrectLevel.L,
+        version: 20,
+      });
+    }
+  }
+
+  return row;
+}
+
+/**
+ * Render the running-test browser-URL prompt into the browser slot.
+ * Near-verbatim port of log-detail.html's BROWSER template + handlers,
+ * but assembled with DOM methods instead of Underscore string templates.
+ */
+function renderBrowserSlot(browser) {
+  const slot = findSlot("browser");
+  if (!slot) return;
+  const snapshot = JSON.stringify(browser ?? null);
+  if (snapshot === lastRenderedBrowserJson && slot === lastRenderedBrowserSlot) return;
+  // Pasted-but-unsubmitted URI text must survive a re-render triggered by
+  // an unrelated change elsewhere in the browser payload — and a hero swap
+  // that replaced the slot node itself, in which case the user's text only
+  // exists in the detached previous slot (current slot wins if both have
+  // text for the same submitUrl, hence the harvest order).
+  const preservedUriInputs = new Map();
+  const harvestRoots =
+    lastRenderedBrowserSlot && lastRenderedBrowserSlot !== slot
+      ? [lastRenderedBrowserSlot, slot]
+      : [slot];
+  for (const root of harvestRoots) {
+    for (const el of root.querySelectorAll("textarea.uriInput")) {
+      if (el.value) preservedUriInputs.set(el.dataset.submiturl, el.value);
+    }
+  }
+  lastRenderedBrowserJson = snapshot;
+  lastRenderedBrowserSlot = slot;
+  clearSlot(slot);
+  if (!browser) return;
+  const urlEntries = normalizeUrlEntries(browser.urlsWithMethod, browser.urls).filter((e) => e.url);
+  const visitedEntries = normalizeUrlEntries(browser.visitedUrlsWithMethod, browser.visited).filter(
+    (e) => e.url,
+  );
+  const hasUrls = urlEntries.length > 0;
+  const hasVisited = visitedEntries.length > 0;
+  const hasApiRequests =
+    Array.isArray(browser.browserApiRequests) && browser.browserApiRequests.length > 0;
+  const hasUriInputs =
+    Array.isArray(browser.uriInputRequests) && browser.uriInputRequests.length > 0;
+  // #1884 — must be included in the early-return guard below, or a test that
+  // needs ONLY an image upload (no pending URLs/API requests/URI inputs)
+  // renders nothing at all, the same bug class #1869 hit for visited-only
+  // payloads.
+  const uploadsRequired = Number(browser.uploadsRequired) || 0;
+  const hasUpload = uploadsRequired > 0;
+  if (!hasUrls && !hasVisited && !hasApiRequests && !hasUriInputs && !hasUpload) return;
+
+  const wrapper = document.createElement("div");
+  wrapper.className = "v2-browser-wrapper";
+  wrapper.style.display = "flex";
+  wrapper.style.flexDirection = "column";
+  wrapper.style.gap = "var(--space-3)";
+
+  if (hasUrls) {
+    const heading = document.createElement("p");
+    heading.style.margin = "0";
+    heading.textContent = "Visit one of the following URLs to interact with the test:";
+    wrapper.appendChild(heading);
+
+    for (const { url, method } of urlEntries) {
+      wrapper.appendChild(
+        buildUrlRow(url, method, { visited: false, showQr: browser.show_qr_code }),
+      );
+    }
+  }
+
+  if (hasVisited) {
+    const visitedHeading = document.createElement("p");
+    visitedHeading.style.margin = "0";
+    visitedHeading.textContent = "Visited:";
+    wrapper.appendChild(visitedHeading);
+
+    for (const { url, method } of visitedEntries) {
+      wrapper.appendChild(buildUrlRow(url, method, { visited: true }));
+    }
+  }
+
+  // #1884 — an actionable "upload an image" prompt, mirroring the URL-visit
+  // rows above. Previously the only cues were a buried, uncounted overflow-menu
+  // item and a per-log-entry link (#1868) the user had to already be scrolling
+  // the log stream to see; neither is visible in "the top portion of the page"
+  // the reporter is looking at. Icon/label match cts-log-entry.js's
+  // _renderUploadCta() so the two surfaces read as the same affordance.
+  if (hasUpload) {
+    const row = document.createElement("div");
+    row.className = "v2-browser-row";
+    row.style.display = "flex";
+    row.style.flexDirection = "column";
+    row.style.gap = "var(--space-2)";
+
+    const text = document.createElement("p");
+    text.style.margin = "0";
+    text.textContent =
+      uploadsRequired === 1
+        ? "1 image needs to be uploaded to continue the test:"
+        : `${uploadsRequired} images need to be uploaded to continue the test:`;
+    row.appendChild(text);
+
+    const uploadBtn = document.createElement("cts-link-button");
+    uploadBtn.setAttribute("href", "/upload.html?log=" + encodeURIComponent(testId));
+    uploadBtn.setAttribute("icon", "camera");
+    uploadBtn.setAttribute("label", uploadsRequired === 1 ? "Upload image" : "Upload images");
+    row.appendChild(uploadBtn);
+
+    wrapper.appendChild(row);
+  }
+
+  // browserApiRequests — Digital Credentials API rows (mirrors the
+  // legacy `templates/browser.html:27–30` block). Each entry has
+  // `{ request, submitUrl }`. The button stays presentational; the page
+  // owns navigator.credentials.* and the POST. Wire format is frozen —
+  // see `handleVisitBrowserApi` and the Java consumers
+  // `ExtractBrowserApiResponse.java` / `ExtractVP1FinalBrowserApiResponse.java`.
+  if (Array.isArray(browser.browserApiRequests)) {
+    for (const apiReq of browser.browserApiRequests) {
+      if (!apiReq || !apiReq.request) continue;
+      const requestJson = JSON.stringify(apiReq.request);
+      const submitUrl = apiReq.submitUrl || "";
+
+      const row = document.createElement("div");
+      row.className = "v2-browser-row";
+      row.style.display = "flex";
+      row.style.flexDirection = "column";
+      row.style.gap = "var(--space-2)";
+
+      const apiBtn = document.createElement("cts-button");
+      apiBtn.classList.add("visitBrowserApiBtn");
+      apiBtn.setAttribute("variant", "primary");
+      apiBtn.setAttribute("size", "sm");
+      apiBtn.setAttribute("icon", "paper-plane");
+      apiBtn.setAttribute("label", "Proceed with test via browser API (preview)");
+      apiBtn.dataset.browserapirequest = requestJson;
+      apiBtn.dataset.browserapisubmiturl = submitUrl;
+      apiBtn.addEventListener("cts-click", handleVisitBrowserApi);
+      row.appendChild(apiBtn);
+
+      const reqLabel = document.createElement("code");
+      reqLabel.textContent = requestJson;
+      reqLabel.style.fontFamily = "var(--font-mono)";
+      reqLabel.style.fontSize = "var(--fs-13)";
+      reqLabel.style.wordBreak = "break-all";
+      row.appendChild(reqLabel);
+
+      wrapper.appendChild(row);
+    }
+  }
+
+  // uriInputRequests — paste-an-openid4vp://-URI rows (mirrors the legacy
+  // `templates/browser.html` uriInputRequests block). Each entry has
+  // `{ submitUrl, description }`: the user pastes the verifier-under-test's
+  // authorization request (or scans its QR code) and the submit handler
+  // GETs the pasted URI's query string to submitUrl.
+  if (hasUriInputs) {
+    for (const uriReq of browser.uriInputRequests) {
+      if (!uriReq || !uriReq.submitUrl) continue;
+
+      const row = document.createElement("div");
+      row.className = "v2-browser-row";
+      row.style.display = "flex";
+      row.style.flexDirection = "column";
+      row.style.gap = "var(--space-2)";
+
+      if (uriReq.description) {
+        const desc = document.createElement("p");
+        desc.textContent = uriReq.description;
+        desc.style.margin = "0";
+        row.appendChild(desc);
+      }
+
+      const textarea = document.createElement("textarea");
+      textarea.className = "uriInput";
+      textarea.rows = 3;
+      textarea.placeholder = "openid4vp://?client_id=...&request_uri=...";
+      textarea.setAttribute("aria-label", "Verifier authorization request URI");
+      textarea.dataset.submiturl = uriReq.submitUrl;
+      textarea.style.width = "100%";
+      textarea.style.boxSizing = "border-box";
+      textarea.style.fontFamily = "var(--font-mono)";
+      textarea.style.fontSize = "var(--fs-13)";
+      const preserved = preservedUriInputs.get(uriReq.submitUrl);
+      if (preserved) textarea.value = preserved;
+      row.appendChild(textarea);
+
+      const btnRow = document.createElement("div");
+      btnRow.style.display = "flex";
+      btnRow.style.gap = "var(--space-2)";
+
+      const submitBtn = document.createElement("cts-button");
+      submitBtn.classList.add("submitUriBtn");
+      submitBtn.setAttribute("variant", "primary");
+      submitBtn.setAttribute("size", "sm");
+      submitBtn.setAttribute("icon", "paper-plane");
+      submitBtn.setAttribute("label", "Submit pasted URI");
+      submitBtn.dataset.submiturl = uriReq.submitUrl;
+      submitBtn.addEventListener("cts-click", handleSubmitUri);
+      btnRow.appendChild(submitBtn);
+
+      // Scan QR is only offered where the browser can decode QR codes
+      // natively (BarcodeDetector — Chromium-based browsers).
+      if (
+        "BarcodeDetector" in window &&
+        navigator.mediaDevices &&
+        navigator.mediaDevices.getUserMedia
+      ) {
+        const scanBtn = document.createElement("cts-button");
+        scanBtn.classList.add("scanQrBtn");
+        scanBtn.setAttribute("variant", "secondary");
+        scanBtn.setAttribute("size", "sm");
+        scanBtn.setAttribute("icon", "qr-code");
+        scanBtn.setAttribute("label", "Scan QR");
+        scanBtn.addEventListener("cts-click", handleScanQr);
+        btnRow.appendChild(scanBtn);
+      }
+
+      row.appendChild(btnRow);
+      wrapper.appendChild(row);
+    }
+  }
+
+  slot.appendChild(wrapper);
+}
+
+/**
+ * uriInputRequests submit handler. Takes the query string of the pasted
+ * URI (everything from the first "?") and GETs it to the row's submitUrl
+ * — delivering, e.g., a verifier-under-test's openid4vp:// authorization
+ * request to the test's own authorization endpoint. On success the page
+ * reloads to pick up the test's progress.
+ *
+ * @param {Event} evt
+ */
+async function handleSubmitUri(evt) {
+  const host = /** @type {HTMLElement} */ (evt.currentTarget);
+  const submitUrl = host.dataset.submiturl || "";
+  const row = host.closest(".v2-browser-row");
+  const textarea = row ? row.querySelector("textarea.uriInput") : null;
+  const raw = textarea ? textarea.value.trim() : "";
+  const q = raw.indexOf("?");
+  if (q < 0) {
+    showError("No '?' query string found in the pasted URI.");
+    return;
+  }
+  const target = submitUrl + raw.substring(q); // substring includes the leading '?'
+  showBusy("Delivering authorization request…");
+  try {
+    const response = await fetch(target, { method: "GET" });
+    if (!response.ok) {
+      throw new Error(await readRunnerError(response));
+    }
+    window.location.reload();
+  } catch (err) {
+    hideBusy();
+    showError(`Failed to deliver authorization request: ${err.message}`);
+  }
+}
+
+/**
+ * "Scan QR" handler for uriInputRequests rows. Opens scanQrModal, streams
+ * the camera into its <video>, and polls the frames with the browser's
+ * native BarcodeDetector until a QR code decodes — the decoded text lands
+ * in the row's paste textarea and the modal closes. The camera stream is
+ * stopped whenever the modal closes, whatever the close path (success,
+ * Cancel, X, ESC, backdrop click — every path fires cts-modal-close).
+ *
+ * @param {Event} evt
+ */
+function handleScanQr(evt) {
+  const host = /** @type {HTMLElement} */ (evt.currentTarget);
+  const row = host.closest(".v2-browser-row");
+  const textarea = row ? row.querySelector("textarea.uriInput") : null;
+  const modal = document.getElementById("scanQrModal");
+  const video = /** @type {HTMLVideoElement} */ (document.getElementById("scanQrVideo"));
+  const statusEl = document.getElementById("scanQrStatus");
+  if (!textarea || !modal || !video || !statusEl) return;
+
+  const detector = new window.BarcodeDetector({ formats: ["qr_code"] });
+  let stream = null;
+  let rafId = null;
+  // Set when the modal closes. getUserMedia can resolve AFTER the user has
+  // already dismissed the modal (the permission prompt / camera spin-up is
+  // not cancellable) — by then the one-shot close listener has fired with
+  // nothing to stop, so the late .then must stop the stream itself or the
+  // camera stays on with no owner.
+  let cancelled = false;
+
+  const stopCamera = () => {
+    cancelled = true;
+    if (rafId !== null) {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
+    if (stream) {
+      for (const track of stream.getTracks()) track.stop();
+      stream = null;
+    }
+    video.srcObject = null;
+  };
+  modal.addEventListener("cts-modal-close", stopCamera, { once: true });
+
+  statusEl.textContent = "Requesting camera…";
+  if (typeof modal.show === "function") modal.show();
+
+  navigator.mediaDevices
+    .getUserMedia({ video: { facingMode: "environment" } })
+    .then((mediaStream) => {
+      if (cancelled) {
+        for (const track of mediaStream.getTracks()) track.stop();
+        return;
+      }
+      stream = mediaStream;
+      video.srcObject = stream;
+      return video.play();
+    })
+    .then(() => {
+      if (!stream) return; // modal closed while the camera was starting
+      statusEl.textContent = "Scanning…";
+      const scanFrame = () => {
+        if (!stream) return;
+        detector
+          .detect(video)
+          .then((codes) => {
+            if (!stream) return;
+            if (codes.length > 0 && codes[0].rawValue) {
+              textarea.value = codes[0].rawValue;
+              statusEl.textContent = "QR code captured.";
+              if (typeof modal.hide === "function") modal.hide(); // fires cts-modal-close → stopCamera
+            } else {
+              rafId = requestAnimationFrame(scanFrame);
+            }
+          })
+          .catch(() => {
+            // ignore per-frame decode errors and keep trying until the modal closes
+            if (stream) rafId = requestAnimationFrame(scanFrame);
+          });
+      };
+      rafId = requestAnimationFrame(scanFrame);
+    })
+    .catch((err) => {
+      statusEl.textContent = `Camera error: ${err && err.message ? err.message : err}`;
+    });
+}
+
+/**
+ * Digital Credentials API handler. Wire format is frozen — Java parses it
+ * structurally in `ExtractBrowserApiResponse` /
+ * `ExtractVP1FinalBrowserApiResponse`. Three branches:
+ *   - `submitUrl === ""`: legacy `navigator.credentials.create` path.
+ *   - success + DigitalCredential: POST `{data, protocol}`.
+ *   - success + non-DigitalCredential: POST `{bad_response_type}`.
+ *   - exception: POST `{exception: {name, message}}` and surface via
+ *     `showError` (legacy used `alert()` — replaced per the leaf-component
+ *     principle's "error chrome at the page level" rule).
+ *
+ * @param {Event} evt
+ */
+async function handleVisitBrowserApi(evt) {
+  const host = /** @type {HTMLElement} */ (evt.currentTarget);
+  /** @type {any} */
+  let request;
+  try {
+    request = JSON.parse(host.dataset.browserapirequest || "");
+  } catch (parseErr) {
+    showError(`Invalid browser API request payload: ${parseErr.message}`);
+    return;
+  }
+  const submitUrl = host.dataset.browserapisubmiturl || "";
+
+  if (submitUrl === "") {
+    // Legacy parity: when no submitUrl is provided, the test wants the
+    // wallet to be created (not got). Fire-and-forget; the wallet does
+    // its own thing from there.
+    try {
+      // eslint-disable-next-line compat/compat
+      navigator.credentials.create(request);
+    } catch (err) {
+      showError(`navigator.credentials.create failed: ${err.message}`);
+    }
+    return;
+  }
+
+  /**
+   * @param {Record<string, unknown>} body
+   */
+  const postResult = (body) =>
+    fetch(submitUrl, {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+
+  try {
+    // eslint-disable-next-line compat/compat
+    const credentialResponse = await navigator.credentials.get(request);
+    if (credentialResponse && credentialResponse.constructor.name === "DigitalCredential") {
+      /** @type {any} */
+      const cred = credentialResponse;
+      await postResult({ data: cred.data, protocol: cred.protocol });
+    } else {
+      await postResult({
+        bad_response_type: credentialResponse ? credentialResponse.constructor.name : "null",
+      });
+    }
+  } catch (err) {
+    try {
+      await postResult({ exception: { name: err.name, message: err.message } });
+    } catch (postErr) {
+      console.warn("[log-detail] failed to POST browser API exception:", postErr);
+    }
+    showError(err.message || String(err));
+  }
+}
+
+async function handleVisitUrl(evt) {
+  const host = evt.currentTarget;
+  // Always the full original URL (query string included) — the /visit
+  // endpoint below matches it by exact string equality server-side, so this
+  // must never be a query-stripped or form-action URL.
+  const url = host.dataset.url;
+  if (!url) return;
+  showBusy(`Opening: ${url}`);
+  let win = null;
+  if (host.dataset.method === "POST") {
+    // Scoped to this row's own form — never a global lookup — so multiple
+    // pending POST rows can't submit each other's form.
+    const form = host.closest(".v2-browser-row")?.querySelector("form.redirect");
+    form?.requestSubmit();
+  } else {
+    win = window.open(url, "_blank");
+  }
+  if (win) win.focus();
+  try {
+    const response = await fetch(
+      `/api/runner/browser/${encodeURIComponent(testId)}/visit?url=${encodeURIComponent(url)}`,
+      { method: "POST" },
+    );
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    // Reload to refresh the runner state.
+    window.location.reload();
+  } catch (err) {
+    hideBusy();
+    showError(`Failed to mark URL as visited: ${err.message}`);
+  }
+}
+
+/**
+ * Render the FINAL_ERROR alert into the error slot. Construction logic
+ * lives in `log-detail-error-slot.js` so Storybook's
+ * `WithFinalErrorSlotPopulated` story can call the same code and stay
+ * faithful to the live render path.
+ */
+function renderErrorSlot(error) {
+  renderErrorIntoSlot(findSlot("error"), error);
+}
+
+/** ──────────── Header action event handlers ──────────── */
+
+function handleEditConfig(evt) {
+  const detail = evt.detail || {};
+  if (detail.planId) {
+    window.location.assign("/schedule-test.html?from-plan=" + encodeURIComponent(detail.planId));
+  } else if (detail.testId) {
+    window.location.assign("/schedule-test.html?edit-test=" + encodeURIComponent(detail.testId));
+  }
+}
+
+function handleShareLink(evt) {
+  const eventTestId = (evt.detail && evt.detail.testId) || testId;
+  const dialog = document.getElementById("privateLinkDialog");
+  if (!dialog) return;
+  // The shared cts-private-link-dialog owns the whole flow (expiry input,
+  // generate, Safari-safe auto-copy, Copy button). We only point it at the
+  // per-test share endpoint and open it.
+  /** @type {any} */ (dialog).shareUrl = `/api/info/${encodeURIComponent(eventTestId)}/share`;
+  /** @type {any} */ (dialog).show();
+}
+
+async function handlePublish(evt) {
+  const detail = evt.detail || {};
+  const action = detail.action;
+  const mode = detail.mode;
+  const eventTestId = detail.testId || testId;
+  showBusy(action === "unpublish" ? "Unpublishing…" : "Publishing…");
+  try {
+    const response = await fetch(`/api/info/${encodeURIComponent(eventTestId)}/publish`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ publish: action === "unpublish" ? "" : mode || "everything" }),
+    });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    // Reload the page to pick up the new publish state. Send admin
+    // through ?public=true after publishing so they immediately see
+    // the public read-only view (matches legacy behaviour).
+    const next =
+      action === "publish"
+        ? `/log-detail.html?log=${encodeURIComponent(eventTestId)}&public=true`
+        : `/log-detail.html?log=${encodeURIComponent(eventTestId)}`;
+    window.location.assign(next);
+  } catch (err) {
+    hideBusy();
+    showError(`Failed to ${action}: ${err.message}`);
+  }
+}
+
+function handleUploadImages(evt) {
+  const eventTestId = (evt.detail && evt.detail.testId) || testId;
+  window.location.assign("/upload.html?log=" + encodeURIComponent(eventTestId));
+}
+
+function handleDownloadLog(evt) {
+  const eventTestId = (evt.detail && evt.detail.testId) || testId;
+  window.location.assign(
+    "/api/log/exporthtml/" + encodeURIComponent(eventTestId) + (isPublic ? "?public=true" : ""),
+  );
+}
+
+async function handleStartTest(evt) {
+  const eventTestId = (evt.detail && evt.detail.testId) || testId;
+  showBusy("Starting test…");
+  try {
+    const response = await fetch(`/api/runner/${encodeURIComponent(eventTestId)}`, {
+      method: "POST",
+    });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    window.location.reload();
+  } catch (err) {
+    hideBusy();
+    showError(`Failed to start test: ${err.message}`);
+  }
+}
+
+async function handleStopTest(evt) {
+  const eventTestId = (evt.detail && evt.detail.testId) || testId;
+  showBusy("Stopping test…");
+  try {
+    const response = await fetch(`/api/runner/${encodeURIComponent(eventTestId)}`, {
+      method: "DELETE",
+    });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    window.location.reload();
+  } catch (err) {
+    hideBusy();
+    showError(`Failed to stop test: ${err.message}`);
+  }
+}
+
+/**
+ * Build the /api/runner POST URL the same way plan-detail.html does
+ * (its `buildRunnerUrl` is the single source of truth for query-param
+ * shape). `test` is the module name (NOT the runtime test ID); `plan`
+ * is optional; `variant` is pass-through when string, JSON when object,
+ * omitted when nullish.
+ *
+ * @param {string} testName
+ * @param {string | null | undefined} planId
+ * @param {object | string | null | undefined} variant
+ * @returns {string}
+ */
+function buildRunnerUrl(testName, planId, variant) {
+  let url = `/api/runner?test=${encodeURIComponent(testName)}`;
+  if (planId) {
+    url += `&plan=${encodeURIComponent(planId)}`;
+  }
+  if (variant !== null && variant !== undefined) {
+    const encoded = typeof variant === "string" ? variant : JSON.stringify(variant);
+    if (encoded && encoded !== "{}") {
+      url += `&variant=${encodeURIComponent(encoded)}`;
+    }
+  }
+  return url;
+}
+
+/**
+ * Surface a runner-API failure with the server's own error message
+ * when the body carries one ({error: "..."}), mirroring plan-detail.html's
+ * handleApiError. Falls back to the generic statusText. Returns the
+ * resolved message for the caller's showError().
+ *
+ * @param {Response} response
+ * @returns {Promise<string>}
+ */
+async function readRunnerError(response) {
+  try {
+    const body = await response.json();
+    if (body && typeof body.error === "string" && body.error.trim()) {
+      return body.error;
+    }
+    if (body && typeof body.message === "string" && body.message.trim()) {
+      return body.message;
+    }
+  } catch {
+    /* not JSON — fall through */
+  }
+  return `HTTP ${response.status} ${response.statusText || ""}`.trim();
+}
+
+async function handleRepeat() {
+  // Resolve testName + variant from the latest /api/info payload — the
+  // event detail only carries the runtime test ID, but the runner
+  // endpoint wants the module name (e.g. `oidcc-server`) in `test=`.
+  // Passing the runtime ID is what caused the 404/400 modal Thomas
+  // reported (A3).
+  const info = latestTestInfo;
+  if (!info || !info.testName) {
+    showError("Test info hasn't loaded yet — wait a moment and try again.");
+    return;
+  }
+  showBusy("Repeating test…");
+  try {
+    const url = buildRunnerUrl(info.testName, info.planId || null, info.variant || null);
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    });
+    if (!response.ok) {
+      const message = await readRunnerError(response);
+      throw new Error(message);
+    }
+    const data = await response.json();
+    if (data && data.id) {
+      window.location.assign(`/log-detail.html?log=${encodeURIComponent(data.id)}`);
+    } else {
+      window.location.reload();
+    }
+  } catch (err) {
+    hideBusy();
+    showError(`Failed to repeat test: ${err.message}`);
+  }
+}
+
+/**
+ * True when every key the module's variant constrains is present and
+ * equal in the test's full resolved variant. The plan's per-module
+ * variant carries only constraint keys; the test's variant carries
+ * those plus plan-level defaults — so the relationship is subset, not
+ * equality. Used by both the in-plan currentIndex lookup and the
+ * Continue Plan next-module lookup, so the two stay consistent.
+ *
+ * @param {object | undefined | null} moduleVariant - the plan-module variant (subset)
+ * @param {object | undefined | null} testVariant - the test's full resolved variant
+ */
+function variantsMatch(moduleVariant, testVariant) {
+  const mv = moduleVariant || {};
+  const tv = testVariant || {};
+  for (const key of Object.keys(mv)) {
+    if (mv[key] !== tv[key]) return false;
+  }
+  return true;
+}
+
+async function handleContinue() {
+  const info = latestTestInfo;
+  if (!info || !info.planId || !info.testName) return;
+  // Find the *next* module in the plan. The runner endpoint's `test=`
+  // param wants a module name, so Continue Plan can't just POST
+  // `?plan=...` — that produces the "Required parameter 'test' is not
+  // present" 400 Thomas reported. Reuse the plan modules already
+  // fetched by fetchAndApplyPlanState (cached at module scope) to find
+  // the next entry without a second roundtrip.
+  const currentIndex = cachedPlanModules.findIndex(
+    (m) => m.testModule === info.testName && variantsMatch(m.variant, info.variant),
+  );
+  const next = currentIndex >= 0 ? cachedPlanModules[currentIndex + 1] : null;
+  if (!next || !next.testModule) {
+    showError("No next module found in this plan.");
+    return;
+  }
+  showBusy("Continuing to next module…");
+  try {
+    const url = buildRunnerUrl(next.testModule, info.planId, next.variant || null);
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    });
+    if (!response.ok) {
+      const message = await readRunnerError(response);
+      throw new Error(message);
+    }
+    const data = await response.json();
+    if (data && data.id) {
+      window.location.assign(`/log-detail.html?log=${encodeURIComponent(data.id)}`);
+    } else {
+      window.location.reload();
+    }
+  } catch (err) {
+    hideBusy();
+    showError(`Failed to continue plan: ${err.message}`);
+  }
+}
+
+/** ──────────── Document-level cts-scroll-to-entry ──────────── */
+
+function handleScrollToEntry(evt) {
+  const entryId = evt.detail && evt.detail.entryId;
+  if (!entryId) return;
+  // Find the entry by its server-side _id. cts-log-entry exposes the id
+  // via `data-entry-id` so this query is stable across U6 (R32 reference
+  // IDs) and U8 (TOC rail) — those features layer additional anchors but
+  // do not break the legacy _id contract.
+  const target = document.querySelector(
+    `cts-log-entry[data-entry-id="${entryId.replace(/"/g, '\\"')}"]`,
+  );
+  if (!target) return;
+  // Blocks are non-collapsible (always-rendered .logBlock divs), so the
+  // entry is already in the layout — scroll straight to it with no
+  // collapsed-ancestor reveal step. scrollEntryIntoView handles the wide
+  // layout where the host is display:contents (boxless — a bare
+  // scrollIntoView would silently no-op) by scrolling the painted
+  // .logItem row instead. block: "center" (not "start") keeps preceding
+  // log context visible above the target row instead of pinning it to the
+  // very top of the viewport.
+  scrollEntryIntoView(target, { behavior: "smooth", block: "center" });
+  flashArrivalWhenScrollSettles(target);
+}
+
+/**
+ * Cancels the most recently scheduled flashArrivalWhenScrollSettles() wait,
+ * if any is still pending. Only one jump's landing can be "current" at a
+ * time — without this, clicking a second failure row before the first
+ * jump's scroll settles would leave the first wait armed too, and a single
+ * scrollend (the browser coalesces the redirected scroll into one motion)
+ * would flash both the abandoned first target and the real second one.
+ * @type {(() => void) | null}
+ */
+let cancelPendingArrivalFlash = null;
+
+/**
+ * Flash the landing row once the smooth scroll started by
+ * scrollEntryIntoView has settled — firing mid-scroll would read as noise
+ * rather than "you've arrived" (same post-settle timing schedule-test.html
+ * uses for its own cts-flash-highlight arrival cue). `scrollend` is the
+ * settle signal; the timeout is a safety net for browsers that never fire
+ * it, or when the target was already on screen and nothing scrolled.
+ *
+ * @param {Element} target - The `cts-log-entry` host to flash.
+ * @returns {void}
+ */
+function flashArrivalWhenScrollSettles(target) {
+  if (cancelPendingArrivalFlash) cancelPendingArrivalFlash();
+
+  let settled = false;
+  function finish() {
+    if (settled) return;
+    settled = true;
+    window.removeEventListener("scrollend", finish);
+    clearTimeout(timeoutId);
+    cancelPendingArrivalFlash = null;
+    flashEntryArrival(target);
+  }
+  function cancel() {
+    if (settled) return;
+    settled = true;
+    window.removeEventListener("scrollend", finish);
+    clearTimeout(timeoutId);
+  }
+  window.addEventListener("scrollend", finish, { once: true });
+  const timeoutId = setTimeout(finish, 1000);
+  cancelPendingArrivalFlash = cancel;
+}
+
+/**
+ * U8 — handle a click on a cts-log-toc rail row. The rail dispatches
+ * `cts-scroll-to-block` with `{ blockId }`; the matching `.logBlock` in the
+ * entries stream scrolls into view so the block header is the visible anchor.
+ * Blocks are non-collapsible, so there is no open step — the block is always
+ * in the layout.
+ *
+ * @param {Event} evt
+ */
+function handleScrollToBlock(evt) {
+  const detail = /** @type {CustomEvent} */ (evt).detail || {};
+  const blockId = detail.blockId;
+  if (!blockId) return;
+  const target = /** @type {HTMLElement | null} */ (
+    document.querySelector(`.logBlock[data-block-id="${blockId.replace(/"/g, '\\"')}"]`)
+  );
+  if (!target) return;
+  target.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+/**
+ * U8 — wire the wide-viewport rail. Adds the `--with-toc` modifier on
+ * <main> so the page grid reserves the rail column; the responsive CSS
+ * (≥ 1440px) and the rail's own empty-data `hidden` attribute gate whether
+ * the column actually paints.
+ *
+ * Listens for `cts-blocks-updated` from cts-log-viewer so the rail's
+ * blocks array re-syncs with each polling cycle.
+ */
+function setupLogToc() {
+  /** @type {any} */
+  const rail = document.getElementById("ctsLogToc");
+  if (!rail) return;
+  const main = document.getElementById("main-content");
+  if (main) {
+    main.classList.add("log-page--with-toc");
+  }
+  document.addEventListener("cts-scroll-to-block", handleScrollToBlock);
+  document.addEventListener("cts-blocks-updated", (evt) => {
+    const blocks = /** @type {CustomEvent} */ (evt).detail && evt.detail.blocks;
+    if (Array.isArray(blocks)) rail.blocks = blocks;
+  });
+}
+
+/**
+ * Read the `--dur-3` motion token (e.g. "280ms") off the page root and return
+ * it in milliseconds, so the JS `inert` settle stays in lockstep with the CSS
+ * collapse transition without hard-coding the duration. Falls back to 280 if
+ * the token is unreadable.
+ *
+ * @returns {number}
+ */
+function readMotionDurationMs() {
+  const raw = getComputedStyle(document.documentElement).getPropertyValue("--dur-3").trim();
+  const value = parseFloat(raw);
+  if (Number.isNaN(value)) return 280;
+  // Tokens are authored in ms ("280ms"); tolerate a seconds form ("0.28s").
+  return raw.endsWith("ms") ? value : value * 1000;
+}
+
+/**
+ * feat/log-toc-collapsible — wire the Test-structure rail collapse toggle.
+ *
+ * The collapsed/expanded choice persists in `localStorage` (global, one key)
+ * and is applied PRE-PAINT by the inline `<head>` script in log-detail.html
+ * (which sets `documentElement.classList.toc-collapsed` before first paint so a
+ * collapsed-by-preference load never shows an expanded frame — R6). This
+ * function only re-syncs the toggle's label + `aria-expanded` to that pre-paint
+ * state, manages the rail's `inert` lifecycle, persists user toggles, and keeps
+ * keyboard focus off the collapsed rail.
+ *
+ * Named (not an inline closure in bootstrap) so a future keyboard shortcut can
+ * call the same toggle handler — see the plan's "Deferred to follow-up work".
+ *
+ * R10 (suppress the toggle when the rail is empty) is handled declaratively in
+ * the page CSS via `#main-content:has(#ctsLogToc[hidden]) .log-toc-toggle-slot`,
+ * NOT here: the rail's `[hidden]` state is set inside cts-log-toc's async Lit
+ * `updated()` cycle, so a synchronous read on `cts-blocks-updated` would race
+ * it. The `:has()` selector tracks the attribute reactively with no timing
+ * coupling.
+ */
+function setupTocCollapse() {
+  /** @type {any} */
+  const toggle = document.getElementById("ctsLogTocToggle");
+  /** @type {HTMLElement | null} */
+  const rail = document.getElementById("ctsLogToc");
+  const root = document.documentElement;
+  if (!toggle || !rail) return;
+
+  /** The cts-tooltip wrapping the toggle (hover/focus discoverability). */
+  const tooltip = toggle.closest("cts-tooltip");
+
+  const storage = tryGetStorage("localStorage");
+  const motionDurationMs = readMotionDurationMs();
+
+  /**
+   * Pending timeout id for the duration-matched `inert` settle. Cleared on
+   * every toggle so a rapid collapse→expand never re-applies `inert` to a
+   * now-visible rail.
+   * @type {number}
+   */
+  let inertTimer = 0;
+
+  const prefersReducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /**
+   * Sync the toggle's accessible label, `aria-expanded` (forwarded by
+   * cts-button onto the inner button), and hover-tooltip text to the given
+   * collapsed state. The button is icon-only, so the action lives in
+   * `aria-label` + the tooltip, not visible text. Driven through `setAttribute`
+   * so the host attributes stay consistent with the rendered inner button.
+   * @param {boolean} collapsed
+   */
+  function syncToggle(collapsed) {
+    const action = collapsed ? "Show test structure" : "Hide test structure";
+    toggle.setAttribute("aria-expanded", collapsed ? "false" : "true");
+    toggle.setAttribute("aria-label", action);
+    if (tooltip) tooltip.setAttribute("content", action);
+  }
+
+  // Mirror the pre-paint state onto the toggle + the rail's inert state without
+  // animating (the animate class is enabled one frame later, below).
+  const initialCollapsed = root.classList.contains("toc-collapsed");
+  syncToggle(initialCollapsed);
+  rail.inert = initialCollapsed;
+
+  // Enable the collapse transition one frame after first paint so the
+  // load-time state applies instantly and only later user toggles animate (R6).
+  requestAnimationFrame(() => {
+    const main = document.getElementById("main-content");
+    if (main) main.classList.add("log-page--toc-animate");
+  });
+
+  toggle.addEventListener("cts-click", () => {
+    // Clear any pending inert settle so an interrupted collapse→expand never
+    // re-applies inert to a visible rail.
+    if (inertTimer) {
+      clearTimeout(inertTimer);
+      inertTimer = 0;
+    }
+
+    const willCollapse = !root.classList.contains("toc-collapsed");
+
+    if (willCollapse) {
+      // R11 — never silently drop focus to <body>: move focus to the toggle
+      // BEFORE the rail becomes inert if focus currently sits inside the rail.
+      // The focus target is cts-button's inner <button> (light DOM); the host
+      // itself is not focusable, so guard the query rather than focusing the
+      // host. Via the real triggers the inner button is always rendered by now
+      // (a pointer click already moved focus onto it; a future keyboard
+      // shortcut fires on a fully-loaded page), so this is defensive.
+      if (rail.contains(document.activeElement)) {
+        const innerBtn = toggle.querySelector("button");
+        if (innerBtn) innerBtn.focus();
+      }
+      root.classList.add("toc-collapsed");
+    } else {
+      // Expand — restore focus-reachability synchronously.
+      rail.inert = false;
+      root.classList.remove("toc-collapsed");
+    }
+
+    syncToggle(willCollapse);
+
+    // A tooltip shown from the pre-click hover keeps its old text (cts-tooltip
+    // only re-reads `content` on the next show), which would read e.g. "Hide
+    // test structure" over an already-hidden rail. Dismiss it via the trigger's
+    // own hide event; the next hover/focus shows the updated action.
+    if (tooltip) toggle.dispatchEvent(new MouseEvent("mouseleave"));
+
+    if (willCollapse) {
+      if (prefersReducedMotion()) {
+        // No animation, so settle inert immediately (R5 + R9).
+        rail.inert = true;
+      } else {
+        // Settle inert once the collapse animation has finished. Driven off a
+        // duration-matched timeout, NOT `transitionend` for the registered
+        // custom property (engine-inconsistent; see the plan's KTDs).
+        inertTimer = window.setTimeout(() => {
+          rail.inert = true;
+          inertTimer = 0;
+        }, motionDurationMs);
+      }
+    }
+
+    // Persist the choice. Degrades to session-only (no-op) when storage is
+    // unavailable, so the in-session toggle still works (R7).
+    if (storage) {
+      try {
+        storage.setItem(TOC_COLLAPSE_STORAGE_KEY, willCollapse ? "true" : "false");
+      } catch {
+        /* storage became unavailable mid-session — ignore, stay in-session */
+      }
+    }
+  });
+}
+
+/** ──────────── Keyboard shortcuts ──────────── */
+
+function handleKeydown(event) {
+  // navigator.platform is deprecated, but its modern replacement
+  // (navigator.userAgentData.platform) ships only in Chromium today and
+  // the legacy page we mirror here uses navigator.platform. Falling
+  // back to userAgent string-matching gives Safari/Firefox coverage
+  // without introducing a divergence in keyboard-shortcut behaviour
+  // between the two pages during the rollout window.
+  // eslint-disable-next-line deprecation/deprecation -- see comment above
+  const legacyPlatform = /** @type {string} */ (/** @type {any} */ (navigator).platform || "");
+  const platform =
+    (navigator.userAgentData && navigator.userAgentData.platform) ||
+    legacyPlatform ||
+    navigator.userAgent ||
+    "";
+  const isMac = platform.toUpperCase().indexOf("MAC") >= 0;
+  const isModifier = isMac ? event.metaKey : event.ctrlKey;
+  if (!isModifier || !event.shiftKey) return;
+  const key = event.key.toLowerCase();
+  if (key === "x") {
+    event.preventDefault();
+    // The Repeat button lives in the status bar now — cts-test-nav-controls'
+    // "Repeat Test" was removed once the status bar took over the affordance.
+    // Target `data-action="repeat-test"`, NOT `status-bar-primary`: since
+    // #1903 the live bars carry Repeat as a secondary action, and on the
+    // needs-start / running bars the primary slot is Start Test / Stop —
+    // so keying on the primary testid would fire the wrong action there.
+    const inner = document.querySelector(
+      'cts-log-detail-header [data-action="repeat-test"] button',
+    );
+    if (inner) inner.click();
+  } else if (key === "u") {
+    event.preventDefault();
+    const inner = document.querySelector(
+      'cts-test-nav-controls [data-testid="continue-btn"] button',
+    );
+    if (inner) inner.click();
+  }
+}
+
+/** ──────────── Entry point ──────────── */
+
+async function bootstrap() {
+  readUrlParams();
+  if (!testId) {
+    showError("Missing `log` query parameter.");
+    return;
+  }
+
+  document.addEventListener("cts-scroll-to-entry", handleScrollToEntry);
+  document.addEventListener("keydown", handleKeydown);
+  setupLogToc();
+  setupTocCollapse();
+  // U6: cts-log-viewer dispatches cts-references-updated after each
+  // successful poll that appended rows. Forward the map to every
+  // failure summary instance so chips render in lockstep with the
+  // entries stream — and, on the same beat, re-read the viewer's
+  // findings (#1866): the event fires exactly when the stream has grown,
+  // and its `updateComplete` gating guarantees the new rows are committed.
+  document.addEventListener("cts-references-updated", (evt) => {
+    const refs = /** @type {CustomEvent} */ (evt).detail && evt.detail.references;
+    if (refs) applyReferences(refs);
+    applyFindings();
+  });
+  // #1890: when the viewer gives up (expired session, denied access, or an
+  // exhausted retry budget), the page's own runner poll must stop too —
+  // otherwise the log freezes behind an honest banner while /api/info and
+  // /api/runner keep hammering a server that already said no. Registered
+  // before the viewer's first fetch so an immediate terminal state is caught.
+  document.addEventListener("cts-log-polling-stopped", abandonRunnerPolling);
+  document.addEventListener("cts-log-polling-resumed", resumeRunnerPolling);
+
+  await fetchCurrentUser();
+
+  /** @type {any} */
+  const header = document.getElementById("logDetailHeader");
+  /** @type {any} */
+  const viewer = document.getElementById("logViewer");
+
+  if (header) {
+    header.isAdmin = isAdmin;
+    header.isPublic = isPublic;
+    // The instance being viewed drives the plan-status "you are here"
+    // marker + "Module N of M" label in the nav row's progress bar (R14/
+    // R17). Set it before /api/plan resolves so the marker lands as soon
+    // as the modules arrive.
+    header.currentInstanceId = testId;
+    header.addEventListener("cts-edit-config", handleEditConfig);
+    header.addEventListener("cts-share-link", handleShareLink);
+    header.addEventListener("cts-publish", handlePublish);
+    header.addEventListener("cts-upload-images", handleUploadImages);
+    header.addEventListener("cts-download-log", handleDownloadLog);
+    header.addEventListener("cts-start-test", handleStartTest);
+    header.addEventListener("cts-stop-test", handleStopTest);
+    header.addEventListener("cts-repeat-test", handleRepeat);
+    // cts-test-nav-controls only bubbles cts-continue now — the
+    // duplicate "Repeat Test" button was removed; the status bar
+    // primary owns the cts-repeat-test event by itself.
+    header.addEventListener("cts-continue", handleContinue);
+    // R15: progress segments are real links now — each reachable sibling's
+    // cts-plan-status segment carries the href built by buildSiblingHref (set in
+    // navModules off public, and after the fan-out confirms reachability on
+    // public), so clicking navigates natively. No cts-plan-status-activate
+    // listener: the component does not emit it in log mode.
+  }
+
+  let testInfo;
+  try {
+    testInfo = await fetchTestInfo();
+  } catch (err) {
+    showError(err.message);
+    return;
+  }
+
+  applyTestInfo(testInfo);
+  updateBreadcrumb(testInfo);
+
+  if (viewer) {
+    // isPublic MUST be assigned in the same synchronous block as testId
+    // (conventionally first) — the testId assignment triggers the first
+    // /api/log fetch, which must already carry public=true for anonymous
+    // viewers. Never defer the isPublic assignment past an await.
+    viewer.isPublic = isPublic;
+    // Same rule as isPublic: assigned before testId, because testId starts
+    // the fetch and a terminal auth banner must already know which audience
+    // it is talking to (a private-link viewer cannot "sign in again").
+    viewer.isGuest = isGuest;
+    viewer.testInfo = testInfo;
+    viewer.testId = testId;
+  }
+
+  await fetchAndApplyPlanState(testInfo);
+
+  startRunnerPolling(testInfo);
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", bootstrap);
+} else {
+  bootstrap();
+}

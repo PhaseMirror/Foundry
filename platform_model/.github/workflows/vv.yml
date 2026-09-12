@@ -1,0 +1,21 @@
+name: Verification & Validation
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  vv:
+    name: Linux x86-64 normative acceptance
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Run the complete pinned devcontainer gate
+        uses: devcontainers/ci@8bf61b26e9c3a98f69cb6ce2f88d24ff59b785c6 # v0.3.1900000417
+        with:
+          # The second run is the regression test for stale ignored evidence.
+          runCmd: |
+            just vv
+            just vv

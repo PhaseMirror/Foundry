@@ -1,0 +1,171 @@
+\documentclass[11pt]{article}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+\begin{document}
+\section*{Semantic declarations}
+\subsection*{\texttt{StandardsProfile}}
+\noindent Kind: \texttt{structure}.\par
+\subsection*{\texttt{NormalizedHolo}}
+\noindent Kind: \texttt{structure}.\par
+\subsection*{\texttt{FlatValidationInput}}
+\noindent Kind: \texttt{structure}.\par
+\subsection*{\texttt{allConsecutive}}
+\noindent Kind: \texttt{definition}.\par
+\noindent Type: \texttt{Bool}.\par
+\noindent Definition: \texttt{(match values with | List.nil => true | List.cons value rest => ((Nat.beq (expected) (value)) \&\& allConsecutive ((expected + 1)) (rest)))}.\par
+\noindent Axiom policy: \texttt{none}.\par
+\subsection*{\texttt{allConsecutiveProp}}
+\noindent Kind: \texttt{definition}.\par
+\noindent Type: \texttt{Prop}.\par
+\noindent Definition: \texttt{(match values with | List.nil => (expected = expected) | List.cons value rest => ((expected = value) /\textbackslash{} allConsecutiveProp ((expected + 1)) (rest)))}.\par
+\noindent Axiom policy: \texttt{none}.\par
+\subsection*{\texttt{allBelow}}
+\noindent Kind: \texttt{definition}.\par
+\noindent Type: \texttt{Bool}.\par
+\noindent Definition: \texttt{(match values with | List.nil => true | List.cons value rest => ((Nat.blt (value) (bound)) \&\& allBelow (bound) (rest)))}.\par
+\noindent Axiom policy: \texttt{none}.\par
+\subsection*{\texttt{allBelowProp}}
+\noindent Kind: \texttt{definition}.\par
+\noindent Type: \texttt{Prop}.\par
+\noindent Definition: \texttt{(match values with | List.nil => (bound = bound) | List.cons value rest => ((value < bound) /\textbackslash{} allBelowProp (bound) (rest)))}.\par
+\noindent Axiom policy: \texttt{none}.\par
+\subsection*{\texttt{validateComponentIndexes}}
+\noindent Kind: \texttt{definition}.\par
+\noindent Type: \texttt{Bool}.\par
+\noindent Definition: \texttt{allConsecutive (0) (values)}.\par
+\noindent Axiom policy: \texttt{none}.\par
+\subsection*{\texttt{validateEdgeEndpoints}}
+\noindent Kind: \texttt{definition}.\par
+\noindent Type: \texttt{Bool}.\par
+\noindent Definition: \texttt{allBelow (componentCount) (endpoints)}.\par
+\noindent Axiom policy: \texttt{none}.\par
+\subsection*{\texttt{validateRiskLinks}}
+\noindent Kind: \texttt{definition}.\par
+\noindent Type: \texttt{Bool}.\par
+\noindent Definition: \texttt{allBelow (assetOrThreatCount) (links)}.\par
+\noindent Axiom policy: \texttt{none}.\par
+\subsection*{\texttt{validateControlLinks}}
+\noindent Kind: \texttt{definition}.\par
+\noindent Type: \texttt{Bool}.\par
+\noindent Definition: \texttt{allBelow (riskCount) (links)}.\par
+\noindent Axiom policy: \texttt{none}.\par
+\subsection*{\texttt{validateViewpointLinks}}
+\noindent Kind: \texttt{definition}.\par
+\noindent Type: \texttt{Bool}.\par
+\noindent Definition: \texttt{allBelow (targetCount) (links)}.\par
+\noindent Axiom policy: \texttt{none}.\par
+\subsection*{\texttt{validateQualityLinks}}
+\noindent Kind: \texttt{definition}.\par
+\noindent Type: \texttt{Bool}.\par
+\noindent Definition: \texttt{allBelow (targetCount) (links)}.\par
+\noindent Axiom policy: \texttt{none}.\par
+\subsection*{\texttt{validateFlattenedBounds}}
+\noindent Kind: \texttt{definition}.\par
+\noindent Type: \texttt{Bool}.\par
+\noindent Definition: \texttt{allBelow (bound) (indexes)}.\par
+\noindent Axiom policy: \texttt{none}.\par
+\subsection*{\texttt{validateExactStandardsProfile}}
+\noindent Kind: \texttt{definition}.\par
+\noindent Type: \texttt{Bool}.\par
+\noindent Definition: \texttt{((Nat.beq ((profile).architectureEdition) (2022)) \&\& ((Nat.beq ((profile).applicationSecurityEdition) (2011)) \&\& ((Nat.beq ((profile).controlEdition) (2017)) \&\& ((Nat.beq ((profile).riskEdition) (2022)) \&\& (Nat.beq ((profile).qualityEdition) (2023))))))}.\par
+\noindent Axiom policy: \texttt{none}.\par
+\subsection*{\texttt{componentIndexesValid}}
+\noindent Kind: \texttt{definition}.\par
+\noindent Type: \texttt{Prop}.\par
+\noindent Definition: \texttt{allConsecutiveProp (0) (values)}.\par
+\noindent Axiom policy: \texttt{none}.\par
+\subsection*{\texttt{edgeEndpointsValid}}
+\noindent Kind: \texttt{definition}.\par
+\noindent Type: \texttt{Prop}.\par
+\noindent Definition: \texttt{allBelowProp (componentCount) (endpoints)}.\par
+\noindent Axiom policy: \texttt{none}.\par
+\subsection*{\texttt{riskLinksValid}}
+\noindent Kind: \texttt{definition}.\par
+\noindent Type: \texttt{Prop}.\par
+\noindent Definition: \texttt{allBelowProp (count) (links)}.\par
+\noindent Axiom policy: \texttt{none}.\par
+\subsection*{\texttt{controlLinksValid}}
+\noindent Kind: \texttt{definition}.\par
+\noindent Type: \texttt{Prop}.\par
+\noindent Definition: \texttt{allBelowProp (count) (links)}.\par
+\noindent Axiom policy: \texttt{none}.\par
+\subsection*{\texttt{viewpointLinksValid}}
+\noindent Kind: \texttt{definition}.\par
+\noindent Type: \texttt{Prop}.\par
+\noindent Definition: \texttt{allBelowProp (count) (links)}.\par
+\noindent Axiom policy: \texttt{none}.\par
+\subsection*{\texttt{qualityLinksValid}}
+\noindent Kind: \texttt{definition}.\par
+\noindent Type: \texttt{Prop}.\par
+\noindent Definition: \texttt{allBelowProp (count) (links)}.\par
+\noindent Axiom policy: \texttt{none}.\par
+\subsection*{\texttt{flattenedBoundsValid}}
+\noindent Kind: \texttt{definition}.\par
+\noindent Type: \texttt{Prop}.\par
+\noindent Definition: \texttt{allBelowProp (count) (links)}.\par
+\noindent Axiom policy: \texttt{none}.\par
+\subsection*{\texttt{standardsProfileValid}}
+\noindent Kind: \texttt{definition}.\par
+\noindent Type: \texttt{Prop}.\par
+\noindent Definition: \texttt{(((profile).architectureEdition = 2022) /\textbackslash{} (((profile).applicationSecurityEdition = 2011) /\textbackslash{} (((profile).controlEdition = 2017) /\textbackslash{} (((profile).riskEdition = 2022) /\textbackslash{} ((profile).qualityEdition = 2023)))))}.\par
+\noindent Axiom policy: \texttt{none}.\par
+\subsection*{\texttt{canonicalStandardsProfile}}
+\noindent Kind: \texttt{definition}.\par
+\noindent Type: \texttt{StandardsProfile}.\par
+\noindent Definition: \texttt{(\{ architectureEdition := 2022, applicationSecurityEdition := 2011, controlEdition := 2017, riskEdition := 2022, qualityEdition := 2023 \} : StandardsProfile)}.\par
+\noindent Axiom policy: \texttt{none}.\par
+\subsection*{\texttt{allConsecutive\_sound\_complete}}
+\noindent Kind: \texttt{theorem}.\par
+\noindent Statement: \texttt{((allConsecutive (expected) (values) = true) <-> allConsecutiveProp (expected) (values))}.\par
+\noindent Axiom policy: \texttt{none}.\par
+\subsection*{\texttt{allBelow\_sound\_complete}}
+\noindent Kind: \texttt{theorem}.\par
+\noindent Statement: \texttt{((allBelow (bound) (values) = true) <-> allBelowProp (bound) (values))}.\par
+\noindent Axiom policy: \texttt{none}.\par
+\subsection*{\texttt{componentIndexes\_sound\_complete}}
+\noindent Kind: \texttt{theorem}.\par
+\noindent Statement: \texttt{((validateComponentIndexes (values) = true) <-> componentIndexesValid (values))}.\par
+\noindent Axiom policy: \texttt{none}.\par
+\subsection*{\texttt{edgeEndpoints\_sound\_complete}}
+\noindent Kind: \texttt{theorem}.\par
+\noindent Statement: \texttt{((validateEdgeEndpoints (componentCount) (endpoints) = true) <-> edgeEndpointsValid (componentCount) (endpoints))}.\par
+\noindent Axiom policy: \texttt{none}.\par
+\subsection*{\texttt{riskLinks\_sound\_complete}}
+\noindent Kind: \texttt{theorem}.\par
+\noindent Statement: \texttt{((validateRiskLinks (count) (links) = true) <-> riskLinksValid (count) (links))}.\par
+\noindent Axiom policy: \texttt{none}.\par
+\subsection*{\texttt{controlLinks\_sound\_complete}}
+\noindent Kind: \texttt{theorem}.\par
+\noindent Statement: \texttt{((validateControlLinks (count) (links) = true) <-> controlLinksValid (count) (links))}.\par
+\noindent Axiom policy: \texttt{none}.\par
+\subsection*{\texttt{viewpointLinks\_sound\_complete}}
+\noindent Kind: \texttt{theorem}.\par
+\noindent Statement: \texttt{((validateViewpointLinks (count) (links) = true) <-> viewpointLinksValid (count) (links))}.\par
+\noindent Axiom policy: \texttt{none}.\par
+\subsection*{\texttt{qualityLinks\_sound\_complete}}
+\noindent Kind: \texttt{theorem}.\par
+\noindent Statement: \texttt{((validateQualityLinks (count) (links) = true) <-> qualityLinksValid (count) (links))}.\par
+\noindent Axiom policy: \texttt{none}.\par
+\subsection*{\texttt{flattenedBounds\_sound\_complete}}
+\noindent Kind: \texttt{theorem}.\par
+\noindent Statement: \texttt{((validateFlattenedBounds (count) (links) = true) <-> flattenedBoundsValid (count) (links))}.\par
+\noindent Axiom policy: \texttt{none}.\par
+\subsection*{\texttt{standardsProfile\_sound\_complete}}
+\noindent Kind: \texttt{theorem}.\par
+\noindent Statement: \texttt{((validateExactStandardsProfile (profile) = true) <-> standardsProfileValid (profile))}.\par
+\noindent Axiom policy: \texttt{none}.\par
+\subsection*{\texttt{canonicalIndexes}}
+\noindent Kind: \texttt{definition}.\par
+\noindent Type: \texttt{List (Nat)}.\par
+\noindent Definition: \texttt{(match count with | Nat.zero => ([] : List (Nat)) | Nat.succ rest => (expected :: canonicalIndexes ((expected + 1)) (rest)))}.\par
+\noindent Axiom policy: \texttt{none}.\par
+\subsection*{\texttt{canonicalIndexAssignment}}
+\noindent Kind: \texttt{definition}.\par
+\noindent Type: \texttt{Prop}.\par
+\noindent Definition: \texttt{(values = canonicalIndexes (0) (count))}.\par
+\noindent Axiom policy: \texttt{none}.\par
+\subsection*{\texttt{canonicalIndexAssignmentUnique}}
+\noindent Kind: \texttt{theorem}.\par
+\noindent Statement: \texttt{(canonicalIndexAssignment (count) (values) <-> (values = canonicalIndexes (0) (count)))}.\par
+\noindent Axiom policy: \texttt{none}.\par
+\end{document}

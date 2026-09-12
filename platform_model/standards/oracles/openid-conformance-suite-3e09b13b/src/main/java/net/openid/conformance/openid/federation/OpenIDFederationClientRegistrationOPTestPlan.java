@@ -1,0 +1,39 @@
+package net.openid.conformance.openid.federation;
+
+import net.openid.conformance.plan.PublishTestPlan;
+import net.openid.conformance.plan.TestPlan;
+
+@PublishTestPlan(
+	testPlanName = "openid-federation-entity-joined-to-test-federation-op-test-plan",
+	displayName = "OpenID Federation: Entity joined to test federation OP test - alpha tests (not currently part of certification program - please email certification@oidf.org)",
+	profile = TestPlan.ProfileNames.federationTest,
+	specFamily = TestPlan.SpecFamilyNames.federation,
+	testModules = {
+		// TODO: Negative tests on the entity configuration to be added, i.e. tests that fail if further communication happens.
+		//OpenIDFederationAutomaticClientRegistrationInvalidIssInEntityConfigurationTest.class,
+		//OpenIDFederationAutomaticClientRegistrationExpectEntityConfigurationRequestTest.class,
+		OpenIDFederationAutomaticClientRegistrationWithJarAndGetTest.class,
+		OpenIDFederationAutomaticClientRegistrationWithJarAndPostTest.class,
+		OpenIDFederationAutomaticClientRegistrationWithParTest.class,
+		OpenIDFederationAutomaticClientRegistrationWithJarAndGetAndTrustChainTest.class,
+		OpenIDFederationAutomaticClientRegistrationWithJarAndPostAndTrustChainTest.class,
+		OpenIDFederationAutomaticClientRegistrationWithParAndTrustChainTest.class,
+		OpenIDFederationAutomaticClientRegistrationWithJarAndEncryptedRequestObjectTest.class,
+		OpenIDFederationAutomaticClientRegistrationInvalidClientIdInRequestObjectTest.class,
+		OpenIDFederationAutomaticClientRegistrationInvalidClientIdInQueryParametersTest.class,
+		OpenIDFederationAutomaticClientRegistrationInvalidSignatureOnRequestObjectTest.class,
+		OpenIDFederationAutomaticClientRegistrationInvalidSignatureWithOtherKeysOnRequestObjectTest.class,
+		OpenIDFederationAutomaticClientRegistrationInvalidRequestObjectExpTest.class,
+		OpenIDFederationAutomaticClientRegistrationInvalidRequestObjectIssTest.class,
+		OpenIDFederationAutomaticClientRegistrationInvalidRequestObjectAudTest.class,
+		OpenIDFederationAutomaticClientRegistrationInvalidRequestObjectSubTest.class,
+		OpenIDFederationAutomaticClientRegistrationInvalidMissingRequestObjectJtiTest.class,
+		OpenIDFederationAutomaticClientRegistrationInvalidMissingRequestObjectExpTest.class,
+		OpenIDFederationAutomaticClientRegistrationInvalidMissingRequestObjectIssTest.class,
+		OpenIDFederationAutomaticClientRegistrationInvalidMissingRequestObjectAudTest.class,
+		OpenIDFederationAutomaticClientRegistrationInvalidDuplicateRequestObjectJtiTest.class
+	}
+)
+public class OpenIDFederationClientRegistrationOPTestPlan implements TestPlan {
+
+}

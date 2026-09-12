@@ -1,0 +1,2088 @@
+import { test, expect } from "@playwright/test";
+import { setupCommonRoutes, setupFailFast, expectNoUnmockedCalls } from "./helpers/routes.js";
+import { selectPlanViaSearch, selectedPlanRow } from "./helpers/pick-plan.js";
+import { MOCK_PLANS, MOCK_PLAN_NO_VARIANTS, MOCK_GUIDED_PLANS } from "./fixtures/mock-plans.js";
+
+/** All available plans including the no-variants plan */
+const ALL_PLANS = [...MOCK_PLANS, MOCK_PLAN_NO_VARIANTS];
+
+test.describe("schedule-test.html — Test Plan Scheduling", () => {
+  test.beforeEach(async ({ page }) => {
+    // Every test in this file exercises the advanced island. Guided is the
+    // page default, so force the stored mode preference up front (the same
+    // retrofit MR !2029 applied). Guided-mode behavior is covered by
+    // schedule-test-guided.spec.js.
+    await page.addInitScript(() => {
+      try {
+        localStorage.setItem("oidf-guided-mode", "advanced");
+      } catch {
+        /* storage unavailable — the test will surface it */
+      }
+    });
+  });
+
+  test.afterEach(async ({ page }) => {
+    expectNoUnmockedCalls(page);
+  });
+
+  test("picker renders plan rows and the family filter (R7)", async ({ page }) => {
+    await setupFailFast(page);
+
+    await page.route("**/api/plan/available", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(ALL_PLANS),
+      }),
+    );
+
+    await page.route("**/api/lastconfig", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({}),
+      }),
+    );
+
+    await setupCommonRoutes(page);
+
+    await page.goto("/schedule-test.html");
+
+    // Cross-page contract: every wired page mounts a single <cts-toast-host>
+    // for window.ctsToast(...). A silent removal of the mount from schedule-test.html
+    // would otherwise pass all tests in this file. (Mirrors upload.spec.js:210.)
+    await expect(page.locator("cts-toast-host")).toHaveCount(1);
+
+    // cts-test-selector is the sole plan-entry point (cts-spec-cascade was
+    // removed): it renders one clickable row per available plan.
+    const rows = page.locator("#planSearch .oidf-test-selector__row");
+    await expect(rows.first()).toBeVisible();
+    await expect(
+      page.locator('#planSearch [data-plan-name="oidcc-basic-certification-test-plan"]'),
+    ).toContainText("OpenID Connect Core: Basic Certification Profile");
+
+    // The family filter lists the spec families from the mock data, so a user
+    // can narrow the list the way the cascade's family dropdown used to.
+    const familyFilter = page.locator("#planSearch .oidf-test-selector__family");
+    await expect(familyFilter).toBeVisible();
+    await expect(familyFilter).toContainText("OIDCC");
+    await expect(familyFilter).toContainText("FAPI");
+  });
+
+  test("submission POSTs to /api/plan and redirects (R9)", async ({ page }) => {
+    let postCalled = false;
+
+    await setupFailFast(page);
+
+    await page.route("**/api/lastconfig", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({}),
+      }),
+    );
+
+    // Mock POST /api/plan — return a new plan ID.
+    // Registered BEFORE the more specific /api/plan/* routes below so
+    // that Playwright (which checks last-registered first) tries the
+    // specific routes before this glob — **/api/plan?* would otherwise
+    // intercept /api/plan/available because ? is a single-char wildcard.
+    await page.route("**/api/plan?*", (route) => {
+      if (route.request().method() === "POST") {
+        postCalled = true;
+        return route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            id: "plan-new-001",
+            name: "oidcc-client-basic-certification-test-plan",
+          }),
+        });
+      }
+      return route.fallback();
+    });
+
+    // Mock the plan-detail page that we'll be redirected to
+    await page.route("**/api/plan/plan-new-001", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          _id: "plan-new-001",
+          planName: "oidcc-client-basic-certification-test-plan",
+          modules: [],
+          variant: {},
+          config: {},
+        }),
+      }),
+    );
+
+    await page.route("**/api/plan/available", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(ALL_PLANS),
+      }),
+    );
+
+    await setupCommonRoutes(page);
+
+    await page.goto("/schedule-test.html");
+
+    // Pick the no-variant OIDCC client-basic plan from the search picker.
+    await selectPlanViaSearch(page, "oidcc-client-basic-certification-test-plan");
+
+    // Wait for the Create button to become enabled (no variants = immediately enabled)
+    const createBtn = page.locator("#createPlanBtn");
+    await expect(createBtn).toBeEnabled({ timeout: 5000 });
+
+    // Click Create Test Plan
+    await createBtn.click();
+
+    // Should navigate to plan-detail with the new plan ID
+    await page.waitForURL("**/plan-detail.html?plan=plan-new-001");
+    expect(postCalled).toBe(true);
+  });
+
+  test("create button disabled when no plan selected, shows error modal on forced click (R10)", async ({
+    page,
+  }) => {
+    await setupFailFast(page);
+
+    await page.route("**/api/plan/available", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(ALL_PLANS),
+      }),
+    );
+
+    await page.route("**/api/lastconfig", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({}),
+      }),
+    );
+
+    await setupCommonRoutes(page);
+
+    await page.goto("/schedule-test.html");
+
+    // Create button should be disabled initially (no plan selected).
+    // Query the inner native <button> rendered by cts-button — Playwright's
+    // toBeDisabled() reads the `:disabled` pseudo-class which applies to
+    // native form controls, not custom-element hosts.
+    const createBtn = page.locator("#createPlanBtn button");
+    await expect(createBtn).toBeDisabled();
+
+    // Wait until the inline init chain has installed createPlanBtn.onclick.
+    // Post-Phase-2 the chain awaits a config-field-catalog fetch before
+    // loadScheduleTestPage() runs, so the assertion above (which only
+    // checks the cts-button render output) can resolve before the click
+    // handler is wired. Same pattern as schedule-test-baselines.spec.js.
+    await page.waitForFunction(() => document.getElementById("createPlanBtn")?.onclick !== null);
+
+    // The action bar is always visible; the button is disabled (not hidden)
+    // when no plan is selected. Drop disabled so the synthetic click lands,
+    // then invoke the onclick handler directly — it checks the selected plan
+    // name (getSelectedPlanName()) and shows an error modal.
+    await page.evaluate(() => {
+      const btn = document.getElementById("createPlanBtn");
+      if (!btn) throw new Error("createPlanBtn not found");
+      btn.removeAttribute("disabled");
+      btn.click();
+    });
+
+    // Error modal should appear with "select a test plan" message
+    const errorModal = page.locator("#errorModal");
+    await expect(errorModal).toBeVisible();
+    await expect(page.locator("#errorMessage")).toContainText("select a test plan");
+
+    // Close the error modal
+    await errorModal.locator(".oidf-modal-close").first().click();
+    await expect(errorModal).toBeHidden();
+  });
+
+  test("variant selectors render when plan has variants (R5)", async ({ page }) => {
+    await setupFailFast(page);
+
+    await page.route("**/api/plan/available", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(ALL_PLANS),
+      }),
+    );
+
+    await page.route("**/api/lastconfig", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({}),
+      }),
+    );
+
+    await setupCommonRoutes(page);
+
+    await page.goto("/schedule-test.html");
+
+    // Pick the OIDCC basic plan (has client_auth_type, response_type, server_metadata variants).
+    await selectPlanViaSearch(page, "oidcc-basic-certification-test-plan");
+
+    // Variant selectors should appear
+    const variantSelectors = page.locator("#variantSelectors");
+    await expect(variantSelectors).toBeVisible();
+
+    // Should have 3 variant dropdowns, rendered in the API's payload order
+    // (sortOrder-ranked names first, then alphabetical — the page no longer
+    // sorts client-side).
+    const selects = variantSelectors.locator("select.variant-selector");
+    await expect(selects).toHaveCount(3);
+    await expect(selects.nth(0)).toHaveAttribute("data-variant-parameter", "server_metadata");
+    await expect(selects.nth(1)).toHaveAttribute("data-variant-parameter", "response_type");
+    await expect(selects.nth(2)).toHaveAttribute("data-variant-parameter", "client_auth_type");
+
+    // Each dropdown has the correct options from the fixture's variantValues
+    const authSelect = page.locator("#vp_client_auth_type");
+    await expect(authSelect).toBeVisible();
+    await expect(authSelect.locator("option")).toHaveCount(4); // "--- Select ---" + 3 values
+    await expect(authSelect).toContainText("client_secret_basic");
+    await expect(authSelect).toContainText("client_secret_post");
+    await expect(authSelect).toContainText("private_key_jwt");
+
+    const responseSelect = page.locator("#vp_response_type");
+    await expect(responseSelect).toBeVisible();
+    await expect(responseSelect.locator("option")).toHaveCount(2); // "--- Select ---" + 1 value
+
+    const metadataSelect = page.locator("#vp_server_metadata");
+    await expect(metadataSelect).toBeVisible();
+    await expect(metadataSelect.locator("option")).toHaveCount(3); // "--- Select ---" + 2 values
+  });
+
+  test("notApplicableWhen hides excluded options and preselects a sole survivor", async ({
+    page,
+  }) => {
+    await setupFailFast(page);
+
+    // The message signing plan (which carries the notApplicableWhen rules)
+    // lives in the guided fixture list, so serve a catalog including it.
+    await page.route("**/api/plan/available", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify([...ALL_PLANS, ...MOCK_GUIDED_PLANS]),
+      }),
+    );
+
+    await page.route("**/api/lastconfig", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({}),
+      }),
+    );
+
+    await setupCommonRoutes(page);
+
+    await page.goto("/schedule-test.html");
+
+    // The message signing fixture plan carries notApplicableWhen rules keyed
+    // on fapi_profile, mirroring the AU-CDR @VariantNotApplicableWhen rules.
+    await selectPlanViaSearch(page, "fapi2-message-signing-final-test-plan");
+
+    const authSelect = page.locator("#vp_client_auth_type");
+    const responseSelect = page.locator("#vp_fapi_response_mode");
+    const profileSelect = page.locator("#vp_fapi_profile");
+    await expect(profileSelect).toBeVisible();
+
+    // Before a profile is picked, everything is selectable.
+    await expect(authSelect.locator('option[value="mtls"]')).toBeEnabled();
+    await expect(responseSelect.locator('option[value="plain_response"]')).toBeEnabled();
+
+    // Picking AU-CDR hides the excluded values and, as only one value
+    // remains in each dependent select, preselects the survivors.
+    await profileSelect.selectOption("consumerdataright_au");
+    await expect(authSelect.locator('option[value="mtls"]')).toBeDisabled();
+    await expect(responseSelect.locator('option[value="plain_response"]')).toBeDisabled();
+    await expect(authSelect).toHaveValue("private_key_jwt");
+    await expect(responseSelect).toHaveValue("jarm");
+    await expect(page.locator("#vp_sender_constrain")).toHaveValue("mtls");
+    await expect(page.locator("#vp_fapi_request_method")).toHaveValue("signed_non_repudiation");
+
+    // Switching back to plain_fapi re-enables the hidden values; the
+    // preselected survivors stay selected (they remain valid choices).
+    await profileSelect.selectOption("plain_fapi");
+    await expect(authSelect.locator('option[value="mtls"]')).toBeEnabled();
+    await expect(responseSelect.locator('option[value="plain_response"]')).toBeEnabled();
+    await expect(authSelect).toHaveValue("private_key_jwt");
+    await expect(responseSelect).toHaveValue("jarm");
+  });
+
+  test("submitting with variants includes variant JSON in POST URL (R6)", async ({ page }) => {
+    await setupFailFast(page);
+
+    await page.route("**/api/plan/available", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(ALL_PLANS),
+      }),
+    );
+
+    await page.route("**/api/lastconfig", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({}),
+      }),
+    );
+
+    // Mock POST /api/plan — capture the request URL to verify variant params
+    await page.route("**/api/plan?*", (route) => {
+      if (route.request().method() === "POST") {
+        return route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({ id: "plan-new-002", name: "oidcc-basic-certification-test-plan" }),
+        });
+      }
+      return route.fallback();
+    });
+
+    await page.route("**/api/plan/plan-new-002", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          _id: "plan-new-002",
+          planName: "oidcc-basic-certification-test-plan",
+          modules: [],
+          variant: {
+            client_auth_type: "client_secret_basic",
+            response_type: "code",
+            server_metadata: "discovery",
+          },
+          config: {},
+        }),
+      }),
+    );
+
+    await setupCommonRoutes(page);
+
+    await page.goto("/schedule-test.html");
+
+    // Pick the OIDCC basic plan.
+    await selectPlanViaSearch(page, "oidcc-basic-certification-test-plan");
+
+    // Select variant values
+    await page.locator("#vp_client_auth_type").selectOption("client_secret_basic");
+    await page.locator("#vp_response_type").selectOption("code");
+    await page.locator("#vp_server_metadata").selectOption("discovery");
+
+    // Wait for Create button to enable
+    const createBtn = page.locator("#createPlanBtn");
+    await expect(createBtn).toBeEnabled({ timeout: 5000 });
+
+    // Set up request interception BEFORE clicking
+    const planRequest = page.waitForRequest(
+      (req) => req.url().includes("/api/plan?") && req.method() === "POST",
+    );
+
+    // Click Create
+    await createBtn.click();
+
+    // Verify the POST URL contains variant JSON
+    const req = await planRequest;
+    const url = new URL(req.url());
+    const variantParams = url.searchParams.getAll("variant");
+    expect(variantParams.length).toBeGreaterThan(0);
+
+    // The variant JSON should contain the selected values
+    const variantJson = JSON.parse(decodeURIComponent(variantParams[0]));
+    expect(variantJson.client_auth_type).toBe("client_secret_basic");
+    expect(variantJson.response_type).toBe("code");
+    expect(variantJson.server_metadata).toBe("discovery");
+
+    // Should navigate to plan-detail
+    await page.waitForURL("**/plan-detail.html?plan=plan-new-002");
+  });
+
+  test("variant selectors hidden for plan with no variants", async ({ page }) => {
+    await setupFailFast(page);
+
+    await page.route("**/api/plan/available", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(ALL_PLANS),
+      }),
+    );
+
+    await page.route("**/api/lastconfig", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({}),
+      }),
+    );
+
+    await setupCommonRoutes(page);
+
+    await page.goto("/schedule-test.html");
+
+    // Pick the no-variants plan (client-basic).
+    await selectPlanViaSearch(page, "oidcc-client-basic-certification-test-plan");
+
+    // Variant selectors should be hidden (display: none)
+    await expect(page.locator("#variantSelectors")).toBeHidden();
+  });
+
+  test("ConnectID shows profile-specific login hint fields", async ({ page }) => {
+    await setupFailFast(page);
+
+    await page.route("**/api/plan/available", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(ALL_PLANS),
+      }),
+    );
+
+    await page.route("**/api/lastconfig", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({}),
+      }),
+    );
+
+    await setupCommonRoutes(page);
+
+    await page.goto("/schedule-test.html");
+
+    await selectPlanViaSearch(page, "fapi-ciba-id1-test-plan");
+    await page.locator("#vp_fapi_ciba_profile").selectOption("connectid_au");
+
+    const configField = (target) => page.locator(`cts-form-field[name="${target}"]`);
+
+    await expect(configField("client.login_hint")).toBeVisible();
+    await expect(configField("client.card_primary_account_number")).toBeVisible();
+    await expect(configField("client.hint_type")).toBeHidden();
+    await expect(configField("client.hint_value")).toBeHidden();
+    await expect(configField("client.login_hint").locator("input")).toHaveAttribute(
+      "placeholder",
+      "user@example.com",
+    );
+  });
+
+  test("degrades gracefully when /api/plan/available returns 500 (R11)", async ({ page }) => {
+    await setupFailFast(page);
+
+    await page.route("**/api/plan/available", (route) =>
+      route.fulfill({
+        status: 500,
+        contentType: "application/json",
+        body: JSON.stringify({ error: "Internal Server Error" }),
+      }),
+    );
+
+    await page.route("**/api/lastconfig", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({}),
+      }),
+    );
+
+    await setupCommonRoutes(page);
+
+    await page.goto("/schedule-test.html");
+
+    // When /api/plan/available returns 5xx, the page reveals an explicit
+    // load-failure banner (KTD5) instead of a silently empty picker — the
+    // user sees a clear message rather than a broken UI.
+    const errorBanner = page.locator('[data-testid="plans-load-error"]');
+    await expect(errorBanner).toBeVisible();
+    await expect(errorBanner).toContainText("Unable to load test plans");
+
+    // No plan rows render in the failure state — there is nothing the user
+    // could pick, by design.
+    await expect(page.locator("#planSearch .oidf-test-selector__row")).toHaveCount(0);
+
+    // Create button should remain disabled (no plan can be selected).
+    // Targets the inner native button — see note in the R10 test.
+    await expect(page.locator("#createPlanBtn button")).toBeDisabled();
+  });
+
+  // --- R13: opt-in load-last-config (the page no longer auto-prefills) ---
+  //
+  // Phase 2 swapped <cts-json-editor id="config"> for <cts-config-form
+  // id="ctsConfigForm">. The component owns its own JSON tab and exposes
+  // the working config object via the `.config` property. These helpers
+  // read/write the underlying config object directly so the assertions
+  // stay independent of which tab is currently active.
+
+  /**
+   * @param {import('@playwright/test').Page} page
+   * @returns {Promise<string>} JSON.stringify of the current config object.
+   */
+  async function readConfigValue(page) {
+    return page.evaluate(() => {
+      const host = /** @type {any} */ (document.getElementById("ctsConfigForm"));
+      if (!host) return "";
+      return JSON.stringify(host.config || {});
+    });
+  }
+
+  /**
+   * @param {import('@playwright/test').Page} page
+   * @param {string} value JSON string parsed and assigned to .config.
+   */
+  async function setConfigValue(page, value) {
+    await page.evaluate((next) => {
+      const host = /** @type {any} */ (document.getElementById("ctsConfigForm"));
+      if (!host) throw new Error("cts-config-form#ctsConfigForm not found");
+      host.config = JSON.parse(next);
+    }, value);
+  }
+
+  test("R13: selecting a new plan type clears the config form", async ({ page }) => {
+    await setupFailFast(page);
+
+    await page.route("**/api/plan/available", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(ALL_PLANS),
+      }),
+    );
+
+    // Even though we never click "Load last configuration", mock the
+    // endpoint so an accidental fetch (regression to auto-prefill) shows
+    // up as content in the editor, not an unmocked-call assertion failure.
+    await page.route("**/api/lastconfig", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({}),
+      }),
+    );
+
+    await setupCommonRoutes(page);
+    await page.goto("/schedule-test.html");
+
+    // Pick OIDCC basic, populate the config editor, then switch to a
+    // different plan — a fresh user pick (suppression counter at 0) clears
+    // the carried-over config.
+    await selectPlanViaSearch(page, "oidcc-basic-certification-test-plan");
+    await setConfigValue(page, '{"alias":"about-to-be-cleared","server.issuer":"https://x.test"}');
+
+    await selectPlanViaSearch(page, "fapi2-security-profile-final-test-plan");
+
+    // After clear, currentConfig is an empty object — stringified shape is "{}".
+    expect(await readConfigValue(page)).toBe("{}");
+  });
+
+  test("R7: favoriting a plan persists across reload and never clears the config", async ({
+    page,
+  }) => {
+    await setupFailFast(page);
+
+    await page.route("**/api/plan/available", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(ALL_PLANS),
+      }),
+    );
+    await page.route("**/api/lastconfig", (route) =>
+      route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) }),
+    );
+
+    await setupCommonRoutes(page);
+
+    // Stateful /api/favorite-plans mock: an in-memory set that survives the
+    // page reload (it lives in this test's closure, like the real server).
+    // Registered AFTER setupCommonRoutes so it wins (Playwright matches routes
+    // in reverse registration order).
+    /** @type {string[]} */
+    const serverFavorites = [];
+    await page.route("**/api/favorite-plans**", (route) => {
+      const req = route.request();
+      const respond = () =>
+        route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({ plans: serverFavorites }),
+        });
+      if (req.method() === "POST") {
+        const plan = JSON.parse(req.postData() || "{}").plan;
+        if (plan && !serverFavorites.includes(plan)) serverFavorites.push(plan);
+        return respond();
+      }
+      if (req.method() === "DELETE") {
+        const plan = decodeURIComponent(new URL(req.url()).pathname.split("/").pop() || "");
+        const i = serverFavorites.indexOf(plan);
+        if (i >= 0) serverFavorites.splice(i, 1);
+        return respond();
+      }
+      return respond(); // GET
+    });
+
+    await page.goto("/schedule-test.html");
+
+    // The favorite toggle is keyed on data-favorite-plan (NOT data-plan-name,
+    // which is the row's selection identity), so this resolves to exactly the
+    // star — not the row.
+    const fapiStar = page.locator(
+      '#planSearch [data-favorite-plan="fapi2-security-profile-final-test-plan"]',
+    );
+
+    // Land on a plan with a config form and populate it.
+    await selectPlanViaSearch(page, "oidcc-basic-certification-test-plan");
+    await setConfigValue(page, '{"alias":"keep-me","server.issuer":"https://x.test"}');
+
+    // Spy on clearConfigForNewPlan: favoriting must NOT route through the
+    // plan-selection / config-clear path (it changes no selected plan).
+    await page.evaluate(() => {
+      const w = /** @type {any} */ (window);
+      w.__clearConfigCalls = 0;
+      const orig = w.clearConfigForNewPlan;
+      // clearConfigForNewPlan takes no args and is called bare, so forwarding
+      // is a plain call.
+      w.clearConfigForNewPlan = function () {
+        w.__clearConfigCalls++;
+        return orig();
+      };
+    });
+
+    // Star a different plan than the one selected.
+    await expect(fapiStar).toHaveAttribute("aria-pressed", "false");
+    await fapiStar.click();
+    await expect(fapiStar).toHaveAttribute("aria-pressed", "true");
+    // The POST reached the server mock.
+    await expect.poll(() => serverFavorites).toContain("fapi2-security-profile-final-test-plan");
+
+    // The in-flight config is untouched and clearConfigForNewPlan never ran —
+    // a hard regression gate on the suppression-counter / config-clear path.
+    expect(await readConfigValue(page)).toContain("keep-me");
+    expect(await page.evaluate(() => /** @type {any} */ (window).__clearConfigCalls)).toBe(0);
+
+    // The favorite survives a full reload: the remounted picker re-fetches
+    // /api/favorite-plans and the server mock still has it.
+    await page.reload();
+    await expect(
+      page.locator('#planSearch [data-favorite-plan="fapi2-security-profile-final-test-plan"]'),
+    ).toHaveAttribute("aria-pressed", "true");
+  });
+
+  test("R7: a 401 from /api/favorite-plans disables the stars (sign-in affordance)", async ({
+    page,
+  }) => {
+    await setupFailFast(page);
+    await page.route("**/api/plan/available", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(ALL_PLANS),
+      }),
+    );
+    await page.route("**/api/lastconfig", (route) =>
+      route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) }),
+    );
+    await setupCommonRoutes(page);
+    // Favorites unavailable — no authenticated principal. The page seeds
+    // canFavorite=false, so the stars render as a disabled sign-in affordance.
+    await page.route("**/api/favorite-plans**", (route) =>
+      route.fulfill({ status: 401, body: "" }),
+    );
+    await page.goto("/schedule-test.html");
+
+    const disabledStars = page.locator(
+      '#planSearch .oidf-test-selector__fav[aria-disabled="true"]',
+    );
+    await expect(disabledStars).toHaveCount(ALL_PLANS.length);
+    await expect(disabledStars.first()).toHaveAttribute("aria-label", /Sign in to save favorites/);
+  });
+
+  test("R7: a 500 from /api/favorite-plans leaves the stars enabled (retryable)", async ({
+    page,
+  }) => {
+    await setupFailFast(page);
+    await page.route("**/api/plan/available", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(ALL_PLANS),
+      }),
+    );
+    await page.route("**/api/lastconfig", (route) =>
+      route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) }),
+    );
+    await setupCommonRoutes(page);
+    // A server fault is NOT an answer about who the user is. Telling a
+    // signed-in user "Sign in to save favorites" is wrong, and the disabled
+    // state has no recovery short of a reload — so the stars stay live and a
+    // failed toggle reverts with its own error toast instead.
+    let seedRequests = 0;
+    await page.route("**/api/favorite-plans**", (route) => {
+      seedRequests++;
+      return route.fulfill({ status: 500, body: "" });
+    });
+    await page.goto("/schedule-test.html");
+
+    await expect.poll(() => seedRequests).toBeGreaterThan(0);
+    await expect(
+      page.locator('#planSearch .oidf-test-selector__fav[aria-disabled="true"]'),
+    ).toHaveCount(0);
+    await expect(
+      page.locator('#planSearch .oidf-test-selector__fav[aria-pressed="false"]'),
+    ).toHaveCount(ALL_PLANS.length);
+  });
+
+  test("R7: a star still being written survives the seed landing under it", async ({ page }) => {
+    await setupFailFast(page);
+    await page.route("**/api/plan/available", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(ALL_PLANS),
+      }),
+    );
+    await page.route("**/api/lastconfig", (route) =>
+      route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) }),
+    );
+    await setupCommonRoutes(page);
+
+    // The seed is held open long enough for a click to land first, and the
+    // write is held open LONGER than the seed. So the seed resolves while the
+    // toggle is still in flight: it supplies the baseline (the plan already
+    // saved on the server) and the pending decision has to be laid back over
+    // the top, or the star the user just pressed silently un-presses itself
+    // mid-write.
+    const SEED_DELAY_MS = 1200;
+    const WRITE_DELAY_MS = 2600;
+    const SAVED = "oidcc-basic-certification-test-plan";
+    const PLAN = "fapi2-security-profile-final-test-plan";
+    let writeResolved = false;
+    await page.route("**/api/favorite-plans**", async (route) => {
+      if (route.request().method() === "GET") {
+        await new Promise((resolve) => setTimeout(resolve, SEED_DELAY_MS));
+        return route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({ plans: [SAVED] }),
+        });
+      }
+      await new Promise((resolve) => setTimeout(resolve, WRITE_DELAY_MS));
+      writeResolved = true;
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ plans: [SAVED, PLAN] }),
+      });
+    });
+
+    await page.goto("/schedule-test.html");
+
+    const star = page.locator(`#planSearch [data-favorite-plan="${PLAN}"]`);
+    const savedStar = page.locator(`#planSearch [data-favorite-plan="${SAVED}"]`);
+    const favoritesView = page.locator("#planSearch .oidf-test-selector__family-view");
+
+    // While the seed is open the count is unknown, so the view shows a
+    // placeholder rather than a confident "(0)".
+    await expect(favoritesView).toHaveText(/★ Favorites \(…\)/);
+
+    await expect(star).toHaveAttribute("aria-pressed", "false");
+    await star.click();
+    await expect(star).toHaveAttribute("aria-pressed", "true");
+
+    // The already-saved plan lighting up is the seed landing. At that moment
+    // the write is provably still open, so the pressed star can only be there
+    // because the pending decision was re-applied over the seed's baseline.
+    // These reads are one-shot on purpose: a retrying assertion would wait out
+    // the transient un-press and pass once the write's own response arrived,
+    // which is exactly the regression this is here to catch.
+    await expect(savedStar).toHaveAttribute("aria-pressed", "true");
+    expect(writeResolved).toBe(false);
+    // eslint-disable-next-line playwright/prefer-web-first-assertions -- must not retry, see above
+    expect(await star.getAttribute("aria-pressed")).toBe("true");
+    expect(await favoritesView.textContent()).toMatch(/★ Favorites \(2\)/);
+    expect(writeResolved).toBe(false);
+
+    // The write's own response is authoritative and settles the same list.
+    await expect.poll(() => writeResolved).toBe(true);
+    await expect(star).toHaveAttribute("aria-pressed", "true");
+    await expect(savedStar).toHaveAttribute("aria-pressed", "true");
+    await expect(favoritesView).toHaveText(/★ Favorites \(2\)/);
+  });
+
+  test("R7: a star that FAILS during the seed fetch still reveals the saved favorites", async ({
+    page,
+  }) => {
+    await setupFailFast(page);
+    await page.route("**/api/plan/available", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(ALL_PLANS),
+      }),
+    );
+    await page.route("**/api/lastconfig", (route) =>
+      route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) }),
+    );
+    await setupCommonRoutes(page);
+
+    // The user already has two favorites on the server. The seed is held open,
+    // a third star is pressed during that window, and its write fails — so the
+    // revert puts `favorites` back to the page-load placeholder, NOT to the
+    // saved pair. The seed's answer is the only thing that knows about them,
+    // and it must still be applied.
+    const SEED_DELAY_MS = 1500;
+    const SAVED = ["oidcc-basic-certification-test-plan", "fapi-ciba-id1-test-plan"];
+    const DOOMED = "fapi2-security-profile-final-test-plan";
+    await page.route("**/api/favorite-plans**", async (route) => {
+      if (route.request().method() === "GET") {
+        await new Promise((resolve) => setTimeout(resolve, SEED_DELAY_MS));
+        return route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({ plans: SAVED }),
+        });
+      }
+      // Slow enough that the optimistic press is observable, but settling well
+      // BEFORE the seed lands — the exact ordering that used to lose the saved
+      // favorites, since the write was already over by the time the seed had
+      // an answer to apply.
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      return route.fulfill({ status: 500, body: "" });
+    });
+
+    await page.goto("/schedule-test.html");
+
+    const doomedStar = page.locator(`#planSearch [data-favorite-plan="${DOOMED}"]`);
+    await expect(doomedStar).toHaveAttribute("aria-pressed", "false");
+    await doomedStar.click();
+    await expect(doomedStar).toHaveAttribute("aria-pressed", "true");
+    // The write fails and the optimistic star is reverted.
+    await expect(doomedStar).toHaveAttribute("aria-pressed", "false");
+
+    // Outlive the seed, then confirm the two saved favorites are visible —
+    // the failed write must not have suppressed them.
+    await page.waitForTimeout(SEED_DELAY_MS + 500);
+    for (const plan of SAVED) {
+      await expect(page.locator(`#planSearch [data-favorite-plan="${plan}"]`)).toHaveAttribute(
+        "aria-pressed",
+        "true",
+      );
+    }
+    await expect(doomedStar).toHaveAttribute("aria-pressed", "false");
+    await expect(page.locator("#planSearch .oidf-test-selector__family-view")).toHaveText(
+      /★ Favorites \(2\)/,
+    );
+  });
+
+  test("R13: clicking 'Load last configuration' restores the previous config", async ({ page }) => {
+    await setupFailFast(page);
+
+    await page.route("**/api/plan/available", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(ALL_PLANS),
+      }),
+    );
+
+    // The endpoint shape is { config, planName, variant } — only `config`
+    // is required for this assertion. No planName means selectPlanByName
+    // is a no-op (returns false on `!plan`), which keeps the test focused
+    // on "click → editor populated" without coupling to a specific plan.
+    await page.route("**/api/lastconfig", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          config: {
+            alias: "from-last-config",
+            "server.issuer": "https://restored.example.com",
+          },
+        }),
+      }),
+    );
+
+    await setupCommonRoutes(page);
+    await page.goto("/schedule-test.html");
+
+    // Land on a plan with a config form; the editor must start empty
+    // (per R13's new behavior — no auto-load on init).
+    await selectPlanViaSearch(page, "oidcc-basic-certification-test-plan");
+    // After clear, currentConfig is an empty object — stringified shape is "{}".
+    expect(await readConfigValue(page)).toBe("{}");
+
+    await page.getByTestId("load-last-config").click();
+
+    // The editor should now contain the /api/lastconfig payload.
+    await expect.poll(() => readConfigValue(page)).toContain("from-last-config");
+  });
+
+  test("R13: 'Load last configuration' with a saved plan preserves the config (suppression counter)", async ({
+    page,
+  }) => {
+    await setupFailFast(page);
+
+    await page.route("**/api/plan/available", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(ALL_PLANS),
+      }),
+    );
+
+    // Unlike the test above, this payload carries a real planName, so
+    // loadLastConfigFromServer drives selectPlanByName (the programmatic-
+    // restore wrapper) — which bumps isSystemSelectingPlan around the
+    // cts-plan-selected dispatch. The suppression counter must keep the
+    // listener from running clearConfigForNewPlan, so the config we just
+    // restored survives (the plan's Risk #2 invariant). Use the no-variant
+    // plan so the config form binds immediately.
+    await page.route("**/api/lastconfig", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          planName: "oidcc-client-basic-certification-test-plan",
+          variant: {},
+          config: {
+            alias: "restored-under-suppression",
+            "server.issuer": "https://restored.example.com",
+          },
+        }),
+      }),
+    );
+
+    await setupCommonRoutes(page);
+    await page.goto("/schedule-test.html");
+
+    // Spy on clearConfigForNewPlan once the init chain has wired the page
+    // (createPlanBtn.onclick is the end-of-init sentinel). The
+    // cts-plan-selected listener calls the global by name, so reassigning
+    // window.clearConfigForNewPlan intercepts it — same pattern as the
+    // favoriting test above.
+    await page.waitForFunction(() => document.getElementById("createPlanBtn")?.onclick !== null);
+    await page.evaluate(() => {
+      const w = /** @type {any} */ (window);
+      w.__clearConfigCalls = 0;
+      const orig = w.clearConfigForNewPlan;
+      w.clearConfigForNewPlan = function () {
+        w.__clearConfigCalls++;
+        return orig();
+      };
+    });
+
+    await page.getByTestId("load-last-config").click();
+
+    // The restored config lands...
+    await expect.poll(() => readConfigValue(page)).toContain("restored-under-suppression");
+    // ...AND the suppression counter prevented the config-clear: a regression
+    // where dispatchPlanSelection ignored isSystemSelectingPlan (or
+    // selectPlanByName stopped bumping it) would run clearConfigForNewPlan and
+    // trip this spy.
+    expect(await page.evaluate(() => /** @type {any} */ (window).__clearConfigCalls)).toBe(0);
+
+    // GL#1897: "Load last configuration" is selectPlanByName()'s third
+    // caller (alongside ?test_plan= and ?from-plan=/?edit-plan=) — a
+    // system-chosen plan, not a hand-picked one, so it collapses the full
+    // picker into the summary card too.
+    await expect(page.locator("#planSelectedSummary")).toBeVisible();
+    await expect(page.locator("#planSearch")).toBeHidden();
+    await expect(page.locator("#planSelectedName")).toHaveText(
+      "OpenID Connect Client: Basic Certification",
+    );
+  });
+
+  test("R13/U11: page load probes /api/lastconfig but does not apply it", async ({ page }) => {
+    await setupFailFast(page);
+
+    let lastconfigCalled = false;
+
+    await page.route("**/api/plan/available", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(ALL_PLANS),
+      }),
+    );
+
+    // U11 (B3): bootstrap probes /api/lastconfig once to gate the
+    // "Load last configuration" button's disabled state. R13's no-auto-
+    // apply contract still holds — the probe MUST NOT write the payload
+    // to the editor. The mock returns a populated config so an accidental
+    // regression to auto-apply would land "should-not-load" in the form.
+    await page.route("**/api/lastconfig", (route) => {
+      lastconfigCalled = true;
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ config: { alias: "should-not-load" } }),
+      });
+    });
+
+    await setupCommonRoutes(page);
+    await page.goto("/schedule-test.html");
+
+    await selectPlanViaSearch(page, "oidcc-basic-certification-test-plan");
+    // Form starts empty — the probe must not apply the persisted config.
+    expect(await readConfigValue(page)).toBe("{}");
+
+    // The probe runs as part of init; wait for the button to settle out
+    // of its initial loading state so the assertion isn't racy.
+    await expect(page.locator("#loadLastConfigBtn")).not.toHaveAttribute("loading", /.*/);
+    expect(lastconfigCalled).toBe(true);
+  });
+
+  test("U11: Load button starts disabled when no saved config exists", async ({ page }) => {
+    await setupFailFast(page);
+
+    await page.route("**/api/plan/available", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(ALL_PLANS),
+      }),
+    );
+
+    // Empty payload — backend always returns 200 with {} when nothing
+    // is saved for the current user (SavedConfigurationApi.java:32).
+    await page.route("**/api/lastconfig", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({}),
+      }),
+    );
+
+    await setupCommonRoutes(page);
+    await page.goto("/schedule-test.html");
+
+    // cts-button forwards the host's `disabled` to the inner native
+    // <button>; that's what :disabled tracks.
+    const innerBtn = page.locator("#loadLastConfigBtn button");
+    await expect(innerBtn).toBeDisabled();
+    // The probe completes — loading attribute should be cleared.
+    await expect(page.locator("#loadLastConfigBtn")).not.toHaveAttribute("loading", /.*/);
+  });
+
+  test("U11: Load button enables once probe reports a saved config", async ({ page }) => {
+    await setupFailFast(page);
+
+    await page.route("**/api/plan/available", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(ALL_PLANS),
+      }),
+    );
+
+    await page.route("**/api/lastconfig", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ config: { alias: "saved" } }),
+      }),
+    );
+
+    await setupCommonRoutes(page);
+    await page.goto("/schedule-test.html");
+
+    const innerBtn = page.locator("#loadLastConfigBtn button");
+    await expect(innerBtn).toBeEnabled();
+    await expect(page.locator("#loadLastConfigBtn")).not.toHaveAttribute("loading", /.*/);
+  });
+
+  test("U11: clicking shows pending state and re-enables after success", async ({ page }) => {
+    await setupFailFast(page);
+
+    await page.route("**/api/plan/available", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(ALL_PLANS),
+      }),
+    );
+
+    let lastconfigCalls = 0;
+    /** @type {(value?: void) => void} */
+    let releaseClickFetch = () => {};
+    const clickFetchInFlight = new Promise((resolve) => {
+      releaseClickFetch = resolve;
+    });
+
+    // First call (bootstrap probe) resolves immediately. Second call
+    // (click) is held open until the test asserts the pending state.
+    await page.route("**/api/lastconfig", async (route) => {
+      lastconfigCalls += 1;
+      if (lastconfigCalls === 1) {
+        return route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({ config: { alias: "saved" } }),
+        });
+      }
+      await clickFetchInFlight;
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ config: { alias: "from-last-config" } }),
+      });
+    });
+
+    await setupCommonRoutes(page);
+    await page.goto("/schedule-test.html");
+
+    const innerBtn = page.locator("#loadLastConfigBtn button");
+    await expect(innerBtn).toBeEnabled();
+
+    await page.getByTestId("load-last-config").click();
+
+    // While the click fetch is in flight, the button shows the spinner
+    // and is disabled (cts-button's loading state).
+    await expect(page.locator("#loadLastConfigBtn")).toHaveAttribute("loading", /.*/);
+    await expect(innerBtn).toBeDisabled();
+
+    // Release the fetch and verify the button settles back to enabled.
+    releaseClickFetch();
+    await expect(page.locator("#loadLastConfigBtn")).not.toHaveAttribute("loading", /.*/);
+    await expect(innerBtn).toBeEnabled();
+  });
+
+  test("U11: click error shows toast and re-enables the button", async ({ page }) => {
+    await setupFailFast(page);
+
+    await page.route("**/api/plan/available", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(ALL_PLANS),
+      }),
+    );
+
+    let lastconfigCalls = 0;
+    await page.route("**/api/lastconfig", (route) => {
+      lastconfigCalls += 1;
+      if (lastconfigCalls === 1) {
+        return route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({ config: { alias: "saved" } }),
+        });
+      }
+      return route.fulfill({ status: 500, body: "Server error" });
+    });
+
+    await setupCommonRoutes(page);
+    await page.goto("/schedule-test.html");
+
+    const innerBtn = page.locator("#loadLastConfigBtn button");
+    await expect(innerBtn).toBeEnabled();
+
+    await page.getByTestId("load-last-config").click();
+
+    // FAPI_UI.showError opens the legacy #errorModal.
+    const errorModal = page.locator("#errorModal");
+    await expect(errorModal).toBeVisible();
+
+    // After the failed click, the button re-enables so the user can retry.
+    await expect(page.locator("#loadLastConfigBtn")).not.toHaveAttribute("loading", /.*/);
+    await expect(innerBtn).toBeEnabled();
+  });
+
+  // --- Validate Configuration flow (inline verdict + button loading state) ---
+  //
+  // The verdict content branches (success vs missing-count copy, icon
+  // choice, re-entrancy, every clearing path) are covered at component
+  // level by the cts-config-form stories; this test pins the page-level
+  // wiring: clicking the button on the real schedule-test page opens the
+  // loading window, lands the inline verdict next to the button (NOT a
+  // toast — the pre-redesign surface), and a form edit clears it.
+
+  test("validate flow: loading window, inline verdict, cleared by an edit", async ({ page }) => {
+    await setupFailFast(page);
+
+    await page.route("**/api/plan/available", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(ALL_PLANS),
+      }),
+    );
+
+    await page.route("**/api/lastconfig", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({}),
+      }),
+    );
+
+    await setupCommonRoutes(page);
+    await page.goto("/schedule-test.html");
+
+    // Reveal the config form by picking the no-variants plan — its config
+    // form renders immediately, while plans with variants keep it hidden
+    // until every variant is picked.
+    await selectPlanViaSearch(page, "oidcc-client-basic-certification-test-plan");
+
+    const validateHost = page.locator('#ctsConfigForm cts-button[type="submit"]');
+    const validateBtn = validateHost.locator("button");
+    await expect(validateBtn).toBeVisible();
+    await expect(validateBtn).toBeEnabled();
+
+    const verdict = page.getByTestId("validate-verdict");
+    await expect(verdict).toBeEmpty();
+
+    // The feedback window opens on click: the cts-button host reflects
+    // `loading` (same attribute idiom as the #loadLastConfigBtn assertions
+    // above) and the inner native button disables. The expectation starts
+    // polling before the click resolves — the window is only ~1s, so a
+    // sequential await could miss it on a loaded machine.
+    await Promise.all([expect(validateHost).toHaveAttribute("loading", /.*/), validateBtn.click()]);
+    await expect(validateBtn).toBeDisabled();
+
+    // The verdict lands inline when the window resolves. The mock plans
+    // carry no catalog-required fields, so the empty form passes.
+    await expect(verdict).toContainText("Configuration is valid");
+    await expect(validateHost).not.toHaveAttribute("loading", /.*/);
+    await expect(validateBtn).toBeEnabled();
+
+    // The verdict is inline next to the button — no toast fires for
+    // validation anymore (the host mount stays, per the cross-page
+    // contract asserted at the top of this file).
+    await expect(page.locator("cts-toast-host cts-toast")).toHaveCount(0);
+
+    // Editing any form field invalidates the verdict immediately.
+    const aliasInput = page.locator("#ctsConfigForm cts-form-field input").first();
+    await aliasInput.fill("edited-after-validate");
+    await expect(verdict).toBeEmpty();
+  });
+
+  // --- cts-test-selector search flow (the sole plan-entry point) ---
+  //
+  // Clicking a search result fires cts-plan-select; the page handler resolves
+  // the plan via FAPI_UI.availablePlans and dispatches cts-plan-selected, so
+  // the downstream listeners (clearConfigForNewPlan, updateVariants,
+  // updateConfigFieldVisibility) fire on every pick. The picked row stays
+  // highlighted via the `selected` attribute the listener mirrors back — that
+  // highlighted row is the page-owned current-plan signal.
+
+  test("search-then-click selects a plan and reveals the config form", async ({ page }) => {
+    await setupFailFast(page);
+
+    await page.route("**/api/plan/available", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(ALL_PLANS),
+      }),
+    );
+
+    await page.route("**/api/lastconfig", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({}),
+      }),
+    );
+
+    await setupCommonRoutes(page);
+    await page.goto("/schedule-test.html");
+
+    // The selector renders one row per plan once `planSearch.plans` is set
+    // by loadAvailablePlans(). Wait for at least one row before driving the
+    // search — otherwise the type+click can race the init chain.
+    const searchRows = page.locator("#planSearch .oidf-test-selector__row");
+    await expect(searchRows.first()).toBeVisible();
+
+    // Narrow the list with the search box, then click the no-variants plan
+    // (its config form renders immediately — plans with variants are gated
+    // on every variant being picked first).
+    await page.locator("#planSearch .oidf-test-selector__search").fill("Client: Basic");
+    const targetRow = page.locator(
+      '#planSearch [data-plan-name="oidcc-client-basic-certification-test-plan"]',
+    );
+    await expect(targetRow).toBeVisible();
+    await targetRow.click();
+
+    // The picked row is marked active — the page-owned current-plan signal.
+    await expect(targetRow).toHaveClass(/is-active/);
+
+    // No variants, so the create button becomes enabled and the config form
+    // is shown. The button is a cts-button — target the inner native button
+    // for :disabled, matching the existing test patterns above.
+    await expect(page.locator("#createPlanBtn button")).toBeEnabled({ timeout: 5000 });
+  });
+
+  // --- conditional variant exclusions (@VariantNotApplicableWhen) ---
+
+  test("a variant left with a single applicable value is auto-selected and marked read-only", async ({
+    page,
+  }) => {
+    await setupFailFast(page);
+
+    // MOCK_GUIDED_PLANS carries the FAPI2 plan whose grant_management variant declares
+    // notApplicableWhen against fapi_profile, mirroring the real @VariantNotApplicableWhen pair.
+    await page.route("**/api/plan/available", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(MOCK_GUIDED_PLANS),
+      }),
+    );
+
+    await page.route("**/api/lastconfig", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({}),
+      }),
+    );
+
+    await setupCommonRoutes(page);
+    await page.goto("/schedule-test.html");
+
+    await selectPlanViaSearch(page, "fapi2-message-signing-final-test-plan");
+
+    const grantManagement = page.locator("#vp_grant_management");
+
+    // Generic FAPI keeps grant management a real opt-in, so the row is shown with both values.
+    await page.locator("#vp_fapi_profile").selectOption("plain_fapi");
+    await expect(grantManagement).toBeVisible();
+
+    // Chile forces grant management on: "disabled" is excluded, leaving one value. There is no choice
+    // left to make, so the value is applied for the user and the control is marked aria-disabled - but
+    // it stays on screen and in the tab order, since the manual form has no review step that would
+    // otherwise show it, and a native `disabled` select is unreachable by keyboard/screen reader.
+    await page.locator("#vp_fapi_profile").selectOption("openbanking_chile");
+    await expect(grantManagement).toBeVisible();
+    await expect(grantManagement).toHaveAttribute("aria-disabled", "true");
+    // aria-disabled, NOT the native `disabled` attribute — that is what keeps it in the tab order.
+    // (Playwright's toBeEnabled() honours aria-disabled, so assert on the property itself.)
+    expect(
+      await grantManagement.evaluate((el) => /** @type {HTMLSelectElement} */ (el).disabled),
+    ).toBe(false);
+    await expect(grantManagement).toHaveValue("enabled");
+
+    // The reason is given in a hint the control points at, not a title tooltip.
+    const forcedHint = page.locator("#vp_grant_management_forced_hint");
+    await expect(forcedHint).toBeVisible();
+    await expect(grantManagement).toHaveAttribute(
+      "aria-describedby",
+      "vp_grant_management_forced_hint",
+    );
+    await expect(grantManagement).not.toHaveAttribute("title", /./);
+
+    // It is reachable with the keyboard, and the forced value is held in place if something does
+    // manage to change it.
+    await grantManagement.focus();
+    await expect(grantManagement).toBeFocused();
+    await grantManagement.evaluate((el) => {
+      const select = /** @type {HTMLSelectElement} */ (el);
+      select.value = "disabled";
+      select.dispatchEvent(new Event("change"));
+    });
+    await expect(grantManagement).toHaveValue("enabled");
+
+    // KSA is the mirror image: "enabled" is excluded, so the forced value is "disabled" instead.
+    await page.locator("#vp_fapi_profile").selectOption("ksa");
+    await expect(grantManagement).toBeVisible();
+    await expect(grantManagement).toHaveAttribute("aria-disabled", "true");
+    await expect(grantManagement).toHaveValue("disabled");
+
+    // Back to generic FAPI: the control is a real choice again, with both values selectable and no
+    // forced-value marking left behind.
+    await page.locator("#vp_fapi_profile").selectOption("plain_fapi");
+    await expect(grantManagement).toBeVisible();
+    await expect(grantManagement).toBeEnabled();
+    await expect(grantManagement).not.toHaveAttribute("aria-disabled", /./);
+    expect(
+      await grantManagement.evaluate((el) => /** @type {HTMLSelectElement} */ (el).disabled),
+    ).toBe(false);
+    await expect(page.locator("#vp_grant_management_forced_hint")).toHaveCount(0);
+    await expect(grantManagement.locator("option:not([disabled])")).toHaveCount(3);
+  });
+
+  test("click on a plan row smooth-scrolls #selectionFlash into view AND focuses the first variant select", async ({
+    page,
+  }) => {
+    // The dead-click fix: with a long plan list, the variant region renders
+    // below the fold. Selecting a plan must scroll the selection group
+    // (#selectionFlash) into view so the user can see what just happened and
+    // continue. Once the scroll settles, focus moves to the first variant
+    // <select> — on every selection, including this mouse-click path — so the
+    // user can carry straight on to configuring the plan.
+    await setupFailFast(page);
+
+    await page.route("**/api/plan/available", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(ALL_PLANS),
+      }),
+    );
+
+    await page.route("**/api/lastconfig", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({}),
+      }),
+    );
+
+    await setupCommonRoutes(page);
+    // Shrink the viewport so #selectionFlash is reliably off-screen at the
+    // moment of the click — otherwise the page is short enough that the
+    // selection group is already visible and scrolling is a no-op (the test
+    // would tautologically pass).
+    await page.setViewportSize({ width: 1024, height: 360 });
+    await page.goto("/schedule-test.html");
+
+    const searchRows = page.locator("#planSearch .oidf-test-selector__row");
+    await expect(searchRows.first()).toBeVisible();
+
+    // Pick a plan WITH variants so the post-scroll focus has a variant
+    // <select> to land on (the no-variant fallback is covered by the
+    // keyboard test below).
+    await page.locator("#planSearch .oidf-test-selector__search").fill("Core: Basic");
+    const targetRow = page.locator(
+      '#planSearch [data-plan-name="oidcc-basic-certification-test-plan"]',
+    );
+    await expect(targetRow).toBeVisible();
+
+    // Precondition: capture the selection group's top BEFORE the click so we
+    // can assert below that the click actually moved the page (vs the group
+    // happening to already be near viewport-top, which would make the
+    // post-click assertion tautological).
+    const flashTopBeforeClick = await page.locator("#selectionFlash").evaluate((el) => {
+      return Math.round(el.getBoundingClientRect().top);
+    });
+    expect(flashTopBeforeClick).toBeGreaterThan(200);
+
+    await targetRow.click();
+
+    // After the rAF-deferred scroll, #selectionFlash's top edge should sit
+    // near the viewport top. Give it a generous threshold — the scroll
+    // is smooth and Playwright may sample mid-animation.
+    await expect
+      .poll(
+        async () => {
+          const top = await page.locator("#selectionFlash").evaluate((el) => {
+            return Math.round(el.getBoundingClientRect().top);
+          });
+          return top;
+        },
+        { timeout: 3000 },
+      )
+      .toBeLessThan(100);
+
+    // The scroll-in arrival is punctuated by a one-shot highlight over the
+    // selection group (#selectionFlash). It fires once the smooth scroll
+    // settles (scrollend) and clears itself ~1.6s later, so poll for the
+    // attribute in-window (no timing assertion on the animation itself, which
+    // would be flaky). The keyboard path runs the identical flashHighlight()
+    // call, so asserting it here covers both.
+    await expect
+      .poll(
+        async () =>
+          page.locator("#selectionFlash").evaluate((el) => el.hasAttribute("data-flashing")),
+        { timeout: 2000 },
+      )
+      .toBe(true);
+
+    // The settled scroll honors #selectionFlash's scroll-margin-top: the
+    // group lands ~16px (--space-4) shy of the viewport top — breathing
+    // room for the flash wash — not flush against it. The flash above only
+    // fires post-settle, so this read is stable, not mid-animation.
+    const settledTop = await page.locator("#selectionFlash").evaluate((el) => {
+      return Math.round(el.getBoundingClientRect().top);
+    });
+    expect(settledTop).toBeGreaterThanOrEqual(8);
+    expect(settledTop).toBeLessThanOrEqual(32);
+
+    // Once the scroll settles, focus lands on the first <select> inside
+    // #variantSelectors so the user can keep configuring. The variant
+    // selectors render during plan selection; focus then moves in the
+    // post-scroll-settle callback, so poll for it.
+    await expect
+      .poll(
+        async () =>
+          page.evaluate(() => {
+            const active = document.activeElement;
+            const firstVariantSelect = document.querySelector("#variantSelectors select");
+            return !!firstVariantSelect && active === firstVariantSelect;
+          }),
+        { timeout: 3000 },
+      )
+      .toBe(true);
+  });
+
+  test("keyboard selection on a no-variant plan scrolls AND falls back to focusing the Create button", async ({
+    page,
+  }) => {
+    // The keyboard path runs the identical post-scroll-settle focus as the
+    // click test above. This case uses a plan with NO variants, so
+    // #variantSelectors is empty and focus falls back to the Create button —
+    // focus is never stranded back in the search list, and the user can keep
+    // keyboarding forward. (Plans WITH variants focus the first variant select
+    // instead — see the click test above.)
+    await setupFailFast(page);
+
+    await page.route("**/api/plan/available", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(ALL_PLANS),
+      }),
+    );
+
+    await page.route("**/api/lastconfig", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({}),
+      }),
+    );
+
+    await setupCommonRoutes(page);
+    await page.setViewportSize({ width: 1024, height: 360 });
+    await page.goto("/schedule-test.html");
+
+    const searchRows = page.locator("#planSearch .oidf-test-selector__row");
+    await expect(searchRows.first()).toBeVisible();
+
+    // Narrow the list, focus the search input, then ArrowDown into the
+    // first result and Enter to commit.
+    const searchInput = page.locator("#planSearch .oidf-test-selector__search");
+    await searchInput.fill("Client: Basic");
+    const targetRow = page.locator(
+      '#planSearch [data-plan-name="oidcc-client-basic-certification-test-plan"]',
+    );
+    await expect(targetRow).toBeVisible();
+
+    // Precondition: the selection group starts well below viewport-top so the
+    // post-selection scroll assertion is meaningful.
+    const flashTopBeforeEnter = await page.locator("#selectionFlash").evaluate((el) => {
+      return Math.round(el.getBoundingClientRect().top);
+    });
+    expect(flashTopBeforeEnter).toBeGreaterThan(200);
+
+    await searchInput.focus();
+    await page.keyboard.press("ArrowDown");
+    // The focused row receives the keyboard event; pressing Enter on it
+    // dispatches cts-plan-select with via:'keyboard'.
+    await page.keyboard.press("Enter");
+
+    // The selection group scrolls into view (same assertion as the click test).
+    await expect
+      .poll(
+        async () => {
+          const top = await page.locator("#selectionFlash").evaluate((el) => {
+            return Math.round(el.getBoundingClientRect().top);
+          });
+          return top;
+        },
+        { timeout: 3000 },
+      )
+      .toBeLessThan(100);
+
+    // And focus falls back to the Create button's inner native <button> —
+    // because this plan has no variants, #variantSelectors is empty, so Tab
+    // continues forward into the config form instead of stranding focus.
+    await expect
+      .poll(
+        async () => {
+          return page.evaluate(() => {
+            const active = document.activeElement;
+            const createBtnInner = document
+              .getElementById("createPlanBtn")
+              ?.querySelector("button");
+            return !!createBtnInner && active === createBtnInner;
+          });
+        },
+        { timeout: 3000 },
+      )
+      .toBe(true);
+  });
+
+  test("?test_plan= deep-link resolves AND highlights the search row (regression)", async ({
+    page,
+  }) => {
+    await setupFailFast(page);
+
+    await page.route("**/api/plan/available", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(ALL_PLANS),
+      }),
+    );
+
+    await page.route("**/api/lastconfig", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({}),
+      }),
+    );
+
+    await setupCommonRoutes(page);
+    await page.goto("/schedule-test.html?test_plan=oidcc-client-basic-certification-test-plan");
+
+    // The deep-link resolves via selectPlanByName (the programmatic-select
+    // wrapper that bumps isSystemSelectingPlan around the dispatch). The
+    // page-owned current-plan signal is the highlighted search row.
+    const targetRow = page.locator(
+      '#planSearch [data-plan-name="oidcc-client-basic-certification-test-plan"]',
+    );
+    await expect(targetRow).toHaveClass(/is-active/, { timeout: 5000 });
+
+    // Exactly one row is active — a regression that marked every
+    // family-matching row active (e.g. by keying on spec family instead of
+    // plan name) would still pass the assertion above; pin the count to one.
+    await expect(selectedPlanRow(page)).toHaveCount(1);
+
+    // GL#1897: a system-chosen plan (deep-link) collapses the full picker
+    // into a compact summary card instead of leaving the big search widget
+    // expanded — the search row assertions above still hold because hiding
+    // an ancestor does not remove its light-DOM descendants or their
+    // classes, only their visibility.
+    const summary = page.locator("#planSelectedSummary");
+    await expect(summary).toBeVisible();
+    await expect(page.locator("#planSearch")).toBeHidden();
+    await expect(page.locator("#planSelectedName")).toHaveText(
+      "OpenID Connect Client: Basic Certification",
+    );
+    await expect(page.locator("#planSelectedMeta")).toContainText("OIDCC");
+    await expect(page.locator("#planSelectedMeta")).toContainText("Final");
+    await expect(page.locator("#planSelectedMeta")).toContainText(
+      "oidcc-client-basic-certification-test-plan",
+    );
+    await expect(page.locator("#planSelectedMeta")).toContainText("1 test module");
+
+    // "Change" swaps back to the full picker and returns focus to its
+    // search box.
+    await page.locator("#planSelectedChangeBtn").click();
+    await expect(summary).toBeHidden();
+    await expect(page.locator("#planSearch")).toBeVisible();
+    await expect(page.locator("#planSearch .oidf-test-selector__search")).toBeFocused();
+  });
+
+  test("GL#1897: unknown ?test_plan= value falls back to the expanded picker", async ({ page }) => {
+    await setupFailFast(page);
+
+    await page.route("**/api/plan/available", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(ALL_PLANS),
+      }),
+    );
+
+    await page.route("**/api/lastconfig", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({}),
+      }),
+    );
+
+    await setupCommonRoutes(page);
+    await page.goto("/schedule-test.html?test_plan=this-plan-does-not-exist");
+
+    // applyConfigPreset()'s existing `testPlanName in FAPI_UI.availablePlans`
+    // guard skips selectPlanByName for an unknown name, so
+    // showPlanSelectedSummary() never runs — the DOMContentLoaded fallback
+    // must un-hide the picker the early guard pre-emptively hid.
+    await expect(page.locator("#planSearch")).toBeVisible();
+    await expect(page.locator("#planSelectedSummary")).toBeHidden();
+    await expect(page.locator("#planSearch .oidf-test-selector__row").first()).toBeVisible();
+  });
+
+  test("GL#1897: ?from-plan= (edit configuration) also collapses to the summary card", async ({
+    page,
+  }) => {
+    await setupFailFast(page);
+
+    await page.route("**/api/plan/available", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(ALL_PLANS),
+      }),
+    );
+
+    await page.route("**/api/plan/plan-edit-001", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          planName: "oidcc-client-basic-certification-test-plan",
+          config: { server: { issuer: "https://op.example.com" } },
+        }),
+      }),
+    );
+
+    await page.route("**/api/lastconfig", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({}),
+      }),
+    );
+
+    await setupCommonRoutes(page);
+    await page.goto("/schedule-test.html?from-plan=plan-edit-001");
+
+    // Previously this path only hid #planSearch with nothing in its place —
+    // #1897 wants a name and a way to change it, same as the ?test_plan=
+    // path.
+    await expect(page.locator("#planSelectedSummary")).toBeVisible();
+    await expect(page.locator("#planSearch")).toBeHidden();
+    await expect(page.locator("#planSelectedName")).toHaveText(
+      "OpenID Connect Client: Basic Certification",
+    );
+  });
+
+  test("GL#1897: picking a plan by hand from the list does not auto-collapse it", async ({
+    page,
+  }) => {
+    await setupFailFast(page);
+
+    await page.route("**/api/plan/available", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(ALL_PLANS),
+      }),
+    );
+
+    await page.route("**/api/lastconfig", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({}),
+      }),
+    );
+
+    await setupCommonRoutes(page);
+    await page.goto("/schedule-test.html");
+
+    // Organic picks go through dispatchPlanSelection() directly (the
+    // cts-plan-select listener), never selectPlanByName() — only the
+    // programmatic wrapper triggers showPlanSelectedSummary().
+    await selectPlanViaSearch(page, "oidcc-client-basic-certification-test-plan");
+
+    await expect(page.locator("#planSearch")).toBeVisible();
+    await expect(page.locator("#planSelectedSummary")).toBeHidden();
+  });
+
+  test("R42: cts-form-field renders a label[for] / id pair for every visible field", async ({
+    page,
+  }) => {
+    // After Phase 2, every rendered field is a <cts-form-field>, which owns
+    // its own <label for="cts-ff-N"> + matching id on the inner control. The
+    // legacy wireConfigFormLabels DOM-walk is gone. This test guards that
+    // contract end-to-end on the live page (cts-form-field's own Storybook
+    // play tests cover it at the unit level).
+    await setupFailFast(page);
+
+    await page.route("**/api/plan/available", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(ALL_PLANS),
+      }),
+    );
+
+    await page.route("**/api/lastconfig", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({}),
+      }),
+    );
+
+    await setupCommonRoutes(page);
+    await page.goto("/schedule-test.html");
+
+    // cts-form-field elements only render after a plan is selected AND every
+    // variant is selected (updateConfigFieldVisibility gates the schema bind
+    // on allVariantsSelected). Pick the no-variants OIDCC plan so the form
+    // renders immediately on selection.
+    await selectPlanViaSearch(page, "oidcc-client-basic-certification-test-plan");
+    await expect(page.locator('cts-form-field[name="alias"]').first()).toBeAttached({
+      timeout: 5000,
+    });
+
+    // For every rendered field, the inner control must have an id AND a
+    // matching label[for=…]. cts-form-field renders the label inside its
+    // light DOM with the same uid that's pinned on the control.
+    const samples = await page.evaluate(() => {
+      const fields = Array.from(document.querySelectorAll("cts-form-field"));
+      return fields.map((field) => {
+        const control = field.querySelector("input, select, textarea");
+        const id = control?.id || "";
+        const labelEl = id ? field.querySelector(`label[for="${id}"]`) : null;
+        return {
+          name: field.getAttribute("name"),
+          id,
+          labelText: labelEl?.textContent?.trim() || "",
+        };
+      });
+    });
+    expect(samples.length).toBeGreaterThan(0);
+    for (const s of samples) {
+      expect(s.id, `expected id on cts-form-field[name=${s.name}]`).toBeTruthy();
+    }
+    // boolean fields render the description as the inline checkbox label
+    // instead of a header label, so an empty labelText is permissible on
+    // boolean controls but not on string/select/textarea ones. Sanity-check
+    // that the schedule-test catalog (no boolean fields today) lands every
+    // sample with non-empty label text.
+    const blankLabels = samples.filter((s) => !s.labelText).map((s) => s.name);
+    expect(blankLabels, `expected non-empty labels for ${blankLabels.join(", ")}`).toEqual([]);
+    // Ids are unique even when the same dotted-path appears in multiple
+    // sections (cts-form-field's uidCounter pins a monotonic counter).
+    const ids = samples.map((s) => s.id).filter(Boolean);
+    const dupes = ids.filter((id, i) => ids.indexOf(id) !== i);
+    expect(dupes, "expected every cts-form-field control id to be unique").toEqual([]);
+  });
+
+  test.describe("unsaved changes guard", () => {
+    /**
+     * Bring the page up to a state where the config form is rendered and at
+     * least one field is editable, but do not yet edit anything.
+     *
+     * The helper also pre-registers the `plans.html` mock route used by
+     * link-click tests in this describe block. Per project convention all
+     * `page.route()` calls must run before `page.goto()`; registering the
+     * route per-test after `bootScheduleTestPage()` would fail that gate.
+     * @param {import("@playwright/test").Page} page - Playwright page fixture
+     */
+    async function bootScheduleTestPage(page) {
+      await setupFailFast(page);
+      await page.route("**/api/plan/available", (route) =>
+        route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify(ALL_PLANS),
+        }),
+      );
+      await page.route("**/api/lastconfig", (route) =>
+        route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({}),
+        }),
+      );
+      await page.route("**/plans.html*", (route) =>
+        route.fulfill({
+          status: 200,
+          contentType: "text/html",
+          body: "<!doctype html><html><body>ok</body></html>",
+        }),
+      );
+      await setupCommonRoutes(page);
+      await page.goto("/schedule-test.html");
+      await selectPlanViaSearch(page, "oidcc-client-basic-certification-test-plan");
+      await expect(page.locator("#createPlanBtn button")).toBeEnabled({ timeout: 5000 });
+    }
+
+    /**
+     * Synthesize the cts-config-change event that cts-config-form would
+     * dispatch on any field edit. Decouples the test from the field catalog
+     * layout while exercising the exact code path the guard listens for.
+     * @param {import("@playwright/test").Page} page
+     */
+    async function armGuardDirty(page) {
+      await page.evaluate(() => {
+        document.getElementById("ctsConfigForm")?.dispatchEvent(
+          new CustomEvent("cts-config-change", {
+            bubbles: true,
+            detail: { config: { alias: "edited" } },
+          }),
+        );
+      });
+      await expect(page.locator("cts-unsaved-changes-guard")).toHaveAttribute("dirty", "");
+    }
+
+    test("pristine form: internal link click navigates without prompt", async ({ page }) => {
+      await bootScheduleTestPage(page);
+      await expect(page.locator("cts-unsaved-changes-guard")).not.toHaveAttribute("dirty", "");
+
+      await page.locator('cts-navbar a[href="plans.html"]').first().click();
+      await page.waitForURL(/plans\.html$/);
+      await expect(
+        page.locator("cts-unsaved-changes-guard cts-modal dialog.oidf-modal[open]"),
+      ).toHaveCount(0);
+    });
+
+    test("dirty form: internal link click opens the unsaved-changes modal", async ({ page }) => {
+      await bootScheduleTestPage(page);
+      await armGuardDirty(page);
+
+      await page.locator('cts-navbar a[href="plans.html"]').first().click();
+
+      const dialog = page.locator("cts-unsaved-changes-guard cts-modal dialog.oidf-modal[open]");
+      await expect(dialog).toBeVisible();
+      await expect(dialog.locator(".oidf-modal-title")).toHaveText("You have unsaved changes");
+    });
+
+    test("Stay on page keeps the user and leaves the form dirty", async ({ page }) => {
+      await bootScheduleTestPage(page);
+      await armGuardDirty(page);
+
+      const beforeUrl = page.url();
+      await page.locator('cts-navbar a[href="plans.html"]').first().click();
+      await expect(
+        page.locator("cts-unsaved-changes-guard cts-modal dialog.oidf-modal[open]"),
+      ).toBeVisible();
+
+      await page.locator("#exitGuard-modal-stay").click();
+      await expect(
+        page.locator("cts-unsaved-changes-guard cts-modal dialog.oidf-modal[open]"),
+      ).toHaveCount(0);
+      expect(page.url()).toBe(beforeUrl);
+      await expect(page.locator("cts-unsaved-changes-guard")).toHaveAttribute("dirty", "");
+    });
+
+    test("Leave page navigates to the link target", async ({ page }) => {
+      await bootScheduleTestPage(page);
+      await armGuardDirty(page);
+
+      await page.locator('cts-navbar a[href="plans.html"]').first().click();
+      await expect(
+        page.locator("cts-unsaved-changes-guard cts-modal dialog.oidf-modal[open]"),
+      ).toBeVisible();
+
+      await page.locator("#exitGuard-modal-leave").click();
+      await page.waitForURL(/plans\.html$/);
+    });
+
+    test("Create Test Plan does not trigger the unsaved-changes modal", async ({ page }) => {
+      let postCalled = false;
+
+      await setupFailFast(page);
+      await page.route("**/api/plan/available", (route) =>
+        route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify(ALL_PLANS),
+        }),
+      );
+      await page.route("**/api/lastconfig", (route) =>
+        route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({}),
+        }),
+      );
+      await page.route("**/api/plan?*", (route) => {
+        if (route.request().method() === "POST") {
+          postCalled = true;
+          return route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify({
+              id: "plan-guard-001",
+              name: "oidcc-client-basic-certification-test-plan",
+            }),
+          });
+        }
+        return route.fallback();
+      });
+      await page.route("**/plan-detail.html*", (route) =>
+        route.fulfill({
+          status: 200,
+          contentType: "text/html",
+          body: "<!doctype html><html><body>ok</body></html>",
+        }),
+      );
+      await setupCommonRoutes(page);
+
+      await page.goto("/schedule-test.html");
+      await selectPlanViaSearch(page, "oidcc-client-basic-certification-test-plan");
+      await expect(page.locator("#createPlanBtn button")).toBeEnabled({ timeout: 5000 });
+
+      await armGuardDirty(page);
+
+      await page.locator("#createPlanBtn").click();
+      await page.waitForURL(/plan-detail\.html\?plan=plan-guard-001$/);
+      expect(postCalled).toBe(true);
+      await expect(
+        page.locator("cts-unsaved-changes-guard cts-modal dialog.oidf-modal[open]"),
+      ).toHaveCount(0);
+    });
+
+    test("modifier-key click on internal link is not intercepted", async ({ page }) => {
+      await bootScheduleTestPage(page);
+      await armGuardDirty(page);
+
+      await page
+        .locator('cts-navbar a[href="plans.html"]')
+        .first()
+        .click({ modifiers: ["Meta"] });
+      await expect(
+        page.locator("cts-unsaved-changes-guard cts-modal dialog.oidf-modal[open]"),
+      ).toHaveCount(0);
+    });
+
+    test("dirty form: window beforeunload event has its default prevented", async ({ page }) => {
+      // Closes the P1 testing gap from
+      // docs/residual-review-findings/2026-05-18-dirty-form-exit-guard.md —
+      // the _onBeforeUnload branch of cts-unsaved-changes-guard had no
+      // integration coverage before this test.
+      //
+      // The residual file's fix recipe (page.reload() + page.on('dialog',
+      // dismiss)) does not surface in headless Chromium — neither
+      // page.reload() nor page.close({runBeforeUnload:true}) reliably emits
+      // a 'dialog' event for beforeunload in CI. The residual explicitly
+      // permitted test.skip in that case, but a real integration assertion
+      // is more valuable: dispatch a real beforeunload event on window and
+      // verify the guard's handler called preventDefault. This exercises:
+      //  - the connectedCallback's window.addEventListener wiring
+      //  - the live `dirty` state on the component
+      //  - the _onBeforeUnload branch that runs preventDefault + returnValue
+      // The browser-prompt UI side is a Chromium implementation detail that
+      // headless mode does not expose; the handler contract is what matters.
+      await bootScheduleTestPage(page);
+      await armGuardDirty(page);
+
+      const defaultPrevented = await page.evaluate(() => {
+        const event = new Event("beforeunload", { cancelable: true });
+        window.dispatchEvent(event);
+        return event.defaultPrevented;
+      });
+
+      // `defaultPrevented === true` proves the handler ran inside the
+      // dirty-state branch and called `event.preventDefault()` — the
+      // signal modern browsers honour to fire the unsaved-changes prompt.
+      expect(defaultPrevented).toBe(true);
+    });
+
+    test("pristine form: window beforeunload event is not prevented", async ({ page }) => {
+      // Companion to the dirty-form beforeunload test — confirms the guard
+      // does not preventDefault on the unload event when the form has not
+      // been edited, so the browser would proceed with the unload normally.
+      await bootScheduleTestPage(page);
+      await expect(page.locator("cts-unsaved-changes-guard")).not.toHaveAttribute("dirty", "");
+
+      const result = await page.evaluate(() => {
+        const event = new Event("beforeunload", { cancelable: true });
+        window.dispatchEvent(event);
+        return { defaultPrevented: event.defaultPrevented };
+      });
+
+      expect(result.defaultPrevented).toBe(false);
+    });
+  });
+});

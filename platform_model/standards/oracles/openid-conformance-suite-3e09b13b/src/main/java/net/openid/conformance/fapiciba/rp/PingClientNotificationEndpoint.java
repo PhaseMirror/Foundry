@@ -1,0 +1,131 @@
+package net.openid.conformance.fapiciba.rp;
+
+import com.google.gson.JsonObject;
+import net.openid.conformance.condition.AbstractCondition;
+import net.openid.conformance.condition.PreEnvironment;
+import net.openid.conformance.testmodule.Environment;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.DefaultResponseErrorHandler;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestClientResponseException;
+import org.springframework.web.client.RestTemplate;
+
+import java.io.IOException;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
+import java.security.spec.InvalidKeySpecException;
+import java.util.concurrent.TimeUnit;
+
+public class PingClientNotificationEndpoint extends AbstractCondition {
+	public static final String CLIENT_PING_ATTEMPTED = "client_ping_attempted";
+
+	@Override
+	@PreEnvironment(required = "client", strings = { "auth_req_id", "client_notification_token" })
+	public Environment evaluate(Environment env) {
+
+		JsonObject pingRequestObject = new JsonObject();
+		pingRequestObject.addProperty("auth_req_id", getAuthReqId(env));
+
+		RestTemplate restTemplate = null;
+		try {
+			restTemplate = createRestTemplate(env, true);
+			restTemplate.setErrorHandler(new DefaultResponseErrorHandler());
+
+			HttpHeaders headers = new HttpHeaders();
+			headers.setContentType(MediaType.APPLICATION_JSON);
+			addAuthorizationHeader(headers, env);
+
+			HttpEntity<String> request = new HttpEntity<>(pingRequestObject.toString(), headers);
+
+			String clientNotificationEndpoint = env.getString("client","backchannel_client_notification_endpoint");
+			markPingAttemptStarted(env);
+			int attempt = 1;
+
+			while (true) {
+				try {
+					ResponseEntity<String> response = restTemplate.exchange(clientNotificationEndpoint, HttpMethod.POST, request, String.class);
+
+					env.putInteger("client_notification_endpoint_response_http_status", response.getStatusCode().value());
+					env.putBoolean("client_was_pinged", true);
+
+					logSuccess("Received client notification endpoint response:" + response.getBody());
+					return env;
+
+				} catch (RestClientResponseException e) {
+					if (attempt < getMaximumAttempts() && shouldRetry(e)) {
+						log("Retrying the client notification endpoint after a transient HTTP response",
+							args("attempt", attempt, "http_status", e.getStatusCode().value()));
+						waitBeforeRetry(attempt);
+						attempt++;
+						continue;
+					}
+					return handleClientResponseException(env, e);
+				} catch (RestClientException e) {
+					if (attempt < getMaximumAttempts() && shouldRetry(e)) {
+						log("Retrying the client notification endpoint after a temporary communication failure",
+							args("attempt", attempt, "error", e.getMessage()));
+						waitBeforeRetry(attempt);
+						attempt++;
+						continue;
+					}
+					return handleClientException(env, e);
+				}
+			}
+		} catch (NoSuchAlgorithmException | KeyManagementException | CertificateException | InvalidKeySpecException | KeyStoreException | IOException | UnrecoverableKeyException e) {
+			throw error("Error creating HTTP Client", e);
+		}
+	}
+
+	protected int getMaximumAttempts() {
+		return 1;
+	}
+
+	protected boolean shouldRetry(RestClientException e) {
+		return false;
+	}
+
+	protected void waitBeforeRetry(int attempt) {
+		try {
+			TimeUnit.SECONDS.sleep(attempt);
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			throw error("Interrupted while waiting to retry the client notification endpoint", e);
+		}
+	}
+
+	protected void markPingAttemptStarted(Environment env) {
+		// Most profiles only consider the client pinged after a successful HTTP response.
+	}
+
+	protected Environment handleClientResponseException(Environment env, RestClientResponseException e) {
+		throw error("RestClientResponseException occurred whilst calling client notification endpoint",
+			args("code", e.getStatusCode().value(), "status", e.getStatusText(), "body", e.getResponseBodyAsString()));
+	}
+
+	protected Environment handleClientException(Environment env, RestClientException e) {
+		String msg = "Call to client notification endpoint failed";
+		if (e.getCause() != null) {
+			msg += " - " + e.getCause().getMessage();
+		}
+		throw error(msg, e);
+	}
+
+	protected String getBearerToken(Environment env) {
+		return env.getString("client_notification_token");
+	}
+
+	protected String getAuthReqId(Environment env) {
+		return env.getString("auth_req_id");
+	}
+
+	protected void addAuthorizationHeader(HttpHeaders headers, Environment env) {
+		headers.setBearerAuth(getBearerToken(env));
+	}
+}

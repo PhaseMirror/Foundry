@@ -1,0 +1,325 @@
+{
+  "$id": "prismpm/model-document/1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "application": { "$ref": "#/$defs/application" },
+    "architecture": { "$ref": "#/$defs/architecture" },
+    "provenance": { "$ref": "#/$defs/provenance" },
+    "quality": { "$ref": "#/$defs/quality" },
+    "schema": { "const": "prismpm/model-document/1" },
+    "security": { "$ref": "#/$defs/security" },
+    "standards_profile": {
+      "oneOf": [
+        { "const": [] },
+        { "const": [
+        "ISO-25010-2023",
+        "ISO-27005-2022",
+        "ISO-27034-1-2011",
+        "ISO-27034-5-2017",
+        "ISO-42010-2022"
+        ] }
+      ]
+    }
+  },
+  "required": ["architecture", "provenance", "quality", "schema", "security", "standards_profile"],
+  "title": "ModelDocument",
+  "type": "object",
+  "$defs": {
+    "application": {
+      "additionalProperties": false,
+      "properties": {
+        "acceptance_vectors": { "items": { "$ref": "#/$defs/application_acceptance_vector" }, "minItems": 1, "type": "array" },
+        "actions": { "items": { "type": "string" }, "minItems": 1, "type": "array", "uniqueItems": true },
+        "capabilities_empty": { "const": true },
+        "cargo_name": { "pattern": "^[a-z][a-z0-9_-]{0,63}$", "type": "string" },
+        "cargo_description": { "minLength": 1, "type": "string" },
+        "cargo_homepage": { "format": "uri", "pattern": "^https://", "type": "string" },
+        "cargo_repository": { "format": "uri", "pattern": "^https://", "type": "string" },
+        "cargo_version": { "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$", "type": "string" },
+        "color": { "type": "string" },
+        "core_contract": { "type": "string" },
+        "entry_root": { "type": "string" },
+        "fat_archive": { "const": true },
+        "guest_allocation_maximum": { "maximum": 4294967295, "minimum": 1, "type": "integer" },
+        "input_grammar": { "type": "string" },
+        "layout": { "type": "string" },
+        "library_roots": { "items": { "type": "string" }, "minItems": 1, "type": "array", "uniqueItems": true },
+        "operation_type": { "pattern": "^[A-Za-z_][A-Za-z0-9_]*$", "type": "string" },
+        "error_type": { "pattern": "^[A-Za-z_][A-Za-z0-9_]*$", "type": "string" },
+        "function_name": { "pattern": "^[A-Za-z_][A-Za-z0-9_]*$", "type": "string" },
+        "live_mode": { "type": "string" },
+        "name": { "minLength": 1, "type": "string" },
+        "primary_layer": { "maximum": 255, "minimum": 0, "type": "integer" },
+        "request_maximum": { "maximum": 4294967295, "minimum": 1, "type": "integer" },
+        "response_maximum": { "maximum": 4294967295, "minimum": 1, "type": "integer" },
+        "targets": { "items": { "type": "string" }, "minItems": 1, "type": "array", "uniqueItems": true },
+        "typography": { "type": "string" },
+        "view": { "$ref": "#/$defs/application_view" },
+        "view_layer": { "maximum": 255, "minimum": 0, "type": "integer" }
+      },
+      "required": ["acceptance_vectors", "actions", "capabilities_empty", "cargo_description", "cargo_homepage", "cargo_name", "cargo_repository", "cargo_version", "color", "core_contract", "entry_root", "error_type", "fat_archive", "function_name", "guest_allocation_maximum", "input_grammar", "layout", "library_roots", "live_mode", "name", "operation_type", "primary_layer", "request_maximum", "response_maximum", "targets", "typography", "view", "view_layer"],
+      "type": "object"
+    },
+    "application_acceptance_vector": {
+      "additionalProperties": false,
+      "properties": {
+        "request": { "items": { "maximum": 255, "minimum": 0, "type": "integer" }, "type": "array" },
+        "response": { "items": { "maximum": 255, "minimum": 0, "type": "integer" }, "type": "array" }
+      },
+      "required": ["request", "response"],
+      "type": "object"
+    },
+    "application_view": {
+      "additionalProperties": false,
+      "properties": {
+        "division_error": { "type": "string" },
+        "heading": { "type": "string" },
+        "hologram_intent": { "const": true },
+        "input_error": { "type": "string" },
+        "initial_operation": { "maximum": 255, "minimum": 0, "type": "integer" },
+        "left_label": { "type": "string" },
+        "live_polite": { "const": true },
+        "operation_label": { "type": "string" },
+        "operations": { "items": { "$ref": "#/$defs/application_view_operation" }, "minItems": 1, "type": "array", "uniqueItems": true },
+        "overflow_error": { "type": "string" },
+        "pages_adapter": { "const": true },
+        "retain_focus": { "const": true },
+        "right_label": { "type": "string" },
+        "submit_label": { "type": "string" },
+        "submit_on_enter": { "const": true },
+        "title": { "type": "string" }
+      },
+      "required": ["division_error", "heading", "hologram_intent", "initial_operation", "input_error", "left_label", "live_polite", "operation_label", "operations", "overflow_error", "pages_adapter", "retain_focus", "right_label", "submit_label", "submit_on_enter", "title"],
+      "type": "object"
+    },
+    "application_view_operation": {
+      "additionalProperties": false,
+      "properties": {
+        "discriminant": { "maximum": 255, "minimum": 0, "type": "integer" },
+        "label": { "minLength": 1, "type": "string" },
+        "request_name": { "pattern": "^[a-z][a-z-]*$", "type": "string" },
+        "rust_variant": { "pattern": "^[A-Za-z_][A-Za-z0-9_]*$", "type": "string" }
+      },
+      "required": ["discriminant", "label", "request_name", "rust_variant"],
+      "type": "object"
+    },
+    "activity": {
+      "additionalProperties": false,
+      "properties": {
+        "control_index": { "$ref": "#/$defs/index" },
+        "id": { "$ref": "#/$defs/qualified_entity" },
+        "index": { "$ref": "#/$defs/index" }
+      },
+      "required": ["control_index", "id", "index"],
+      "type": "object"
+    },
+    "architecture": {
+      "additionalProperties": false,
+      "properties": {
+        "component_kinds": { "items": { "$ref": "#/$defs/catalog" }, "type": "array" },
+        "components": { "items": { "$ref": "#/$defs/component" }, "type": "array" },
+        "concerns": { "items": { "$ref": "#/$defs/indexed" }, "type": "array" },
+        "edge_kinds": { "items": { "$ref": "#/$defs/catalog" }, "type": "array" },
+        "edges": { "items": { "$ref": "#/$defs/edge" }, "type": "array" },
+        "model_kinds": { "items": { "$ref": "#/$defs/catalog" }, "type": "array" },
+        "stakeholders": { "items": { "$ref": "#/$defs/indexed" }, "type": "array" },
+        "viewpoints": { "items": { "$ref": "#/$defs/viewpoint" }, "type": "array" },
+        "views": { "items": { "$ref": "#/$defs/view" }, "type": "array" }
+      },
+      "required": ["component_kinds", "components", "concerns", "edge_kinds", "edges", "model_kinds", "stakeholders", "viewpoints", "views"],
+      "type": "object"
+    },
+    "asset": {
+      "additionalProperties": false,
+      "properties": {
+        "component_index": { "$ref": "#/$defs/index" },
+        "id": { "$ref": "#/$defs/qualified_entity" },
+        "index": { "$ref": "#/$defs/index" }
+      },
+      "required": ["component_index", "id", "index"],
+      "type": "object"
+    },
+    "catalog": {
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/qualified_catalog" },
+        "index": { "$ref": "#/$defs/index" }
+      },
+      "required": ["id", "index"],
+      "type": "object"
+    },
+    "component": {
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/qualified_entity" },
+        "index": { "$ref": "#/$defs/index" },
+        "kind_id": { "$ref": "#/$defs/qualified_catalog" }
+      },
+      "required": ["id", "index", "kind_id"],
+      "type": "object"
+    },
+    "control": {
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/qualified_entity" },
+        "index": { "$ref": "#/$defs/index" },
+        "risk_index": { "$ref": "#/$defs/index" }
+      },
+      "required": ["id", "index", "risk_index"],
+      "type": "object"
+    },
+    "edge": {
+      "additionalProperties": false,
+      "properties": {
+        "from_index": { "$ref": "#/$defs/index" },
+        "id": { "$ref": "#/$defs/qualified_entity" },
+        "index": { "$ref": "#/$defs/index" },
+        "kind_id": { "$ref": "#/$defs/qualified_catalog" },
+        "to_index": { "$ref": "#/$defs/index" }
+      },
+      "required": ["from_index", "id", "index", "kind_id", "to_index"],
+      "type": "object"
+    },
+    "facet": {
+      "additionalProperties": false,
+      "properties": {
+        "content_id": { "$ref": "#/$defs/sha256" },
+        "package": { "enum": ["prism.arch", "prism.qual", "prism.sec"] },
+        "version": { "const": "1.0.0" }
+      },
+      "required": ["content_id", "package", "version"],
+      "type": "object"
+    },
+    "index": { "maximum": 18446744073709551615, "minimum": 0, "type": "integer" },
+    "indexed": {
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/qualified_entity" },
+        "index": { "$ref": "#/$defs/index" }
+      },
+      "required": ["id", "index"],
+      "type": "object"
+    },
+    "measure": {
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/qualified_entity" },
+        "index": { "$ref": "#/$defs/index" },
+        "requirement_index": { "$ref": "#/$defs/index" },
+        "threshold": { "$ref": "#/$defs/index" }
+      },
+      "required": ["id", "index", "requirement_index", "threshold"],
+      "type": "object"
+    },
+    "measurement": {
+      "additionalProperties": false,
+      "properties": {
+        "control_index": { "$ref": "#/$defs/index" },
+        "id": { "$ref": "#/$defs/qualified_entity" },
+        "index": { "$ref": "#/$defs/index" },
+        "passed": { "type": "boolean" }
+      },
+      "required": ["control_index", "id", "index", "passed"],
+      "type": "object"
+    },
+    "provenance": {
+      "additionalProperties": false,
+      "properties": {
+        "compiler_semantics_id": { "$ref": "#/$defs/sha256" },
+        "emitter_semantics_id": { "$ref": "#/$defs/sha256" },
+        "facet_packages": { "items": { "$ref": "#/$defs/facet" }, "maxItems": 3, "type": "array" },
+        "semantic_id": { "$ref": "#/$defs/sha256" },
+        "snapshot_id": { "$ref": "#/$defs/sha256" },
+        "source_id": { "$ref": "#/$defs/sha256" }
+      },
+      "required": ["compiler_semantics_id", "emitter_semantics_id", "facet_packages", "semantic_id", "snapshot_id", "source_id"],
+      "type": "object"
+    },
+    "quality": {
+      "additionalProperties": false,
+      "properties": {
+        "characteristics": { "items": { "$ref": "#/$defs/indexed" }, "type": "array" },
+        "measures": { "items": { "$ref": "#/$defs/measure" }, "type": "array" },
+        "requirements": { "items": { "$ref": "#/$defs/requirement" }, "type": "array" },
+        "subcharacteristics": { "items": { "$ref": "#/$defs/subcharacteristic" }, "type": "array" }
+      },
+      "required": ["characteristics", "measures", "requirements", "subcharacteristics"],
+      "type": "object"
+    },
+    "qualified_catalog": { "pattern": "^prism\\.(arch|qual|sec)@1\\.0\\.0::[A-Za-z][A-Za-z0-9_]*\\.[A-Za-z][A-Za-z0-9_]*$", "type": "string" },
+    "qualified_entity": { "pattern": "^[A-Za-z][A-Za-z0-9_.]*::[A-Za-z][A-Za-z0-9_]*$", "type": "string" },
+    "requirement": {
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/qualified_entity" },
+        "index": { "$ref": "#/$defs/index" },
+        "subcharacteristic_index": { "$ref": "#/$defs/index" }
+      },
+      "required": ["id", "index", "subcharacteristic_index"],
+      "type": "object"
+    },
+    "risk": {
+      "additionalProperties": false,
+      "properties": {
+        "asset_index": { "$ref": "#/$defs/index" },
+        "id": { "$ref": "#/$defs/qualified_entity" },
+        "impact_id": { "$ref": "#/$defs/qualified_catalog" },
+        "index": { "$ref": "#/$defs/index" },
+        "likelihood_id": { "$ref": "#/$defs/qualified_catalog" },
+        "threat_index": { "$ref": "#/$defs/index" }
+      },
+      "required": ["asset_index", "id", "impact_id", "index", "likelihood_id", "threat_index"],
+      "type": "object"
+    },
+    "security": {
+      "additionalProperties": false,
+      "properties": {
+        "activities": { "items": { "$ref": "#/$defs/activity" }, "type": "array" },
+        "assets": { "items": { "$ref": "#/$defs/asset" }, "type": "array" },
+        "controls": { "items": { "$ref": "#/$defs/control" }, "type": "array" },
+        "impacts": { "items": { "$ref": "#/$defs/catalog" }, "type": "array" },
+        "likelihoods": { "items": { "$ref": "#/$defs/catalog" }, "type": "array" },
+        "measurements": { "items": { "$ref": "#/$defs/measurement" }, "type": "array" },
+        "risks": { "items": { "$ref": "#/$defs/risk" }, "type": "array" },
+        "threats": { "items": { "$ref": "#/$defs/indexed" }, "type": "array" }
+      },
+      "required": ["activities", "assets", "controls", "impacts", "likelihoods", "measurements", "risks", "threats"],
+      "type": "object"
+    },
+    "sha256": { "pattern": "^[0-9a-f]{64}$", "type": "string" },
+    "subcharacteristic": {
+      "additionalProperties": false,
+      "properties": {
+        "characteristic_index": { "$ref": "#/$defs/index" },
+        "id": { "$ref": "#/$defs/qualified_entity" },
+        "index": { "$ref": "#/$defs/index" }
+      },
+      "required": ["characteristic_index", "id", "index"],
+      "type": "object"
+    },
+    "view": {
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/qualified_entity" },
+        "index": { "$ref": "#/$defs/index" },
+        "model_kind_index": { "$ref": "#/$defs/index" },
+        "viewpoint_index": { "$ref": "#/$defs/index" }
+      },
+      "required": ["id", "index", "model_kind_index", "viewpoint_index"],
+      "type": "object"
+    },
+    "viewpoint": {
+      "additionalProperties": false,
+      "properties": {
+        "concern_index": { "$ref": "#/$defs/index" },
+        "id": { "$ref": "#/$defs/qualified_entity" },
+        "index": { "$ref": "#/$defs/index" },
+        "model_kind_index": { "$ref": "#/$defs/index" },
+        "stakeholder_index": { "$ref": "#/$defs/index" }
+      },
+      "required": ["concern_index", "id", "index", "model_kind_index", "stakeholder_index"],
+      "type": "object"
+    }
+  }
+}

@@ -1,0 +1,383 @@
+package net.openid.conformance.fapi2spfinal;
+
+import net.openid.conformance.plan.PublishTestPlan;
+import net.openid.conformance.plan.TestPlan;
+import net.openid.conformance.testmodule.TestModule;
+import net.openid.conformance.variant.FAPI2FinalOPProfile;
+import net.openid.conformance.variant.VariantSelection;
+
+import java.lang.invoke.MethodHandles;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+@PublishTestPlan (
+	testPlanName = "fapi2-message-signing-final-test-plan",
+	displayName = "FAPI2-Message-Signing-Final: Authorization server test",
+	profile = TestPlan.ProfileNames.optest,
+	specFamily = TestPlan.SpecFamilyNames.fapi2MessageSigning,
+	specVersion = TestPlan.SpecVersionNames.fapi2MsFinal
+)
+public class FAPI2MessageSigningFinalTestPlan implements TestPlan {
+	public static final List<Class<? extends TestModule>> testModules = List.of(
+		// Normal well behaved client cases
+		FAPI2SPFinalDiscoveryEndpointVerification.class,
+		FAPI2SPFinalHappyFlow.class,
+		FAPI2SPFinalUserRejectsAuthentication.class,
+		FAPI2SPFinalEnsureServerAcceptsRequestObjectWithMultipleAud.class,
+		FAPI2SPFinalEnsureAuthorizationRequestWithoutStateSuccess.class,
+		FAPI2SPFinalEnsureAuthorizationRequestWithoutNonceSuccess.class,
+		FAPI2SPFinalEnsureAuthorizationRequestWith64CharNonceSuccess.class,
+		FAPI2SPFinalEnsureOtherScopeOrderSucceeds.class,
+		FAPI2SPFinalTestClaimsParameterIdentityClaims.class,
+		FAPI2SPFinalAccessTokenTypeHeaderCaseSensitivity.class,
+		FAPI2SPFinalEnsureRequestObjectWithNbf8SecondsInTheFutureIsAccepted.class,
+
+		// DPoP tests
+		FAPI2SPFinalCheckDpopProofNbfExp.class,
+		FAPI2SPFinalEnsureDpopProofWithIat10SecondsBeforeSucceeds.class,
+		FAPI2SPFinalEnsureDpopProofWithIat10SecondsAfterSucceeds.class,
+
+		// DPop Authorization Code Binding negative tests
+		FAPI2SPFinalEnsureMismatchedDpopJktFails.class,
+		FAPI2SPFinalEnsureTokenEndpointFailsWithMismatchedDpopProofJkt.class,
+		FAPI2SPFinalEnsureTokenEndpointFailsWithMismatchedDpopJkt.class,
+		FAPI2SPFinalEnsureDpopProofAtParEndpointBindingSuccess.class,
+		FAPI2SPFinalEnsureDpopAuthCodeBindingSuccess.class,
+
+		// Possible failure case
+		FAPI2SPFinalEnsureDifferentNonceInsideAndOutsideRequestObject.class,
+		FAPI2SPFinalEnsureDifferentStateInsideAndOutsideRequestObject.class,
+		FAPI2SPFinalEnsureAuthorizationRequestWithLongNonce.class,
+		FAPI2SPFinalEnsureAuthorizationRequestWithLongState.class,
+
+		// Negative tests for request objects
+		FAPI2SPFinalEnsureRequestObjectWithoutExpFails.class,
+		FAPI2SPFinalEnsureRequestObjectWithoutNbfFails.class,
+		FAPI2SPFinalStateOnlyOutsideRequestObjectNotUsed.class,
+		FAPI2SPFinalEnsureRequestObjectWithoutRedirectUriFails.class,
+		FAPI2SPFinalEnsureExpiredRequestObjectFails.class,
+		FAPI2SPFinalEnsureRequestObjectWithBadAudFails.class,
+		FAPI2SPFinalEnsureRequestObjectWithExpOver60Fails.class,
+		FAPI2SPFinalAustraliaConnectIdRequestObjectWithExpOver10Fails.class,
+		FAPI2SPFinalEnsureRequestObjectWithNbfOver60Fails.class,
+		FAPI2SPFinalAustraliaConnectIdEnsureRequestObjectWithNbfOver15Fails.class,
+		FAPI2SPFinalKsaEnsureRequestObjectWithExpOver10Fails.class,
+		FAPI2SPFinalKsaEnsureRequestObjectWithNbfOver10Fails.class,
+		FAPI2SPFinalEnsureSignedRequestObjectWithRS256Fails.class,
+		FAPI2SPFinalEnsureRequestObjectSignatureAlgorithmIsNotNone.class,
+		FAPI2SPFinalEnsureRequestObjectWithInvalidSignatureFails.class,
+		FAPI2SPFinalEnsureMatchingKeyInAuthorizationRequest.class,
+		FAPI2SPFinalEnsureUnsignedRequestAtParEndpointFails.class,
+
+		// Negative tests for authorization request
+		FAPI2SPFinalEnsureRegisteredRedirectUri.class,
+		FAPI2SPFinalTolerateUnregisteredRedirectUri.class,
+		FAPI2SPFinalEnsureUnsignedAuthorizationRequestWithoutUsingParFails.class,
+		FAPI2SPFinalEnsureRedirectUriInAuthorizationRequest.class,
+		FAPI2SPFinalEnsureResponseTypeCodeIdTokenFails.class,
+		FAPI2SPFinalAustraliaConnectIdEnsureInvalidPurposeFails.class,
+		FAPI2SPFinalEnsureResponseTypeTokenFails.class,
+
+		// Negative tests for token endpoint
+		FAPI2SPFinalEnsureClientIdInTokenEndpoint.class,
+		FAPI2SPFinalEnsureHolderOfKeyRequired.class,
+		FAPI2SPFinalEnsureAuthorizationCodeIsBoundToClient.class,
+		FAPI2SPFinalAttemptReuseAuthorizationCodeAfterOneSecond.class,
+		FAPI2SPFinalAttemptToUseExpiredAuthCode.class,
+
+		// Private key specific tests
+		FAPI2SPFinalEnsureSignedClientAssertionWithRS256Fails.class,
+		FAPI2SPFinalEnsureClientAssertionInTokenEndpoint.class,
+		FAPI2SPFinalEnsureClientAssertionWithExpIs5MinutesInPastFails.class,
+		FAPI2SPFinalEnsureClientAssertionWithWrongAudFails.class,
+		FAPI2SPFinalEnsureClientAssertionWithNoSubFails.class,
+
+		FAPI2SPFinalDpopNegativeTests.class,
+
+		//Refresh token tests
+		FAPI2SPFinalRefreshToken.class,
+		FAPI2SPFinalCdrEnsureSharingDurationZeroGivesNoRefreshToken.class,
+		FAPI2SPFinalCdrEnsureNegativeSharingDurationFails.class,
+		FAPI2SPFinalCdrRefreshTokenIntrospectionExpiry.class,
+		FAPI2SPFinalCdrArrangementAmendmentRevokesOldTokens.class,
+		FAPI2SPFinalCdrEnsureUnrecognisedArrangementIdFails.class,
+
+
+		// OB Brazil specific tests
+		FAPI2SPFinalBrazilEnsureBadPaymentSignatureFails.class,
+
+		// ConnectID specific tests
+		FAPI2SPFinalAustraliaConnectIdTestClaimsParameterIdTokenIdentityClaims.class,
+
+		//PAR tests
+		FAPI2SPFinalPAREnsureServerAcceptsReusedRequestUriBeforeAuthenticationCompletion.class,
+		FAPI2SPFinalPARAttemptReuseRequestUri.class,
+		FAPI2SPFinalPARAttemptToUseExpiredRequestUri.class,
+		FAPI2SPFinalPAREnsureJWTClientAssertionWithIatNbf8SecondsInTheFutureIsAccepted.class,
+		FAPI2SPFinalPAREnsureJWTClientAssertionWithIatNbfOver60SecondsInTheFutureFails.class,
+		FAPI2SPFinalPAREnsureRequestUriIsBoundToClient.class,
+		FAPI2SPFinalPARRejectRequestUriInParAuthorizationFormParams.class,
+		FAPI2SPFinalPARRejectInvalidHttpVerb.class,
+
+		// PKCE tests
+		FAPI2SPFinalPAREnsurePKCERequired.class,
+		FAPI2SPFinalPAREnsurePKCECodeVerifierRequired.class,
+		FAPI2SPFinalPARIncorrectPKCECodeVerifierRejected.class,
+		FAPI2SPFinalPAREnsurePlainPKCERejected.class,
+
+		FAPI2SPFinalPARRejectRequestUriInParAuthorizationRequest.class,
+
+		FAPI2SPFinalParWithoutDuplicateParameters.class,
+
+		//negative private key authentication
+		FAPI2SPFinalPAREndpointAsArrayAudienceFails.class,
+		FAPI2SPFinalPAREndpointAsAudienceFails.class,
+		FAPI2SPFinalPARTokenEndpointAsAudienceFails.class,
+
+		// Grant Management tests
+		FAPI2SPFinalGrantManagementQueryAndRevoke.class,
+		FAPI2SPFinalGrantManagementMerge.class,
+		FAPI2SPFinalGrantManagementReplace.class,
+		FAPI2SPFinalGrantManagementEnsureInvalidGrantIdFails.class,
+		FAPI2SPFinalGrantManagementEnsureQueryNonExistentGrantFails.class,
+		FAPI2SPFinalGrantManagementEnsureWrongClientCannotQueryGrant.class,
+		FAPI2SPFinalGrantManagementEnsureWrongClientCannotRevokeGrant.class
+
+	);
+
+	@Override
+	public List<Variant> variantsNotApplicable() {
+		List<Variant> variants = new ArrayList<>(FAPI2SPFinalTestPlan.FAPI2_VARIANTS_NOT_APPLICABLE);
+		// Message signing adds JAR/JARM which are authorization-endpoint features;
+		// client credentials grant has no authorization endpoint.
+		variants.add(new Variant(FAPI2FinalOPProfile.class, "fapi_client_credentials_grant"));
+		return variants;
+	}
+
+	@Override
+	public List<ModuleListEntry> testModulesWithVariants() {
+		List<TestPlan.Variant> variant = List.of(
+		);
+
+		return List.of(
+			new TestPlan.ModuleListEntry(testModules, variant)
+		);
+
+	}
+
+	@Override
+	public List<String> certificationProfileName(VariantSelection variant) {
+
+		List<String> profiles = new ArrayList<>();
+		Map<String, String> v = variant.getVariant();
+		String profile = v.get("fapi_profile");
+		String clientAuth = v.get("client_auth_type");
+		String requestMethod = v.get("fapi_request_method");
+		String responseMode = v.get("fapi_response_mode");
+		String senderConstrain = v.get("sender_constrain");
+		String authRequestType = v.get("authorization_request_type");
+		boolean jarm = responseMode.equals("jarm");
+		boolean privateKey = clientAuth.equals("private_key_jwt");
+		boolean dpop = senderConstrain.equals("dpop");
+		boolean mtlsBounded = senderConstrain.equals("mtls");
+		boolean signedRequest = requestMethod.equals("signed_non_repudiation");
+		String clientType = v.get("openid");
+		boolean openid = clientType.equals("openid_connect");
+		boolean rar = "rar".equals(authRequestType);
+		boolean grantManagement = "enabled".equals(v.get("grant_management"));
+
+		String certProfile = "FAPI2SP OP";
+
+		if (openid) {
+			profiles.add("FAPI2SP OP OpenID Connect");
+		}
+
+		switch (profile) {
+			case "plain_fapi":
+				break;
+			case "consumerdataright_au":
+				if (!privateKey) {
+					throw new RuntimeException("Invalid configuration for %s: Only private_key_jwt is used for AU-CDR".formatted(
+						MethodHandles.lookup().lookupClass().getSimpleName()));
+				}
+				if (!signedRequest) {
+					throw new RuntimeException("Invalid configuration for %s: Only signed requests are used for AU-CDR".formatted(
+						MethodHandles.lookup().lookupClass().getSimpleName()));
+				}
+				if (!mtlsBounded) {
+					throw new RuntimeException("Invalid configuration for %s: Only MTLS sender constraining is used for AU-CDR".formatted(
+						MethodHandles.lookup().lookupClass().getSimpleName()));
+				}
+				if (!jarm) {
+					throw new RuntimeException("Invalid configuration for %s: JARM responses are required for AU-CDR".formatted(
+						MethodHandles.lookup().lookupClass().getSimpleName()));
+				}
+				if (rar) {
+					throw new RuntimeException("Invalid configuration for %s: RAR is not used for AU-CDR".formatted(
+						MethodHandles.lookup().lookupClass().getSimpleName()));
+				}
+				if (!openid) {
+					throw new RuntimeException("Invalid configuration for %s: OpenID must be selected for AU-CDR".formatted(
+						MethodHandles.lookup().lookupClass().getSimpleName()));
+				}
+				// as there's only one possible correct configuration, stop here and return just the name
+				return List.of( "FAPI2MS OP AU-CDR");
+			case "openbanking_brazil":
+				return List.of( "FAPI2MS OP BR-OF");
+			case "connectid_au":
+				if (!privateKey) {
+					throw new RuntimeException("Invalid configuration for %s: Only private_key_jwt is used for ConnectID".formatted(
+						MethodHandles.lookup().lookupClass().getSimpleName()));
+				}
+				if (!signedRequest) {
+					throw new RuntimeException("Invalid configuration for %s: Only signed requests are required for ConnectID".formatted(
+						MethodHandles.lookup().lookupClass().getSimpleName()));
+				}
+				if (dpop) {
+					throw new RuntimeException("Invalid configuration for %s: DPoP sender constraining is not used for ConnectID".formatted(
+						MethodHandles.lookup().lookupClass().getSimpleName()));
+				}
+				if (jarm) {
+					throw new RuntimeException("Invalid configuration for %s: JARM responses are not used for ConnectID".formatted(
+						MethodHandles.lookup().lookupClass().getSimpleName()));
+				}
+				if (!openid) {
+					throw new RuntimeException("Invalid configuration for %s: OpenID must be selected for ConnectID".formatted(
+						MethodHandles.lookup().lookupClass().getSimpleName()));
+				}
+				// as there's only one possible correct configuration, stop here and return just the name
+				return List.of("FAPI2MS OP with ConnectId support");
+			case "cbuae":
+				if (!privateKey) {
+					throw new RuntimeException("Invalid configuration for %s: Only private_key_jwt is used for CBUAE".formatted(
+							MethodHandles.lookup().lookupClass().getSimpleName()));
+				}
+				if (!signedRequest) {
+					throw new RuntimeException("Invalid configuration for %s: Only signed requests are supported for CBUAE".formatted(
+							MethodHandles.lookup().lookupClass().getSimpleName()));
+				}
+				if (!rar) {
+					throw new RuntimeException("Invalid configuration for %s: Only signed requests are supported for CBUAE".formatted(
+							MethodHandles.lookup().lookupClass().getSimpleName()));
+				}
+				if (!mtlsBounded) {
+					throw new RuntimeException("Invalid configuration for %s: Only MTLS sender constraining is supported for CBUAE".formatted(
+							MethodHandles.lookup().lookupClass().getSimpleName()));
+				}
+				if (jarm) {
+					throw new RuntimeException("Invalid configuration for %s: JARM responses are not used for CBUAE".formatted(
+							MethodHandles.lookup().lookupClass().getSimpleName()));
+				}
+
+				if (!openid) {
+					throw new RuntimeException(String.format("Invalid configuration for %s: OpenID must be selected for CBUAE",
+							MethodHandles.lookup().lookupClass().getSimpleName()));
+				}
+				// as there's only one possible correct configuration, stop here and return just the name
+				return List.of("FAPI2MS OP CBUAE");
+			case "ksa":
+				if (!signedRequest) {
+					throw new RuntimeException("Invalid configuration for %s: Only signed requests are supported for KSA".formatted(
+						MethodHandles.lookup().lookupClass().getSimpleName()));
+				}
+				if (rar) {
+					throw new RuntimeException("Invalid configuration for %s: RAR is not supported for KSA".formatted(
+						MethodHandles.lookup().lookupClass().getSimpleName()));
+				}
+				if (!mtlsBounded) {
+					throw new RuntimeException("Invalid configuration for %s: Only MTLS sender constraining is supported for KSA".formatted(
+						MethodHandles.lookup().lookupClass().getSimpleName()));
+				}
+				if (jarm) {
+					throw new RuntimeException("Invalid configuration for %s: JARM responses are not used for KSA".formatted(
+						MethodHandles.lookup().lookupClass().getSimpleName()));
+				}
+				if (!openid) {
+					throw new RuntimeException("Invalid configuration for %s: OpenID must be selected for KSA".formatted(
+						MethodHandles.lookup().lookupClass().getSimpleName()));
+				}
+				return List.of("FAPI2MS OP KSA w/" + getClientAuth(clientAuth));
+			case "openbanking_chile":
+				if (privateKey) {
+					throw new RuntimeException("Invalid configuration for %s: Only MTLS client authentication is used for Chile".formatted(
+							MethodHandles.lookup().lookupClass().getSimpleName()));
+				}
+				if (!mtlsBounded) {
+					throw new RuntimeException("Invalid configuration for %s: Only MTLS sender constraining is supported for Chile".formatted(
+							MethodHandles.lookup().lookupClass().getSimpleName()));
+				}
+				if (!signedRequest) {
+					throw new RuntimeException("Invalid configuration for %s: Only signed requests are supported for Chile".formatted(
+							MethodHandles.lookup().lookupClass().getSimpleName()));
+				}
+				if (!rar) {
+					throw new RuntimeException("Invalid configuration for %s: RAR is required for Chile".formatted(
+							MethodHandles.lookup().lookupClass().getSimpleName()));
+				}
+				if (jarm) {
+					throw new RuntimeException("Invalid configuration for %s: JARM responses are not used for Chile".formatted(
+							MethodHandles.lookup().lookupClass().getSimpleName()));
+				}
+				if (!grantManagement) {
+					throw new RuntimeException("Invalid configuration for %s: Grant Management is required for Chile".formatted(
+							MethodHandles.lookup().lookupClass().getSimpleName()));
+				}
+				return List.of("FAPI2MS OP CL-OF");
+			default:
+				throw new RuntimeException("Unknown profile %s for %s".formatted(
+					profile, MethodHandles.lookup().lookupClass().getSimpleName()));
+		}
+
+		// add client authentication
+		certProfile += getClientAuth(clientAuth);
+
+		switch (senderConstrain) {
+			case "mtls":
+				certProfile += " + MTLS";
+				break;
+			case "dpop":
+				certProfile += " + DPoP";
+				break;
+			default:
+				throw new RuntimeException("Unknown sender constrain method %s for %s".formatted(
+					senderConstrain, MethodHandles.lookup().lookupClass().getSimpleName()));
+		}
+		profiles.add(certProfile);
+
+		switch (requestMethod) {
+			case "unsigned":
+				break;
+			case "signed_non_repudiation":
+				profiles.add("FAPI2MS OP JAR");
+				break;
+		}
+
+		if (grantManagement) {
+			profiles.add("FAPI2MS OP GM");
+		}
+		switch (responseMode) {
+			case "plain_response":
+				// nothing
+				break;
+			case "jarm":
+				profiles.add("FAPI2MS OP JARM");
+				break;
+		}
+
+
+		return profiles;
+	}
+
+	String getClientAuth(String clientAuth) {
+		switch (clientAuth) {
+			case "private_key_jwt":
+				return " private key";
+			case "mtls":
+				return " MTLS";
+			default:
+				throw new RuntimeException("Unknown client auth type %s for %s".formatted(
+					clientAuth, MethodHandles.lookup().lookupClass().getSimpleName()));
+		}
+	}
+}

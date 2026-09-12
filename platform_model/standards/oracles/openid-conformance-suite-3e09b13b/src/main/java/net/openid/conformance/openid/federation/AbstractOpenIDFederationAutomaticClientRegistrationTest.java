@@ -1,0 +1,434 @@
+package net.openid.conformance.openid.federation;
+
+import com.google.common.base.Strings;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+import net.openid.conformance.condition.Condition;
+import net.openid.conformance.condition.client.AddClientIdToRequest;
+import net.openid.conformance.condition.client.BuildRequestObjectPostToPAREndpoint;
+import net.openid.conformance.condition.client.CallPAREndpoint;
+import net.openid.conformance.condition.client.CallTokenEndpointAndReturnFullResponse;
+import net.openid.conformance.condition.client.CheckErrorDescriptionFromAuthorizationEndpointResponseErrorContainsCRLFTAB;
+import net.openid.conformance.condition.client.CheckForPARResponseExpiresIn;
+import net.openid.conformance.condition.client.CheckForRequestUriValue;
+import net.openid.conformance.condition.client.CheckForUnexpectedParametersInErrorResponseFromAuthorizationEndpoint;
+import net.openid.conformance.condition.client.CheckIfAuthorizationEndpointError;
+import net.openid.conformance.condition.client.CheckIfTokenEndpointResponseError;
+import net.openid.conformance.condition.client.CheckPAREndpointResponse201WithNoError;
+import net.openid.conformance.condition.client.CheckStateInAuthorizationResponse;
+import net.openid.conformance.condition.client.CreateTokenEndpointRequestForAuthorizationCodeGrant;
+import net.openid.conformance.condition.client.EnsureContentTypeJson;
+import net.openid.conformance.condition.client.EnsureErrorFromAuthorizationEndpointResponse;
+import net.openid.conformance.condition.client.EnsureHttpStatusCodeIs201;
+import net.openid.conformance.condition.client.EnsureMinimumRequestUriEntropy;
+import net.openid.conformance.condition.client.ExtractAuthorizationCodeFromAuthorizationResponse;
+import net.openid.conformance.condition.client.ExtractIdTokenFromTokenResponse;
+import net.openid.conformance.condition.client.ExtractJWKsFromStaticClientConfiguration;
+import net.openid.conformance.condition.client.ExtractRequestUriFromPARResponse;
+import net.openid.conformance.condition.client.GetStaticClientConfiguration;
+import net.openid.conformance.condition.client.RejectAuthCodeInAuthorizationEndpointResponse;
+import net.openid.conformance.condition.client.ValidateClientJWKsPrivatePart;
+import net.openid.conformance.condition.client.ValidateErrorDescriptionFromAuthorizationEndpointResponseError;
+import net.openid.conformance.condition.client.ValidateErrorUriFromAuthorizationEndpointResponseError;
+import net.openid.conformance.condition.client.ValidateIssIfPresentInAuthorizationResponse;
+import net.openid.conformance.openid.AbstractOIDCCServerTest;
+import net.openid.conformance.openid.federation.client.AddAuthorityHintsForRP;
+import net.openid.conformance.openid.federation.client.AddFederationEntityMetadataToTrustAnchorEntityConfiguration;
+import net.openid.conformance.openid.federation.client.AddFederationEntityToTrustAnchorImmediateSubordinates;
+import net.openid.conformance.openid.federation.client.AddSelfHostedTrustAnchorToAuthorityHints;
+import net.openid.conformance.openid.federation.client.AddSelfToTrustAnchorImmediateSubordinates;
+import net.openid.conformance.openid.federation.client.ClientRegistration;
+import net.openid.conformance.openid.federation.client.GenerateTrustAnchorEntityConfiguration;
+import net.openid.conformance.openid.federation.client.LoadTrustAnchorJWKs;
+import net.openid.conformance.openid.federation.client.SignEntityStatement;
+import net.openid.conformance.openid.federation.client.ValidateTrustAnchorJWKs;
+import net.openid.conformance.sequence.ConditionSequence;
+import net.openid.conformance.sequence.client.CreateJWTClientAuthenticationAssertionAndAddToTokenEndpointRequest;
+import net.openid.conformance.sequence.client.CreateJWTClientAuthenticationAssertionWithIssAudAndAddToPAREndpointRequest;
+import net.openid.conformance.sequence.client.PerformStandardIdTokenChecks;
+import net.openid.conformance.testmodule.OIDFJSON;
+import net.openid.conformance.testmodule.TestFailureException;
+import net.openid.conformance.variant.FAPIAuthRequestMethod;
+import net.openid.conformance.variant.FederationEntityMetadata;
+import net.openid.conformance.variant.VariantSetup;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.hc.core5.net.URIBuilder;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+
+import java.net.URISyntaxException;
+import java.util.List;
+
+@SuppressWarnings("unused")
+public abstract class AbstractOpenIDFederationAutomaticClientRegistrationTest extends AbstractOpenIDFederationTest {
+
+	protected Class<? extends ConditionSequence> profileStaticClientConfiguration;
+	//protected Supplier<? extends ConditionSequence> profileCompleteClientConfiguration;
+	protected Class<? extends ConditionSequence> addTokenEndpointClientAuthentication;
+	protected Class<? extends ConditionSequence> addParEndpointClientAuthentication;
+
+	protected boolean includeTrustChainInAuthorizationRequest = false;
+
+	protected abstract FAPIAuthRequestMethod getRequestMethod();
+
+	protected abstract HttpMethod getHttpMethodForAuthorizeRequest();
+
+	protected abstract void verifyTestConditions();
+
+	protected abstract void redirect(HttpMethod method);
+
+	@Override
+	public void configure(JsonObject config, String baseUrl, String externalUrlOverride, String baseMtlsUrl) {
+
+		String hostOverride = OIDFJSON.getStringOrNull(config.get("federation").getAsJsonObject().get("rp_entity_identifier_host_override"));
+		if (!Strings.isNullOrEmpty(hostOverride)) {
+			baseUrl = EntityUtils.replaceHostnameInUrl(baseUrl, hostOverride);
+		}
+		if (!Strings.isNullOrEmpty(externalUrlOverride)) {
+			baseUrl = externalUrlOverride;
+		}
+
+		env.putString("base_url", baseUrl);
+		env.putString("base_mtls_url", baseMtlsUrl);
+		env.putObject("config", config);
+
+		callAndStopOnFailure(ValidateEntityIdentifier.class, Condition.ConditionResult.FAILURE, "OIDFED-1.2");
+
+		env.putString("config", "federation.trust_anchor", baseUrl + "/trust-anchor");
+
+		String entityIdentifier = env.getString("config", "federation.entity_identifier");
+		eventLog.startBlock("Retrieve Entity Configuration for %s".formatted(entityIdentifier));
+
+		callAndStopOnFailure(ExtractEntityIdentiferFromConfig.class, Condition.ConditionResult.FAILURE);
+
+		if (FederationEntityMetadata.STATIC.equals(getVariant(FederationEntityMetadata.class))) {
+			// This case is perhaps not applicable in the general case,
+			// but f ex the leaf entities in the Swedish sandbox federation
+			// do not publish their own entity configurations.
+			callAndStopOnFailure(GetStaticEntityStatement.class, Condition.ConditionResult.FAILURE);
+		} else {
+			callAndStopOnFailure(ValidateFederationUrl.class, Condition.ConditionResult.FAILURE, "OIDFED-1.2");
+			callAndStopOnFailure(CallEntityStatementEndpointAndReturnFullResponse.class, Condition.ConditionResult.FAILURE, "OIDFED-9");
+			validateEntityStatementResponse();
+		}
+		eventLog.endBlock();
+
+		callAndStopOnFailure(ExtractJWTFromFederationEndpointResponse.class,  "OIDFED-9");
+		if (FederationEntityMetadata.DISCOVERY.equals(getVariant(FederationEntityMetadata.class))) {
+			validateEntityStatement();
+		}
+		callAndStopOnFailure(SetPrimaryEntityStatement.class, Condition.ConditionResult.FAILURE);
+
+		additionalConfiguration();
+
+		setStatus(Status.CONFIGURED);
+		fireSetupDone();
+	}
+
+	@Override
+	public void additionalConfiguration() {
+		eventLog.startBlock("Additional configuration");
+
+		String baseUrl = env.getString("base_url");
+
+		env.putString("entity_identifier", baseUrl);
+		exposeEnvString("entity_identifier");
+
+		env.putString("trust_anchor_entity_identifier", baseUrl + "/trust-anchor");
+		exposeEnvString("trust_anchor_entity_identifier");
+
+		env.putString("entity_configuration_url", baseUrl + "/.well-known/openid-federation");
+		env.putString("trust_anchor_entity_configuration_url", baseUrl + "/trust-anchor/.well-known/openid-federation");
+
+		String clientRegistrationType = getVariant(ClientRegistration.class).toString();
+		env.putString("client_registration_type", clientRegistrationType);
+
+		callAndStopOnFailure(ExtractECJWKsFromRPConfig.class, Condition.ConditionResult.FAILURE);
+		env.mapKey("federation_jwks", "rp_ec_jwks");
+		callAndStopOnFailure(ValidateFederationJWKsPrivatePart.class, Condition.ConditionResult.FAILURE);
+		env.unmapKey("federation_jwks");
+
+		JsonElement clientConfigElm = env.getElementFromObject("config", "client");
+		if (clientConfigElm == null) {
+			clientConfigElm = new JsonObject();
+			env.putObject("config", "client", clientConfigElm.getAsJsonObject());
+		}
+		JsonObject clientConfig = clientConfigElm.getAsJsonObject();
+
+		clientConfig.addProperty("client_id", baseUrl);
+
+		callAndStopOnFailure(GetStaticClientConfiguration.class);
+		env.putObject("client", "jwks", env.getElementFromObject("config", "federation.rp_client_jwks").getAsJsonObject());
+		callAndStopOnFailure(ValidateClientJWKsPrivatePart.class, "RFC7517-1.1");
+		callAndStopOnFailure(ExtractJWKsFromStaticClientConfiguration.class);
+
+		callAndStopOnFailure(AddAuthorityHintsForRP.class);
+		callAndStopOnFailure(AddSelfHostedTrustAnchorToAuthorityHints.class);
+		callAndStopOnFailure(AddSelfToTrustAnchorImmediateSubordinates.class);
+		callAndStopOnFailure(AddFederationEntityToTrustAnchorImmediateSubordinates.class);
+
+		env.mapKey("server_public_jwks", "client_public_jwks");
+		callAndStopOnFailure(GenerateEntityConfigurationForOPTest.class);
+		callAndStopOnFailure(AddFederationEntityMetadataToEntityConfiguration.class);
+		callAndStopOnFailure(AddOpenIDRelyingPartyMetadataToEntityConfiguration.class);
+		env.unmapKey("client_public_jwks");
+
+		callAndStopOnFailure(LoadTrustAnchorJWKs.class);
+		callAndStopOnFailure(ValidateTrustAnchorJWKs.class, "RFC7517-1.1");
+		callAndStopOnFailure(GenerateTrustAnchorEntityConfiguration.class);
+		callAndStopOnFailure(AddFederationEntityMetadataToTrustAnchorEntityConfiguration.class);
+
+		call(sequence(profileStaticClientConfiguration));
+
+		verifyTestConditions();
+
+		eventLog.endBlock();
+	}
+
+	@VariantSetup(parameter = ClientRegistration.class, value = "automatic")
+	public void setupPrivateKeyJwt() {
+		profileStaticClientConfiguration = AbstractOIDCCServerTest.ConfigureStaticClientForPrivateKeyJwt.class;
+		addTokenEndpointClientAuthentication = CreateJWTClientAuthenticationAssertionAndAddToTokenEndpointRequest.class;
+		addParEndpointClientAuthentication = CreateJWTClientAuthenticationAssertionWithIssAudAndAddToPAREndpointRequest.class;
+	}
+
+	@Override
+	public void start() {
+		setStatus(Status.RUNNING);
+		makeAuthorizationRequest();
+	}
+
+	@Override
+	public Object handleHttp(String path, HttpServletRequest req, HttpServletResponse res, HttpSession session, JsonObject requestParts) {
+		String requestId = "incoming_request_" + RandomStringUtils.secure().nextAlphanumeric(37);
+		env.putObject(requestId, requestParts);
+		return switch (path) {
+			case ".well-known/openid-federation" -> entityConfigurationResponse();
+			case "list" -> listResponse();
+			case "jwks" -> clientJwksResponse();
+			default -> super.handleHttp(path, req, res, session, requestParts);
+		};
+	}
+
+	protected Object entityConfigurationResponse() {
+		return entityConfigurationResponse("server", "rp_ec_jwks", SignEntityStatement.class);
+	}
+
+	protected Object listResponse() {
+		return new ResponseEntity<Object>(new JsonArray(), HttpStatus.OK);
+	}
+
+	protected Object clientJwksResponse() {
+		JsonObject jwks = env.getObject("client_public_jwks");
+		return ResponseEntity
+			.status(HttpStatus.OK)
+			.contentType(MediaType.APPLICATION_JSON)
+			.body(jwks);
+	}
+
+	protected void makeAuthorizationRequest() {
+		eventLog.startBlock("Authorization endpoint request");
+		callAndStopOnFailure(EnsureEntityIsOpenIdProvider.class, Condition.ConditionResult.FAILURE);
+
+		buildRequestObject();
+		env.putObject("authorization_endpoint_request", "claims", env.getObject("request_object_claims"));
+		signRequestObject();
+		encryptRequestObject();
+
+		String endpointUri = env.getString("primary_entity_statement_jwt", "claims.metadata.openid_provider.authorization_endpoint");
+		URIBuilder uriBuilder = null;
+		try {
+			uriBuilder = new URIBuilder(endpointUri);
+		} catch (URISyntaxException e) {
+			throw new TestFailureException(getId(), "Invalid authorization endpoint URI", e);
+		}
+
+		String authorizationEndpointUrl;
+
+		if (FAPIAuthRequestMethod.PUSHED.equals(getRequestMethod())) {
+			callParEndpoint();
+			extractRequestUri();
+			// could use callAndStopOnFailure(BuildRequestObjectByReferenceRedirectToAuthorizationEndpoint.class, "PAR-4"); here?
+			uriBuilder.addParameter("request_uri", env.getString("request_uri"));
+			uriBuilder.addParameter("client_id", env.getString("request_object_claims", "client_id"));
+		} else {
+			createQueryParameters();
+			uriBuilder.addParameter("client_id", env.getString("query_parameters", "client_id"));
+			uriBuilder.addParameter("scope", env.getString("query_parameters", "scope"));
+			uriBuilder.addParameter("response_type", env.getString("query_parameters", "response_type"));
+			uriBuilder.addParameter("request", env.getString("query_parameters", "request"));
+		}
+
+		try {
+			authorizationEndpointUrl = uriBuilder.build().toString();
+		} catch (URISyntaxException e) {
+			throw new TestFailureException(getId(), "Invalid authorization endpoint URI", e);
+		}
+
+		env.putString("redirect_uri", env.getString("request_object_claims", "redirect_uri"));
+		env.putString("redirect_to_authorization_endpoint", authorizationEndpointUrl);
+
+		HttpMethod httpMethod = getHttpMethodForAuthorizeRequest();
+		redirect(httpMethod);
+		eventLog.endBlock();
+	}
+
+	protected void buildRequestObject() {
+		callAndContinueOnFailure(CreateRequestObjectClaims.class, Condition.ConditionResult.FAILURE);
+
+		if (includeTrustChainInAuthorizationRequest) {
+			String entityIdentifier = env.getString("entity_identifier");
+			String trustAnchorEntityIdentifier = env.getString("trust_anchor_entity_identifier");
+			String trustAnchorOverride = env.getString("config", "federation.rp_authority_hint");
+			if (trustAnchorOverride != null) {
+				trustAnchorEntityIdentifier = trustAnchorOverride;
+			}
+			JsonArray trustChain = buildTrustChain(List.of(entityIdentifier, trustAnchorEntityIdentifier));
+
+			JsonObject trustChainObject = new JsonObject();
+			trustChainObject.add("trust_chain", trustChain);
+			env.putObject("config", "client.trust_chain", trustChainObject);
+
+			callAndContinueOnFailure(AddTrustChainParameterToRequestObject.class, Condition.ConditionResult.FAILURE);
+		}
+	}
+
+	protected void signRequestObject() {
+		callAndContinueOnFailure(SignRequestObjectWithFederationTrustChain.class, Condition.ConditionResult.FAILURE);
+	}
+
+	protected void encryptRequestObject() {
+	}
+
+	protected void callParEndpoint() {
+		eventLog.startBlock("PAR endpoint request");
+		if (addParEndpointClientAuthentication != null) {
+			JsonObject opMetadata = env.getElementFromObject("primary_entity_statement_jwt", "claims.metadata.openid_provider").getAsJsonObject().deepCopy();
+			opMetadata.addProperty("issuer", env.getString("primary_entity_statement_jwt", "claims.iss"));
+			env.putObject("openid_provider_metadata", opMetadata);
+			env.mapKey("server", "openid_provider_metadata");
+			callAndStopOnFailure(BuildRequestObjectPostToPAREndpoint.class);
+			mapClientAuthKeys("pushed_authorization_request_form_parameters",
+				"pushed_authorization_request_endpoint_request_headers");
+			call(sequence(addParEndpointClientAuthentication));
+			unmapClientAuthKeys();
+		}
+
+		callAndContinueOnFailure(CallPAREndpoint.class, Condition.ConditionResult.FAILURE);
+		env.unmapKey("server");
+		env.mapKey("endpoint_response", CallPAREndpoint.RESPONSE_KEY);
+		callAndContinueOnFailure(EnsureHttpStatusCodeIs201.class, Condition.ConditionResult.FAILURE);
+		callAndContinueOnFailure(EnsureContentTypeJson.class, Condition.ConditionResult.FAILURE);
+		callAndStopOnFailure(CheckPAREndpointResponse201WithNoError.class, "PAR-2.2", "PAR-2.3", "PAR-2.4");
+
+		callAndStopOnFailure(CheckForRequestUriValue.class, "PAR-2.2");
+
+		callAndContinueOnFailure(CheckForPARResponseExpiresIn.class, Condition.ConditionResult.FAILURE, "PAR-2.2");
+
+		env.unmapKey("endpoint_response");
+		eventLog.endBlock();
+	}
+
+	protected void extractRequestUri() {
+		callAndStopOnFailure(ExtractRequestUriFromPARResponse.class, Condition.ConditionResult.FAILURE);
+		callAndContinueOnFailure(EnsureMinimumRequestUriEntropy.class, Condition.ConditionResult.FAILURE, "PAR-2.2", "PAR-7.1", "JAR-10.2");
+	}
+
+	protected void createQueryParameters() {
+		callAndStopOnFailure(CreateQueryParametersForAuthorizationRequest.class, Condition.ConditionResult.FAILURE);
+	}
+
+	/**
+	 * Do generic checks on an error response from the authorization endpoint
+	 *
+	 * Generally called from onAuthorizationCallbackResponse. The caller stills needs to check for the exact specific
+	 * error code their test scenario expects.
+	 */
+	protected void performGenericAuthorizationEndpointErrorResponseValidation() {
+		callAndContinueOnFailure(CheckStateInAuthorizationResponse.class, Condition.ConditionResult.FAILURE);
+		env.putString("server", "issuer", env.getString("config", "federation.entity_identifier"));
+		callAndContinueOnFailure(ValidateIssIfPresentInAuthorizationResponse.class, Condition.ConditionResult.FAILURE, "OAuth2-iss-2");
+		env.removeElement("server", "issuer");
+		callAndContinueOnFailure(EnsureErrorFromAuthorizationEndpointResponse.class, Condition.ConditionResult.FAILURE, "OIDCC-3.1.2.6");
+		callAndContinueOnFailure(RejectAuthCodeInAuthorizationEndpointResponse.class, Condition.ConditionResult.FAILURE, "OIDCC-3.1.2.6");
+		callAndContinueOnFailure(CheckForUnexpectedParametersInErrorResponseFromAuthorizationEndpoint.class, Condition.ConditionResult.WARNING, "OIDCC-3.1.2.6");
+		callAndContinueOnFailure(CheckErrorDescriptionFromAuthorizationEndpointResponseErrorContainsCRLFTAB.class, Condition.ConditionResult.WARNING, "RFC6749-4.1.2.1");
+		callAndContinueOnFailure(ValidateErrorDescriptionFromAuthorizationEndpointResponseError.class, Condition.ConditionResult.FAILURE,"RFC6749-4.1.2.1");
+		callAndContinueOnFailure(ValidateErrorUriFromAuthorizationEndpointResponseError.class, Condition.ConditionResult.FAILURE,"RFC6749-4.1.2.1");
+	}
+
+	@Override
+	protected void processCallback() {
+		eventLog.startBlock("Verify authorization endpoint response");
+		env.mapKey("authorization_endpoint_response", "callback_query_params");
+
+		onAuthorizationCallbackResponse();
+
+		eventLog.endBlock();
+		fireTestFinished();
+	}
+
+	protected void onAuthorizationCallbackResponse() {
+		env.putString("server", "issuer", env.getString("config", "federation.entity_identifier"));
+		callAndContinueOnFailure(ValidateIssIfPresentInAuthorizationResponse.class, Condition.ConditionResult.FAILURE, "OAuth2-iss-2");
+		env.removeElement("server", "issuer");
+		callAndStopOnFailure(CheckIfAuthorizationEndpointError.class);
+		callAndContinueOnFailure(CheckStateInAuthorizationResponse.class, Condition.ConditionResult.FAILURE);
+		callAndStopOnFailure(ExtractAuthorizationCodeFromAuthorizationResponse.class);
+		handleSuccessfulAuthorizationEndpointResponse();
+	}
+
+	protected void handleSuccessfulAuthorizationEndpointResponse() {
+		performPostAuthorizationFlow();
+	}
+
+	protected void performPostAuthorizationFlow() {
+		String tokenEndpoint = env.getString("primary_entity_statement_jwt", "claims.metadata.openid_provider.token_endpoint");
+		env.putString("token_endpoint", tokenEndpoint);
+
+		// call the token endpoint and complete the flow
+		createAuthorizationCodeRequest();
+		redeemAuthorizationCode();
+		onPostAuthorizationFlowComplete();
+	}
+
+	protected void createAuthorizationCodeRequest() {
+		callAndStopOnFailure(CreateTokenEndpointRequestForAuthorizationCodeGrant.class);
+		mapClientAuthKeys("token_endpoint_request_form_parameters", "token_endpoint_request_headers");
+		callAndStopOnFailure(AddClientIdToRequest.class);
+		call(sequence(addTokenEndpointClientAuthentication));
+		unmapClientAuthKeys();
+	}
+
+	//Originally called requestAuthorizationCode()
+	protected void redeemAuthorizationCode() {
+		eventLog.startBlock("Token endpoint");
+		callAndStopOnFailure(CallTokenEndpointAndReturnFullResponse.class);
+		callAndStopOnFailure(CheckIfTokenEndpointResponseError.class);
+
+		callAndStopOnFailure(ExtractIdTokenFromTokenResponse.class, "OIDCC-3.1.3.3", "OIDCC-3.3.3.3");
+
+		env.putString("server", "issuer", env.getString("config", "federation.entity_identifier"));
+		performIdTokenValidation();
+		env.removeElement("server", "issuer");
+
+		env.putObject("token_endpoint_id_token", env.getObject("id_token"));
+		eventLog.endBlock();
+	}
+
+	protected void performIdTokenValidation() {
+		eventLog.startBlock("Validate id token");
+		call(new PerformStandardIdTokenChecks());
+		callAndContinueOnFailure(ValidateIdTokenAudIsSingleElement.class, Condition.ConditionResult.FAILURE, "OIDFED-12.1.1.1");
+		eventLog.endBlock();
+	}
+
+	protected void onPostAuthorizationFlowComplete() {
+	}
+}

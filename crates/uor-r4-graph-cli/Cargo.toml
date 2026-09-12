@@ -1,0 +1,36 @@
+[package]
+name = "uor-r4-graph-cli"
+license = "MIT"
+version = "0.1.0"
+edition = "2024"
+
+[features]
+# #804 measurement-only exception passthrough — see uor-r4-model-source's
+# feature of the same name. Never a default.
+observation-blas-exception = ["uor-r4-model-source/observation-blas-exception"]
+
+[dependencies]
+uor-r4-core = { version = "0.1.0", path = "../uor-r4-core" }
+uor-r4-graph-compiler = { version = "0.1.0", path = "../uor-r4-graph-compiler" }
+uor-r4-graph-certify = { version = "0.1.0", path = "../uor-r4-graph-certify" }
+uor-r4-graph-runtime = { version = "0.1.0", path = "../uor-r4-graph-runtime" }
+uor-r4-model-source = { version = "0.1.0", path = "../uor-r4-model-source" }
+serde = { version = "1.0", features = ["derive"] }
+# #613: `float_roundtrip` makes float PARSING correctly-rounded, so a metric
+# serialized into a checkpoint deserializes bit-for-bit identically — the
+# guarantee resume's byte-identity rests on (serde_json's default parser can
+# land 1 ULP off, which diverges a resumed report from a clean one).
+serde_json = { version = "1.0", features = ["float_roundtrip"] }
+blake3 = "1.5.0"
+uor-r4-graph-format = { version = "0.1.0", path = "../uor-r4-graph-format" }
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
+
+[dev-dependencies]
+# #622/#626: dev-only ecosystem reference for tropical (max-plus) semantics.
+# The tropical_2hop_626 harness's fold must byte-agree with
+# uor_matmul_core::dot_tropical_ref (parity test), pinning our ⊗/⊕/-inf
+# conventions to the shared implementation. Never a dependency of shipped
+# code; the runtime keeps its own P-4-scanned source.
+uor-matmul-core = { version = "0.1.0", git = "https://github.com/UOR-Foundation/uor-matmul.git", rev = "b13c98449948174f590e337c4dc25dfc394a07d0", default-features = false }

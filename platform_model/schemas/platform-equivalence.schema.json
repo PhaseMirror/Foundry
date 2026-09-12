@@ -1,0 +1,84 @@
+{
+  "$defs": {
+    "digest": { "pattern": "^sha256:[0-9a-f]{64}$", "type": "string" },
+    "id": { "pattern": "^[a-z][a-z0-9._/-]{0,127}$", "type": "string" }
+  },
+  "$id": "https://uor.foundation/schemas/prismpm/platform-equivalence/1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "architectures": {
+      "items": { "enum": ["amd64", "arm64"] },
+      "maxItems": 2,
+      "minItems": 2,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "differences": { "maxItems": 0, "type": "array" },
+    "file_count": { "minimum": 1, "type": "integer" },
+    "files": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "digest": { "$ref": "#/$defs/digest" },
+          "path": { "maxLength": 1024, "minLength": 1, "type": "string" },
+          "size": { "minimum": 0, "type": "integer" }
+        },
+        "required": ["digest", "path", "size"],
+        "type": "object"
+      },
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "model_digest": { "$ref": "#/$defs/digest" },
+    "modeled_platform_artifacts": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "artifact_id": { "$ref": "#/$defs/id" },
+          "platform_requirements": {
+            "items": { "$ref": "#/$defs/id" },
+            "minItems": 1,
+            "type": "array",
+            "uniqueItems": true
+          },
+          "platforms": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "architectures": {
+                  "items": { "enum": ["amd64", "arm64", "wasm32"] },
+                  "minItems": 1,
+                  "type": "array",
+                  "uniqueItems": true
+                },
+                "os": { "enum": ["browser", "linux", "portable"] },
+                "requirement_id": { "$ref": "#/$defs/id" },
+                "runtime": { "enum": ["browser", "oci", "static", "webassembly"] },
+                "runtime_version": { "maxLength": 128, "minLength": 1, "type": "string" }
+              },
+              "required": ["architectures", "os", "requirement_id", "runtime", "runtime_version"],
+              "type": "object"
+            },
+            "minItems": 1,
+            "type": "array",
+            "uniqueItems": true
+          }
+        },
+        "required": ["artifact_id", "platform_requirements", "platforms"],
+        "type": "object"
+      },
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "platform_independent_tree_digest": { "$ref": "#/$defs/digest" },
+    "release_digest": { "$ref": "#/$defs/digest" },
+    "schema": { "const": "prismpm/platform-equivalence/1" },
+    "sdk_digest": { "$ref": "#/$defs/digest" },
+    "status": { "const": "accepted" }
+  },
+  "required": ["architectures", "differences", "file_count", "files", "model_digest", "modeled_platform_artifacts", "platform_independent_tree_digest", "release_digest", "schema", "sdk_digest", "status"],
+  "type": "object"
+}

@@ -1,0 +1,27 @@
+package net.openid.conformance.fapiciba.rp;
+
+import net.openid.conformance.testmodule.PublishTestModule;
+import org.springframework.http.HttpStatus;
+
+@PublishTestModule(
+	testName = "fapi-ciba-id1-client-invalid-unknown-user-id-test",
+	displayName = "FAPI-CIBA-ID1: Client test - unknown_user_id returned in backchannel response",
+	summary = "The client should perform OpenID discovery from the displayed discoveryUrl and then " +
+		"call the backchannel endpoint. The client must detect that the response is a HTTP 400 Bad Request " +
+		"with error unknown_user_id and not make further requests after that.",
+	profile = "FAPI-CIBA-ID1"
+)
+public class FAPICIBAClientBackchannelInvalidUnknownUserIdTest extends AbstractFAPICIBAClientTest {
+
+	@Override
+	protected HttpStatus createBackchannelResponse() {
+		callAndStopOnFailure(CreateBackchannelEndpointResponseWithUnknownUserIdError.class, "CIBA-13");
+		return HttpStatus.BAD_REQUEST;
+	}
+
+	@Override
+	protected void backchannelEndpointCallComplete() {
+		fireTestFinished();
+	}
+
+}

@@ -1,0 +1,68 @@
+[workspace]
+resolver = "2"
+members = ["crates/*", "xtask"]
+exclude = [
+    "stdlib/generated/package",
+    "vendor/lexlean",
+    "vendor/lean4-prod/rust/prod-codegen",
+    "vendor/lean4-prod/rust/prod-ir",
+]
+
+[workspace.package]
+version = "0.3.0"
+edition = "2021"
+rust-version = "1.97"
+license = "MIT OR Apache-2.0"
+authors = ["Alex Flom"]
+keywords = ["prismpm", "lean", "latex", "architecture", "security"]
+categories = ["compilers", "development-tools"]
+
+[workspace.dependencies]
+repo-model = { version = "0.3.0", path = "crates/model" }
+repo-conformance = { version = "0.3.0", path = "crates/conformance" }
+prismpm = { version = "0.3.0", path = "crates/prismpm" }
+lexlean = { version = "0.3.0", path = "vendor/lexlean" }
+prod-codegen = { version = "0.1.0", path = "vendor/lean4-prod/rust/prod-codegen" }
+prod-ir = { version = "0.1.0", path = "vendor/lean4-prod/rust/prod-ir" }
+
+camino = "1.2"
+base64 = "=0.22.1"
+clap = { version = "4.5", features = ["derive"] }
+ctrlc = "=3.5.2"
+fs4 = { version = "0.13", features = ["sync"] }
+hologram = { package = "uor-hologram", version = "0.12.1", git = "https://github.com/Hologram-Technologies/hologram", rev = "2bda6a9a9476872dade705bd61ece4209607f6da", default-features = false, features = ["archive", "space"] }
+nom = { version = "7", default-features = false }
+proptest = "1.6"
+jsonschema = { version = "=0.50.1", default-features = false }
+same-file = "1.0"
+semver = "1.0"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_yaml = "0.9"
+sha1 = "0.10"
+sha2 = "0.10"
+tempfile = "3"
+tar = "0.4"
+thiserror = "2"
+toml = "0.8"
+unicode-normalization = "0.1"
+walkdir = "2"
+x509-parser = "=0.18.0"
+
+[workspace.lints.rust]
+missing_docs = "deny"
+unsafe_op_in_unsafe_fn = "deny"
+
+[workspace.lints.clippy]
+undocumented_unsafe_blocks = "deny"
+missing_safety_doc = "deny"
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+
+[patch.crates-io]
+lexlean = { path = "vendor/lexlean" }
+prod-codegen = { path = "vendor/lean4-prod/rust/prod-codegen" }
+prod-ir = { path = "vendor/lean4-prod/rust/prod-ir" }

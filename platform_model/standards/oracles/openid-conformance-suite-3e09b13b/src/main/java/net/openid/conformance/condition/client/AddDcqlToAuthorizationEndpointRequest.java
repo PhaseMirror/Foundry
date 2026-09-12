@@ -1,0 +1,27 @@
+package net.openid.conformance.condition.client;
+
+import com.google.gson.JsonObject;
+import net.openid.conformance.condition.AbstractCondition;
+import net.openid.conformance.condition.PostEnvironment;
+import net.openid.conformance.condition.PreEnvironment;
+import net.openid.conformance.condition.as.ExtractDCQLQueryFromAuthorizationRequest;
+import net.openid.conformance.testmodule.Environment;
+
+public class AddDcqlToAuthorizationEndpointRequest extends AbstractCondition {
+
+	@Override
+	@PreEnvironment(required = { ExtractDCQLQueryFromAuthorizationRequest.ENV_KEY, "authorization_endpoint_request" })
+	@PostEnvironment(required = "authorization_endpoint_request")
+	public Environment evaluate(Environment env) {
+		JsonObject dcql = env.getObject(ExtractDCQLQueryFromAuthorizationRequest.ENV_KEY);
+
+		JsonObject authorizationEndpointRequest = env.getObject("authorization_endpoint_request");
+
+		authorizationEndpointRequest.add("dcql_query", dcql);
+
+		logSuccess("Added dcql_query parameter to request", authorizationEndpointRequest);
+
+		return env;
+	}
+
+}

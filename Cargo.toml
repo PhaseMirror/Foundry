@@ -1,0 +1,42 @@
+[workspace]
+resolver = "2"
+members = ["crates/*", "xtask"]
+exclude = ["crates/health-sdk", "crates/language-mapping", "crates/living-loop", "crates/materia_commons", "crates/privacy-mev", "crates/m-ode", "crates/uor-prism-crypto", "crates/uor-prism-fhe", "crates/uor-prism-numerics", "crates/uor-prism-tensor", "crates/uor-prism-verify", "crates/uor-prism", "crates/prism-calculator", "crates/multiplicity-crypto", "crates/phase-mirror-operator", "crates/conformance", "crates/repo-model"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+# Raise this when something here needs a newer compiler; nothing does yet.
+rust-version = "1.89"
+license = "MIT OR Apache-2.0"
+# Instantiated repositories set their own URLs here.
+repository = "https://github.com/UOR-Foundation/uor-foundry"
+homepage = "https://github.com/UOR-Foundation/uor-foundry"
+authors = ["UOR Foundation"]
+keywords = []
+categories = []
+
+[workspace.dependencies]
+repo-model = { version = "0.1.0", path = "crates/model" }
+# A `path` dependency with no `version` is a wildcard requirement, and
+# `cargo deny` refuses those (`wildcards = "deny"`). Every internal dependency
+# carries both.
+repo-conformance = { version = "0.1.0", path = "crates/conformance" }
+anyhow = "1.0.102"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "2.0.18"
+chrono = "0.4.44"
+
+[workspace.lints.rust]
+missing_docs = "deny"
+unsafe_op_in_unsafe_fn = "deny"
+
+[workspace.lints.clippy]
+undocumented_unsafe_blocks = "deny"
+missing_safety_doc = "deny"
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1

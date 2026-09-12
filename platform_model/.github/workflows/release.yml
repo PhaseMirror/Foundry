@@ -1,0 +1,618 @@
+name: PrismPM production release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Exact SemVer without a leading v
+        required: true
+        default: 0.3.0
+        type: string
+      publish-crates:
+        description: Publish the already packaged crates through crates.io trusted publishing
+        required: true
+        default: false
+        type: boolean
+  push:
+    tags:
+      - v0.3.0
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions: {}
+
+env:
+  SDK_REPOSITORY: ghcr.io/uor-foundation/prismpm-sdk
+  RUNTIME_REPOSITORY: ghcr.io/uor-foundation/prismpm-runtime
+
+jobs:
+  gate:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          submodules: false
+      - id: version
+        shell: bash
+        env:
+          DISPATCH_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          version=${DISPATCH_VERSION:-${GITHUB_REF_NAME#v}}
+          case "$version" in
+            0.3.0) ;;
+            *) printf 'release workflow is closed to PrismPM 0.3.0, got %s\n' "$version" >&2; exit 2 ;;
+          esac
+          test "$(git status --porcelain)" = ""
+          test "$(sed -n 's/^version = "\([^"]*\)"/\1/p' Cargo.toml | head -1)" = "$version"
+          printf 'version=%s\n' "$version" >> "$GITHUB_OUTPUT"
+      - uses: devcontainers/ci@513af61f4de4f75d37e4438f184ba4358f0fc1ca
+        with:
+          push: never
+          runCmd: just vv
+
+  images:
+    needs: gate
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: sdk
+            dockerfile: sdk/Dockerfile
+            target: runtime
+            repository: ghcr.io/uor-foundation/prismpm-sdk
+          - name: runtime
+            dockerfile: sdk/runtime/Dockerfile
+            target: ""
+            repository: ghcr.io/uor-foundation/prismpm-runtime
+          - name: adapter-compose
+            dockerfile: sdk/Dockerfile
+            target: adapter-compose
+            repository: ghcr.io/uor-foundation/prismpm-adapter-compose
+          - name: adapter-kubernetes
+            dockerfile: sdk/Dockerfile
+            target: adapter-kubernetes
+            repository: ghcr.io/uor-foundation/prismpm-adapter-kubernetes
+          - name: adapter-github-pages
+            dockerfile: sdk/Dockerfile
+            target: adapter-github-pages
+            repository: ghcr.io/uor-foundation/prismpm-adapter-github-pages
+          - name: oracles
+            dockerfile: sdk/Dockerfile
+            target: oracles
+            repository: ghcr.io/uor-foundation/prismpm-oracles
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          submodules: false
+      - uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - id: build
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          target: ${{ matrix.target }}
+          platforms: linux/amd64,linux/arm64
+          outputs: type=registry,rewrite-timestamp=true
+          provenance: false
+          sbom: false
+          build-args: SOURCE_DATE_EPOCH=0
+          tags: |
+            ${{ matrix.repository }}:sha-${{ github.sha }}
+          labels: |
+            org.opencontainers.image.created=1970-01-01T00:00:00Z
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.version=${{ needs.gate.outputs.version }}
+      - id: platforms
+        shell: bash
+        env:
+          IMAGE_INDEX_DIGEST: ${{ steps.build.outputs.digest }}
+          REPOSITORY: ${{ matrix.repository }}
+        run: |
+          set -euo pipefail
+          docker buildx imagetools inspect --raw "$REPOSITORY@$IMAGE_INDEX_DIGEST" > "${{ matrix.name }}-image-index.json"
+          for architecture in amd64 arm64; do
+            child_digest=$(jq -er --arg architecture "$architecture" \
+              '.manifests[] | select(.platform.os == "linux" and .platform.architecture == $architecture) | .digest' \
+              "${{ matrix.name }}-image-index.json")
+            case "$child_digest" in sha256:????????????????????????????????????????????????????????????????) ;; *) exit 2 ;; esac
+            printf '%s=%s\n' "$architecture" "$child_digest" >> "$GITHUB_OUTPUT"
+          done
+      - id: sbom-amd64
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610
+        with:
+          image: ${{ matrix.repository }}@${{ steps.platforms.outputs.amd64 }}
+          format: spdx-json
+          output-file: ${{ matrix.name }}-linux-amd64.spdx.json
+          artifact-name: ${{ matrix.name }}-linux-amd64-spdx
+          upload-release-assets: false
+      - id: sbom-arm64
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610
+        with:
+          image: ${{ matrix.repository }}@${{ steps.platforms.outputs.arm64 }}
+          format: spdx-json
+          output-file: ${{ matrix.name }}-linux-arm64.spdx.json
+          artifact-name: ${{ matrix.name }}-linux-arm64-spdx
+          upload-release-assets: false
+      - id: attest-sbom-amd64
+        uses: actions/attest-sbom@4651f806c01d8637787e274ac3bdf724ef169f34
+        with:
+          subject-name: ${{ matrix.repository }}
+          subject-digest: ${{ steps.platforms.outputs.amd64 }}
+          sbom-path: ${{ matrix.name }}-linux-amd64.spdx.json
+          push-to-registry: true
+      - id: attest-sbom-arm64
+        uses: actions/attest-sbom@4651f806c01d8637787e274ac3bdf724ef169f34
+        with:
+          subject-name: ${{ matrix.repository }}
+          subject-digest: ${{ steps.platforms.outputs.arm64 }}
+          sbom-path: ${{ matrix.name }}-linux-arm64.spdx.json
+          push-to-registry: true
+      - id: attest-provenance
+        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a
+        with:
+          subject-name: ${{ matrix.repository }}
+          subject-digest: ${{ steps.build.outputs.digest }}
+          push-to-registry: true
+      - name: Stage stable attestation bundle names
+        shell: bash
+        env:
+          SBOM_AMD64: ${{ steps.attest-sbom-amd64.outputs.bundle-path }}
+          SBOM_ARM64: ${{ steps.attest-sbom-arm64.outputs.bundle-path }}
+          PROVENANCE: ${{ steps.attest-provenance.outputs.bundle-path }}
+        run: |
+          set -euo pipefail
+          cp "$SBOM_AMD64" "${{ matrix.name }}-linux-amd64.sbom.sigstore.json"
+          cp "$SBOM_ARM64" "${{ matrix.name }}-linux-arm64.sbom.sigstore.json"
+          cp "$PROVENANCE" "${{ matrix.name }}-provenance.sigstore.json"
+      - uses: sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad
+        with:
+          cosign-release: v3.1.3
+      - shell: bash
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+          REPOSITORY: ${{ matrix.repository }}
+        run: |
+          set -euo pipefail
+          case "$DIGEST" in sha256:????????????????????????????????????????????????????????????????) ;; *) exit 2 ;; esac
+          cosign sign --yes "$REPOSITORY@$DIGEST"
+          cosign verify \
+            --certificate-identity-regexp "^https://github.com/${GITHUB_REPOSITORY}/.github/workflows/release.yml@refs/(heads/main|tags/v0\\.3\\.0)$" \
+            --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+            "$REPOSITORY@$DIGEST" >/dev/null
+          docker pull "$REPOSITORY@$DIGEST"
+          if [ "${{ matrix.name }}" = runtime ]; then
+            test "$(docker run --rm --cap-drop ALL --security-opt no-new-privileges "$REPOSITORY@$DIGEST" id -u)" != 0
+            docker run --rm --cap-drop ALL --security-opt no-new-privileges "$REPOSITORY@$DIGEST" node /opt/prismpm/runtime/runtime.mjs help
+          else
+            # The default initializer uses only its ordinary setuid/setgid
+            # capability to adapt an optional Docker-socket group, then execs
+            # the command as UID 1000. Explicit non-root invocations require
+            # no capabilities at all, as used by the Action below.
+            test "$(docker run --rm "$REPOSITORY@$DIGEST" id -u)" = 1000
+            test "$(docker run --rm "$REPOSITORY@$DIGEST" sh -lc 'printf %s "$HOME"')" = /home/vscode
+            docker run --rm --user 1000:1000 --cap-drop ALL --security-opt no-new-privileges "$REPOSITORY@$DIGEST" prismpm --version
+            docker run --rm --volume /var/run/docker.sock:/var/run/docker.sock "$REPOSITORY@$DIGEST" docker version --format '{{.Server.Version}}'
+            case "${{ matrix.name }}" in
+              adapter-compose) docker run --rm "$REPOSITORY@$DIGEST" test -r /opt/prismpm/share/adapters/compose.json ;;
+              adapter-kubernetes) docker run --rm "$REPOSITORY@$DIGEST" test -r /opt/prismpm/share/adapters/kubernetes.json ;;
+              adapter-github-pages) docker run --rm "$REPOSITORY@$DIGEST" test -r /opt/prismpm/share/adapters/github-pages.json ;;
+              oracles) docker run --rm "$REPOSITORY@$DIGEST" test -x /usr/local/bin/oci-distribution-conformance ;;
+            esac
+          fi
+          printf '%s@%s\n' "$REPOSITORY" "$DIGEST" > "${{ matrix.name }}-image.txt"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: ${{ matrix.name }}-image
+          path: ${{ matrix.name }}-image.txt
+          if-no-files-found: error
+          retention-days: 30
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: ${{ matrix.name }}-supply-chain
+          path: |
+            ${{ matrix.name }}-image-index.json
+            ${{ matrix.name }}-linux-amd64.spdx.json
+            ${{ matrix.name }}-linux-arm64.spdx.json
+            ${{ matrix.name }}-linux-amd64.sbom.sigstore.json
+            ${{ matrix.name }}-linux-arm64.sbom.sigstore.json
+            ${{ matrix.name }}-provenance.sigstore.json
+          if-no-files-found: error
+          retention-days: 30
+
+  reproducibility:
+    needs: gate
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            platform: linux/amd64
+            dockerfile: sdk/Dockerfile
+            target: runtime
+            name: sdk-amd64
+          - os: ubuntu-24.04-arm
+            platform: linux/arm64
+            dockerfile: sdk/Dockerfile
+            target: runtime
+            name: sdk-arm64
+          - os: ubuntu-24.04
+            platform: linux/amd64
+            dockerfile: sdk/runtime/Dockerfile
+            target: ""
+            name: runtime-amd64
+          - os: ubuntu-24.04-arm
+            platform: linux/arm64
+            dockerfile: sdk/runtime/Dockerfile
+            target: ""
+            name: runtime-arm64
+          - os: ubuntu-24.04
+            platform: linux/amd64
+            dockerfile: sdk/Dockerfile
+            target: adapter-compose
+            name: adapter-compose-amd64
+          - os: ubuntu-24.04-arm
+            platform: linux/arm64
+            dockerfile: sdk/Dockerfile
+            target: adapter-compose
+            name: adapter-compose-arm64
+          - os: ubuntu-24.04
+            platform: linux/amd64
+            dockerfile: sdk/Dockerfile
+            target: adapter-kubernetes
+            name: adapter-kubernetes-amd64
+          - os: ubuntu-24.04-arm
+            platform: linux/arm64
+            dockerfile: sdk/Dockerfile
+            target: adapter-kubernetes
+            name: adapter-kubernetes-arm64
+          - os: ubuntu-24.04
+            platform: linux/amd64
+            dockerfile: sdk/Dockerfile
+            target: adapter-github-pages
+            name: adapter-github-pages-amd64
+          - os: ubuntu-24.04-arm
+            platform: linux/arm64
+            dockerfile: sdk/Dockerfile
+            target: adapter-github-pages
+            name: adapter-github-pages-arm64
+          - os: ubuntu-24.04
+            platform: linux/amd64
+            dockerfile: sdk/Dockerfile
+            target: oracles
+            name: oracles-amd64
+          - os: ubuntu-24.04-arm
+            platform: linux/arm64
+            dockerfile: sdk/Dockerfile
+            target: oracles
+            name: oracles-arm64
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          path: root-a
+          submodules: false
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          path: root-b
+          submodules: false
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f
+      - shell: bash
+        env:
+          DOCKERFILE: ${{ matrix.dockerfile }}
+          PLATFORM: ${{ matrix.platform }}
+          TARGET: ${{ matrix.target }}
+        run: |
+          set -euo pipefail
+          target=()
+          if [ -n "$TARGET" ]; then target=(--target "$TARGET"); fi
+          for root in root-a root-b; do
+            docker buildx build --no-cache --provenance=false --sbom=false \
+              --build-arg SOURCE_DATE_EPOCH=0 \
+              --platform "$PLATFORM" --file "$root/$DOCKERFILE" \
+              "${target[@]}" \
+              --output "type=oci,dest=$root.oci.tar,rewrite-timestamp=true" "$root"
+            mkdir "$root.oci"
+            tar -xf "$root.oci.tar" -C "$root.oci"
+            jq -r '.manifests[0].digest' "$root.oci/index.json" > "$root.digest"
+          done
+          cmp root-a.digest root-b.digest
+          cmp root-a.oci/index.json root-b.oci/index.json
+          printf '%s %s\n' "${{ matrix.name }}" "$(cat root-a.digest)"
+
+  native:
+    needs: [gate, images]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux/amd64
+            target: x86_64-unknown-linux-gnu
+          - platform: linux/arm64
+            target: aarch64-unknown-linux-gnu
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          submodules: false
+      - uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: sdk-image
+          path: .release-sdk
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - shell: bash
+        env:
+          PLATFORM: ${{ matrix.platform }}
+          VERSION: ${{ needs.gate.outputs.version }}
+        run: |
+          set -euo pipefail
+          docker buildx build \
+            --build-arg "SDK_VERSION=$VERSION" \
+            --platform "$PLATFORM" \
+            --file sdk/Dockerfile \
+            --target cli-archive \
+            --output type=local,dest=.native-release \
+            .
+          archive=$(find .native-release -maxdepth 1 -type f -name 'prismpm-*.tar.gz' -print)
+          test -n "$archive"
+          test -f "$archive.sha256"
+          docker run --rm \
+            --mount "type=bind,source=$PWD/.native-release,target=/release,readonly" \
+            docker.io/library/debian:bookworm-slim@sha256:88200866dfff7ea7f5cbcb6ec7c8a701889efe6fe859fe64d6990e4b07ea4171 \
+            sh -ec 'cd /release && sha256sum --check "$(basename "$1").sha256"' sh "$archive"
+          sdk_image=$(cat .release-sdk/sdk-image.txt)
+          case "$sdk_image" in
+            ghcr.io/uor-foundation/prismpm-sdk@sha256:????????????????????????????????????????????????????????????????) ;;
+            *) printf 'invalid SDK image identity: %s\n' "$sdk_image" >&2; exit 64 ;;
+          esac
+          mkdir .native-cli
+          tar --extract --gzip --file "$archive" --directory .native-cli
+          native_runtime=docker.io/library/debian:bookworm-slim@sha256:88200866dfff7ea7f5cbcb6ec7c8a701889efe6fe859fe64d6990e4b07ea4171
+          docker run --rm --platform "$PLATFORM" --network none --user "$(id -u):$(id -g)" \
+            --cap-drop ALL --security-opt no-new-privileges \
+            --mount "type=bind,source=$PWD/.native-cli,target=/native,readonly" \
+            --mount "type=bind,source=$PWD,target=/workspace" --workdir /workspace \
+            --entrypoint /native/prismpm "$native_runtime" \
+            --project /workspace --json check > native-check.json
+          docker run --rm --platform "$PLATFORM" --network none --user "$(id -u):$(id -g)" \
+            --cap-drop ALL --security-opt no-new-privileges \
+            --mount "type=bind,source=$PWD,target=/workspace" \
+            "$sdk_image" prismpm --project /workspace --json check > container-check.json
+          cmp native-check.json container-check.json
+          set +e
+          docker run --rm --platform "$PLATFORM" --network none --user "$(id -u):$(id -g)" \
+            --cap-drop ALL --security-opt no-new-privileges \
+            --mount "type=bind,source=$PWD/.native-cli,target=/native,readonly" \
+            --mount "type=bind,source=$PWD,target=/workspace" --workdir /workspace \
+            --entrypoint /native/prismpm "$native_runtime" \
+            --project /workspace --json inspect \
+            ghcr.io/uor-foundation/calculator:mutable > native-error.json 2>&1
+          native_status=$?
+          docker run --rm --platform "$PLATFORM" --network none --user "$(id -u):$(id -g)" \
+            --cap-drop ALL --security-opt no-new-privileges \
+            --mount "type=bind,source=$PWD,target=/workspace" \
+            "$sdk_image" prismpm --project /workspace --json inspect \
+            ghcr.io/uor-foundation/calculator:mutable > container-error.json 2>&1
+          container_status=$?
+          set -e
+          test "$native_status" -eq 6
+          test "$container_status" -eq "$native_status"
+          cmp native-error.json container-error.json
+          mv "$archive" "$archive.sha256" .
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: native-${{ matrix.target }}
+          path: |
+            prismpm-*.tar.gz
+            prismpm-*.tar.gz.sha256
+          if-no-files-found: error
+          retention-days: 30
+
+  crates:
+    if: ${{ inputs.publish-crates == true || startsWith(github.ref, 'refs/tags/') }}
+    needs: [gate, images, reproducibility]
+    runs-on: ubuntu-24.04
+    environment: crates.io
+    permissions:
+      contents: read
+      id-token: write
+      packages: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          submodules: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: sdk-image
+          path: .release-sdk
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - uses: rust-lang/crates-io-auth-action@c6f97d42243bad5fab37ca0427f495c86d5b1a18
+        id: auth
+      - shell: bash
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
+        run: |
+          set -euo pipefail
+          sdk_image=$(cat .release-sdk/sdk-image.txt)
+          case "$sdk_image" in
+            ghcr.io/uor-foundation/prismpm-sdk@sha256:????????????????????????????????????????????????????????????????) ;;
+            *) printf 'invalid SDK release identity: %s\n' "$sdk_image" >&2; exit 64 ;;
+          esac
+          docker run --rm \
+            --user 1000:1000 \
+            --env CARGO_REGISTRY_TOKEN \
+            --mount "type=bind,source=$PWD,target=/workspace" \
+            --workdir /workspace \
+            --entrypoint /bin/bash \
+            "$sdk_image" \
+            -euo pipefail -c '
+              wait_for_crate() {
+                package=$1 version=$2
+                for attempt in $(seq 1 90); do
+                  code=$(curl --user-agent prismpm-release/0.3 \
+                    --silent --output /dev/null --write-out "%{http_code}" \
+                    "https://crates.io/api/v1/crates/$package/$version")
+                  if [ "$code" = 200 ]; then return 0; fi
+                  sleep 10
+                done
+                printf "crates.io did not expose %s %s after publication\n" "$package" "$version" >&2
+                return 1
+              }
+              public_checksum() {
+                package=$1 version=$2
+                response=$(mktemp)
+                code=$(curl --user-agent prismpm-release/0.3 --silent --show-error \
+                  --output "$response" --write-out "%{http_code}" \
+                  "https://crates.io/api/v1/crates/$package/$version")
+                if [ "$code" = 404 ]; then
+                  rm -f "$response"
+                  return 1
+                fi
+                test "$code" = 200
+                node -e "const fs=require(\"node:fs\"); const checksum=JSON.parse(fs.readFileSync(process.argv[1],\"utf8\")).version?.checksum; if (!/^[0-9a-f]{64}$/.test(checksum ?? \"\")) process.exit(2); process.stdout.write(checksum + \"\\n\");" "$response"
+                rm -f "$response"
+              }
+              publish_exact() {
+                package=$1 version=$2 manifest=$3 archive=$4 expected=$5
+                cargo package --locked --manifest-path "$manifest"
+                test -f "$archive"
+                if [ "$expected" != - ]; then
+                  cmp "$archive" "$expected"
+                fi
+                local_checksum=$(sha256sum "$archive" | cut -d" " -f1)
+                if observed=$(public_checksum "$package" "$version"); then
+                  test "$observed" = "$local_checksum"
+                  return 0
+                fi
+                cargo publish --locked --manifest-path "$manifest"
+                wait_for_crate "$package" "$version"
+                observed=$(public_checksum "$package" "$version")
+                test "$observed" = "$local_checksum"
+              }
+              # Independently released inputs must be public before a fresh
+              # crates.io consumer can resolve the packaged PrismPM manifest.
+              wait_for_crate lexlean 0.3.0
+              wait_for_crate uor-hologram 0.13.1
+              release_parent=$(mktemp -d)
+              release_sources="$release_parent/release-crates"
+              ./scripts/package-release-crates.sh --prepare "$release_sources"
+              publish_exact prod-ir 0.1.0 \
+                "$release_sources/lean4-prod/prod-ir/Cargo.toml" \
+                "$release_sources/lean4-prod/target/package/prod-ir-0.1.0.crate" \
+                "$PWD/vendor/lean4-prod/crates/prod-ir-0.1.0.crate"
+              publish_exact prod-codegen 0.1.0 \
+                "$release_sources/lean4-prod/prod-codegen/Cargo.toml" \
+                "$release_sources/lean4-prod/target/package/prod-codegen-0.1.0.crate" \
+                "$PWD/vendor/lean4-prod/crates/prod-codegen-0.1.0.crate"
+              publish_exact prism-stdlib 0.2.0 \
+                "$release_sources/stdlib/Cargo.toml" \
+                "$release_sources/stdlib/target/package/prism-stdlib-0.2.0.crate" \
+                "$PWD/stdlib/generated/prism-stdlib-0.2.0.crate"
+              publish_exact prismpm 0.3.0 crates/prismpm/Cargo.toml \
+                "$PWD/target/package/prismpm-0.3.0.crate" -
+              rm -rf "$release_parent"
+            '
+
+  release:
+    needs: [gate, images, native, reproducibility, crates]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+      packages: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          submodules: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          pattern: native-*
+          path: release
+          merge-multiple: true
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          pattern: '*-image'
+          path: release
+          merge-multiple: true
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          pattern: '*-supply-chain'
+          path: release
+          merge-multiple: true
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - name: Publish accepted OCI discovery tags
+        shell: bash
+        env:
+          VERSION: ${{ needs.gate.outputs.version }}
+        run: |
+          set -euo pipefail
+          for identity_file in release/*-image.txt; do
+            identity=$(cat "$identity_file")
+            case "$identity" in
+              ghcr.io/uor-foundation/*@sha256:????????????????????????????????????????????????????????????????) ;;
+              *) printf 'invalid release image identity: %s\n' "$identity" >&2; exit 64 ;;
+            esac
+            repository=${identity%@*}
+            expected=${identity##*@}
+            docker buildx imagetools create --tag "$repository:$VERSION" "$identity"
+            observed=$(docker buildx imagetools inspect "$repository:$VERSION" \
+              --format '{{.Manifest.Digest}}')
+            test "$observed" = "$expected"
+          done
+      - shell: bash
+        run: |
+          set -euo pipefail
+          find release -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > release/SHA256SUMS
+      - uses: actions/attest-build-provenance@43d14bc2b83dec42d39ecae14e916627a18bb661
+        with:
+          subject-path: release/prismpm-*.tar.gz
+      - uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65
+        with:
+          tag_name: v${{ needs.gate.outputs.version }}
+          target_commitish: ${{ github.sha }}
+          fail_on_unmatched_files: true
+          generate_release_notes: false
+          body_path: RELEASE_NOTES.md
+          files: |
+            release/*

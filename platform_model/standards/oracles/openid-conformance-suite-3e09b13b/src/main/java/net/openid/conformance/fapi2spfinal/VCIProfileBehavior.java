@@ -1,0 +1,642 @@
+package net.openid.conformance.fapi2spfinal;
+
+import net.openid.conformance.condition.AbstractCondition;
+import net.openid.conformance.condition.Condition.ConditionResult;
+import net.openid.conformance.condition.client.CheckDiscEndpointGrantTypesSupportedContainsAuthorizationCode;
+import net.openid.conformance.condition.client.CheckDiscEndpointTokenEndpointAuthMethodsSupportedContainsPrivateKeyOrTlsClientOrAttestation;
+import net.openid.conformance.condition.client.EnsureContentTypeApplicationJwt;
+import net.openid.conformance.condition.client.EnsureContentTypeJson;
+import net.openid.conformance.condition.client.EnsureHttpStatusCodeIs200;
+import net.openid.conformance.condition.client.EnsureMdocAgeInYearsConsistentWithBirthDate;
+import net.openid.conformance.condition.client.EnsureMdocAgeOverElementsConsistentWithBirthDate;
+import net.openid.conformance.condition.client.EnsureMdocMdlElementValuesAreValid;
+import net.openid.conformance.condition.client.EnsureMdocMdlMandatoryDataElementsPresent;
+import net.openid.conformance.condition.client.EnsureIssuedMdocMdlElementsAreDefined;
+import net.openid.conformance.condition.client.EnsureIssuedMdocPhotoIdElementsAreDefined;
+import net.openid.conformance.condition.client.EnsureMdocPhotoIdConditionalDataElementsPresent;
+import net.openid.conformance.condition.client.EnsureMdocPhotoIdElementValuesAreValid;
+import net.openid.conformance.condition.client.EnsureMdocPhotoIdMandatoryDataElementsPresent;
+import net.openid.conformance.condition.client.EnsureMdocPhotoIdRecommendedDataElementsPresent;
+import net.openid.conformance.condition.client.EnsureSdJwtVcVctMatchesCredentialConfiguration;
+import net.openid.conformance.condition.client.ParseCredentialAsSdJwt;
+import net.openid.conformance.condition.client.ParseMdocCredentialFromVCIIssuance;
+import net.openid.conformance.condition.client.ValidateMdocMsoValidityInfoTimestamps;
+import net.openid.conformance.condition.client.SetProtectedResourceUrlToSingleResourceEndpoint;
+import net.openid.conformance.condition.client.ValidateCredentialIsUnpaddedBase64Url;
+import net.openid.conformance.openid.federation.CallCredentialIssuerNonceEndpoint;
+import net.openid.conformance.sequence.AbstractConditionSequence;
+import net.openid.conformance.sequence.ConditionSequence;
+import net.openid.conformance.sequence.client.CreateVCICredentialRequestSteps;
+import net.openid.conformance.sequence.client.GenerateVCIKeyAttestationAndProofSteps;
+import net.openid.conformance.sequence.client.SetupVicalFromConfiguration;
+import net.openid.conformance.sequence.client.ValidateMdocCredential;
+import net.openid.conformance.sequence.client.ValidateSdJwtVcCredentialClaims;
+import net.openid.conformance.sequence.client.ValidateVCINonceEndpointResponse;
+import net.openid.conformance.sequence.client.VCIDiscoveryEndpointChecks;
+import net.openid.conformance.testmodule.IterateEnvironmentArray;
+import net.openid.conformance.variant.AuthorizationRequestType;
+import net.openid.conformance.variant.ClientAuthType;
+import net.openid.conformance.variant.FAPI2AuthRequestMethod;
+import net.openid.conformance.variant.GrantManagement;
+import net.openid.conformance.variant.VCI1FinalCredentialFormat;
+import net.openid.conformance.variant.VCICredentialEncryption;
+import net.openid.conformance.vci10issuer.condition.CheckCacheControlHeaderContainsNoStore;
+import net.openid.conformance.vci10issuer.condition.CheckForUnexpectedParametersInSdJwtVcTypeMetadata;
+import net.openid.conformance.vci10issuer.condition.VCIAddCredentialConfigurationIdToEnv;
+import net.openid.conformance.vci10issuer.condition.VCICaptureCredentialForLinkability;
+import net.openid.conformance.vci10issuer.condition.VCIDetectTypeMetadataExtends;
+import net.openid.conformance.vci10issuer.condition.VCIEnsureMandatoryClaimsArePresent;
+import net.openid.conformance.vci10issuer.condition.VCIEnsureMdocDeviceKeyMatchesProofKey;
+import net.openid.conformance.vci10issuer.condition.VCIEnsureSdJwtCnfMatchesProofKey;
+import net.openid.conformance.vci10issuer.condition.VCIEnsureSdJwtVcVctMatchesTypeMetadataVct;
+import net.openid.conformance.vci10issuer.condition.VCIEnsureSelectiveDisclosureConformsToTypeMetadata;
+import net.openid.conformance.vci10issuer.condition.VCIExtractSdJwtVcTypeMetadataUrl;
+import net.openid.conformance.vci10issuer.condition.VCIFetchSdJwtVcTypeMetadata;
+import net.openid.conformance.vci10issuer.condition.VCIValidateSdJwtVcTypeMetadataStructure;
+import net.openid.conformance.vci10issuer.condition.VCIVerifyTypeMetadataIntegrity;
+import net.openid.conformance.vci10issuer.condition.VCICheckForDeferredCredentialResponse;
+import net.openid.conformance.vci10issuer.condition.VCICheckKeyAttestationJwksIfKeyAttestationIsRequired;
+import net.openid.conformance.vci10issuer.condition.VCIDecryptCredentialResponse;
+import net.openid.conformance.vci10issuer.condition.VCIDetermineCredentialConfigurationTransferMethod;
+import net.openid.conformance.vci10issuer.condition.VCIEnsureCredentialResponseIsEncryptedJwe;
+import net.openid.conformance.vci10issuer.condition.VCIEnsureResolvedCredentialConfigurationMatchesSelection;
+
+import net.openid.conformance.condition.common.RARSupport;
+import net.openid.conformance.vci10issuer.condition.VCIEnsureCredentialIdentifiersUnchangedAcrossTokenResponses;
+import net.openid.conformance.vci10issuer.condition.VCIExtractCredentialIdentifiersFromTokenEndpointResponse;
+import net.openid.conformance.vci10issuer.condition.VCIExtractCredentialResponse;
+import net.openid.conformance.vci10issuer.condition.VCIValidateOpenidCredentialAuthorizationDetailsInTokenEndpointResponse;
+import net.openid.conformance.vci10issuer.condition.VCIWarnOnAuthorizationDetailsInTokenEndpointResponseConventions;
+import net.openid.conformance.vci10issuer.condition.VCIExtractTlsInfoFromCredentialIssuer;
+import net.openid.conformance.vci10issuer.condition.VCIFetchOAuthorizationServerMetadata;
+import net.openid.conformance.vci10issuer.condition.VCIGenerateClientJwksIfMissing;
+import net.openid.conformance.vci10issuer.condition.VCIGetDynamicCredentialIssuerMetadata;
+import net.openid.conformance.vci10issuer.condition.VCIParseCredentialIssuerMetadata;
+import net.openid.conformance.vci10issuer.condition.VCIResolveCredentialEndpointToUse;
+import net.openid.conformance.vci10issuer.condition.VCIResolveCredentialProofTypeToUse;
+import net.openid.conformance.vci10issuer.condition.VCIResolveRequestedCredentialConfiguration;
+import net.openid.conformance.vci10issuer.condition.VCISelectOAuthorizationServer;
+import net.openid.conformance.vci10issuer.condition.VCISetDiscoveryUrlFromAuthorizationServer;
+import net.openid.conformance.vci10issuer.condition.VCIValidateClientJWKsPrivatePart;
+import net.openid.conformance.vci10issuer.condition.VCIValidateNoUnknownKeysInCredentialResponse;
+import net.openid.conformance.vci10issuer.condition.clientattestation.CallClientAttestationChallengeEndpoint;
+import net.openid.conformance.vci10issuer.condition.clientattestation.CheckClientAttestationChallengeResponseForUnknownFields;
+import net.openid.conformance.vci10issuer.condition.clientattestation.CreateClientAttestationJwt;
+import net.openid.conformance.vci10issuer.condition.clientattestation.GenerateClientAttestationClientInstanceKey;
+import net.openid.conformance.vci10issuer.condition.clientattestation.ValidateClientAttestationChallengeResponse;
+
+import java.util.function.Supplier;
+
+/**
+ * Profile behavior for VCI (Verifiable Credentials Issuance) tests.
+ *
+ * Overrides FAPI2 behavior to:
+ * - Fetch credential issuer metadata instead of standard OIDC/OAuth discovery
+ * - Use VCI-specific client JWKs generation (allows missing JWKs)
+ * - Use VCI-specific client JWKs validation (allows multiple signing keys)
+ * - Configure credential encryption JWKs when encryption is enabled
+ * - Configure client attestation keys when client_attestation auth type is used
+ * - Set up the credential endpoint instead of a generic resource endpoint
+ * - Skip FAPI-specific resource endpoint headers (auth date, interaction ID)
+ */
+public class VCIProfileBehavior extends FAPI2ProfileBehavior {
+
+	protected VCI1FinalCredentialFormat credentialFormat;
+
+	@Override
+	public Supplier<? extends ConditionSequence> getProfileSpecificDiscoveryChecks() {
+		return DiscoveryEndpointChecks::new;
+	}
+
+	public static class DiscoveryEndpointChecks extends AbstractConditionSequence {
+		@Override
+		public void evaluate() {
+			callAndContinueOnFailure(CheckDiscEndpointGrantTypesSupportedContainsAuthorizationCode.class, ConditionResult.FAILURE);
+			call(new VCIDiscoveryEndpointChecks());
+		}
+	}
+
+	@Override
+	public boolean shouldExtractRARFromConfig() {
+		// VCI generates RAR from the credential configuration, not from user config
+		return false;
+	}
+
+	@Override
+	public void initializeVariants() {
+		module.jarm = false;
+		module.isPar = true;
+		module.isOpenId = false;
+		module.isSignedRequest = module.getVariant(FAPI2AuthRequestMethod.class) == FAPI2AuthRequestMethod.SIGNED_NON_REPUDIATION;
+		module.isRarRequest = module.getVariant(AuthorizationRequestType.class) == AuthorizationRequestType.RAR;
+		module.useDpopAuthCodeBinding = false;
+		module.profileRequiresMtlsEverywhere = false;
+		// VCI never uses client credentials grant
+		module.clientCredentialsGrant = false;
+		// this override does not call super, so the flag the base sets from the variant is set here too
+		module.isGrantManagement = module.getVariant(GrantManagement.class) == GrantManagement.ENABLED;
+
+		credentialFormat = module.getVariant(VCI1FinalCredentialFormat.class);
+	}
+
+	@Override
+	public ConditionSequence fetchServerConfiguration(boolean isOpenId) {
+		return new AbstractConditionSequence() {
+			@Override
+			public void evaluate() {
+				callAndStopOnFailure(VCIGetDynamicCredentialIssuerMetadata.class, "OID4VCI-1FINAL-12.2.2");
+				callAndStopOnFailure(VCIParseCredentialIssuerMetadata.class, "OID4VCI-1FINAL-12.2.2");
+				callAndStopOnFailure(VCIExtractTlsInfoFromCredentialIssuer.class);
+				callAndStopOnFailure(VCIFetchOAuthorizationServerMetadata.class, ConditionResult.FAILURE,
+					"OID4VCI-1FINAL-12.2.3", "RFC8414-3.1");
+				callAndStopOnFailure(VCISelectOAuthorizationServer.class, ConditionResult.FAILURE,
+					"OID4VCI-1FINAL-12.2.3");
+				if (credentialFormat == VCI1FinalCredentialFormat.MDOC) {
+					// register and validate the optionally configured VICAL used by the mdoc
+					// issuer trust checks in ValidateMdocCredential; done once at configure
+					// time (this behavior serves the FAPI2SP modules too, so this single spot
+					// covers every VCI issuer test family)
+					call(sequence(SetupVicalFromConfiguration.class));
+				}
+			}
+		};
+	}
+
+	@Override
+	public ConditionSequence configureClientExtra() {
+		// VCI client JWKs generation and encryption JWKs are handled in
+		// AbstractVCIIssuerTestModule.configureClient() where they run before validation
+		return configureCredentialConfigurationResolution(credentialFormat);
+	}
+
+	@Override
+	public ConditionSequence configureClientAttestation() {
+		if (module.getVariant(ClientAuthType.class) != ClientAuthType.CLIENT_ATTESTATION) {
+			return null;
+		}
+		return new AbstractConditionSequence() {
+			@Override
+			public void evaluate() {
+
+				// Only call challenge endpoint if server metadata advertises one
+				call(condition(CallClientAttestationChallengeEndpoint.class)
+					.skipIfElementMissing("server", "challenge_endpoint")
+					.requirement("OAuth2-ATCA07-8"));
+
+				call(exec().mapKey("endpoint_response", "challenge_endpoint_response"));
+				call(condition(EnsureHttpStatusCodeIs200.class)
+					.skipIfElementMissing("server", "challenge_endpoint")
+					.requirement("OAuth2-ATCA07-8")
+					.onFail(ConditionResult.FAILURE)
+					.dontStopOnFailure());
+				call(condition(EnsureContentTypeJson.class)
+					.skipIfElementMissing("server", "challenge_endpoint")
+					.requirement("OAuth2-ATCA07-8")
+					.onFail(ConditionResult.WARNING)
+					.dontStopOnFailure());
+				call(condition(CheckCacheControlHeaderContainsNoStore.class)
+					.skipIfElementMissing("server", "challenge_endpoint")
+					.requirement("OAuth2-ATCA07-8")
+					.onFail(ConditionResult.FAILURE)
+					.dontStopOnFailure());
+				call(condition(ValidateClientAttestationChallengeResponse.class)
+					.skipIfElementMissing("server", "challenge_endpoint")
+					.requirement("OAuth2-ATCA07-8"));
+				call(condition(CheckClientAttestationChallengeResponseForUnknownFields.class)
+					.skipIfElementMissing("server", "challenge_endpoint")
+					.requirement("OAuth2-ATCA07-8")
+					.onFail(ConditionResult.WARNING)
+					.dontStopOnFailure());
+				call(exec().unmapKey("endpoint_response"));
+
+				callAndStopOnFailure(GenerateClientAttestationClientInstanceKey.class, ConditionResult.FAILURE,
+					"OAuth2-ATCA07-1");
+				callAndStopOnFailure(CreateClientAttestationJwt.class, ConditionResult.FAILURE,
+					"OAuth2-ATCA07-1", "HAIP-4.3.1-2");
+			}
+		};
+	}
+
+	@Override
+	public ConditionSequence afterTokenEndpointResponseProcessed() {
+		return new AbstractConditionSequence() {
+			@Override
+			public void evaluate() {
+				// Generic RAR-level checks (presence, array shape, per-entry type).
+				// Gated on authorization_endpoint_request.authorization_details actually
+				// being populated by RARSupport.AddRARToAuthorizationEndpointRequest —
+				// merely populating env.rar during client setup is not enough, since
+				// e.g. the no-scope + AuthorizationRequestType=SIMPLE case populates
+				// rar but never adds authorization_details to the outbound request.
+				call(condition(RARSupport.CheckForAuthorizationDetailsInTokenResponse.class)
+					.skipIfElementMissing("authorization_endpoint_request", "authorization_details")
+					.onSkip(ConditionResult.INFO)
+					.requirements("OID4VCI-1FINAL-6.2", "RFC9396-7")
+					.dontStopOnFailure());
+
+				// openid_credential-specific structural FAILURE checks.
+				call(condition(VCIValidateOpenidCredentialAuthorizationDetailsInTokenEndpointResponse.class)
+					.skipIfElementMissing("token_endpoint_response", "authorization_details")
+					.onSkip(ConditionResult.INFO)
+					.requirements("OID4VCI-1FINAL-6.2", "OID4VCI-1FINAL-5.1.1")
+					.dontStopOnFailure());
+
+				// Cross-response consistency check; must run BEFORE the extractor
+				// overwrites the prior set under client.credential_identifiers_by_config_id.
+				call(condition(VCIEnsureCredentialIdentifiersUnchangedAcrossTokenResponses.class)
+					.skipIfElementMissing("token_endpoint_response", "authorization_details")
+					.onSkip(ConditionResult.INFO)
+					.requirement("OpenID4VCI-739")
+					.dontStopOnFailure());
+
+				// WARNING-grade convention checks.
+				call(condition(VCIWarnOnAuthorizationDetailsInTokenEndpointResponseConventions.class)
+					.skipIfElementMissing("token_endpoint_response", "authorization_details")
+					.onSkip(ConditionResult.INFO)
+					.requirements("OID4VCI-1FINAL-5.1.1", "OID4VCI-1FINAL-6.2")
+					.onFail(ConditionResult.WARNING)
+					.dontStopOnFailure());
+
+				// Finally, record/refresh client.credential_identifiers_by_config_id.
+				callAndStopOnFailure(VCIExtractCredentialIdentifiersFromTokenEndpointResponse.class, "OID4VCI-1FINAL-6.2");
+			}
+		};
+	}
+
+	@Override
+	public ConditionSequence validateClientJwksPrivatePart() {
+		return new AbstractConditionSequence() {
+			@Override
+			public void evaluate() {
+				callAndStopOnFailure(VCIGenerateClientJwksIfMissing.class);
+				// VCI-specific validation that allows multiple signing keys for attestation proof type
+				callAndStopOnFailure(VCIValidateClientJWKsPrivatePart.class, "RFC7517-1.1");
+			}
+		};
+	}
+
+	@Override
+	public ConditionSequence setupResourceEndpoint() {
+		return new AbstractConditionSequence() {
+			@Override
+			public void evaluate() {
+				// Resolve credential endpoint URL from issuer metadata (not from user config)
+				callAndStopOnFailure(VCIResolveCredentialEndpointToUse.class);
+				// Copy resource.resourceUrl to protected_resource_url
+				callAndStopOnFailure(SetProtectedResourceUrlToSingleResourceEndpoint.class);
+			}
+		};
+	}
+
+	@Override
+	public ConditionSequence addResourceEndpointProfileHeaders(boolean isSecondClient) {
+		// VCI does not use FAPI-specific resource endpoint headers
+		return null;
+	}
+
+	@Override
+	public ConditionSequence setupResourceEndpointRequestBody() {
+		return new AbstractConditionSequence() {
+			@Override
+			public void evaluate() {
+				call(callNonceEndpointIfNeeded());
+				call(exec().putString("resource", "resourceMethod", "POST"));
+				call(exec().putString("resource", "resourceMediaType", "application/json"));
+				call(exec().putString("resource_endpoint_request_headers", "Content-Type", "application/json"));
+				call(generateProofAndPopulateCredentialRequest());
+			}
+		};
+	}
+
+	protected ConditionSequence callNonceEndpointIfNeeded() {
+		return new AbstractConditionSequence() {
+			@Override
+			public void evaluate() {
+				Boolean requiresCryptographicBinding = module.getEnv().getBoolean("vci_requires_cryptographic_binding");
+				if (requiresCryptographicBinding == null || !requiresCryptographicBinding) {
+					return;
+				}
+				if (module.getEnv().getElementFromObject("vci", "credential_issuer_metadata.nonce_endpoint") == null) {
+					return;
+				}
+
+				callAndStopOnFailure(CallCredentialIssuerNonceEndpoint.class, "OID4VCI-1FINAL-7.1");
+				call(exec().mapKey("endpoint_response", "nonce_endpoint_response"));
+				call(new ValidateVCINonceEndpointResponse());
+				call(exec().unmapKey("endpoint_response"));
+			}
+		};
+	}
+
+	protected ConditionSequence generateProofAndPopulateCredentialRequest() {
+		return new AbstractConditionSequence() {
+			@Override
+			public void evaluate() {
+				Boolean requiresCryptographicBinding = module.getEnv().getBoolean("vci_requires_cryptographic_binding");
+
+				if (requiresCryptographicBinding != null && requiresCryptographicBinding) {
+					String proofTypeKey = module.getEnv().getString("vci_proof_type_key");
+					call(new GenerateVCIKeyAttestationAndProofSteps(proofTypeKey));
+				}
+
+				boolean encrypted = module.getVariant(VCICredentialEncryption.class) == VCICredentialEncryption.ENCRYPTED;
+				call(new CreateVCICredentialRequestSteps(encrypted));
+			}
+		};
+	}
+
+	@Override
+	public ConditionSequence createUpdateResourceRequestSteps(
+			Supplier<? extends ConditionSequence> createDpopForResourceEndpointSteps) {
+		return new AbstractConditionSequence() {
+			@Override
+			public void evaluate() {
+				// Call nonce endpoint for a fresh nonce before regenerating the proof
+				call(callNonceEndpointIfNeeded());
+				call(generateProofAndPopulateCredentialRequest());
+				if (createDpopForResourceEndpointSteps != null) {
+					call(sequence(createDpopForResourceEndpointSteps));
+				}
+			}
+		};
+	}
+
+	@Override
+	public ConditionSequence validateResourceEndpointResponseHeaders(boolean isSecondClient) {
+		return null;
+	}
+
+	@Override
+	public ConditionSequence validateResourceEndpointResponse() {
+		return new AbstractConditionSequence() {
+			@Override
+			public void evaluate() {
+				call(exec().mapKey("endpoint_response", "resource_endpoint_response_full"));
+				boolean encrypted = module.getVariant(VCICredentialEncryption.class) == VCICredentialEncryption.ENCRYPTED;
+				if (encrypted) {
+					callAndContinueOnFailure(EnsureContentTypeApplicationJwt.class, ConditionResult.FAILURE, "OID4VCI-1FINAL-8.3");
+					callAndStopOnFailure(VCIEnsureCredentialResponseIsEncryptedJwe.class, "OID4VCI-1FINAL-8.3.1.2");
+					callAndStopOnFailure(VCIDecryptCredentialResponse.class, "OID4VCI-1FINAL-10");
+				} else {
+					callAndContinueOnFailure(EnsureContentTypeJson.class, ConditionResult.FAILURE, "OID4VCI-1FINAL-8.3");
+				}
+				callAndContinueOnFailure(VCIValidateNoUnknownKeysInCredentialResponse.class, ConditionResult.WARNING, "OID4VCI-1FINAL-8.3");
+
+				callAndStopOnFailure(VCICheckForDeferredCredentialResponse.class, "OID4VCI-1FINAL-9");
+				callAndStopOnFailure(VCIExtractCredentialResponse.class, "OID4VCI-1FINAL-8.3");
+
+				call(new IterateEnvironmentArray("extracted_credentials", "list", () -> verifyCredential())
+					.currentString("credential")
+					.logBlockLabels(ctx -> ctx.getIterationCount() > 1
+						? module.currentClientString() + "Verify credential " + ctx.getIteration() + " of " + ctx.getIterationCount()
+						: module.currentClientString() + "Verify credential"));
+
+				call(exec().unmapKey("endpoint_response"));
+			}
+		};
+	}
+
+	public ConditionSequence verifyCredential() {
+		return new AbstractConditionSequence() {
+			@Override
+			public void evaluate() {
+				Boolean requiresCryptographicBinding = module.getEnv().getBoolean("vci_requires_cryptographic_binding");
+				String format = module.getEnv().getString("vci_credential_configuration", "format");
+
+				if ("mso_mdoc".equals(format)) {
+					call(verifyMdocCredential());
+				} else {
+					call(verifySdJwtCredential(requiresCryptographicBinding != null && requiresCryptographicBinding));
+				}
+			}
+		};
+	}
+
+	/**
+	 * Per-credential verification for the VCI issuer test modules: everything
+	 * {@link #verifyCredential()} checks plus credential-content conformance checks that
+	 * are deliberately not run from validateResourceEndpointResponse(), so the FAPI2
+	 * security-profile modules sharing that path don't re-check the same content in every
+	 * module.
+	 */
+	public ConditionSequence verifyIssuedCredential() {
+		return new AbstractConditionSequence() {
+			@Override
+			public void evaluate() {
+				call(verifyCredential());
+
+				String format = module.getEnv().getString("vci_credential_configuration", "format");
+				if ("mso_mdoc".equals(format)) {
+					// The check only applies to mDL credentials (it no-ops for other docTypes), and
+					// ISO/IEC 18013-5 defines those mandatory data elements regardless of profile,
+					// so missing elements are always a failure.
+					callAndContinueOnFailure(ValidateMdocMsoValidityInfoTimestamps.class,
+						ConditionResult.FAILURE, "ISO18013-5-12.3.4", "ISO23220-4-A.1.2.4.2");
+					callAndContinueOnFailure(EnsureMdocMdlMandatoryDataElementsPresent.class,
+						ConditionResult.FAILURE, "ISO18013-5-7.2.1");
+					callAndContinueOnFailure(EnsureIssuedMdocMdlElementsAreDefined.class,
+						ConditionResult.WARNING, "ISO18013-5-13.4.1");
+					callAndContinueOnFailure(EnsureMdocMdlElementValuesAreValid.class,
+						ConditionResult.FAILURE, "ISO18013-5-13.4.2");
+					callAndContinueOnFailure(EnsureMdocPhotoIdMandatoryDataElementsPresent.class,
+						ConditionResult.FAILURE, "ISO23220-4-C");
+					callAndContinueOnFailure(EnsureMdocPhotoIdRecommendedDataElementsPresent.class,
+						ConditionResult.WARNING, "ISO23220-4-C");
+					callAndContinueOnFailure(EnsureMdocPhotoIdConditionalDataElementsPresent.class,
+						ConditionResult.FAILURE, "ISO23220-4-C");
+					callAndContinueOnFailure(EnsureIssuedMdocPhotoIdElementsAreDefined.class,
+						ConditionResult.WARNING, "ISO23220-4-C");
+					callAndContinueOnFailure(EnsureMdocPhotoIdElementValuesAreValid.class,
+						ConditionResult.FAILURE, "ISO23220-4-C");
+					callAndContinueOnFailure(EnsureMdocAgeOverElementsConsistentWithBirthDate.class,
+						ConditionResult.FAILURE, "ISO18013-5-13.4.6", "ISO23220-2-6.3.2.2");
+					callAndContinueOnFailure(EnsureMdocAgeInYearsConsistentWithBirthDate.class,
+						ConditionResult.WARNING, "ISO18013-5-13.4.6", "ISO23220-2-6.3.2.2");
+				}
+			}
+		};
+	}
+
+	protected ConditionSequence verifyMdocCredential() {
+		return new AbstractConditionSequence() {
+			@Override
+			public void evaluate() {
+				callAndContinueOnFailure(ValidateCredentialIsUnpaddedBase64Url.class, ConditionResult.FAILURE, "OID4VCI-1FINALA-A.2.4");
+				// every following check depends on the parsed credential, so stop rather than continue
+				// into checks that would skip or see a previously parsed credential's state
+				callAndStopOnFailure(ParseMdocCredentialFromVCIIssuance.class, "OID4VCI-1FINALA-A.2");
+				// Capture the whole credential + the issuer's Date header now (see SD-JWT path). Tests
+				// that obtain two or more credentials of the same dataset later compare the MSO signed
+				// timestamps (RFC 9901 §10.1 unlinkability applies to mdoc too).
+				callAndContinueOnFailure(VCICaptureCredentialForLinkability.class, ConditionResult.WARNING, "SDJWT-10.1");
+				call(new ValidateMdocCredential(true, isHaip()));
+
+				// no proofs are sent when the credential configuration doesn't use cryptographic binding
+				call(condition(VCIEnsureMdocDeviceKeyMatchesProofKey.class)
+					.skipIfObjectMissing("credential_request_proofs")
+					.skipIfObjectMissing("mdoc_device_key_jwk")
+					.onSkip(ConditionResult.INFO)
+					.onFail(ConditionResult.FAILURE)
+					.requirements("OID4VCI-1FINAL-8.3")
+					.dontStopOnFailure());
+			}
+		};
+	}
+
+	protected ConditionSequence verifySdJwtCredential(boolean requiresCryptographicBinding) {
+		return new AbstractConditionSequence() {
+			@Override
+			public void evaluate() {
+				// every following check depends on the parsed credential, so stop rather than continue
+				// into checks that would skip or see a previously parsed credential's state
+				callAndStopOnFailure(ParseCredentialAsSdJwt.class, "SDJWT-4");
+				// Capture the whole credential + the issuer's Date header now, before any notification
+				// request overwrites the response headers. Tests that obtain two or more credentials of
+				// the same dataset later compare them (RFC 9901 §10.1 unlinkability).
+				callAndContinueOnFailure(VCICaptureCredentialForLinkability.class, ConditionResult.WARNING, "SDJWT-10.1");
+				call(new ValidateSdJwtVcCredentialClaims(requiresCryptographicBinding, isHaip()));
+				callAndContinueOnFailure(EnsureSdJwtVcVctMatchesCredentialConfiguration.class,
+					ConditionResult.FAILURE, "OID4VCI-1FINALA-A.3.2");
+
+				if (requiresCryptographicBinding) {
+					call(condition(VCIEnsureSdJwtCnfMatchesProofKey.class)
+						.skipIfObjectMissing("sdjwt")
+						.onSkip(ConditionResult.INFO)
+						.onFail(ConditionResult.FAILURE)
+						.requirements("OID4VCI-1FINAL-8.3")
+						.dontStopOnFailure());
+				}
+
+				// SD-JWT VC Type Metadata validation per draft-ietf-oauth-sd-jwt-vc-13 (HAIP 1.0 reference).
+				callAndContinueOnFailure(VCIExtractSdJwtVcTypeMetadataUrl.class, ConditionResult.FAILURE, "SDJWTVC-6.3.1");
+
+				// All downstream checks gate on the prior step's env value so the chain
+				// quietly no-ops when vct is not an HTTPS URL.
+				call(condition(VCIFetchSdJwtVcTypeMetadata.class)
+					.skipIfElementMissing("vci", "sdjwt_vc_type_metadata_url")
+					.onSkip(ConditionResult.INFO)
+					.onFail(ConditionResult.FAILURE)
+					.requirements("SDJWTVC-6.3.1")
+					.dontStopOnFailure());
+
+				call(condition(VCIVerifyTypeMetadataIntegrity.class)
+					.skipIfElementMissing("vci", "sdjwt_vc_type_metadata")
+					.onSkip(ConditionResult.INFO)
+					.onFail(ConditionResult.FAILURE)
+					.requirements("SDJWTVC-6.3.1", "SDJWTVC-7")
+					.dontStopOnFailure());
+
+				call(condition(VCIEnsureSdJwtVcVctMatchesTypeMetadataVct.class)
+					.skipIfElementMissing("vci", "sdjwt_vc_type_metadata")
+					.onSkip(ConditionResult.INFO)
+					.onFail(ConditionResult.FAILURE)
+					.requirements("SDJWTVC-6.3")
+					.dontStopOnFailure());
+
+				call(condition(VCIValidateSdJwtVcTypeMetadataStructure.class)
+					.skipIfElementMissing("vci", "sdjwt_vc_type_metadata")
+					.onSkip(ConditionResult.INFO)
+					.onFail(ConditionResult.FAILURE)
+					.requirements("SDJWTVC-6.2", "SDJWTVC-9")
+					.dontStopOnFailure());
+
+				call(condition(CheckForUnexpectedParametersInSdJwtVcTypeMetadata.class)
+					.skipIfElementMissing("vci", "sdjwt_vc_type_metadata")
+					.onSkip(ConditionResult.INFO)
+					.onFail(ConditionResult.WARNING)
+					.requirements("SDJWTVC-6.2")
+					.dontStopOnFailure());
+
+				// extends-chain processing is not yet implemented: surface a WARNING
+				// when extends is present so the limitation is visible, then let
+				// mandatory/sd checks run against the child's directly-declared
+				// claims. Per §9.5.1 child constraints can only be stricter than
+				// parent, so child-only checks may produce false negatives for
+				// inherited constraints but cannot produce false positives.
+				call(condition(VCIDetectTypeMetadataExtends.class)
+					.skipIfElementMissing("vci", "sdjwt_vc_type_metadata")
+					.onSkip(ConditionResult.INFO)
+					.onFail(ConditionResult.WARNING)
+					.requirements("SDJWTVC-6.4", "SDJWTVC-9.5")
+					.dontStopOnFailure());
+
+				call(condition(VCIEnsureMandatoryClaimsArePresent.class)
+					.skipIfElementMissing("vci", "sdjwt_vc_type_metadata")
+					.onSkip(ConditionResult.INFO)
+					.onFail(ConditionResult.FAILURE)
+					.requirements("SDJWTVC-9.3")
+					.dontStopOnFailure());
+
+				call(condition(VCIEnsureSelectiveDisclosureConformsToTypeMetadata.class)
+					.skipIfElementMissing("vci", "sdjwt_vc_type_metadata")
+					.onSkip(ConditionResult.INFO)
+					.onFail(ConditionResult.FAILURE)
+					.requirements("SDJWTVC-9.4")
+					.dontStopOnFailure());
+			}
+		};
+	}
+
+	/**
+	 * Whether this profile behavior is for HAIP. Used to parametrise
+	 * {@link ValidateMdocCredential} and {@link ValidateSdJwtVcCredentialClaims} so the HAIP-only
+	 * checks (revocation mechanism, x5c chains, validity-info presence) are included only on
+	 * HAIP runs.
+	 */
+	protected boolean isHaip() {
+		return false;
+	}
+
+	@Override
+	public Class<? extends AbstractCondition> getDiscoveryTokenEndpointAuthMethodsCheck() {
+		return CheckDiscEndpointTokenEndpointAuthMethodsSupportedContainsPrivateKeyOrTlsClientOrAttestation.class;
+	}
+
+	// --- Discovery endpoint verification overrides ---
+
+	@Override
+	public ConditionSequence discoveryFetchServerConfiguration(boolean isOpenId) {
+		return new AbstractConditionSequence() {
+			@Override
+			public void evaluate() {
+				callAndStopOnFailure(VCIGetDynamicCredentialIssuerMetadata.class, "OID4VCI-1FINAL-12.2.2");
+				callAndStopOnFailure(VCIParseCredentialIssuerMetadata.class, "OID4VCI-1FINAL-12.2.2");
+				callAndStopOnFailure(VCIFetchOAuthorizationServerMetadata.class, ConditionResult.FAILURE,
+					"OID4VCI-1FINAL-12.2.3", "RFC8414-3.1");
+				callAndStopOnFailure(VCISelectOAuthorizationServer.class, ConditionResult.FAILURE,
+					"OID4VCI-1FINAL-12.2.3");
+			}
+		};
+	}
+
+	@Override
+	public ConditionSequence discoveryAfterServerConfigurationFetched() {
+		return new AbstractConditionSequence() {
+			@Override
+			public void evaluate() {
+				callAndStopOnFailure(VCISetDiscoveryUrlFromAuthorizationServer.class);
+			}
+		};
+	}
+
+	protected ConditionSequence configureCredentialConfigurationResolution(VCI1FinalCredentialFormat vciCredentialFormat) {
+		return new AbstractConditionSequence() {
+			@Override
+			public void evaluate() {
+
+				callAndStopOnFailure(VCIAddCredentialConfigurationIdToEnv.class);
+				call(exec().exposeEnvironmentString("credential_configuration_id"));
+
+				callAndStopOnFailure(VCIResolveRequestedCredentialConfiguration.class, ConditionResult.FAILURE);
+				callAndStopOnFailure(new VCIEnsureResolvedCredentialConfigurationMatchesSelection(vciCredentialFormat));
+
+				callAndStopOnFailure(VCIDetermineCredentialConfigurationTransferMethod.class, ConditionResult.FAILURE);
+				callAndStopOnFailure(VCIResolveCredentialProofTypeToUse.class, ConditionResult.FAILURE);
+
+				// Only check key attestation if cryptographic binding is required
+				callAndStopOnFailure(VCICheckKeyAttestationJwksIfKeyAttestationIsRequired.class, ConditionResult.FAILURE);
+			}
+		};
+	}
+
+}

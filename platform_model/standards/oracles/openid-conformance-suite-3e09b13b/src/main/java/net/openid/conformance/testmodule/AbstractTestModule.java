@@ -1,0 +1,1421 @@
+package net.openid.conformance.testmodule;
+
+import com.google.common.base.Strings;
+import com.google.common.base.Suppliers;
+import com.google.common.collect.ImmutableMap;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import net.openid.conformance.util.BrainpoolSignatureProvider;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+import net.openid.conformance.condition.Condition;
+import net.openid.conformance.condition.ConditionError;
+import net.openid.conformance.condition.common.UnexpectedHttpRequestReceived;
+import net.openid.conformance.frontchannel.BrowserControl;
+import net.openid.conformance.info.ImageService;
+import net.openid.conformance.info.TestInfoService;
+import net.openid.conformance.logging.TestInstanceEventLog;
+import net.openid.conformance.runner.TestExecutionManager;
+import net.openid.conformance.runner.TestStatusWaiterService;
+import net.openid.conformance.sequence.AbstractConditionSequence;
+import net.openid.conformance.sequence.ConditionSequence;
+import net.openid.conformance.sequence.SkippedCondition;
+import org.apache.commons.lang3.tuple.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+
+import java.lang.reflect.InvocationTargetException;
+import java.time.Instant;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
+
+public abstract class AbstractTestModule implements TestModule, DataUtils {
+
+	private static final Logger logger = LoggerFactory.getLogger(AbstractTestModule.class);
+
+	public static final boolean LOG_FINAL_ENV = Boolean.parseBoolean(System.getProperty("net.openid.conformance.testModules.logFinalEnv", "true"));
+
+	static {
+		// registers BouncyCastle and the brainpool delegating provider
+		BrainpoolSignatureProvider.ensureInstalled();
+	}
+
+	private String id = null; // unique identifier for the test, set from the outside
+	private volatile Status status = Status.NOT_YET_CREATED; // current status of the test
+	private Result result = Result.UNKNOWN; // results of running the test
+
+	private Map<Class<? extends Enum<?>>, ? extends Enum<?>> variant;
+	private Map<String, String> owner; // Owner of the test (i.e. who created it. Should be subject and issuer from OIDC
+	protected TestInstanceEventLog eventLog;
+	protected BrowserControl browser;
+	protected TestExecutionManager executionManager;
+	protected Map<String, String> exposed = new HashMap<>(); // exposes runtime values to outside modules
+	protected Environment env = new Environment(); // keeps track of values at runtime
+	private Instant created; // time stamp of when this test created
+	private Instant statusUpdated; // time stamp of when the status was last updated
+	private TestInterruptedException finalError; // final error from running the test
+	private boolean cleanupCalled = false;
+
+	protected TestInfoService testInfo;
+	protected ImageService imageService;
+	private TestLockManager testLockManager;
+
+	// Plain field — NOT @Autowired. TestModule instances are reflectively constructed via
+	// Class.getDeclaredConstructor().newInstance() (VariantService) so they are not Spring beans;
+	// dependencies are wired via setters from TestRunner. Null-safe checks in setStatusInternal
+	// guard against the very first CREATED transition that fires inside setProperties (line 129),
+	// which happens before TestRunner.setTestStatusWaiterService() has had a chance to inject this.
+	private TestStatusWaiterService testStatusWaiterService;
+
+	private Supplier<String> testNameSupplier = Suppliers.memoize(() -> getClass().getDeclaredAnnotation(PublishTestModule.class).testName());
+
+	protected AbstractTestModule() {
+
+	}
+
+	public TestInstanceEventLog getEventLog() {
+		return eventLog;
+	}
+
+	@Override
+	public boolean autoStart() {
+		/* automatically start all tests by default */
+		return true;
+	}
+
+	@Override
+	public void setProperties(String id, Map<String, String> owner, TestInstanceEventLog eventLog, BrowserControl browser, TestInfoService testInfo, TestExecutionManager executionManager, ImageService imageService) {
+		this.id = id;
+		this.owner = owner;
+		this.eventLog = eventLog;
+		this.browser = browser;
+		this.testInfo = testInfo;
+		this.executionManager = executionManager;
+		this.imageService = imageService;
+
+		// Surface the owner identity in env so utilities like PreGeneratedJwks
+		// and reuse-detection checks (RecentValueHistory-backed) can scope state
+		// per authenticated user without each test-family subclass having to
+		// remember to call this.
+		exposeOwnerIdToEnvironment();
+
+		this.created = Instant.now();
+		this.statusUpdated = created; // this will get changed in a moment but set it here for completeness
+
+		this.testLockManager = new TestLockManager() {
+			private volatile boolean enabled = true;
+
+			@Override
+			public void releaseLock() {
+				if (enabled) {
+					setStatusInternal(Status.WAITING);
+				}
+			}
+
+			@Override
+			public void reacquireLock() {
+				if (enabled) {
+					setStatusInternal(Status.RUNNING);
+				}
+			}
+
+			@Override
+			public void disable() {
+				enabled = false;
+			}
+		};
+
+		setStatusInternal(Status.CREATED);
+	}
+
+	@Override
+	public void setTestStatusWaiterService(TestStatusWaiterService service) {
+		this.testStatusWaiterService = service;
+	}
+
+	@Override
+	public void setVariant(Map<Class<? extends Enum<?>>, ? extends Enum<?>> variant) {
+		this.variant = variant;
+	}
+
+	public <T extends Enum<T>> T getVariant(Class<T> parameter) {
+		Enum<?> value = variant.get(parameter);
+		if (value == null) {
+			throw new IllegalArgumentException("Invalid variant parameter: " + parameter.getSimpleName());
+		} else if (!parameter.isAssignableFrom(value.getClass())) {
+			throw new RuntimeException("BUG: invalid value for variant %s: %s".formatted(
+				parameter.getSimpleName(),
+				value));
+		}
+		return parameter.cast(value);
+	}
+
+	/**
+	 * Like {@link #getVariant(Class)}, but returns {@code defaultValue} instead of throwing
+	 * when no value is set for {@code parameter}.
+	 *
+	 * <p>Intended for plan-level context variants that a module does not declare itself:
+	 * when a module runs inside a test plan, {@code VariantService} also injects the variant
+	 * values the plan's <em>other</em> modules declare (see
+	 * {@code TestModuleHolder.newInstance(VariantSelection, Map)}), but when the same module
+	 * runs outside that plan those values are simply absent.
+	 */
+	public <T extends Enum<T>> T getVariantOrDefault(Class<T> parameter, T defaultValue) {
+		if (variant == null || !variant.containsKey(parameter)) {
+			return defaultValue;
+		}
+		return getVariant(parameter);
+	}
+
+	@Override
+	public Map<String, String> getOwner() {
+		return owner;
+	}
+
+	/**
+	 * Surface a stable identifier for the logged-in suite user (subject + issuer) into the
+	 * environment under {@code owner_id}, plus the split fields {@code owner_sub} /
+	 * {@code owner_iss} for code that wants to reconstruct a typed key without re-parsing
+	 * the joined string. Used by reuse-detection checks (RecentValueHistory) and by the
+	 * per-owner keypair cache (PreGeneratedJwks). No-op when the owner is unknown
+	 * (e.g. some unit-test setups).
+	 */
+	protected void exposeOwnerIdToEnvironment() {
+		Map<String, String> currentOwner = getOwner();
+		if (currentOwner != null) {
+			String sub = currentOwner.get("sub");
+			String iss = currentOwner.get("iss");
+			if (sub != null && iss != null) {
+				env.putString("owner_id", sub + " " + iss);
+				env.putString("owner_sub", sub);
+				env.putString("owner_iss", iss);
+			}
+		}
+	}
+
+	/**
+	 * Create and evaluate a Condition in the current environment. Throw a @TestFailureException if the Condition fails.
+	 *
+	 * onFail is set to FAILURE
+	 *
+	 */
+	protected void callAndStopOnFailure(Condition condition, String... requirements) {
+		call(condition(condition)
+			.onFail(Condition.ConditionResult.FAILURE)
+			.requirements(requirements));
+	}
+
+	/**
+	 * Create and evaluate a Condition in the current environment. Throw a @TestFailureException if the Condition fails.
+	 *
+	 * onFail is set to FAILURE
+	 *
+	 */
+	protected void callAndStopOnFailure(Class<? extends Condition> conditionClass, String... requirements) {
+		call(condition(conditionClass)
+			.onFail(Condition.ConditionResult.FAILURE)
+			.requirements(requirements));
+	}
+
+	/**
+	 * Create and evaluate a Condition in the current environment. Throw a @TestFailureException if the Condition fails.
+	 */
+	protected void callAndStopOnFailure(Condition condition, Condition.ConditionResult onFail, String... requirements) {
+		if (onFail != Condition.ConditionResult.FAILURE) {
+			throw new TestFailureException(getId(), "callAndStopOnFailure called with onFail != ConditionResult.FAILURE");
+		}
+		call(condition(condition)
+			.requirements(requirements)
+			.onFail(onFail));
+	}
+
+	/**
+	 * Create and evaluate a Condition in the current environment. Throw a @TestFailureException if the Condition fails.
+	 */
+	protected void callAndStopOnFailure(Class<? extends Condition> conditionClass, Condition.ConditionResult onFail, String... requirements) {
+		if (onFail != Condition.ConditionResult.FAILURE) {
+			throw new TestFailureException(getId(), "callAndStopOnFailure called with onFail != ConditionResult.FAILURE");
+		}
+		call(condition(conditionClass)
+			.requirements(requirements)
+			.onFail(onFail));
+	}
+
+	private void logException(Throwable e) {
+		Map<String, Object> event = ex(e);
+		event.put("msg", "Caught exception from test framework: " + e.getMessage());
+
+		eventLog.log(getName(), event);
+	}
+
+	/**
+	 * Create and evaluate a Condition in the current environment. Log but ignore if the Condition fails.
+	 */
+	protected void callAndContinueOnFailure(Condition condition, Condition.ConditionResult onFail, String... requirements) {
+		call(condition(condition)
+			.requirements(requirements)
+			.onFail(onFail)
+			.dontStopOnFailure());
+	}
+
+	/**
+	 * Create and evaluate a Condition in the current environment. Log but ignore if the Condition fails.
+	 */
+	protected void callAndContinueOnFailure(Class<? extends Condition> conditionClass, Condition.ConditionResult onFail, String... requirements) {
+		call(condition(conditionClass)
+			.requirements(requirements)
+			.onFail(onFail)
+			.dontStopOnFailure());
+	}
+
+	/**
+	 * Create and evaluate a Condition in the current environment, but only if the environment contains the given
+	 * objects and strings (both can be null).
+	 *
+	 * onFail is set to INFO
+	 *
+	 * requirements are empty
+	 */
+	protected void skipIfMissing(String[] required, String[] strings, Condition.ConditionResult onSkip,
+		Class<? extends Condition> conditionClass) {
+
+		call(condition(conditionClass)
+			.skipIfObjectsMissing(required)
+			.skipIfStringsMissing(strings)
+			.onSkip(onSkip)
+			.onFail(Condition.ConditionResult.INFO)
+			.dontStopOnFailure());
+	}
+
+	/**
+	 * Create and evaluate a Condition in the current environment, but only if the environment contains the given
+	 * objects and strings (both can be null).
+	 *
+	 * onFail is set to WARNING
+	 *
+	 */
+	protected void skipIfMissing(String[] required, String[] strings, Condition.ConditionResult onSkip,
+		Class<? extends Condition> conditionClass, String... requirements) {
+		call(condition(conditionClass)
+			.skipIfObjectsMissing(required)
+			.skipIfStringsMissing(strings)
+			.onSkip(onSkip)
+			.requirements(requirements)
+			.onFail(Condition.ConditionResult.WARNING)
+			.dontStopOnFailure());
+	}
+
+	/**
+	 * Create and evaluate a Condition in the current environment, but only if the environment contains the given
+	 * objects and strings (both can be null).
+	 *
+	 */
+	protected void skipIfMissing(String[] required, String[] strings, Condition.ConditionResult onSkip,
+								 Class<? extends Condition> conditionClass, Condition.ConditionResult onFail, String... requirements) {
+		call(condition(conditionClass)
+			.skipIfObjectsMissing(required)
+			.skipIfStringsMissing(strings)
+			.onSkip(onSkip)
+			.requirements(requirements)
+			.onFail(onFail)
+			.dontStopOnFailure());
+	}
+
+	/**
+	 * Create and evaluate a Condition in the current environment, but only if the environment contains the given
+	 * objects and strings (both can be null).
+	 */
+	protected void skipIfElementMissing(String objId, String path, Condition.ConditionResult onSkip,
+										Class<? extends Condition> conditionClass, Condition.ConditionResult onFail, String... requirements) {
+		call(condition(conditionClass)
+			.skipIfElementMissing(objId, path)
+			.onSkip(onSkip)
+			.requirements(requirements)
+			.onFail(onFail)
+			.dontStopOnFailure());
+	}
+
+	/**
+	 * Call the condition as specified in the builder. The ConditionCallBuilder is accessed in the following order:
+	 *
+	 *  - condition class is instantiated
+	 *  - missing objects are checked
+	 *  - missing strings are checked
+	 *  - missing elements are checked
+	 *  - pre-environment objects are checked
+	 *  - pre-environment strings are checked
+	 *  - condition is evaluated
+	 *  - if failed, either throw a test exception or just log the failure
+	 *  - if not failed:
+	 *  	- post-environment objects are checked
+	 *  	- post-environment strings are checked
+	 *
+	 * @param builder the fully configured condition call builder
+	 */
+	protected void call(ConditionCallBuilder builder) {
+
+		if (getStatus() != Status.CREATED) {
+			// We don't run this check for 'CREATED' as the lock is currently not held during 'configure'; see
+			// https://gitlab.com/openid/conformance-suite/issues/688
+			if (!env.getLock().isHeldByCurrentThread()) {
+				if (getStatus() != Status.RUNNING) {
+					throw new TestFailureException(getId(), "Condition '" +
+						builder.getConditionClass().getSimpleName() + "' called when test status is '" +
+						getStatus() + "'. This is a bug in the test module and probably means that a call to " +
+						"setStatus(Status.RUNNING) is missing.");
+				}
+
+				throw new TestFailureException(getId(), "Condition '" + builder.getConditionClass().getSimpleName()
+					+ "' called on a thread that does not hold lock (test status is '" + getStatus() + "'). This " +
+					"is a bug in the test module.");
+			}
+		}
+
+		try {
+
+			Condition condition = builder.getCondition();
+			if (condition == null) {
+				// create a new condition object from the class above
+				condition = builder.getConditionClass()
+					.getDeclaredConstructor()
+					.newInstance();
+			}
+			condition.setProperties(id, eventLog, builder.getOnFail(), builder.getRequirements());
+			condition.setLockManager(testLockManager);
+
+			logger.info(getId() + ": " + (builder.isStopOnFailure() ? ">>" : "}}") + " Calling Condition " + builder.getConditionClass().getSimpleName());
+
+			// check the environment to see if we need to skip this call
+			for (String req : builder.getSkipIfObjectsMissing()) {
+				if (!env.containsObject(req)) {
+					logger.info(getId() + ": [skip] Test condition " + builder.getConditionClass().getSimpleName() + " skipped, couldn't find key in environment: " + req);
+					eventLog.log(condition.getMessage(), args(
+						"msg", "Skipped evaluation due to missing required object: " + req,
+						"expected", req,
+						"result", builder.getOnSkip(),
+						"mapped", env.isKeyShadowed(req) ? env.getEffectiveKey(req) : null,
+						"requirements", builder.getRequirements()
+					// TODO: log the environment here?
+					));
+					updateResultFromConditionFailure(builder.getOnSkip());
+					return;
+				}
+			}
+			for (String s : builder.getSkipIfStringsMissing()) {
+				if (env.getString(s) == null) {
+					logger.info(getId() + ": [skip] Test condition " + builder.getConditionClass().getSimpleName() + " skipped, couldn't find string in environment: " + s);
+					eventLog.log(condition.getMessage(), args(
+						"msg", "Skipped evaluation due to missing required string: " + s,
+						"expected", s,
+						"result", builder.getOnSkip(),
+						"requirements", builder.getRequirements()
+						// TODO: log the environment here?
+					));
+					updateResultFromConditionFailure(builder.getOnSkip());
+					return;
+				}
+			}
+			for (String s : builder.getSkipIfStringsPresent()) {
+				if (env.getString(s) != null) {
+					logger.info(getId() + ": [skip] Test condition " + builder.getConditionClass().getSimpleName() + " skipped, string present in environment: " + s);
+					eventLog.log(condition.getMessage(), args(
+						"msg", "Skipped evaluation because string is present: " + s,
+						"expected", s,
+						"result", builder.getOnSkip(),
+						"requirements", builder.getRequirements()
+					));
+					updateResultFromConditionFailure(builder.getOnSkip());
+					return;
+				}
+			}
+			for (String s : builder.getSkipIfLongsMissing()) {
+				if (env.getLong(s) == null) {
+					logger.info(getId() + ": [skip] Test condition " + builder.getConditionClass().getSimpleName() + " skipped, couldn't find long integer in environment: " + s);
+					eventLog.log(condition.getMessage(), args(
+						"msg", "Skipped evaluation due to missing required long integer: " + s,
+						"expected", s,
+						"result", builder.getOnSkip(),
+						"requirements", builder.getRequirements()
+						// TODO: log the environment here?
+					));
+					updateResultFromConditionFailure(builder.getOnSkip());
+					return;
+				}
+			}
+			for (Pair<String, String> idx : builder.getSkipIfElementsMissing()) {
+				JsonElement el = env.getElementFromObject(idx.getLeft(), idx.getRight());
+				if (el == null) {
+					logger.info(getId() + ": [skip] Test condition " + builder.getConditionClass().getSimpleName() + " skipped, couldn't find element in environment: " + idx.getLeft() + " " + idx.getRight());
+					eventLog.log(condition.getMessage(), args(
+						"msg", "Skipped evaluation due to missing required element: " + idx.getLeft() + " " + idx.getRight(),
+						"object", idx.getLeft(),
+						"path", idx.getRight(),
+						"mapped", env.isKeyShadowed(idx.getLeft()) ? env.getEffectiveKey(idx.getLeft()) : null,
+						"result", builder.getOnSkip(),
+						"requirements", builder.getRequirements()
+ 					// TODO: log the environment here?
+					));
+					updateResultFromConditionFailure(builder.getOnSkip());
+					return;
+				}
+			}
+			for (Pair<String, String> idx : builder.getSkipIfElementsPresent()) {
+				String key = idx.getLeft();
+				String path = idx.getRight();
+				JsonElement el = env.getElementFromObject(key, path);
+				if (el != null) {
+					logger.info(getId() + ": [skip] Test condition " + builder.getConditionClass().getSimpleName() + " skipped, element present in environment: " + key + " " + path);
+					eventLog.log(condition.getMessage(), args(
+						"msg", "Skipped evaluation because element is present: " + key + " " + path,
+						"object", key,
+						"path", path,
+						"mapped", env.isKeyShadowed(key) ? env.getEffectiveKey(key) : null,
+						"result", builder.getOnSkip(),
+						"requirements", builder.getRequirements()
+					));
+					updateResultFromConditionFailure(builder.getOnSkip());
+					return;
+				}
+			}
+
+			condition.execute(env);
+
+		} catch (ConditionError error) {
+			if (error.isPreOrPostError()) {
+				logger.info(getId() + ": [pre/post] Test condition failed " + builder.getConditionClass().getSimpleName() + " failure: " + error.getMessage());
+				throw new TestFailureException(error);
+			} else {
+				if (builder.isStopOnFailure()) {
+					logger.info(getId() + ": stopOnFailure Test condition failed " + builder.getConditionClass().getSimpleName() + " failure: " + error.getMessage());
+					throw new TestFailureException(error);
+				} else {
+					logger.info(getId() + ": Test condition failure " + builder.getConditionClass().getSimpleName() + " failure: " + error.getMessage());
+					updateResultFromConditionFailure(builder.getOnFail());
+				}
+			}
+		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e) {
+			logException(e);
+			logger.error(getId() + ": Couldn't create condition object", e);
+			throw new TestFailureException(getId(), "Fatal failure from condition: " + builder.getConditionClass().getSimpleName());
+		} catch (TestFailureException e) {
+			logger.error(getId() + ": Caught TestFailureException", e);
+			throw e;
+		} catch (Exception | Error e) {
+			// it is unusual to catch Error, but if we're running in a background thread and don't catch it, nothing
+			// will appear in the test results - and we want to log errors (e.g. stack overflows) into the test results
+			// so they're easily visible rather than needing to dig through server console logging
+			logException(e);
+			logger.error(getId() + ": Generic error from underlying test framework", e);
+			throw new TestFailureException(getId(), e);
+		}
+
+	}
+
+	/**
+	 * Create a new condition call builder, which can be passed to call()
+	 */
+	protected ConditionCallBuilder condition(Class<? extends Condition> conditionClass) {
+		return new ConditionCallBuilder(conditionClass);
+	}
+
+	/**
+	 * Create a new condition call builder, which can be passed to call()
+	 */
+	protected ConditionCallBuilder condition(Condition condition) {
+		return new ConditionCallBuilder(condition);
+	}
+
+	/**
+	 * Create a new test execution builder, which can be passed to call()
+	 */
+	protected Command exec() {
+		return new Command();
+	}
+
+	/**
+	 * Execute a set of test execution commands.
+	 *
+	 * Commands in the builder are executed in the following order:
+	 *
+	 *  - environment strings are exposed
+	 *  - log blocks are started
+	 *  - environment keys are mapped
+	 *  - environment keys are unmapped
+	 *  - log blocks are ended
+	 *
+	 */
+	protected void call(Command builder) {
+
+		for(String e : builder.getExposeStrings()) {
+			exposeEnvString(e);
+		}
+
+		if (!Strings.isNullOrEmpty(builder.getStartBlock())) {
+			eventLog.startBlock(builder.getStartBlock());
+		}
+
+		builder.getEnvCommands().forEach(cmd -> cmd.accept(env));
+
+		if (builder.isEndBlock()) {
+			eventLog.endBlock();
+		}
+	}
+
+	protected void call(IterateEnvironmentArray builder) {
+		JsonElement sourceElement = env.getElementFromObject(builder.getSourceObject(), builder.getSourcePath());
+		if (sourceElement == null) {
+			throw new TestFailureException(getId(), "Missing environment array for iteration at "
+				+ builder.getSourceObject() + "." + builder.getSourcePath());
+		}
+		if (!sourceElement.isJsonArray()) {
+			throw new TestFailureException(getId(), "Expected environment array for iteration at "
+				+ builder.getSourceObject() + "." + builder.getSourcePath());
+		}
+
+		JsonArray sourceArray = sourceElement.getAsJsonArray();
+		try {
+			for (int i = 0; i < sourceArray.size(); i++) {
+				JsonElement element = sourceArray.get(i);
+				builder.prepareIteration(env, element, i, sourceArray.size());
+
+				String blockLabel = builder.getLogBlockLabel(element, i, sourceArray.size());
+				if (!Strings.isNullOrEmpty(blockLabel)) {
+					eventLog.startBlock(blockLabel);
+				}
+
+				try {
+					call(builder.getSequenceCallBuilder());
+				} finally {
+					if (!Strings.isNullOrEmpty(blockLabel)) {
+						eventLog.endBlock();
+					}
+				}
+			}
+		} finally {
+			builder.cleanupAfterIteration(env, sourceArray.size());
+		}
+	}
+
+	/**
+	 * Dispatch function to call a more specific subclass as needed.
+	 */
+	protected void call(TestExecutionUnit builder) {
+		if (builder instanceof ConditionCallBuilder callBuilder) {
+			call(callBuilder);
+		} else if (builder instanceof Command command) {
+			call(command);
+		} else if (builder instanceof IterateEnvironmentArray iterateEnvironmentArray) {
+			call(iterateEnvironmentArray);
+		} else if (builder instanceof ConditionSequence sequence) {
+			call(sequence);
+		} else if (builder instanceof ConditionSequenceCallBuilder callBuilder) {
+			call(callBuilder);
+		} else if (builder instanceof SkippedCondition condition) {
+			eventLog.log(condition.getSource(), args(
+					"msg", condition.getMessage()));
+		} else {
+			throw new TestFailureException(getId(), "Unknown class passed to call() function");
+		}
+	}
+
+	/**
+	 * Create a caller for the given sequence
+	 */
+	protected ConditionSequenceCallBuilder sequence(Class<? extends ConditionSequence> conditionSequenceClass) {
+		return new ConditionSequenceCallBuilder(conditionSequenceClass);
+	}
+
+	protected ConditionSequenceCallBuilder sequence(Supplier<? extends ConditionSequence> conditionSequenceConstructor) {
+		return new ConditionSequenceCallBuilder(conditionSequenceConstructor);
+	}
+
+	private ConditionSequence createSequence(Class<? extends ConditionSequence> conditionSequenceClass) {
+		try {
+			ConditionSequence conditionSequence = conditionSequenceClass
+				.getDeclaredConstructor()
+				.newInstance();
+
+			return conditionSequence;
+
+		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e) {
+			logException(e);
+			logger.error(getId() + ": Couldn't create condition sequence object", e);
+			throw new TestFailureException(getId(), "Fatal failure from condition sequence: " + conditionSequenceClass.getSimpleName());
+		}
+	}
+
+	protected ConditionSequence sequenceOf(TestExecutionUnit... units) {
+		return new AbstractConditionSequence() {
+
+			@Override
+			public void evaluate() {
+				call(Arrays.asList(units));
+			}
+		};
+	}
+
+	/**
+	 * Map generic client authentication keys to endpoint-specific keys.
+	 * Ensures the target objects exist before mapping, so conditions that
+	 * require them via @PreEnvironment don't fail on missing objects.
+	 */
+	protected void mapClientAuthKeys(String formParamsKey, String headersKey) {
+		if (env.getObject(headersKey) == null) {
+			env.putObject(headersKey, new JsonObject());
+		}
+		if (env.getObject(formParamsKey) == null) {
+			env.putObject(formParamsKey, new JsonObject());
+		}
+		env.mapKey("request_form_parameters", formParamsKey);
+		env.mapKey("request_headers", headersKey);
+	}
+
+	protected void unmapClientAuthKeys() {
+		env.unmapKey("request_form_parameters");
+		env.unmapKey("request_headers");
+	}
+
+	protected void call(ConditionSequenceCallBuilder builder) {
+		ConditionSequence sequence;
+
+		if (builder.getConditionSequenceConstructor() != null) {
+			sequence = builder.getConditionSequenceConstructor().get();
+		} else {
+			sequence = createSequence(builder.getConditionSequenceClass());
+		}
+
+		call(sequence);
+	}
+
+	protected void call(ConditionSequence sequence) {
+		if (sequence == null) {
+			return;
+		}
+		logger.info(getId() + ":   Starting sequence " + sequence.getClass().getSimpleName());
+
+		// execute the sequence
+		sequence.evaluate();
+
+		// pass all of the resulting units to the call functions
+		sequence.getTestExecutionUnits()
+			.forEach(this::call);
+
+		logger.info(getId() + ":   End of sequence " + sequence.getClass().getSimpleName());
+	}
+
+	@Override
+	public String getId() {
+		return id;
+	}
+
+	@Override
+	public Status getStatus() {
+		// Note that this (deliberately) doesn't take a lock on the Environment (as 'setStatus()' does), so the status
+		// is potentially inaccurate/immediately out of date if another thread is within a call to setStatus().
+		//
+		// Taking the lock would be undesireable as it would mean the 'get status' HTTP API would block whenever the
+		// test status is RUNNING (which is a lot of the time) as the test has the lock whilst in RUNNING.
+		return status;
+	}
+
+	protected void logFinalEnv() {
+		if (LOG_FINAL_ENV) {
+			logger.info(getId() + ": Final environment: " + env);
+		}
+	}
+
+	@Override
+	public void fireSetupDone() {
+		eventLog.log(getName(), "Setup Done");
+	}
+
+	@Override
+	public void fireTestFinished() {
+
+		// first we set our test to WAITING to release the lock (note that this happens in the calling thread) and prepare for finalization
+		setStatusInternal(Status.WAITING);
+		fireTestFinishedInternal();
+	}
+
+	// internal version of above used to skip the 'setStatus(WAITING)' when called from non-test jobs
+	private void fireTestFinishedInternal() {
+
+		// this happens in the background so that we can check the state of the browser controller
+
+		getTestExecutionManager().runFinalisationTaskInBackground(() -> {
+
+			// wait for web runners to wrap up first
+
+			Instant timeout = Instant.now().plusSeconds(60); // wait at most 60 seconds
+			while (browser.runnersActive()
+				&& Instant.now().isBefore(timeout)) {
+				Thread.sleep(100); // sleep before we check again
+			}
+
+			// really at this point there should be no other threads running (though the placeholder watcher may be)
+			// kill everything else anyway - we don't hold any locks so we don't want anything else doing anything
+			// whilst or after we tidy up.
+			getTestExecutionManager().cancelAllBackgroundTasksExceptFinalisation();
+
+			if (getResult() == Result.UNKNOWN) {
+				List<?> filledPlaceholders = imageService.getFilledPlaceholders(getId(), true);
+				if (filledPlaceholders.size() > 0) {
+					// This is only necessary for placeholders filled by browsercontrol; for images uploaded by the
+					// user we set the status to review when the image is uploaded
+					fireTestReviewNeeded();
+				} else {
+					fireTestSuccess();
+				}
+			}
+
+			// clean up any remaining placeholders here; if we call this function then we have reached a condition where we're not expecting them to be filled externally
+
+			List<String> placeholders = imageService.getRemainingPlaceholders(getId(), true);
+
+			for (String placeholder : placeholders) {
+				Map<String, Object> update = ImmutableMap.of(
+					"image_no_longer_required", true);
+				imageService.fillPlaceholder(getId(), placeholder, update, true);
+			}
+
+			eventLog.log(getName(), args(
+				"msg", "Test has run to completion",
+				"result", Status.FINISHED.toString(),
+				"testmodule_result", getResult()));
+
+			// if we weren't interrupted already, then we're finished
+			if (!getStatus().equals(Status.INTERRUPTED)) {
+				// log the environment here, as "stop" won't do so for the 'finished' case
+				logFinalEnv();
+
+				// this must be pretty much the last thing we do, we must NEVER mark the test as finished until
+				// everything has happen, as 'FINISHED' is the cue for run-test-plan.py to fetch the results, start
+				// the next test, etc.
+				// This will run any 'cleanup' tasks for the test module
+				setStatusInternal(Status.FINISHED);
+			}
+
+			// stop() will also cancel the current thread, so don't do any logging etc after this
+			stop("Test has run to completion.");
+
+			return "done";
+		});
+	}
+
+	@Override
+	public void fireTestReviewNeeded() {
+		if (!Result.FAILED.equals(result)) {
+			setResult(Result.REVIEW);
+		}
+	}
+
+	private void fireTestSuccess() {
+		setResult(Result.PASSED);
+	}
+
+	private void fireTestFailure() {
+		setResult(Result.FAILED);
+	}
+
+	@Override
+	public void fireTestSkipped(String msg) throws TestSkippedException {
+		// There's some potential conflict here with other results; mainly that setting the result to SKIPPED will
+		// overwrite any prior WARNING result. It's debatable which result is more important, it seems like
+		// the fact that the test couldn't be completed is the more important.
+		//
+		// Overwriting 'REVIEW' is also potentially concerning but really we should never skip a test after a user
+		// has uploaded a screenshot.
+		if (getResult() != Result.FAILED) {
+			setResult(Result.SKIPPED);
+		}
+		throw new TestSkippedException(getId(), msg);
+	}
+
+	/**
+	 * @return the result
+	 */
+	@Override
+	public Result getResult() {
+		return result;
+	}
+
+	/**
+	 * @param result
+	 *            the result to set
+	 */
+	private void setResult(Result result) {
+		this.result = result;
+		testInfo.updateTestResult(getId(), getResult());
+	}
+
+	private void updateResultFromConditionFailure(Condition.ConditionResult onFail) {
+		switch (onFail) {
+			case FAILURE:
+				setResult(Result.FAILED);
+				break;
+			case WARNING:
+				if (getResult() != Result.FAILED) {
+					setResult(Result.WARNING);
+				}
+				break;
+			default:
+				// No action
+				break;
+		}
+	}
+
+	protected void setStatus(Status newStatus) {
+		switch (newStatus) {
+			case CONFIGURED:
+			case WAITING:
+			case RUNNING:
+				setStatusInternal(newStatus);
+				break;
+
+			default:
+				throw new TestFailureException(getId(), "Test module called setStatus() with a value other than CONFIGURED/WAITING/RUNNING. This is a bug in the test module; it should use a different method to change to the desired state - e.g. fireTestFinished() or throwing a TestFailureException.");
+		}
+	}
+
+	/**
+	 * Atomically changes the test status from {@link Status#WAITING} to
+	 * {@link Status#RUNNING}. The method returns {@code false} and releases the
+	 * test lock when another thread changed the status before the lock was
+	 * acquired.
+	 */
+	protected boolean setStatusRunningIfWaiting() {
+		return setStatusInternal(Status.RUNNING, Status.WAITING);
+	}
+
+	/*
+	 * Test status state machine:
+	 *
+	 *          /----------->--------------------------------\
+	 *         /           /                                  \
+	 *        /----------------->----------------\             \
+	 *       /           /     /                  v             v
+	 *   CREATED -> CONFIGURED -> RUNNING --> FINISHED      INTERRUPTED
+	 *                         \     ^--v      ^              ^
+	 *                          \-> WAITING --/--------------/
+	 *
+	 */
+	private void setStatusInternal(Status newStatus) {
+		setStatusInternal(newStatus, null);
+	}
+
+	private boolean setStatusInternal(Status newStatus, Status expectedOldStatus) {
+		try {
+			final boolean hadLockOnEntry = env.getLock().isHeldByCurrentThread();
+
+			logger.info(getId() + ": setStatus(" + newStatus.toString() + "): hadLockOnEntry="+hadLockOnEntry+", current status = " + getStatus().toString());
+
+			if (!hadLockOnEntry) {
+				// acquire lock immediately - as well as protecting the Environment, the lock also protects the status variable
+				acquireLock();
+				logger.info(getId() + ": setStatus(" + newStatus.toString() + "): lock acquired, current status = " + getStatus().toString());
+			}
+			Status oldStatus = getStatus(); // must be after lock is taken
+			if (expectedOldStatus != null && oldStatus != expectedOldStatus) {
+				if (!hadLockOnEntry) {
+					clearLock();
+				}
+				return false;
+			}
+
+			if (newStatus == Status.RUNNING) {
+				if (hadLockOnEntry) {
+					// RUNNING->RUNNING isn't good, and moved /to/ RUNNING when we already hold the lock probably isn't right either?
+					throw new TestFailureException(getId(), "Illegal test state change by thread that holds lock: " + oldStatus + " -> " + newStatus);
+				}
+			} else if (newStatus == oldStatus) {
+				// nothing to change
+				throw new TestFailureException(getId(), "setStatus() called but status is the same: " + oldStatus + " -> " + newStatus);
+			}
+
+			if (hadLockOnEntry && oldStatus != Status.RUNNING) {
+				throw new TestFailureException(getId(), "Illegal current test status for thread that holds lock: " + oldStatus + " -> " + newStatus);
+			}
+
+			// must be after lock acquired, or the status might've changed by the time we wake up
+
+			switch (oldStatus) {
+				case NOT_YET_CREATED:
+					switch (newStatus) {
+						case CREATED:
+							break;
+						default:
+							throw new TestFailureException(getId(), "Illegal test state change: " + oldStatus + " -> " + newStatus);
+					}
+					break;
+				case CREATED:
+					switch (newStatus) {
+						case CONFIGURED:
+						case WAITING:
+						case INTERRUPTED:
+						case FINISHED:
+							break;
+						default:
+							throw new TestFailureException(getId(), "Illegal test state change: " + oldStatus + " -> " + newStatus);
+					}
+					break;
+				case CONFIGURED:
+					switch (newStatus) {
+						case RUNNING:
+						case INTERRUPTED:
+						case FINISHED:
+						case WAITING:
+							break;
+						default:
+							throw new TestFailureException(getId(), "Illegal test state change: " + oldStatus + " -> " + newStatus);
+					}
+					break;
+				case RUNNING:  // We should have the lock when we're running
+					switch (newStatus) {
+						case INTERRUPTED:
+							break;
+						case FINISHED:
+						case WAITING:
+							break;
+						default:
+							throw new TestFailureException(getId(), "Illegal test state change: " + oldStatus + " -> " + newStatus);
+					}
+					break;
+				case WAITING:  // we shouldn't have the lock if we're waiting.
+					switch (newStatus) {
+						case RUNNING:
+						case INTERRUPTED:
+						case FINISHED:
+							break;
+						default:
+							throw new TestFailureException(getId(), "Illegal test state change: " + oldStatus + " -> " + newStatus);
+					}
+					break;
+				case INTERRUPTED:
+					throw new TestFailureException(getId(), "Illegal test state change: " + oldStatus + " -> " + newStatus);
+				case FINISHED:
+					throw new TestFailureException(getId(), "Illegal test state change: " + oldStatus + " -> " + newStatus);
+				default:
+					throw new TestFailureException(getId(), "Illegal test state change: " + oldStatus + " -> " + newStatus);
+			}
+
+			if (Status.FINISHED.equals(newStatus) || Status.INTERRUPTED.equals(newStatus)) {
+				// Disable the lock manager before cleanup — cleanup runs inside setStatusInternal
+				// while the lock is held, so nested setStatusInternal calls from the interceptor
+				// would corrupt the status machine.
+				testLockManager.disable();
+				// make the cleanup steps complete before we move the test to 'FINISHED' or 'INTERRUPTED'
+				performFinalCleanup();
+			}
+
+			if (Status.FINISHED.equals(newStatus) && getResult() == Result.UNKNOWN) {
+				throw new TestFailureException(getId(), "Illegal test state; tried to move from " + oldStatus + " -> " + newStatus + " but 'result' is UNKNOWN");
+			}
+
+			this.status = newStatus;
+			testInfo.updateTestStatus(getId(), newStatus);
+
+			this.statusUpdated = Instant.now();
+
+			// Publish AFTER statusUpdated is set so any waiter released by this publish observes a
+			// fully-consistent snapshot (status + statusUpdated). This runs while the status lock is
+			// still held (and, for the RUNNING transition below, intentionally stays held), which is
+			// safe and deliberately not moved after clearLock(): the callback only hands newStatus to
+			// a DeferredResult.setResult, which is non-blocking (it schedules an async servlet
+			// re-dispatch rather than serializing the response inline), and the waiter receives
+			// newStatus directly rather than re-reading lock-protected state — so lock-release ordering
+			// is immaterial to what it observes. Null-safe because the first setStatusInternal(CREATED)
+			// call fires inside setProperties (line 129) before TestRunner has wired the service.
+			if (testStatusWaiterService != null) {
+				testStatusWaiterService.publishStatusChange(getId(), newStatus);
+			}
+
+			if (Status.RUNNING.equals(newStatus)) {
+				// exit with the lock still held, as we should always have the lock when TestConditions are being run
+			} else {
+				// release the lock as the very final step; this ensure other threads won't start reading the
+				// test status until after it's been updated, etc.
+				clearLock();
+			}
+			return true;
+		} catch (Exception | Error e) {
+			// It's really best if we don't exit with the lock held, ensuring any other threads trying to take the
+			// lock won't end up blocked forever.
+			clearLockIfHeld();
+			throw e;
+		}
+	}
+
+
+	/**
+	 * Clear the lock. If we don't have it in the current thread, throw an exception.
+	 */
+	protected void clearLock(){
+		env.getLock().unlock();
+	}
+
+	/**
+	 * Helper to check if we have the lock, and if we do, unlock it. If we don't have the lock
+	 * in the current thread, do nothing.
+	 */
+	protected void clearLockIfHeld(){
+		if(env.getLock().isHeldByCurrentThread()) {
+			env.getLock().unlock();
+		}
+	}
+
+	/**
+	 * Add a key/value pair to the exposed values that the user will see in the frontend
+	 *
+	 * @param key
+	 * @param val
+	 */
+	protected void expose(String key, String val) {
+		exposed.put(key, val);
+	}
+
+	/**
+	 * Remove a previously exposed value, e.g. when the endpoint it points to no longer
+	 * applies to the current test state and leaving it visible would mislead the user
+	 * (or an external test driver polling the exposed values).
+	 *
+	 * @param key the key to remove; removing a key that was never exposed is a no-op
+	 */
+	protected void unexpose(String key) {
+		exposed.remove(key);
+	}
+
+	/**
+	 * Expose a value from the environment so the user sees it in the frontend
+	 * <p>
+	 * The value is extracted from env by the given {@code key}.
+	 * If a non null {@code sourceKey} is given then env value given by {@code sourceKey}
+	 * and the optional {@code sourcePath} is used.
+	 * </p>
+	 * The resulting value is exposed as {@code key}.
+	 *
+	 * @param key key to expose
+	 * @param sourceKey the key to lookup in the env. This is optional.
+	 * @param sourcePath the path to lookup in the env key value. This is optional. Only considered when sourceKey is not null.
+	 */
+	protected void exposeEnvString(String key, String sourceKey, String sourcePath) {
+
+		Objects.requireNonNull(key, "must not be null");
+
+		String val;
+		if (sourceKey == null) {
+			// ignore path if sourceKey is missing
+			val = env.getString(key);
+		} else if (sourcePath == null) {
+			val = env.getString(sourceKey);
+		} else {
+			val = env.getString(sourceKey, sourcePath);
+		}
+
+		expose(key, val);
+	}
+
+	/**
+	 * Expose a value from the environment so the user sees it in the frontend
+	 *
+	 * @param key
+	 */
+	protected void exposeEnvString(String key) {
+		exposeEnvString(key, null, null);
+	}
+
+	@Override
+	public Map<String, String> getExposedValues() {
+		return exposed;
+	}
+
+	@Override
+	public BrowserControl getBrowser() {
+		return this.browser;
+	}
+
+	/**
+	 * @return the name
+	 */
+	@Override
+	public String getName() {
+		return testNameSupplier.get();
+	}
+
+	@Override
+	public void stop(String reason) {
+
+		if (!(getStatus().equals(Status.FINISHED) || getStatus().equals(Status.INTERRUPTED))) {
+			setStatusInternal(Status.INTERRUPTED);
+			eventLog.log(getName(), args(
+				"msg", "Test was interrupted before it could complete. "+reason,
+				"result", Status.INTERRUPTED.toString()));
+			// It's a bit weird that the above log() puts INTERRUPTED (a TestModule status value) into 'result' in the
+			// db, which normally contains a ConditionResult.
+
+			logFinalEnv();
+		}
+
+		// This might interrupt the current thread, so don't do any logging after this
+		getTestExecutionManager().cancelAllBackgroundTasks();
+	}
+
+	protected void performFinalCleanup() {
+		if (!cleanupCalled) {
+			logger.info(getId() + ": Performing final clean-up");
+			try {
+				cleanup();
+			} catch (TestFailureException e) {
+				eventLog.log(getName(), ex(e, args("msg", "A test failure was raised while cleaning up")));
+			} finally {
+				cleanupCalled = true;
+			}
+		}
+	}
+
+	@Override
+	public void handleException(TestInterruptedException error, String source) {
+		logger.error(getId() + ": Caught an error in '"+source+"' while running the test, stopping the test: " + error.getMessage());
+
+		if (error instanceof TestSkippedException) {
+			eventLog.log(getName(),
+				args(
+					"result", TestModule.Result.SKIPPED,
+					"msg", "The test was skipped: " + error.getMessage()));
+			fireTestFinished();
+		} else {
+			/* must be a TestFailureException */
+			String failure;
+			if (error.getCause() instanceof ConditionError) {
+				// ConditionError will already have been logged when created in AbstractCondition.java (and
+				// ConditionError should not be thrown from other places, see
+				// https://gitlab.com/openid/conformance-suite/issues/443 ) - so no need to log again
+				failure = error.getCause().getMessage();
+			} else {
+				failure = error.getMessage();
+
+				Map<String, Object> event = new HashMap<>();
+				event.put("caught_at", source);
+				if (error.getCause() == null) {
+					// this must be a message a TestModule has explicitly thrown, i.e. with
+					// throw new TestFailureException(getId(), "Client has incorrectly <...>");
+					// log that message rather than 'unexpected exception caught'
+					event.put("msg", failure);
+				} else {
+					// if the root error isn't a ConditionError nor an explicit message from a test module, set this so the UI can display the underlying error in detail
+					setFinalError(error);
+				}
+				eventLog.log(getName(), ex(error, event));
+			}
+
+			// Any exception except 'skipped' from a test counts as a failure
+			fireTestFailure();
+			// stop() might interrupt the current thread, so don't do any logging after this
+			stop("The failure '"+failure+"' means the test cannot continue.");
+		}
+	}
+
+	@Override
+	public void cleanup() {
+		// Nothing to do in general
+	}
+
+	/**
+	 * @return the created
+	 */
+	@Override
+	public Instant getCreated() {
+		return created;
+	}
+
+	@Override
+	public Instant getStatusUpdated() {
+		return statusUpdated;
+	}
+
+	/**
+	 * @return the finalError
+	 */
+	@Override
+	public TestInterruptedException getFinalError() {
+		return finalError;
+	}
+
+	/**
+	 * @param finalError the finalError to set
+	 */
+	@Override
+	public void setFinalError(TestInterruptedException finalError) {
+		this.finalError = finalError;
+	}
+
+	/**
+	 * Maximum time, in seconds, to wait when acquiring the test lock. The lock is released during
+	 * network I/O, so legitimate holds are very short; this is a safety net so a thread can never block
+	 * forever waiting for a lock held by another thread that is itself stuck. Kept >= the outbound HTTP
+	 * timeout (60s) so it never trips on a legitimately-bounded operation. Protected so tests can
+	 * override it with a short value. See https://gitlab.com/openid/conformance-suite/-/work_items/1827
+	 */
+	protected long getLockAcquireTimeoutSeconds() {
+		return 90;
+	}
+
+	protected void acquireLock() {
+		long timeoutSeconds = getLockAcquireTimeoutSeconds();
+		try {
+			if (!env.getLock().tryLock(timeoutSeconds, TimeUnit.SECONDS)) {
+				// We failed to get the lock within the timeout. Rather than block this thread (potentially
+				// an HTTP worker thread, e.g. when stopping a conflicting test) forever behind another
+				// thread that is stuck, fail loudly. Returning an error frees the thread instead of letting
+				// a single stuck test tie up workers and eventually hang the whole suite. See https://gitlab.com/openid/conformance-suite/-/work_items/1827
+				// Log a full thread dump before failing so the thread holding the lock (presumably the
+				// stuck one) can be identified - a plain ReentrantLock does not expose its owner. See https://gitlab.com/openid/conformance-suite/-/work_items/1827
+				logger.warn("{}: timed out after {}s waiting to acquire the test lock; dumping all thread "
+						+ "stacks to help identify the holder:\n{}",
+					getId(), timeoutSeconds, dumpAllThreadStacks());
+				throw new TestFailureException(getId(), "Timed out after " + timeoutSeconds
+					+ " seconds waiting to acquire the test lock; another thread is holding it and is "
+					+ "probably stuck. This may be a bug in the test suite. Aborting.");
+			}
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			throw new TestFailureException(getId(), "Interrupted while waiting to acquire the test lock", e);
+		}
+	}
+
+	/**
+	 * Build a full thread dump (all threads and their stack traces) as a string, for diagnosing a
+	 * lock-acquire timeout: a plain ReentrantLock does not expose its owner, so we dump every thread to
+	 * make the holder identifiable in the logs.
+	 */
+	private static String dumpAllThreadStacks() {
+		StringBuilder sb = new StringBuilder();
+		for (Map.Entry<Thread, StackTraceElement[]> entry : Thread.getAllStackTraces().entrySet()) {
+			Thread t = entry.getKey();
+			sb.append('"').append(t.getName()).append("\" ").append(t.getState()).append('\n');
+			for (StackTraceElement element : entry.getValue()) {
+				sb.append("\tat ").append(element).append('\n');
+			}
+			sb.append('\n');
+		}
+		return sb.toString();
+	}
+
+	@Override
+	public Object handleHttp(String path, HttpServletRequest req, HttpServletResponse res, HttpSession session, JsonObject requestParts) {
+		return unexpectedHttpRequest(path, requestParts);
+	}
+
+	@Override
+	public Object handleHttpMtls(String path, HttpServletRequest req, HttpServletResponse res, HttpSession session, JsonObject requestParts) {
+		return unexpectedHttpRequest(path, requestParts);
+	}
+
+	@Override
+	public Object handleWellKnown(String path, HttpServletRequest req, HttpServletResponse res, HttpSession session, JsonObject requestParts) {
+		if (path.startsWith("/.well-known/oauth-authorization-server")) {
+			// for backwards compatibility with how the tests worked before this handler was introduced, the default behaviour is a 404 error
+			// (as at least one existing client, the one we use in the client_test oidcc tests, queries the oauth location first)
+			return new ResponseEntity<>(Map.of("error", "this test doesn't support the path '" + path + "'"), HttpStatus.NOT_FOUND);
+		}
+		return unexpectedHttpRequest(path, requestParts);
+	}
+
+	/**
+	 * Called when an HTTP request arrives for a path neither the test module nor any of its
+	 * parent classes serve. The request is reported as a FAILURE (via a condition, so it shows
+	 * in the test log and result) and answered with a 404, and the test continues - a stray
+	 * request (e.g. a wallet probing sub-paths of the request_uri) must not interrupt a test
+	 * that is still waiting for the real interaction.
+	 */
+	protected Object unexpectedHttpRequest(String path, JsonObject requestParts) {
+		JsonObject unexpected = new JsonObject();
+		unexpected.addProperty("path", path);
+		if (requestParts != null && requestParts.has("method")) {
+			unexpected.add("method", requestParts.get("method"));
+		}
+
+		// the http request arrives on its own thread without the test lock, so take it while
+		// the condition runs, as request handlers do
+		setStatus(Status.RUNNING);
+		env.putObject(UnexpectedHttpRequestReceived.ENV_KEY, unexpected);
+		callAndContinueOnFailure(UnexpectedHttpRequestReceived.class, Condition.ConditionResult.FAILURE);
+		env.removeObject(UnexpectedHttpRequestReceived.ENV_KEY);
+		setStatus(Status.WAITING);
+
+		return new ResponseEntity<>(Map.of("error", "The test does not serve the path '" + path + "'"), HttpStatus.NOT_FOUND);
+	}
+
+	@Override
+	public TestExecutionManager getTestExecutionManager() {
+		return executionManager;
+	}
+
+	protected void waitForPlaceholders() {
+		// set up a listener to wait for either an error callback or an image upload
+		executionManager.runInBackground(() -> {
+			long delayMillis = 1000; // wait for a second before we check the first time
+
+			Thread.sleep(delayMillis);
+
+			while (true) {
+
+				// grab the lock before we check anything in case something is finishing up
+				acquireLock();
+
+				// re-fetch the placeholders every check
+				List<String> remainingPlaceholders = imageService.getRemainingPlaceholders(getId(), true);
+
+				if (getStatus().equals(Status.FINISHED) || getStatus().equals(Status.INTERRUPTED)) {
+					// if the test is finished/interrupted, nothing for us to do, stop looking
+					clearLock();
+					break;
+				}
+				if (remainingPlaceholders.isEmpty() && getStatus().equals(Status.WAITING)) {
+					// if the test is still waiting, but all the placeholders are gone, then we can call it finished, stop looking
+					clearLock();
+					fireTestFinishedInternal();
+					break;
+				}
+				// otherwise (test is waiting but placeholders are still there, or test is running, etc), check again in the future
+				clearLock();
+
+				if (delayMillis < 30 * 1000) {
+					// backoff checks to every 30 seconds so we don't overload db or jvm
+					delayMillis *= 2;
+				}
+				Thread.sleep(delayMillis);
+
+			}
+
+			return "done";
+		});
+	}
+
+	@Override
+	public void checkLockReleased() {
+		if (env.getLock().isHeldByCurrentThread()) {
+			if (getStatus() == Status.RUNNING) {
+				// give a more helpful error message that tells the developer what they have most likely done
+				// wrong.
+				throw new TestFailureException(getId(), "The test status has been left as 'RUNNING'. This is a bug in the test module and probably means that a call to setStatus(Status.WAITING) is missing.");
+			}
+
+			// otherwise it's still wrong, but the reason why is going to be less obvious
+			throw new TestFailureException(getId(), "The test module has incorrectly left the lock held, this is a bug in the test module, it might be caused by a missing call to setStatus(Status.WAITING)");
+		}
+	}
+
+	@Override
+	public void forceReleaseLock() {
+		clearLockIfHeld();
+	}
+}

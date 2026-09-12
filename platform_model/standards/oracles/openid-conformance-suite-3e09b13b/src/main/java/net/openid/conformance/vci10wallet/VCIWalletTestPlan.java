@@ -1,0 +1,39 @@
+package net.openid.conformance.vci10wallet;
+
+import net.openid.conformance.plan.PublishTestPlan;
+import net.openid.conformance.plan.TestPlan;
+import net.openid.conformance.testmodule.TestModule;
+import net.openid.conformance.variant.FAPIClientType;
+import net.openid.conformance.variant.FAPIResponseMode;
+
+import java.util.List;
+
+@PublishTestPlan (
+	testPlanName = "oid4vci-1_0-wallet-test-plan",
+	displayName = "OpenID for Verifiable Credential Issuance 1.0 Final: Test a wallet - alpha tests (not part of certification program - use the HAIP wallet plan to certify)",
+	profile = TestPlan.ProfileNames.vciwallet,
+	specFamily = TestPlan.SpecFamilyNames.oid4vci
+)
+public class VCIWalletTestPlan implements TestPlan {
+
+	public static final List<Class<? extends TestModule>> testModules = List.of(
+		VCIWalletTestCredentialIssuance.class,
+		VCIWalletTestCredentialIssuanceWithNotification.class,
+		VCIWalletTestCredentialIssuanceUsingScopesWithoutAuthorizationDetailsInTokenResponse.class,
+		VCIWalletTestClientAttestationChallenge.class,
+		VCIWalletTestBatchCredentialIssuance.class
+	);
+
+	@Override
+	public List<ModuleListEntry> testModulesWithVariants() {
+		return List.of(
+			new ModuleListEntry(
+				testModules,
+				List.of(
+					new Variant(FAPIClientType.class, "plain_oauth"),
+					new Variant(FAPIResponseMode.class, "plain_response")
+				)
+			)
+		);
+	}
+}

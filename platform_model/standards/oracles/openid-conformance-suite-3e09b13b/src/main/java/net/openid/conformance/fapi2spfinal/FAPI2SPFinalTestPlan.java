@@ -1,0 +1,157 @@
+package net.openid.conformance.fapi2spfinal;
+
+import net.openid.conformance.plan.PublishTestPlan;
+import net.openid.conformance.plan.TestPlan;
+import net.openid.conformance.testmodule.TestModule;
+import net.openid.conformance.variant.ClientAuthType;
+import net.openid.conformance.variant.FAPI2AuthRequestMethod;
+import net.openid.conformance.variant.FAPI2FinalOPProfile;
+import net.openid.conformance.variant.FAPIResponseMode;
+import net.openid.conformance.variant.VariantSelection;
+
+import java.lang.invoke.MethodHandles;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+@PublishTestPlan (
+	testPlanName = "fapi2-security-profile-final-test-plan",
+	displayName = "FAPI2-Security-Profile-Final: Authorization server test",
+	profile = TestPlan.ProfileNames.optest,
+	specFamily = TestPlan.SpecFamilyNames.fapi2SecurityProfile,
+	specVersion = TestPlan.SpecVersionNames.fapi2SpFinal
+)
+public class FAPI2SPFinalTestPlan implements TestPlan {
+
+	/**
+	 * Variant values that are not applicable to FAPI2 SP Final certification test plans.
+	 * VCI/VCI_HAIP profiles and client_attestation auth are excluded from FAPI2 plans;
+	 * they are intended for VCI-specific test plans.
+	 */
+	static final List<Variant> FAPI2_VARIANTS_NOT_APPLICABLE = List.of(
+		new Variant(FAPI2FinalOPProfile.class, "vci"),
+		new Variant(FAPI2FinalOPProfile.class, "vci_haip"),
+		new Variant(ClientAuthType.class, "client_attestation")
+	);
+
+	public static List<Class<? extends TestModule>> fapi2SPtestModules() {
+		ArrayList<Class<? extends TestModule>> modules = new ArrayList<>(FAPI2MessageSigningFinalTestPlan.testModules);
+
+		// these require signing, so remove them (otherwise the VariantService gets upset on app start)
+		modules.remove(FAPI2SPFinalEnsureServerAcceptsRequestObjectWithMultipleAud.class);
+		modules.remove(FAPI2SPFinalEnsureRequestObjectWithoutExpFails.class);
+		modules.remove(FAPI2SPFinalEnsureRequestObjectWithoutNbfFails.class);
+		modules.remove(FAPI2SPFinalEnsureExpiredRequestObjectFails.class);
+		modules.remove(FAPI2SPFinalEnsureRequestObjectWithBadAudFails.class);
+		modules.remove(FAPI2SPFinalEnsureRequestObjectWithExpOver60Fails.class);
+		modules.remove(FAPI2SPFinalAustraliaConnectIdRequestObjectWithExpOver10Fails.class);
+		modules.remove(FAPI2SPFinalEnsureRequestObjectWithNbfOver60Fails.class);
+		modules.remove(FAPI2SPFinalAustraliaConnectIdEnsureRequestObjectWithNbfOver15Fails.class);
+		modules.remove(FAPI2SPFinalKsaEnsureRequestObjectWithExpOver10Fails.class);
+		modules.remove(FAPI2SPFinalKsaEnsureRequestObjectWithNbfOver10Fails.class);
+		modules.remove(FAPI2SPFinalEnsureRequestObjectWithNbf8SecondsInTheFutureIsAccepted.class);
+		modules.remove(FAPI2SPFinalEnsureSignedRequestObjectWithRS256Fails.class);
+		modules.remove(FAPI2SPFinalEnsureRequestObjectSignatureAlgorithmIsNotNone.class);
+		modules.remove(FAPI2SPFinalEnsureRequestObjectWithInvalidSignatureFails.class);
+		modules.remove(FAPI2SPFinalEnsureMatchingKeyInAuthorizationRequest.class);
+		modules.remove(FAPI2SPFinalEnsureUnsignedRequestAtParEndpointFails.class);
+		modules.remove(FAPI2SPFinalPARRejectRequestUriInParAuthorizationRequest.class);
+		return modules;
+	}
+
+	@Override
+	public List<ModuleListEntry> testModulesWithVariants() {
+		List<Class<? extends TestModule>> modules = fapi2SPtestModules();
+
+		List<TestPlan.Variant> baselineVariants = List.of(
+			new TestPlan.Variant(FAPI2AuthRequestMethod.class, "unsigned"),
+			new TestPlan.Variant(FAPIResponseMode.class, "plain_response")
+		);
+
+		return List.of(
+			new TestPlan.ModuleListEntry(modules, baselineVariants)
+		);
+
+	}
+
+	@Override
+	public List<Variant> variantsNotApplicable() {
+		return FAPI2_VARIANTS_NOT_APPLICABLE;
+	}
+
+	@Override
+	public List<String> certificationProfileName(VariantSelection variant) {
+
+		List<String> profiles = new ArrayList<>();
+
+
+		Map<String, String> v = variant.getVariant();
+		String profile = v.get("fapi_profile");
+		String clientAuth = v.get("client_auth_type");
+		String senderConstrain = v.get("sender_constrain");
+		String clientType = v.get("openid");
+		boolean openid = clientType.equals("openid_connect");
+
+		String certProfile = "FAPI2SP OP ";
+
+		if (openid) {
+			profiles.add("FAPI2SP OP OpenID Connect");
+		}
+
+		switch (profile) {
+			case "plain_fapi":
+				break;
+			case "fapi_client_credentials_grant":
+				certProfile += "Client Credentials Grant ";
+				break;
+			case "consumerdataright_au":
+				throw new RuntimeException("AU-CDR requires JARM and signed request objects, please use the FAPI2 Message Signing test plan.");
+			case "openbanking_brazil":
+				return List.of( "FAPI2SP OP BR-OF");
+			case "connectid_au":
+				throw new RuntimeException("Invalid configuration for %s: Please use the FAPI2 Message Signing test plan for ConnectID".formatted(
+					MethodHandles.lookup().lookupClass().getSimpleName()));
+			case "cbuae":
+				throw new RuntimeException("CBUAE profile requires the usage of JAR, please use the message signing test plan.");
+			case "openbanking_chile":
+				throw new RuntimeException("Chile profile requires the usage of JAR, please use the message signing test plan.");
+			case "ksa":
+				throw new RuntimeException("KSA profile requires the usage of JAR, please use the message signing test plan.");
+			default:
+				throw new RuntimeException("Unknown profile %s for %s".formatted(
+					profile, MethodHandles.lookup().lookupClass().getSimpleName()));
+		}
+
+		switch (clientAuth) {
+			case "private_key_jwt":
+				certProfile += "private key";
+				break;
+			case "mtls":
+				certProfile += "MTLS";
+				break;
+			default:
+				throw new RuntimeException("Unknown client auth type %s for %s".formatted(
+					clientAuth, MethodHandles.lookup().lookupClass().getSimpleName()));
+		}
+
+		switch (senderConstrain) {
+			case "mtls":
+				certProfile += " + MTLS";
+				break;
+			case "dpop":
+				certProfile += " + DPoP";
+				break;
+			default:
+				throw new RuntimeException("Unknown sender constrain method %s for %s".formatted(
+					senderConstrain, MethodHandles.lookup().lookupClass().getSimpleName()));
+		}
+		profiles.add(certProfile);
+
+		// this plan runs the grant management modules when the variant is enabled, so the generated
+		// names have to record that they were part of the run
+		if ("enabled".equals(v.get("grant_management"))) {
+			profiles.add("FAPI2SP OP GM");
+		}
+		return profiles;
+	}
+}

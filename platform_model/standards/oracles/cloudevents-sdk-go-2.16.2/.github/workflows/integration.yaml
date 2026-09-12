@@ -1,0 +1,95 @@
+name: Integration Tests
+
+on:
+  push:
+    branches: [ 'main', 'release-*' ]
+  pull_request:
+    branches: [ 'main', 'release-*' ]
+
+permissions:
+  contents: read
+  
+jobs:
+
+  integration:
+    name: CloudEvents Integration Test
+    strategy:
+      matrix:
+        # Only test one go version: the integration tests don't seem to pass if NATS runs more one running at a time.
+        go-version: [1.24]
+        platform: [ubuntu-latest]
+
+    runs-on: ${{ matrix.platform }}
+
+    services:
+      kafka:
+        image: lensesio/fast-data-dev
+        env:
+          ADV_HOST: localhost
+        ports:
+          - 9091:9091
+          - 9092:9092
+
+      kafka_confluent:
+        image: confluentinc/confluent-local:7.6.0
+        ports:
+          - "9192:9192"
+        env:
+          KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://localhost:29192,PLAINTEXT_HOST://localhost:9192'
+          KAFKA_CONTROLLER_QUORUM_VOTERS: '1@localhost:29193'
+          KAFKA_LISTENERS: 'PLAINTEXT://localhost:29192,CONTROLLER://localhost:29193,PLAINTEXT_HOST://0.0.0.0:9192'
+
+      natss:
+        image: nats-streaming:0.22.1
+        ports:
+          - 4222:4222
+
+      jetstream:
+        image: bitnami/nats:latest
+        env: 
+          NATS_EXTRA_ARGS: "--jetstream --port 4223"
+        ports:
+          - 4223:4223
+
+      amqp:
+        image: scholzj/qpid-dispatch
+        env:
+          QDROUTERD_CONFIG_OPTIONS: |
+            router {
+                mode: standalone
+                id: ZTg2NDQ0N2Q1YjU1OGE1N2NkNzY4NDFk
+                workerThreads: 4
+            }
+            log {
+                 module: DEFAULT
+                 enable: trace+
+                 timestamp: true
+            }
+            listener {
+                 role: normal
+                 host: 0.0.0.0
+                 port: amqp
+                 saslMechanisms: ANONYMOUS
+            }
+        ports:
+          - 5672:5672
+      
+      mqtt:
+        image: eclipse-mosquitto:1.6
+        ports:
+          - 1883:1883
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: Setup Go ${{ matrix.go-version }}
+        uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6.0.0
+        with:
+          go-version: ${{ matrix.go-version }}
+          cache-dependency-path: v2/go.sum
+        id: go
+        
+      - name: Test
+        run: ./hack/integration-test.sh
+

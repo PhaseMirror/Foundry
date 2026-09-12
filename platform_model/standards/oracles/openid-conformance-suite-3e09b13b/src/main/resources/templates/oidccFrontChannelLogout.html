@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity3">
+<head>
+    <meta charset="UTF-8">
+    <title>OIDF Conformance: Check session iframe</title>
+    <meta http-equiv="Cache-control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+</head>
+<body>
+    <h1>OP initiated front channel logout</h1>
+    <div>
+        RP frontchannel_logout_uri will be loaded below in an iframe
+    </div>
+
+    <div id="msgdiv"></div>
+    <style>
+
+        iframe{
+            width:90%;
+            height:400px;
+        }
+        #msgdiv{
+            color:red;
+            font-size:1.2em;
+        }
+    </style>
+
+    <script th:if="${post_logout_redirect_uri_redirect!='OPINIT'}">
+    //RP init
+    var iframe = document.createElement('iframe');
+    iframe.onload = function(){
+        let url = '[[${iframe_loaded_callback_url}]]';
+        const urlData = 'loaded=true';
+
+        if (url.indexOf('?') != -1) {
+            url = url + '&' + urlData;
+        }
+        else {
+            url = url + '?' + urlData;
+        }
+
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', url, true);
+        xhr.onload = function () {
+            document.getElementById('msgdiv').innerHTML = 'Logout uri loaded and test marked as finished. You will be redirected to post_logout_uri in 5 seconds.';
+            setTimeout(function(){window.location.href='[[${post_logout_redirect_uri_redirect}]]';}, 5000);
+        };
+        xhr.onerror = function (event) {
+            document.getElementById('msgdiv').innerHTML = 'Failed to mark test as finished! Please try again.';
+        };
+        xhr.send();
+    }
+    iframe.src = '[[${rp_frontchannel_logout_uri}]]';
+    document.body.appendChild(iframe);
+
+
+    </script>
+    <script th:if="${post_logout_redirect_uri_redirect=='OPINIT'}">
+    //OP init
+    var iframe = document.createElement('iframe');
+    iframe.onload = function(){
+        let url = '[[${iframe_loaded_callback_url}]]';
+        const urlData = 'loaded=true';
+
+        if (url.indexOf('?') != -1) {
+            url = url + '&' + urlData;
+        }
+        else {
+            url = url + '?' + urlData;
+        }
+
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', url, true);
+        xhr.onload = function () {
+            document.getElementById('msgdiv').innerHTML = 'Logout uri loaded and test marked as finished. You can close this window and go back to the test window.';
+        };
+        xhr.onerror = function (event) {
+            document.getElementById('msgdiv').innerHTML = 'Failed to mark test as finished! Please try again.';
+        };
+        xhr.send();
+    }
+    iframe.src = '[[${rp_frontchannel_logout_uri}]]';
+    document.body.appendChild(iframe);
+
+
+    </script>
+
+</body>
+</html>

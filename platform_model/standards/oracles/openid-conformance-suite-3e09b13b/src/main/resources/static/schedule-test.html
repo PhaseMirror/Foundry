@@ -1,0 +1,2560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <title>OIDF Conformance: Schedule new test</title>
+
+    <script>
+        // Legacy `?edit-plan=<id>` bookmarks deep-link to plan-detail; must
+        // fire before any other script so the page never paints the wrong
+        // surface during the redirect.
+        (function () {
+            var legacyPlanId = new URLSearchParams(window.location.search).get("edit-plan");
+            if (legacyPlanId) {
+                window.location.replace("plan-detail.html?plan=" + encodeURIComponent(legacyPlanId));
+            }
+        })();
+    </script>
+
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap">
+    <link rel="preload" as="font" type="font/woff2" href="/fonts/inter/Inter-Variable.woff2" crossorigin>
+    <link rel="stylesheet" href="/css/oidf-tokens.css">
+    <link rel="stylesheet" type="text/css" href="css/layout.css">
+    <link rel="stylesheet" href="/css/oidf-app.css">
+
+    <script src="/vendor/lodash/js/lodash.min.js"></script>
+
+    <script type="text/javascript" src="js/fapi.ui.js"></script>
+    <script>window.litDisableBundleWarning = true;</script>
+    <script type="importmap">{"imports":{"lit":"/vendor/lit/lit.js","lit/":"/vendor/lit/","lit/directives/async-append.js":"/vendor/lit/lit.js","lit/directives/async-replace.js":"/vendor/lit/lit.js","lit/directives/cache.js":"/vendor/lit/lit.js","lit/directives/choose.js":"/vendor/lit/lit.js","lit/directives/class-map.js":"/vendor/lit/lit.js","lit/directives/guard.js":"/vendor/lit/lit.js","lit/directives/if-defined.js":"/vendor/lit/lit.js","lit/directives/join.js":"/vendor/lit/lit.js","lit/directives/keyed.js":"/vendor/lit/lit.js","lit/directives/live.js":"/vendor/lit/lit.js","lit/directives/map.js":"/vendor/lit/lit.js","lit/directives/range.js":"/vendor/lit/lit.js","lit/directives/ref.js":"/vendor/lit/lit.js","lit/directives/repeat.js":"/vendor/lit/lit.js","lit/directives/style-map.js":"/vendor/lit/lit.js","lit/directives/template-content.js":"/vendor/lit/lit.js","lit/directives/unsafe-html.js":"/vendor/lit/lit.js","lit/directives/unsafe-svg.js":"/vendor/lit/lit.js","lit/directives/until.js":"/vendor/lit/lit.js","lit/directives/when.js":"/vendor/lit/lit.js","@lit/reactive-element":"/vendor/lit/lit.js","@lit/reactive-element/":"/vendor/lit/","lit-html":"/vendor/lit/lit.js","lit-html/":"/vendor/lit/","lit-element/":"/vendor/lit/","marked":"/vendor/marked/marked.esm.js","dompurify":"/vendor/dompurify/purify.es.mjs"}}</script>
+    <script type="module" src="/components/cts-navbar.js"></script>
+    <script type="module" src="/components/cts-modal.js"></script>
+    <script type="module" src="/components/cts-spinner.js"></script>
+    <script type="module" src="/components/cts-tabs.js"></script>
+    <script type="module" src="/components/cts-badge.js"></script>
+    <script type="module" src="/components/cts-button.js"></script>
+    <script type="module" src="/components/cts-alert.js"></script>
+    <script type="module" src="/components/cts-tooltip.js"></script>
+    <script type="module" src="/components/cts-json-editor.js"></script>
+    <script type="module" src="/components/cts-flash-highlight.js"></script>
+    <script type="module" src="/components/cts-test-selector.js"></script>
+    <script type="module" src="/components/cts-form-field.js"></script>
+    <script type="module" src="/components/cts-config-form.js"></script>
+    <script type="module" src="/components/cts-unsaved-changes-guard.js"></script>
+    <script type="module" src="/components/cts-action-bar.js"></script>
+    <script type="module" src="/components/cts-icon.js"></script>
+    <script type="module" src="/components/cts-card.js"></script>
+    <script type="module" src="/js/cts-copy-flash.js"></script>
+    <script type="module" src="/js/cts-toast-api.js"></script>
+    <script type="module" src="/components/cts-footer.js"></script>
+
+    <script>
+        // Pre-declare the adapter-ready Promise before the module script
+        // below evaluates, so the inline init chain (also below) can await
+        // it as a single source of truth for "the adapter is loaded and
+        // installed on window.__configFormAdapter". Module scripts execute
+        // asynchronously relative to inline scripts; without this Promise
+        // the inline DOMContentLoaded chain may run before the module's IIFE
+        // and the first updateConfigFieldVisibility call would no-op.
+        window.__configFormAdapterReady = new Promise(function (resolve, reject) {
+            window.__resolveConfigFormAdapterReady = resolve;
+            window.__rejectConfigFormAdapterReady = reject;
+        });
+    </script>
+    <script type="module">
+        import {
+            buildConfigFormSchema,
+            computeHiddenFields,
+            setAtPath,
+        } from "/components/config-form-adapter.js";
+        // Re-expose on window so the inline <script> below (which cannot use
+        // ES module imports) can drive cts-config-form via the adapter.
+        window.__configFormAdapter = { buildConfigFormSchema, computeHiddenFields, setAtPath };
+        window.__resolveConfigFormAdapterReady();
+    </script>
+
+    <script>
+        // Same promise-shim pattern as __configFormAdapterReady above: the
+        // inline DOMContentLoaded init chain must learn the resolved
+        // Guided | Advanced mode from the guided-wizard ES module before
+        // deciding whether to run the advanced hydration steps (R9).
+        window.__guidedModeReady = new Promise(function (resolve) {
+            window.__resolveGuidedModeReady = resolve;
+        });
+    </script>
+
+    <script>
+        // Promise-shim for the favorites store module (same pattern as
+        // __configFormAdapterReady / __guidedModeReady above): the inline init
+        // chain awaits this before seeding planSearch.favorites and wiring the
+        // optimistic cts-favorite-toggle persistence, because the module
+        // script that creates the controller runs async relative to inline
+        // scripts.
+        window.__favoritesReady = new Promise(function (resolve) {
+            window.__resolveFavoritesReady = resolve;
+        });
+    </script>
+    <script type="module">
+        // Favorites persistence: the favorites list is account data, stored
+        // server-side per principal via the auth-gated /api/favorite-plans API.
+        // Re-expose the controller + attachFavorites on window so the inline
+        // <script> chain below (which cannot use ES imports) can seed favorites
+        // and wire optimistic persistence once the plans load.
+        import {
+            createFavoritesController,
+            attachFavorites,
+        } from "/components/cts-test-selector.favorites-store.js";
+        window.__favoritesController = createFavoritesController();
+        window.__attachFavorites = attachFavorites;
+        window.__resolveFavoritesReady();
+    </script>
+
+    <style>
+        /* ── Guided | Advanced mode header ──────────────────────────── */
+        .schedule-test-mode-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: var(--space-4);
+            flex-wrap: wrap;
+            margin-bottom: var(--space-4);
+        }
+        .schedule-test-mode-head__title {
+            margin: 0;
+            font-size: var(--fs-15);
+            color: var(--fg-soft);
+            font-weight: var(--fw-medium);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .mode-toggle {
+            display: inline-flex;
+            background: var(--bg-muted);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-3);
+            padding: var(--space-1);
+            gap: var(--space-1);
+            flex: none;
+            box-sizing: border-box;
+        }
+        .mode-toggle__btn {
+            appearance: none;
+            border: 0;
+            background: transparent;
+            color: var(--fg-muted);
+            font: inherit;
+            font-size: var(--fs-13);
+            font-weight: var(--fw-medium);
+            padding: var(--space-2) var(--space-4);
+            border-radius: var(--radius-2);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-2);
+            box-sizing: border-box;
+            transition: background-color 120ms ease, color 120ms ease;
+        }
+        .mode-toggle__btn[aria-pressed="true"] {
+            background: var(--bg-elev);
+            color: var(--fg);
+            box-shadow: var(--shadow-1);
+        }
+        .mode-toggle__btn:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
+
+        /* The two state islands. [hidden] needs the !important because some
+           descendants (cts-action-bar) set their own display. */
+        #guidedIsland[hidden],
+        #scheduleTestPage[hidden],
+        #guidedStageActions[hidden],
+        #bridgePrompt[hidden] { display: none !important; }
+        #guidedIsland:focus,
+        #scheduleTestPage:focus { outline: none; }
+
+        /* Reserve room below each island's content so its sticky
+           cts-action-bar (#guidedStageActions / #launchButtons) has space to
+           stick all the way to true max scroll before releasing.
+           The bar's containing block for sticky purposes is this island
+           div, not the outer <main> — a padding-bottom on <main> gives the
+           bar no extra room, since the island itself ends flush with the
+           bar. The fallback `80px` covers the first paint before
+           cts-action-bar publishes --cts-action-bar-height. */
+        #guidedIsland,
+        #scheduleTestPage {
+            padding-bottom: calc(var(--cts-action-bar-height, 80px) + var(--space-5));
+        }
+
+        /* The padding-bottom above only guarantees room
+           exists at the very end of the scroll range — it does nothing to
+           stop content from landing PARTIALLY BEHIND the sticky bar when
+           scrolled to mid-way through the form (e.g. "Validate
+           Configuration", the form's own submit button, is the last thing
+           inside <cts-config-form> and sits right where the sticky bar
+           covers it). scrollIntoView()/scrollIntoViewIfNeeded() and Tab-key
+           focus scrolling compute "is this visible?" from raw viewport
+           geometry — they have no idea the bottom var(--cts-action-bar-
+           height) pixels of the viewport are painted over by a fixed/sticky
+           bar, so they stop scrolling as soon as an element's box merely
+           intersects the viewport, even if it's still hidden underneath.
+           scroll-padding-bottom is the browser-native fix: every native and
+           scripted scrollIntoView within this page now reserves that much
+           clearance automatically, the same way log-detail.js's entries use
+           scroll-margin-top to clear the sticky status bar at the top. */
+        html {
+            scroll-padding-bottom: var(--cts-action-bar-height, 80px);
+        }
+
+        /* scroll-padding-bottom only controls how FAR a
+           scroll goes, not the underlying layout — on a short form, true
+           max scroll is reached before the requested clearance is actually
+           satisfied, so the bar (once it releases from sticking) still
+           settles flush against the form's last control ("Validate
+           Configuration") with zero DOM-level gap. Give the bar itself real
+           margin so there's always visible breathing room once it settles,
+           independent of scroll position or how tall any given plan's form
+           is. */
+        #launchButtons .oidf-action-bar,
+        #guidedStageActions .oidf-action-bar {
+            /* Targets cts-action-bar's inner div, not the host: the host
+               element itself has no explicit `display` and defaults to
+               `inline`, which ignores margin-top entirely — margin has to
+               land on the div that's actually block-level and sticky. */
+            margin-top: var(--space-4);
+        }
+
+        /* revealPlanSelection() scrolls #selectionFlash to block:start; land
+           it 16px shy of the viewport top so the selection (and the flash wash
+           around it) gets breathing room. scroll-margin offsets the scroll
+           target position only — unlike padding, the box doesn't change. */
+        #selectionFlash { scroll-margin-top: var(--space-4); }
+
+        .sr-only { position: absolute; clip-path: inset(50%); width: 1px; height: 1px; overflow: hidden; }
+
+        /* ── Guided journey (ported from prototype 4) ───────────────── */
+
+        /* Progress rail */
+        #guidedIsland .cert-progress {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            margin: 0 0 var(--space-6);
+            list-style: none;
+            padding: 0;
+            flex-wrap: wrap;
+        }
+        #guidedIsland .cert-progress:empty { display: none; }
+        #guidedIsland .cert-progress li {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            font-size: var(--fs-12);
+            color: var(--fg-muted);
+        }
+        #guidedIsland .cert-progress li[data-state="done"] { color: var(--fg); }
+        #guidedIsland .cert-progress li[data-state="current"] { color: var(--orange-600); font-weight: var(--fw-bold); }
+        #guidedIsland .cert-progress .dot {
+            width: var(--space-3);
+            height: var(--space-3);
+            border-radius: var(--radius-pill);
+            background: var(--border-strong);
+            display: inline-block;
+            flex: none;
+        }
+        #guidedIsland .cert-progress li[data-state="done"] .dot { background: var(--status-pass); }
+        #guidedIsland .cert-progress li[data-state="current"] .dot { background: var(--orange-400); box-shadow: 0 0 0 3px var(--orange-100); }
+        #guidedIsland .cert-progress .sep {
+            width: var(--space-5);
+            height: 1px;
+            background: var(--border);
+        }
+
+        /* Breadcrumb chips of answered questions */
+        #guidedIsland .cert-trail {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: var(--space-2);
+            margin-bottom: var(--space-5);
+            min-height: var(--space-6);
+        }
+        #guidedIsland .cert-trail:empty { display: none; }
+        #guidedIsland .trail-label {
+            font-size: var(--fs-12);
+            color: var(--fg-soft);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-right: var(--space-1);
+        }
+        #guidedIsland .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-2);
+            border: 1px solid var(--border);
+            background: var(--bg-elev);
+            color: var(--fg);
+            border-radius: var(--radius-pill);
+            padding: var(--space-1) var(--space-2) var(--space-1) var(--space-3);
+            font: inherit;
+            font-size: var(--fs-13);
+            cursor: pointer;
+            transition: background 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
+        }
+        #guidedIsland .chip:hover { background: var(--orange-50); border-color: var(--orange-300); }
+        #guidedIsland .chip:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
+        #guidedIsland .chip .chip-key { font-size: var(--fs-11); color: var(--fg-soft); }
+        #guidedIsland .chip .chip-val { font-weight: var(--fw-medium); }
+        #guidedIsland .chip cts-icon { color: var(--fg-soft); }
+
+        /* The single full-width stage */
+        #guidedIsland .guided-stage { view-transition-name: cert-stage; }
+        #guidedIsland .stage-eyebrow {
+            font-size: var(--fs-13);
+            color: var(--orange-600);
+            font-weight: var(--fw-bold);
+            letter-spacing: 0.02em;
+            margin: 0 0 var(--space-2);
+        }
+        #guidedIsland .guided-stage h1 {
+            font-size: var(--fs-32);
+            line-height: var(--lh-tight);
+            margin: 0 0 var(--space-2);
+            color: var(--fg);
+            max-width: var(--maxw-narrow);
+        }
+        #guidedIsland .guided-stage h1:focus-visible { outline: var(--focus-ring); outline-offset: 6px; border-radius: var(--radius-2); }
+        #guidedIsland .guided-stage h1:focus { outline: none; }
+        #guidedIsland .stage-lede {
+            font-size: var(--fs-16);
+            color: var(--fg-muted);
+            margin: 0 0 var(--space-6);
+            max-width: var(--maxw-narrow);
+            line-height: var(--lh-base);
+        }
+
+        /* Choice cards (radio-group semantics) */
+        #guidedIsland .choice-grid {
+            display: grid;
+            gap: var(--space-3);
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            border: 0;
+            padding: 0;
+            margin: 0;
+        }
+        #guidedIsland .choice-grid.is-narrow { grid-template-columns: minmax(0, 1fr); max-width: 640px; }
+        #guidedIsland .choice-grid legend {
+            position: absolute;
+            clip-path: inset(50%);
+            width: 1px; height: 1px; overflow: hidden;
+        }
+        #guidedIsland .choice {
+            position: relative;
+            display: flex;
+            gap: var(--space-3);
+            align-items: flex-start;
+            border: 1.5px solid var(--border);
+            background: var(--bg-elev);
+            border-radius: var(--radius-3);
+            padding: var(--space-4) var(--space-5);
+            cursor: pointer;
+            transition: border-color 120ms ease, box-shadow 120ms ease, background 120ms ease;
+        }
+        #guidedIsland .choice:hover { border-color: var(--orange-300); box-shadow: var(--shadow-1); }
+        #guidedIsland .choice:has(input:focus-visible) { outline: var(--focus-ring); outline-offset: 2px; }
+        #guidedIsland .choice:has(input:checked) {
+            border-color: var(--orange-400);
+            background: var(--orange-50);
+            box-shadow: inset 0 0 0 1px var(--orange-400);
+        }
+        #guidedIsland .choice input {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+        #guidedIsland .choice .marker {
+            flex: none;
+            width: var(--space-5);
+            height: var(--space-5);
+            border-radius: var(--radius-pill);
+            border: 1.5px solid var(--border-strong);
+            display: grid;
+            place-items: center;
+            margin-top: 2px;
+            color: transparent;
+            transition: border-color 120ms ease, background 120ms ease, color 120ms ease;
+        }
+        #guidedIsland .choice:has(input:checked) .marker {
+            border-color: var(--orange-400);
+            background: var(--orange-400);
+            color: var(--fg-on-orange);
+        }
+        #guidedIsland .choice .flag {
+            font-size: var(--fs-24);
+            line-height: 1;
+            flex: none;
+            margin-top: -1px;
+        }
+        #guidedIsland .choice .choice-body { min-width: 0; }
+        #guidedIsland .choice .choice-label {
+            font-size: var(--fs-16);
+            font-weight: var(--fw-bold);
+            color: var(--fg);
+            display: block;
+        }
+        #guidedIsland .choice .choice-desc {
+            font-size: var(--fs-14);
+            color: var(--fg-muted);
+            margin-top: var(--space-1);
+            line-height: var(--lh-base);
+            display: block;
+        }
+        #guidedIsland .choice .choice-badge-row { margin-top: var(--space-2); }
+
+        /* also_required bundle checklist */
+        #guidedIsland .bundle-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: grid;
+            gap: var(--space-2);
+        }
+        #guidedIsland .bundle-list li {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            padding: var(--space-3) var(--space-4);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-2);
+            background: var(--bg);
+            font-size: var(--fs-14);
+        }
+        #guidedIsland .bundle-list li .step-num {
+            flex: none;
+            width: var(--space-6);
+            height: var(--space-6);
+            border-radius: var(--radius-pill);
+            display: grid;
+            place-items: center;
+            font-size: var(--fs-13);
+            font-weight: var(--fw-bold);
+            background: var(--bg-muted);
+            color: var(--fg-muted);
+        }
+        #guidedIsland .bundle-list li[data-self="true"] .step-num { background: var(--orange-400); color: var(--fg-on-orange); }
+        #guidedIsland .bundle-list li[data-self="true"] { border-color: var(--orange-300); background: var(--orange-50); }
+        #guidedIsland .bundle-list li .name { font-weight: var(--fw-medium); color: var(--fg); }
+        #guidedIsland .bundle-list li .here {
+            margin-left: auto;
+            font-size: var(--fs-12);
+            color: var(--orange-600);
+            font-weight: var(--fw-bold);
+        }
+        #guidedIsland .bundle-list li .later {
+            margin-left: auto;
+            font-size: var(--fs-12);
+            color: var(--fg-soft);
+        }
+
+        /* Review sections */
+        #guidedIsland .review-section { margin-bottom: var(--space-6); }
+        #guidedIsland .review-section > h2 {
+            font-size: var(--fs-15);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--fg-soft);
+            margin: 0 0 var(--space-3);
+            font-weight: var(--fw-bold);
+        }
+        #guidedIsland .resolved-plan {
+            display: flex;
+            gap: var(--space-4);
+            align-items: flex-start;
+        }
+        #guidedIsland .resolved-plan .pip {
+            flex: none;
+            width: var(--space-10);
+            height: var(--space-10);
+            border-radius: var(--radius-2);
+            background: var(--orange-100);
+            color: var(--orange-600);
+            display: grid;
+            place-items: center;
+        }
+        #guidedIsland .resolved-plan .plan-name-display {
+            font-size: var(--fs-20);
+            font-weight: var(--fw-bold);
+            color: var(--fg);
+            margin: 0;
+            line-height: var(--lh-snug);
+        }
+        #guidedIsland .resolved-plan .plan-meta {
+            margin-top: var(--space-2);
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-2);
+            align-items: center;
+        }
+        #guidedIsland .plan-name-code {
+            font-family: "JetBrains Mono", monospace;
+            font-size: var(--fs-12);
+            background: var(--bg-sunken);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-1);
+            padding: 2px var(--space-2);
+            color: var(--fg-muted);
+        }
+        #guidedIsland table.variant-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: var(--fs-14);
+        }
+        #guidedIsland table.variant-table th,
+        #guidedIsland table.variant-table td {
+            text-align: left;
+            padding: var(--space-3) var(--space-4);
+            border-bottom: 1px solid var(--border);
+            vertical-align: top;
+        }
+        #guidedIsland table.variant-table thead th {
+            font-size: var(--fs-12);
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            color: var(--fg-soft);
+            background: var(--bg-muted);
+        }
+        #guidedIsland table.variant-table tbody tr:last-child td { border-bottom: 0; }
+        #guidedIsland table.variant-table .vt-param { font-weight: var(--fw-medium); color: var(--fg); white-space: nowrap; }
+        #guidedIsland table.variant-table .vt-value {
+            font-family: "JetBrains Mono", monospace;
+            font-size: var(--fs-13);
+            color: var(--orange-700);
+        }
+        #guidedIsland table.variant-table .vt-desc { color: var(--fg-muted); font-size: var(--fs-13); line-height: var(--lh-base); }
+        #guidedIsland .review-config-hint {
+            font-size: var(--fs-13);
+            color: var(--fg-muted);
+            margin: 0 0 var(--space-3);
+        }
+        #guidedIsland .config-preview {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-2);
+        }
+
+        /* Escape hatch (route to advanced) */
+        #guidedIsland .escape-hatch { margin-top: var(--space-8); border-top: 1px solid var(--border); padding-top: var(--space-6); }
+        #guidedIsland .escape-card {
+            display: flex;
+            gap: var(--space-3);
+            align-items: center;
+            width: 100%;
+            text-align: left;
+            border: 1px dashed var(--border-strong);
+            background: var(--bg);
+            border-radius: var(--radius-3);
+            padding: var(--space-4) var(--space-5);
+            cursor: pointer;
+            font: inherit;
+            color: var(--fg);
+            transition: border-color 120ms ease, background 120ms ease;
+        }
+        #guidedIsland .escape-card:hover { border-color: var(--fg-soft); background: var(--bg-muted); }
+        #guidedIsland .escape-card:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
+        #guidedIsland .escape-card cts-icon { color: var(--fg-soft); flex: none; }
+        #guidedIsland .escape-card .ec-body { flex: 1 1 auto; }
+        #guidedIsland .escape-card .ec-title { font-weight: var(--fw-bold); display: block; }
+        #guidedIsland .escape-card .ec-sub { font-size: var(--fs-13); color: var(--fg-muted); display: block; }
+        #guidedIsland .escape-card .ec-chev { margin-left: auto; }
+
+        .actions-right { margin-left: auto; display: flex; gap: var(--space-3); }
+
+        /* Persistent render target inside #guidedStageActions. Layout-invisible
+           so the buttons participate directly in the action bar's inner flex
+           row (gap + .actions-right margin both keep working). */
+        .guided-actions-content { display: contents; }
+
+        /* View Transitions: directional slide between guided steps */
+        @media (prefers-reduced-motion: no-preference) {
+            ::view-transition-group(cert-stage) { animation-duration: 280ms; }
+            html:active-view-transition-type(forward)::view-transition-old(cert-stage) { animation: 220ms ease both vt-out-left; }
+            html:active-view-transition-type(forward)::view-transition-new(cert-stage) { animation: 280ms ease both vt-in-right; }
+            html:active-view-transition-type(backward)::view-transition-old(cert-stage) { animation: 220ms ease both vt-out-right; }
+            html:active-view-transition-type(backward)::view-transition-new(cert-stage) { animation: 280ms ease both vt-in-left; }
+            @keyframes vt-out-left { to { opacity: 0; transform: translateX(-16px); } }
+            @keyframes vt-in-right { from { opacity: 0; transform: translateX(16px); } }
+            @keyframes vt-out-right { to { opacity: 0; transform: translateX(16px); } }
+            @keyframes vt-in-left { from { opacity: 0; transform: translateX(-16px); } }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            ::view-transition-group(*),
+            ::view-transition-old(*),
+            ::view-transition-new(*) { animation: none !important; }
+        }
+
+        /* Guided→advanced prefill bridge (lives in the advanced island) */
+        .bridge-prompt {
+            display: flex;
+            gap: var(--space-3);
+            align-items: center;
+            border: 1.5px solid var(--orange-300);
+            background: var(--orange-50);
+            border-radius: var(--radius-3);
+            padding: var(--space-3) var(--space-4);
+            margin-bottom: var(--space-5);
+            box-sizing: border-box;
+        }
+        .bridge-prompt .bp-icon { color: var(--orange-600); flex: none; }
+        .bridge-prompt .bp-body { flex: 1 1 auto; min-width: 0; }
+        .bridge-prompt .bp-title { font-weight: var(--fw-bold); color: var(--fg); font-size: var(--fs-14); }
+        .bridge-prompt .bp-sub { font-size: var(--fs-13); color: var(--fg-muted); margin-top: 2px; }
+        .bridge-prompt .bp-actions { display: flex; gap: var(--space-2); flex: none; }
+
+        /* GL#1897: collapsed "here's your plan" card shown in place of
+           #planSearch when the plan arrived via a preset/shared-configuration
+           URL param rather than an in-page browse-and-pick. Same visual
+           pattern as the guided wizard's review-step .resolved-plan card
+           (guided-wizard.js renderReviewStep()), copied here rather than
+           shared because that one is scoped under #guidedIsland. */
+        .plan-selected-summary { margin-bottom: var(--space-5); }
+        .plan-selected-summary .resolved-plan {
+            display: flex;
+            gap: var(--space-4);
+            align-items: flex-start;
+        }
+        .plan-selected-summary .resolved-plan-body { flex: 1 1 auto; min-width: 0; }
+        .plan-selected-summary .pip {
+            flex: none;
+            width: var(--space-10);
+            height: var(--space-10);
+            border-radius: var(--radius-2);
+            background: var(--orange-100);
+            color: var(--orange-600);
+            display: grid;
+            place-items: center;
+        }
+        .plan-selected-summary .plan-name-display {
+            font-size: var(--fs-20);
+            font-weight: var(--fw-bold);
+            color: var(--fg);
+            margin: 0;
+            line-height: var(--lh-snug);
+        }
+        .plan-selected-summary .plan-meta {
+            margin-top: var(--space-2);
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-2);
+            align-items: center;
+        }
+        .plan-selected-summary .plan-name-code {
+            font-family: "JetBrains Mono", monospace;
+            font-size: var(--fs-12);
+            background: var(--bg-sunken);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-1);
+            padding: 2px var(--space-2);
+            color: var(--fg-muted);
+        }
+    </style>
+
+</head>
+<body>
+    <a class="oidf-skip-link" href="#main-content">Skip to main content</a>
+
+    <cts-navbar current-page="create-test"></cts-navbar>
+
+    <cts-modal id="errorModal" heading="Error">
+        Error: <span id="errorMessage"></span>
+    </cts-modal>
+
+    <cts-modal id="loadingModal" heading="Loading..." static-backdrop no-keyboard>
+        <cts-spinner size="lg" label="Loading"></cts-spinner>
+        <div aria-live="polite">
+            <span id="loadingMessage"></span>
+        </div>
+    </cts-modal>
+
+
+    <main class="schedule-test-page" id="main-content" tabindex="-1">
+
+        <!-- Persistent Guided | Advanced mode toggle. The two islands below
+             are independent state surfaces; switching only flips visibility
+             (never resets either island, R8). Mode resolution + persistence
+             live in /components/guided-wizard.js (booted below). -->
+        <div class="schedule-test-mode-head">
+            <p class="schedule-test-mode-head__title">Schedule a test plan</p>
+            <div class="mode-toggle" role="group" aria-label="Selection mode">
+                <button type="button" class="mode-toggle__btn" id="modeGuidedBtn" aria-pressed="false">
+                    <cts-icon name="bulb" size="16" aria-hidden="true"></cts-icon> Guided
+                </button>
+                <button type="button" class="mode-toggle__btn" id="modeAdvancedBtn" aria-pressed="false">
+                    <cts-icon name="settings" size="16" aria-hidden="true"></cts-icon> Advanced
+                </button>
+            </div>
+        </div>
+
+        <!-- ══ GUIDED ISLAND — the guided certification journey ════════ -->
+        <div id="guidedIsland" tabindex="-1" hidden>
+            <ol class="cert-progress" id="guidedProgress" aria-label="Guided setup progress"></ol>
+            <nav class="cert-trail" id="guidedTrail" aria-label="Your answers"></nav>
+            <section class="guided-stage" id="guidedStage" tabindex="-1">
+                <h1 tabindex="-1">Guided setup</h1>
+            </section>
+            <div aria-live="polite" class="sr-only" id="guidedLiveRegion"></div>
+            <!-- Per-step sticky actions (Back / Continue / Create). Lives
+                 inside the island so hiding the island hides the bar; the
+                 journey controller fills + toggles it per phase. It renders
+                 into the inner span (display: contents) — cts-action-bar
+                 adopts its children once at first connect, so replacing the
+                 host's children directly would destroy the sticky wrapper. -->
+            <cts-action-bar id="guidedStageActions" align-to="schedule-test-page" aria-label="Guided step actions" hidden><span class="guided-actions-content" id="guidedActionsContent"></span></cts-action-bar>
+        </div>
+
+        <!-- ══ ADVANCED ISLAND — the classic schedule-test surface ═════ -->
+        <div id="scheduleTestPage" tabindex="-1">
+
+            <div class="schedule-test-header">
+                <p class="schedule-test-instructions">Please see <a href="https://openid.net/certification/instructions/">OpenID Foundation Certification Instructions</a>.</p>
+
+                <div class="schedule-test-toolbar">
+                    <cts-button id="loadLastConfigBtn" data-testid="load-last-config" size="sm" variant="secondary" icon="clock" label="Load last configuration" loading disabled></cts-button>
+                </div>
+            </div>
+
+            <!-- Guided→advanced prefill bridge (R8): shown when a resolved,
+                 undeclined, unadopted guided journey exists on entering
+                 advanced. Wired by the journey controller. -->
+            <div class="bridge-prompt" id="bridgePrompt" hidden>
+                <cts-icon class="bp-icon" name="bulb" size="24" aria-hidden="true"></cts-icon>
+                <div class="bp-body">
+                    <div class="bp-title">Prefill from your guided answers?</div>
+                    <div class="bp-sub" id="bridgeSub"></div>
+                </div>
+                <div class="bp-actions">
+                    <cts-button id="bridgeDeclineBtn" size="sm" variant="secondary" label="No thanks"></cts-button>
+                    <cts-button id="bridgeAcceptBtn" size="sm" variant="primary" icon="check" label="Prefill"></cts-button>
+                </div>
+            </div>
+
+            <!-- Plans-load-failure banner (KTD5). Hidden by default; revealed
+                 from loadAvailablePlans()'s catch when /api/plan/available
+                 fails. A successful-but-empty response is left to the picker's
+                 own empty state — only a fetch failure shows this. Replaces
+                 the deleted cts-spec-cascade's `spec-cascade-error` banner. -->
+            <cts-alert
+                id="plansLoadError"
+                variant="danger"
+                data-testid="plans-load-error"
+                hidden
+            >Unable to load test plans — please reload the page.</cts-alert>
+
+            <cts-test-selector id="planSearch" loading></cts-test-selector>
+            <!-- GL#1897: shown instead of #planSearch when the plan arrived via
+                 a preset/shared-configuration URL param (?test_plan=,
+                 ?from-plan=/?edit-plan=) or "Load last configuration", rather
+                 than an in-page pick — see selectPlanByName()/
+                 showPlanSelectedSummary() below. "Change" swaps back to the
+                 full picker. -->
+            <div id="planSelectedSummary" class="plan-selected-summary" hidden>
+                <cts-card tone="orange">
+                    <div class="resolved-plan">
+                        <span class="pip" aria-hidden="true"><cts-icon name="shield-check" size="24"></cts-icon></span>
+                        <div class="resolved-plan-body">
+                            <p class="plan-name-display" id="planSelectedName"></p>
+                            <div class="plan-meta" id="planSelectedMeta"></div>
+                        </div>
+                        <cts-button id="planSelectedChangeBtn" size="sm" variant="secondary" label="Change"></cts-button>
+                    </div>
+                </cts-card>
+            </div>
+            <!-- Wrap the variant selectors so the scroll-in flash wash (fired
+                 after a search-list plan pick) covers the selection group. It
+                 is the scroll + flash target for revealPlanSelection(). See
+                 cts-flash-highlight + the cts-plan-select handler. -->
+            <cts-flash-highlight id="selectionFlash">
+                <form id="variantSelectors">
+                    <!-- render variant selectors here -->
+                </form>
+            </cts-flash-highlight>
+
+            <div id="configForm" style="display:none">
+                <h3>Configure Test</h3>
+                <div id="jwksGeneratorRow" class="oidf-jwks-generator-row" hidden></div>
+                <cts-config-form id="ctsConfigForm"></cts-config-form>
+            </div>
+
+            <cts-action-bar id="launchButtons" align-to="schedule-test-page" aria-label="Test plan actions">
+                <cts-button id="createPlanBtn" size="lg" variant="primary" icon="flag" label="Create Test Plan" disabled></cts-button>
+                <cts-button id="copyPlanUrlBtn" size="lg" variant="secondary" icon="copy" label="Share Test Plan Configuration" disabled></cts-button>
+            </cts-action-bar>
+
+            <cts-unsaved-changes-guard
+                id="exitGuard"
+                config-form-id="ctsConfigForm"
+                for="variantSelectors"
+            ></cts-unsaved-changes-guard>
+
+            <cts-modal
+                id="copyTestPlanUrlModal"
+                heading="Link copied to clipboard"
+                footer-buttons='[{"label":"Copy link again","class":"btn-outline-secondary","icon":"copy","dismiss":false,"id":"copyPlanUrlAgainBtn"},{"label":"Got it","class":"btn-primary","dismiss":true,"id":"shareModalDismissBtn"}]'>
+                <div class="share-modal-success">
+                    <cts-icon name="check-big" size="20" aria-hidden="true"></cts-icon>
+                    <span class="share-modal-success__eyebrow">Copied</span>
+                </div>
+                <p>Anyone with this link can recreate your test plan configuration.</p>
+                <cts-alert variant="warning">
+                    Heads up — the link may contain <strong>private keys</strong>, <strong>secrets</strong>, and other <strong>sensitive information</strong> from your configuration. Anyone you share it with will see those values.
+                </cts-alert>
+            </cts-modal>
+        </div>
+    </main>
+
+    <script type="module">
+        // Boot the Guided | Advanced mode controller. Dynamic import inside
+        // try/catch so a failed module load degrades to today's advanced
+        // page (the advanced island is the markup default) instead of
+        // hanging the init chain on an unresolved __guidedModeReady.
+        let guidedModeController;
+        try {
+            const mod = await import("/components/guided-wizard.js");
+            guidedModeController = mod.bootGuidedMode();
+            // The journey needs the live catalog, which the init chain
+            // loads; expose a late-bound starter the chain calls once
+            // FAPI_UI.availablePlans and the field catalog are in hand.
+            guidedModeController.startJourney = function (deps) {
+                return mod.startGuidedJourney(guidedModeController, deps);
+            };
+        } catch (e) {
+            console.error("[schedule-test] guided-wizard module failed to load; staying in advanced mode", e);
+        }
+        window.__resolveGuidedModeReady(guidedModeController);
+    </script>
+
+    <script type="text/javascript">
+        // currentConfig is the page's working copy of the test plan config.
+        // It is kept in sync with <cts-config-form> via the cts-config-change
+        // listener installed in loadScheduleTestPage(). Submit and "Copy plan
+        // URL" both read from this variable instead of scraping the DOM.
+        let currentConfig = {};
+
+        // fieldCatalog is the vendored static metadata that the config-form
+        // adapter consumes alongside the per-plan info from
+        // FAPI_UI.availablePlans. Fetched once at page init and never refetched.
+        let fieldCatalog = null;
+
+        // Run `done` once the page's smooth scroll has settled. `scrollend`
+        // (Baseline 2025-12) fires when a scroll rests; we listen on `document`
+        // because scrollIntoView() scrolls the root viewport. Two guards make
+        // this reliable in every branch:
+        //   - If the target was already in view, scrollIntoView() scrolls
+        //     nothing, so `scrollend` never fires. A short probe watches for the
+        //     first `scroll` event; if none lands, we run `done` immediately.
+        //   - A hard cap runs `done` even if `scrollend` is somehow missed, so
+        //     the callback can never be stranded and listeners can't leak.
+        // Call AFTER scrollIntoView() so the in-flight scroll is the one tracked.
+        function whenScrollSettles(done) {
+            let finished = false;
+            let scrolled = false;
+            function onScroll() { scrolled = true; }
+            function finish() {
+                if (finished) return;
+                finished = true;
+                document.removeEventListener('scrollend', finish);
+                document.removeEventListener('scroll', onScroll);
+                clearTimeout(noScrollTimer);
+                clearTimeout(hardCap);
+                done();
+            }
+            document.addEventListener('scrollend', finish);
+            document.addEventListener('scroll', onScroll, { passive: true });
+            // No scroll started shortly after the request → nothing will scroll.
+            const noScrollTimer = setTimeout(function() { if (!scrolled) finish(); }, 120);
+            // Safety net: never strand the callback if scrollend is missed.
+            const hardCap = setTimeout(finish, 1000);
+        }
+
+        // Shared arrival cue for the user-pick paths (clicking a search
+        // result, accepting the guided prefill bridge): scroll the selection
+        // group into view, then — once the smooth scroll has *settled* —
+        // flash the variant-selectors group and drop focus into the first
+        // variant <select> (falling back to the Create button for plans with
+        // no variants) so the user can carry straight on to configuring. The
+        // flash fires post-settle so the wash reads as "you've arrived"
+        // rather than playing mid-flight; reduced-motion handling lives
+        // inside flashHighlight(). Deliberately NOT called on the
+        // non-scrolling deep-link / edit-plan / last-config restore paths.
+        // The rAF defers until the post-selection render (variants +
+        // config-form mutations) has laid out, so the scroll target reflects
+        // the final layout — call it synchronously after selecting the plan.
+        function revealPlanSelection() {
+            requestAnimationFrame(function() {
+                // #selectionFlash wraps the variant selectors (it used to wrap
+                // the now-deleted cascade too); it is the scroll + flash
+                // target and carries the scroll-margin-top rule.
+                var flashEl = document.getElementById('selectionFlash');
+                if (!flashEl) return;
+                flashEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                whenScrollSettles(function() {
+                    if (typeof flashEl.flashHighlight === 'function') {
+                        flashEl.flashHighlight();
+                    }
+                    // No preventScroll: the scroll has already rested, so
+                    // letting .focus() nudge an off-screen control into view
+                    // is desirable here, not a conflict.
+                    var variantForm = document.getElementById('variantSelectors');
+                    var firstField = variantForm && variantForm.querySelector('select');
+                    if (!firstField) {
+                        // No-variant plan: #variantSelectors is empty. Don't
+                        // strand focus back in the search list — advance to the
+                        // primary action. cts-button renders a native <button>
+                        // in its light DOM (createRenderRoot returns `this`), so
+                        // focus that; the host element itself isn't focusable.
+                        var createBtn = document.getElementById('createPlanBtn');
+                        firstField = (createBtn && createBtn.querySelector('button')) || createBtn;
+                    }
+                    if (firstField) firstField.focus();
+                });
+            });
+        }
+
+        function loadFieldCatalog() {
+            return fetch('/js/config-field-catalog.json')
+                .then(r => r.ok ? r.json() : Promise.reject(new Error(`catalog fetch failed: ${r.status}`)))
+                .then(data => { fieldCatalog = data; })
+                .catch(err => {
+                    console.error('[schedule-test] failed to load config-field-catalog.json', err);
+                    fieldCatalog = { sections: [] };
+                });
+        }
+
+        /**
+         *
+         */
+        document.addEventListener("DOMContentLoaded", () => {
+
+            // GL#1897: when the plan arrives via a preset URL param —
+            // ?from-plan=/?edit-plan= (Edit Configuration) or ?test_plan=
+            // (a shared-configuration link) — the test-selector search list
+            // is not needed; hide it immediately to avoid a flash of the full
+            // picker before selectPlanByName() resolves and swaps in the
+            // collapsed #planSelectedSummary (see showPlanSelectedSummary()).
+            // If the preset plan name turns out to be invalid/unknown, the
+            // fallback after the init chain below un-hides the picker again.
+            var presetParams = new URLSearchParams(window.location.search);
+            if (presetParams.get("from-plan") || presetParams.get("edit-plan") || presetParams.get("test_plan")) {
+                var planSearchEl = document.getElementById("planSearch");
+                if (planSearchEl) planSearchEl.hidden = true;
+            }
+
+            // No full-page "Loading available tests..." modal: the test
+            // selector (#planSearch) boots with its own in-list loader, so the
+            // page chrome stays visible and only the list area shows a spinner.
+            // The selector's loader is cleared in the chain's .finally below.
+            FAPI_UI.loadScheduleTestPageTemplates()
+            .then(function() {
+                return FAPI_UI.getUserInfo();
+            }).then(function() {
+                return loadAvailablePlans();
+            }).then(function() {
+                return loadFieldCatalog();
+            }).then(function() {
+                // Block on the adapter module being installed on window
+                // before any page code that calls into it. Without this
+                // the inline DOMContentLoaded chain can outrun the
+                // <script type="module"> at the top of <head>.
+                return window.__configFormAdapterReady;
+            }).then(function() {
+                return loadConfig();
+            }).then(function() {
+                return loadScheduleTestPage();
+            }).then(function() {
+                // R9 mode gate: when the boot decision is guided, the
+                // advanced hydration steps are skipped entirely — running
+                // them would mutate the hidden advanced island and diverge
+                // currentConfig from what the guided journey shows. The
+                // boot decision (not the live mode) is authoritative here:
+                // URL params are fixed at load time. A failed module load
+                // resolves to undefined → advanced hydration runs as today.
+                return window.__guidedModeReady.then(function(guidedCtl) {
+                    if (guidedCtl) {
+                        // Start the guided journey now that the live catalog
+                        // and field catalog are loaded. It renders eagerly —
+                        // even when the guided island is hidden — so a later
+                        // toggle to guided shows the in-progress journey.
+                        guidedCtl.startJourney({
+                            availablePlans: FAPI_UI.availablePlans || {},
+                            fieldCatalog: fieldCatalog,
+                            getCurrentUser: function() { return FAPI_UI.currentUser; },
+                            createPlan: postCreatePlan,
+                            normalizeCreateError: normalizeCreateError,
+                            revealPlanSelection: revealPlanSelection,
+                            // acceptBridge drives the page's plan selection with
+                            // user-pick semantics: dispatchPlanSelection() leaves
+                            // isSystemSelectingPlan at 0 so the bridge prefill
+                            // clears the in-flight config (matching the old
+                            // cascade.selectPlanByName path). The dep key matches
+                            // the function name on purpose — it is the counter-0
+                            // core, NOT the counter-bumping page selectPlanByName
+                            // wrapper. It is synchronous — updateVariants()
+                            // renders the variant <select>s before it returns, so
+                            // the variant overlay lands.
+                            dispatchPlanSelection: dispatchPlanSelection,
+                            // maybeOfferBridge reads the current-plan source of
+                            // truth to dedup an already-applied prefill.
+                            getSelectedPlanName: getSelectedPlanName,
+                        });
+                    }
+                    if (guidedCtl && guidedCtl.initialMode === 'guided') {
+                        return;
+                    }
+                    return applyConfigPreset().then(function() {
+                        return restoreEditPlanVariants();
+                    }).then(function() {
+                        return applyConfigJsonParam();
+                    }).then(function() {
+                        // GL#1897 fallback: a preset param named a plan that
+                        // never resolved (unknown/stale ?test_plan=, or
+                        // ?from-plan=/?edit-plan= whose plan failed to load)
+                        // — #planSearch was hidden pre-emptively above but
+                        // showPlanSelectedSummary() never ran to replace it.
+                        // Un-hide the picker so the page isn't left with
+                        // neither the picker nor the summary visible.
+                        var summary = document.getElementById('planSelectedSummary');
+                        var picker = document.getElementById('planSearch');
+                        if (picker && picker.hidden && (!summary || summary.hidden)) {
+                            showPlanPicker();
+                        }
+                    });
+                });
+            }).finally(function() {
+                // Clear the test selector's in-list loader once init settles —
+                // success or failure — so the plan rows reveal exactly when the
+                // page is wired and interactive (the cts-plan-select handler is
+                // installed by loadScheduleTestPage in the chain above). On a
+                // failed plans fetch the rows fall back to the empty message
+                // and loadAvailablePlans()'s catch reveals #plansLoadError.
+                var planSearch = document.getElementById('planSearch');
+                if (planSearch) {
+                    planSearch.loading = false;
+                }
+            });
+        });
+
+        // Handle the ?configJson= URL param. Runs AFTER applyConfigPreset
+        // so any ?test_plan= has already selected the plan and bound the
+        // schema; configJson can apply directly. If no plan is selected
+        // yet (standalone ?configJson= URL), defer the apply until the
+        // user picks a plan — a one-shot cts-plan-selected listener
+        // bumps isSystemSelectingPlan around the apply so the regular
+        // listener does not wipe the just-applied config.
+        function applyConfigJsonParam() {
+            const searchParams = new URLSearchParams(window.location.search);
+            const configJsonParam = searchParams.get("configJson");
+            if (!configJsonParam) return;
+            let parsed;
+            try {
+                parsed = JSON.parse(configJsonParam);
+            } catch (e) {
+                console.warn('[schedule-test] invalid configJson URL param', e);
+                return;
+            }
+            const selectedPlanName = getSelectedPlanName();
+            if (selectedPlanName && selectedPlanName !== 'select') {
+                applyConfigToForm(parsed);
+                return;
+            }
+            // No plan selected — defer to the first user-driven plan pick.
+            const oneShot = function() {
+                document.removeEventListener('cts-plan-selected', oneShot);
+                // Bumping the counter would suppress clearConfigForNewPlan
+                // but the listener has already fired (we're inside it).
+                // The listener runs clearConfigForNewPlan synchronously
+                // before this oneShot fires, so currentConfig was already
+                // wiped. Apply after the listener body so we win the race.
+                queueMicrotask(() => applyConfigToForm(parsed));
+            };
+            document.addEventListener('cts-plan-selected', oneShot);
+        }
+
+        // R42 label wiring is no longer needed: <cts-form-field> renders a
+        // proper <label for="..."> for every input it owns, with unique ids
+        // generated per instance via the uidCounter in cts-form-field.js.
+
+        async function applyConfigPreset() {
+            let searchParams = new URLSearchParams(window.location.search);
+            let testPlanName = searchParams.get("test_plan");
+            if (testPlanName && testPlanName in FAPI_UI.availablePlans) {
+                await selectPlanByName(testPlanName);
+            }
+        }
+
+        async function restoreEditPlanVariants() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const editParams = urlParams.get("edit-plan") || urlParams.get("from-plan");
+            if (editParams && FAPI_UI.loadedPlanName) {
+                await selectPlanByName(FAPI_UI.loadedPlanName);
+                // restore any previously selected variant values and config field visibility
+                if (FAPI_UI.selectedVariant) {
+                    Object.entries(FAPI_UI.selectedVariant).forEach(([key, value]) => {
+                        const el = document.querySelector(`.variant-selector[data-variant-parameter="${key}"]`);
+                        if (el) {
+                            el.value = value;
+                        }
+                    });
+                }
+                updateVariantOptionsVisibility();
+                updateConfigFieldVisibility();
+            }
+        }
+
+        function registerEkycSecurityProfileChangeEvent() {
+            const securityProfile = document.getElementById('vp_security_profile');
+
+            /**
+             * Disables the option values in the select element which is not in the list
+             * @param selectElementId select element ID
+             * @param optionValues array of allowable option values
+             */
+            function updateAllowableSelectOptionValues(selectElementId, optionValues) {
+                const selectElement = document.getElementById('vp_' + selectElementId);
+                // start with 1, 0 = 'select' value
+                for (var opt, j=1; opt=selectElement.options[j]; j++) {
+                    if(optionValues.includes(opt.value) || (optionValues.includes('*'))) {
+                        opt.disabled = false;
+                    } else {
+                        opt.disabled = true;
+                        if(selectElement.selectedIndex == j) {
+                            selectElement.selectedIndex = 0;
+                            const e = new Event("change");
+                            selectElement.dispatchEvent(e);
+                        }
+                    }
+                }
+            }
+
+            const security_profile_options = {
+                none : {
+                    client_auth_type : ['*'],
+                    response_type : ['*'],
+                    response_mode : ['*'],
+                    fapi_response_mode : ['*'],
+                    auth_request_method : ['*'],
+                    auth_request_non_repudiation_method : ['*'],
+                    sender_constrain : ['*']
+                },
+                fapi1_base: {
+                    client_auth_type : ['mtls', 'private_key_jwt', 'client_secret_jwt'],
+                    response_type : ['*'],
+                    response_mode : ['default'],
+                    fapi_response_mode : ['plain_response'],
+                    auth_request_method : ['http_query'],
+                    auth_request_non_repudiation_method : ['unsigned'],
+                    sender_constrain : ['none']
+                },
+                fapi1_advanced : {
+                    client_auth_type : ['mtls', 'private_key_jwt'],
+                    response_type : ['code', 'code id_token'],
+                    response_mode : ['default'],
+                    fapi_response_mode : ['jarm'],
+                    auth_request_method : ['request_object_by_value', 'request_object_pushed'],
+                    auth_request_non_repudiation_method : ['signed_non_repudiation'],
+                    sender_constrain : ['mtls']
+                },
+                fapi2_sp : {
+                    client_auth_type : ['mtls', 'private_key_jwt'],
+                    response_type : ['code'],
+                    response_mode : ['default'],
+                    fapi_response_mode : ['plain_response'],
+                    auth_request_method : ['request_object_pushed'],
+                    auth_request_non_repudiation_method : ['unsigned'],
+                    sender_constrain : ['dpop', 'mtls']
+                },
+                fapi2_ms : {
+                    client_auth_type : ['mtls', 'private_key_jwt'],
+                    response_type : ['code'],
+                    response_mode : ['default'],
+                    fapi_response_mode : ['*'],
+                    auth_request_method : ['request_object_pushed'],
+                    auth_request_non_repudiation_method : ['signed_non_repudiation'],
+                    sender_constrain : ['dpop', 'mtls']
+                }
+            };
+
+            function onSecurityProfileChange() {
+                if(undefined != security_profile_options[securityProfile.value]) {
+                    for(const[key, value] of Object.entries(security_profile_options[securityProfile.value])) {
+                        updateAllowableSelectOptionValues(key, value);
+                    }
+                }
+             }
+            securityProfile.addEventListener("change", onSecurityProfileChange);
+            // invoke once to update variant values
+            onSecurityProfileChange();
+        }
+
+        // Lay the user's still-unresolved star presses back over a server list.
+        // Used when the seed GET lands after the user has already toggled
+        // something: the server list is the baseline, and each decision whose
+        // write has not settled yet is re-applied on top so the optimistic UI
+        // survives. A pending unstar drops the plan; a pending star appends it
+        // (insertion order, matching the store).
+        function applyPendingToggles(serverPlans, pendingToggles) {
+            var next = serverPlans.filter(function (name) {
+                return pendingToggles.get(name) !== false;
+            });
+            pendingToggles.forEach(function (wanted, plan) {
+                if (wanted && next.indexOf(plan) === -1) next.push(plan);
+            });
+            return next;
+        }
+
+        function loadAvailablePlans() {
+            return fetch('/api/plan/available')
+                .then((response) => {
+                    // On 5xx, calling .json() on a JSON error body would
+                    // coerce to [] later and silently route to the empty
+                    // state instead of the load-failure banner. Reject here
+                    // so the catch reveals #plansLoadError (KTD5).
+                    if (!response.ok) {
+                        throw new Error('HTTP ' + response.status + ': ' + response.statusText);
+                    }
+                    return response.json();
+                })
+                .then((data) => {
+                    // Keep `FAPI_UI.availablePlans` populated for downstream
+                    // consumers: `applyConfigPreset`, `updateVariants`,
+                    // `updateConfigFieldVisibility`, the create-plan submit
+                    // path, and the variant-options renderer all key into it
+                    // by planName.
+                    // Defensive: coerce non-array payloads to an empty array
+                    // so the keyBy doesn't choke on a malformed 200 body and
+                    // the picker routes to its empty-state UI.
+                    var planList = Array.isArray(data) ? data : [];
+                    FAPI_UI.availablePlans = _.keyBy(planList, 'planName');
+                    // The same dataset feeds the search picker (the sole
+                    // plan-entry point): typing filters the list; clicking a
+                    // result fires cts-plan-select, which the page handler
+                    // routes through dispatchPlanSelection so downstream
+                    // listeners (clearConfigForNewPlan, updateVariants,
+                    // updateConfigFieldVisibility) fire on every pick.
+                    var planSearch = document.getElementById('planSearch');
+                    if (planSearch) {
+                        planSearch.plans = planList;
+                        // Favorites: seed the saved list from the server
+                        // (/api/favorite-plans) and wire the optimistic
+                        // cts-favorite-toggle persistence. This is fully
+                        // independent of plan selection — favoriting changes no
+                        // selected plan, so it never routes through
+                        // selectPlanByName / clearConfigForNewPlan and never
+                        // touches the isSystemSelectingPlan suppression counter.
+                        if (window.__favoritesReady) {
+                            window.__favoritesReady.then(function () {
+                                var favController = window.__favoritesController;
+                                var attachFav = window.__attachFavorites;
+                                if (!favController || !attachFav) return;
+                                // Reconciling the seed GET against stars the
+                                // user presses while it is still open. Two
+                                // facts decide whether the seed's answer is
+                                // still worth applying when it lands:
+                                //
+                                //  - a write that SUCCEEDED returned the full
+                                //    updated set, which is newer than anything
+                                //    the seed can say, so the seed is dropped;
+                                //  - a write still IN FLIGHT is showing
+                                //    optimistically, so the seed supplies the
+                                //    baseline underneath it and the pending
+                                //    decision is re-applied on top.
+                                //
+                                // A write that FAILED makes the seed neither
+                                // stale nor overlaid: attachFavorites reverted
+                                // it against whatever `favorites` held at page
+                                // load — a placeholder, not the truth — so the
+                                // seed's answer is exactly what should be
+                                // shown. (Discarding it there was the bug: a
+                                // failed star during the seed window hid every
+                                // real favorite behind "No favorites yet" for
+                                // the rest of the page-load.)
+                                var pendingToggles = new Map();
+                                var seedSuperseded = false;
+                                planSearch.addEventListener('cts-favorite-toggle', function (e) {
+                                    pendingToggles.set(e.detail.plan, e.detail.favorite);
+                                });
+                                // Show "★ Favorites (…)" rather than a
+                                // confident "(0)" while the seed is open —
+                                // the count is unknown until it lands, and
+                                // this is exactly the window in which a click
+                                // races the seed.
+                                planSearch.favoritesLoading = true;
+                                favController.get().then(function (res) {
+                                    if (!seedSuperseded) {
+                                        planSearch.favorites = applyPendingToggles(
+                                            (res && res.plans) || [], pendingToggles);
+                                    }
+                                    planSearch.canFavorite = true;
+                                }).catch(function (err) {
+                                    if (!seedSuperseded) {
+                                        planSearch.favorites =
+                                            applyPendingToggles([], pendingToggles);
+                                    }
+                                    // Only an auth answer means "not signed
+                                    // in": the stars then render as a
+                                    // "Sign in to save favorites" affordance
+                                    // rather than offering toggles that would
+                                    // fail. A 5xx, or a rejected fetch (which
+                                    // carries no status at all), is transient
+                                    // — leave the stars enabled so a retry is
+                                    // one click away instead of stranding the
+                                    // user on a false "signed out" until they
+                                    // reload. A failed toggle has its own
+                                    // revert + error toast in the store.
+                                    if (err && (err.status === 401 || err.status === 403)) {
+                                        planSearch.canFavorite = false;
+                                    }
+                                }).finally(function () {
+                                    planSearch.favoritesLoading = false;
+                                });
+                                attachFav(planSearch, favController, {
+                                    onSettled: function (plan, favorite, ok) {
+                                        // Retire only the decision this write
+                                        // carried. Toggling the same plan twice
+                                        // before the first write returns leaves
+                                        // a NEWER intent recorded here, and an
+                                        // unconditional delete would erase it.
+                                        // Compared strictly, never for
+                                        // truthiness: an unstar records `false`
+                                        // and a missing entry reads `undefined`,
+                                        // so the two can't be confused.
+                                        if (pendingToggles.get(plan) === favorite) {
+                                            pendingToggles.delete(plan);
+                                        }
+                                        // Only a successful write outranks the
+                                        // seed; a failed one leaves the server
+                                        // exactly as the seed described it.
+                                        if (ok) seedSuperseded = true;
+                                    }
+                                });
+                            });
+                        }
+                    }
+                })
+                .catch((err) => {
+                    // Reveal the page-level load-failure banner (KTD5). The
+                    // page owns the fetch, so this catch is the one place that
+                    // can distinguish a real fetch failure (-> banner) from a
+                    // successful-but-empty response (-> the picker's own empty
+                    // state). The init chain still proceeds: downstream readers
+                    // index `FAPI_UI.availablePlans[planName]` and guard on
+                    // truthiness, so an empty object is a safe fallback.
+                    FAPI_UI.availablePlans = {};
+                    var loadError = document.getElementById('plansLoadError');
+                    if (loadError) loadError.hidden = false;
+                    console.warn('[schedule-test] /api/plan/available fetch failed:', err);
+                });
+        }
+
+        // R13: tracks reentrancy of system-driven plan selection so the
+        // cts-plan-selected listener can distinguish "the user picked a new
+        // plan" (clear the config) from "we just programmatically applied a
+        // saved/edited config" (keep the config we just put there).
+        let isSystemSelectingPlan = 0;
+
+        // KTD2: the page-owned current-plan source of truth. Replaces the
+        // former `#planSelect.value` read — that <select> lived inside
+        // cts-spec-cascade's light DOM, which is now deleted. Every consumer
+        // that needs "which plan is selected" reads it via
+        // getSelectedPlanName() instead of poking at a component's light DOM.
+        let currentPlanName = '';
+
+        function getSelectedPlanName() {
+            return currentPlanName;
+        }
+
+        // GL#1897: collapse #planSearch into a compact "here's your plan"
+        // card when the plan was chosen for the user (preset URL param or
+        // "Load last configuration") rather than picked by hand from the
+        // list. appendMetaBadge builds each #planSelectedMeta child via DOM
+        // APIs (not an innerHTML template) — schedule-test.html has no
+        // shared HTML-escape helper, and plan.displayName/planName/etc. are
+        // plain text content regardless, so textContent is both the
+        // simplest and the safe-by-default choice here.
+        function appendMetaBadge(container, isBadge, text) {
+            var el = document.createElement(isBadge ? 'cts-badge' : 'span');
+            if (isBadge) el.setAttribute('variant', 'secondary');
+            else el.className = 'plan-name-code';
+            el.textContent = text;
+            container.appendChild(el);
+        }
+
+        function showPlanSelectedSummary(plan) {
+            var picker = document.getElementById('planSearch');
+            var summary = document.getElementById('planSelectedSummary');
+            if (!plan || !picker || !summary) return;
+            document.getElementById('planSelectedName').textContent = plan.displayName || plan.planName;
+            var meta = document.getElementById('planSelectedMeta');
+            meta.textContent = '';
+            if (plan.specFamily) appendMetaBadge(meta, true, plan.specFamily);
+            if (plan.specVersion) appendMetaBadge(meta, true, plan.specVersion);
+            appendMetaBadge(meta, false, plan.planName);
+            if (Array.isArray(plan.modules) && plan.modules.length) {
+                appendMetaBadge(meta, false, plan.modules.length + ' test modules');
+            }
+            picker.hidden = true;
+            summary.hidden = false;
+        }
+
+        // Swaps back to the full picker (the "Change" action, and the
+        // invalid-preset fallback in the DOMContentLoaded chain above).
+        function showPlanPicker() {
+            var picker = document.getElementById('planSearch');
+            var summary = document.getElementById('planSelectedSummary');
+            if (summary) summary.hidden = true;
+            if (picker) {
+                picker.hidden = false;
+                var input = picker.querySelector('.oidf-test-selector__search');
+                if (input) input.focus();
+            }
+        }
+
+        // Core plan selection (KTD1): resolve planName -> plan via
+        // FAPI_UI.availablePlans, set the current-plan source of truth, then
+        // dispatch `cts-plan-selected` ourselves (cts-spec-cascade used to own
+        // this dispatch). Deliberately does NOT touch isSystemSelectingPlan:
+        // the cts-plan-selected listener reads that counter to decide
+        // clear-vs-preserve, and the two entry points differ only in it. User
+        // picks (search-list click, guided accept-bridge) call this directly
+        // with the counter at 0 -> config cleared; programmatic restores wrap
+        // it in selectPlanByName() with the counter bumped -> config preserved.
+        //
+        // KTD4: currentPlanName is set BEFORE the dispatch so the synchronous
+        // listener (which runs updateVariants() / updateConfigFieldVisibility())
+        // reads the new plan. The updateComplete deferral the cascade needed
+        // (to sync #planSelect.value before listeners ran) is gone — a plain
+        // variable is in sync the instant we assign it.
+        //
+        // Returns true if the plan resolved and was dispatched, false for a
+        // falsy or unknown plan name (no dispatch, no crash).
+        function dispatchPlanSelection(planName) {
+            if (!planName || !FAPI_UI.availablePlans || !FAPI_UI.availablePlans[planName]) {
+                return false;
+            }
+            currentPlanName = planName;
+            document.dispatchEvent(new CustomEvent('cts-plan-selected', {
+                bubbles: true,
+                detail: { plan: FAPI_UI.availablePlans[planName] },
+            }));
+            return true;
+        }
+
+        // Programmatic-select wrapper (KTD3): bumps the suppression counter
+        // around the dispatch so the cts-plan-selected listener preserves the
+        // config the caller is about to apply (?test_plan=, edit-plan,
+        // "Load last configuration"). Stays async so existing
+        // `await selectPlanByName(...)` callers keep their sequencing; the
+        // dispatch and the synchronous updateVariants() the listener runs both
+        // complete before this resolves, so callers that immediately overlay
+        // variant values see rendered <select>s.
+        async function selectPlanByName(planName) {
+            isSystemSelectingPlan++;
+            try {
+                var selected = dispatchPlanSelection(planName);
+                // GL#1897: every selectPlanByName() caller (?test_plan=,
+                // ?from-plan=/?edit-plan=, "Load last configuration") is a
+                // system-chosen plan, not a hand-picked one — collapse to
+                // the summary card. dispatchPlanSelection() (organic list
+                // clicks) is untouched, so browsing never auto-collapses.
+                if (selected) showPlanSelectedSummary(FAPI_UI.availablePlans[planName]);
+                return selected;
+            } finally {
+                isSystemSelectingPlan--;
+            }
+        }
+
+        function saveConfig(config) {
+            var localStorage = tryGetStorage('sessionStorage');
+            if (localStorage) {
+                localStorage.setItem('savedConfig', JSON.stringify(config));
+            }
+        }
+
+        function clearSavedConfig() {
+            var localStorage = tryGetStorage('sessionStorage');
+            if (localStorage) {
+                localStorage.removeItem('savedConfig');
+            }
+        }
+
+        function loadConfig() {
+            var urlParams = new URLSearchParams(window.location.search);
+            var planId = urlParams.get('edit-plan') || urlParams.get('from-plan');
+            var testId = urlParams.get('edit-test');
+            if (planId) {
+                return loadPlanConfig(planId);
+            } else if (testId) {
+                return loadTestConfig(testId);
+            } else {
+                return loadLastConfig();
+            }
+        }
+
+        // Apply a fetched config object to cts-config-form AND to the page's
+        // currentConfig mirror so the submit handler sees the same shape the
+        // user sees. The component re-renders both tabs from the new .config.
+        // Programmatic hydration must NOT arm the unsaved-changes guard, so
+        // we clear the dirty flag after writing the new config.
+        function applyConfigToForm(configObj) {
+            currentConfig = configObj || {};
+            const ctsConfigForm = document.getElementById('ctsConfigForm');
+            if (ctsConfigForm) ctsConfigForm.config = currentConfig;
+            const exitGuard = document.getElementById('exitGuard');
+            if (exitGuard && typeof exitGuard.markClean === 'function') {
+                exitGuard.markClean();
+            }
+        }
+
+        function loadPlanConfig(planId) {
+            // Load config of plan from database
+            return fetch('/api/plan/' + encodeURIComponent(planId))
+                .then((response) => response.json())
+                .then(async (data) => {
+                    FAPI_UI.loadedPlanName = data.planName;
+                    if (data.config) {
+                        // Order matters: await the selection so the listener
+                        // fires updateConfigFieldVisibility (which binds
+                        // ctsConfigForm.schema/uiSchema/hiddenFields) BEFORE
+                        // we hand the config to the component. Otherwise the
+                        // component receives `.config` against an empty
+                        // schema, then re-renders later when the schema lands
+                        // — a brief window where the form has populated data
+                        // but no fields to render. Same ordering as
+                        // loadLastConfigFromServer.
+                        await updateSelectedTestSelector(data.planName);
+                        if (data.variant) {
+                            FAPI_UI.selectedVariant = data.variant;
+                        }
+                        applyConfigToForm(data.config);
+                    } else {
+                        // otherwise leave the form blank
+                        applyConfigToForm({});
+                    }
+                })
+        }
+
+        function loadTestConfig(testId) {
+            return fetch('/api/info/' + encodeURIComponent(testId))
+                .then((response) => response.json())
+                .then(async (data) => {
+                    if (data.config) {
+                        // See loadPlanConfig for the select-before-config
+                        // ordering rationale.
+                        await updateSelectedTestSelector(data.planName);
+                        if (data.variant) {
+                            FAPI_UI.selectedVariant = data.variant;
+                        }
+                        applyConfigToForm(data.config);
+                    } else {
+                        applyConfigToForm({});
+                    }
+                })
+        }
+
+        // R13: page load no longer auto-fetches /api/lastconfig. We still
+        // restore an in-flight savedConfig from sessionStorage (a "you just
+        // hit submit and the server failed" recovery), but cross-session
+        // prefill from the last persisted config is now opt-in via the
+        // "Load last configuration" button (loadLastConfigFromServer).
+        async function loadLastConfig() {
+            var localStorage = tryGetStorage('sessionStorage');
+            var localSavedConfig;
+
+            try {
+                localSavedConfig = localStorage ? JSON.parse(localStorage.getItem('savedConfig')) : null;
+                clearSavedConfig();
+            } catch (e) {
+                localSavedConfig = null;
+            }
+
+            if (localSavedConfig) {
+                // savedConfig.config is the stringified JSON the submit
+                // handler stashed before the create attempt failed. Parse
+                // it back into an object before handing to the component.
+                let parsed = {};
+                let parseFailed = false;
+                try {
+                    parsed = typeof localSavedConfig.config === "string"
+                        ? JSON.parse(localSavedConfig.config || "{}")
+                        : (localSavedConfig.config || {});
+                } catch (e) {
+                    parsed = {};
+                    parseFailed = true;
+                }
+                if (parseFailed) {
+                    // Old sessionStorage entries from pre-Phase-2 may carry
+                    // invalid JSON; surface a non-blocking warning instead
+                    // of silently dropping the user's saved attempt.
+                    FAPI_UI.showError({
+                        error: "Could not restore your last submitted configuration — the stored data was invalid and has been cleared.",
+                    });
+                }
+                // Same select-before-config ordering as loadPlanConfig:
+                // bind the schema first, then hand the data to the component.
+                await updateSelectedTestSelector(localSavedConfig.planName);
+                if (localSavedConfig.variant) {
+                    FAPI_UI.selectedVariant = localSavedConfig.variant;
+                }
+                applyConfigToForm(parsed);
+                return true;
+            }
+
+            // R13: default to a blank configuration. The user picks a plan,
+            // the form opens up empty, and they can either type fresh or
+            // click "Load last configuration" to fetch /api/lastconfig.
+            applyConfigToForm({});
+            return false;
+        }
+
+        // U11 (B3): probe /api/lastconfig once during bootstrap so the
+        // "Load last configuration" button can render disabled when there
+        // is nothing to load. The probe ONLY informs button state — it
+        // does NOT apply the config to the form. R13 (don't auto-prefill)
+        // is preserved: the user still has to click before any persisted
+        // config touches the editor.
+        function probeLastConfig() {
+            var btn = document.getElementById('loadLastConfigBtn');
+            return fetch('/api/lastconfig')
+                .then((response) => response.json())
+                .then((data) => {
+                    if (btn) btn.loading = false;
+                    if (data && data.config) {
+                        if (btn) btn.disabled = false;
+                    }
+                })
+                .catch((error) => {
+                    // Silent failure: keep the button disabled and log
+                    // the error to the console. Toasting on bootstrap
+                    // would spam the page; clicking a disabled button
+                    // can't trigger the same error, so the user is not
+                    // misled.
+                    if (btn) btn.loading = false;
+                    console.warn('[schedule-test] probeLastConfig failed:', error);
+                });
+        }
+
+        // R13: explicit "Load last configuration" action. Mirrors the prior
+        // auto-fetch behavior but is now triggered only by the user clicking
+        // the toolbar button. updateSelectedTestSelector selects the plan
+        // through selectPlanByName (which trips isSystemSelectingPlan), so
+        // the cts-plan-selected listener skips clearing the config we are
+        // about to apply.
+        //
+        // U11 (B3): the click handler toggles cts-button's `loading` for
+        // the duration of the fetch, so the spinner is visible on slow
+        // review-app environments. The button stays enabled after an
+        // error so the user can retry.
+        function loadLastConfigFromServer() {
+            var btn = document.getElementById('loadLastConfigBtn');
+            if (btn) btn.loading = true;
+            return fetch('/api/lastconfig')
+                .then((response) => response.json())
+                .then(async (data) => {
+                    if (data.config) {
+                        // U12 (B4): after selectPlanByName dispatches
+                        // cts-plan-selected, the listener calls
+                        // updateVariants() (which renders the variant
+                        // <select>s) and updateConfigFieldVisibility()
+                        // (which early-returns because the variants
+                        // are still on their "select" placeholder, so
+                        // ctsConfigForm.schema never binds and the
+                        // Form tab has no fields to render). The saved
+                        // variants in data.variant fix that — propagate
+                        // them to the rendered <select>s (mirroring
+                        // restoreEditPlanVariants), then re-run
+                        // updateConfigFieldVisibility so the schema
+                        // binds before applyConfigToForm hands the body
+                        // to the form.
+                        await updateSelectedTestSelector(data.planName);
+                        if (data.variant) {
+                            FAPI_UI.selectedVariant = data.variant;
+                            Object.entries(data.variant).forEach(([key, value]) => {
+                                const el = document.querySelector(
+                                    `.variant-selector[data-variant-parameter="${key}"]`
+                                );
+                                if (el) el.value = value;
+                            });
+                            updateVariantOptionsVisibility();
+                            updateConfigFieldVisibility();
+                        }
+                        applyConfigToForm(data.config);
+                    } else {
+                        FAPI_UI.showError({
+                            error: "No previously saved configuration is available."
+                        });
+                    }
+                })
+                .catch((error) => {
+                    FAPI_UI.showError({
+                        error: "Could not load the previous configuration: " + error
+                    });
+                })
+                .finally(() => {
+                    if (btn) btn.loading = false;
+                });
+        }
+
+        function updateSelectedTestSelector(planName) {
+            // Returns the selectPlanByName promise so callers in async chains
+            // can await the dispatch (and its synchronous variant render)
+            // before continuing.
+            return selectPlanByName(planName);
+        }
+
+        function collectFormParametersToParameterObject(dataAttribute, skipValue) {
+            let paramValues = [...document.querySelectorAll(`[${dataAttribute}]`)]
+                .filter(it => (it.value && it.value !== skipValue))
+                .map(it => ({
+                    [it.getAttribute(`${dataAttribute}`)]: encodeURIComponent(it.value)
+                }));
+
+            const paramObject = paramValues.reduce((acc, obj) => {
+                const key = Object.keys(obj)[0];
+                const value = obj[key];
+                acc[key] = value;
+                return acc;
+            }, {});
+            return paramObject;
+        }
+
+        function createTestPlanParameterUrl() {
+            let pageUrl = window.location.origin + window.location.pathname;
+            let testPlan = getSelectedPlanName();
+            let url = pageUrl + "?test_plan=" + testPlan;
+            let dataVariantParameters = collectFormParametersToParameterObject("data-variant-parameter", "select");
+
+            if (Object.keys(dataVariantParameters).length > 0) {
+                url += "&" + new URLSearchParams(dataVariantParameters).toString();
+            }
+            if (currentConfig && Object.keys(currentConfig).length > 0) {
+                let normalizedJsonConfig = JSON.stringify(currentConfig);
+                url += "&configJson=" + encodeURIComponent(normalizedJsonConfig);
+            }
+            return url;
+        }
+
+        // ── Shared create-plan plumbing ─────────────────────────────────
+        // Both create buttons — the advanced #createPlanBtn and the guided
+        // journey's create — POST through these helpers so the URL shape and
+        // error normalization cannot drift between the two islands.
+
+        function buildCreatePlanUrl(planName, selectedVariant) {
+            return '/api/plan?planName=' + encodeURIComponent(planName)
+                + '&variant=' + encodeURIComponent(JSON.stringify(selectedVariant));
+        }
+
+        // POST /api/plan. Resolves with the created plan ({id, ...});
+        // rejects with the raw Response (HTTP error) or fetch Error
+        // (network) for normalizeCreateError below.
+        function postCreatePlan(planName, selectedVariant, config) {
+            return fetch(buildCreatePlanUrl(planName, selectedVariant), {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(config),
+            }).then((response) => {
+                if (!response.ok) {
+                    return Promise.reject(response);
+                }
+                return response.json();
+            });
+        }
+
+        // Normalize a create failure into {code, message}. Never rejects.
+        // Preserves the legacy error-shape handling: plain-text bodies, the
+        // RunTimeException JSON {message} the app throws on bad variant
+        // selections (500), bare JSON-string bodies, and network errors.
+        function normalizeCreateError(error) {
+            if (!(error instanceof Response)) {
+                // Network error automatically detected by fetch.
+                return Promise.resolve({ code: "", message: String(error) });
+            }
+            var message = error.statusText;
+            var responseClone = error.clone();
+            return error.text()
+                .then(textError => {
+                    if (message === "") {
+                        message = textError;
+                    }
+                    if (error.status == 500) {
+                        try {
+                            const errorObj = JSON.parse(textError);
+                            // We have code that throws RunTimeException for bad variant selections etc;
+                            if (errorObj.message) {
+                                message = errorObj.message;
+                            }
+                        } catch (e) {
+                            // just use the message we already have
+                            console.log(e);
+                        }
+                    }
+                    return { code: error.status.toString(), message: message };
+                })
+                .catch(() => {
+                    // JSON error thrown by the app
+                    return responseClone.json()
+                        .then(jsonError => {
+                            if (typeof (jsonError) === 'string' && jsonError.length != 0) {
+                                message = jsonError;
+                            }
+                            return { code: error.status.toString(), message: message };
+                        })
+                        .catch(() => ({ code: error.status.toString(), message: error.statusText }));
+                });
+        }
+
+        function loadScheduleTestPage() {
+
+            // Wire <cts-config-form> → currentConfig: every form-field edit
+            // and every valid JSON-tab edit re-emits the full config (with
+            // any hidden-field values merged back via the component's
+            // hiddenFields round-trip). Submit reads currentConfig instead
+            // of scraping the DOM.
+            const ctsConfigForm = document.getElementById('ctsConfigForm');
+            if (ctsConfigForm) {
+                ctsConfigForm.addEventListener('cts-config-change', function(e) {
+                    currentConfig = e.detail.config || {};
+                });
+                // Seed the component with whatever currentConfig holds at
+                // this point (e.g. loaded from /api/plan/{id} in the init
+                // chain).
+                if (currentConfig && Object.keys(currentConfig).length > 0) {
+                    ctsConfigForm.config = currentConfig;
+                }
+            }
+
+            document.getElementById('createPlanBtn').onclick = function(evt) {
+
+                // The page owns the current-plan source of truth; an empty
+                // string means no plan has been picked yet.
+                const planName = getSelectedPlanName();
+
+                // if the user hasn't picked anything, just bail
+                if (!planName || planName == 'select') {
+                    FAPI_UI.showError({
+                        error: "Please select a test plan from the dropdown list"
+                    });
+                    return;
+                }
+
+                FAPI_UI.showBusy('Creating plan...');
+
+                var selectedVariant = getSelectedVariant();
+
+                // Stash the config in case we are unable to create the test
+                saveConfig({ config: JSON.stringify(currentConfig), planName: planName, variant: selectedVariant });
+
+                for (var [key, value] of Object.entries(selectedVariant)) {
+                    // if the user hasn't picked a value for some variant
+                    if (value == 'select') {
+                        FAPI_UI.showError({
+                            error: "Please select a value for " + key + " from the dropdown list"
+                        });
+                        return;
+                    }
+                }
+
+                // Submit is the user's explicit "I'm done editing" signal —
+                // disarm the guard *after* all pre-flight validations pass
+                // so an early return from the variant loop does not leave the
+                // guard clean with unsaved edits still in the form. If the
+                // POST below fails and the user resumes editing, the next
+                // cts-config-change re-arms the guard naturally.
+                const exitGuardOnSubmit = document.getElementById('exitGuard');
+                if (exitGuardOnSubmit && typeof exitGuardOnSubmit.markClean === 'function') {
+                    exitGuardOnSubmit.markClean();
+                }
+
+                postCreatePlan(planName, selectedVariant, currentConfig)
+                .then((data) => {
+                    clearSavedConfig();
+                    // forward to the test plan page
+                    window.location.assign('/plan-detail.html?plan=' + encodeURIComponent(data.id));
+                })
+                .catch((error) => {
+                    FAPI_UI.hideBusy();
+                    normalizeCreateError(error).then(({ code, message }) => {
+                        FAPI_UI.showError({ code: code, error: message });
+                    });
+                });
+            };
+
+            let copyPlanUrlBtn = document.getElementById('copyPlanUrlBtn');
+            copyPlanUrlBtn.onclick = async function(evt)  {
+                let url = createTestPlanParameterUrl();
+                try {
+                    await navigator.clipboard.writeText(url);
+                } catch (err) {
+                    console.warn('[schedule-test] clipboard.writeText failed:', err);
+                    document.getElementById('copyTestPlanUrlModal').show();
+                    return;
+                }
+                if (typeof window.ctsCopyFlash === 'function') {
+                    window.ctsCopyFlash(copyPlanUrlBtn);
+                }
+                document.getElementById('copyTestPlanUrlModal').show();
+            }
+
+            // "Copy link again" in the share-success modal. The footer-buttons
+            // descriptor on cts-modal renders this button as a dismiss:false
+            // secondary action so the user can re-copy the URL without losing
+            // the privacy-warning context. The button is part of the modal's
+            // captured DOM, so it exists from connectedCallback onward — we
+            // can bind the click handler once at page init.
+            let copyAgainBtn = document.getElementById('copyPlanUrlAgainBtn');
+            if (copyAgainBtn) {
+                copyAgainBtn.addEventListener('click', async function() {
+                    let url = createTestPlanParameterUrl();
+                    try {
+                        await navigator.clipboard.writeText(url);
+                    } catch (err) {
+                        console.warn('[schedule-test] clipboard.writeText failed on re-copy:', err);
+                        return;
+                    }
+                    if (typeof window.ctsCopyFlash === 'function') {
+                        window.ctsCopyFlash(copyAgainBtn);
+                    }
+                });
+            }
+
+            // The page dispatches `cts-plan-selected` whenever a plan is
+            // chosen — user pick (dispatchPlanSelection) OR programmatic
+            // selectPlanByName. R13: clear the carried-over config when the
+            // user picks a new plan. The selectPlanByName wrapper bumps
+            // isSystemSelectingPlan around its dispatch, so programmatic flows
+            // (edit-plan, edit-test, "Load last configuration") preserve the
+            // config they just applied.
+            document.addEventListener('cts-plan-selected', function(e) {
+                if (isSystemSelectingPlan === 0) {
+                    clearConfigForNewPlan();
+                }
+                // Keep the search picker's selected-row marker in sync with
+                // the chosen plan, regardless of the trigger source (user
+                // pick, deep-link, edit-plan, load-last-config).
+                var planSearch = document.getElementById('planSearch');
+                if (planSearch && e.detail && e.detail.plan) {
+                    planSearch.selected = e.detail.plan.planName;
+                }
+                updateVariants();
+                updateConfigFieldVisibility();
+            });
+
+            // cts-test-selector fires `cts-plan-select` when the user clicks
+            // a search result. Drive the page's own selection so its dispatched
+            // `cts-plan-selected` runs the same downstream listeners — no
+            // separate config-load codepath. dispatchPlanSelection() leaves
+            // isSystemSelectingPlan at 0, so this user pick clears any
+            // carried-over config (user-pick semantics). With a long plan list
+            // the variant region renders below the fold; revealPlanSelection()
+            // scrolls it into view, flashes the selection group, and drops
+            // focus into the first variant <select> — on every selection,
+            // mouse or keyboard.
+            var planSearch = document.getElementById('planSearch');
+            if (planSearch) {
+                planSearch.addEventListener('cts-plan-select', function(evt) {
+                    var planName = evt.detail && evt.detail.plan && evt.detail.plan.planName;
+                    if (planName) dispatchPlanSelection(planName);
+                    revealPlanSelection();
+                });
+            }
+
+            // R13: opt-in last-config load. Replaces the old auto-fetch on
+            // page load — see loadLastConfig() above.
+            //
+            // U11 (B3): kick off the existence probe before wiring the
+            // click. The button starts `loading disabled`; the probe
+            // toggles `loading=false` and, if a saved config exists,
+            // `disabled=false`. We do NOT await the probe — it runs
+            // alongside the rest of init so a slow review-app does not
+            // block page render.
+            probeLastConfig();
+            document.getElementById('loadLastConfigBtn').addEventListener('click', function() {
+                loadLastConfigFromServer();
+            });
+            // GL#1897: "Change" on the collapsed plan-summary card swaps
+            // back to the full picker.
+            document.getElementById('planSelectedChangeBtn').addEventListener('click', function() {
+                showPlanPicker();
+            });
+            document.getElementById('variantSelectors').addEventListener("change", function(){
+                updateVariantOptionsVisibility();
+                updateConfigFieldVisibility();
+            });
+
+            // update the config visibility right now
+            updateVariants();
+            if (FAPI_UI.selectedVariant) {
+                var selection = FAPI_UI.selectedVariant;
+                _.each(selection, function(value, key) {
+                    var el = document.querySelector('.variant-selector[data-variant-parameter="' + key + '"]');
+
+                    if (el != null) {
+                        el.value = value;
+                    }
+                });
+            }
+            updateVariantOptionsVisibility();
+            updateConfigFieldVisibility();
+
+            // ?configJson= URL hydration moved to applyConfigJsonParam()
+            // which runs AFTER applyConfigPreset (see DOMContentLoaded
+            // chain). Reasoning: applying configJson here would write to
+            // ctsConfigForm.config while schema is still empty (no plan
+            // selected) AND would be wiped by the cts-plan-selected listener
+            // on the user's first manual plan pick.
+        }
+
+        /**
+         * Updates the visibility of variant options based on @VariantNotApplicableWhen conditions.
+         * When a variant parameter has notApplicableWhen conditions, some of its options
+         * may need to be hidden based on the current selection of other variant parameters.
+         */
+        function updateVariantOptionsVisibility() {
+            // Empty string until a plan is picked — treat that as "no plan".
+            var planName = getSelectedPlanName();
+            if (!planName || planName === 'select' || !FAPI_UI.availablePlans[planName]) {
+                return;
+            }
+
+            var selectedPlan = FAPI_UI.availablePlans[planName];
+            var planVariants = selectedPlan.variants;
+            if (!planVariants) {
+                return;
+            }
+
+            // Get current selections for all variant parameters
+            var currentSelections = getSelectedVariant();
+            // console.log('updateVariantOptionsVisibility called with selections:', currentSelections);
+            // console.log('planVariants:', planVariants);
+
+            // For each variant parameter, check if it has notApplicableWhen conditions
+            _.each(planVariants, function(variantInfo, parameterName) {
+                var notApplicableWhen = variantInfo.notApplicableWhen;
+                console.log('Checking variant:', parameterName, 'notApplicableWhen:', notApplicableWhen);
+                if (!notApplicableWhen) {
+                    return; // No conditions for this variant
+                }
+
+                var selectElement = document.getElementById('vp_' + parameterName);
+                if (!selectElement) {
+                    return;
+                }
+
+                // If any condition parameter hasn't been selected yet, hide this
+                // variant until the dependency is resolved
+                var hasPendingDependency = _.some(notApplicableWhen, function(conditionValueMap, conditionParamName) {
+                    var currentConditionValue = currentSelections[conditionParamName];
+                    return !currentConditionValue || currentConditionValue === 'select';
+                });
+
+                if (hasPendingDependency) {
+                    var variantRow = selectElement.closest('.cascade-row');
+                    if (variantRow) {
+                        variantRow.style.display = 'none';
+                    }
+                    // Reset selection since dependency isn't resolved
+                    selectElement.value = 'select';
+                    return;
+                }
+
+                // Collect all values that should be hidden based on current selections
+                var valuesToHide = new Set();
+
+                // Check each condition (each condition is keyed by the condition parameter name)
+                _.each(notApplicableWhen, function(conditionValueMap, conditionParamName) {
+                    var currentConditionValue = currentSelections[conditionParamName];
+                    if (currentConditionValue && currentConditionValue !== 'select') {
+                        // Check if the current value triggers any exclusions
+                        var excludedValues = conditionValueMap[currentConditionValue];
+                        if (excludedValues) {
+                            excludedValues.forEach(function(v) {
+                                valuesToHide.add(v);
+                            });
+                        }
+                    }
+                });
+
+                // Update visibility of each option
+                var options = selectElement.querySelectorAll('option');
+                var currentValue = selectElement.value;
+                var needToResetSelection = false;
+
+                options.forEach(function(option) {
+                    var optionValue = option.value;
+                    if (optionValue === 'select') {
+                        return; // Don't hide the placeholder option
+                    }
+
+                    if (valuesToHide.has(optionValue)) {
+                        option.style.display = 'none';
+                        option.disabled = true;
+                        // If the currently selected option is being hidden, we need to reset
+                        if (currentValue === optionValue) {
+                            needToResetSelection = true;
+                        }
+                    } else {
+                        option.style.display = '';
+                        option.disabled = false;
+                    }
+                });
+
+                // If the current selection was hidden, reset to placeholder
+                if (needToResetSelection) {
+                    selectElement.value = 'select';
+                }
+
+                // Also update visibility of the entire variant selector if ALL options are hidden.
+                //
+                // When exactly one option survives the exclusions the value is forced by the other
+                // variants already selected (e.g. grant_management under the Chile profile). The row
+                // stays visible and is selected for the user, but is disabled: the manual form has no
+                // review step, so hiding it would leave the tester with no way to see a value that is
+                // part of the test they are about to run.
+                //
+                // Only when values were actually hidden, though: a parameter that simply declares a
+                // single value was never narrowed by anything, so it is left for the user (or the
+                // guided-journey bridge) to pick rather than being marked as forced.
+                var visibleOptions = Array.from(options).filter(function(opt) {
+                    return opt.value !== 'select' && opt.style.display !== 'none';
+                });
+
+                var variantRow = selectElement.closest('.cascade-row');
+                if (variantRow) {
+                    if (visibleOptions.length === 0) {
+                        variantRow.style.display = 'none';
+                        selectElement.disabled = false;
+                        clearForcedVariantMarking(selectElement, variantRow);
+                        // Auto-select the first (hidden) option so validation passes
+                        var firstRealOption = Array.from(options).find(function(opt) {
+                            return opt.value !== 'select';
+                        });
+                        if (firstRealOption) {
+                            selectElement.value = firstRealOption.value;
+                        }
+                    } else if (visibleOptions.length === 1 && valuesToHide.size > 0) {
+                        variantRow.style.display = '';
+                        selectElement.value = visibleOptions[0].value;
+                        markVariantAsForced(selectElement, variantRow);
+                    } else {
+                        variantRow.style.display = '';
+                        selectElement.disabled = false;
+                        clearForcedVariantMarking(selectElement, variantRow);
+                    }
+                }
+            });
+        }
+
+        // A variant that the other selections have narrowed to a single applicable value is not the
+        // user's to change, but it must stay reachable: a native `disabled` <select> is removed from
+        // the tab order and its `title` tooltip is not reliably announced, so a keyboard or screen
+        // reader user could not get at a value that is part of the test they are about to run. The
+        // control is therefore left enabled and marked `aria-disabled`, with the value held in place
+        // by the change guard below and the reason given in a visible hint rather than a tooltip.
+        // The disabled <option>s still block the other values in the native picker; the guard covers
+        // the browsers that let a `display: none` option be reached with the keyboard.
+        function markVariantAsForced(selectElement, variantRow) {
+            var forcedValue = selectElement.value;
+            selectElement.disabled = false;
+            selectElement.setAttribute('aria-disabled', 'true');
+            selectElement.dataset.forcedValue = forcedValue;
+            selectElement.removeAttribute('title');
+
+            var hintId = selectElement.id + '_forced_hint';
+            var hint = document.getElementById(hintId);
+            if (!hint) {
+                hint = document.createElement('p');
+                hint.id = hintId;
+                hint.className = 'variant-forced-hint';
+                variantRow.appendChild(hint);
+            }
+            hint.textContent = 'This value is determined by the other options you have selected.';
+            selectElement.setAttribute('aria-describedby', hintId);
+
+            if (!selectElement.dataset.forcedGuardAttached) {
+                selectElement.dataset.forcedGuardAttached = 'true';
+                selectElement.addEventListener('change', function() {
+                    if (selectElement.getAttribute('aria-disabled') === 'true' &&
+                        selectElement.value !== selectElement.dataset.forcedValue) {
+                        selectElement.value = selectElement.dataset.forcedValue;
+                    }
+                });
+            }
+        }
+
+        function clearForcedVariantMarking(selectElement, variantRow) {
+            selectElement.removeAttribute('aria-disabled');
+            selectElement.removeAttribute('aria-describedby');
+            selectElement.removeAttribute('title');
+            delete selectElement.dataset.forcedValue;
+            var hint = document.getElementById(selectElement.id + '_forced_hint');
+            if (hint) {
+                hint.remove();
+            }
+        }
+
+        function updateConfigFieldVisibility() {
+            // Hide the config form until a plan/test & all variants are
+            // selected. The outer #configForm wrapper (re-introduced in the
+            // Phase 2 markup) keeps its id so this toggle works without poking
+            // at cts-config-form's internals.
+            //
+            // The action bar (#launchButtons) is NOT toggled — it stays visible
+            // at all times. Its Create/Share buttons carry the "not ready yet"
+            // signal through their disabled state, so the bar is a stable
+            // affordance rather than something that appears once everything is
+            // filled in. Every return path below must therefore leave the
+            // button disabled states correct.
+            const configFormEl = document.getElementById('configForm');
+            const createBtn = document.getElementById('createPlanBtn');
+            const copyBtn = document.getElementById('copyPlanUrlBtn');
+            const ctsConfigForm = document.getElementById('ctsConfigForm');
+
+            configFormEl.style.display = 'none';
+
+            const planName = getSelectedPlanName();
+            const planInfo = FAPI_UI.availablePlans[planName];
+
+            if (!planName || planName === 'select' || !planInfo) {
+                createBtn.disabled = true;
+                copyBtn.disabled = true;
+                return;
+            }
+
+            const selectedVariant = getSelectedVariant();
+            const allVariantsSelected = Object.values(selectedVariant).every(v => v && v !== 'select');
+            createBtn.disabled = !allVariantsSelected;
+            copyBtn.disabled = !allVariantsSelected;
+
+            if (!allVariantsSelected) return;
+
+            // Adapter is loaded as an ES module and re-exposed on window in
+            // the module shim at the top of <head>; the init chain awaits
+            // window.__configFormAdapterReady, so reaching here without
+            // both pieces means the module failed to load (404/parse error)
+            // or the catalog fetch failed silently. Surface a visible
+            // error so the user is not staring at an empty form with no
+            // signal of what went wrong.
+            const adapter = window.__configFormAdapter;
+            if (!adapter || !fieldCatalog) {
+                console.error('[schedule-test] config-form adapter or catalog not ready');
+                FAPI_UI.showError({
+                    error: "Configuration form failed to load. Refresh the page; if the problem persists, the /js/config-form-adapter.js or /js/config-field-catalog.json asset is unreachable.",
+                });
+                return;
+            }
+
+            const { schema, uiSchema } = adapter.buildConfigFormSchema(
+                planInfo,
+                fieldCatalog,
+                selectedVariant,
+            );
+            const hiddenFields = adapter.computeHiddenFields(planInfo, selectedVariant, fieldCatalog);
+
+            if (ctsConfigForm) {
+                ctsConfigForm.schema = schema;
+                ctsConfigForm.uiSchema = uiSchema;
+                ctsConfigForm.hiddenFields = hiddenFields;
+            }
+            renderJwksGeneratorRow(uiSchema);
+
+            configFormEl.style.display = '';
+
+            if (planName === "ekyc-test-plan-oidccore") {
+                registerEkycSecurityProfileChangeEvent();
+            }
+        }
+
+        // Render the per-plan JWKS generator buttons inside #jwksGeneratorRow.
+        // The static form used to render `<a id="generate-…">` links inline
+        // next to the JWKS textareas; here we collect every field carrying
+        // an `x-cts-jwks-generator` annotation in the bound uiSchema and emit
+        // one link per generator. Hidden when no fields need a generator.
+        function renderJwksGeneratorRow(uiSchema) {
+            const row = document.getElementById('jwksGeneratorRow');
+            if (!row) return;
+            const ctsConfigForm = document.getElementById('ctsConfigForm');
+            const schemaProps = ctsConfigForm?.schema?.properties || {};
+            const generators = [];
+            for (const section of uiSchema.sections || []) {
+                for (const path of section.fields || []) {
+                    const slug = schemaProps[path]?.['x-cts-jwks-generator'];
+                    if (slug) generators.push({ slug, path, sectionTitle: section.title });
+                }
+            }
+            const links = generators.map(g => {
+                const link = document.createElement('a');
+                link.href = '#';
+                link.id = `generate-${g.slug}`;
+                link.className = 'oidf-jwks-generator-link';
+                link.textContent = `Generate ${g.sectionTitle} JWKS`;
+                return link;
+            });
+            row.replaceChildren(...links);
+            if (links.length === 0) {
+                row.hidden = true;
+                return;
+            }
+            row.hidden = false;
+            registerGenerateJwksListeners();
+        }
+
+        var savedVariantSelections = {};
+
+        function updateVariants() {
+            var map = FAPI_UI.availablePlans;
+            // Empty string until a plan is picked — treat that as "no plan".
+            var itemSelected = getSelectedPlanName();
+
+            // Merge current selections into persistent store so they survive
+            // intermediate states where no plan is selected (e.g. changing
+            // spec version when multiple plans exist).
+            var currentVariants = getSelectedVariant();
+            _.each(currentVariants, function(value, key) {
+                if (value && value !== 'select') {
+                    savedVariantSelections[key] = value;
+                }
+            });
+
+            const node = document.getElementById('variantSelectors');
+            while (node.firstChild) {
+                node.removeChild(node.firstChild);
+            }
+
+            if (map[itemSelected] && map[itemSelected].variants && Object.keys(map[itemSelected].variants).length > 0) {
+
+                // update the variant display; the API emits variants pre-sorted by sortOrder
+                _.each(map[itemSelected].variants, function(values, parameter) {
+
+                    var id = 'vp_' + parameter;
+                    var description = (values.variantInfo.description || '')
+                        .replace(/&/g, '&amp;')
+                        .replace(/"/g, '&quot;');
+                    var selector = '<div class="cascade-row">' +
+                            '<label for="' + id + '">' + values.variantInfo.displayName + '</label>' +
+                            '<div class="input-group">\n' +
+                            '<div class="input-group-text">' +
+                            '<cts-tooltip content="' + description + '" placement="bottom"><cts-icon name="info"></cts-icon></cts-tooltip>' +
+                            '</div>' +
+                            '<select class="variant-selector" id="' + id + '" data-variant-parameter="' + parameter + '">' +
+                            '<option value="select">--- Select A Variant ----</option>' +
+                            '</select></div></div>';
+                    document.getElementById('variantSelectors').insertAdjacentHTML('beforeend', selector);
+                    _.each(values.variantValues, function(info, value) {
+                        document.getElementById(id).insertAdjacentHTML('beforeend', FAPI_UI.logTemplates.TEST_OPTION({
+                            val: value,
+                            display: value
+                        }));
+                    });
+
+                    // update param presets from query parameter
+                    let searchParams = new URLSearchParams(window.location.search);
+                    let paramValue = searchParams.get(parameter);
+                    if (paramValue) {
+                        let variantSelect = document.getElementById(id);
+                        variantSelect.value = paramValue;
+                        variantSelect.dispatchEvent(new Event('change'));
+                    } else if (savedVariantSelections[parameter] && savedVariantSelections[parameter] !== 'select') {
+                        let variantSelect = document.getElementById(id);
+                        variantSelect.value = savedVariantSelections[parameter];
+                        if (variantSelect.value !== savedVariantSelections[parameter]) {
+                            // Value doesn't exist in this plan's options; show placeholder
+                            variantSelect.value = 'select';
+                        }
+                    }
+                });
+
+                if(itemSelected == "ekyc-test-plan-oidccore") {
+                    registerEkycSecurityProfileChangeEvent();
+                }
+                document.getElementById('variantSelectors').style.display = '';
+            } else {
+
+                // don't show the variant if there's none to show
+                document.getElementById('variantSelectors').style.display = 'none';
+            }
+            // Update variant option visibility based on notApplicableWhen conditions
+            updateVariantOptionsVisibility();
+        }
+
+        function getSelectedVariant() {
+            var selection = {};
+
+            document.querySelectorAll('.variant-selector[data-variant-parameter]')?.forEach(function(element) {
+                selection[element.getAttribute('data-variant-parameter')] = element.value;
+            });
+            return selection;
+        }
+
+        // R13: reset the in-flight config when the user picks a new plan.
+        // cts-config-form re-renders both tabs from the new (empty) .config.
+        // Swapping plans resets the editing surface, so the unsaved-changes
+        // guard should disarm too — the previous plan's edits are gone and
+        // the new (empty) form is by definition pristine.
+        function clearConfigForNewPlan() {
+            FAPI_UI.selectedVariant = undefined;
+            currentConfig = {};
+            const ctsConfigForm = document.getElementById('ctsConfigForm');
+            if (ctsConfigForm) ctsConfigForm.config = currentConfig;
+            const exitGuard = document.getElementById('exitGuard');
+            if (exitGuard && typeof exitGuard.markClean === 'function') {
+                exitGuard.markClean();
+            }
+        }
+
+        function tryGetStorage(type) {
+            // simple check to see whether browser storage is usable
+            // Keep in sync with tryGetStorage in /components/guided-wizard.js —
+            // this classic script cannot import the module's copy.
+            try {
+                var storage = window[type];
+                var x = '__storage_test__';
+                storage.setItem(x, x);
+                storage.removeItem(x);
+                return storage;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        // Re-attach JWKS generator click handlers whenever the
+        // #jwksGeneratorRow is (re)rendered by updateConfigFieldVisibility.
+        // Each slug maps to the dotted-path key in cts-config-form.config
+        // that the generator fills, plus whether to include an encryption
+        // key alongside the signing key.
+        function registerGenerateJwksListeners() {
+            addGenerateJwks("#generate-rp-ec-jwks", "federation.rp_ec_jwks");
+            addGenerateJwks("#generate-rp-client-jwks", "federation.rp_client_jwks");
+            addGenerateJwks("#generate-trust-anchor-jwks", "federation_trust_anchor.trust_anchor_jwks");
+            addGenerateJwks("#generate-op-ec-jwks", "federation.op_ec_jwks");
+            addGenerateJwks("#generate-op-server-jwks", "federation.op_server_jwks", true);
+        }
+
+        // Use the adapter's setAtPath (re-exposed on window via the module
+        // shim) instead of a local duplicate of the same algorithm.
+        function setConfigAtPath(obj, dottedPath, value) {
+            window.__configFormAdapter.setAtPath(obj, dottedPath, value);
+        }
+
+        // Base64url encoder
+        function base64urlEncode(buffer) {
+          return btoa(String.fromCharCode(...new Uint8Array(buffer)))
+            .replace(/\+/g, "-")
+            .replace(/\//g, "_")
+            .replace(/=+$/, "");
+        }
+
+        // Compute RFC7638 JWK thumbprint (SHA-256 of ordered canonical JSON)
+        async function computeJwkThumbprint(jwk) {
+          // For RSA keys, RFC 7638 requires only "e", "kty", and "n", in that order
+          const ordered = {
+            e: jwk.e,
+            kty: jwk.kty,
+            n: jwk.n,
+          };
+
+          const encoder = new TextEncoder();
+          const json = JSON.stringify(ordered);
+          const data = encoder.encode(json);
+          const hash = await crypto.subtle.digest("SHA-256", data);
+          return base64urlEncode(hash);
+        }
+
+        async function generateJwkSet(includeEncKey) {
+            const keyPair = await window.crypto.subtle.generateKey({
+              name: "RSASSA-PKCS1-v1_5",
+              modulusLength: 2048,
+              publicExponent: new Uint8Array([1, 0, 1]),
+              hash: "SHA-256",
+            }, true, ["sign", "verify"]);
+
+            const sigPrivateJwk = await window.crypto.subtle.exportKey("jwk", keyPair.privateKey);
+            const kid = await computeJwkThumbprint(sigPrivateJwk);
+
+            // Add required metadata
+            sigPrivateJwk.kid = kid;
+            sigPrivateJwk.use = "sig";
+            sigPrivateJwk.alg = "RS256";
+
+            // Clean up
+            delete sigPrivateJwk.ext;
+            delete sigPrivateJwk.key_ops;
+
+            if (includeEncKey) {
+                const encKeyPair = await window.crypto.subtle.generateKey(
+                    {
+                      name: "RSA-OAEP",
+                      modulusLength: 2048,
+                      publicExponent: new Uint8Array([1, 0, 1]),
+                      hash: "SHA-256",
+                    },
+                    true,
+                    ["decrypt", "encrypt"]
+                );
+
+                const encPrivateJwk = await window.crypto.subtle.exportKey("jwk", encKeyPair.privateKey);
+                const encKid = await computeJwkThumbprint(encPrivateJwk);
+
+                Object.assign(encPrivateJwk, {
+                    kid: encKid,
+                    use: "enc",
+                    alg: "RSA-OAEP",
+                });
+
+                delete encPrivateJwk.ext;
+                delete encPrivateJwk.key_ops;
+
+                return {
+                    keys: [sigPrivateJwk, encPrivateJwk],
+                };
+            } else {
+                return {
+                    keys: [sigPrivateJwk],
+                };
+            }
+        }
+
+        function addGenerateJwks(generateSelector, targetPath, includeEncKey) {
+            const link = document.querySelector(generateSelector);
+            if (!link) return; // The generator link is only rendered when its target field is visible.
+            // No { once: true } guard — the user can regenerate JWKS as many
+            // times as they want per session. renderJwksGeneratorRow always
+            // calls replaceChildren before re-registering, so the same DOM
+            // node is never bound twice; handlers cannot accumulate across
+            // plan/variant cycles.
+            link.addEventListener("click", async (e) => {
+                e.preventDefault();
+                const ctsConfigForm = document.getElementById('ctsConfigForm');
+                try {
+                    const jwks = await generateJwkSet(includeEncKey);
+                    // Write the parsed JWKS OBJECT — cts-form-field's
+                    // type-aware display formats it as pretty-printed JSON in
+                    // the textarea. Writing JSON.stringify(jwks) here would
+                    // store a string in a catalog-declared type:object field
+                    // and submit the wrong shape to /api/plan.
+                    const next = structuredClone(currentConfig || {});
+                    setConfigAtPath(next, targetPath, jwks);
+                    currentConfig = next;
+                    if (ctsConfigForm) ctsConfigForm.config = next;
+                } catch (err) {
+                    console.error(err);
+                    FAPI_UI.showError({ error: `Generate JWKS failed: ${err.message}` });
+                }
+            });
+        }
+    </script>
+
+    <cts-footer></cts-footer>
+
+    <cts-toast-host></cts-toast-host>
+</body>
+</html>

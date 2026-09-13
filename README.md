@@ -16,7 +16,7 @@ operated, sustained, and improved.
 This directory is a **bounded sub-module** restricted to formal proofs,
 mathematically-bound Rust verification engines, and core cryptography. It
 intentionally contains **no** UI frameworks or outer-loop orchestrators; those
-concerns live in the parent Multiplicity workspace. Any non-mathematical
+concerns live in the parent Phase Mirror workspace. Any non-mathematical
 deployments, UI code, or orchestrators should be pushed up to the workspace
 root.
 

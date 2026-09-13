@@ -1,6 +1,7 @@
 import Care
 import ADR.Theorems.CareViability
 
+
 /-!
 # Homestead–UAC–UCC Bridge — L0 Governed Contraction at the Edge
 

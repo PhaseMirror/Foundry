@@ -1,3 +1,6 @@
+import ADR.Core
+import ADR.Proofs
+
 /-
 # ADR Migration Module — Adjudicated In-Place Records (ADR-0040, 0041, 0043, 0057–0061)
 
@@ -15,8 +18,6 @@ Each migrated record carries:
 
 -/
 
-import ADR.Core
-import ADR.Proofs
 
 namespace ADR.Migrated
 

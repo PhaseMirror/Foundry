@@ -1,3 +1,5 @@
+import ADR.Core
+
 /-
 # Hundian Social Physics — Pauli Gate & Multiplicity Theorem
 
@@ -11,7 +13,6 @@ decommissioned in favor of this location (ADR-Integral). All proofs
 discharged without `sorry`.
 -/
 
-import ADR.Core
 
 namespace PhaseMirror.HundianPauli
 

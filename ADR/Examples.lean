@@ -1,6 +1,7 @@
 import ADR.Core
 import ADR.Proofs
 
+
 /-!
 # Architecture Decision Records (ADR) — Production Examples & P²C PETC v1.2 Governance
 

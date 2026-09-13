@@ -1,3 +1,5 @@
+import ADR.Core
+
 /-!
 # ADR-0008: R4 Homonym Lock — Machine-Checked Disambiguation
 
@@ -23,7 +25,6 @@ another. The lock is enforced by the type system, not by prose.
 - `homonym_lock_enforced`: the five kinds are pairwise non-equal as types.
 -/
 
-import ADR.Core
 
 namespace ADR
 

@@ -1,6 +1,7 @@
 import .Core
 import .Proofs
 
+
 /-! # ADR‑0040 — Conscious Sovereignty Layer, Zenolock, and Prime‑Indexed Recursive Tensor Mathematics
    A Defensive Publication on Ethical Cryptographic Governance and Post‑Quantum Enforcement
    Inventor / Author Name Here – Multiplicity Foundation & Citizen Gardens (proposed)

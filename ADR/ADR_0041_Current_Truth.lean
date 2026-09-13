@@ -1,6 +1,7 @@
 import .Core
 import .Proofs
 
+
 /-! # ADR‑0041 — CURRENT_TRUTH
    Living Honesty Ledger & Current Truth specification.
    This ADR formalizes the operational definition of the "Current Truth" ledger that

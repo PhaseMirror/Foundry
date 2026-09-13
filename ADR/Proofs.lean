@@ -1,5 +1,6 @@
 import ADR.Core
 
+
 /-!
 # Architecture Decision Records (ADR) — Formal Verification and Invariants
 

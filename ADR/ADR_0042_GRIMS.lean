@@ -1,8 +1,9 @@
+import .Core
+import .Proofs
+
 /-! # GRIMS+ and Prime-Indexed Recursive Lawfulness
    Auto‑generated ADR definition (ID 42). Populate fields from the source markdown. -/
 
-import .Core
-import .Proofs
 
 open ADR
 

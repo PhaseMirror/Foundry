@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "docs/specs/ucc_sextuple_v1.schema.json",
+  "title": "UCC Sextuple — System Input",
+  "description": "Partial system expressed as the sextuple (X, ∘, α, μ, F, Δ). Integer-only wire format; floating point is structurally forbidden (ADR-0021).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["x", "op"],
+  "properties": {
+    "x": {
+      "description": "X — prime-indexed objects of the system.",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["prime"],
+        "properties": {
+          "prime": { "type": "integer", "minimum": 2 },
+          "label": { "type": "string" }
+        }
+      }
+    },
+    "op": {
+      "description": "∘ — the lawful composition law.",
+      "enum": ["join", "union"],
+      "default": "join"
+    },
+    "alpha": {
+      "description": "α — coherence/identity anchor: 1 for join (lcm identity), 0 for union.",
+      "type": "integer",
+      "minimum": 0,
+      "default": 1
+    },
+    "multiplicity": {
+      "description": "μ — surplus-ledger exponents v_p (finite support over X).",
+      "type": "object",
+      "additionalProperties": { "type": "integer", "minimum": 1 },
+      "default": {}
+    },
+    "f": {
+      "description": "F — endomorphism applied per relation step.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": { "enum": ["identity", "ofai"], "default": "identity" },
+        "iterate": { "type": "integer", "minimum": 1, "default": 1 }
+      }
+    },
+    "relations": {
+      "description": "The partial composition evidence being closed over.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["a", "b"],
+        "properties": {
+          "a": { "type": "integer", "minimum": 2 },
+          "b": { "type": "integer", "minimum": 2 }
+        }
+      },
+      "default": []
+    },
+    "delta": {
+      "description": "Δ — carried prior defect label (optional). The kernel rederives Δ.",
+      "type": ["string", "null"],
+      "default": null
+    }
+  }
+}

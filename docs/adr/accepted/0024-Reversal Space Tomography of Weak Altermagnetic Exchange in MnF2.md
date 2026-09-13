@@ -26,3 +26,6 @@ Adopt reversal-space tomography as the engineering framework for signed readouts
 * **[Related ADR]** ADR-0022 — polarization-channel separation this protocol multiplies in transduction.
 * **[Related ADR]** ADR-0027 — group-character coding as a specialization of the general null-witness duality.
 * **[Related ADR]** ADR-0028 — target-first design that justifies which reversal coordinate to add (design gain ΔC).
+
+* **[Delivered — spec]** `docs/specs/observ_calculus_v1.md` (+ `observ_calculus_v1.schema.json`) — the measurement-map program wire and gate semantics.
+* **[Delivered — kernel]** `packages/rust/observ` — exact-rational observability kernel: null/witness filtrations, obstruction dimension with dual counterexamples, design gain, Walsh–Hadamard reversal coding, admissible-reference sector gate, six-component claim gate, receipts bound into the CRMF PWEH chain (no WORM); sample programs under `packages/rust/observ/programs/`, verified by 4 Kani harnesses and 50 unit/integration tests on `cargo test -p observ`.

@@ -1,0 +1,192 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "docs/specs/observ_calculus_v1.schema.json",
+  "title": "Observability Calculus — Measurement Program",
+  "description": "Measurement-map program for the observ kernel (ADRs 0022-0028). Integer-only wire format; floating point is structurally forbidden (ADR-0021). Coefficients are i64 bounded by ±2^31.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["name", "dim", "stages", "targets"],
+  "properties": {
+    "name": { "type": "string" },
+    "dim": { "type": "integer", "minimum": 1, "maximum": 32 },
+    "stages": {
+      "description": "S, R, P, A, T probe stages, first-applied first; each a dim x dim exact-integer matrix.",
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 16,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "kind", "matrix"],
+        "properties": {
+          "name": { "type": "string" },
+          "kind": {
+            "enum": ["source", "response", "probe_projection", "averaging", "transfer", "nuisance"]
+          },
+          "matrix": {
+            "type": "array",
+            "minItems": 2,
+            "items": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "type": "integer" }
+            }
+          }
+        }
+      }
+    },
+    "targets": {
+      "description": "Focus functionals C to be identified.",
+      "type": "array",
+      "maxItems": 16,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "rows"],
+        "properties": {
+          "name": { "type": "string" },
+          "rows": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "type": "integer" }
+            }
+          }
+        }
+      }
+    },
+    "probes": {
+      "description": "Additional experimental channels that can resolve obstruction.",
+      "type": "array",
+      "maxItems": 16,
+      "items": { "$ref": "#/$defs/channel" },
+      "default": []
+    },
+    "claims": {
+      "description": "Six-component closure claims (M S E X R K).",
+      "type": "array",
+      "maxItems": 24,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["component", "status"],
+        "properties": {
+          "component": { "enum": ["M", "S", "E", "X", "R", "K"] },
+          "status": {
+            "enum": ["open", "claimed", "measured", "supported", "closed", "identified", "contradicted", "blocked"]
+          },
+          "channel": { "type": ["string", "null"], "default": null },
+          "focus": { "type": ["string", "null"], "default": null }
+        }
+      },
+      "default": []
+    },
+    "reversals": {
+      "description": "Walsh-Hadamard reversal cubes. forbidden_masks with a nonzero character kill the gate.",
+      "type": "array",
+      "maxItems": 16,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["n", "cube", "state_dim", "reversal_maps"],
+        "properties": {
+          "n": { "type": "integer", "minimum": 0, "maximum": 10 },
+          "cube": {
+            "type": "array",
+            "items": { "type": "integer" }
+          },
+          "forbidden_masks": {
+            "type": "array",
+            "items": { "type": "integer" },
+            "default": []
+          },
+          "state_dim": { "type": "integer", "maximum": 32 },
+          "reversal_maps": {
+            "type": "array",
+            "maxItems": 10,
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": { "type": "integer" }
+              }
+            }
+          }
+        }
+      },
+      "default": []
+    },
+    "reference": {
+      "description": "State-gate certificate; required for any S (source/exchange) claim closure.",
+      "anyOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["operator_dim", "group", "target", "declared"],
+          "properties": {
+            "operator_dim": { "type": "integer", "maximum": 32 },
+            "group": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "array",
+                  "items": { "type": "integer" }
+                }
+              }
+            },
+            "target": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": { "type": "integer" }
+              }
+            },
+            "declared": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["independent", "state", "no_retune"],
+              "properties": {
+                "independent": { "type": "boolean" },
+                "state": { "type": "boolean" },
+                "no_retune": { "type": "boolean" }
+              }
+            },
+            "odd_direction": {
+              "type": "array",
+              "items": { "type": "integer" },
+              "default": []
+            },
+            "characters": {
+              "type": "array",
+              "items": { "enum": [-1, 1] },
+              "default": []
+            }
+          }
+        }
+      ],
+      "default": null
+    }
+  },
+  "$defs": {
+    "channel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "rows"],
+      "properties": {
+        "name": { "type": "string" },
+        "rows": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": { "type": "integer" }
+          }
+        }
+      }
+    }
+  }
+}

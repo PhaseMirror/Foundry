@@ -24,3 +24,6 @@ Adopt the δJ7 principle as the canonical account of symmetry-complement source 
 * **[Related ADR]** ADR-0022 — polarization-odd channel whose chiral response this source sector drives.
 * **[Related ADR]** ADR-0024 — signed field/partner-momentum readout that measures δJ7.
 * **[Related ADR]** ADR-0026 — cross-material falsification benchmark that limits δJ7's generality.
+
+* **[Delivered — spec]** `docs/specs/observ_calculus_v1.md` (+ `observ_calculus_v1.schema.json`) — the measurement-map program wire and gate semantics.
+* **[Delivered — kernel]** `packages/rust/observ` — exact-rational observability kernel: null/witness filtrations, obstruction dimension with dual counterexamples, design gain, Walsh–Hadamard reversal coding, admissible-reference sector gate, six-component claim gate, receipts bound into the CRMF PWEH chain (no WORM); sample programs under `packages/rust/observ/programs/`, verified by 4 Kani harnesses and 50 unit/integration tests on `cargo test -p observ`.

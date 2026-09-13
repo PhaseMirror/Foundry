@@ -28,3 +28,6 @@ Adopt the target-first observability calculus as the standard for designing alte
 * **[Related ADR]** ADR-0024 — reversal-space coding as the concrete implementation of dual witness/obstruction channels.
 * **[Related ADR]** ADR-0026 — the state gate formalized with the same upstream-first logic at benchmark scale.
 * **[Related ADR]** ADR-0025 — the claim-separation discipline (C₁ signed exchange, C₂ dynamical chiral response, C₃ static multipole rank) governing MnF₂ targets.
+
+* **[Delivered — spec]** `docs/specs/observ_calculus_v1.md` (+ `observ_calculus_v1.schema.json`) — the measurement-map program wire and gate semantics.
+* **[Delivered — kernel]** `packages/rust/observ` — exact-rational observability kernel: null/witness filtrations, obstruction dimension with dual counterexamples, design gain, Walsh–Hadamard reversal coding, admissible-reference sector gate, six-component claim gate, receipts bound into the CRMF PWEH chain (no WORM); sample programs under `packages/rust/observ/programs/`, verified by 4 Kani harnesses and 50 unit/integration tests on `cargo test -p observ`.

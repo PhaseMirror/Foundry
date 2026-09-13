@@ -28,3 +28,6 @@ Adopt the layered measurement-map geometry with null–witness duality as the ca
 * **[Related ADR]** ADR-0024 — Walsh–Hadamard reversal coding as the symmetry-coded specialization.
 * **[Related ADR]** ADR-0026 — cross-probe closure conditioned on common latent state.
 * **[Related ADR]** ADR-0028 — the target-first calculus built as the time-reversed use of this geometry.
+
+* **[Delivered — spec]** `docs/specs/observ_calculus_v1.md` (+ `observ_calculus_v1.schema.json`) — the measurement-map program wire and gate semantics.
+* **[Delivered — kernel]** `packages/rust/observ` — exact-rational observability kernel: null/witness filtrations, obstruction dimension with dual counterexamples, design gain, Walsh–Hadamard reversal coding, admissible-reference sector gate, six-component claim gate, receipts bound into the CRMF PWEH chain (no WORM); sample programs under `packages/rust/observ/programs/`, verified by 4 Kani harnesses and 50 unit/integration tests on `cargo test -p observ`.

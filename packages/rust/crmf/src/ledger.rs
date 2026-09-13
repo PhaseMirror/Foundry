@@ -66,12 +66,10 @@ impl CrmfLedger {
         let mut violations = Vec::new();
         if let Ok(file) = File::open(&self.path) {
             let reader = BufReader::new(file);
-            for line in reader.lines() {
-                if let Ok(l) = line {
-                    if let Ok(obj) = serde_json::from_str::<serde_json::Value>(&l) {
-                        if obj.get("state_hash").is_none() {
-                            violations.push("Missing state_hash in ledger entry".to_string());
-                        }
+            for line in reader.lines().map_while(Result::ok) {
+                if let Ok(obj) = serde_json::from_str::<serde_json::Value>(&line) {
+                    if obj.get("state_hash").is_none() {
+                        violations.push("Missing state_hash in ledger entry".to_string());
                     }
                 }
             }

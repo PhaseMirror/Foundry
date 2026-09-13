@@ -25,3 +25,6 @@ Adopt the probe–tensor correspondence as the discipline relating static multip
 * **[Related ADR]** ADR-0023 — S and χ as distinct response maps from one Hamiltonian class.
 * **[Related ADR]** ADR-0026 — K, χ, and S as separate components of the six-element claim vector.
 * **[Related ADR]** ADR-0027 — claim-migration prohibition restated via measurement fibers.
+
+* **[Delivered — spec]** `docs/specs/observ_calculus_v1.md` (+ `observ_calculus_v1.schema.json`) — the measurement-map program wire and gate semantics.
+* **[Delivered — kernel]** `packages/rust/observ` — exact-rational observability kernel: null/witness filtrations, obstruction dimension with dual counterexamples, design gain, Walsh–Hadamard reversal coding, admissible-reference sector gate, six-component claim gate, receipts bound into the CRMF PWEH chain (no WORM); sample programs under `packages/rust/observ/programs/`, verified by 4 Kani harnesses and 50 unit/integration tests on `cargo test -p observ`.

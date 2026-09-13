@@ -26,3 +26,6 @@ Adopt the hardened cross-material falsification benchmark with a six-component c
 * **[Related ADR]** ADR-0025 — the K component and its conditional identifiability feeding the matrix.
 * **[Related ADR]** ADR-0027 — the layered null taxonomy that makes cross-probe agreement meaningful.
 * **[Related ADR]** ADR-0028 — target-first protocol that operationalizes the same state-gate logic.
+
+* **[Delivered — spec]** `docs/specs/observ_calculus_v1.md` (+ `observ_calculus_v1.schema.json`) — the measurement-map program wire and gate semantics.
+* **[Delivered — kernel]** `packages/rust/observ` — exact-rational observability kernel: null/witness filtrations, obstruction dimension with dual counterexamples, design gain, Walsh–Hadamard reversal coding, admissible-reference sector gate, six-component claim gate, receipts bound into the CRMF PWEH chain (no WORM); sample programs under `packages/rust/observ/programs/`, verified by 4 Kani harnesses and 50 unit/integration tests on `cargo test -p observ`.

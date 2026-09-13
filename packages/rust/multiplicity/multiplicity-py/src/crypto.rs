@@ -11,7 +11,7 @@
 //! * All async functions collapse to synchronous ones; camelCase bridge-driver
 //!   aliases are omitted. The snake_case module-level API is preserved.
 
-use crate::jsonfmt::to_python_style;
+use pyjson::to_python_style;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Map, Value};
 use sha2::{Digest, Sha256};

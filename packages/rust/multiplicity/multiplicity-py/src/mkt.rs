@@ -10,7 +10,7 @@
 //! machinery itself is fully deterministic and testable.
 
 use crate::crypto::sha256_hex;
-use crate::jsonfmt::to_compact;
+use pyjson::to_compact;
 use serde_json::json;
 
 /// A colored braid word: a sequence of `(left, right)` crossings.

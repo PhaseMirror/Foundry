@@ -16,8 +16,8 @@
 //!   port hashes the canonical `sort_keys` JSON of the params instead, keeping
 //!   the structure identical and the digest deterministic.
 //! * Python `json.dumps(payload, sort_keys=True)` uses default separators
-//!   (`, ` and `: `). This is reproduced exactly by [`jsonfmt::to_python_style`],
-//!   because `serde_json` always emits compact separators.
+//!   (`, ` and `: `). This is reproduced exactly by the shared [`pyjson`]
+//!   crate, because `serde_json` always emits compact separators.
 //! * The async wrappers collapse to synchronous functions (there is no event
 //!   loop in Rust); camelCase aliases used to drive the Node bridge are dropped.
 
@@ -26,7 +26,6 @@
 
 pub mod cas;
 pub mod crypto;
-pub mod jsonfmt;
 pub mod math;
 pub mod mkt;
 

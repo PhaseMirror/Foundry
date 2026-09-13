@@ -9,7 +9,7 @@
 //! registry semantics on top of the SHA-256 fallback crypto.
 
 use crate::crypto::{self as crypto_mod, fallback_commitment, BridgeStatus};
-use crate::jsonfmt::to_python_style;
+use pyjson::to_python_style;
 use serde_json::{json, Value};
 use std::collections::BTreeMap;
 use std::sync::{Mutex, MutexGuard, OnceLock};

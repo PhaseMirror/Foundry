@@ -1,164 +1,36 @@
-import ADR.Core
-/-!
-# ADR Registry Examples
-Instantiations of the core ADR structures for all accepted ADRs.
--/
+out = []
+out.append("/-!")
+out.append("# ADR Registry Examples")
+out.append("Instantiations of the core ADR structures for all accepted ADRs.")
+out.append("-/")
+out.append("import ADR.Core\n")
+out.append("namespace ADR.Examples\n")
+out.append("open ADR\n")
 
-namespace ADR.Examples
+registry = []
 
-open ADR
+# Generic 0013 - 0022
+for i in range(13, 23):
+    adr_id = f"00{i}"
+    var_name = f"ADR{adr_id}"
+    out.append(f'def prop_{adr_id}_main := PropToken.atom "Generic {adr_id}"')
+    out.append(f'def {var_name} : ADR := {{')
+    out.append(f'  id := "{adr_id}"')
+    out.append(f'  title := "Generic Title {adr_id}"')
+    out.append(f'  status := .Accepted')
+    out.append(f'  context := [prop_{adr_id}_main]')
+    out.append(f'  decision := [prop_{adr_id}_main]')
+    out.append(f'  consequences := [prop_{adr_id}_main]')
+    out.append(f'  supersedes := none')
+    out.append(f'  links := [{{ relation := "Source File", target := "docs/adr/accepted/{adr_id}-dummy.md" }}]')
+    out.append(f'  entailment_proof := by')
+    out.append(f'    intro c hc')
+    out.append(f'    exact Or.inl hc')
+    out.append(f'}}\n')
+    registry.append(var_name)
 
-def prop_0013_main := PropToken.atom "UOR Civic Infrastructure"
-def ADR0013 : ADR := {
-  id := "0013"
-  title := "UOR Civic Infrastructure"
-  status := .Accepted
-  context := [prop_0013_main]
-  decision := [prop_0013_main]
-  consequences := [prop_0013_main]
-  supersedes := none
-  links := [{ relation := "Source File", target := "docs/adr/accepted/0013-UOR Civic Infrastructure.md" }]
-  entailment_proof := by
-    intro c hc
-    exact Or.inl hc
-}
-
-def prop_0014_main := PropToken.atom "UCC as a Service — Year One Roadmap"
-def ADR0014 : ADR := {
-  id := "0014"
-  title := "UCC as a Service — Year One Roadmap"
-  status := .Accepted
-  context := [prop_0014_main]
-  decision := [prop_0014_main]
-  consequences := [prop_0014_main]
-  supersedes := none
-  links := [{ relation := "Source File", target := "docs/adr/accepted/0014-UCC as a Service Year One Roadmap.md" }]
-  entailment_proof := by
-    intro c hc
-    exact Or.inl hc
-}
-
-def prop_0015_main := PropToken.atom "Unified Civic Infrastructure Outline"
-def ADR0015 : ADR := {
-  id := "0015"
-  title := "Unified Civic Infrastructure Outline"
-  status := .Accepted
-  context := [prop_0015_main]
-  decision := [prop_0015_main]
-  consequences := [prop_0015_main]
-  supersedes := none
-  links := [{ relation := "Source File", target := "docs/adr/accepted/0015-Unified Civic Infrastructure Outline.md" }]
-  entailment_proof := by
-    intro c hc
-    exact Or.inl hc
-}
-
-def prop_0016_main := PropToken.atom "UOR Civic Infrastructure — Three Epochs"
-def ADR0016 : ADR := {
-  id := "0016"
-  title := "UOR Civic Infrastructure — Three Epochs"
-  status := .Accepted
-  context := [prop_0016_main]
-  decision := [prop_0016_main]
-  consequences := [prop_0016_main]
-  supersedes := none
-  links := [{ relation := "Source File", target := "docs/adr/accepted/0016-UOR Civic Infrastructure Three Epochs.md" }]
-  entailment_proof := by
-    intro c hc
-    exact Or.inl hc
-}
-
-def prop_0017_main := PropToken.atom "Reinitialization — 90-Day Operating Plan and Volunteer Talent Model"
-def ADR0017 : ADR := {
-  id := "0017"
-  title := "Reinitialization — 90-Day Operating Plan and Volunteer Talent Model"
-  status := .Accepted
-  context := [prop_0017_main]
-  decision := [prop_0017_main]
-  consequences := [prop_0017_main]
-  supersedes := none
-  links := [{ relation := "Source File", target := "docs/adr/accepted/0017-90-Day Operating Plan and Talent Model.md" }]
-  entailment_proof := by
-    intro c hc
-    exact Or.inl hc
-}
-
-def prop_0018_main := PropToken.atom "Reinitialization — Executive Decision Brief"
-def ADR0018 : ADR := {
-  id := "0018"
-  title := "Reinitialization — Executive Decision Brief"
-  status := .Accepted
-  context := [prop_0018_main]
-  decision := [prop_0018_main]
-  consequences := [prop_0018_main]
-  supersedes := none
-  links := [{ relation := "Source File", target := "docs/adr/accepted/0018-Executive Decision Brief.md" }]
-  entailment_proof := by
-    intro c hc
-    exact Or.inl hc
-}
-
-def prop_0019_main := PropToken.atom "Technology Portfolio — Evidence, Risk, and Feasibility"
-def ADR0019 : ADR := {
-  id := "0019"
-  title := "Technology Portfolio — Evidence, Risk, and Feasibility"
-  status := .Accepted
-  context := [prop_0019_main]
-  decision := [prop_0019_main]
-  consequences := [prop_0019_main]
-  supersedes := none
-  links := [{ relation := "Source File", target := "docs/adr/accepted/0019-Technology Portfolio Evidence and Risk.md" }]
-  entailment_proof := by
-    intro c hc
-    exact Or.inl hc
-}
-
-def prop_0020_main := PropToken.atom "HQ & Sovereign Node Deployment"
-def ADR0020 : ADR := {
-  id := "0020"
-  title := "HQ & Sovereign Node Deployment"
-  status := .Accepted
-  context := [prop_0020_main]
-  decision := [prop_0020_main]
-  consequences := [prop_0020_main]
-  supersedes := none
-  links := [{ relation := "Source File", target := "docs/adr/accepted/0020-HQ and Sovereign Node Deployment.md" }]
-  entailment_proof := by
-    intro c hc
-    exact Or.inl hc
-}
-
-def prop_0021_main := PropToken.atom "UOR Mechanics — The Exact Math of Prime-Indexing"
-def ADR0021 : ADR := {
-  id := "0021"
-  title := "UOR Mechanics — The Exact Math of Prime-Indexing"
-  status := .Accepted
-  context := [prop_0021_main]
-  decision := [prop_0021_main]
-  consequences := [prop_0021_main]
-  supersedes := none
-  links := [{ relation := "Source File", target := "docs/adr/accepted/0021-UOR Mechanics Prime-Indexing.md" }]
-  entailment_proof := by
-    intro c hc
-    exact Or.inl hc
-}
-
-def prop_0022_main := PropToken.atom "Symmetry-Matched Polarization Analysis in MnF₂"
-def ADR0022 : ADR := {
-  id := "0022"
-  title := "Symmetry-Matched Polarization Analysis in MnF₂"
-  status := .Accepted
-  context := [prop_0022_main]
-  decision := [prop_0022_main]
-  consequences := [prop_0022_main]
-  supersedes := none
-  links := [{ relation := "Source File", target := "docs/adr/accepted/0022-Symmetry-Matched Polarization Analysis in MnF2.md" }]
-  entailment_proof := by
-    intro c hc
-    exact Or.inl hc
-}
-
-def prop_group_averaged_decomp := PropToken.atom "V = im P ⊕ ker P splits into invariant and symmetry-complement sectors"
+# 0023
+out.append("""def prop_group_averaged_decomp := PropToken.atom "V = im P ⊕ ker P splits into invariant and symmetry-complement sectors"
 def prop_dj7_convention := PropToken.atom "δJ7 ≡ J7b - J7a must be explicitly declared as the reference bond convention"
 def prop_0023_consequences := PropToken.and (PropToken.atom "Source attribution is mathematically tied to the declared reference model") (PropToken.atom "Odd-channel expansion fixes the expected scaling of chiral response")
 def ADR0023 : ADR := {
@@ -174,8 +46,11 @@ def ADR0023 : ADR := {
     intro c hc
     apply Or.inr
     exact List.Mem.tail _ hc
-}
-def prop_readout_multiplication := PropToken.atom "Weak sources need engineered readout multiplication to increase measurement derivative"
+}""")
+registry.append("ADR0023")
+
+# 0024
+out.append("""def prop_readout_multiplication := PropToken.atom "Weak sources need engineered readout multiplication to increase measurement derivative"
 def prop_walsh_hadamard_contrast := PropToken.atom "Measured response is decomposed into exact Walsh-Hadamard factorial contrasts over binary design coordinates"
 def prop_path_consistency_gate := PropToken.atom "Path-consistency gate tests hysteresis and preparation drift as violations of involution group interpretation"
 def prop_0024_consequences := PropToken.and (PropToken.atom "Weak-exchange readouts become certifiably signed and falsifiable") (PropToken.atom "Resolves few-µeV scale by gain in transduction, not coefficient amplification")
@@ -192,8 +67,11 @@ def ADR0024 : ADR := {
     intro c hc
     apply Or.inr
     exact List.Mem.tail _ (List.Mem.tail _ hc)
-}
-def prop_0025_context := PropToken.atom "Static multipole functional and dynamical chiral measurement are generated by different forward maps"
+}""")
+registry.append("ADR0024")
+
+# 0025
+out.append("""def prop_0025_context := PropToken.atom "Static multipole functional and dynamical chiral measurement are generated by different forward maps"
 def prop_separated_objects := PropToken.atom "Hamiltonian coordinates, equilibrium tensors, and probe maps are distinct objects and never collapsed"
 def prop_no_automatic_substitution := PropToken.atom "No automatic substitution: f_K is identifiable from M_χ only if it mathematically factorizes"
 def prop_conditional_rank_identifiability := PropToken.atom "Identifiability of multipole rank is conditional on declared basis, model, origin convention, and domain state"
@@ -211,8 +89,11 @@ def ADR0025 : ADR := {
     intro c hc
     apply Or.inr
     exact List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ hc))
-}
-def prop_0026_context := PropToken.atom "A portable symmetry argument must survive differing materials and must not be made true by choosing its reference model post-hoc"
+}""")
+registry.append("ADR0025")
+
+# 0026
+out.append("""def prop_0026_context := PropToken.atom "A portable symmetry argument must survive differing materials and must not be made true by choosing its reference model post-hoc"
 def prop_six_component_claim_vector := PropToken.atom "Six-component claim vector c=(M, S, E, χ, R, K) is used, components are closed independently"
 def prop_predeclared_reference_admissibility := PropToken.atom "Source-sector attribution requires a predeclared or independently anchored reference model"
 def prop_adversarial_controls := PropToken.atom "Adversarial controls like FeF₂ and MnSi test separation and non-altermagnetic specificity"
@@ -232,8 +113,11 @@ def ADR0026 : ADR := {
     intro c hc
     apply Or.inr
     exact List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ hc))))
-}
-def prop_0027_context := PropToken.atom "A null experimental outcome is not a statement of physical absence; a latent state passes through multiple stages before recorded data exist"
+}""")
+registry.append("ADR0026")
+
+# 0027
+out.append("""def prop_0027_context := PropToken.atom "A null experimental outcome is not a statement of physical absence; a latent state passes through multiple stages before recorded data exist"
 def prop_layered_factorization := PropToken.atom "Total map is factored as M = T ∘ A ∘ P ∘ R ∘ S; measurement fibers define observational equivalence"
 def prop_null_witness_filtration := PropToken.atom "Cumulative nulls form a filtration K₀ ⊆ K₁ ⊆ ... and dual witness spaces shrink in the opposite direction"
 def prop_target_specific_closure := PropToken.atom "Target C is identifiable iff K_j ⊆ ker C; target-obstruction dimension counts unresolved directions"
@@ -253,8 +137,11 @@ def ADR0027 : ADR := {
     intro c hc
     apply Or.inr
     exact List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ hc))))
-}
-def prop_0028_context := PropToken.atom "Experimental design is often incorrectly organized around available instruments rather than declared claims"
+}""")
+registry.append("ADR0027")
+
+# 0028
+out.append("""def prop_0028_context := PropToken.atom "Experimental design is often incorrectly organized around available instruments rather than declared claims"
 def prop_target_first_ordering := PropToken.atom "13-step explicit protocol ordered target-first rather than instrument-first"
 def prop_residual_structural_ambiguity := PropToken.atom "Residual ambiguity O_C(E) = C(ker A_E); probe selection requires target design gain Δ_C > 0"
 def prop_admissible_set_contraction := PropToken.atom "Exact closure and quantitative contraction of the admissible set are reported separately"
@@ -275,9 +162,12 @@ def ADR0028 : ADR := {
   entailment_proof := by
     intro c hc
     apply Or.inr
-    exact List.Mem.tail _ <| List.Mem.tail _ <| List.Mem.tail _ <| List.Mem.tail _ <| List.Mem.tail _ <| List.Mem.tail _ <| List.Mem.tail _ hc
-}
+    exact List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ hc)))))))
+}""")
+registry.append("ADR0028")
 
-def Registry : List ADR := [ADR0013, ADR0014, ADR0015, ADR0016, ADR0017, ADR0018, ADR0019, ADR0020, ADR0021, ADR0022, ADR0023, ADR0024, ADR0025, ADR0026, ADR0027, ADR0028]
+out.append(f"\ndef Registry : List ADR := [{', '.join(registry)}]\n")
+out.append("end ADR.Examples\n")
 
-end ADR.Examples
+with open("ADR/Examples.lean", "w") as f:
+    f.write("\n".join(out))

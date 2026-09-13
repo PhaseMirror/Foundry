@@ -1,15 +1,27 @@
-//! Serialization compatible with Python's `json.dumps(sort_keys=True)` using
-//! the default separators (`, ` and `: `).
+//! Serialization compatible with Python's `json` module.
 //!
-//! `serde_json` only emits compact separators, so this module walks a
-//! [`serde_json::Value`] (whose objects sort keys when the `preserve_order`
-//! feature is disabled) and re-emits it with Python's default separators.
-//! Escaping of strings reuses `serde_json` so it matches Python's `json`
-//! module byte-for-byte for the payloads used in this crate.
+//! `serde_json` only emits compact separators and does not match Python's
+//! default-separator or `indent` formats exactly. This crate reproduces the
+//! two Python formats actually used by the ported Python packages:
+//!
+//! * [`to_python_style`] — `json.dumps(value, sort_keys=True)` with default
+//!   separators (`, ` and `: `).
+//! * [`to_compact`] — `json.dumps(value, sort_keys=True, separators=(",", ":"))`.
+//!
+//! Both iterate key–value pairs as stored, so callers should build objects via
+//! `serde_json`'s default `Map` (a `BTreeMap`, sorted keys) to get the
+//! `sort_keys=True` ordering.
+//!
+//! Escaping of strings reuses `serde_json`, matching Python for the payloads
+//! used across the ported packages (no non-ASCII escaping is applied, matching
+//! Python's `ensure_ascii=False` for UTF-8-safe payloads).
+
+#![forbid(unsafe_code)]
 
 use serde_json::Value;
 
-/// Render `value` the way Python `json.dumps(value, sort_keys=True)` does.
+/// Render `value` the way Python `json.dumps(value, sort_keys=True)` does
+/// (default separators `, ` and `: `).
 pub fn to_python_style(value: &Value) -> String {
     match value {
         Value::Null => "null".to_string(),
@@ -41,7 +53,8 @@ pub fn to_python_style(value: &Value) -> String {
     }
 }
 
-/// Serialize `value` compactly, matching Python `json.dumps(value, sort_keys=True, separators=(",", ":"))`.
+/// Serialize `value` compactly, matching
+/// `json.dumps(value, sort_keys=True, separators=(",", ":"))`.
 pub fn to_compact(value: &Value) -> String {
     serde_json::to_string(value).expect("serialization cannot fail")
 }

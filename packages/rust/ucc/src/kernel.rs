@@ -28,9 +28,7 @@ use std::collections::{BTreeMap, HashMap, HashSet};
 use crate::defect::{DefectCode, UccDefect};
 use crate::levers::Lever;
 use crate::receipt::Receipt;
-use crate::system::{
-    alpha_identity, CompositionOp, EndoKind, Endomorphism, SystemInput,
-};
+use crate::system::{alpha_identity, CompositionOp, EndoKind, Endomorphism, SystemInput};
 use crmf::failgate::{self, FailLatch, GovSignal};
 
 /// Node cap: exceeding it counts as recursion escalation and kills.
@@ -81,11 +79,7 @@ pub struct Component {
 impl Component {
     /// Human label, e.g. `2^1 * 3^1`.
     pub fn canonical_label(&self) -> String {
-        let powers: Vec<String> = self
-            .members
-            .iter()
-            .map(|p| format!("{p}^1"))
-            .collect();
+        let powers: Vec<String> = self.members.iter().map(|p| format!("{p}^1")).collect();
         powers.join(" * ")
     }
 }
@@ -215,8 +209,7 @@ pub fn lawfulness(input: &SystemInput) -> (Vec<UccDefect>, bool) {
     // Law 2 — identity unique.
     if !dup.is_empty() {
         defects.push(
-            UccDefect::new(DefectCode::IdentityUnique, dup.len() as u64)
-                .with_nodes(dup.clone()),
+            UccDefect::new(DefectCode::IdentityUnique, dup.len() as u64).with_nodes(dup.clone()),
         );
     }
 
@@ -224,31 +217,28 @@ pub fn lawfulness(input: &SystemInput) -> (Vec<UccDefect>, bool) {
     for rel in &input.relations {
         if !(declared.contains(&rel.a) && declared.contains(&rel.b)) {
             defects.push(
-                UccDefect::new(DefectCode::RelationDangling, 1)
-                    .with_nodes(vec![rel.a, rel.b]),
+                UccDefect::new(DefectCode::RelationDangling, 1).with_nodes(vec![rel.a, rel.b]),
             );
         }
     }
 
     // Law 4 — the surplus ledger keys only declared identities.
-    for (p, _v) in &input.multiplicity {
+    for p in input.multiplicity.keys() {
         if !declared.contains(p) {
-            defects.push(
-                UccDefect::new(DefectCode::MultiplicityKeyUnknown, *p)
-                    .with_nodes(vec![*p]),
-            );
+            defects
+                .push(UccDefect::new(DefectCode::MultiplicityKeyUnknown, *p).with_nodes(vec![*p]));
         }
     }
 
     // Law 5 — the endomorphism is lawful.
     if let Some(f) = &input.f {
         match f.kind {
-            EndoKind::Identity if f.iterate != 1 => defects.push(
-                UccDefect::new(DefectCode::EndomorphismUnlawful, f.iterate),
-            ),
-            EndoKind::Ofai if f.iterate == 0 => defects.push(
-                UccDefect::new(DefectCode::EndomorphismUnlawful, f.iterate),
-            ),
+            EndoKind::Identity if f.iterate != 1 => {
+                defects.push(UccDefect::new(DefectCode::EndomorphismUnlawful, f.iterate))
+            }
+            EndoKind::Ofai if f.iterate == 0 => {
+                defects.push(UccDefect::new(DefectCode::EndomorphismUnlawful, f.iterate))
+            }
             _ => {}
         }
     }
@@ -259,7 +249,10 @@ pub fn lawfulness(input: &SystemInput) -> (Vec<UccDefect>, bool) {
         defects.push(
             UccDefect::new(
                 DefectCode::CoherenceAnchor,
-                input.alpha.saturating_sub(expected).max(expected.saturating_sub(input.alpha)),
+                input
+                    .alpha
+                    .saturating_sub(expected)
+                    .max(expected.saturating_sub(input.alpha)),
             )
             .with_nodes(input.node_primes()),
         );
@@ -286,7 +279,10 @@ pub fn lawfulness(input: &SystemInput) -> (Vec<UccDefect>, bool) {
     }
 
     // Λ_m scaled — the contractivity envelope.
-    let lambda = final_exponents.values().copied().fold(0u64, u64::saturating_add);
+    let lambda = final_exponents
+        .values()
+        .copied()
+        .fold(0u64, u64::saturating_add);
 
     // Law 8 — recursion escalation.
     let escalate = input.relations.len() > MAX_RELATIONS
@@ -299,14 +295,13 @@ pub fn lawfulness(input: &SystemInput) -> (Vec<UccDefect>, bool) {
     let expansive = escalate || !failgate::is_contractive(lambda);
     if expansive {
         defects.push(
-            UccDefect::new(DefectCode::ExpansiveTransition, lambda)
-                .with_nodes(input.node_primes()),
+            UccDefect::new(DefectCode::ExpansiveTransition, lambda).with_nodes(input.node_primes()),
         );
     }
 
     // Law 10 — overflow probe: every lawful component label fits u64.
     if let Some(components) = component_parts(input) {
-        for comp_members in components {
+        'components: for comp_members in components {
             let mut acc: u64 = 1;
             for p in &comp_members {
                 let v = final_exponents.get(p).copied().unwrap_or(1);
@@ -320,7 +315,7 @@ pub fn lawfulness(input: &SystemInput) -> (Vec<UccDefect>, bool) {
                             UccDefect::new(DefectCode::ArithmeticOverflow, *p)
                                 .with_nodes(comp_members.clone()),
                         );
-                        break;
+                        continue 'components;
                     };
                     pp = next;
                 }
@@ -329,7 +324,7 @@ pub fn lawfulness(input: &SystemInput) -> (Vec<UccDefect>, bool) {
                         UccDefect::new(DefectCode::ArithmeticOverflow, *p)
                             .with_nodes(comp_members.clone()),
                     );
-                    break;
+                    continue 'components;
                 };
                 acc = pow;
             }
@@ -372,7 +367,7 @@ pub fn measure_associator(input: &SystemInput) -> u64 {
     forward
         .iter()
         .zip(reverse.iter())
-        .map(|((_p, &l), (_q, &r))| if l >= r { l - r } else { r - l })
+        .map(|((_p, &l), (_q, &r))| l.abs_diff(r))
         .fold(0u64, u64::saturating_add)
 }
 
@@ -405,9 +400,9 @@ pub fn final_exponents(input: &SystemInput, declared: &HashSet<u64>) -> BTreeMap
             // Lossless structural join: no surplus is added.
             CompositionOp::Join => base,
             // Dirichlet convolution: exponents add per enforced touch.
-            CompositionOp::Union => base.saturating_add(
-                touches.get(&p).copied().unwrap_or(0).saturating_mul(delta),
-            ),
+            CompositionOp::Union => {
+                base.saturating_add(touches.get(&p).copied().unwrap_or(0).saturating_mul(delta))
+            }
         };
         out.insert(p, vp);
     }
@@ -427,14 +422,14 @@ fn component_parts(input: &SystemInput) -> Option<Vec<Vec<u64>>> {
         idx.insert(*p, i);
     }
     let mut parent: Vec<usize> = (0..primes.len()).collect();
-    fn find(parent: &mut Vec<usize>, mut i: usize) -> usize {
+    fn find(parent: &mut [usize], mut i: usize) -> usize {
         while parent[i] != i {
             parent[i] = parent[parent[i]];
             i = parent[i];
         }
         i
     }
-    fn union(parent: &mut Vec<usize>, a: usize, b: usize) {
+    fn union(parent: &mut [usize], a: usize, b: usize) {
         let ra = find(parent, a);
         let rb = find(parent, b);
         if ra != rb {
@@ -511,13 +506,13 @@ pub fn is_prime(n: u64) -> bool {
         return false;
     }
     for p in [2u64, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37] {
-        if n % p == 0 {
+        if n.is_multiple_of(p) {
             return n == p;
         }
     }
     let mut d = n - 1;
     let mut s = 0;
-    while d % 2 == 0 {
+    while d.is_multiple_of(2) {
         d /= 2;
         s += 1;
     }
@@ -565,18 +560,31 @@ fn mod_pow(base: u64, mut exp: u64, m: u64) -> u64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::system::{NodeRef, Relation};
 
     fn lawful_triad() -> SystemInput {
         SystemInput {
             x: vec![
-                NodeRef { prime: 2, label: "alpha".into() },
-                NodeRef { prime: 3, label: "beta".into() },
-                NodeRef { prime: 5, label: "gamma".into() },
+                NodeRef {
+                    prime: 2,
+                    label: "alpha".into(),
+                },
+                NodeRef {
+                    prime: 3,
+                    label: "beta".into(),
+                },
+                NodeRef {
+                    prime: 5,
+                    label: "gamma".into(),
+                },
             ],
             op: CompositionOp::Join,
             alpha: alpha_identity(CompositionOp::Join),
             multiplicity: BTreeMap::new(),
-            f: Some(Endomorphism { kind: EndoKind::Identity, iterate: 1 }),
+            f: Some(Endomorphism {
+                kind: EndoKind::Identity,
+                iterate: 1,
+            }),
             relations: vec![Relation { a: 2, b: 3 }],
             delta: None,
         }
@@ -610,13 +618,22 @@ mod tests {
     fn union_decreases_nothing_monotone() {
         let input = SystemInput {
             x: vec![
-                NodeRef { prime: 2, label: "a".into() },
-                NodeRef { prime: 3, label: "b".into() },
+                NodeRef {
+                    prime: 2,
+                    label: "a".into(),
+                },
+                NodeRef {
+                    prime: 3,
+                    label: "b".into(),
+                },
             ],
             op: CompositionOp::Union,
             alpha: alpha_identity(CompositionOp::Union),
             multiplicity: BTreeMap::new(),
-            f: Some(Endomorphism { kind: EndoKind::Ofai, iterate: 2 }),
+            f: Some(Endomorphism {
+                kind: EndoKind::Ofai,
+                iterate: 2,
+            }),
             relations: vec![Relation { a: 2, b: 3 }],
             delta: None,
         };
@@ -624,13 +641,18 @@ mod tests {
         assert_eq!(verdict.signal, GateSignal::Nominal);
         let closure = verdict.closure.expect("nominal closes");
         assert_eq!(closure.components.len(), 1);
-        assert_eq!(closure.lambda_m_scaled, 2 + 2 + 2 + 2);
+        // v_2 = base 1 + touch 1 * iterate 2 = 3; same for v_3; Λ_m = 6.
+        assert_eq!(closure.lambda_m_scaled, 6);
+        assert_eq!(closure.components[0].label, 216);
     }
 
     #[test]
     fn composite_identity_is_named_in_english_delta() {
         let input = SystemInput {
-            x: vec![NodeRef { prime: 6, label: "not-prime".into() }],
+            x: vec![NodeRef {
+                prime: 6,
+                label: "not-prime".into(),
+            }],
             ..lawful_triad()
         };
         let verdict = Kernel::new().close(&input);

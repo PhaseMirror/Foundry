@@ -27,3 +27,5 @@ Adopt the Universal Closure Calculator (UCC) as a hosted kernel service for year
 * **[Related ADR]** `0013-UOR Civic Infrastructure.md` — governing civic model this product plan operationalizes.
 * **[Related ADR]** ADR-0021 — prime-indexed lawful composition the closure kernel implements.
 * **[Source File]** `lean/MTPI/ADR0013.lean` — canonical BCS serialization and PWEH integrity substrate underlying receipt integrity.
+* **[Delivered — spec]** `docs/specs/ucc_sextuple_v1.md` (+ `ucc_sextuple_v1.schema.json`) — the one-page sextuple public spec and input schema (Q0 layer).
+* **[Delivered — kernel]** `packages/rust/ucc` — closure kernel (sextuple schema, L0 lawfulness gate on the ADR-0013 fail latch, Kuratowski closure, canonical receipts bound into the CRMF PWEH chain; no WORM, archival is the Archivum layer's job), toy systems under `packages/rust/ucc/systems/`, verified by 4 Kani harnesses and unit/integration tests on `cargo test -p ucc`.

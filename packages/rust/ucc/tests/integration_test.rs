@@ -1,6 +1,6 @@
 //! End-to-end gate tests for the UCC Q0 slice (ADR-0014).
 
-use std::collections::{BTreeMap, HashSet};
+use std::collections::BTreeMap;
 
 use ucc::defect::DefectCode;
 use ucc::kernel::{GateSignal, Kernel};
@@ -23,6 +23,9 @@ impl UccVerdictHelper {
     fn defects(&self) -> &[ucc::UccDefect] {
         &self.0.defects
     }
+    fn levers(&self) -> &[Lever] {
+        &self.0.levers
+    }
     fn closure(&self) -> Option<&ucc::kernel::Closure> {
         self.0.closure.as_ref()
     }
@@ -31,14 +34,26 @@ impl UccVerdictHelper {
 fn lawful_triad() -> SystemInput {
     SystemInput {
         x: vec![
-            NodeRef { prime: 2, label: "alpha".into() },
-            NodeRef { prime: 3, label: "beta".into() },
-            NodeRef { prime: 5, label: "gamma".into() },
+            NodeRef {
+                prime: 2,
+                label: "alpha".into(),
+            },
+            NodeRef {
+                prime: 3,
+                label: "beta".into(),
+            },
+            NodeRef {
+                prime: 5,
+                label: "gamma".into(),
+            },
         ],
         op: CompositionOp::Join,
         alpha: alpha_identity(CompositionOp::Join),
         multiplicity: BTreeMap::new(),
-        f: Some(Endomorphism { kind: EndoKind::Identity, iterate: 1 }),
+        f: Some(Endomorphism {
+            kind: EndoKind::Identity,
+            iterate: 1,
+        }),
         relations: vec![Relation { a: 2, b: 3 }],
         delta: None,
     }
@@ -46,7 +61,7 @@ fn lawful_triad() -> SystemInput {
 
 #[test]
 fn lawful_triad_closes_nominal_with_receipt() {
-    let v = triad(l lawful_triad());
+    let v = triad(lawful_triad());
     assert_eq!(v.signal(), GateSignal::Nominal);
     assert!(v.defects().is_empty());
     let closure = v.closure().expect("nominal closes");
@@ -93,13 +108,19 @@ fn closure_is_extensive_idempotent_monotone() {
 #[test]
 fn composite_identity_is_named_in_english() {
     let input = SystemInput {
-        x: vec![NodeRef { prime: 6, label: "not-prime".into() }],
+        x: vec![NodeRef {
+            prime: 6,
+            label: "not-prime".into(),
+        }],
         ..lawful_triad()
     };
     let v = triad(input);
     assert_eq!(v.signal(), GateSignal::SigGovKill);
     assert!(v.closure().is_none());
-    assert!(v.defects().iter().any(|d| d.code == DefectCode::IdentityIrreducible));
+    assert!(v
+        .defects()
+        .iter()
+        .any(|d| d.code == DefectCode::IdentityIrreducible));
     for d in v.defects() {
         assert!(!d.english.is_empty());
     }
@@ -123,15 +144,24 @@ fn every_defect_has_actionable_lever() {
 fn duplicate_identity_kills() {
     let input = SystemInput {
         x: vec![
-            NodeRef { prime: 2, label: "a".into() },
-            NodeRef { prime: 2, label: "b".into() },
+            NodeRef {
+                prime: 2,
+                label: "a".into(),
+            },
+            NodeRef {
+                prime: 2,
+                label: "b".into(),
+            },
         ],
         relations: vec![],
         ..lawful_triad()
     };
     let v = triad(input);
     assert_eq!(v.signal(), GateSignal::SigGovKill);
-    assert!(v.defects().iter().any(|d| d.code == DefectCode::IdentityUnique));
+    assert!(v
+        .defects()
+        .iter()
+        .any(|d| d.code == DefectCode::IdentityUnique));
 }
 
 #[test]
@@ -142,5 +172,8 @@ fn eskew_anchor_kills() {
     };
     let v = triad(input);
     assert_eq!(v.signal(), GateSignal::SigGovKill);
-    assert!(v.defects().iter().any(|d| d.code == DefectCode::CoherenceAnchor));
+    assert!(v
+        .defects()
+        .iter()
+        .any(|d| d.code == DefectCode::CoherenceAnchor));
 }

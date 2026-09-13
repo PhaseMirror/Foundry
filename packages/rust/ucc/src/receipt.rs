@@ -12,7 +12,7 @@
 //! Lean mirror of the lawfulness layer actually lands.
 
 use crmf::canonical::be_u64;
-use crmf::pweh::{hash_meta, be256, PwevhIntegrity};
+use crmf::pweh::{be256, hash_meta, PwevhIntegrity};
 use serde::{Deserialize, Serialize};
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -62,11 +62,7 @@ pub struct Receipt {
 impl Receipt {
     /// Issue a receipt for one call and bind it into a PWEH chain seeded with
     /// the input digest.
-    pub fn issue(
-        input_sha256: [u8; 32],
-        signal: GateSignal,
-        _defects: &[UccDefect],
-    ) -> Self {
+    pub fn issue(input_sha256: [u8; 32], signal: GateSignal, _defects: &[UccDefect]) -> Self {
         let timestamp = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .map(|d| d.as_secs())

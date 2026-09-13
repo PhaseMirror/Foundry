@@ -88,7 +88,12 @@ fn cmd_verify(args: &[String]) {
             expansive
         );
         for d in &defects {
-            println!("  - {} (metric {}): {}", code_name(d.code), d.metric, d.english);
+            println!(
+                "  - {} (metric {}): {}",
+                code_name(d.code),
+                d.metric,
+                d.english
+            );
         }
         process::exit(EXIT_UNLAWFUL);
     }
@@ -185,9 +190,7 @@ fn print_delta(verdict: &UccVerdict) {
         let closure = verdict.closure.as_ref().expect("nominal closes");
         println!("[OK] Δ = 0 — lawfulness holds; closure computed.");
         for c in &closure.components {
-            println!(
-                "  component {} = {}", c.canonical_label(), c.label
-            );
+            println!("  component {} = {}", c.canonical_label(), c.label);
         }
         println!(
             "  Λ_m scaled = {} (contractive: {})",

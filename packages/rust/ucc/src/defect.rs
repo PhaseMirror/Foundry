@@ -74,14 +74,26 @@ impl DefectCode {
         match self {
             DefectCode::IdentityIrreducible => "re-key the object's prime to an irreducible prime",
             DefectCode::IdentityUnique => "drop one of the colliding objects",
-            DefectCode::RelationDangling => "add the endpoint to the declared surface or drop the relation",
-            DefectCode::MultiplicityKeyUnknown => "align the surplus ledger keys to the declared surface",
-            DefectCode::EndomorphismUnlawful => "correct the endomorphism kind and set iterate >= 1",
-            DefectCode::CoherenceAnchor => "set alpha to the identity of the declared composition law",
+            DefectCode::RelationDangling => {
+                "add the endpoint to the declared surface or drop the relation"
+            }
+            DefectCode::MultiplicityKeyUnknown => {
+                "align the surplus ledger keys to the declared surface"
+            }
+            DefectCode::EndomorphismUnlawful => {
+                "correct the endomorphism kind and set iterate >= 1"
+            }
+            DefectCode::CoherenceAnchor => {
+                "set alpha to the identity of the declared composition law"
+            }
             DefectCode::MonotonicityBreach => "carry the full surplus base before composing",
             DefectCode::AssociatorDefect => "split the composition into lawful association orders",
-            DefectCode::ExpansiveTransition => "compress the surplus envelope below the contractive ceiling",
-            DefectCode::ArithmeticOverflow => "reduce the system size below the integer envelope limit",
+            DefectCode::ExpansiveTransition => {
+                "compress the surplus envelope below the contractive ceiling"
+            }
+            DefectCode::ArithmeticOverflow => {
+                "reduce the system size below the integer envelope limit"
+            }
         }
     }
 }
@@ -99,10 +111,10 @@ pub struct UccDefect {
 }
 
 impl UccDefect {
-    pub const fn new(code: DefectCode, metric: u64) -> Self {
+    pub fn new(code: DefectCode, metric: u64) -> Self {
         UccDefect {
             code,
-            english: code.english(),
+            english: code.english().to_string(),
             nodes: Vec::new(),
             metric,
         }

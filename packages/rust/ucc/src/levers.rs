@@ -16,7 +16,7 @@ pub struct Lever {
 }
 
 impl Lever {
-    pub const fn new(owner: u64, action: &'static str, metric: u64, horizon: &'static str) -> Self {
+    pub fn new(owner: u64, action: &'static str, metric: u64, horizon: &'static str) -> Self {
         Lever {
             owner,
             action: action.to_string(),

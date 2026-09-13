@@ -17,21 +17,16 @@ pub const ALPHA_UNION_IDENTITY: u64 = 0;
 pub const LAWFUL_RECURSION_VERSION: &str = "1.0";
 
 /// ∘ — the lawful composition law.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "snake_case")]
 pub enum CompositionOp {
     /// `K1 ⊗ K2 = lcm(K1, K2)`: lossless structural join. Member labels combine
     /// with the strongest exponent and no double count (ADR-0021).
+    #[default]
     Join,
     /// `K1 ⊕ K2 = ∏_p p^(v_p(K1) + v_p(K2))`: exact exponent aggregation
     /// (Dirichlet convolution on multiplicative coefficients, ADR-0021).
     Union,
-}
-
-impl Default for CompositionOp {
-    fn default() -> Self {
-        CompositionOp::Join
-    }
 }
 
 /// The lawful anchor for a composition law.
@@ -44,20 +39,15 @@ pub const fn alpha_identity(op: CompositionOp) -> u64 {
 }
 
 /// F — the endomorphism applied per relation step.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "snake_case")]
 pub enum EndoKind {
     /// No growth: the identity endomorphism.
+    #[default]
     Identity,
     /// Operator-first arithmetic iterate: surplus exponents accumulate by
     /// `iterate` per participation.
     Ofai,
-}
-
-impl Default for EndoKind {
-    fn default() -> Self {
-        EndoKind::Identity
-    }
 }
 
 /// The concrete endomorphism with its iterate.

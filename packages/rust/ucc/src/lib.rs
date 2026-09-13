@@ -29,12 +29,12 @@ pub mod receipt;
 pub mod system;
 
 pub use defect::{DefectCode, UccDefect};
-pub use kernel::{Closure, Component, Kernel, UccError, UccVerdict};
+pub use kernel::{Closure, Component, Kernel, UccVerdict};
 pub use levers::Lever;
 pub use receipt::Receipt;
 pub use system::{
-    CompositionOp, EndoKind, Endomorphism, NodeRef, Relation, SystemInput,
-    ALPHA_JOIN_IDENTITY, ALPHA_UNION_IDENTITY, LAWFUL_RECURSION_VERSION,
+    CompositionOp, EndoKind, Endomorphism, NodeRef, Relation, SystemInput, ALPHA_JOIN_IDENTITY,
+    ALPHA_UNION_IDENTITY, LAWFUL_RECURSION_VERSION,
 };
 
 /// Kernel version tag. The Q0 repository-hygiene gate requires the receipt to

@@ -23,3 +23,12 @@
 | [ADR-0060](ADR-0060.md) | Lexical Standalone Delimiter Detection | Accepted | - |
 | [ADR-0061](ADR-0061.md) | Strict Validation & Fail-Closed Errors for Missing Delimiters | Accepted | - |
 | [ADR-0064](ADR-0064.md) | Hundian Social Physics Occupancy Governance & Term-Order Gate | Accepted | - |
+| [ADR-0013](accepted/0013-UOR%20Civic%20Infrastructure.md) | UOR Civic Infrastructure | Accepted | - |
+| [ADR-0014](accepted/0014-UCC%20as%20a%20Service%20Year%20One%20Roadmap.md) | UCC as a Service — Year One Roadmap | Accepted | - |
+| [ADR-0015](accepted/0015-Unified%20Civic%20Infrastructure%20Outline.md) | Unified Civic Infrastructure Outline | Accepted | - |
+| [ADR-0016](accepted/0016-UOR%20Civic%20Infrastructure%20Three%20Epochs.md) | UOR Civic Infrastructure — Three Epochs | Accepted | - |
+| [ADR-0017](accepted/0017-90-Day%20Operating%20Plan%20and%20Talent%20Model.md) | Reinitialization: 90-Day Operating Plan & Volunteer Talent Model | Proposed | - |
+| [ADR-0018](accepted/0018-Executive%20Decision%20Brief.md) | Reinitialization: Executive Decision Brief | Proposed | - |
+| [ADR-0019](accepted/0019-Technology%20Portfolio%20Evidence%20and%20Risk.md) | Technology Portfolio — Evidence, Risk & Feasibility | Proposed | - |
+| [ADR-0020](accepted/0020-HQ%20and%20Sovereign%20Node%20Deployment.md) | HQ & Sovereign Node Deployment | Proposed | - |
+| [ADR-0021](accepted/0021-UOR%20Mechanics%20Prime-Indexing.md) | UOR Mechanics — The Exact Math of Prime-Indexing | Accepted | - |

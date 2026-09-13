@@ -32,3 +32,10 @@
 | [ADR-0019](accepted/0019-Technology%20Portfolio%20Evidence%20and%20Risk.md) | Technology Portfolio — Evidence, Risk & Feasibility | Proposed | - |
 | [ADR-0020](accepted/0020-HQ%20and%20Sovereign%20Node%20Deployment.md) | HQ & Sovereign Node Deployment | Proposed | - |
 | [ADR-0021](accepted/0021-UOR%20Mechanics%20Prime-Indexing.md) | UOR Mechanics — The Exact Math of Prime-Indexing | Accepted | - |
+| [ADR-0022](accepted/0022-Symmetry-Matched%20Polarization%20Analysis%20in%20MnF2.md) | Symmetry-Matched Polarization Analysis in MnF₂ | Proposed | - |
+| [ADR-0023](accepted/0023-The%20dJ7%20Principle%20Symmetry%20Complement%20Source%20Sectors%20in%20MnF2.md) | The dJ7 Principle — Symmetry-Complement Source Sectors in MnF₂ | Proposed | - |
+| [ADR-0024](accepted/0024-Reversal%20Space%20Tomography%20of%20Weak%20Altermagnetic%20Exchange%20in%20MnF2.md) | Reversal-Space Tomography of Weak Altermagnetic Exchange in MnF₂ | Proposed | - |
+| [ADR-0025](accepted/0025-Static%20Multipolar%20Order%20and%20Dynamical%20Chiral%20Response%20in%20MnF2.md) | Static Multipolar Order and Dynamical Chiral Response in MnF₂ | Proposed | - |
+| [ADR-0026](accepted/0026-Symmetry%20Complement%20Coordinates%20Across%20Altermagnets.md) | Symmetry-Complement Coordinates Across Altermagnets | Proposed | - |
+| [ADR-0027](accepted/0027-When%20Null%20Does%20Not%20Mean%20Absent%20Measurement%20Map%20Geometry.md) | When Null Does Not Mean Absent — Measurement-Map Geometry | Proposed | - |
+| [ADR-0028](accepted/0028-Target%20First%20Observability%20Calculus%20with%20Admissible%20Ambiguity.md) | Target-First Observability Calculus — Admissible Ambiguity & Dual Obstructions | Proposed | - |

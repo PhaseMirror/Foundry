@@ -7,7 +7,7 @@ The model will be defined and validated against explicitly adopted standards.
 Its outputs will be the views, artifacts, and deployed service describing how
 the Foundation is implemented, governed, operated, sustained, and improved.
 
-# Universal Closure Calculator(UCC) Release 1.0.0
+# Universal Closure Calculator (UCC) Release 1.0.0
 
 **Date:** 2026-08-08  
 **Status:** Defensive Publication / Empirical Deployment Ready  

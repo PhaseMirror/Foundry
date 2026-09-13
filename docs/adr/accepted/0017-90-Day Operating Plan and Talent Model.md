@@ -1,6 +1,6 @@
 # ADR-0017: Reinitialization — 90-Day Operating Plan and Volunteer Talent Model
 
-**Status:** Proposed
+**Status:** Accepted
 
 ## Context
 The UOR Foundation must reinitialize under a volunteer-led, no-funding assumption. The organization cannot outrun its operating structure, so the next unit of value is confidence: a bounded thirteen-week cycle that produces a governed, independently verifiable value-layer baseline under strict WIP and ownership controls.

@@ -6,7 +6,7 @@
 //!
 //! Usage: `validate-determinism [runs]`
 
-use archivum_scripts::{DEFAULT_RUNNER_OUTPUT, run_validation};
+use archivum_scripts::{run_validation, DEFAULT_RUNNER_OUTPUT, DEFAULT_VECTOR_OUTPUT_DIR};
 use std::path::PathBuf;
 
 fn main() {

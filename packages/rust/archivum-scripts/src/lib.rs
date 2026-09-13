@@ -35,9 +35,7 @@ pub fn encode_canonical(value: &Value) -> Vec<u8> {
 
 fn sort_maps(value: &Value) -> Value {
     match value {
-        Value::Array(items) => {
-            Value::Array(items.iter().map(sort_maps).collect())
-        }
+        Value::Array(items) => Value::Array(items.iter().map(sort_maps).collect()),
         Value::Map(pairs) => {
             let mut pairs: Vec<(Value, Value)> = pairs
                 .iter()
@@ -103,10 +101,7 @@ pub fn build_plain_text_vector() -> Vec<u8> {
             Value::Text("registry_hash".into()),
             Value::Bytes(registry_hash_33b()),
         ),
-        (
-            Value::Text("object_cbor".into()),
-            Value::Bytes(object_cbor),
-        ),
+        (Value::Text("object_cbor".into()), Value::Bytes(object_cbor)),
         (
             Value::Text("expected".into()),
             Value::Array(vec![Value::Map(vec![
@@ -142,15 +137,15 @@ pub fn build_plain_text_vector() -> Vec<u8> {
             Value::Map(vec![
                 (
                     Value::Text("max_fuel".into()),
-                    Value::Integer(1_000_000),
+                    Value::Integer(ciborium::value::Integer::from(1_000_000)),
                 ),
                 (
                     Value::Text("max_time_ms".into()),
-                    Value::Integer(1_000),
+                    Value::Integer(ciborium::value::Integer::from(1_000)),
                 ),
                 (
                     Value::Text("max_memory_pages".into()),
-                    Value::Integer(256),
+                    Value::Integer(ciborium::value::Integer::from(256)),
                 ),
             ]),
         ),
@@ -161,9 +156,15 @@ pub fn build_plain_text_vector() -> Vec<u8> {
 
 /// Write the `test-001-plain-text.cbor` and `.hash` files into `out_dir`,
 /// returning the two paths written.
-pub fn write_generated_vectors(out_dir: &Path) -> Result<(std::path::PathBuf, std::path::PathBuf), String> {
-    std::fs::create_dir_all(out_dir)
-        .map_err(|e| format!("failed to create output directory {}: {e}", out_dir.display()))?;
+pub fn write_generated_vectors(
+    out_dir: &Path,
+) -> Result<(std::path::PathBuf, std::path::PathBuf), String> {
+    std::fs::create_dir_all(out_dir).map_err(|e| {
+        format!(
+            "failed to create output directory {}: {e}",
+            out_dir.display()
+        )
+    })?;
 
     let cbor_path = out_dir.join("test-001-plain-text.cbor");
     let hash_path = out_dir.join("test-001-plain-text.hash");
@@ -193,20 +194,18 @@ pub fn read_hash_file(path: &Path) -> Result<[u8; 32], String> {
         ));
     }
     let mut out = [0u8; 32];
-    let mut nibble = 0usize;
-    for c in hex.bytes() {
+    for (pos, c) in hex.bytes().enumerate() {
         let v = match c {
             b'0'..=b'9' => c - b'0',
             b'a'..=b'f' => c - b'a' + 10,
             b'A'..=b'F' => c - b'A' + 10,
             _ => return Err(format!("{}: invalid hex char", path.display())),
         };
-        if nibble % 2 == 0 {
-            out[nibble / 2] = v << 4;
+        if pos.is_multiple_of(2) {
+            out[pos / 2] = v << 4;
         } else {
-            out[nibble / 2] |= v;
+            out[pos / 2] |= v;
         }
-        nibble += 1;
     }
     Ok(out)
 }
@@ -234,7 +233,10 @@ impl fmt::Display for DeterminismError {
                 write!(f, "run {run}: could not read output at {path}")
             }
             DeterminismError::OutputMismatch { run } => {
-                write!(f, "MISMATCH at run {run}: validation output did not match baseline")
+                write!(
+                    f,
+                    "MISMATCH at run {run}: validation output did not match baseline"
+                )
             }
         }
     }
@@ -260,17 +262,20 @@ pub fn run_validation(
             println!("Completed {run}/{runs} runs...");
         }
 
-        let output = runner
-            .output()
-            .map_err(|e| DeterminismError::Spawn { run, source: e.to_string() })?;
+        let output = runner.output().map_err(|e| DeterminismError::Spawn {
+            run,
+            source: e.to_string(),
+        })?;
         if !output.status.success() {
             let stderr = String::from_utf8_lossy(&output.stderr).into_owned();
             return Err(DeterminismError::NonZeroExit { run, stderr });
         }
 
-        let text = std::fs::read_to_string(output_path).map_err(|_| DeterminismError::OutputUnreadable {
-            run,
-            path: output_path.display().to_string(),
+        let text = std::fs::read_to_string(output_path).map_err(|_| {
+            DeterminismError::OutputUnreadable {
+                run,
+                path: output_path.display().to_string(),
+            }
         })?;
 
         match baseline.as_ref() {
@@ -293,7 +298,7 @@ mod tests {
         let bytes = build_plain_text_vector();
         let top: Value = ciborium::from_reader(bytes.as_slice()).expect("decode");
 
-        let get = |key: &str, value: &Value| -> &Value {
+        fn get<'a>(key: &str, value: &'a Value) -> &'a Value {
             match value {
                 Value::Map(map) => map
                     .iter()
@@ -302,7 +307,7 @@ mod tests {
                     .unwrap_or_else(|| panic!("missing key {key}")),
                 other => panic!("expected a map, got {other:?}"),
             }
-        };
+        }
 
         let expected = match get("expected", &top) {
             Value::Array(items) => &items[0],

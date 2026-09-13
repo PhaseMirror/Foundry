@@ -4,7 +4,7 @@
 //! The Python drove the transpiler via a subprocess; this integration test
 //! drives the in-process `PirtmTranspiler` (equivalent by construction).
 
-use core_transpiler::{PirtmTranspiler, extract_attributes};
+use core_transpiler::{extract_attributes, PirtmTranspiler};
 
 fn transpile_and_extract(nl_input: &str) -> (core_transpiler::ExtractedAttributes, String) {
     let mut transpiler = PirtmTranspiler::new();
@@ -16,12 +16,18 @@ fn transpile_and_extract(nl_input: &str) -> (core_transpiler::ExtractedAttribute
 #[test]
 fn official_test_vectors_pass() {
     let vectors: Vec<(&str, Vec<(&str, f64)>)> = vec![
-        ("guarantee convergence with a 10% margin", vec![("epsilon", 0.10)]),
+        (
+            "guarantee convergence with a 10% margin",
+            vec![("epsilon", 0.10)],
+        ),
         (
             "spectral radius < 0.92 and 5% stability margin",
             vec![("q_target", 0.92), ("epsilon", 0.05)],
         ),
-        ("Ensure ε = 0.07 for p = 13", vec![("epsilon", 0.07), ("mod", 13.0)]),
+        (
+            "Ensure ε = 0.07 for p = 13",
+            vec![("epsilon", 0.07), ("mod", 13.0)],
+        ),
         (
             "operator norm of 0.4 with contraction coefficient of 0.88",
             vec![("op_norm_t", 0.4), ("q_target", 0.88)],

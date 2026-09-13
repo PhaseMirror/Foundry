@@ -1,6 +1,6 @@
 # ADR-0019: Technology Portfolio — Evidence, Risk, and Feasibility
 
-**Status:** Proposed
+**Status:** Accepted
 
 ## Context
 The Foundation's technology claims must be recut to what public sources actually support. The evidence cut (10 September 2026) reconciles a prior management inventory of 19 assets against a GitHub search result of 15 public repositories, classifies each asset, and grades visible external evidence on the E0–E6 scale. The gap between internal claims and externally verifiable evidence is the standing risk.

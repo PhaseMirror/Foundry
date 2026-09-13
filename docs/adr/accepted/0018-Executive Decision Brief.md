@@ -1,6 +1,6 @@
 # ADR-0018: Reinitialization — Executive Decision Brief
 
-**Status:** Proposed
+**Status:** Accepted
 
 ## Context
 UOR technology is ahead of UOR operating structure. The Foundation holds credible ontology, addressing, conformance, registry, application-model, and research assets; what is missing is one public source of truth, an approved authority chain, coordinated release ownership, independent implementation evidence, and attributable use outside Foundation-authored work. The next unit of value is therefore confidence, not another capability — outsiders must be able to identify the authoritative contract, reproduce behavior, understand limitations, and know who can decide a change.

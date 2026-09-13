@@ -135,7 +135,10 @@ impl PirtmTranspiler {
                     r"‖T‖ = ([\d\.]+)",
                 ],
             ),
-            ("mod", &[r"modulus ([\d]+)", r"prime index ([\d]+)", r"p = ([\d]+)"]),
+            (
+                "mod",
+                &[r"modulus ([\d]+)", r"prime index ([\d]+)", r"p = ([\d]+)"],
+            ),
         ];
 
         for (attr, patterns) in MAPPINGS {
@@ -146,8 +149,8 @@ impl PirtmTranspiler {
                 };
                 let raw = &captures[1];
                 let full_match = captures.get(0).expect("whole match");
-                let after_is_percent = full_match.end() < text.len()
-                    && text.as_bytes()[full_match.end()] == b'%';
+                let after_is_percent =
+                    full_match.end() < text.len() && text.as_bytes()[full_match.end()] == b'%';
 
                 if attr == "mod" {
                     self.modulus = raw.parse::<u64>().unwrap_or(self.modulus);
@@ -168,12 +171,14 @@ impl PirtmTranspiler {
         }
 
         let lowered = text.to_lowercase();
-        if !lowered.contains("modulus") && !lowered.contains("prime index") && !lowered.contains("p =") {
+        if !lowered.contains("modulus")
+            && !lowered.contains("prime index")
+            && !lowered.contains("p =")
+        {
             let hash = blake3::hash(text.as_bytes());
             let bytes = hash.as_bytes();
-            let idx =
-                u32::from_be_bytes([bytes[0], bytes[1], bytes[2], bytes[3]]) as usize
-                    % CERTIFIED_PRIMES.len();
+            let idx = u32::from_be_bytes([bytes[0], bytes[1], bytes[2], bytes[3]]) as usize
+                % CERTIFIED_PRIMES.len();
             self.modulus = CERTIFIED_PRIMES[idx];
         }
     }
@@ -335,7 +340,8 @@ mod tests {
     fn witness_payload_is_python_style_sorted() {
         let transpiler = PirtmTranspiler::new();
         let witness = transpiler.emit_witness();
-        let payload = r#"{"epsilon": 0.05, "mod": 7, "op_norm_t": 1.0, "q_target": 0.95, "scheme": "dual"}"#;
+        let payload =
+            r#"{"epsilon": 0.05, "mod": 7, "op_norm_t": 1.0, "q_target": 0.95, "scheme": "dual"}"#;
         assert_eq!(witness.sha256, sha256_hash(payload));
         assert_eq!(witness.poseidon, poseidon_hash(payload));
     }

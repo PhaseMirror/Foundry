@@ -1,6 +1,6 @@
 # ADR-0024: Reversal-Space Tomography of Weak Altermagnetic Exchange in MnF₂
 
-**Status:** Proposed
+**Status:** Accepted
 
 ## Context
 The δJ7 principle (ADR-0023) identifies a weak seventh-neighbor exchange imbalance as a candidate source coordinate for the altermagnetic chiral response in MnF₂, at the few-µeV scale, coexisting with a larger dipolar contribution. Weak sources need engineered readout multiplication: a control variable can increase the measurement derivative |∂O/∂λ| without changing |λ|. The paper provides the quantitative design discipline for that readout engineering and for certifying the sign of the measured response.

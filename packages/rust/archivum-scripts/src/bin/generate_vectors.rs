@@ -3,7 +3,7 @@
 //! Writes canonical CBOR test vectors (`{test_id}.cbor`) plus a companion
 //! blake3 hex digest file (`{test_id}.hash`) into the vectors output dir.
 
-use archivum_scripts::{DEFAULT_VECTOR_OUTPUT_DIR, write_generated_vectors};
+use archivum_scripts::{write_generated_vectors, DEFAULT_VECTOR_OUTPUT_DIR};
 use std::path::PathBuf;
 
 fn main() {

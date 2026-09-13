@@ -1,6 +1,6 @@
 # ADR-0020: HQ & Sovereign Node Deployment
 
-**Status:** Proposed
+**Status:** Accepted
 
 ## Context
 The UOR Foundation requires a physical ground state that operates as a LifeBushido Retreat, a working Sovereign Urban Gardens (SUG) node, and the site for the civic Sovereignty Node. The proposed location is 36.8 acres in Livermore, Larimer County, Colorado, under the Citizen Gardens UNA / Phase Mirror Protocol framework. Risk is to be aggressively mitigated by gating capital deployment into two operational phases. Social Physics is strict: M = 2R + 1 (reciprocity as sovereign infrastructure), triadic recursion 3 → 9 → 27, and Phase Mirror as a fail-closed sentinel enforcing L0 invariants without human executive override.

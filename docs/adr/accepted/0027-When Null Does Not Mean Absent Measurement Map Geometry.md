@@ -1,6 +1,6 @@
 # ADR-0027: When Null Does Not Mean Absent — Measurement-Map Geometry and Null–Witness Duality
 
-**Status:** Proposed
+**Status:** Accepted
 
 ## Context
 A null experimental outcome is not, by itself, a statement of physical absence. A latent state passes through source physics, response formation, probe selection, ensemble averaging, instrument transfer, and nuisance structure before recorded data exist. Physics practice frequently assigns a stage label to a null ("response null", "projection null") without a rigorous basis for where distinguishability was lost, conflating raw signal with identification. The Altermagnetic program (this series) motivated the four-null distinction; the paper generalizes it into a compositional calculus.

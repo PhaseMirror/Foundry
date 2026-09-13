@@ -1,6 +1,6 @@
 # ADR-0028: Target-First Observability Calculus — Admissible Ambiguity and Dual Obstructions
 
-**Status:** Proposed
+**Status:** Accepted
 
 ## Context
 Experimental design is often organized around an available instrument and only afterward around the claim the resulting data are meant to support. A detector records data; a paper makes a physical claim. Design decisions that maximize signal can select the wrong experiment: a high-amplitude measurement may have zero target design gain while a much smaller measurement exactly closes the target. The paper supplies a physics-specific observability workflow that reverses this ordering.

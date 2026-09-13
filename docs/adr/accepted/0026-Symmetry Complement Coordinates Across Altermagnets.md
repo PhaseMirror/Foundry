@@ -1,6 +1,6 @@
 # ADR-0026: Symmetry-Complement Coordinates Across Altermagnets — Cross-Material Falsification
 
-**Status:** Proposed
+**Status:** Accepted
 
 ## Context
 A portable symmetry argument must survive materials in which the microscopic hierarchy, probe physics, and even the proposed magnetic state differ, and it must not be made true by choosing its reference model after seeing the target response. The Altermagnetic literature has accumulated strong positive signatures and sharply constraining nulls across MnF₂, FeF₂, α-MnTe, CrSb, α-Fe₂O₃, and bulk RuO₂. Whether the δJ7-style source-sector construction generalizes, and how far, cannot be judged by favorable examples alone.

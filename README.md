@@ -1,4 +1,13 @@
-# Universal Closure Calculator
+# UOR Foundry
+
+The UOR Foundation modeled with PrismPM: a non-profit dedicated to the
+democratization of technology.
+
+The model will be defined and validated against explicitly adopted standards.
+Its outputs will be the views, artifacts, and deployed service describing how
+the Foundation is implemented, governed, operated, sustained, and improved.
+
+## Universal Closure Calculator
 
 ![Verification](https://github.com/PhaseMirror/Prime/actions/workflows/verification.yml/badge.svg)
 

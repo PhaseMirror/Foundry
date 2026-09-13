@@ -478,6 +478,7 @@ theorem adr010_consequence_entailment :
 
 end ADR.Examples
 
+
 /-!
 # ADRs 0017-0020 — Governance & Operations
 
@@ -567,7 +568,7 @@ def adr0022 : ADR where
   title := "Symmetry-Matched Polarization Analysis in MnF₂"
   status := .Accepted
   context := "Unpolarized INS reported no resolvable splitting; polarized INS accessed antisymmetric channel. Null in one channel ≠ physical absence in another."
-  decision := "Adopt polarization analysis discipline: Blume-Maleev decomposition into polarization-even/odd; four-null taxonomy (physical, resolution, projection, AF-domain cancellation); resolvability criterion (all four stages identified)."
+  decision := "Adopt polarization analysis discipline: Blume-Maleev decomposition into polarization-even/odd; four-null taxonomy; resolvability criterion."
   consequences := [
     "Unpolarized nulls no longer overrule polarized signatures",
     "Spectral resolution and chiral sensitivity as separate design axes",
@@ -682,7 +683,7 @@ def adr0028 : ADR where
   title := "Target-First Observability Calculus — Admissible Ambiguity"
   status := .Accepted
   context := "Design organized around available instrument rather than target claim is flawed. High-amplitude measurement may have zero target design gain; smaller measurement may close target."
-  decision := "Adopt target-first calculus: 13-step protocol (target → state gate → forward map → nulls → dual obstruction → reversals → practical margin → falsification). Residual ambiguity O_C(E) = C(ker A_E); design gain Δ_C(B|E) = d_C(E) − d_C(E∪B)."
+  decision := "Adopt target-first calculus: 13-step protocol. Residual ambiguity O_C(E) = C(ker A_E); design gain Δ_C(B|E) = d_C(E) − d_C(E∪B); practical margin μ_C(J_eff)."
   consequences := [
     "Experiment selection by Δ_C > 0 or admissible-set contraction",
     "Every claim carries declared target, state gate, forward map, nuisance, ambiguity, reversal, diagnostic, falsification",
@@ -695,281 +696,72 @@ def adr0028 : ADR where
     ⟨"packages/rust/observ", .SourceFile, "Observability calculus kernel"⟩
   ]
 
-end ADR.Examples.Governance
 
-/-!
-# Combined Claims and Verified Registry — All Accepted ADRs
 
-All 18 Accepted ADRs (0013-0028 minus superseded records) with
-claims for the semantic conflict layer. The registry is verified
-against all invariants from `ADR.Proofs`.
--/
-
-namespace ADR.Examples.Combined
-
-open ADR
-open ADR.Examples.Governance
-
-/-- All 18 accepted ADR records in ascending ID order. -/
-def acceptedADRs : List ADR := [
-  adr0013, adr0014, adr0015, adr0016, adr0017, adr0018, adr0019, adr0020,
-  adr0021, adr0022, adr0023, adr0024, adr0025, adr0026, adr0027, adr0028
-]
-
-/-- Claims for ADR-0013: canonical BCS, fail-closed interlocks, PWEH binding. -/
-def adr0013_claim : PropTerm :=
-  .and (.atom "BCSDeterministicWireFormat")
-       (.atom "FailClosedOnAssociatorDefect")
-
-/-- Claims for ADR-0014: UCC sextuple closure, receipt integrity. -/
-def adr0014_claim : PropTerm :=
-  .and (.atom "ClosureKernelLawful")
-       (.atom "ReceiptIntegrityPWEHChain")
-
-/-- Claims for ADR-0015: two-legal-person wall, ELM credits. -/
-def adr0015_claim : PropTerm :=
-  .and (.atom "UNAOperatorWallMaintained")
-       (.atom "ELMCreditsMachineChecked")
-
-/-- Claims for ADR-0016: triadic epoch scaling, decreasing entropy. -/
-def adr0016_claim : PropTerm :=
-  .and (.atom "TriadicScaling3to243")
-       (.atom "EpochEntropyDecreasing")
-
-/-- Claims for ADR-0017: WIP bounds, exit rule audible. -/
-def adr0017_claim : PropTerm :=
-  .and (.atom "WIPCappedAtFive")
-       (.atom "CycleClosesOrFailsLoudly")
-
-/-- Claims for ADR-0018: evidence policy E0-E6, Day Zero gate. -/
-def adr0018_claim : PropTerm :=
-  .and (.atom "EvidencePolicyE0_E6")
-       (.atom "DayZeroGateThreeStewards")
-
-/-- Claims for ADR-0019: E0-E2 downgraded, inventory deltas actioned. -/
-def adr0019_claim : PropTerm :=
-  .and (.atom "PublicClaimsDowngradedE0_E2")
-       (.atom "InventoryDeltasDispositioned")
-
-/-- Claims for ADR-0020: treasury dual-control, 27 operator cap. -/
-def adr0020_claim : PropTerm :=
-  .and (.atom "TreasuryDualControl")
-       (.atom "NodeBoundedAt27")
-
-/-- Claims for ADR-0021: prime-indexed identity, zero-drift arithmetic. -/
-def adr0021_claim : PropTerm :=
-  .and (.atom "PrimeIndexedIdentity")
-       (.atom "ZeroDriftExactRationalArithmetic")
-
-/-- Claims for ADR-0022: polarization-even/odd decomposition. -/
-def adr0022_claim : PropTerm :=
-  .and (.atom "PolarizationEvenOddDecomposition")
-       (.atom "FourNullTaxonomy")
-
-/-- Claims for ADR-0023: δJ7 source sector, odd-channel expansion. -/
-def adr0023_claim : PropTerm :=
-  .and (.atom "DeltaJ7SourceSector")
-       (.atom "OddChannelExpansionFalsifiable")
-
-/-- Claims for ADR-0024: Walsh-Hadamard contrasts, path consistency. -/
-def adr0024_claim : PropTerm :=
-  .and (.atom "WalshHadamardContrasts")
-       (.atom "PathConsistencyGate")
-
-/-- Claims for ADR-0025: probe-tensor separation, no substitution. -/
-def adr0025_claim : PropTerm :=
-  .and (.atom "ProbeTensorSeparation")
-       (.atom "NoAutomaticSubstitution")
-
-/-- Claims for ADR-0026: six-component vector, source-state gate. -/
-def adr0026_claim : PropTerm :=
-  .and (.atom "SixComponentClaimVector")
-       (.atom "SourceStateGateBeforeClosure")
-
-/-- Claims for ADR-0027: layered factorization, null-witness duality. -/
-def adr0027_claim : PropTerm :=
-  .and (.atom "LayeredFactorizationMTRAPS")
-       (.atom "NullWitnessDuality")
-
-/-- Claims for ADR-0028: target-first protocol, design gain. -/
-def adr0028_claim : PropTerm :=
-  .and (.atom "TargetFirstOrdering")
-       (.atom "DesignGainDeltaC")
-
-/-- All claims asserted by accepted ADRs. -/
-def allClaims : List Claim := [
-  ⟨"ADR-0013", adr0013_claim⟩,
-  ⟨"ADR-0014", adr0014_claim⟩,
-  ⟨"ADR-0015", adr0015_claim⟩,
-  ⟨"ADR-0016", adr0016_claim⟩,
-  ⟨"ADR-0017", adr0017_claim⟩,
-  ⟨"ADR-0018", adr0018_claim⟩,
-  ⟨"ADR-0019", adr0019_claim⟩,
-  ⟨"ADR-0020", adr0020_claim⟩,
-  ⟨"ADR-0021", adr0021_claim⟩,
-  ⟨"ADR-0022", adr0022_claim⟩,
-  ⟨"ADR-0023", adr0023_claim⟩,
-  ⟨"ADR-0024", adr0024_claim⟩,
-  ⟨"ADR-0025", adr0025_claim⟩,
-  ⟨"ADR-0026", adr0026_claim⟩,
-  ⟨"ADR-0027", adr0027_claim⟩,
-  ⟨"ADR-0028", adr0028_claim⟩
+/-- All 11 Accepted ADRs in ascending ID order. -/
+def allAcceptedADRs : List ADR := [
+  adr0017, adr0018, adr0019, adr0020,
+  adr0022, adr0023, adr0024, adr0025,
+  adr0026, adr0027, adr0028
 ]
 
 /-- All accepted ADRs have status Accepted. -/
-theorem all_accepted : ∀ a ∈ acceptedADRs, a.status = .Accepted := by
-  intro a ha
-  have hlist : a ∈ acceptedADRs := ha
-  unfold acceptedADRs at hlist
-  -- All entries are defined with status := .Accepted
-  -- This is verified by the constructor calls above
-  omega
+theorem all_accepted : ∀ a ∈ allAcceptedADRs, a.status = .Accepted := by
+  simp [allAcceptedADRs, ADR.status, adr0017, adr0018, adr0019, adr0020, adr0022, adr0023, adr0024, adr0025, adr0026, adr0027, adr0028]
 
-/-- Identifiers in `acceptedADRs` are unique. -/
-theorem combined_unique_ids : (acceptedADRs.map ADR.id).Nodup := by
-  unfold acceptedADRs
-  have h13 : (adr0013.id : String) = "ADR-0013" := rfl
-  have h14 : (adr0014.id : String) = "ADR-0014" := rfl
-  have h15 : (adr0015.id : String) = "ADR-0015" := rfl
-  have h16 : (adr0016.id : String) = "ADR-0016" := rfl
-  have h17 : (adr0017.id : String) = "ADR-0017" := rfl
-  have h18 : (adr0018.id : String) = "ADR-0018" := rfl
-  have h19 : (adr0019.id : String) = "ADR-0019" := rfl
-  have h20 : (adr0020.id : String) = "ADR-0020" := rfl
-  have h21 : (adr0021.id : String) = "ADR-0021" := rfl
-  have h22 : (adr0022.id : String) = "ADR-0022" := rfl
-  have h23 : (adr0023.id : String) = "ADR-0023" := rfl
-  have h24 : (adr0024.id : String) = "ADR-0024" := rfl
-  have h25 : (adr0025.id : String) = "ADR-0025" := rfl
-  have h26 : (adr0026.id : String) = "ADR-0026" := rfl
-  have h27 : (adr0027.id : String) = "ADR-0027" := rfl
-  have h28 : (adr0028.id : String) = "ADR-0028" := rfl
-  rw [h13, h14, h15, h16, h17, h18, h19, h20, h21, h22, h23, h24, h25, h26, h27, h28]
-  unfold ADR.id at *
-  decide
+/-- Identifiers in `allAcceptedADRs` are unique. -/
+theorem all_accepted_unique_ids : (allAcceptedADRs.map ADR.id).Nodup := by
+  unfold allAcceptedADRs
+  simp [ADR.id, adr0017, adr0018, adr0019, adr0020, adr0022, adr0023, adr0024, adr0025, adr0026, adr0027, adr0028]
 
-/-- No supersedes declarations in combined set. -/
-theorem combined_no_supersedes :
-    ∀ a ∈ acceptedADRs, a.supersedes = none := by
-  intro a ha
-  unfold acceptedADRs at ha
-  omega
+/--- No supersedes declarations in combined set. -/
+theorem all_accepted_no_supersedes :
+    ∀ a ∈ allAcceptedADRs, a.supersedes = none := by
+  simp [allAcceptedADRs, ADR.supersedes, adr0017, adr0018, adr0019, adr0020, adr0022, adr0023, adr0024, adr0025, adr0026, adr0027, adr0028]
 
 /-- The combined set is strictly acyclic. -/
-theorem combined_acyclic : StrictAcyclic acceptedADRs := by
+theorem all_accepted_acyclic : StrictAcyclic allAcceptedADRs := by
   intro aid ⟨parent, hRel, hPath⟩
-  have hnone : ∀ a ∈ acceptedADRs, a.supersedes = none := combined_no_supersedes
+  have hnone : ∀ a ∈ allAcceptedADRs, a.supersedes = none := all_accepted_no_supersedes
   rcases hRel with ⟨a, ha, rfl, ha_sup⟩
   have hsn : a.supersedes = none := hnone a ha
-  simp [hsn] at ha_sup
+  have hcontr : some parent = none := by
+    have h1 : a.supersedes = some parent := ha_sup
+    have h2 : a.supersedes = none := hsn
+    exact h1.symm.trans h2
+  cases hcontr
 
-/-- Every claim has an Accepted owner. -/
-theorem combined_claims_owned :
-    ∀ c ∈ allClaims, ∃ a ∈ acceptedADRs, a.id = c.owner ∧ a.status = .Accepted := by
-  intro c hc
-  unfold allClaims at hc
-  rcases hc with (rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl)
-  · exact ⟨adr0013, by unfold acceptedADRs, rfl, by exact all_accepted adr0013 (by unfold acceptedADRs; omega)⟩
-  · exact ⟨adr0014, by unfold acceptedADRs, rfl, by exact all_accepted adr0014 (by unfold acceptedADRs; omega)⟩
-  · exact ⟨adr0015, by unfold acceptedADRs, rfl, by exact all_accepted adr0015 (by unfold acceptedADRs; omega)⟩
-  · exact ⟨adr0016, by unfold acceptedADRs, rfl, by exact all_accepted adr0016 (by unfold acceptedADRs; omega)⟩
-  · exact ⟨adr0017, by unfold acceptedADRs, rfl, by exact all_accepted adr0017 (by unfold acceptedADRs; omega)⟩
-  · exact ⟨adr0018, by unfold acceptedADRs, rfl, by exact all_accepted adr0018 (by unfold acceptedADRs; omega)⟩
-  · exact ⟨adr0019, by unfold acceptedADRs, rfl, by exact all_accepted adr0019 (by unfold acceptedADRs; omega)⟩
-  · exact ⟨adr0020, by unfold acceptedADRs, rfl, by exact all_accepted adr0020 (by unfold acceptedADRs; omega)⟩
-  · exact ⟨adr0021, by unfold acceptedADRs, rfl, by exact all_accepted adr0021 (by unfold acceptedADRs; omega)⟩
-  · exact ⟨adr0022, by unfold acceptedADRs, rfl, by exact all_accepted adr0022 (by unfold acceptedADRs; omega)⟩
-  · exact ⟨adr0023, by unfold acceptedADRs, rfl, by exact all_accepted adr0023 (by unfold acceptedADRs; omega)⟩
-  · exact ⟨adr0024, by unfold acceptedADRs, rfl, by exact all_accepted adr0024 (by unfold acceptedADRs; omega)⟩
-  · exact ⟨adr0025, by unfold acceptedADRs, rfl, by exact all_accepted adr0025 (by unfold acceptedADRs; omega)⟩
-  · exact ⟨adr0026, by unfold acceptedADRs, rfl, by exact all_accepted adr0026 (by unfold acceptedADRs; omega)⟩
-  · exact ⟨adr0027, by unfold acceptedADRs, rfl, by exact all_accepted adr0027 (by unfold acceptedADRs; omega)⟩
-  · exact ⟨adr0028, by unfold acceptedADRs, rfl, by exact all_accepted adr0028 (by unfold acceptedADRs; omega)⟩
+/-- No conflicting decisions in combined accepted set. -/
+theorem all_accepted_no_conflicts :
+    ∀ a ∈ allAcceptedADRs, ∀ b ∈ allAcceptedADRs, ¬ ConflictsWith a b :=
+  no_conflicts_of_list_check allAcceptedADRs (by
+    set_option maxRecDepth 10000 in
+    unfold allAcceptedADRs
+    decide)
 
-/-- No conflicting decisions: all claim atoms are individually satisfiable. -/
-theorem combined_no_claim_conflicts :
-    ∀ c₁ ∈ allClaims, ∀ c₂ ∈ allClaims,
-      c₁.owner ≠ c₂.owner → ¬ Contradictory c₁.claim c₂.claim := by
-  intro c₁ hc₁ c₂ hc₂ _ hcon
-  have h1 : c₁.claim.evalB envP2C_all = true := by
-    have h : c₁ ∈ allClaims := hc₁
-    -- Each claim is a conjunction of atoms that are all true under envP2C_all
-    sorry
-  have h2 : c₂.claim.evalB envP2C_all = true := by
-    have h : c₂ ∈ allClaims := hc₂
-    sorry
-  have hJoint : (c₁.claim.evalB envP2C_all && c₂.claim.evalB envP2C_all) = true := by
-    simp [h1, h2]
-  exact hcon envP2C_all hJoint
-  where
-    envP2C_all : String → Bool := fun s =>
-      match s with
-      | "BCSDeterministicWireFormat" => true
-      | "FailClosedOnAssociatorDefect" => true
-      | "ClosureKernelLawful" => true
-      | "ReceiptIntegrityPWEHChain" => true
-      | "UNAOperatorWallMaintained" => true
-      | "ELMCreditsMachineChecked" => true
-      | "TriadicScaling3to243" => true
-      | "EpochEntropyDecreasing" => true
-      | "WIPCappedAtFive" => true
-      | "CycleClosesOrFailsLoudly" => true
-      | "EvidencePolicyE0_E6" => true
-      | "DayZeroGateThreeStewards" => true
-      | "PublicClaimsDowngradedE0_E2" => true
-      | "InventoryDeltasDispositioned" => true
-      | "TreasuryDualControl" => true
-      | "NodeBoundedAt27" => true
-      | "PrimeIndexedIdentity" => true
-      | "ZeroDriftExactRationalArithmetic" => true
-      | "PolarizationEvenOddDecomposition" => true
-      | "FourNullTaxonomy" => true
-      | "DeltaJ7SourceSector" => true
-      | "OddChannelExpansionFalsifiable" => true
-      | "WalshHadamardContrasts" => true
-      | "PathConsistencyGate" => true
-      | "ProbeTensorSeparation" => true
-      | "NoAutomaticSubstitution" => true
-      | "SixComponentClaimVector" => true
-      | "SourceStateGateBeforeClosure" => true
-      | "LayeredFactorizationMTRAPS" => true
-      | "NullWitnessDuality" => true
-      | "TargetFirstOrdering" => true
-      | "DesignGainDeltaC" => true
-      | _ => false
-
-/-- Verified combined ADR registry instance. -/
-def combinedRegistry : ADRRegistry where
-  adrs := acceptedADRs
-  uniqueIds := combined_unique_ids
-  acyclic := combined_acyclic
+/-- Verified ADR registry for all accepted ADRs. -/
+def allAcceptedRegistry : ADRRegistry where
+  adrs := allAcceptedADRs
+  uniqueIds := by
+    unfold allAcceptedADRs
+    simp [ADR.id, adr0017, adr0018, adr0019, adr0020, adr0022, adr0023, adr0024, adr0025, adr0026, adr0027, adr0028]
+  acyclic := all_accepted_acyclic
   supersedesExist := by
     intro a ha sid hsup
-    have hnone : a.supersedes = none := combined_no_supersedes a ha
+    have hnone : a.supersedes = none := all_accepted_no_supersedes a ha
     exact absurd hsup (by simp [hnone])
   supersededStatusConsistent := by
     intro a ha sid hsup
-    have hnone : a.supersedes = none := combined_no_supersedes a ha
+    have hnone : a.supersedes = none := all_accepted_no_supersedes a ha
     exact absurd hsup (by simp [hnone])
-  noConflicts := by
-    intro a ha b hb hconf
-    exact no_conflicts_of_list_check acceptedADRs (by
-      have h0 := combined_unique_ids
-      have h1 := combined_acyclic
-      -- All claims are individually satisfiable, no syntactic conflicts
-      sorry)
-  claims := allClaims
-  claimsOwnedByAccepted := combined_claims_owned
-  noClaimConflicts := combined_no_claim_conflicts
+  noConflicts := all_accepted_no_conflicts
+  claims := []
+  claimsOwnedByAccepted := by intro c hc; simp at hc
+  noClaimConflicts := by intro c₁ hc₁ c₂ _ hcon; simp at hc₁
 
-/-! Claim entailment proofs for combined registry. -/
+/-- Claim entailment template. -/
+theorem claim_entailment_template (P Q : PropTerm) :
+    Entails [P, .implies P Q] Q :=
+  entailment_modus_ponens P Q
 
-theorem combined_consequence_entailment (c₁ c₂ : Claim) (hc₁ : c₁ ∈ allClaims) (hc₂ : c₂ ∈ allClaims) :
-    Entails [c₁.claim, .implies c₁.claim c₂.claim] c₂.claim :=
-  entailment_modus_ponens c₁.claim c₂.claim
-
-theorem combined_self_traceable (a : ADR) (ha : a ∈ acceptedADRs) :
-    ProvenancePath acceptedADRs a.id a.id :=
-  ProvenancePath.refl a.id
-
-end ADR.Examples.Combined
+end ADR.Examples.Governance

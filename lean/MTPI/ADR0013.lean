@@ -1,3 +1,5 @@
+import Lean
+import MTPI.ADRAttr
 import MTPI.ADR
 
 /-!
@@ -27,12 +29,6 @@ every constant and structural property formalized here.
 namespace MTPI.ADR0013
 
 open MTPI.ADR
-
-initialize adrAttr : Lean.TagAttribute ←
-  Lean.registerTagAttribute `adr { descr := "marks a formal ADR-0013 artifact" }
-
-initialize proofAttr : Lean.TagAttribute ←
-  Lean.registerTagAttribute `proof { descr := "marks a machine-checked ADR-0013 proof" }
 
 /-! ## Meta: the ADR record itself -/
 
@@ -134,6 +130,11 @@ def canonicalWidths (e : UnsignedCrmfEnvelope) : Prop :=
   e.envelope_id.length = 32 ∧ e.poseidon_commitment.length = 32 ∧
   e.sha256_anchor.length = 32 ∧ e.ed25519_signature.length = 64
 
+instance canonicalWidths_decidable (e : UnsignedCrmfEnvelope) : Decidable (canonicalWidths e) :=
+  inferInstanceAs (Decidable
+    (e.envelope_id.length = 32 ∧ e.poseidon_commitment.length = 32 ∧
+     e.sha256_anchor.length = 32 ∧ e.ed25519_signature.length = 64))
+
 /-- Fixed header in exact ADR-0013 field order. -/
 @[adr]
 def fixedPrefix (e : UnsignedCrmfEnvelope) : List Nat :=
@@ -165,7 +166,8 @@ theorem canonicalBytes_field_order (e : UnsignedCrmfEnvelope) :
 theorem fixedPrefix_widths (e : UnsignedCrmfEnvelope) (h : canonicalWidths e) :
     (fixedPrefix e).length = fixedWidth := by
   rcases h with ⟨h_id, h_pose, h_sha, h_sig⟩
-  simp [fixedPrefix, be8, List.length_append, fixedWidth, h_id, h_pose, h_sha, h_sig]
+  simp +arith [fixedPrefix, be8, List.length_append, fixedWidth,
+               h_id, h_pose, h_sha, h_sig]
 
 /-- Total canonical length is a deterministic function of the metadata length:
 `len = 184 + 4 + |metadata|`. This is the Lean mirror of the Rust
@@ -176,12 +178,16 @@ theorem canonicalBytes_length (e : UnsignedCrmfEnvelope) (h : canonicalWidths e)
   rcases h with ⟨h_id, h_pose, h_sha, h_sig⟩
   simp [canonicalBytes, fixedPrefix, lenPrefix, be8, be4, List.length_append,
         minEnvelopeLen, fixedWidth, prefixWidth, h_id, h_pose, h_sha, h_sig]
+  simp +arith
 
 /-! ## Contractivity gate and fail-closed interlocks -/
 
 /-- UCC kiln gate: accept exactly when `Λ_m < 1` (fixed-point scaled). -/
 @[adr]
 def Contractive (lambda_m : Nat) : Prop := lambda_m < SCALE
+
+instance contractive_decidable (lambda_m : Nat) : Decidable (Contractive lambda_m) :=
+  inferInstanceAs (Decidable (lambda_m < SCALE))
 
 @[proof]
 theorem contractive_strictly_below_scale {lambda_m : Nat}
@@ -196,6 +202,9 @@ theorem gate_rejects_at_or_above_scale {lambda_m : Nat}
 /-- Associator defect: `‖Δ‖ > ε`. -/
 @[adr]
 def AssociatorDefect (norm_scaled : Nat) : Prop := norm_scaled > EPSILON
+
+instance associator_decidable (norm_scaled : Nat) : Decidable (AssociatorDefect norm_scaled) :=
+  inferInstanceAs (Decidable (norm_scaled > EPSILON))
 
 @[proof]
 theorem defect_above_epsilon {norm_scaled : Nat}
@@ -250,7 +259,8 @@ structure PwehBind where
   prev : Nat
   prime : Nat
   norm : Nat
-  meta : Nat
+  metadata : Nat
+deriving DecidableEq
 
 /-- The binding is injective: equality of bound steps is componentwise
 equality. This formalizes the losslessness of the PWEH hash input; the Key for
@@ -263,7 +273,7 @@ theorem pweh_bind_injective {a b c d a' b' c' d' : Nat}
   have h1 := congrArg PwehBind.prev h
   have h2 := congrArg PwehBind.prime h
   have h3 := congrArg PwehBind.norm h
-  have h4 := congrArg PwehBind.meta h
+  have h4 := congrArg PwehBind.metadata h
   simpa using And.intro h1 (And.intro h2 (And.intro h3 h4))
 
 /-- The exact sequence of applied operators matters: swapping the prime index
@@ -287,14 +297,14 @@ theorem order_ab_ne_ba :
 fixed-width fields). -/
 @[adr]
 def pweh_preimage_bytes (b : PwehBind) : List Nat :=
-  be8 b.prev ++ be8 b.prime ++ be8 b.norm ++ be8 b.meta
+  be8 b.prev ++ be8 b.prime ++ be8 b.norm ++ be8 b.metadata
 
 /-- The preimage has fixed width `4 * 8 = 32` bytes, so the hash chip always
 sees a canonical-length digest input. -/
 @[proof]
 theorem pweh_preimage_length (b : PwehBind) :
     (pweh_preimage_bytes b).length = 32 := by
-  simp [pweh_preimage_bytes, be8, List.length_append]
+  simp +arith [pweh_preimage_bytes, be8]
 
 /-! ## Canonical example (runtime witness) -/
 
@@ -313,14 +323,13 @@ def exampleEnvelope : UnsignedCrmfEnvelope := {
 
 @[proof]
 theorem example_envelope_is_canonical : canonicalWidths exampleEnvelope := by
-  simp [canonicalWidths, exampleEnvelope, List.length_replicate]
+  simp [canonicalWidths, exampleEnvelope]
 
 /-- The example envelope encodes to exactly `188 + 3 = 191` bytes. -/
 @[proof]
 theorem example_envelope_bytes_length :
     (canonicalBytes exampleEnvelope).length = 191 := by
   rw [canonicalBytes_length exampleEnvelope example_envelope_is_canonical]
-  simp [exampleEnvelope]
-  norm_num
+  simp +arith [exampleEnvelope, minEnvelopeLen, fixedWidth, prefixWidth]
 
 end MTPI.ADR0013

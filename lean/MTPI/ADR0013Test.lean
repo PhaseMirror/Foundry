@@ -26,6 +26,6 @@ def main : IO Unit := do
   check "nominal commit does not kill" ((commit false false false) = false)
   check "latch never unhalts" ((commit true false false) = true)
   check "kill requires defect evidence" ((commit false false false = true) → False)
-  check "pweh bind is injective (witness)" (order_ab_ne_ba)
+  check "pweh bind is injective (witness)" (PwehBind.mk 2 9 27 5 ≠ PwehBind.mk 9 2 27 5)
   check "pweh bind order matters" (PwehBind.mk 2 9 27 5 ≠ PwehBind.mk 9 2 27 5)
   check "pweh preimage width is 32" ((pweh_preimage_bytes (PwehBind.mk 1 2 3 4)).length = 32)

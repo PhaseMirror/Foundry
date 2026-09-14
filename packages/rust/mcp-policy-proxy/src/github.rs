@@ -10,7 +10,7 @@ use crate::gate::{check_sat, strip_sat, SatOutcome};
 use crate::jsonrpc::error_response;
 use serde_json::{json, Value};
 use std::io;
-use tokio::io::{AsyncBufReadExt, AsyncRead, AsyncWrite, AsyncWriteExt, BufReader as AsyncBufReader, BufWriter as AsyncBufWriter};
+use tokio::io::{AsyncRead, AsyncReadExt as _, AsyncWrite, AsyncWriteExt, BufWriter as AsyncBufWriter};
 use tokio::process::Command;
 
 /// `tools/call` error message when `_sat` is absent.
@@ -83,9 +83,10 @@ async fn write_line(writer: &mut AsyncBufWriter<impl AsyncWrite + Unpin>, bytes:
 /// * `child_stdin` / `child_stdout` — the upstream server's pipe ends,
 /// * `client_stdout` — our stdout.
 ///
-/// Both read streams are polled with `select!`, so child output is forwarded
-/// while client input is being processed, exactly like the Python
-/// forwarding thread.
+/// Mirrors the Python adapter's architecture: a dedicated forwarding task
+/// drains `child_stdout` line by line and feeds a channel, while the main loop
+/// selects between our stdin and that channel. The main loop writes to
+/// `client_stdout` exclusively, so output ordering is preserved.
 pub async fn run_loop<Si, Ci, Ro, Wo>(
     client_stdin: Si,
     child_stdin: Ci,
@@ -96,81 +97,93 @@ pub async fn run_loop<Si, Ci, Ro, Wo>(
 where
     Si: AsyncRead + Unpin,
     Ci: AsyncWrite + Unpin,
-    Ro: AsyncRead + Unpin,
+    Ro: AsyncRead + Unpin + Send + 'static,
     Wo: AsyncWrite + Unpin,
 {
-    let mut client_in = AsyncBufReader::new(client_stdin);
+    let mut client_in = client_stdin;
     let mut child_in = AsyncBufWriter::new(child_stdin);
-    let mut child_out = AsyncBufReader::new(child_stdout);
     let mut client_out = AsyncBufWriter::new(client_stdout);
 
-    let mut line = String::new();
-    let mut child_line = String::new();
-    let mut child_closed = false;
-    #[cfg(test)]
-    let t0 = std::time::Instant::now();
-    #[cfg(test)]
-    let mut dbg = |m: &str, v: &str| {
-        eprintln!("[{}ms] {m} {} {}", t0.elapsed().as_millis(), v.len(), v.chars().take(60).collect::<String>())
-    };
+    // Child -> client forwarding task. Keeps the upstream blob out of the way
+    // so the main select only multiplexes our stdin with channel traffic.
+    let (tx, mut rx) = tokio::sync::mpsc::channel::<Vec<u8>>(32);
+    let mut child_out = child_stdout;
+    let forwarder = tokio::spawn(async move {
+        let mut child_line = Vec::new();
+        loop {
+            child_line.clear();
+            match read_line_into(&mut child_out, &mut child_line).await {
+                Ok(0) => break,
+                Ok(_) => {
+                    if tx.send(child_line.clone()).await.is_err() {
+                        break;
+                    }
+                }
+                Err(_) => break,
+            }
+        }
+    });
+    drop(forwarder);
 
+    let mut line = Vec::new();
     loop {
         line.clear();
-        child_line.clear();
         tokio::select! {
-            read = client_in.read_line(&mut line) => {
-                #[cfg(test)]
-                dbg("client-arm-fired:", &line);
+            read = read_line_into(&mut client_in, &mut line) => {
                 let n = read?;
                 if n == 0 {
-                    #[cfg(test)]
-                    eprintln!("[{}ms] client-EOF", t0.elapsed().as_millis());
                     break;
                 }
-                if line.trim().is_empty() {
+                if line.iter().all(|b| b.is_ascii_whitespace()) {
                     continue;
                 }
-                match process_line(&line, pub_key_hex)? {
+                let line_str = std::str::from_utf8(&line)
+                    .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, format!("non-UTF8 on stdin: {e}")))?;
+                match process_line(line_str, pub_key_hex)? {
                     Some(LineAction::Emit(response)) => {
-                        #[cfg(test)]
-                        eprintln!("[{}ms] Emit begin", t0.elapsed().as_millis());
                         write_line(&mut client_out, response.as_bytes()).await?;
-                        #[cfg(test)]
-                        eprintln!("[{}ms] Emit done", t0.elapsed().as_millis());
                     }
                     Some(LineAction::Forward(request)) => {
-                        #[cfg(test)]
-                        eprintln!("[{}ms] Forward begin", t0.elapsed().as_millis());
                         let serialized = serialize(&request)?;
                         // The child may already have exited (broken pipe); the
                         // proxy stays up for the remaining client traffic.
                         if let Err(e) = write_line(&mut child_in, serialized.as_bytes()).await {
                             eprintln!("Error forwarding to GitHub server: {e}");
                         }
-                        #[cfg(test)]
-                        eprintln!("[{}ms] Forward done", t0.elapsed().as_millis());
                     }
                     None => {}
                 }
             }
-            read = child_out.read_line(&mut child_line), if !child_closed => {
-                #[cfg(test)]
-                eprintln!("[{}ms] child-arm-fired", t0.elapsed().as_millis());
-                let n = read?;
-                if n == 0 {
-                    #[cfg(test)]
-                    eprintln!("[{}ms] child-EOF", t0.elapsed().as_millis());
-                    child_closed = true;
-                    continue;
+            child_line = rx.recv() => {
+                if let Some(child_line) = child_line {
+                    client_out.write_all(&child_line).await?;
+                    client_out.flush().await?;
                 }
-                #[cfg(test)]
-                eprintln!("[{}ms] child-arm-forwarding", t0.elapsed().as_millis());
-                client_out.write_all(child_line.as_bytes()).await?;
-                client_out.flush().await?;
             }
         }
     }
     Ok(())
+}
+
+/// Read a single `\n`-terminated line from `reader` into `buf`.
+///
+/// Reads one byte at a time so the future can be freely multiplexed with
+/// `tokio::select!` without relying on `AsyncBufReader` internal buffering.
+/// Returns the number of bytes written, or `0` on EOF (an unterminated final
+/// line is delivered as written).
+async fn read_line_into(reader: &mut (impl AsyncRead + Unpin), buf: &mut Vec<u8>) -> io::Result<usize> {
+    buf.clear();
+    let mut byte = [0u8; 1];
+    loop {
+        let n = reader.read(&mut byte).await?;
+        if n == 0 {
+            return Ok(buf.len());
+        }
+        buf.push(byte[0]);
+        if byte[0] == b'\n' {
+            return Ok(buf.len());
+        }
+    }
 }
 
 /// Spawn `npx -y @modelcontextprotocol/server-github` and proxy over the real
@@ -197,7 +210,8 @@ mod tests {
     use crate::signature::canonical_payload;
     use ed25519_dalek::{Signer as _, SigningKey};
     use serde_json::json;
-    use tokio::io::{AsyncReadExt, AsyncWriteExt, DuplexStream};
+    use std::time::Duration;
+    use tokio::io::{AsyncRead, AsyncWriteExt};
 
     fn signed_sat(claims: Value) -> Value {
         let key = SigningKey::from_bytes(&[13u8; 32]);
@@ -268,7 +282,7 @@ mod tests {
         assert!(process_line("not-json", &pub_key_hex()).is_err());
     }
 
-    async fn read_line(stream: &mut DuplexStream) -> Vec<u8> {
+    async fn read_line(stream: &mut (impl AsyncRead + Unpin)) -> Vec<u8> {
         let mut buf = Vec::new();
         let mut byte = [0u8; 1];
         loop {
@@ -284,12 +298,29 @@ mod tests {
         buf
     }
 
+    /// Drive `run_loop` over real OS pipes (no in-memory `tokio::io::duplex`).
+    /// A line-echo shell loop (`sh`) plays the role of the upstream GitHub MCP
+    /// server: it echoes every forwarded request back immediately, exercising
+    /// the child->client path (plain `cat` would buffer its pipe output).
+    #[cfg(unix)]
     #[tokio::test]
-    async fn duplex_end_to_end() {
-        let (mut client_write, client_stdin) = tokio::io::duplex(4096);
-        let (client_stdout, mut stdout_read) = tokio::io::duplex(4096);
-        let (child_stdin, mut child_read) = tokio::io::duplex(4096);
-        let (mut child_write, child_stdout) = tokio::io::duplex(4096);
+    async fn run_loop_over_real_pipes() {
+        use tokio::net::unix::pipe;
+        use tokio::process::Command;
+
+        let (mut client_write, client_stdin) = pipe::pipe().unwrap();
+        let (client_stdout, mut stdout_read) = pipe::pipe().unwrap();
+
+        let mut child = Command::new("sh")
+            .args(["-c", "while IFS= read -r l; do printf '%s\\n' \"$l\"; done"])
+            .stdin(std::process::Stdio::piped())
+            .stdout(std::process::Stdio::piped())
+            .stderr(std::process::Stdio::null())
+            .kill_on_drop(true)
+            .spawn()
+            .unwrap();
+        let child_stdin = child.stdin.take().unwrap();
+        let child_stdout = child.stdout.take().unwrap();
 
         let pk = pub_key_hex();
         let handle = tokio::spawn(async move {
@@ -298,60 +329,52 @@ mod tests {
                 .unwrap();
         });
 
-        // 1. initialize is forwarded to the child verbatim.
-        let t0 = std::time::Instant::now();
-        eprintln!("[{}ms] STEP1 write", t0.elapsed().as_millis());
-        client_write
-            .write_all(b"{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\"}\n")
+        // 1. initialize is forwarded to the child; the echo loop returns it.
+        let line = r#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05"}}
+"#;
+        client_write.write_all(line.as_bytes()).await.unwrap();
+        let echoed = tokio::time::timeout(Duration::from_secs(5), read_line(&mut stdout_read))
             .await
-            .unwrap();
-        eprintln!("[{}ms] STEP1 read", t0.elapsed().as_millis());
-        assert_eq!(
-            read_line(&mut child_read).await,
-            b"{\"id\":1,\"jsonrpc\":\"2.0\",\"method\":\"initialize\"}\n"
-        );
-        eprintln!("[{}ms] STEP1 done", t0.elapsed().as_millis());
+            .expect("initialize not forwarded to client");
+        let v: Value = serde_json::from_slice(&echoed).unwrap();
+        assert_eq!(v["id"], 1);
+        assert_eq!(v["method"], "initialize");
 
         // 2. tools/call with a valid SAT is forwarded with _sat stripped.
-        eprintln!("[{}ms] STEP2 write", t0.elapsed().as_millis());
         let sat = signed_sat(json!({"agent": "ace"}));
         let args = json!({"_sat": sat, "repo": "a/b"});
-        let line = format!(r#"{{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{{"name":"get_pr","arguments":{args}}}}}"#);
+        let mut line = format!(
+            r#"{{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{{"name":"get_pr","arguments":{args}}}}}"#
+        );
+        line.push('\n');
         client_write.write_all(line.as_bytes()).await.unwrap();
-        eprintln!("[{}ms] STEP2 read", t0.elapsed().as_millis());
-        let forwarded = read_line(&mut child_read).await;
-        let v: Value = serde_json::from_slice(forwarded.trim_ascii()).unwrap();
+        let echoed = tokio::time::timeout(Duration::from_secs(5), read_line(&mut stdout_read))
+            .await
+            .expect("stripped tools/call not forwarded");
+        let v: Value = serde_json::from_slice(&echoed).unwrap();
+        assert_eq!(v["id"], 2);
         assert!(v["params"]["arguments"].get("_sat").is_none());
         assert_eq!(v["params"]["arguments"]["repo"], "a/b");
-        eprintln!("[{}ms] STEP2 done", t0.elapsed().as_millis());
 
-        // 3. tools/call without a SAT is answered by the proxy.
-        eprintln!("[{}ms] STEP3 write", t0.elapsed().as_millis());
+        // 3. tools/call without a SAT is answered by the proxy, not cat.
         client_write
             .write_all(b"{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"tools/call\",\"params\":{\"name\":\"get_pr\",\"arguments\":{\"repo\":\"c/d\"}}}\n")
             .await
             .unwrap();
-        eprintln!("[{}ms] STEP3 read", t0.elapsed().as_millis());
-        let resp = read_line(&mut stdout_read).await;
-        let v: Value = serde_json::from_slice(resp.trim_ascii()).unwrap();
-        assert_eq!(v["error"]["message"], MISSING_SAT_MESSAGE);
-        eprintln!("[{}ms] STEP3 done", t0.elapsed().as_millis());
-
-        // 4. Child output is forwarded to our stdout.
-        eprintln!("[{}ms] STEP4 child write", t0.elapsed().as_millis());
-        child_write
-            .write_all(b"{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"ok\":true}}\n")
+        let resp = tokio::time::timeout(Duration::from_secs(5), read_line(&mut stdout_read))
             .await
-            .unwrap();
-        eprintln!("[{}ms] STEP4 read", t0.elapsed().as_millis());
-        let forwarded = read_line(&mut stdout_read).await;
-        assert!(forwarded.starts_with(b"{\"jsonrpc\":\"2.0\""));
-        eprintln!("[{}ms] STEP4 done", t0.elapsed().as_millis());
+            .expect("missing-sat error not emitted");
+        let v: Value = serde_json::from_slice(&resp).unwrap();
+        assert_eq!(v["id"], 3);
+        assert_eq!(v["error"]["code"], -32602);
+        assert_eq!(v["error"]["message"], MISSING_SAT_MESSAGE);
 
-        // 5. Closing our stdin ends the loop.
-        eprintln!("[{}ms] STEP5 drop", t0.elapsed().as_millis());
+        // 4. Closing our stdin ends the loop; the child is reaped.
         drop(client_write);
-        handle.await.unwrap();
-        eprintln!("[{}ms] STEP5 done", t0.elapsed().as_millis());
+        tokio::time::timeout(Duration::from_secs(5), handle)
+            .await
+            .expect("run_loop did not exit on client EOF")
+            .unwrap();
+        let _status = tokio::time::timeout(Duration::from_secs(5), child.wait()).await;
     }
 }

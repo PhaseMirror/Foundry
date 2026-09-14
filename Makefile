@@ -63,6 +63,19 @@ docs:
 	mkdir -p docs/verification
 	@echo "Documentation generated in docs/"
 
+# Regenerate ADR index from registry.json
+adr-index:
+	python3 scripts/generate_adr_index.py
+
+# ADR-0010: Check for sorry tactics in ADR/ directory
+adr-sorry-check:
+	python3 scripts/check_adr_sorry.py
+
+# Unified ADR verification gate: index + sorry check + lean build + test
+adr-verify: adr-index adr-sorry-check
+	lake build ADR
+	lake test adrTest
+
 # Clean build artifacts
 clean:
 	cd lean && lake clean

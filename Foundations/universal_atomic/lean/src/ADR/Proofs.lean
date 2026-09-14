@@ -26,5 +26,13 @@ theorem no_circular_supersession (a b : ADR) (h₁ : a.supersedes = some b.id) (
 /-- Every accepted ADR has a reconstructible history via the `history` function. -/
 theorem accepted_has_history (a : ADR) (h : a.status = ADRStatus.Accepted) :
     a.history.length ≥ 1 := by
-  -- placeholder proof using `sorry` to be replaced in production
-  sorry
+  have hNonEmpty : a.history ≠ "" := by
+    have hTitle : a.title ≠ "" := by decide
+    intro hEmpty
+    simp [history] at hEmpty
+    contradiction
+  have hPos : a.history.length > 0 := by
+    intro hZero
+    have hEmpty : a.history = "" := String.eq_empty_of_length_zero hZero
+    exact hNonEmpty hEmpty
+  exact Nat.le_of_lt hPos

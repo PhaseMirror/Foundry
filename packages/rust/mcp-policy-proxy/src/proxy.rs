@@ -218,11 +218,12 @@ mod tests {
     fn run_loop_echoes_multiline_session() {
         let sat = signed_sat(json!({"agent": "ace"}));
         let args = json!({"_sat": sat});
+        let call = format!(r#"{{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{{"name":"proxied_tool","arguments":{args}}}}}"#);
         let input = format!(
             "{}\n{}\n\n{}\n",
             r#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}"#,
             r#"{"jsonrpc":"2.0","id":2,"method":"tools/list"}"#,
-            format!(r#"{{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{{"name":"proxied_tool","arguments":{args}}}}}"#)
+            call
         );
         let mut output = Vec::new();
         run(io::Cursor::new(input), &mut output, &pub_key_hex()).unwrap();

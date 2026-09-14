@@ -35,11 +35,14 @@ fn run_session(input: &str) -> String {
 fn full_client_session() {
     let sat = signed_sat();
     let args = json!({"_sat": sat});
+    let call = format!(
+        r#"{{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{{"name":"proxied_tool","arguments":{args}}}}}"#
+    );
     let input = format!(
         "{}\n{}\n{}\n{}\n",
         r#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05"}}"#,
         r#"{"jsonrpc":"2.0","id":2,"method":"tools/list"}"#,
-        format!(r#"{{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{{"name":"proxied_tool","arguments":{args}}}}}"#),
+        call,
         r#"{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"proxied_tool","arguments":{}}}"#,
     );
     let out = run_session(&input);

@@ -79,7 +79,36 @@ theorem source_state_gate (c : ClaimVector) :
 @[proof]
 theorem verdicts_not_scores :
     Verdict ≠ String := by
-  -- Verdicts are label sets, not evidence scores ranking materials
-  exact (sorry : Verdict ≠ String)
+  intro hEq
+  have hFintype : Fintype Verdict := inferInstance
+  have hFintype' : Fintype String := hEq ▸ hFintype
+  have hCardV : Fintype.card Verdict = 8 := by
+    unfold Fintype.card
+    simp [Verdict, List.finrange, List.map, List.length]
+    norm_num
+  have hCardS : Fintype.card String = 8 := by
+    exact Eq.subst (Eq.symm hEq) hCardV
+  have hNot8 : Fintype.card String ≠ 8 := by
+    have hNodup9 : List.Nodup (List.map String.ofChar (List.range 9)) := by
+      simp [List.Nodup, List.map, List.range, String.ofChar]
+      omega
+    have h9InUniv : ∀ (s : String), s ∈ List.map String.ofChar (List.range 9) → s ∈ Fintype.univ := by
+      intro s _
+      exact mem_univ s
+    have hCardFinset9 : (List.toFinset (List.map String.ofChar (List.range 9)) : Finset String).card = 9 := by
+      have hNodup' : List.Nodup (List.map String.ofChar (List.range 9)) := hNodup9
+      have hEq : (List.toFinset (List.map String.ofChar (List.range 9)) : Finset String).card = (List.map String.ofChar (List.range 9)).length := by
+        have hInj : Function.Injective (List.map String.ofChar (List.range 9)) := by
+          simpa [Function.Injective, List.map, List.nthLe, List.range, String.ofChar] using hNodup9
+        simp [hInj]
+      simpa [hEq] using (by simp [List.range])
+    have hLe : 9 ≤ Fintype.card String := by
+      have hSubCard : (List.toFinset (List.map String.ofChar (List.range 9)) : Finset String).card ≤ Fintype.card String := by
+        have hSubset : (List.toFinset (List.map String.ofChar (List.range 9)) : Finset String) ⊆ Fintype.univ := by
+          simpa [Finset.subset_iff, List.mem_toFinset, List.mem_map] using h9InUniv
+        exact Finset.card_le_card_of_subset hSubset
+      omega
+    omega
+  exact hNot8 hCardS
 
 end MTPI.ADR0026

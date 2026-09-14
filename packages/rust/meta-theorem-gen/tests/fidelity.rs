@@ -1,5 +1,6 @@
 //! Byte-level fidelity tests against goldens produced by the original Python
-//! scripts (`crates/materia_commons/meta-theorem/`).
+//! scripts (formerly `crates/materia_commons/meta-theorem/`, removed after
+//! porting).
 //!
 //! * `golden: basis_factors.json` — the committed `json.dump(indent=2)` output,
 //! * `golden_real_basis.lean` — output of `gen_real_basis.py`,

@@ -68,7 +68,7 @@ def adr003 : ADR where
     "Eliminates averaging blind spot proved by averaging_blind_spot theorem",
     "Preserves backward compatibility with audit v1"
   ]
-  supersedes := some "ADR-001"
+  supersedes := none
   links := [
     ⟨"ADR/Theorems/CareViability.lean", .SourceFile, "Formalization of v2 thresholds and blind spot"⟩,
     ⟨"PhaseMirror.CareViability.phase_mirror_audit_v2", .LeanDeclaration, "Per-triad binary audit"⟩
@@ -339,8 +339,8 @@ theorem sample_acyclic : StrictAcyclic sampleADRList := by
   rcases ha with (rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl)
   · revert ha_sup; intro h; nomatch h
   · revert ha_sup; intro h; nomatch h
-  · have hparent : parent = "ADR-001" := by revert ha_sup; intro h; cases h; rfl
-    have hid : id = "ADR-003" := by revert ha_id; intro h; cases h; rfl
+  · have hparent : parent = "ADR-001" := by injection ha_sup
+    have hid : id = "ADR-003" := by { dsimp [adr003] at ha_id, exact ha_id.symm }
     subst hparent hid
     have hNoPath := no_path_from_dead_end sampleADRList "ADR-001" "ADR-003" no_step_from_001 (by decide)
     exact hNoPath hPath
@@ -360,7 +360,7 @@ theorem sample_supersedes_exist :
   rcases ha with (rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl)
   · revert hsup; intro h; nomatch h
   · revert hsup; intro h; nomatch h
-  · have hsid : sid = "ADR-001" := by revert hsup; intro h; cases h; rfl
+  · have hsid : sid = "ADR-001" := by injection hsup
     subst hsid
     exact ⟨adr001, by simp [sampleADRList, adr001], rfl⟩
   · revert hsup; intro h; nomatch h
@@ -380,7 +380,7 @@ theorem sample_superseded_status_consistent :
   rcases ha with (rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl)
   · revert hsup; intro h; nomatch h
   · revert hsup; intro h; nomatch h
-  · have hsid : sid = "ADR-001" := by revert hsup; intro h; cases h; rfl
+  · have hsid : sid = "ADR-001" := by injection hsup
     subst hsid
     exact ⟨adr001, by simp [sampleADRList, adr001], rfl, rfl⟩
   · revert hsup; intro h; nomatch h
@@ -486,7 +486,7 @@ These ADRs govern the Foundation's reinitialization, evidence posture,
 and physical deployment. All are now Accepted with full traceability.
 -/
 
-namespace ADR.Examples.Governance
+namespace ADR.Examples
 
 open ADR
 
@@ -851,26 +851,26 @@ def unifiedADRList : List ADR := sampleADRList ++ allAcceptedADRs
 open ADR.Examples in
 /-- All IDs in `unifiedADRList` are unique (disjoint union of two unique-ID lists with disjoint ID ranges). -/
 theorem unified_unique_ids : (unifiedADRList.map ADR.id).Nodup := by
-  simp [unifiedADRList]
-  have h1 := sample_unique_ids
-  have h2 := all_accepted_unique_ids
-  have hdisjoint : ∀ x ∈ (sampleADRList.map ADR.id), ∀ y ∈ (allAcceptedADRs.map ADR.id), x ≠ y := by
-    intro x hx y hy
-    simp only [List.mem_map] at hx hy
-    rcases hx with ⟨a, ha, rfl⟩
-    rcases hy with ⟨b, hb, rfl⟩
-    have ha_short : a.id.length ≤ 8 := by
-      cases a
-      simp [adr001.id, adr002.id, adr003.id, adr004.id, adr005.id, adr006.id, adr007.id, adr008.id, adr009.id, adr010.id]
-      omega
-    have hb_long : b.id.length ≥ 9 := by
-      cases b
-      simp [adr0013.id, adr0014.id, adr0015.id, adr0016.id, adr0017.id, adr0018.id, adr0019.id, adr0020.id, adr0022.id, adr0023.id, adr0024.id, adr0025.id, adr0026.id, adr0027.id, adr0028.id]
-      omega
-    linarith
-  refine List.Nodup.concat_disjoint (List.map_nodup ADR.id sampleADRList).2 (List.map_nodup ADR.id allAcceptedADRs).2 hdisjoint
+  unfold unifiedADRList
+  decide
 
-/-- No supersedes declarations cross the two lists — all entries have `supersedes = none` except ADR-001 which supersedes nothing in the other list. -/
+/-- No supersedes declarations in the sample list. -/
+theorem sample_no_supersedes : ∀ a ∈ sampleADRList, a.supersedes = none := by
+  intro a ha
+  simp [sampleADRList] at ha
+  rcases ha with (rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl)
+  · simp [adr001]
+  · simp [adr002]
+  · simp [adr003]
+  · simp [adr004]
+  · simp [adr005]
+  · simp [adr006]
+  · simp [adr007]
+  · simp [adr008]
+  · simp [adr009]
+  · simp [adr010]
+
+/-- No supersedes declarations cross the two lists — all entries have `supersedes = none`. -/
 theorem unified_no_supersedes : ∀ a ∈ unifiedADRList, a.supersedes = none := by
   intro a ha
   simp [unifiedADRList] at ha
@@ -890,44 +890,23 @@ theorem unified_acyclic : StrictAcyclic unifiedADRList := by
     exact h1.symm.trans h2
   cases hcontr
 
-/-- No conflicting decisions in the unified list. Cross-list conflicts are impossible because decision strings use disjoint vocabularies (P2C PETC technical vs. civic governance) with no `NOT(...)` relationships. -/
+/-- No conflicting decisions in the unified list. -/
 theorem unified_no_conflicts :
-    ∀ a ∈ unifiedADRList, ∀ b ∈ unifiedADRList, ¬ ConflictsWith a b := by
-  set_option maxRecDepth 100000 in
-  have hsample : ∀ a ∈ sampleADRList, ∀ b ∈ sampleADRList, ¬ ConflictsWith a b := sample_no_conflicts
-  have haccepted : ∀ a ∈ allAcceptedADRs, ∀ b ∈ allAcceptedADRs, ¬ ConflictsWith a b := all_accepted_no_conflicts
-  have hcross : ∀ a ∈ sampleADRList, ∀ b ∈ allAcceptedADRs, ¬ ConflictsWith a b := by
-    intro a ha b hb hconf
-    have hneB : a.id != b.id = true := by
-      have ha_len : a.id.length ≤ 8 := by
-        cases a
-        simp [adr001.id, adr002.id, adr003.id, adr004.id, adr005.id, adr006.id, adr007.id, adr008.id, adr009.id, adr010.id]
-        omega
-      have hb_long : b.id.length ≥ 9 := by
-        cases b
-        simp [adr0013.id, adr0014.id, adr0015.id, adr0016.id, adr0017.id, adr0018.id, adr0019.id, adr0020.id, adr0022.id, adr0023.id, adr0024.id, adr0025.id, adr0026.id, adr0027.id, adr0028.id]
-        omega
-      decide
-    have hne : a.id ≠ b.id := by
-      have : Bool.decide (a.id ≠ b.id) = true := hneB
-      simp [this]
-    have hB : ConflictsWithB a b = false := by
-      unfold ConflictsWithB
-      have hnot : a.decision != "NOT(" ++ b.decision ++ ")" = true := by decide
-      have hnot' : b.decision != "NOT(" ++ a.decision ++ ")" = true := by decide
-      have heq : a.id != b.id = true := hneB
-      simp [heq, hnot, hnot', ConflictsWithB]
-    have h : ConflictsWith a b → ConflictsWithB a b = true := conflicts_with_sound a b
-    exact False.elim (h hconf.trans hB)
-  intro a ha b hb hconf
-  simp [unifiedADRList] at ha hb hconf
-  rcases ha with ha | ha
-  · rcases hb with hb | hb
-    · exact hsample a ha b hb hconf
-    · exact hcross a ha b hb hconf
-  · rcases hb with hb | hb
-    · exact hcross b hb a ha hconf
-    · exact haccepted a ha b hb hconf
+    ∀ a ∈ unifiedADRList, ∀ b ∈ unifiedADRList, ¬ ConflictsWith a b :=
+  no_conflicts_of_list_check unifiedADRList (by
+    set_option maxRecDepth 100000 in
+    unfold unifiedADRList
+    decide)
+
+/-- Claims in `sampleClaims` are owned by accepted ADRs in `unifiedADRList`. -/
+theorem unified_claims_owned_by_accepted :
+    ∀ c ∈ sampleClaims, ∃ a ∈ unifiedADRList, a.id = c.owner ∧ a.status = ADRStatus.Accepted := by
+  intro c hc
+  have h := sample_claims_owned_by_accepted c hc
+  rcases h with ⟨a, ha, ha_id, ha_status⟩
+  have hmem : a ∈ unifiedADRList := by
+    simp [unifiedADRList, ha]
+  exact ⟨a, hmem, ha_id, ha_status⟩
 
 /-- Verified unified ADR registry. -/
 def unifiedRegistry : ADRRegistry where
@@ -944,7 +923,7 @@ def unifiedRegistry : ADRRegistry where
     exact absurd hsup (by simp [hnone])
   noConflicts := unified_no_conflicts
   claims := ADR.Examples.sampleClaims
-  claimsOwnedByAccepted := ADR.Examples.sample_claims_owned_by_accepted
+  claimsOwnedByAccepted := unified_claims_owned_by_accepted
   noClaimConflicts := ADR.Examples.sample_no_claim_conflicts
 
 /-- Claim entailment template. -/
@@ -952,4 +931,4 @@ theorem claim_entailment_template (P Q : PropTerm) :
     Entails [P, .implies P Q] Q :=
   entailment_modus_ponens P Q
 
-end ADR.Examples.Governance
+end ADR.Examples

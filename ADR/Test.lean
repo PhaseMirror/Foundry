@@ -5,7 +5,7 @@ import ADR.Export
 
 
 open ADR
-open ADR.Examples.Governance
+open ADR.Examples
 open ADR.Export
 
 def testImmutability : IO Unit := do

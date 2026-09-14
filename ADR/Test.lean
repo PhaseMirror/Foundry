@@ -13,9 +13,7 @@ def testImmutability : IO Unit := do
   IO.println "✓ Immutability constraints satisfied: Accepted -> Superseded is valid."
 
 def testAcyclicity : IO Unit := do
-  let acyclic_proof : StrictAcyclic allAcceptedADRs := by
-    intro adr h_in
-    sorry
+  let acyclic_proof : StrictAcyclic allAcceptedADRs := all_accepted_acyclic
   IO.println "✓ Registry acyclicity mathematically verified."
 
 def testIntentionalFailure : IO Unit := do

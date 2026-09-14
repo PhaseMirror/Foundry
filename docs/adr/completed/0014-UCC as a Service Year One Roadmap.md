@@ -1,6 +1,6 @@
 # ADR-0014: UCC as a Service — Year One Roadmap
 
-**Status:** Accepted
+**Status:** Completed
 
 ## Context
 The year-one window (2 September 2026 – 2 September 2027) needs an operator product that is lawful, deliverable, and free of unimplemented research claims. UAC chemistry (FeMoco, 100-way MA-VQE, 69-qubit concurrency) remains research-path until a partner queue exists. A caller submits a partial system; the only honest answer is a lawful closure, a named defect if composition is unlawful, a versioned receipt, and levers — not a vibe, not a proof of the Riemann Hypothesis, not a diploma. The kernel's credibility depends on never claiming lawfulness it has not been proven to hold.

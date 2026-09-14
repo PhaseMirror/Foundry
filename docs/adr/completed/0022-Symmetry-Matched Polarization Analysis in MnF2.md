@@ -1,6 +1,6 @@
 # ADR-0022: Symmetry-Matched Polarization Analysis in MnF₂
 
-**Status:** Accepted
+**Status:** Completed
 
 ## Context
 Unpolarized inelastic neutron scattering (INS) on MnF₂ reported no resolvable altermagnetic magnon band splitting within experimental resolution, while polarized INS later accessed an antisymmetric dynamical channel and reported a domain-dependent chiral response. These are not contradictions but different measurement operations: an unresolved positive spectral weight and a projection onto an antisymmetric polarization channel are different maps on the same spin-wave model. A "null" in one channel must not be treated as evidence of physical absence in another. The paper formalizes how to separate spectral resolution from chiral sensitivity in altermagnetic neutron scattering.

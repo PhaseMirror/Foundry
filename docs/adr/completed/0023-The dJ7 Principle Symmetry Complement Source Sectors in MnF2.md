@@ -1,6 +1,6 @@
 # ADR-0023: The δJ7 Principle — Symmetry-Complement Source Sectors in Altermagnetic MnF₂
 
-**Status:** Accepted
+**Status:** Completed
 
 ## Context
 A recurring theoretical idea in correlated-matter physics is that an observable can be controlled by a Hamiltonian term that is small in the total energy yet leading in a selected symmetry channel. In MnF₂ a small imbalance between the two symmetry-distinct seventh-neighbor Heisenberg exchange bonds (J7a and J7b) has emerged as a candidate source coordinate for the altermagnetic chiral response. Whether that construction is valid depends on a precise group-theoretic statement of what "symmetry complement" means relative to a declared reference model. The paper fixes that statement.

@@ -1,6 +1,6 @@
 # ADR-0016: UOR Civic Infrastructure — Three Epochs
 
-**Status:** Accepted
+**Status:** Completed
 
 ## Context
 The Foundry's roadmap must be presentable as a physically and biologically constrained deployment rather than an abstract idea. The governing civic architecture (dense mathematics, PWEH integrity, triadic scaling) needs an epochal frame that a board can digest while preserving structural integrity: a formally verified trajectory of decreasing entropy that replaces traditional extractive growth.

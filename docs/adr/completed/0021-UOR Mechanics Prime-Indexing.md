@@ -1,6 +1,6 @@
 # ADR-0021: UOR Mechanics — The Exact Math of Prime-Indexing
 
-**Status:** Accepted
+**Status:** Completed
 
 ## Context
 Distributed state identification by mutable file paths permits duplication, reordering, and platform-dependent drift. The UOR framework requires an identity scheme that is collision-free, compositionally rich, and exactly reproducible across heterogeneous nodes. The mathematical bedrock is locked as the canonical substrate for execution receipts, settlement, and integrity sealing; downstream market structures (Holotrade liquidity engine, Six Auditable Multipliers, Flux Core failover, TimeOps/GlowChain causal propagation, BountyForge, the 1B-node edge lattice) are exploratory applications of this same substrate and feed future ADRs.

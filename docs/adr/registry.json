@@ -1,1 +1,853 @@
-{"version":"1.0.0","adrs":[{"id":"ADR-001","title":"Integer Jordan Bond Governance","status":"Superseded","context":"Floating-point non-determinism introduces drift and spoliation risk in state transitions across distributed nodes.","decision":"Enforce fixed-point integer Jordan bond arithmetic scaled by N = 1024 at the kernel boundary.","consequences":["Arithmetic determinism guaranteed across heterogeneous nodes","Floating point drift strictly eliminated"],"supersedes":null,"links":[{"uri":"PhaseMirror.Care.Scale","kind":"LeanDeclaration","description":"Canonical fixed-point scale N = 1024"},{"uri":"Care.lean","kind":"SourceFile","description":"Integer fixed-point operations"}]},{"id":"ADR-002","title":"Sedona Spine Retention Engine Sole Source of Truth","status":"Accepted","context":"Decentralized litigation hold rules risk spoliation drift if computed independently by UI or client agents.","decision":"All ESI preservation risk logic must route exclusively through the Sedona Spine Rust Engine and WASM SDK.","consequences":["Zero drift in litigation hold calculations","Mandatory provenance chain: Policy -> Event -> Kernel -> Witness"],"supersedes":null,"links":[{"uri":"models/legalese-scopist/CONTRACT.md","kind":"SpecificationDoc","description":"Preservation alert protocol"},{"uri":"models/legalese-scopist/","kind":"SourceFile","description":"Rust Engine Core implementation"}]},{"id":"ADR-003","title":"Per-Triad Resonance Floors (Audit v2)","status":"Accepted","context":"Aggregate mean resonance floor in ADR-001 permitted averaging blind spots where individual triads could fall below viability.","decision":"Strengthen viability audit to require every individual triad to meet or exceed ResFloor = 870.","consequences":["Eliminates averaging blind spot proved by averaging_blind_spot theorem","Preserves backward compatibility with audit v1"],"supersedes":"ADR-001","links":[{"uri":"ADR/Theorems/CareViability.lean","kind":"SourceFile","description":"Formalization of v2 thresholds and blind spot"},{"uri":"PhaseMirror.CareViability.phase_mirror_audit_v2","kind":"LeanDeclaration","description":"Per-triad binary audit"}]},{"id":"ADR-004","title":"Meet-Semilattice Partition Refinement & LCR Operator","status":"Accepted","context":"SPMD distributed execution requires a formal refinement order over tensor sharding states (Sharded(d) \u2264 Replicated \u2264 Unconstrained) that is deterministic, commutative, and fail-closed.","decision":"Enforce pointwise meet operator (\u2293) over logical mesh axes with idempotent, associative, and commutative semantics. Incompatible assignments evaluate to bottom, raising an immediate ConflictReport.","consequences":["Deterministic least common refinement across distributed execution paths","Fail-closed immediate rejection of conflicting sharding schedules"],"supersedes":null,"links":[{"uri":"specs/p2c_petc_v12.md","kind":"SpecificationDoc","description":"P2C PETC v1.2 Specification Section 2.3"},{"uri":"packages/rust/pirtm-compiler/src/sharding.rs","kind":"SourceFile","description":"LCR Meet Operator Implementation"}]},{"id":"ADR-005","title":"BLAKE2b-16 Personalization & Canonical Bytecode Wire Format","status":"Accepted","context":"Witness bytecode streams require compact, tamper-evident framing with low verification overhead across heterogeneous compiler runtimes (MLIR, XLA, PyTorch).","decision":"Standardize binary wire format on header magic 'P2CWITv2', version 0x0102, LEB128/ZigZag varints, trailer 0xAA 0x55, and 16-byte BLAKE2b body digest personalized with b'P2C_V12'.","consequences":["Bit-flip and truncation detection at frame boundary","Allocation-free stack-based decoding in high-performance runtimes"],"supersedes":null,"links":[{"uri":"specs/p2c_petc_v12.md","kind":"SpecificationDoc","description":"P2C PETC v1.2 Binary Wire Format Section 3"},{"uri":"packages/rust/core/src/petc.rs","kind":"SourceFile","description":"Bytecode Frame Parser"}]},{"id":"ADR-006","title":"MultiContract Atomic Contraction with PartialSum Tokens","status":"Accepted","context":"Contraction over sharded tensor dimensions produces partial sums requiring explicit collective reductions before downstream consumption.","decision":"Standardize opcode 0x05 (MultiContract) to atomically verify dual signatures and emit PartialSum(mesh_axis) tokens consumed strictly by subsequent Collective operations.","consequences":["Prevents unreduced partial sum escapes in SPMD graphs","Simultaneous atomic multi-axis tensor contractions in O(k) time"],"supersedes":null,"links":[{"uri":"specs/p2c_petc_v12.md","kind":"SpecificationDoc","description":"P2C PETC v1.2 Opcode Semantics Section 4"},{"uri":"packages/rust/engine/src/petc.rs","kind":"SourceFile","description":"MultiContract Evaluator"}]},{"id":"ADR-007","title":"Commutative Collective Transformers for Deterministic Sharding Commit","status":"Accepted","context":"Multi-mesh collective operations (AllReduce, AllGather) must yield identical global sharding states regardless of topological scheduling order.","decision":"Define collective transformers T_m that transition axis m to Replicated, and formally verify operator commutativity T_m \u2218 T_n = T_n \u2218 T_m for all m \u2260 n.","consequences":["Topology-invariant global sharding commitment","Eliminates deadlocks and non-determinism in multi-axis reduction pipelines"],"supersedes":null,"links":[{"uri":"specs/p2c_petc_v12.md","kind":"SpecificationDoc","description":"P2C PETC v1.2 Section 2.3 Collective Transformers"},{"uri":"lean/Multiplicity/PETC.lean","kind":"LeanDeclaration","description":"Collective transformer commutation"}]},{"id":"ADR-008","title":"Prime Signature Canonical Monoid as Exclusive Rust Kernel Substrate","status":"Accepted","context":"All multiplicity computations, spectral analysis, and emission decisions must share a single, deterministic representation to prevent representational drift between Lean formalization and Rust execution.","decision":"The only permitted representation of a Multiplicity Signature inside the Rust kernel is a finitely supported map from primes to exponents, equipped with the free commutative monoid structure (pointwise addition of exponents). No alternative encodings (dense vectors, hashed bags, or floating-point approximations) are permitted in the core path.","consequences":["Signature equality is decidable by structural comparison of support and exponents","Multiplicity product is strictly associative and commutative","Any foreign representation must be converted at the kernel boundary and rejected if conversion is lossy"],"supersedes":null,"links":[{"uri":"PhaseMirror.PrimeSignature","kind":"LeanDeclaration","description":"Formal specification of signature monoid"},{"uri":"packages/rust/multiplicity/multiplicity-core/src/signature.rs","kind":"SourceFile","description":"Target Rust implementation site"}]},{"id":"ADR-009","title":"Mandatory Contraction Witness & Spectral Radius Verification Before Emission Gate","status":"Accepted","context":"Unconstrained recurrence or agent emission can produce unbounded Lyapunov drift, violating the sovereign contraction invariant of the Phase Mirror core.","decision":"No signal may pass the Emission Gate unless a machine-checkable ContractionWitness is supplied that proves the spectral radius of the current operator is strictly less than 1. The witness must be re-validated on every gate evaluation.","consequences":["EmissionGate returns Suppress or Hold when no valid witness is present","SpectralGovernor is the sole authority permitted to mint ContractionWitness values","Any bypass of the witness check constitutes a hard kernel violation and aborts the process"],"supersedes":null,"links":[{"uri":"PhaseMirror.SpectralGovernor","kind":"LeanDeclaration","description":"Formal contract of spectral governor"},{"uri":"packages/rust/ramanujan-multiplicity","kind":"SourceFile","description":"Witness generation site"}]},{"id":"ADR-010","title":"Axiom-Clean Kernel Boundary and Manifested Proof Debt Policy","status":"Accepted","context":"Unmanifested sorry, todo!, or commented-out critical paths create verification leakage that undermines the honesty guarantee of the entire formal stack.","decision":"The kernel boundary (Rust + Lean interface) must be axiom-clean. Every open proof obligation that affects runtime behavior must be either (a) fully discharged or (b) explicitly manifested as a named sorry with a tracking issue and a hard CI failure if the count increases. Zero untracked proof debt is permitted on the main branch.","consequences":["CI rejects any increase in manifested or unmanifested sorry count on protected paths","Kernel startup performs a static check that the formal registry and the Rust core share the same honesty manifest","Research surfaces (including F1-square) may contain open obligations only when explicitly quarantined outside the kernel boundary"],"supersedes":null,"links":[{"uri":".github/workflows/adr-verify.yml","kind":"SpecificationDoc","description":"Honesty audit workflow"},{"uri":"docs/CURRENT_TRUTH.md","kind":"SpecificationDoc","description":"Living honesty ledger"}]},{"id":"ADR-0040","title":"Conscious Sovereignty Layer, Zenolock, and the PIRTM Dialect","status":"Proposed","context":"Introducing a sovereign execution layer (Zenolock) that enforces immutable state transitions for PIRTM programs.","decision":"Adopt Zenolock as the runtime guard; integrate with the Conscious Sovereignty Layer for auditability.","consequences":["End-to-end tamper-evidence","Deterministic replay","Reduced attack surface"],"supersedes":null,"links":[{"uri":"https://example.org/zenolock/spec","kind":"SpecificationDoc","description":"Zenolock Spec"},{"uri":"https://example.org/pirtm/arch","kind":"SpecificationDoc","description":"PIRTM Architecture"}]},{"id":"ADR-0041","title":"Automating Local DevOps for Multiplicity","status":"Proposed","context":"We need a repeatable, deterministic build and deployment process. Deterministic local builds are essential. Reduced manual intervention is required. Clear traceability is a must.","decision":"Use a modular Makefile combined with Cargo and Lake to orchestrate build steps.","consequences":["Deterministic local builds","Reduced manual intervention","Clear traceability"],"supersedes":null,"links":[{"uri":"https://www.gnu.org/software/make/manual/make.html","kind":"SpecificationDoc","description":"Makefile Guide"}]},{"id":"ADR-0043","title":"Hyperprime Tensor Evolution and Prime Attention Neural Layers","status":"Proposed","context":"We need a more robust framework for tensor evolution and prime attention capabilities to handle large scale deployments.","decision":"Adopt Hyperprime Tensor Evolution and Prime Attention Neural Layers to modernize our core ML infrastructure.","consequences":["Modernize our core","Robust framework"],"supersedes":null,"links":[{"uri":"Foundry/docs/ADR-0043-Hyperprime_Tensor_Evolution_and_Prime_Attention_Neural_Layers.md","kind":"SourceFile","description":"ADR-0043 Document"}]},{"id":"ADR-0057","title":"Lexical Header Boundary Pre-Processor & Splitter","status":"Accepted","context":"Phase 1 extraction operated over full buffer, creating phase ordering ambiguity.","decision":"Split raw source at standalone header delimiter line before statement parsing.","consequences":["Phase ordering ambiguity eliminated","Header and body parser isolation"],"supersedes":null,"links":[]},{"id":"ADR-0058","title":"Formal Header Envelope Grammar & Scope Isolation","status":"Accepted","context":"Application control flow tokens must be quarantined from header envelope grammar.","decision":"Restrict pirtm.pest to packaging envelope declarations only.","consequences":["Envelope files conform strictly to specification","Malformed headers fail closed"],"supersedes":null,"links":[]},{"id":"ADR-0059","title":"Phase-Decoupled Subsystem Pipeline","status":"Accepted","context":"Mixing spectral matrix extraction with application body statement parsing creates cross-contamination.","decision":"Isolate Phase 1 governance evaluation from Phase 2 code generation with a strict fail-closed gate.","consequences":["Clean architectural decoupling","Unlawful code cannot trigger MLIR emission"],"supersedes":null,"links":[]},{"id":"ADR-0060","title":"Lexical Standalone Delimiter Detection","status":"Accepted","context":"The header delimiter --- must be recognized lexically as a standalone token outside string literals and comments.","decision":"Tokenize --- in Logos prior to unary minus and scan line boundaries for standalone delimiter lines.","consequences":["Prevents false-positive splitting in comments or raw strings","Deterministic boundary detection"],"supersedes":null,"links":[]},{"id":"ADR-0061","title":"Strict Validation & Fail-Closed Errors for Missing Delimiters","status":"Accepted","context":"To eliminate ambiguity between header-only packaging files and full application code contracts.","decision":"Enforce strict fail-closed error taxonomy for missing delimiters or malformed headers.","consequences":["Explicit error messages for end-users and client IDE extensions","Eliminates ambiguous parsing behavior"],"supersedes":null,"links":[]},{"id":"ADR-0064","title":"Hundian Social Physics Occupancy Governance & Term-Order Gate","status":"Accepted","context":"PIRTM social physics models participant role allocations onto degenerate role-class sets; heuristic survey reciprocity is non-deterministic and leaks drift into the audit trail.","decision":"Enforce Pauli key capacity, 5-stage gate priority, and exact multiplicity M = n_unpaired + 1 over the canonical Hundian term-order gate.","consequences":["Eliminates heuristic survey reciprocity","Fail-closed term-ordering gate","Pauli exclusion provably rejects the third occupant","Closed-shell singlet multiplicity discharged by `closed_shell_singlet_multiplicity`"],"supersedes":null,"links":[{"uri":"ADR/Theorems/HundianPauli.lean","kind":"SourceFile","description":"Hundian Pauli gate types and proofs"},{"uri":"PhaseMirror.HundianPauli.evaluatePauliGate","kind":"LeanDeclaration","description":"Canonical term-order / Pauli gate evaluator"}]},{"id":"ADR-0014","title":"UCC as a Service \u2014 Year One Roadmap","status":"Accepted","context":"The year-one window (2 Sep 2026 - 2 Sep 2027) requires a lawful, deliverable operator product free of unimplemented research claims; UAC chemistry (FeMoco / MA-VQE / 69-qubit concurrency) stays research-path until a partner queue exists.","decision":"Adopt the Universal Closure Calculator as a hosted kernel service: every call returns Closure (lawful closure under the Dirichlet / union-find kernel), Defect (Delta = 0 or named in English), Receipt (input hash + kernel version + Lean/Kani build id + timestamp), and Levers (owner-action-metric-horizon). Non-goals: no UAC hardware sales, no 'UCC proves RH' claims (SLA = version, latency, receipt integrity), no kernel on the UNA balance sheet, no PMCP issuance for seats/equity, no neutral-atom array. Two civic closure objects - Civic R&D spend over $2,500 and a credit exchange against Governing Principles s6.4 caps - must close before any external customer.","consequences":["Year-one priority is receipts that change decisions, not revenue","Budget $40k low / $180k plausible; treasuries not mixed; Q0 dual-control $2,500","SKU line: Community (self-host core, no receipt), Pro (hosted /close + receipt), Enterprise (only with paid isolation), PMCP (may call Pro, no kernel grant or revoke)","Q0-Q4 exit gates lock each phase; named tensions explicitly bound"],"supersedes":null,"links":[{"uri":"docs/papers/UCC_Year_One_Roadmap.docx","kind":"SourceFile","description":"Citizen Gardens, UCC as a Service Year One Roadmap (LawfulRecursionVersion 1.0)"},{"uri":"docs/adr/accepted/0013-UOR Civic Infrastructure.md","kind":"SourceFile","description":"Governing civic model this product plan operationalizes"},{"uri":"lean/MTPI/ADR0013.lean","kind":"SourceFile","description":"Canonical BCS / PWEH substrate underlying receipt integrity"}]},{"id":"ADR-0015","title":"Unified Civic Infrastructure Outline","status":"Accepted","context":"The civic layer must hold the literary and legal definition while a separate operator hosts the kernel and contracts with strangers. LawfulRecursionVersion 1.0 is the binding companion to Governing Principles v1.1.","decision":"Adopt the Unified Civic Infrastructure Outline as the Citizen Gardens operating map: a Wyoming unincorporated nonprofit association (WY UNA W.S. 17-22; DUNA at 100 members W.S. 17-32) under a two-legal-person wall (UNA vs Phase Mirror operator LLC). Four infrastructures: UNA/DUNA, Buurtzorg topology, Bushido conduct, Phase Mirror + Multiplicity Social Physics (2R+1, ELM credits, greenhouse living dividends, no credit-bought votes). Four capital doors only (gift / sponsor / recoverable grant / operator subscription). Dual seat: PMCP practitioner (four gates) and oracle-owner firewall. Surplus pointed at purpose; explicit decision-authority table; L0 invariants enforced machine-checked on the civic R&D playground node.","consequences":["Legal identity is honest and DUNA-ready without overclaiming","The wall keeps the kernel off the UNA balance sheet and purpose off the operator P&L","Credit is a recorded machine-checked unit (ELM credits), not a votable currency","Adoption is incremental and gated by L0 invariants"],"supersedes":null,"links":[{"uri":"docs/papers/Unified_Civic_Infrastructure_Outline.docx","kind":"SourceFile","description":"Unified Civic Infrastructure Outline (binding companion to Governing Principles v1.1)"},{"uri":"docs/adr/accepted/0013-UOR Civic Infrastructure.md","kind":"SourceFile","description":"Governing civic model"}]},{"id":"ADR-0016","title":"UOR Civic Infrastructure \u2014 Three Epochs","status":"Accepted","context":"The Foundry roadmap must be deliverable as a phased, biologically and physically constrained deployment on a formally verified trajectory of decreasing entropy, not an abstract idea.","decision":"Adopt the Triadic Evolution model. Epoch 1 Foundation (mass density; staking minting driver; Hundian Foundry State $1.00 baseline; Builders). Epoch 2 Projection (thermalization; calibration minting; value minted when a node reduces regional dissonance; stablecoin folds to $2.00). Epoch 3 Maximum Multiplicity (triadic scaling 3 to 9 to 27 to 81 to 243; recursion + LifeBushido mining; proof of practice = community maintenance as computational proof; Hundian limit $3.00). Epoch transitions gated by the strict 90-day Phase Mirror metric gates.","consequences":["One systemic state, one minting driver, and one economic anchor per epoch","Stablecoin anchor progression $1.00 to $2.00 to $3.00 is a policy constraint, not a market forecast","Staking, calibration, and recursion+LifeBushido are sequential minting mechanisms","Diffusion follows triadic powers of three; saturation at 243 bounds a single locus"],"supersedes":null,"links":[{"uri":"docs/papers/UOR Civic Infrastructure_.docx","kind":"SourceFile","description":"UOR Civic Infrastructure slide-deck text (Triadic Evolution)"},{"uri":"docs/adr/accepted/0013-UOR Civic Infrastructure.md","kind":"SourceFile","description":"Dense civic architecture this deck summarizes"}]},{"id":"ADR-0017","title":"Reinitialization \u2014 90-Day Operating Plan and Volunteer Talent Model","status":"Proposed","context":"The UOR Foundation reinitializes under a volunteer-led, no-funding assumption; the next unit of value is a governed, independently verifiable value-layer baseline produced inside strict WIP and ownership controls.","decision":"Adopt the 90-Day Operating Plan and Volunteer Talent Model: one primary objective (governed, independently verifiable value-layer baseline); Day Zero two-week mobilization with six ownerless-proofed conditions whose exit rule stops Week 1 if any condition is ownerless or ambiguous; five workstreams max (authority and public truth; core value profile; conformance and release; explanation and participation; external validation); thirteen-week map closing with the Core Value Profile v0.1, a canonical conformance corpus, a coordinated baseline release, a public explanation, and one evaluated external path; RACI accountability; volunteer contribution packets with negative evidence; work board with WIP limits and owner + reviewer + timebox + definition of done; action register; metrics (100% conformance across canonical surfaces, 100% of assessed assets, 100% reference + independent agreement).","consequences":["Execution is capped by WIP limits; scope cannot expand silently mid-cycle","No-funding assumption is binding; volunteer hours are an envelope, not a valuation","The cycle closes its deliverables or fails its exit rule loudly","Decision cadence (weekly/biweekly/monthly) is fixed up front and recorded"],"supersedes":null,"links":[{"uri":"docs/papers/UOR_Final_90_Day_Operating_Plan_and_Talent_Model.docx","kind":"SourceFile","description":"UOR Foundation Reinitialization: 90-Day Operating Plan and Volunteer Talent Model (final review draft)"}]},{"id":"ADR-0018","title":"Reinitialization \u2014 Executive Decision Brief","status":"Proposed","context":"UOR technology is ahead of its operating structure: the Foundation lacks one public source of truth, an approved authority chain, coordinated release ownership, independent implementation evidence, and attributable external use. The next unit of value is confidence.","decision":"Adopt the recommendation CONDITIONAL GO. Authorize a two-week Day Zero mobilization under a volunteer-only, no-funding assumption; the ninety-day baseline cycle commences only after the Secretary records the Day Zero gate complete, and until then the portfolio remains in maintenance and governance preparation. Ratify the decision set D1-D10 covering the authority chain, public source of truth, release custody, volunteer capacity, primary pilot, E0-E6 evidence policy (public claims cite evidence, date, owner, and limits), scope boundary, escalation, maintenance posture, and cycle termination. The Day Zero gate record must name at least three structured stewards. Feasibility envelope 215-400 volunteer hours across thirteen weeks (~17-31 hours/week). Ten enterprise risks (R1-R10) registered with owners and controls.","consequences":["No ratification record = no baseline cycle; the condition is mechanical","Public claims bound to evidence grade, date, owner, and limits","The brief is the single ratifying artifact (D1-D10 + Day Zero gate + risk register)","Unsupported E3+ claims degrade the evidence posture on record"],"supersedes":null,"links":[{"uri":"docs/papers/UOR_Final_Executive_Decision_Brief.docx","kind":"SourceFile","description":"UOR Foundation Reinitialization: Executive Decision Brief (recommendation CONDITIONAL GO)"},{"uri":"docs/adr/accepted/ADR-010.md","kind":"SourceFile","description":"Proof-debt and evidence hygiene policy"}]},{"id":"ADR-0019","title":"Technology Portfolio \u2014 Evidence, Risk & Feasibility","status":"Proposed","context":"Technology claims must be recut to what public sources support. Evidence cut 10 September 2026 reconciles a prior management inventory of 19 assets against 15 public repositories and grades visible external evidence on the E0-E6 scale.","decision":"Adopt the Technology Portfolio Evidence, Risk and Feasibility Appendix as the canonical recut: observe/map/interface evidence method; classify each asset Normative / Reference / Experimental / Historical; disposition every 19-vs-15 inventory discrepancy; hold the strongest visible external evidence at E2 with no public E4-E6 (a Foundation-authored adapter, benchmark, or upstream issue is not independent conformance); require attestation above E2; ratify conditional-go on a narrow baseline with effort cards (20h/40h classes) and owners. Priorities in order: correct public truth, ratify authority, verify stewardship, one independent implementation.","consequences":["Public claims downgraded to E0-E2 until independently evidenced","Inventory deltas become action items with owners","Scope deliberately narrow: four priorities, not the research portfolio","UAC-type research claims excluded until partner queues and classical baselines exist"],"supersedes":null,"links":[{"uri":"docs/papers/UOR_Final_Technology_Portfolio_Evidence_Risk_and_Feasibility_Appendix.docx","kind":"SourceFile","description":"Technology Portfolio, Evidence, Risk and Feasibility Appendix (evidence cut 10 September 2026)"}]},{"id":"ADR-0020","title":"HQ & Sovereign Node Deployment","status":"Proposed","context":"The UOR Foundation requires a physical ground state as LifeBushido Retreat, working Sovereign Urban Gardens (SUG) node, and primary ground state: 36.8 acres in Livermore, Larimer County, Colorado under the Citizen Gardens UNA / Phase Mirror Protocol, with a $750,000 capital and operational budget.","decision":"Adopt the HQ executive proposal with two gated phases. Phase 1: land, three 16-foot four-season yurts (amenity space + two bunkhouses), off-grid utilities (deep well, engineered septic, solar array), and a staggered 9-person Circle (three meta-admins anchoring Triangles - CEO Cybersecurity/L0/sentinel, COO infrastructure/SUG/defensive publications, CFO energy ledger/commerce firewall - each pulling in two paid interns at $15/hr + room and board). Phase 2: remaining budget locked in the Foundation treasury until the Three-Way Test passes on a 90-day metric card (member dignity with camera-free privacy zones; community outcome - yurt infrastructure and utilities deployed; solvency - no 90-day treasury deficit); then a 40x40 steel post-and-beam barn and triadic scaling to the Hundian limit of 27 (Family), with further growth only by geographic split. Safeguards: dual-control treasury (over $2,500 needs dual sign-off), Pauli exclusion (max 2 occupants per role), non-profit asset lock (land and structures vest in the Foundation), operational kill-switch (two consecutive failed metric cards halt local node spending).","consequences":["Capital is reversible only at preset gates; Phase 2 funds never leave on Phase 1 assumptions","The node cannot exceed 27 operators without seeding a new node","The Three-Way Test is the only Phase 2 key; no executive override short of an ADR","Land and structures are locked to the Foundation; no private-equity route"],"supersedes":null,"links":[{"uri":"docs/papers/UOR Foundation HQ & Sovereign Node Deployment_.docx","kind":"SourceFile","description":"2026-09-11 UOR ADR-010 HQ Executive Proposal"},{"uri":"docs/adr/accepted/0015-Unified Civic Infrastructure Outline.md","kind":"SourceFile","description":"UNA / operator-LLC wall under which the node operates"}]},{"id":"ADR-0021","title":"UOR Mechanics \u2014 The Exact Math of Prime-Indexing","status":"Accepted","context":"Mutable file-path identity permits duplication, reordering, and platform-dependent drift; UOR requires collision-free, compositionally rich, exactly reproducible identity across heterogeneous nodes.","decision":"Adopt prime-indexing as the canonical UOR substrate. Irreducible identity: a prime is the invariant identity of a node; composites encode relations. Exponents as memory (OFA-ii): k_i in n = product p_i^k_i is a surplus ledger; primes accumulate monotonically (p to p^2 to p^3). Lawful composition: K1 \u2297 K2 = lcm(K1, K2) as a lossless structural join preventing duplication. Multiplicative union: K1 \u2295 K2 = product over p of p^(v_p(K1) + v_p(K2)). Zero-drift architecture: exact rational arithmetic only, no floating point. Cryptographic verification: Binary Canonical Serialization (fixed field orders, ULEB128 prefixes) and Poseidon2 ZK sealing (t=9, r=8). Call-market cleavage (Holotrade, phase-gated): Fee = 1/10 * DeltaP; node yield = ask + 9/10 * DeltaP, with receipt-locked ledger finality.","consequences":["State is never identified by mutable path; one prime-indexed ledger drives identity, history, and compensation","Merges are lossless and deduplicating (lcm); unions are exact (exponent addition)","BCS + Poseidon2 sealing make receipts tamper-evident and cross-platform (Rust/Lean)","Banned floats foreclose drift and penny-shaving settlement attacks","Implemented substrate: ADR-0013 canonical BCS wire format and PWEH integrity chain"],"supersedes":null,"links":[{"uri":"docs/papers/UOR Mechanics_ The Exact Math of Prime-Indexing.docx","kind":"SourceFile","description":"UOR Mechanics: The Exact Math of Prime-Indexing (mathematical bedrock)"},{"uri":"lean/MTPI/ADR0013.lean","kind":"SourceFile","description":"Lean mirror of canonical BCS + PWEH integrity chain"},{"uri":"packages/rust/crmf","kind":"SourceFile","description":"Rust implementation, Kani-verified fail gates and PWEH"}]},{"id":"ADR-0022","title":"Symmetry-Matched Polarization Analysis in MnF2","status":"Proposed","context":"Unpolarized inelastic neutron scattering on MnF2 reported no resolvable altermagnetic magnon band splitting within resolution, while polarized INS later accessed an antisymmetric dynamical channel and reported a domain-dependent chiral response: different measurement operations, not contradictions. A null in one channel must not be treated as physical absence in another.","decision":"Adopt symmetry-matched polarization analysis as the interpretive discipline for altermagnetic neutron-scattering claims in MnF2: decompose the transverse dynamical magnetic correlation tensor via the Blume-Maleev cross section into polarization-even and odd parts so that reversing incident neutron polarization isolates the antisymmetric (chiral) correlator; classify nulls into the four-null taxonomy (physical, resolution, polarization-projection, antiferromagnetic-domain cancellation), deliberately contextual rather than exhaustive; require a resolvability criterion that states which channel each null belongs to and declares the anti-ferromagnetic domain state for domain-sensitive readout.","consequences":["Unpolarized null results are located in the taxonomy rather than overruling polarized signatures","Spectral resolution and chiral sensitivity are kept as separate design axes","Every null claim carries an explicit stage of loss, making comparisons falsifiable","Provides the channel separation on which the dJ7 source-sector, reversal-space and probe-tensor work items build"],"supersedes":null,"links":[{"uri":"docs/adr/proposed/Paper1 Symmetry Matched Polarization Analysis in MnF2- Separating Spectral Resolutionfrom Chiral Sensitivity in Altermagnetic Neutron Scattering - JHaines 2026.pdf","kind":"SourceFile","description":"Symmetry-Matched Polarization Analysis in MnF2: channel decomposition and four-null taxonomy (JHaines 2026)"}]},{"id":"ADR-0023","title":"The dJ7 Principle - Symmetry-Complement Source Sectors in Altermagnetic MnF2","status":"Proposed","context":"A Hamiltonian term small in total energy can be leading in a selected symmetry channel. In MnF2 a small imbalance between the two symmetry-distinct seventh-neighbor Heisenberg exchange bonds (J7a, J7b) is a candidate source coordinate for the altermagnetic chiral response; whether the construction is valid depends on a precise group-theoretic statement relative to a declared reference model.","decision":"Adopt the dJ7 principle as the canonical account of symmetry-complement source sectors in altermagnetic MnF2: group averaging over a reference group G0 defines a projector onto the invariant subspace and splits V = im P XOR ker P into invariant sector and symmetry-complement source sector; a coefficient lambda in the complement obeys the covariance F_O(rho_s lambda) = chi_O(s) F_O(lambda), and under rho_s = -I the odd response has only odd total degree F(lambda) = k*lambda + O(||lambda||^3) (selection, not amplification); the source is the inequivalence dJ7 = J7b - J7a of the seventh-neighbor bonds with the bond-label convention declared explicitly; the result is a bounded-range-seven near-scalar, not a universal one-dimensional coordinate.","consequences":["Source attribution is tied to a declared reference model and bond convention, preventing tautological complement definitions","The odd-channel expansion fixes the scaling of the chiral response, enabling falsifiability","Substrate for reversal-space tomography and probe-tensor correspondence","Explicitly warns against exporting dJ7 as a universal weak coordinate to other altermagnets"],"supersedes":null,"links":[{"uri":"docs/adr/proposed/Paper2 The \u03b4J7 Principle- Symmetry Complement Source Sectors in Altermagnetic MnF2 - JHaines 2026.pdf","kind":"SourceFile","description":"The dJ7 Principle: symmetry-complement source sectors in altermagnetic MnF2 (JHaines 2026)"}]},{"id":"ADR-0024","title":"Reversal-Space Tomography of Weak Altermagnetic Exchange in MnF2","status":"Proposed","context":"The dJ7 principle identifies a few-micro-eV seventh-neighbor exchange imbalance coexisting with a larger dipolar contribution in MnF2. Weak sources need engineered readout multiplication: a control variable can increase the measurement derivative without changing the coefficient itself.","decision":"Adopt reversal-space tomography as the engineering framework for signed readouts of weak altermagnetic exchange in MnF2: treat partner momentum, field sign, incident polarization, and magnetic-domain sign as binary design coordinates of a (Z2)^N reversal experiment; decompose the measured response into exact Walsh-Hadamard factorial contrasts; interpret contrasts as characters of the physical (Z2)^N reversal group only after a path-consistency gate (reversals are independent involutions ri^2 ~ I, ri rj ~ rj ri); treat a significant coefficient in a model-forbidden parity sector as an obstruction channel exposing leakage or missing physics; measure dJ7 as a signed quantity only after the bond-label convention is fixed.","consequences":["Weak-exchange readouts become certifiably signed and falsifiable","Gain in transduction is made explicit without claiming the coefficient is large","Hysteresis and path-dependent preparation are admitted and tested by the path-consistency gate","Supplies the operational readout protocol for the dJ7 source-sector and its singular echo in the target-first calculus"],"supersedes":null,"links":[{"uri":"docs/adr/proposed/Paper3 Reversal-Space Tomography of Weak Altermagnetic Exchange in MnF2- Path Validated Signed Readout Engineering - JHaines 2026.pdf","kind":"SourceFile","description":"Reversal-Space Tomography: path-validated signed readout engineering (JHaines 2026)"}]},{"id":"ADR-0025","title":"Static Multipolar Order and Dynamical Chiral Response in MnF2 - Probe-Tensor Correspondence","status":"Proposed","context":"MnF2 evidence spans elastic multipole reconstruction (anisotropic Mn magnetization, ligand spin polarization, a symmetry-allowed rank-5 magnetic multipole) and inelastic magnon chirality. Symmetry may relate these objects, but they are generated by different forward maps, and identifiability between them is conditional, not automatic.","decision":"Adopt the probe-tensor correspondence as the discipline relating static multipolar and dynamical chiral claims in MnF2: keep Hamiltonian coordinates, equilibrium one-point magnetization tensors, static response tensors, connected correlations, and the probe/instrument map as distinct objects; a static multipole-rank functional fK is identifiable from a dynamical chiral measurement Mchi only if fK = fK-bar circle pi_Mchi, which symmetry compatibility alone does not establish; treat rank identifiability as conditional on a declared basis, radial/form-factor model, origin convention, nuisance space, and domain state; model uncontrolled domain ensembles explicitly because a vanishing one-point moment can coexist with finite diffraction intensity.","consequences":["Static-rank and dynamical-chirality results are kept as separate propositions, preventing cross-tensor claim migration","Every multipole reconstruction states its conditioning assumptions or is not closed","Domain ensemble and cancellation effects are handled explicitly","Establishes the K component of the six-element claim vector"],"supersedes":null,"links":[{"uri":"docs/adr/proposed/Paper4 Static Multipolar Order and Dynamical Chiral Response in MnF2- Probe Tensor Correspondence and Conditional Rank Identifiability - JHaines 2026.pdf","kind":"SourceFile","description":"Static Multipolar Order and Dynamical Chiral Response: probe-tensor correspondence (JHaines 2026)"}]},{"id":"ADR-0026","title":"Symmetry-Complement Coordinates Across Altermagnets - Cross-Material Falsification","status":"Proposed","context":"A portable symmetry argument must survive materials in which the microscopic hierarchy, probe physics, and even the magnetic state differ, and must not be made true by choosing its reference model after seeing the target response. Canonical altermagnets now possess both strong positive signatures and sharply constraining nulls.","decision":"Adopt the hardened cross-material falsification benchmark with a six-component claim vector c = (M, S, E, chi, R, K): static magnetic order, response-specific Hamiltonian/operator source sector, nonrelativistic electronic spin splitting, chiral collective dynamics, a signed reversal/control relation, and static multipolar content; accept source-sector attribution only relative to a predeclared or independently anchored reference (H0, G0) for which the target channel is absent or symmetry-degenerate, with certificate A = A-ind AND A-state AND A-null AND A-no-retune; require a measurement-map statement, the dual counterfactual, mechanism specificity challenges, and independent closure; enforce the source-state gate so a contradicted bulk state (e.g. RuO2) blocks downstream source attribution; include MnSi as a non-altermagnetic specificity control so chi != 0 does not imply an altermagnetic source.","consequences":["The restricted source-sector principle survives while the universal one-dimensional coordinate, universal smallness ratio, and the inference chi != 0 -> altermagnetic source are rejected","Attribution stops at the source-state gate before downstream observables count","MnF2 is the near-scalar calibration (dS ~ 1), MnTe/CrSb need broader sectors (dS > 1), FeF2 separates dipolar and altermagnetic sources, bulk RuO2 is blocked upstream","Yields concrete decisive missing experiments per material"],"supersedes":null,"links":[{"uri":"docs/adr/proposed/Paper5 Symmetry Complement Coordinates Across Altermagnets- Predeclared References and Cross Material Falsification - JHaines 2026.pdf","kind":"SourceFile","description":"Symmetry-Complement Coordinates Across Altermagnets: predeclared references and cross-material falsification (JHaines 2026)"}]},{"id":"ADR-0027","title":"When Null Does Not Mean Absent - Measurement-Map Geometry and Null-Witness Duality","status":"Proposed","context":"A null experimental outcome is not by itself a statement of physical absence: a latent state passes through source physics, response formation, probe selection, ensemble averaging, instrument transfer, and nuisance structure before data exist. Stage labels such as response null or projection null are often assigned without a rigorous basis.","decision":"Adopt the layered measurement-map geometry with null-witness duality: factor the total map M = T A P R S over source/state, response, probe projection, ensemble/domain averaging, and transfer/resolution; define observational equivalence by measurement fibers; in a layered linear experiment with cumulative maps Fj record the cumulative null filtration Kj = ker Fj and dual witness spaces Wj = Ann(Kj) = im Fj*; treat the total observational quotient as factorization-independent while stage-local null attribution is invariant only under invertible reparameterizations of declared intermediate spaces, not under arbitrary refactorization; a target C is identifiable after stage j iff Kj is subset of ker C with obstruction dimension dC(A) = dim C(ker A); passive post-processing cannot restore an erased distinction, whereas active intervention creates a new measurement map; combine independent probes by kernel intersection only under a common latent state; extend to nonlinear/noisy (nuisance-projected Jacobians, Fisher information), stochastic (outcome distributions), and quantum (POVM probability maps) measurements.","consequences":["Every null is attributed to a declared stage or its label is withheld","A large raw signal can be non-identifying while a null channel coexists with a nonzero orthogonal-sector signal","Upstream source contradiction is distinct from a downstream projection null","Reversal channels double as obstruction testbeds"],"supersedes":null,"links":[{"uri":"docs/adr/proposed/Paper6 When Null Does Not Mean Absent- Measurement Map Geometry, Factorization Boundaries, and Null Witness Duality - JHaines 2026.pdf","kind":"SourceFile","description":"When Null Does Not Mean Absent: measurement-map geometry and null-witness duality (JHaines 2026)"}]},{"id":"ADR-0028","title":"Target-First Observability Calculus - Admissible Ambiguity and Dual Obstructions","status":"Proposed","context":"Experimental design is often organized around an available instrument rather than the claim the data support. A high-amplitude measurement can have zero target design gain while a much smaller measurement exactly closes the target; design must work backward from the claim.","decision":"Adopt the target-first observability calculus: specify the target, prerequisite state, and state gate before the forward map; for exact common-state linear measurements define residual structural ambiguity OC(E) = C(ker AE) with closure when {0}, structural design gain DeltaC(B|E) = dC(E) - dC(E union B) >= 0, and report exact closure separately from admissible-set contraction OC(E; y, Omega) with width wC; any v in ker AE with Cv != 0 is a constructive dual counterexample, and the most useful next experiment is one maximally sensitive to it; place the target in an allowed parity sector while recording model-forbidden sectors as obstruction channels; after structural viability, optimize practical margin with nuisance-projected Jacobians (c-optimal / goal-oriented OED downstream); enforce the rule that a downstream response cannot repair a contradicted upstream source state; publish per-claim target, state gate, forward map, nuisance variables, an explicit target-changing ambiguity, reversal/complementary probe, conditioning diagnostic, and an attempted falsification.","consequences":["Experiment selection is justified by target design gain or contraction, not raw amplitude","Exact closure and quantitative contraction are reported separately","A 13-step protocol governs claim production and publication","For MnF2 three shortcuts are forbidden: magnon splitting alone does not identify signed exchange; a chiral signal does not by symmetry determine static multipole rank; a static multipole reconstruction does not prove another probe's dynamical response"],"supersedes":null,"links":[{"uri":"docs/adr/proposed/Paper7 From Hidden Order to Identifiable Physics- A Target First Observability Calculus with Admissible Ambiguity and Dual Obstructions - JHaines 2026.pdf","kind":"SourceFile","description":"From Hidden Order to Identifiable Physics: target-first observability calculus (JHaines 2026)"}]}]}
+{
+  "version": "1.0.0",
+  "adrs": [
+    {
+      "id": "ADR-001",
+      "title": "Integer Jordan Bond Governance",
+      "status": "Superseded",
+      "context": "Floating-point non-determinism introduces drift and spoliation risk in state transitions across distributed nodes.",
+      "decision": "Enforce fixed-point integer Jordan bond arithmetic scaled by N = 1024 at the kernel boundary.",
+      "consequences": [
+        "Arithmetic determinism guaranteed across heterogeneous nodes",
+        "Floating point drift strictly eliminated"
+      ],
+      "supersedes": null,
+      "links": [
+        {
+          "uri": "PhaseMirror.Care.Scale",
+          "kind": "LeanDeclaration",
+          "description": "Canonical fixed-point scale N = 1024"
+        },
+        {
+          "uri": "Care.lean",
+          "kind": "SourceFile",
+          "description": "Integer fixed-point operations"
+        }
+      ]
+    },
+    {
+      "id": "ADR-002",
+      "title": "Sedona Spine Retention Engine Sole Source of Truth",
+      "status": "Accepted",
+      "context": "Decentralized litigation hold rules risk spoliation drift if computed independently by UI or client agents.",
+      "decision": "All ESI preservation risk logic must route exclusively through the Sedona Spine Rust Engine and WASM SDK.",
+      "consequences": [
+        "Zero drift in litigation hold calculations",
+        "Mandatory provenance chain: Policy -> Event -> Kernel -> Witness"
+      ],
+      "supersedes": null,
+      "links": [
+        {
+          "uri": "models/legalese-scopist/CONTRACT.md",
+          "kind": "SpecificationDoc",
+          "description": "Preservation alert protocol"
+        },
+        {
+          "uri": "models/legalese-scopist/",
+          "kind": "SourceFile",
+          "description": "Rust Engine Core implementation"
+        }
+      ]
+    },
+    {
+      "id": "ADR-003",
+      "title": "Per-Triad Resonance Floors (Audit v2)",
+      "status": "Accepted",
+      "context": "Aggregate mean resonance floor in ADR-001 permitted averaging blind spots where individual triads could fall below viability.",
+      "decision": "Strengthen viability audit to require every individual triad to meet or exceed ResFloor = 870.",
+      "consequences": [
+        "Eliminates averaging blind spot proved by averaging_blind_spot theorem",
+        "Preserves backward compatibility with audit v1"
+      ],
+      "supersedes": "ADR-001",
+      "links": [
+        {
+          "uri": "ADR/Theorems/CareViability.lean",
+          "kind": "SourceFile",
+          "description": "Formalization of v2 thresholds and blind spot"
+        },
+        {
+          "uri": "PhaseMirror.CareViability.phase_mirror_audit_v2",
+          "kind": "LeanDeclaration",
+          "description": "Per-triad binary audit"
+        }
+      ]
+    },
+    {
+      "id": "ADR-004",
+      "title": "Meet-Semilattice Partition Refinement & LCR Operator",
+      "status": "Accepted",
+      "context": "SPMD distributed execution requires a formal refinement order over tensor sharding states (Sharded(d) \u2264 Replicated \u2264 Unconstrained) that is deterministic, commutative, and fail-closed.",
+      "decision": "Enforce pointwise meet operator (\u2293) over logical mesh axes with idempotent, associative, and commutative semantics. Incompatible assignments evaluate to bottom, raising an immediate ConflictReport.",
+      "consequences": [
+        "Deterministic least common refinement across distributed execution paths",
+        "Fail-closed immediate rejection of conflicting sharding schedules"
+      ],
+      "supersedes": null,
+      "links": [
+        {
+          "uri": "specs/p2c_petc_v12.md",
+          "kind": "SpecificationDoc",
+          "description": "P2C PETC v1.2 Specification Section 2.3"
+        },
+        {
+          "uri": "packages/rust/pirtm-compiler/src/sharding.rs",
+          "kind": "SourceFile",
+          "description": "LCR Meet Operator Implementation"
+        }
+      ]
+    },
+    {
+      "id": "ADR-005",
+      "title": "BLAKE2b-16 Personalization & Canonical Bytecode Wire Format",
+      "status": "Accepted",
+      "context": "Witness bytecode streams require compact, tamper-evident framing with low verification overhead across heterogeneous compiler runtimes (MLIR, XLA, PyTorch).",
+      "decision": "Standardize binary wire format on header magic 'P2CWITv2', version 0x0102, LEB128/ZigZag varints, trailer 0xAA 0x55, and 16-byte BLAKE2b body digest personalized with b'P2C_V12'.",
+      "consequences": [
+        "Bit-flip and truncation detection at frame boundary",
+        "Allocation-free stack-based decoding in high-performance runtimes"
+      ],
+      "supersedes": null,
+      "links": [
+        {
+          "uri": "specs/p2c_petc_v12.md",
+          "kind": "SpecificationDoc",
+          "description": "P2C PETC v1.2 Binary Wire Format Section 3"
+        },
+        {
+          "uri": "packages/rust/core/src/petc.rs",
+          "kind": "SourceFile",
+          "description": "Bytecode Frame Parser"
+        }
+      ]
+    },
+    {
+      "id": "ADR-006",
+      "title": "MultiContract Atomic Contraction with PartialSum Tokens",
+      "status": "Accepted",
+      "context": "Contraction over sharded tensor dimensions produces partial sums requiring explicit collective reductions before downstream consumption.",
+      "decision": "Standardize opcode 0x05 (MultiContract) to atomically verify dual signatures and emit PartialSum(mesh_axis) tokens consumed strictly by subsequent Collective operations.",
+      "consequences": [
+        "Prevents unreduced partial sum escapes in SPMD graphs",
+        "Simultaneous atomic multi-axis tensor contractions in O(k) time"
+      ],
+      "supersedes": null,
+      "links": [
+        {
+          "uri": "specs/p2c_petc_v12.md",
+          "kind": "SpecificationDoc",
+          "description": "P2C PETC v1.2 Opcode Semantics Section 4"
+        },
+        {
+          "uri": "packages/rust/engine/src/petc.rs",
+          "kind": "SourceFile",
+          "description": "MultiContract Evaluator"
+        }
+      ]
+    },
+    {
+      "id": "ADR-007",
+      "title": "Commutative Collective Transformers for Deterministic Sharding Commit",
+      "status": "Accepted",
+      "context": "Multi-mesh collective operations (AllReduce, AllGather) must yield identical global sharding states regardless of topological scheduling order.",
+      "decision": "Define collective transformers T_m that transition axis m to Replicated, and formally verify operator commutativity T_m \u2218 T_n = T_n \u2218 T_m for all m \u2260 n.",
+      "consequences": [
+        "Topology-invariant global sharding commitment",
+        "Eliminates deadlocks and non-determinism in multi-axis reduction pipelines"
+      ],
+      "supersedes": null,
+      "links": [
+        {
+          "uri": "specs/p2c_petc_v12.md",
+          "kind": "SpecificationDoc",
+          "description": "P2C PETC v1.2 Section 2.3 Collective Transformers"
+        },
+        {
+          "uri": "lean/Multiplicity/PETC.lean",
+          "kind": "LeanDeclaration",
+          "description": "Collective transformer commutation"
+        }
+      ]
+    },
+    {
+      "id": "ADR-008",
+      "title": "Prime Signature Canonical Monoid as Exclusive Rust Kernel Substrate",
+      "status": "Accepted",
+      "context": "All multiplicity computations, spectral analysis, and emission decisions must share a single, deterministic representation to prevent representational drift between Lean formalization and Rust execution.",
+      "decision": "The only permitted representation of a Multiplicity Signature inside the Rust kernel is a finitely supported map from primes to exponents, equipped with the free commutative monoid structure (pointwise addition of exponents). No alternative encodings (dense vectors, hashed bags, or floating-point approximations) are permitted in the core path.",
+      "consequences": [
+        "Signature equality is decidable by structural comparison of support and exponents",
+        "Multiplicity product is strictly associative and commutative",
+        "Any foreign representation must be converted at the kernel boundary and rejected if conversion is lossy"
+      ],
+      "supersedes": null,
+      "links": [
+        {
+          "uri": "PhaseMirror.PrimeSignature",
+          "kind": "LeanDeclaration",
+          "description": "Formal specification of signature monoid"
+        },
+        {
+          "uri": "packages/rust/multiplicity/multiplicity-core/src/signature.rs",
+          "kind": "SourceFile",
+          "description": "Target Rust implementation site"
+        }
+      ]
+    },
+    {
+      "id": "ADR-009",
+      "title": "Mandatory Contraction Witness & Spectral Radius Verification Before Emission Gate",
+      "status": "Accepted",
+      "context": "Unconstrained recurrence or agent emission can produce unbounded Lyapunov drift, violating the sovereign contraction invariant of the Phase Mirror core.",
+      "decision": "No signal may pass the Emission Gate unless a machine-checkable ContractionWitness is supplied that proves the spectral radius of the current operator is strictly less than 1. The witness must be re-validated on every gate evaluation.",
+      "consequences": [
+        "EmissionGate returns Suppress or Hold when no valid witness is present",
+        "SpectralGovernor is the sole authority permitted to mint ContractionWitness values",
+        "Any bypass of the witness check constitutes a hard kernel violation and aborts the process"
+      ],
+      "supersedes": null,
+      "links": [
+        {
+          "uri": "PhaseMirror.SpectralGovernor",
+          "kind": "LeanDeclaration",
+          "description": "Formal contract of spectral governor"
+        },
+        {
+          "uri": "packages/rust/ramanujan-multiplicity",
+          "kind": "SourceFile",
+          "description": "Witness generation site"
+        }
+      ]
+    },
+    {
+      "id": "ADR-010",
+      "title": "Axiom-Clean Kernel Boundary and Manifested Proof Debt Policy",
+      "status": "Accepted",
+      "context": "Unmanifested sorry, todo!, or commented-out critical paths create verification leakage that undermines the honesty guarantee of the entire formal stack.",
+      "decision": "The kernel boundary (Rust + Lean interface) must be axiom-clean. Every open proof obligation that affects runtime behavior must be either (a) fully discharged or (b) explicitly manifested as a named sorry with a tracking issue and a hard CI failure if the count increases. Zero untracked proof debt is permitted on the main branch.",
+      "consequences": [
+        "CI rejects any increase in manifested or unmanifested sorry count on protected paths",
+        "Kernel startup performs a static check that the formal registry and the Rust core share the same honesty manifest",
+        "Research surfaces (including F1-square) may contain open obligations only when explicitly quarantined outside the kernel boundary"
+      ],
+      "supersedes": null,
+      "links": [
+        {
+          "uri": ".github/workflows/adr-verify.yml",
+          "kind": "SpecificationDoc",
+          "description": "Honesty audit workflow"
+        },
+        {
+          "uri": "docs/CURRENT_TRUTH.md",
+          "kind": "SpecificationDoc",
+          "description": "Living honesty ledger"
+        }
+      ]
+    },
+    {
+      "id": "ADR-0040",
+      "title": "Conscious Sovereignty Layer, Zenolock, and the PIRTM Dialect",
+      "status": "Proposed",
+      "context": "Introducing a sovereign execution layer (Zenolock) that enforces immutable state transitions for PIRTM programs.",
+      "decision": "Adopt Zenolock as the runtime guard; integrate with the Conscious Sovereignty Layer for auditability.",
+      "consequences": [
+        "End-to-end tamper-evidence",
+        "Deterministic replay",
+        "Reduced attack surface"
+      ],
+      "supersedes": null,
+      "links": [
+        {
+          "uri": "https://example.org/zenolock/spec",
+          "kind": "SpecificationDoc",
+          "description": "Zenolock Spec"
+        },
+        {
+          "uri": "https://example.org/pirtm/arch",
+          "kind": "SpecificationDoc",
+          "description": "PIRTM Architecture"
+        }
+      ]
+    },
+    {
+      "id": "ADR-0041",
+      "title": "Automating Local DevOps for Multiplicity",
+      "status": "Proposed",
+      "context": "We need a repeatable, deterministic build and deployment process. Deterministic local builds are essential. Reduced manual intervention is required. Clear traceability is a must.",
+      "decision": "Use a modular Makefile combined with Cargo and Lake to orchestrate build steps.",
+      "consequences": [
+        "Deterministic local builds",
+        "Reduced manual intervention",
+        "Clear traceability"
+      ],
+      "supersedes": null,
+      "links": [
+        {
+          "uri": "https://www.gnu.org/software/make/manual/make.html",
+          "kind": "SpecificationDoc",
+          "description": "Makefile Guide"
+        }
+      ]
+    },
+    {
+      "id": "ADR-0043",
+      "title": "Hyperprime Tensor Evolution and Prime Attention Neural Layers",
+      "status": "Proposed",
+      "context": "We need a more robust framework for tensor evolution and prime attention capabilities to handle large scale deployments.",
+      "decision": "Adopt Hyperprime Tensor Evolution and Prime Attention Neural Layers to modernize our core ML infrastructure.",
+      "consequences": [
+        "Modernize our core",
+        "Robust framework"
+      ],
+      "supersedes": null,
+      "links": [
+        {
+          "uri": "Foundry/docs/ADR-0043-Hyperprime_Tensor_Evolution_and_Prime_Attention_Neural_Layers.md",
+          "kind": "SourceFile",
+          "description": "ADR-0043 Document"
+        }
+      ]
+    },
+    {
+      "id": "ADR-0057",
+      "title": "Lexical Header Boundary Pre-Processor & Splitter",
+      "status": "Accepted",
+      "context": "Phase 1 extraction operated over full buffer, creating phase ordering ambiguity.",
+      "decision": "Split raw source at standalone header delimiter line before statement parsing.",
+      "consequences": [
+        "Phase ordering ambiguity eliminated",
+        "Header and body parser isolation"
+      ],
+      "supersedes": null,
+      "links": []
+    },
+    {
+      "id": "ADR-0058",
+      "title": "Formal Header Envelope Grammar & Scope Isolation",
+      "status": "Accepted",
+      "context": "Application control flow tokens must be quarantined from header envelope grammar.",
+      "decision": "Restrict pirtm.pest to packaging envelope declarations only.",
+      "consequences": [
+        "Envelope files conform strictly to specification",
+        "Malformed headers fail closed"
+      ],
+      "supersedes": null,
+      "links": []
+    },
+    {
+      "id": "ADR-0059",
+      "title": "Phase-Decoupled Subsystem Pipeline",
+      "status": "Accepted",
+      "context": "Mixing spectral matrix extraction with application body statement parsing creates cross-contamination.",
+      "decision": "Isolate Phase 1 governance evaluation from Phase 2 code generation with a strict fail-closed gate.",
+      "consequences": [
+        "Clean architectural decoupling",
+        "Unlawful code cannot trigger MLIR emission"
+      ],
+      "supersedes": null,
+      "links": []
+    },
+    {
+      "id": "ADR-0060",
+      "title": "Lexical Standalone Delimiter Detection",
+      "status": "Accepted",
+      "context": "The header delimiter --- must be recognized lexically as a standalone token outside string literals and comments.",
+      "decision": "Tokenize --- in Logos prior to unary minus and scan line boundaries for standalone delimiter lines.",
+      "consequences": [
+        "Prevents false-positive splitting in comments or raw strings",
+        "Deterministic boundary detection"
+      ],
+      "supersedes": null,
+      "links": []
+    },
+    {
+      "id": "ADR-0061",
+      "title": "Strict Validation & Fail-Closed Errors for Missing Delimiters",
+      "status": "Accepted",
+      "context": "To eliminate ambiguity between header-only packaging files and full application code contracts.",
+      "decision": "Enforce strict fail-closed error taxonomy for missing delimiters or malformed headers.",
+      "consequences": [
+        "Explicit error messages for end-users and client IDE extensions",
+        "Eliminates ambiguous parsing behavior"
+      ],
+      "supersedes": null,
+      "links": []
+    },
+    {
+      "id": "ADR-0064",
+      "title": "Hundian Social Physics Occupancy Governance & Term-Order Gate",
+      "status": "Accepted",
+      "context": "PIRTM social physics models participant role allocations onto degenerate role-class sets; heuristic survey reciprocity is non-deterministic and leaks drift into the audit trail.",
+      "decision": "Enforce Pauli key capacity, 5-stage gate priority, and exact multiplicity M = n_unpaired + 1 over the canonical Hundian term-order gate.",
+      "consequences": [
+        "Eliminates heuristic survey reciprocity",
+        "Fail-closed term-ordering gate",
+        "Pauli exclusion provably rejects the third occupant",
+        "Closed-shell singlet multiplicity discharged by `closed_shell_singlet_multiplicity`"
+      ],
+      "supersedes": null,
+      "links": [
+        {
+          "uri": "ADR/Theorems/HundianPauli.lean",
+          "kind": "SourceFile",
+          "description": "Hundian Pauli gate types and proofs"
+        },
+        {
+          "uri": "PhaseMirror.HundianPauli.evaluatePauliGate",
+          "kind": "LeanDeclaration",
+          "description": "Canonical term-order / Pauli gate evaluator"
+        }
+      ]
+    },
+    {
+      "id": "ADR-0014",
+      "title": "UCC as a Service \u2014 Year One Roadmap",
+      "status": "Completed",
+      "context": "The year-one window (2 Sep 2026 - 2 Sep 2027) requires a lawful, deliverable operator product free of unimplemented research claims; UAC chemistry (FeMoco / MA-VQE / 69-qubit concurrency) stays research-path until a partner queue exists.",
+      "decision": "Adopt the Universal Closure Calculator as a hosted kernel service: every call returns Closure (lawful closure under the Dirichlet / union-find kernel), Defect (Delta = 0 or named in English), Receipt (input hash + kernel version + Lean/Kani build id + timestamp), and Levers (owner-action-metric-horizon). Non-goals: no UAC hardware sales, no 'UCC proves RH' claims (SLA = version, latency, receipt integrity), no kernel on the UNA balance sheet, no PMCP issuance for seats/equity, no neutral-atom array. Two civic closure objects - Civic R&D spend over $2,500 and a credit exchange against Governing Principles s6.4 caps - must close before any external customer.",
+      "consequences": [
+        "Year-one priority is receipts that change decisions, not revenue",
+        "Budget $40k low / $180k plausible; treasuries not mixed; Q0 dual-control $2,500",
+        "SKU line: Community (self-host core, no receipt), Pro (hosted /close + receipt), Enterprise (only with paid isolation), PMCP (may call Pro, no kernel grant or revoke)",
+        "Q0-Q4 exit gates lock each phase; named tensions explicitly bound"
+      ],
+      "supersedes": null,
+      "links": [
+        {
+          "uri": "docs/papers/UCC_Year_One_Roadmap.docx",
+          "kind": "SourceFile",
+          "description": "Citizen Gardens, UCC as a Service Year One Roadmap (LawfulRecursionVersion 1.0)"
+        },
+        {
+          "uri": "docs/adr/accepted/0013-UOR Civic Infrastructure.md",
+          "kind": "SourceFile",
+          "description": "Governing civic model this product plan operationalizes"
+        },
+        {
+          "uri": "lean/MTPI/ADR0013.lean",
+          "kind": "SourceFile",
+          "description": "Canonical BCS / PWEH substrate underlying receipt integrity"
+        }
+      ]
+    },
+    {
+      "id": "ADR-0015",
+      "title": "Unified Civic Infrastructure Outline",
+      "status": "Completed",
+      "context": "The civic layer must hold the literary and legal definition while a separate operator hosts the kernel and contracts with strangers. LawfulRecursionVersion 1.0 is the binding companion to Governing Principles v1.1.",
+      "decision": "Adopt the Unified Civic Infrastructure Outline as the Citizen Gardens operating map: a Wyoming unincorporated nonprofit association (WY UNA W.S. 17-22; DUNA at 100 members W.S. 17-32) under a two-legal-person wall (UNA vs Phase Mirror operator LLC). Four infrastructures: UNA/DUNA, Buurtzorg topology, Bushido conduct, Phase Mirror + Multiplicity Social Physics (2R+1, ELM credits, greenhouse living dividends, no credit-bought votes). Four capital doors only (gift / sponsor / recoverable grant / operator subscription). Dual seat: PMCP practitioner (four gates) and oracle-owner firewall. Surplus pointed at purpose; explicit decision-authority table; L0 invariants enforced machine-checked on the civic R&D playground node.",
+      "consequences": [
+        "Legal identity is honest and DUNA-ready without overclaiming",
+        "The wall keeps the kernel off the UNA balance sheet and purpose off the operator P&L",
+        "Credit is a recorded machine-checked unit (ELM credits), not a votable currency",
+        "Adoption is incremental and gated by L0 invariants"
+      ],
+      "supersedes": null,
+      "links": [
+        {
+          "uri": "docs/papers/Unified_Civic_Infrastructure_Outline.docx",
+          "kind": "SourceFile",
+          "description": "Unified Civic Infrastructure Outline (binding companion to Governing Principles v1.1)"
+        },
+        {
+          "uri": "docs/adr/accepted/0013-UOR Civic Infrastructure.md",
+          "kind": "SourceFile",
+          "description": "Governing civic model"
+        }
+      ]
+    },
+    {
+      "id": "ADR-0016",
+      "title": "UOR Civic Infrastructure \u2014 Three Epochs",
+      "status": "Completed",
+      "context": "The Foundry roadmap must be deliverable as a phased, biologically and physically constrained deployment on a formally verified trajectory of decreasing entropy, not an abstract idea.",
+      "decision": "Adopt the Triadic Evolution model. Epoch 1 Foundation (mass density; staking minting driver; Hundian Foundry State $1.00 baseline; Builders). Epoch 2 Projection (thermalization; calibration minting; value minted when a node reduces regional dissonance; stablecoin folds to $2.00). Epoch 3 Maximum Multiplicity (triadic scaling 3 to 9 to 27 to 81 to 243; recursion + LifeBushido mining; proof of practice = community maintenance as computational proof; Hundian limit $3.00). Epoch transitions gated by the strict 90-day Phase Mirror metric gates.",
+      "consequences": [
+        "One systemic state, one minting driver, and one economic anchor per epoch",
+        "Stablecoin anchor progression $1.00 to $2.00 to $3.00 is a policy constraint, not a market forecast",
+        "Staking, calibration, and recursion+LifeBushido are sequential minting mechanisms",
+        "Diffusion follows triadic powers of three; saturation at 243 bounds a single locus"
+      ],
+      "supersedes": null,
+      "links": [
+        {
+          "uri": "docs/papers/UOR Civic Infrastructure_.docx",
+          "kind": "SourceFile",
+          "description": "UOR Civic Infrastructure slide-deck text (Triadic Evolution)"
+        },
+        {
+          "uri": "docs/adr/accepted/0013-UOR Civic Infrastructure.md",
+          "kind": "SourceFile",
+          "description": "Dense civic architecture this deck summarizes"
+        }
+      ]
+    },
+    {
+      "id": "ADR-0017",
+      "title": "Reinitialization \u2014 90-Day Operating Plan and Volunteer Talent Model",
+      "status": "Completed",
+      "context": "The UOR Foundation reinitializes under a volunteer-led, no-funding assumption; the next unit of value is a governed, independently verifiable value-layer baseline produced inside strict WIP and ownership controls.",
+      "decision": "Adopt the 90-Day Operating Plan and Volunteer Talent Model: one primary objective (governed, independently verifiable value-layer baseline); Day Zero two-week mobilization with six ownerless-proofed conditions whose exit rule stops Week 1 if any condition is ownerless or ambiguous; five workstreams max (authority and public truth; core value profile; conformance and release; explanation and participation; external validation); thirteen-week map closing with the Core Value Profile v0.1, a canonical conformance corpus, a coordinated baseline release, a public explanation, and one evaluated external path; RACI accountability; volunteer contribution packets with negative evidence; work board with WIP limits and owner + reviewer + timebox + definition of done; action register; metrics (100% conformance across canonical surfaces, 100% of assessed assets, 100% reference + independent agreement).",
+      "consequences": [
+        "Execution is capped by WIP limits; scope cannot expand silently mid-cycle",
+        "No-funding assumption is binding; volunteer hours are an envelope, not a valuation",
+        "The cycle closes its deliverables or fails its exit rule loudly",
+        "Decision cadence (weekly/biweekly/monthly) is fixed up front and recorded"
+      ],
+      "supersedes": null,
+      "links": [
+        {
+          "uri": "docs/papers/UOR_Final_90_Day_Operating_Plan_and_Talent_Model.docx",
+          "kind": "SourceFile",
+          "description": "UOR Foundation Reinitialization: 90-Day Operating Plan and Volunteer Talent Model (final review draft)"
+        }
+      ]
+    },
+    {
+      "id": "ADR-0018",
+      "title": "Reinitialization \u2014 Executive Decision Brief",
+      "status": "Completed",
+      "context": "UOR technology is ahead of its operating structure: the Foundation lacks one public source of truth, an approved authority chain, coordinated release ownership, independent implementation evidence, and attributable external use. The next unit of value is confidence.",
+      "decision": "Adopt the recommendation CONDITIONAL GO. Authorize a two-week Day Zero mobilization under a volunteer-only, no-funding assumption; the ninety-day baseline cycle commences only after the Secretary records the Day Zero gate complete, and until then the portfolio remains in maintenance and governance preparation. Ratify the decision set D1-D10 covering the authority chain, public source of truth, release custody, volunteer capacity, primary pilot, E0-E6 evidence policy (public claims cite evidence, date, owner, and limits), scope boundary, escalation, maintenance posture, and cycle termination. The Day Zero gate record must name at least three structured stewards. Feasibility envelope 215-400 volunteer hours across thirteen weeks (~17-31 hours/week). Ten enterprise risks (R1-R10) registered with owners and controls.",
+      "consequences": [
+        "No ratification record = no baseline cycle; the condition is mechanical",
+        "Public claims bound to evidence grade, date, owner, and limits",
+        "The brief is the single ratifying artifact (D1-D10 + Day Zero gate + risk register)",
+        "Unsupported E3+ claims degrade the evidence posture on record"
+      ],
+      "supersedes": null,
+      "links": [
+        {
+          "uri": "docs/papers/UOR_Final_Executive_Decision_Brief.docx",
+          "kind": "SourceFile",
+          "description": "UOR Foundation Reinitialization: Executive Decision Brief (recommendation CONDITIONAL GO)"
+        },
+        {
+          "uri": "docs/adr/accepted/ADR-010.md",
+          "kind": "SourceFile",
+          "description": "Proof-debt and evidence hygiene policy"
+        }
+      ]
+    },
+    {
+      "id": "ADR-0019",
+      "title": "Technology Portfolio \u2014 Evidence, Risk & Feasibility",
+      "status": "Completed",
+      "context": "Technology claims must be recut to what public sources support. Evidence cut 10 September 2026 reconciles a prior management inventory of 19 assets against 15 public repositories and grades visible external evidence on the E0-E6 scale.",
+      "decision": "Adopt the Technology Portfolio Evidence, Risk and Feasibility Appendix as the canonical recut: observe/map/interface evidence method; classify each asset Normative / Reference / Experimental / Historical; disposition every 19-vs-15 inventory discrepancy; hold the strongest visible external evidence at E2 with no public E4-E6 (a Foundation-authored adapter, benchmark, or upstream issue is not independent conformance); require attestation above E2; ratify conditional-go on a narrow baseline with effort cards (20h/40h classes) and owners. Priorities in order: correct public truth, ratify authority, verify stewardship, one independent implementation.",
+      "consequences": [
+        "Public claims downgraded to E0-E2 until independently evidenced",
+        "Inventory deltas become action items with owners",
+        "Scope deliberately narrow: four priorities, not the research portfolio",
+        "UAC-type research claims excluded until partner queues and classical baselines exist"
+      ],
+      "supersedes": null,
+      "links": [
+        {
+          "uri": "docs/papers/UOR_Final_Technology_Portfolio_Evidence_Risk_and_Feasibility_Appendix.docx",
+          "kind": "SourceFile",
+          "description": "Technology Portfolio, Evidence, Risk and Feasibility Appendix (evidence cut 10 September 2026)"
+        }
+      ]
+    },
+    {
+      "id": "ADR-0020",
+      "title": "HQ & Sovereign Node Deployment",
+      "status": "Completed",
+      "context": "The UOR Foundation requires a physical ground state as LifeBushido Retreat, working Sovereign Urban Gardens (SUG) node, and primary ground state: 36.8 acres in Livermore, Larimer County, Colorado under the Citizen Gardens UNA / Phase Mirror Protocol, with a $750,000 capital and operational budget.",
+      "decision": "Adopt the HQ executive proposal with two gated phases. Phase 1: land, three 16-foot four-season yurts (amenity space + two bunkhouses), off-grid utilities (deep well, engineered septic, solar array), and a staggered 9-person Circle (three meta-admins anchoring Triangles - CEO Cybersecurity/L0/sentinel, COO infrastructure/SUG/defensive publications, CFO energy ledger/commerce firewall - each pulling in two paid interns at $15/hr + room and board). Phase 2: remaining budget locked in the Foundation treasury until the Three-Way Test passes on a 90-day metric card (member dignity with camera-free privacy zones; community outcome - yurt infrastructure and utilities deployed; solvency - no 90-day treasury deficit); then a 40x40 steel post-and-beam barn and triadic scaling to the Hundian limit of 27 (Family), with further growth only by geographic split. Safeguards: dual-control treasury (over $2,500 needs dual sign-off), Pauli exclusion (max 2 occupants per role), non-profit asset lock (land and structures vest in the Foundation), operational kill-switch (two consecutive failed metric cards halt local node spending).",
+      "consequences": [
+        "Capital is reversible only at preset gates; Phase 2 funds never leave on Phase 1 assumptions",
+        "The node cannot exceed 27 operators without seeding a new node",
+        "The Three-Way Test is the only Phase 2 key; no executive override short of an ADR",
+        "Land and structures are locked to the Foundation; no private-equity route"
+      ],
+      "supersedes": null,
+      "links": [
+        {
+          "uri": "docs/papers/UOR Foundation HQ & Sovereign Node Deployment_.docx",
+          "kind": "SourceFile",
+          "description": "2026-09-11 UOR ADR-010 HQ Executive Proposal"
+        },
+        {
+          "uri": "docs/adr/accepted/0015-Unified Civic Infrastructure Outline.md",
+          "kind": "SourceFile",
+          "description": "UNA / operator-LLC wall under which the node operates"
+        }
+      ]
+    },
+    {
+      "id": "ADR-0021",
+      "title": "UOR Mechanics \u2014 The Exact Math of Prime-Indexing",
+      "status": "Completed",
+      "context": "Mutable file-path identity permits duplication, reordering, and platform-dependent drift; UOR requires collision-free, compositionally rich, exactly reproducible identity across heterogeneous nodes.",
+      "decision": "Adopt prime-indexing as the canonical UOR substrate. Irreducible identity: a prime is the invariant identity of a node; composites encode relations. Exponents as memory (OFA-ii): k_i in n = product p_i^k_i is a surplus ledger; primes accumulate monotonically (p to p^2 to p^3). Lawful composition: K1 \u2297 K2 = lcm(K1, K2) as a lossless structural join preventing duplication. Multiplicative union: K1 \u2295 K2 = product over p of p^(v_p(K1) + v_p(K2)). Zero-drift architecture: exact rational arithmetic only, no floating point. Cryptographic verification: Binary Canonical Serialization (fixed field orders, ULEB128 prefixes) and Poseidon2 ZK sealing (t=9, r=8). Call-market cleavage (Holotrade, phase-gated): Fee = 1/10 * DeltaP; node yield = ask + 9/10 * DeltaP, with receipt-locked ledger finality.",
+      "consequences": [
+        "State is never identified by mutable path; one prime-indexed ledger drives identity, history, and compensation",
+        "Merges are lossless and deduplicating (lcm); unions are exact (exponent addition)",
+        "BCS + Poseidon2 sealing make receipts tamper-evident and cross-platform (Rust/Lean)",
+        "Banned floats foreclose drift and penny-shaving settlement attacks",
+        "Implemented substrate: ADR-0013 canonical BCS wire format and PWEH integrity chain"
+      ],
+      "supersedes": null,
+      "links": [
+        {
+          "uri": "docs/papers/UOR Mechanics_ The Exact Math of Prime-Indexing.docx",
+          "kind": "SourceFile",
+          "description": "UOR Mechanics: The Exact Math of Prime-Indexing (mathematical bedrock)"
+        },
+        {
+          "uri": "lean/MTPI/ADR0013.lean",
+          "kind": "SourceFile",
+          "description": "Lean mirror of canonical BCS + PWEH integrity chain"
+        },
+        {
+          "uri": "packages/rust/crmf",
+          "kind": "SourceFile",
+          "description": "Rust implementation, Kani-verified fail gates and PWEH"
+        }
+      ]
+    },
+    {
+      "id": "ADR-0022",
+      "title": "Symmetry-Matched Polarization Analysis in MnF2",
+      "status": "Completed",
+      "context": "Unpolarized inelastic neutron scattering on MnF2 reported no resolvable altermagnetic magnon band splitting within resolution, while polarized INS later accessed an antisymmetric dynamical channel and reported a domain-dependent chiral response: different measurement operations, not contradictions. A null in one channel must not be treated as physical absence in another.",
+      "decision": "Adopt symmetry-matched polarization analysis as the interpretive discipline for altermagnetic neutron-scattering claims in MnF2: decompose the transverse dynamical magnetic correlation tensor via the Blume-Maleev cross section into polarization-even and odd parts so that reversing incident neutron polarization isolates the antisymmetric (chiral) correlator; classify nulls into the four-null taxonomy (physical, resolution, polarization-projection, antiferromagnetic-domain cancellation), deliberately contextual rather than exhaustive; require a resolvability criterion that states which channel each null belongs to and declares the anti-ferromagnetic domain state for domain-sensitive readout.",
+      "consequences": [
+        "Unpolarized null results are located in the taxonomy rather than overruling polarized signatures",
+        "Spectral resolution and chiral sensitivity are kept as separate design axes",
+        "Every null claim carries an explicit stage of loss, making comparisons falsifiable",
+        "Provides the channel separation on which the dJ7 source-sector, reversal-space and probe-tensor work items build"
+      ],
+      "supersedes": null,
+      "links": [
+        {
+          "uri": "docs/adr/proposed/Paper1 Symmetry Matched Polarization Analysis in MnF2- Separating Spectral Resolutionfrom Chiral Sensitivity in Altermagnetic Neutron Scattering - JHaines 2026.pdf",
+          "kind": "SourceFile",
+          "description": "Symmetry-Matched Polarization Analysis in MnF2: channel decomposition and four-null taxonomy (JHaines 2026)"
+        }
+      ]
+    },
+    {
+      "id": "ADR-0023",
+      "title": "The dJ7 Principle - Symmetry-Complement Source Sectors in Altermagnetic MnF2",
+      "status": "Completed",
+      "context": "A Hamiltonian term small in total energy can be leading in a selected symmetry channel. In MnF2 a small imbalance between the two symmetry-distinct seventh-neighbor Heisenberg exchange bonds (J7a, J7b) is a candidate source coordinate for the altermagnetic chiral response; whether the construction is valid depends on a precise group-theoretic statement relative to a declared reference model.",
+      "decision": "Adopt the dJ7 principle as the canonical account of symmetry-complement source sectors in altermagnetic MnF2: group averaging over a reference group G0 defines a projector onto the invariant subspace and splits V = im P XOR ker P into invariant sector and symmetry-complement source sector; a coefficient lambda in the complement obeys the covariance F_O(rho_s lambda) = chi_O(s) F_O(lambda), and under rho_s = -I the odd response has only odd total degree F(lambda) = k*lambda + O(||lambda||^3) (selection, not amplification); the source is the inequivalence dJ7 = J7b - J7a of the seventh-neighbor bonds with the bond-label convention declared explicitly; the result is a bounded-range-seven near-scalar, not a universal one-dimensional coordinate.",
+      "consequences": [
+        "Source attribution is tied to a declared reference model and bond convention, preventing tautological complement definitions",
+        "The odd-channel expansion fixes the scaling of the chiral response, enabling falsifiability",
+        "Substrate for reversal-space tomography and probe-tensor correspondence",
+        "Explicitly warns against exporting dJ7 as a universal weak coordinate to other altermagnets"
+      ],
+      "supersedes": null,
+      "links": [
+        {
+          "uri": "docs/adr/proposed/Paper2 The \u03b4J7 Principle- Symmetry Complement Source Sectors in Altermagnetic MnF2 - JHaines 2026.pdf",
+          "kind": "SourceFile",
+          "description": "The dJ7 Principle: symmetry-complement source sectors in altermagnetic MnF2 (JHaines 2026)"
+        }
+      ]
+    },
+    {
+      "id": "ADR-0024",
+      "title": "Reversal-Space Tomography of Weak Altermagnetic Exchange in MnF2",
+      "status": "Completed",
+      "context": "The dJ7 principle identifies a few-micro-eV seventh-neighbor exchange imbalance coexisting with a larger dipolar contribution in MnF2. Weak sources need engineered readout multiplication: a control variable can increase the measurement derivative without changing the coefficient itself.",
+      "decision": "Adopt reversal-space tomography as the engineering framework for signed readouts of weak altermagnetic exchange in MnF2: treat partner momentum, field sign, incident polarization, and magnetic-domain sign as binary design coordinates of a (Z2)^N reversal experiment; decompose the measured response into exact Walsh-Hadamard factorial contrasts; interpret contrasts as characters of the physical (Z2)^N reversal group only after a path-consistency gate (reversals are independent involutions ri^2 ~ I, ri rj ~ rj ri); treat a significant coefficient in a model-forbidden parity sector as an obstruction channel exposing leakage or missing physics; measure dJ7 as a signed quantity only after the bond-label convention is fixed.",
+      "consequences": [
+        "Weak-exchange readouts become certifiably signed and falsifiable",
+        "Gain in transduction is made explicit without claiming the coefficient is large",
+        "Hysteresis and path-dependent preparation are admitted and tested by the path-consistency gate",
+        "Supplies the operational readout protocol for the dJ7 source-sector and its singular echo in the target-first calculus"
+      ],
+      "supersedes": null,
+      "links": [
+        {
+          "uri": "docs/adr/proposed/Paper3 Reversal-Space Tomography of Weak Altermagnetic Exchange in MnF2- Path Validated Signed Readout Engineering - JHaines 2026.pdf",
+          "kind": "SourceFile",
+          "description": "Reversal-Space Tomography: path-validated signed readout engineering (JHaines 2026)"
+        }
+      ]
+    },
+    {
+      "id": "ADR-0025",
+      "title": "Static Multipolar Order and Dynamical Chiral Response in MnF2 - Probe-Tensor Correspondence",
+      "status": "Completed",
+      "context": "MnF2 evidence spans elastic multipole reconstruction (anisotropic Mn magnetization, ligand spin polarization, a symmetry-allowed rank-5 magnetic multipole) and inelastic magnon chirality. Symmetry may relate these objects, but they are generated by different forward maps, and identifiability between them is conditional, not automatic.",
+      "decision": "Adopt the probe-tensor correspondence as the discipline relating static multipolar and dynamical chiral claims in MnF2: keep Hamiltonian coordinates, equilibrium one-point magnetization tensors, static response tensors, connected correlations, and the probe/instrument map as distinct objects; a static multipole-rank functional fK is identifiable from a dynamical chiral measurement Mchi only if fK = fK-bar circle pi_Mchi, which symmetry compatibility alone does not establish; treat rank identifiability as conditional on a declared basis, radial/form-factor model, origin convention, nuisance space, and domain state; model uncontrolled domain ensembles explicitly because a vanishing one-point moment can coexist with finite diffraction intensity.",
+      "consequences": [
+        "Static-rank and dynamical-chirality results are kept as separate propositions, preventing cross-tensor claim migration",
+        "Every multipole reconstruction states its conditioning assumptions or is not closed",
+        "Domain ensemble and cancellation effects are handled explicitly",
+        "Establishes the K component of the six-element claim vector"
+      ],
+      "supersedes": null,
+      "links": [
+        {
+          "uri": "docs/adr/proposed/Paper4 Static Multipolar Order and Dynamical Chiral Response in MnF2- Probe Tensor Correspondence and Conditional Rank Identifiability - JHaines 2026.pdf",
+          "kind": "SourceFile",
+          "description": "Static Multipolar Order and Dynamical Chiral Response: probe-tensor correspondence (JHaines 2026)"
+        }
+      ]
+    },
+    {
+      "id": "ADR-0026",
+      "title": "Symmetry-Complement Coordinates Across Altermagnets - Cross-Material Falsification",
+      "status": "Completed",
+      "context": "A portable symmetry argument must survive materials in which the microscopic hierarchy, probe physics, and even the magnetic state differ, and must not be made true by choosing its reference model after seeing the target response. Canonical altermagnets now possess both strong positive signatures and sharply constraining nulls.",
+      "decision": "Adopt the hardened cross-material falsification benchmark with a six-component claim vector c = (M, S, E, chi, R, K): static magnetic order, response-specific Hamiltonian/operator source sector, nonrelativistic electronic spin splitting, chiral collective dynamics, a signed reversal/control relation, and static multipolar content; accept source-sector attribution only relative to a predeclared or independently anchored reference (H0, G0) for which the target channel is absent or symmetry-degenerate, with certificate A = A-ind AND A-state AND A-null AND A-no-retune; require a measurement-map statement, the dual counterfactual, mechanism specificity challenges, and independent closure; enforce the source-state gate so a contradicted bulk state (e.g. RuO2) blocks downstream source attribution; include MnSi as a non-altermagnetic specificity control so chi != 0 does not imply an altermagnetic source.",
+      "consequences": [
+        "The restricted source-sector principle survives while the universal one-dimensional coordinate, universal smallness ratio, and the inference chi != 0 -> altermagnetic source are rejected",
+        "Attribution stops at the source-state gate before downstream observables count",
+        "MnF2 is the near-scalar calibration (dS ~ 1), MnTe/CrSb need broader sectors (dS > 1), FeF2 separates dipolar and altermagnetic sources, bulk RuO2 is blocked upstream",
+        "Yields concrete decisive missing experiments per material"
+      ],
+      "supersedes": null,
+      "links": [
+        {
+          "uri": "docs/adr/proposed/Paper5 Symmetry Complement Coordinates Across Altermagnets- Predeclared References and Cross Material Falsification - JHaines 2026.pdf",
+          "kind": "SourceFile",
+          "description": "Symmetry-Complement Coordinates Across Altermagnets: predeclared references and cross-material falsification (JHaines 2026)"
+        }
+      ]
+    },
+    {
+      "id": "ADR-0027",
+      "title": "When Null Does Not Mean Absent - Measurement-Map Geometry and Null-Witness Duality",
+      "status": "Completed",
+      "context": "A null experimental outcome is not by itself a statement of physical absence: a latent state passes through source physics, response formation, probe selection, ensemble averaging, instrument transfer, and nuisance structure before data exist. Stage labels such as response null or projection null are often assigned without a rigorous basis.",
+      "decision": "Adopt the layered measurement-map geometry with null-witness duality: factor the total map M = T A P R S over source/state, response, probe projection, ensemble/domain averaging, and transfer/resolution; define observational equivalence by measurement fibers; in a layered linear experiment with cumulative maps Fj record the cumulative null filtration Kj = ker Fj and dual witness spaces Wj = Ann(Kj) = im Fj*; treat the total observational quotient as factorization-independent while stage-local null attribution is invariant only under invertible reparameterizations of declared intermediate spaces, not under arbitrary refactorization; a target C is identifiable after stage j iff Kj is subset of ker C with obstruction dimension dC(A) = dim C(ker A); passive post-processing cannot restore an erased distinction, whereas active intervention creates a new measurement map; combine independent probes by kernel intersection only under a common latent state; extend to nonlinear/noisy (nuisance-projected Jacobians, Fisher information), stochastic (outcome distributions), and quantum (POVM probability maps) measurements.",
+      "consequences": [
+        "Every null is attributed to a declared stage or its label is withheld",
+        "A large raw signal can be non-identifying while a null channel coexists with a nonzero orthogonal-sector signal",
+        "Upstream source contradiction is distinct from a downstream projection null",
+        "Reversal channels double as obstruction testbeds"
+      ],
+      "supersedes": null,
+      "links": [
+        {
+          "uri": "docs/adr/proposed/Paper6 When Null Does Not Mean Absent- Measurement Map Geometry, Factorization Boundaries, and Null Witness Duality - JHaines 2026.pdf",
+          "kind": "SourceFile",
+          "description": "When Null Does Not Mean Absent: measurement-map geometry and null-witness duality (JHaines 2026)"
+        }
+      ]
+    },
+    {
+      "id": "ADR-0028",
+      "title": "Target-First Observability Calculus - Admissible Ambiguity and Dual Obstructions",
+      "status": "Completed",
+      "context": "Experimental design is often organized around an available instrument rather than the claim the data support. A high-amplitude measurement can have zero target design gain while a much smaller measurement exactly closes the target; design must work backward from the claim.",
+      "decision": "Adopt the target-first observability calculus: specify the target, prerequisite state, and state gate before the forward map; for exact common-state linear measurements define residual structural ambiguity OC(E) = C(ker AE) with closure when {0}, structural design gain DeltaC(B|E) = dC(E) - dC(E union B) >= 0, and report exact closure separately from admissible-set contraction OC(E; y, Omega) with width wC; any v in ker AE with Cv != 0 is a constructive dual counterexample, and the most useful next experiment is one maximally sensitive to it; place the target in an allowed parity sector while recording model-forbidden sectors as obstruction channels; after structural viability, optimize practical margin with nuisance-projected Jacobians (c-optimal / goal-oriented OED downstream); enforce the rule that a downstream response cannot repair a contradicted upstream source state; publish per-claim target, state gate, forward map, nuisance variables, an explicit target-changing ambiguity, reversal/complementary probe, conditioning diagnostic, and an attempted falsification.",
+      "consequences": [
+        "Experiment selection is justified by target design gain or contraction, not raw amplitude",
+        "Exact closure and quantitative contraction are reported separately",
+        "A 13-step protocol governs claim production and publication",
+        "For MnF2 three shortcuts are forbidden: magnon splitting alone does not identify signed exchange; a chiral signal does not by symmetry determine static multipole rank; a static multipole reconstruction does not prove another probe's dynamical response"
+      ],
+      "supersedes": null,
+      "links": [
+        {
+          "uri": "docs/adr/proposed/Paper7 From Hidden Order to Identifiable Physics- A Target First Observability Calculus with Admissible Ambiguity and Dual Obstructions - JHaines 2026.pdf",
+          "kind": "SourceFile",
+          "description": "From Hidden Order to Identifiable Physics: target-first observability calculus (JHaines 2026)"
+        }
+      ]
+    },
+    {
+      "id": "ADR-0013",
+      "title": "UOR Civic Infrastructure",
+      "status": "Completed",
+      "context": "The Foundry DAO progresses through three strategic developmental epochs. PrismPM governs process and packaging law; the UCC governs physical and dynamical law via the universal closure sextuple. PWEH operationalizes contractivity and fail-closed interlocks as an active execution lock, and CRMF envelopes canonicalized under BCS provide tamper-evident attestation. The architecture requires a canonical wire format for cryptographic commitments, a fail-closed governance mechanism, and an integrity chain that binds execution traces to prime-indexed attestations.",
+      "decision": "Adopt the canonical BCS wire format for the UnsignedCrmfEnvelope, the PWEH integrity binding for execution traces, the contractivity gate for the UCC, and fail-closed interlocks for governance.",
+      "consequences": [
+        "Deterministic, cross-language canonical byte streams for cryptographic commitments (Rust/Lean reproducible)",
+        "Path-dependent tamper resistance across the whole PWEH chain",
+        "Fail-closed governance: any unmodeled defect halts L0 before side effects materialize",
+        "Poseidon2 sponge absorption is the ZK sealing stage",
+        "Floating-point is structurally excluded from all wire formats (ADR-0021)"
+      ],
+      "supersedes": null,
+      "links": [
+        {
+          "uri": "docs/papers/UOR Civic Infrastructure_.docx",
+          "kind": "SpecificationDoc",
+          "description": "UOR Civic Infrastructure (The Triadic Evolution)"
+        },
+        {
+          "uri": "lean/MTPI/ADR0013.lean",
+          "kind": "SourceFile",
+          "description": "Canonical BCS wire format, fail-closed interlocks, contractivity gate, and PWEH binding formalized as Lean 4 theorems"
+        },
+        {
+          "uri": "lean/MTPI/ADR0013Test.lean",
+          "kind": "SourceFile",
+          "description": "Runtime witness executing closed-form claims"
+        },
+        {
+          "uri": "packages/rust/crmf/src/canonical.rs",
+          "kind": "SourceFile",
+          "description": "Canonical BCS wire format (Kani-verified)"
+        },
+        {
+          "uri": "packages/rust/crmf/src/failgate.rs",
+          "kind": "SourceFile",
+          "description": "Fail-closed interlocks (Kani-verified)"
+        },
+        {
+          "uri": "packages/rust/crmf/src/pweh.rs",
+          "kind": "SourceFile",
+          "description": "PWEH integrity chain (Kani-verified)"
+        }
+      ]
+    },
+    {
+      "id": "ADR-0065",
+      "title": "Formal Verification Completeness for ADR Registry",
+      "status": "Accepted",
+      "context": "The project maintains two parallel ADR governance layers: (1) Markdown ledger (docs/adr/) with Context, Decision, Consequences, and Traceability, and (2) Lean formal model (ADR/) with machine-checkable types, proofs, and a test harness. ADR-0010 mandates zero untracked proof debt. A review reveals three violations: (a) ADR/Test.lean:18 contains 'sorry' in testAcyclicity making the acyclicity invariant untested, (b) allAcceptedADRs (Examples.lean:702) covers only ADR-0017 through ADR-0028 excluding ADR-0013 through ADR-0016 which are now Completed with full Lean/Rust evidence, (c) README says accepted/ has 40 markdown files but the directory is empty.",
+      "decision": "1) Immediately replace the sorry in ADR/Test.lean:18 with a complete proof or exitNow with tracked TODO and CI gate. 2) Expand allAcceptedADRs to include ADR-0013 through ADR-0016 in ADR.Examples or ADR.Migrated. 3) Adopt Formalization Completeness Policy: every Completed/Accepted ADR must have corresponding Lean def within one release cycle or a documented waiver. 4) Fix README index to be generated from registry.json.",
+      "consequences": [
+        "Test driver exercises real acyclicity proof",
+        "ADR-0013 through ADR-0016 gain full machine-checkable status proofs",
+        "No ADR can be Accepted/Completed without Lean formal representation or documented waiver",
+        "README index becomes self-correcting",
+        "Existing ADR.Migrated records unaffected"
+      ],
+      "supersedes": null,
+      "links": [
+        {
+          "uri": "ADR/Test.lean",
+          "kind": "SourceFile",
+          "description": "Test driver with sorry at line 18 (to be replaced)"
+        },
+        {
+          "uri": "ADR/Examples.lean",
+          "kind": "SourceFile",
+          "description": "allAcceptedADRs definition (currently incomplete)"
+        },
+        {
+          "uri": "ADR/Core.lean",
+          "kind": "SourceFile",
+          "description": "StrictAcyclic predicate and ProvenancePath inductive"
+        },
+        {
+          "uri": "ADR/Proofs.lean",
+          "kind": "SourceFile",
+          "description": "Acyclicity and immutability theorems"
+        },
+        {
+          "uri": "packages/rust/crmf/",
+          "kind": "SourceFile",
+          "description": "Kani-verified implementations for ADR-0013 through ADR-0016"
+        },
+        {
+          "uri": "docs/adr/ADR-0065-Formal Verification Completeness for ADR Registry.md",
+          "kind": "SourceFile",
+          "description": "This ADR document (root level)"
+        }
+      ]
+    }
+  ]
+}

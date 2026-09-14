@@ -73,11 +73,11 @@ within the Multiplicity workspace.
 ## Architecture Decision Records
 
 The ADR ledger lives in `docs/adr/` with `registry.json` and status
-directories (`accepted/` — 40 markdown plus generated HTML/JSON, `proposed/`,
-`completed/`, `grp/`). The canonical index is `docs/README.md`.
+directories (`completed/` — 16 markdown, formerly in `accepted/`; `proposed/` is empty,
+`grp/` — group ADRs). The canonical index is `docs/adr/README.md`.
 
 - **ADR-0013 — UOR Civic Infrastructure** is the governing document:
-  `docs/adr/accepted/0013-UOR Civic Infrastructure.md`. It specifies the
+  `docs/adr/completed/0013-UOR Civic Infrastructure.md`. It specifies the
   `UnsignedCrmfEnvelope` canonical wire format, the contractive kernel gate
   (`Λ_m < 1`), fail-closed interlocks (`SIG_GOV_KILL` / `L0_HALT` on defect or
   expansive transition), and the prime-indexed PWEH integrity chain

@@ -1,6 +1,6 @@
 # ADR-0015: Unified Civic Infrastructure Outline
 
-**Status:** Accepted
+**Status:** Completed
 
 ## Context
 Citizen Gardens needs a legal and operating scaffold that keeps the civic purpose distinct from the commercial operator while remaining lawful under Wyoming law. The governing instruments (Governing Principles v1.1) define purpose and caps; the civic layer must hold the literary/legal definition while the operator hosts the kernel and contracts with strangers. LawfulRecursionVersion 1.0 is the binding companion to Governing Principles v1.1.

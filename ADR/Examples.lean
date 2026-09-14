@@ -698,8 +698,94 @@ def adr0028 : ADR where
 
 
 
-/-- All 11 Accepted ADRs in ascending ID order. -/
+/-- **ADR-0013:** UOR Civic Infrastructure. -/
+def adr0013 : ADR where
+  id := "ADR-0013"
+  title := "UOR Civic Infrastructure"
+  status := .Accepted
+  context := "The Foundry DAO progresses through three strategic developmental epochs. PrismPM governs process and packaging law; the UCC governs physical and dynamical law via the universal closure sextuple. PWEH operationalizes contractivity and fail-closed interlocks as an active execution lock, and CRMF envelopes canonicalized under BCS provide tamper-evident attestation. The architecture requires a canonical wire format for cryptographic commitments, a fail-closed governance mechanism, and an integrity chain that binds execution traces to prime-indexed attestations."
+  decision := "Adopt the canonical BCS wire format for the UnsignedCrmfEnvelope, the PWEH integrity binding for execution traces, the contractivity gate for the UCC, and fail-closed interlocks for governance."
+  consequences := [
+    "Deterministic, cross-language canonical byte streams for cryptographic commitments (Rust/Lean reproducible)",
+    "Path-dependent tamper resistance across the whole PWEH chain",
+    "Fail-closed governance: any unmodeled defect halts L0 before side effects materialize",
+    "Poseidon2 sponge absorption is the ZK sealing stage",
+    "Floating-point is structurally excluded from all wire formats (ADR-0021)"
+  ]
+  supersedes := none
+  links := [
+    ⟨"docs/papers/UOR Civic Infrastructure_.docx", .SourceFile, "UOR Civic Infrastructure (The Triadic Evolution)"⟩,
+    ⟨"lean/MTPI/ADR0013.lean", .SourceFile, "Canonical BCS wire format, fail-closed interlocks, contractivity gate, and PWEH binding formalized as Lean 4 theorems"⟩,
+    ⟨"lean/MTPI/ADR0013Test.lean", .SourceFile, "Runtime witness executing closed-form claims"⟩,
+    ⟨"packages/rust/crmf/src/canonical.rs", .SourceFile, "Canonical BCS wire format (Kani-verified)"⟩,
+    ⟨"packages/rust/crmf/src/failgate.rs", .SourceFile, "Fail-closed interlocks (Kani-verified)"⟩,
+    ⟨"packages/rust/crmf/src/pweh.rs", .SourceFile, "PWEH integrity chain (Kani-verified)"⟩
+  ]
+
+/-- **ADR-0014:** UCC as a Service — Year One Roadmap. -/
+def adr0014 : ADR where
+  id := "ADR-0014"
+  title := "UCC as a Service — Year One Roadmap"
+  status := .Accepted
+  context := "The year-one window (2 September 2026 – 2 September 2027) needs an operator product that is lawful, deliverable, and free of unimplemented research claims. UAC chemistry (FeMoco, 100-way MA-VQE, 69-qubit concurrency) remains research-path until a partner queue exists."
+  decision := "Adopt the Universal Closure Calculator (UCC) as a hosted kernel service for year one: every call returns Closure (lawful closure under the Dirichlet / union-find kernel), Defect (Δ = 0 or named in English), Receipt (input hash + kernel version + Lean/Kani build id + timestamp), and Levers (Owner — action — metric — horizon)."
+  consequences := [
+    "Year-one priority is receipts that change decisions, not revenue",
+    "Budget $40k low / $180k plausible; treasuries not mixed; Q0 dual-control $2,500",
+    "SKU line: Community, Pro, Enterprise, PMCP",
+    "Q0-Q4 exit gates lock each phase; named tensions explicitly bound"
+  ]
+  supersedes := none
+  links := [
+    ⟨"docs/papers/UCC_Year_One_Roadmap.docx", .SourceFile, "Citizen Gardens, UCC as a Service Year One Roadmap"⟩,
+    ⟨"docs/adr/accepted/0013-UOR Civic Infrastructure.md", .SourceFile, "Governing civic model this product plan operationalizes"⟩,
+    ⟨"lean/MTPI/ADR0013.lean", .SourceFile, "Canonical BCS / PWEH substrate underlying receipt integrity"⟩
+  ]
+
+/-- **ADR-0015:** Unified Civic Infrastructure Outline. -/
+def adr0015 : ADR where
+  id := "ADR-0015"
+  title := "Unified Civic Infrastructure Outline"
+  status := .Accepted
+  context := "Citizen Gardens needs a legal and operating scaffold that keeps the civic purpose distinct from the commercial operator while remaining lawful under Wyoming law. The governing instruments define purpose and caps; the civic layer must hold the literary/legal definition while the operator hosts the kernel and contracts with strangers."
+  decision := "Adopt the Unified Civic Infrastructure Outline as the operating map for Citizen Gardens: a Wyoming unincorporated nonprofit association (DUNA-ready) under a two-legal-person wall. Four infrastructures: UNA/DUNA, Buurtzorg topology, Bushido, Phase Mirror + Multiplicity Social Physics."
+  consequences := [
+    "Legal identity is honest and forward-compatible: DUNA-ready without overclaiming",
+    "The wall keeps the kernel off the UNA balance sheet and the purpose off the operator P&L",
+    "Credit is a recorded, machine-checked accounting unit (ELM credits), not a votable currency",
+    "Adoption is incremental and gated, so the civic layer never outruns its legal form"
+  ]
+  supersedes := none
+  links := [
+    ⟨"docs/papers/Unified_Civic_Infrastructure_Outline.docx", .SourceFile, "Unified Civic Infrastructure Outline (LawfulRecursionVersion 1.0)"⟩,
+    ⟨"docs/adr/completed/0013-UOR Civic Infrastructure.md", .SourceFile, "Governing civic model"⟩,
+    ⟨"docs/adr/completed/0014-UCC as a Service Year One Roadmap.md", .SourceFile, "The operator product this wall hosts"⟩
+  ]
+
+/-- **ADR-0016:** UOR Civic Infrastructure — Three Epochs. -/
+def adr0016 : ADR where
+  id := "ADR-0016"
+  title := "UOR Civic Infrastructure — Three Epochs"
+  status := .Accepted
+  context := "The Foundry's roadmap must be presentable as a physically and biologically constrained deployment rather than an abstract idea. The governing civic architecture needs an epochal frame that a board can digest while preserving structural integrity."
+  decision := "Adopt the Triadic Evolution model: the Foundry progresses through three strategic developmental epochs — Foundation (mass density, staking minting, $1.00 anchor, Builders), Projection (thermalization, calibration minting, $2.00 anchor), and Maximum Multiplicity (triadic scaling 3→9→27→81→243, recursion+LifeBushido, $3.00 limit). Epoch transitions gated by 90-day Phase Mirror metric gates."
+  consequences := [
+    "Each epoch has exactly one systemic state, one minting driver, and one economic anchor",
+    "The $1.00 → $2.00 → $3.00 anchor progression is a policy constraint, not a market forecast",
+    "Staking, calibration, and recursion+LifeBushido are sequential minting mechanisms",
+    "Diffusion follows triadic powers of three; saturation at 243 bounds a single locus"
+  ]
+  supersedes := none
+  links := [
+    ⟨"docs/papers/UOR Civic Infrastructure_.docx", .SourceFile, "UOR Civic Infrastructure slide-deck text (Triadic Evolution)"⟩,
+    ⟨"docs/adr/completed/0013-UOR Civic Infrastructure.md", .SourceFile, "Dense civic architecture this deck summarizes"⟩,
+    ⟨"docs/adr/completed/0015-Unified Civic Infrastructure Outline.md", .SourceFile, "Legal/operating scaffold the epochs run on"⟩
+  ]
+
+
+/-- All 15 Accepted ADRs in ascending ID order. -/
 def allAcceptedADRs : List ADR := [
+  adr0013, adr0014, adr0015, adr0016,
   adr0017, adr0018, adr0019, adr0020,
   adr0022, adr0023, adr0024, adr0025,
   adr0026, adr0027, adr0028
@@ -707,17 +793,17 @@ def allAcceptedADRs : List ADR := [
 
 /-- All accepted ADRs have status Accepted. -/
 theorem all_accepted : ∀ a ∈ allAcceptedADRs, a.status = .Accepted := by
-  simp [allAcceptedADRs, ADR.status, adr0017, adr0018, adr0019, adr0020, adr0022, adr0023, adr0024, adr0025, adr0026, adr0027, adr0028]
+  simp [allAcceptedADRs, ADR.status, adr0013, adr0014, adr0015, adr0016, adr0017, adr0018, adr0019, adr0020, adr0022, adr0023, adr0024, adr0025, adr0026, adr0027, adr0028]
 
 /-- Identifiers in `allAcceptedADRs` are unique. -/
 theorem all_accepted_unique_ids : (allAcceptedADRs.map ADR.id).Nodup := by
   unfold allAcceptedADRs
-  simp [ADR.id, adr0017, adr0018, adr0019, adr0020, adr0022, adr0023, adr0024, adr0025, adr0026, adr0027, adr0028]
+  simp [ADR.id, adr0013, adr0014, adr0015, adr0016, adr0017, adr0018, adr0019, adr0020, adr0022, adr0023, adr0024, adr0025, adr0026, adr0027, adr0028]
 
 /--- No supersedes declarations in combined set. -/
 theorem all_accepted_no_supersedes :
     ∀ a ∈ allAcceptedADRs, a.supersedes = none := by
-  simp [allAcceptedADRs, ADR.supersedes, adr0017, adr0018, adr0019, adr0020, adr0022, adr0023, adr0024, adr0025, adr0026, adr0027, adr0028]
+  simp [allAcceptedADRs, ADR.supersedes, adr0013, adr0014, adr0015, adr0016, adr0017, adr0018, adr0019, adr0020, adr0022, adr0023, adr0024, adr0025, adr0026, adr0027, adr0028]
 
 /-- The combined set is strictly acyclic. -/
 theorem all_accepted_acyclic : StrictAcyclic allAcceptedADRs := by
@@ -744,7 +830,7 @@ def allAcceptedRegistry : ADRRegistry where
   adrs := allAcceptedADRs
   uniqueIds := by
     unfold allAcceptedADRs
-    simp [ADR.id, adr0017, adr0018, adr0019, adr0020, adr0022, adr0023, adr0024, adr0025, adr0026, adr0027, adr0028]
+    simp [ADR.id, adr0013, adr0014, adr0015, adr0016, adr0017, adr0018, adr0019, adr0020, adr0022, adr0023, adr0024, adr0025, adr0026, adr0027, adr0028]
   acyclic := all_accepted_acyclic
   supersedesExist := by
     intro a ha sid hsup
@@ -758,6 +844,108 @@ def allAcceptedRegistry : ADRRegistry where
   claims := []
   claimsOwnedByAccepted := by intro c hc; simp at hc
   noClaimConflicts := by intro c₁ hc₁ c₂ _ hcon; simp at hc₁
+
+/-- Unified ADR list combining `sampleADRList` (ADR-001 through ADR-010) and `allAcceptedADRs` (ADR-0013 through ADR-0028). IDs are disjoint so concatenation preserves uniqueness. -/
+def unifiedADRList : List ADR := sampleADRList ++ allAcceptedADRs
+
+open ADR.Examples in
+/-- All IDs in `unifiedADRList` are unique (disjoint union of two unique-ID lists with disjoint ID ranges). -/
+theorem unified_unique_ids : (unifiedADRList.map ADR.id).Nodup := by
+  simp [unifiedADRList]
+  have h1 := sample_unique_ids
+  have h2 := all_accepted_unique_ids
+  have hdisjoint : ∀ x ∈ (sampleADRList.map ADR.id), ∀ y ∈ (allAcceptedADRs.map ADR.id), x ≠ y := by
+    intro x hx y hy
+    simp only [List.mem_map] at hx hy
+    rcases hx with ⟨a, ha, rfl⟩
+    rcases hy with ⟨b, hb, rfl⟩
+    have ha_short : a.id.length ≤ 8 := by
+      cases a
+      simp [adr001.id, adr002.id, adr003.id, adr004.id, adr005.id, adr006.id, adr007.id, adr008.id, adr009.id, adr010.id]
+      omega
+    have hb_long : b.id.length ≥ 9 := by
+      cases b
+      simp [adr0013.id, adr0014.id, adr0015.id, adr0016.id, adr0017.id, adr0018.id, adr0019.id, adr0020.id, adr0022.id, adr0023.id, adr0024.id, adr0025.id, adr0026.id, adr0027.id, adr0028.id]
+      omega
+    linarith
+  refine List.Nodup.concat_disjoint (List.map_nodup ADR.id sampleADRList).2 (List.map_nodup ADR.id allAcceptedADRs).2 hdisjoint
+
+/-- No supersedes declarations cross the two lists — all entries have `supersedes = none` except ADR-001 which supersedes nothing in the other list. -/
+theorem unified_no_supersedes : ∀ a ∈ unifiedADRList, a.supersedes = none := by
+  intro a ha
+  simp [unifiedADRList] at ha
+  rcases ha with ha | ha
+  · exact sample_no_supersedes a ha
+  · exact all_accepted_no_supersedes a ha
+
+/-- `unifiedADRList` is strictly acyclic — no cross-list supersession paths exist. -/
+theorem unified_acyclic : StrictAcyclic unifiedADRList := by
+  intro aid ⟨parent, hRel, hPath⟩
+  have hnone : ∀ a ∈ unifiedADRList, a.supersedes = none := unified_no_supersedes
+  rcases hRel with ⟨a, ha, rfl, ha_sup⟩
+  have hsn : a.supersedes = none := hnone a ha
+  have hcontr : some parent = none := by
+    have h1 : a.supersedes = some parent := ha_sup
+    have h2 : a.supersedes = none := hsn
+    exact h1.symm.trans h2
+  cases hcontr
+
+/-- No conflicting decisions in the unified list. Cross-list conflicts are impossible because decision strings use disjoint vocabularies (P2C PETC technical vs. civic governance) with no `NOT(...)` relationships. -/
+theorem unified_no_conflicts :
+    ∀ a ∈ unifiedADRList, ∀ b ∈ unifiedADRList, ¬ ConflictsWith a b := by
+  set_option maxRecDepth 100000 in
+  have hsample : ∀ a ∈ sampleADRList, ∀ b ∈ sampleADRList, ¬ ConflictsWith a b := sample_no_conflicts
+  have haccepted : ∀ a ∈ allAcceptedADRs, ∀ b ∈ allAcceptedADRs, ¬ ConflictsWith a b := all_accepted_no_conflicts
+  have hcross : ∀ a ∈ sampleADRList, ∀ b ∈ allAcceptedADRs, ¬ ConflictsWith a b := by
+    intro a ha b hb hconf
+    have hneB : a.id != b.id = true := by
+      have ha_len : a.id.length ≤ 8 := by
+        cases a
+        simp [adr001.id, adr002.id, adr003.id, adr004.id, adr005.id, adr006.id, adr007.id, adr008.id, adr009.id, adr010.id]
+        omega
+      have hb_long : b.id.length ≥ 9 := by
+        cases b
+        simp [adr0013.id, adr0014.id, adr0015.id, adr0016.id, adr0017.id, adr0018.id, adr0019.id, adr0020.id, adr0022.id, adr0023.id, adr0024.id, adr0025.id, adr0026.id, adr0027.id, adr0028.id]
+        omega
+      decide
+    have hne : a.id ≠ b.id := by
+      have : Bool.decide (a.id ≠ b.id) = true := hneB
+      simp [this]
+    have hB : ConflictsWithB a b = false := by
+      unfold ConflictsWithB
+      have hnot : a.decision != "NOT(" ++ b.decision ++ ")" = true := by decide
+      have hnot' : b.decision != "NOT(" ++ a.decision ++ ")" = true := by decide
+      have heq : a.id != b.id = true := hneB
+      simp [heq, hnot, hnot', ConflictsWithB]
+    have h : ConflictsWith a b → ConflictsWithB a b = true := conflicts_with_sound a b
+    exact False.elim (h hconf.trans hB)
+  intro a ha b hb hconf
+  simp [unifiedADRList] at ha hb hconf
+  rcases ha with ha | ha
+  · rcases hb with hb | hb
+    · exact hsample a ha b hb hconf
+    · exact hcross a ha b hb hconf
+  · rcases hb with hb | hb
+    · exact hcross b hb a ha hconf
+    · exact haccepted a ha b hb hconf
+
+/-- Verified unified ADR registry. -/
+def unifiedRegistry : ADRRegistry where
+  adrs := unifiedADRList
+  uniqueIds := unified_unique_ids
+  acyclic := unified_acyclic
+  supersedesExist := by
+    intro a ha sid hsup
+    have hnone : a.supersedes = none := unified_no_supersedes a ha
+    exact absurd hsup (by simp [hnone])
+  supersededStatusConsistent := by
+    intro a ha sid hsup
+    have hnone : a.supersedes = none := unified_no_supersedes a ha
+    exact absurd hsup (by simp [hnone])
+  noConflicts := unified_no_conflicts
+  claims := ADR.Examples.sampleClaims
+  claimsOwnedByAccepted := ADR.Examples.sample_claims_owned_by_accepted
+  noClaimConflicts := ADR.Examples.sample_no_claim_conflicts
 
 /-- Claim entailment template. -/
 theorem claim_entailment_template (P Q : PropTerm) :

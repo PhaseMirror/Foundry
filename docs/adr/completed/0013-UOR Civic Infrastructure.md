@@ -1,6 +1,6 @@
 # ADR-0013: UOR Civic Infrastructure
 
-**Status:** Accepted
+**Status:** Completed
 
 ## Context
 

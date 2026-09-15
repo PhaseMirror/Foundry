@@ -53,6 +53,10 @@ pub enum CrmfError {
     SealViolation,
     #[error("Invalid key material")]
     InvalidKey,
+    #[error("Duplicate envelope anchor hash: {state_hash}")]
+    DuplicateEnvelope { state_hash: String },
+    #[error("Domain tag mismatch: sealed {sealed} vs store {store}")]
+    DomainTagMismatch { sealed: String, store: String },
     #[error("Archivum error: {0}")]
     Archivum(#[from] ArchivumError),
     #[error("BCS error: {0}")]
@@ -102,7 +106,12 @@ pub fn seal_and_store(
     ledger: &mut ArchivumLedger,
 ) -> Result<String, CrmfError> {
     let payload = serde_json::to_vec(envelope)?;
-    let artifact = StoredArtifact::new(payload, BTreeMap::new())
+    let mut metadata = BTreeMap::new();
+    metadata.insert(
+        "domain_tag".to_string(),
+        seal.poseidon2.domain_tag.clone(),
+    );
+    let artifact = StoredArtifact::new(payload, metadata)
         .with_previous(seal.dual_anchor.sha256_hex.clone());
 
     let hex = store.store(artifact)?;

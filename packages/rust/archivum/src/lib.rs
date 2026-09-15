@@ -8,7 +8,7 @@ pub mod ledger;
 pub mod prime_index;
 pub mod proofs;
 
-pub use ledger::{ArchivumLedger, Witness, ArchivumError};
+pub use ledger::{ArchivumLedger, Witness, ArchivumError, compatible};
 pub type WitnessLedger = ArchivumLedger;
 pub use prime_index::{LambdaPStore, ContentAddress, PrimeIndex, PrimeFactor, StoredArtifact};
 pub use proofs::*;

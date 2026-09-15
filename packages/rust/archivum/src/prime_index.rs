@@ -4,19 +4,19 @@
 //! into prime-irreducible components (PIRs). The Archivum serves as the canonical,
 //! permanent storage container where historical objects are stored with complete
 //! provenance, indexed into the prime-factorized multigraph (Ξ).
+//!
+//! Storage is content-addressed and retired to the audit chain in
+//! [`crate::ledger::ArchivumLedger`]; this store holds no legacy WORM file
+//! ledger. The `Compatible()` domain-tag gate (ADR-0067) is enforced at
+//! ingestion and on every CRMF-sealed append.
 
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use num_bigint::BigUint;
-use num_integer::Integer;
-use num_traits::{One, ToPrimitive, Zero};
+use num_traits::{ToPrimitive, Zero};
 use std::collections::{BTreeMap, BTreeSet};
-use std::fs::OpenOptions;
-use std::io::Write;
-use std::path::{Path, PathBuf};
-use hex;
 
-use crate::ledger::ArchivumError;
+use crate::ledger::{ArchivumError, ArchivumLedger, Witness, compatible};
 
 // ---------------------------------------------------------------------------
 // Prime factorization utilities
@@ -42,9 +42,9 @@ pub fn factorize_u64(mut n: u64) -> Vec<PrimeFactor> {
     let mut factors = Vec::new();
     let mut d = 2u64;
     while d * d <= n {
-        if n % d == 0 {
+        if n.is_multiple_of(d) {
             let mut exp = 0;
-            while n % d == 0 {
+            while n.is_multiple_of(d) {
                 n /= d;
                 exp += 1;
             }
@@ -143,11 +143,12 @@ impl PrimeIndex {
     }
 
     /// Find all artifacts that share a given prime factor.
-    pub fn by_prime(&self, prime: u64) -> Vec<&ContentAddress> {
+    pub fn by_prime(&self, prime: u64) -> Vec<std::borrow::Cow<'_, ContentAddress>> {
         self.index.get(&prime)
             .into_iter()
             .flatten()
             .filter_map(|hex| self.artifacts.get(hex))
+            .map(std::borrow::Cow::Borrowed)
             .collect()
     }
 
@@ -170,8 +171,13 @@ impl PrimeIndex {
     }
 
     /// All indexed content addresses.
-    pub fn addresses(&self) -> Vec<&ContentAddress> {
-        self.artifacts.values().collect()
+    pub fn addresses(&self) -> Vec<std::borrow::Cow<'_, ContentAddress>> {
+        self.artifacts.values().map(std::borrow::Cow::Borrowed).collect()
+    }
+
+    /// Look up a content address by hex.
+    pub fn address(&self, hex: &str) -> Option<&ContentAddress> {
+        self.artifacts.get(hex)
     }
 }
 
@@ -179,13 +185,7 @@ impl PrimeIndex {
 // Λ^p-Archivum Store
 // ---------------------------------------------------------------------------
 
-/// The Λ^p-Archivum: a prime-indexed content-addressed store with WORM semantics.
-///
-/// Combines:
-/// - Content addressing (SHA-256)
-/// - Prime-indexed navigation (Λ^p multigraph Ξ)
-/// - Append-only WORM ledger
-/// - Complete provenance tracking
+/// A permanently stored artifact in the Λ^p-Archivum.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StoredArtifact {
     pub address: ContentAddress,
@@ -218,56 +218,96 @@ impl StoredArtifact {
     }
 }
 
-/// The Λ^p-Archivum store.
+/// The Λ^p-Archivum: a prime-indexed, content-addressed permanent store.
+///
+/// Combines:
+/// - Content addressing (SHA-256)
+/// - Prime-indexed navigation (Λ^p multigraph Ξ)
+/// - Domain-tagged `Compatible()` acceptance (ADR-0067)
+/// - Provenance tracking and audit-chain retirement via `ArchivumLedger`
+///
+/// There is deliberately *no* legacy WORM file ledger: append semantics are
+/// carried by the chained, CRMF-sealed [`ArchivumLedger`].
+#[derive(Debug, Clone)]
 pub struct LambdaPStore {
     index: PrimeIndex,
-    ledger_path: Option<PathBuf>,
+    artifacts: BTreeMap<String, StoredArtifact>,
+    domain_tag: String,
+}
+
+impl Default for LambdaPStore {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl LambdaPStore {
     pub fn new() -> Self {
         Self {
             index: PrimeIndex::new(),
-            ledger_path: None,
+            artifacts: BTreeMap::new(),
+            domain_tag: String::from("archivum-domain"),
         }
     }
 
-    /// Set the WORM ledger file path.
-    pub fn with_ledger<P: AsRef<Path>>(mut self, path: P) -> Self {
-        self.ledger_path = Some(path.as_ref().to_path_buf());
+    /// Construct a store with a declared domain tag (used by `Compatible()`).
+    pub fn with_domain_tag(mut self, tag: impl Into<String>) -> Self {
+        self.domain_tag = tag.into();
         self
     }
 
-    /// Store an artifact in Λ^p.
+    /// The store's declared domain tag.
+    pub fn domain_tag(&self) -> &str {
+        &self.domain_tag
+    }
+
+    /// Whether a sealed record's domain tag is `Compatible()` with this store.
+    pub fn is_compatible(&self, sealed_domain_tag: &str) -> bool {
+        compatible(sealed_domain_tag, self.domain_tag())
+    }
+
+    /// Store an artifact in Λ^p, subject to the `Compatible()` domain gate.
     pub fn store(&mut self, artifact: StoredArtifact) -> Result<String, ArchivumError> {
+        let sealed_domain = artifact
+            .metadata
+            .get("domain_tag")
+            .map(|s| s.as_str())
+            .unwrap_or_default();
+        if !self.is_compatible(sealed_domain) {
+            return Err(ArchivumError::DomainTagMismatch {
+                sealed: sealed_domain.to_string(),
+                store: self.domain_tag.clone(),
+            });
+        }
         let hex = artifact.address.hex.clone();
         self.index.insert(artifact.address.clone());
+        self.artifacts.insert(hex.clone(), artifact);
+        Ok(hex)
+    }
 
-        if let Some(ref path) = self.ledger_path {
-            self.append_to_ledger(path, &artifact)?;
-        }
-
+    /// Store an artifact without a domain tag on it (accepted as-is).
+    pub fn store_untagged(&mut self, artifact: StoredArtifact) -> Result<String, ArchivumError> {
+        let hex = artifact.address.hex.clone();
+        self.index.insert(artifact.address.clone());
+        self.artifacts.insert(hex.clone(), artifact);
         Ok(hex)
     }
 
     /// Retrieve an artifact by its content address hex.
     pub fn get(&self, hex: &str) -> Option<&StoredArtifact> {
-        // In a real implementation, this would read from storage.
-        // For now, we return from the index metadata.
-        self.index.artifacts.get(hex).map(|_addr| {
-            // Placeholder: actual data retrieval from disk/cache would go here
-            unimplemented!("Data retrieval from content-addressed storage")
-        })
+        self.artifacts.get(hex)
     }
 
     /// Find artifacts sharing a prime factor.
-    pub fn find_by_prime(&self, prime: u64) -> Vec<&ContentAddress> {
+    ///
+    /// Returns full stored artifacts (not just addresses).
+    pub fn find_by_prime(&self, prime: u64) -> Vec<std::borrow::Cow<'_, ContentAddress>> {
         self.index.by_prime(prime)
     }
 
     /// Get a content address by hex.
     pub fn get_address(&self, hex: &str) -> Option<&ContentAddress> {
-        self.index.artifacts.get(hex)
+        self.index.address(hex)
     }
 
     /// Find shared primes between two artifacts.
@@ -284,47 +324,17 @@ impl LambdaPStore {
         self.index.is_empty()
     }
 
-    fn append_to_ledger(&self, path: &Path, artifact: &StoredArtifact) -> Result<(), ArchivumError> {
-        if let Some(parent) = path.parent() {
-            std::fs::create_dir_all(parent)?;
-        }
-        let mut file = OpenOptions::new()
-            .create(true)
-            .append(true)
-            .open(path)?;
-
-        let entry = serde_json::json!({
-            "hex": artifact.address.hex,
-            "timestamp": artifact.timestamp,
-            "metadata": artifact.metadata,
-            "prime_factors": artifact.address.prime_factors,
-            "previous": artifact.previous,
-        });
-
-        writeln!(file, "{}", entry)?;
-        Ok(())
-    }
-}
-
-impl Default for LambdaPStore {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-// ---------------------------------------------------------------------------
-// WORM WitnessLedger integration (extends existing ArchivumLedger)
-// ---------------------------------------------------------------------------
-
-use crate::ledger::{ArchivumLedger, Witness};
-
-impl LambdaPStore {
-    /// Append a witness to the WORM ledger.
-    pub fn append_witness(&self, ledger: &mut ArchivumLedger, w: Witness) -> Result<[u8; 32], ArchivumError> {
-        ledger.append(w)
+    /// Append a witness to the audit chain subject to the `Compatible()` gate.
+    pub fn append_witness(
+        &self,
+        ledger: &mut ArchivumLedger,
+        w: Witness,
+        sealed_domain_tag: &str,
+    ) -> Result<[u8; 32], ArchivumError> {
+        ledger.append_compatible(w, sealed_domain_tag, self.domain_tag())
     }
 
-    /// Verify the WORM ledger chain integrity.
+    /// Verify the audit chain integrity.
     pub fn verify_ledger(&self, ledger: &ArchivumLedger) -> bool {
         ledger.verify_chain()
     }

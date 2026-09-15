@@ -1,163 +1,51 @@
-pub mod loader;
-pub mod telemetry;
-pub mod ffi;
-pub mod monitor;
-pub mod harmonia;
-pub mod spectral;
+//! # `pirtm-engine` — PIRTM Arithmetic Control Engine (ADR-0066)
+//!
+//! Production-grade Rust implementation of the **PrismPM ↔ PIRTM
+//! interoperability veto gate** mandated by
+//! [`docs/adr/accepted/0066-PrismPM and Langlands Prism.md`](../../../docs/adr/accepted/0066-PrismPM%20and%20Langlands%20Prism.md).
+//!
+//! ## Architecture
+//!
+//! | Module | Responsibility | ADR-0066 section |
+//! | --- | --- | --- |
+//! | [`tensor`] | 2×2 `GainMatrix` over the prime-indexed tensor overlay (`Add→p₁=2`, `Multiply→p₂=3`), spectral radius `ρ(Ψ)`. | §1 Semantic and Dimensional Mapping |
+//! | [`ace`] | Arithmetic Control Engine: fail-closed `SIG_GOV_KILL` veto when `ρ(Ψ) ≥ 1−ε`, plus the scaled fixed-point governance gate over CRMF envelopes. | §2 Rust/Kani Integration Harness, §The Veto Gate |
+//! | [`canonical`] | `UnsignedCrmfEnvelope` and byte-exact canonical BCS packing rules (fixed field order, big-endian integers, length-prefixed metadata). | §Universal BCS Packing Rules |
+//! | [`manifest`] | `EnsembleManifest` (`uor_identity`, `prime_topology`, `spectral_limit`, `multiplicity_signature`, `crmf_seal`) and the `.holo` compile gate. | §The Ensemble Manifest Structure |
+//! | [`poseidon2`] | Poseidon2-style sponge (`t=9, r=8`) producing the 256-bit `crmf_validity_seal`. | §Cryptographic Bridging |
+//! | [`recovery`] | Phase D dual-signature `resumption_request` and the 9-step ACE verification gate (L0_HALT release). | §Phase D Recovery Sequence / §The ACE Verification Gate |
+//!
+//! ## Guarantee proved by the Kani harnesses (`tests/`)
+//!
+//! 1. **The Veto:** a semantically-valid PrismPM model (zero-sorry Lean 4
+//!    proofs) is still vetoed by ACE when the injected gain matrix breaches
+//!    the contractivity bound — `Err(SigGovKill::ExpansiveState)`.
+//! 2. **BCS canonical injectivity:** equal canonical byte streams iff equal
+//!    envelopes — the zero-knowledge absorption prerequisite.
+//! 3. **Fail-closed halting:** any CRMF envelope asserting `Λ_m ≥ 1.0`
+//!    (i.e. `lambda_m ≥ CONTRACTIVITY_SCALE`) is rejected by the governance
+//!    gate.
+//! 4. **Phase D:** the 9-condition ACE resumption gate releases `L0_HALT`
+//!    only when chain-continuity, freshness, content-binding, and
+//!    dual-authorization conditions all hold.
+//!
+//! ## Deliberate minimal seams (externally documented)
+//!
+//! - The Poseidon2 permutation is instantiated over the M61 prime field
+//!   (2^61−1) as a structurally identical `t=9, r=8` sponge; the BN254
+//!   scalar-field substitution point (arkworks `crmf/src/poseidon2.rs`) is a
+//!   drop-in backend behind the same `sponge_absorb` interface.
+//! - The spectral-radius-to-fixed-point conversion happens at the telemetry
+//!   boundary; every governance gate compares scaled `u64` integers only, so
+//!   the gates stay `f64`-free and fully model-checkable.
 
-use std::path::{Path, PathBuf};
-use serde_json::json;
-use sha2::{Sha256, Digest};
-use std::process::{Command, Stdio};
-use std::io::Write;
-pub use spectral::{Ensemble, EnsembleContractivityReceipt, check_small_gain, validate_and_certify};
+pub mod ace;
+pub mod canonical;
+pub mod manifest;
+pub mod poseidon2;
+pub mod recovery;
+pub mod tensor;
 
-#[derive(Debug, Default)]
-pub struct RuntimeConfig {
-    pub dry_run: bool,
-    pub jid_enabled: bool,
-    pub ledger_enabled: bool,
-    pub enforce_bounds: bool,
-    pub input_args: Vec<String>,
-}
-
-pub struct ExecutionReceipt {
-    pub return_code: i32,
-    pub stdout: String,
-    pub stderr: String,
-    pub metrics: telemetry::TelemetryMetrics,
-    pub contractivity_hash: String,
-}
-
-pub struct Runtime {
-    pub config: RuntimeConfig,
-    mlir_path: Option<PathBuf>,
-}
-
-impl Runtime {
-    pub fn new(config: RuntimeConfig) -> Self {
-        Self {
-            config,
-            mlir_path: None,
-        }
-    }
-
-    /// Load an ensemble configuration from a JSON file.
-    pub fn load_ensemble(&self, path: &Path) -> Result<Ensemble, Box<dyn std::error::Error>> {
-        let content = std::fs::read_to_string(path)?;
-        let ensemble: Ensemble = serde_json::from_str(&content)?;
-        Ok(ensemble)
-    }
-
-    pub fn validate_ensemble(&self, ensemble: &Ensemble) -> Result<EnsembleContractivityReceipt, String> {
-        let cert = spectral::validate_and_certify(ensemble, 1e-6)?;
-        println!(
-            "AUDIT EVENT: ensemble_validated - {}",
-            json!({
-                "ensemble_name": cert.ensemble_name,
-                "dimension": cert.dimension,
-                "spectral_radius": cert.spectral_radius,
-                "is_stable": cert.is_stable,
-                "receipt_hash": cert.hash,
-            })
-        );
-        Ok(cert)
-    }
-
-    pub fn load(&mut self, mlir_path: &Path) -> Result<(), Box<dyn std::error::Error>> {
-        self.mlir_path = Some(mlir_path.to_path_buf());
-        Ok(())
-    }
-
-    pub fn run(&mut self) -> Result<ExecutionReceipt, Box<dyn std::error::Error>> {
-        if self.config.dry_run {
-            let metrics = telemetry::simulate_telemetry_collection();
-            let hash = if self.config.ledger_enabled {
-                let mut hasher = Sha256::new();
-                let data = format!("{:?}", metrics);
-                hasher.update(data);
-                format!("{:x}", hasher.finalize())
-            } else {
-                "no-ledger".to_string()
-            };
-
-            let mut stdout_buf = String::new();
-            if !self.config.input_args.is_empty() {
-                stdout_buf.push_str(&format!("Simulated output for input: {}\n", self.config.input_args.join(" ")));
-            }
-            return Ok(ExecutionReceipt {
-                return_code: 0,
-                stdout: stdout_buf,
-                stderr: String::new(),
-                metrics,
-                contractivity_hash: hash,
-            });
-        }
-
-        let mlir_path = self.mlir_path.as_ref().ok_or("No module loaded")?;
-        
-        let ll_path = mlir_path.with_extension("ll");
-        let obj_path = mlir_path.with_extension("o");
-        let bin_path = mlir_path.with_extension("bin");
-
-        let mlir_status = Command::new("mlir-translate")
-            .arg("--mlir-to-llvmir")
-            .arg(mlir_path)
-            .arg("-o")
-            .arg(&ll_path)
-            .status()?;
-        
-        if !mlir_status.success() {
-            return Err(format!("mlir-translate failed with status: {}", mlir_status).into());
-        }
-
-        let llc_status = Command::new("llc")
-            .arg("-filetype=obj")
-            .arg(&ll_path)
-            .arg("-o")
-            .arg(&obj_path)
-            .status()?;
-
-        if !llc_status.success() {
-            return Err(format!("llc failed with status: {}", llc_status).into());
-        }
-
-        let clang_status = Command::new("clang")
-            .arg(&obj_path)
-            .arg("-o")
-            .arg(&bin_path)
-            .status()?;
-
-        if !clang_status.success() {
-            return Err(format!("clang failed with status: {}", clang_status).into());
-        }
-
-        let output = Command::new(&bin_path)
-            .args(&self.config.input_args)
-            .output()?;
-
-        let stdout = String::from_utf8_lossy(&output.stdout).to_string();
-        let stderr = String::from_utf8_lossy(&output.stderr).to_string();
-        let return_code = output.status.code().unwrap_or(-1);
-
-        let metrics = telemetry::collect_execution_metrics(stdout.len(), stderr.len(), return_code);
-
-        let hash = if self.config.ledger_enabled {
-            let mut hasher = Sha256::new();
-            let data = format!("{:?}", metrics);
-            hasher.update(data);
-            format!("{:x}", hasher.finalize())
-        } else {
-            "no-ledger".to_string()
-        };
-
-        Ok(ExecutionReceipt {
-            return_code,
-            stdout,
-            stderr,
-            metrics,
-            contractivity_hash: hash,
-        })
-    }
-}
-
+pub use ace::{SigGovKill, evaluate_ace_governance_gate, evaluate_spectral_radius, verify_transition};
+pub use canonical::{MetricBounds, UnsignedCrmfEnvelope};
+pub use manifest::{EnsembleManifest, PrismOperation};

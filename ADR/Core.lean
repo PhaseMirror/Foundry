@@ -14,6 +14,23 @@ entailment semantics, and registry coherence properties.
 
 namespace ADR
 
+/-- Provenance attribute tagging declarations that are Architecture Decision
+Records (or record artifacts) in the corpus.
+
+Usage: `@[adr] def myRecord : ... := ...`. The attribute is decorative but
+machine-queryable (`adr_attr.hasTag env decl`) and restores the `@[adr]`
+annotations carried by migrated `ADR.Theorems.*` modules. -/
+initialize adr_attr : TagAttribute ←
+  registerTagAttribute `adr "Marks a declaration as an Architecture Decision Record artifact."
+
+/-- Provenance attribute tagging declarations whose bodies are
+machine-checked proofs.
+
+Usage: `@[proof] theorem t : P := by ...`. Restores the `@[proof]` annotations
+carried by migrated `ADR.Theorems.*` modules. -/
+initialize proof_attr : TagAttribute ←
+  registerTagAttribute `proof "Marks a declaration as a machine-checked proof."
+
 /-- Unique identifier for an Architecture Decision Record (e.g., "ADR-001"). -/
 abbrev ADRId := String
 

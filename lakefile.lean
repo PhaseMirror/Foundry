@@ -12,9 +12,12 @@ lean_lib Foundations where
 -- ADR formal governance library (single source of truth).
 -- This lib exposes `ADR.*` modules to `Foundations.lean` and to the
 -- `adrTest` executable. The legacy `Foundations.ADR.*` shadow namespace
--- has been removed; see ADR/README.md.
+-- and the nested `adr_scaffolding` package have been removed; see ADR/README.md.
+-- Root module: `ADR.lean` (required by Lake for a library named `ADR`).
+-- `Care` (root-level `Care.lean`, the socio-atomic care-physics module) is
+-- part of this lib's roots because `ADR.Theorems.*` depend on it.
 lean_lib ADR where
-  roots := #[`ADR]
+  roots := #[`ADR, `Care]
 
 -- ADR formal governance test harness (single source of truth).
 -- `lake test` builds and runs this executable, which exercises the

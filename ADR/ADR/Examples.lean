@@ -340,7 +340,9 @@ theorem sample_acyclic : StrictAcyclic sampleADRList := by
   · revert ha_sup; intro h; nomatch h
   · revert ha_sup; intro h; nomatch h
   · have hparent : parent = "ADR-001" := by injection ha_sup
-    have hid : id = "ADR-003" := by { unfold adr003; exact ha_id.symm }
+    have hid : id = "ADR-003" := by
+      dsimp [adr003] at ha_id
+      exact ha_id.symm
     subst hparent hid
     have hNoPath := no_path_from_dead_end sampleADRList "ADR-001" "ADR-003" no_step_from_001 (by decide)
     exact hNoPath hPath

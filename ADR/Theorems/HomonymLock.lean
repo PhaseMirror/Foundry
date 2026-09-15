@@ -76,7 +76,8 @@ theorem R4Exp_is_parallel_not_core :
 theorem R4Exp_does_not_drive_core :
     R4Kind.boundary R4Kind.R4Exp ≠ .CoreEngine := by
   intro h
-  exact R4Exp_is_parallel_not_core ▸ h ▸ rfl
+  rw [R4Exp_is_parallel_not_core] at h
+  nomatch h
 
 /-- Inference baseline: softmax vs geometry (ADR-0008 §3). -/
 inductive InferenceBaseline where
@@ -98,7 +99,8 @@ theorem inference_baseline_is_softmax :
 theorem resonance_softmax_not_accepted :
     R4Kind.inferenceBaseline R4Kind.R4Exp ≠ .ResonanceSoftmax := by
   intro h
-  exact inference_baseline_is_softmax ▸ h ▸ rfl
+  rw [inference_baseline_is_softmax] at h
+  nomatch h
 
 /-- The theoretical spacetime target (ADR-0008 §4). -/
 @[adr]

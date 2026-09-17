@@ -76,6 +76,13 @@ adr-verify: adr-index adr-sorry-check
 	lake build ADR
 	lake test adrTest
 
+# Run the full ADR verification gate for one ADR and propagate the results into
+# docs/adr/results/<adr-id>-<slug>/ (runs index + sorry check + lake build/test +
+# pirtm-engine cargo tests + Kani BMC harnesses). Pass ADR_FILE to target a
+# specific ADR, e.g.: make adr-test-results ADR_FILE="docs/adr/completed/ADR-0108-PrismPM and Langlands Prism.md"
+adr-test-results:
+	python3 scripts/run_adr_tests.py "$(ADR_FILE)"
+
 # Clean build artifacts
 clean:
 	cd lean && lake clean
@@ -98,6 +105,8 @@ help:
 	@echo "  fpes-gate        - ADR-0029 escape-proof FPES gate"
 	@echo "  fpes-test        - Run the FPES Lean test harness"
 	@echo "  kani-full        - ADR-0029 full FPES Kani suite (N <= 8)"
+	@echo "  adr-verify       - ADR gate (index + sorry + lake build + lake test)"
+	@echo "  adr-test-results - Per-ADR gate; propagates results to docs/adr/results/ (ADR_FILE=<path>)"
 	@echo "  generate-harnesses - Generate Kani harnesses from YAML"
 	@echo "  sync             - Sync Lean theorems to Rust contracts"
 	@echo "  docs             - Generate documentation"

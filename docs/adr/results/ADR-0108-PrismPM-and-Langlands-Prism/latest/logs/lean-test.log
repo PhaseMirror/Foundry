@@ -1,0 +1,701 @@
+$ lake test
+# workdir: /media/citizen/b361d448-7c51-413a-aa23-9515cb626930/home/citizen/Multiplicity/packages/Foundry
+# exit: 0
+# ---- stdout ----
+Starting Formal ADR Verification Harness...
+✓ Immutability constraints satisfied: Accepted -> Superseded is valid.
+✓ Unified registry acyclicity mathematically verified.
+✓ Unified registry satisfies all invariants (uniqueIds, acyclic, supersedesExist, supersededStatusConsistent, noConflicts).
+✓ Type system correctly rejects Accepted -> Proposed transition.
+Performing fail-closed contractivity gate verification (mirrors Kani BMC harnesses)...
+  ✓ adversarialGain vetoed despite valid semantics (ExpansiveState, Λ_m = 1.5 in scaled units).
+  ✓ safeGain admitted (‖Ψ‖₊ = 0.5 < 1 − ε).
+  ✓ bandGain pinned at the 1−ε manifold is fail-closed to NonContractiveLambda.
+  ✓ drift breach vetoed (drift = DRIFT_LIMIT_SCALED + 1 > bound).
+  ✓ semantic proof gap vetoed (PrismPM semantics undischargeable → SIG_GOV_KILL).
+Property-based sweep over all 2×2 fixed-point gain matrices:
+  ✓ every dominant diagonal entry ≥ 1.0 is never admitted (∀ a b c d : Nat).
+Performing PRISM-Archivum formal model verification (mirrors ADR-0067/archivum Kani harnesses)...
+  ✓ Invariant A (append-only preservation): ∀ w, w ∈ L → w ∈ appendEnv L e.
+  ✓ honest singleton chain is ChainOK (seal-valid + hash-linked).
+  ✓ Invariant A′: appending a seal-valid, auto-linked envelope preserves ChainOK.
+  ✓ Invariant B: appending a fresh anchor preserves witness uniqueness (NoDuplicateHashes).
+  ✓ Invariant B′: a duplicate anchor is deterministically rejected (uniqueness is broken).
+  ✓ Invariant C (tamper evidence): forged record re-derivation refutes ChainOK.
+Verifying Compatible() domain-tag gate + CRMF→Archivum ingestion pipeline...
+  ✓ same-domain envelope admitted.
+  ✓ cross-domain envelope vetoed (fail-closed).
+  ✓ property sweep: ∀ sealed store, sealed ≠ store → gate never admits.
+  ✓ ingestion admits a fresh, tag-compatible envelope.
+  ✓ ingestion rejects a tag-mismatched envelope before any storage (RejectedTag).
+  ✓ replay (duplicate anchor) rejected at ingestion: RejectedDup.
+  ✓ no false admissions: admitted_implies_compatible forbids cross-domain admission (type system catches it).
+Checking ADR-0067 consequences as logical entailments of decision+context...
+  ✓ consequence entailed: adopt CRMF as active sealing layer.
+  ✓ consequence entailed: adopt Λ^p-Archivum permanent store.
+  ✓ consequence entailed: mandate hash-linked append-only chain.
+  ✓ consequence entailed: fail-closed Compatible() gate (modus ponens).
+  ✓ consequence entailed: CRMF + Archivum conjunctive obligation.
+Checking ADR-0067 registry invariants (uniqueIds, acyclic, supersession, traceability)...
+  ✓ ADR-0067 registry satisfies uniqueIds, acyclic, supersedesExist, supersededStatusConsistent, noConflicts.
+  ✓ ADR-0067 possesses a reconstructible provenance path (traceability).
+  ✓ ADR-0067 cannot revert to Proposed (immutability of accepted decisions).
+Performing LEGALESE-SCOPIST/OSCAL formal model verification (mirrors ADR-0068)...
+  ✓ Idempotency & purity: identical receipts always generate identical narratives.
+  ✓ Zero-drift: a SIG_GOV_KILL verdict always forces an UNATTESTED narrative.
+  ✓ Attestation boundary: OSCAL is a narrative envelope, never a runtime attester.
+  ✓ Concrete translator satisfies the Scopist Law (deterministic + zero-drift + verbatim risk).
+  ✓ NOMINAL receipt is ATTESTED with verbatim risk; KILL receipt is UNATTESTED, risk pinned, manifest withheld.
+Checking law-level zero-drift binding (translator-agnostic)...
+  ✓ any Scopist obeying the law cannot mitigate a kill (UNATTESTED).
+  ✓ packaging-only: OSCAL risk is receipt-verbatim for any law-abiding Scopist.
+Checking ADR-0068 consequences as logical entailments of decision+context...
+  ✓ consequence entailed: adopt the Scopist as the exclusive read-only translation layer.
+  ✓ consequence entailed: ingest the sealed ContractivityReceipt R.
+  ✓ consequence entailed: enforce zero-drift.
+  ✓ consequence entailed: SIG_GOV_KILL cannot be mitigated (modus ponens).
+  ✓ consequence entailed: OSCAL is packaging-only, never a runtime attester.
+  ✓ consequence entailed: unattested markings for manifests lacking proof hashes.
+Checking ADR-0068 registry invariants (uniqueIds, acyclic, supersession, traceability)...
+  ✓ ADR-0068 registry satisfies uniqueIds, acyclic, supersedesExist, supersededStatusConsistent, noConflicts.
+  ✓ ADR-0068 possesses a reconstructible provenance path (traceability).
+  ✓ ADR-0068 cannot revert to Proposed (immutability of accepted decisions).
+Performing native textual typing invariant verification (mirrors ADR-0069 §9.4−§9.10)...
+  ✓ §9.4 zero-denominator rules: a lemma that never occurs yields TFSI = GESI = 0.
+  ✓ §9.4 unit interval: capture ≤ occurs ⇒ T(ℓ)-ratio ≤ 1.0 (per-mille bound).
+  ✓ §9.4 ratio arithmetic: 120/300 = 400‰ and full capture pins at 1000‰.
+  ✓ §9.6 operator-class membership decidable: אבן (TFSI 900) is outside 𝒯(𝒢_time).
+  ✓ §9.6 class disjointness: 𝒯(𝒢_time) ∩ 𝒯(𝒢_stat) provably empty for every vector.
+  ✓ §9.7 admissibility: adjusted p < q = 0.01 is a hard precondition (2 < 10 confirmed).
+Verifying §9.9/§9.10 control separation, falsifiability, and the exclusion test...
+  ✓ §9.9 success criterion satisfiable: 𝒩 ∩ 𝒯(𝒢_time) = ∅ and 𝒫_T ∪ 𝒫_G ⊆ 𝒯(𝒢_time).
+  ✓ §9.9 falsifiable: a negative control typable for 𝒢_time refutes separation wholesale.
+  ✓ §9.9 falsifiable (positive side): a temporal control missing 𝒯(𝒢_time) refutes separation.
+  ✓ §9.10 exclusion test: bogus τ (every lemma claimed) is rejected by the type system.
+  ✓ §9.10 operator representation τ is Section-10 data; this module assigns none.
+Checking ADR-0069 consequences as logical entailments of decision+context...
+  ✓ consequence entailed: adopt the native corpus typing constraint.
+  ✓ consequence entailed: certify only 𝒞 → T(ℓ) → 𝒯(𝒢); operators deferred.
+  ✓ consequence entailed: thresholds frozen before test evaluation.
+  ✓ consequence entailed: the exclusion test makes the constraint falsifiable.
+  ✓ consequence entailed: operator assignment/claims are Section-10 deliverables (modus ponens).
+  ✓ consequence entailed: train-only estimation never leaks into test (modus ponens).
+  ✓ consequence entailed: control separation is a hard, non-negotiable criterion.
+Checking ADR-0069 registry invariants (uniqueIds, acyclic, supersession, traceability)...
+  ✓ ADR-0069 registry satisfies uniqueIds, acyclic, supersedesExist, supersededStatusConsistent, noConflicts.
+  ✓ ADR-0069 possesses a reconstructible provenance path (traceability).
+  ✓ ADR-0069 cannot revert to Proposed (immutability of accepted decisions).
+Checking ADR-0070 Stage-1 certificate rule (declare (α,σ,η,P), η < 1 passes, η ≥ 1 rejects)...
+  ✓ operator-norm budget lock: ‖B‖ + ‖E‖ = η·p_{max}^(-σ) exactly (B:E = 1:1 split).
+  ✓ GapLB arithmetic: η=0.5 gives (1−η)·floor = 0.0508; η=1.0/1.1 collapse to 0.
+  ✓ pass ⇔ η < 1; reject ⇔ η ≥ 1 (rejection is conservative, never indefiniteness).
+  ✓ all nine η < 1 cells of the Stage-1 table (σ = 0.5/1.0/1.5 × η = 0.25/0.5/0.75) pass.
+  ✓ observed λ_min(U) covers GapLB in every pass cell (the bound is not vacuous).
+  ✓ Stage-1 table locked. Stop rule armed: If the Stage-1 table ever breaks, stop: the branch or the weight is wrong.
+  ✓ reject ≠ indefinite: some rejected cell still has λ_min(U) = 0.061 > 0.
+  ✓ any pass cell forces η < 1 (the gate is strict, not vacuous).
+Checking ADR-0070 fold-K correction and P-scale stability...
+  ✓ ‖K‖₂ data recorded: 0.163 (α = 1.5), 0.381 (α = 1.0).
+  ✓ separate-‖K‖ form is vacuous: ‖K‖₂ > floor ⇒ triangle bound collapses to 0.
+  ✓ λ_min(A) = floor − floor/1000 in every row (A = D_σ + K, part-in-10³ support).
+  ✓ P-scale (α,σ,η) = (1.5,0.5,0.5): passes at P = 25/50/100 with λ_min(U) ≥ GapLB.
+  ✓ the floor falls as p_max^(-σ) while ‖K‖₂ stays frozen at 0.163 (fold-K must stay).
+Checking ADR-0070 sharp Weyl bottom/spread separation and the paper cap...
+  ✓ sharp certificate: η_B < 1 certifies the bottom; η_B ≥ 1 rejects exactly.
+  ✓ PSD E-block: λ_min(E) = 0 drops the E-norm out of the sharp bound.
+  ✓ two constraints decoupled: λ_min(Ξ) = 0 (bottom fine) while ‖Ξ‖₂ > 1 (cap violated).
+  ✓ reject ≠ indefinite survives the sharp certificate (cell with GapLB = 0, λ_min > 0).
+  ✓ three windows named: MR-written and sharp+cap reject raw H; sharp-cap-off is a different object with no essential-spectrum inheritance.
+  ✓ lift is normalization-only: hard truncation vacuous (γ₁ ≈ 14.13 > 1).
+Checking ADR-0070 boundary not-list, composition gate, and SFPT discipline...
+  ✓ composition gate closed: no explicit h = φ·Reζ(½+i·) with HS/sign checks, so no composition.
+  ✓ Section 9 typing does not license τ(היה) = 𝒰: operatorRep is constant none.
+  ✓ boundary not-list (6): not RH, not Hilbert–Pólya, not det_reg, not SR, not finite Arakelov–Hodge, not a τ-license.
+  ✓ SFPT: Δ_V = |C_expl − ∫W·arg ζ| is the only SBM object; Δ_{N,T} is a Hadamard-tail diagnostic.
+  ✓ forbidden-set discipline: Δ_{N,T} is never zero-free evidence, never scanned to b = 1/2.
+  ✓ Stage 2 (b ∈ (1/2,1)) and Stage 3 (scan to 1/2) are not run.
+  ✓ corrections attached: g(z) uses c² − (z−b)²; C_expl(½;3/2,7/2) = (π/20)·log(18π²/245).
+Checking ADR-0070 consequences as logical entailments of decision+context...
+  ✓ consequence entailed: certified MR core.
+  ✓ consequence entailed: Stage-1 declare rule (η < 1 pass / η ≥ 1 reject).
+  ✓ consequence entailed: operator-norm budget lock.
+  ✓ consequence entailed: fold K into A (separate ‖K‖ form never certified).
+  ✓ consequence entailed: sharp Weyl separates bottom from spread.
+  ✓ consequence entailed: MR-written cap stays on.
+  ✓ consequence entailed: no composition without the explicit map.
+  ✓ consequence entailed (context): not-RH boundary.
+  ✓ consequence entailed (context): primes are data and the inequality is analysis.
+  ✓ consequence entailed (context): SFPT discipline (Δ_{N,T} never zero-free evidence).
+  ✓ consequence entailed: rejection is conservative — reject ≠ indefinite (modus ponens).
+  ✓ consequence entailed: folding ⇒ K-separation vacuous (modus ponens).
+Checking ADR-0070 registry invariants (uniqueIds, acyclic, supersession, traceability)...
+  ✓ ADR-0070 registry satisfies uniqueIds, acyclic, supersedesExist, supersededStatusConsistent, noConflicts.
+  ✓ ADR-0070 possesses a reconstructible provenance path (traceability).
+  ✓ ADR-0070 cannot revert to Proposed (immutability of accepted decisions).
+
+Exporting all ADRs to Markdown...
+-----------------------------------
+# ADR-001: Integer Jordan Bond Governance
+
+**Status:** Superseded
+
+## Context
+Floating-point non-determinism introduces drift and spoliation risk in state transitions across distributed nodes.
+
+## Decision
+Enforce fixed-point integer Jordan bond arithmetic scaled by N = 1024 at the kernel boundary.
+
+## Consequences
+* Arithmetic determinism guaranteed across heterogeneous nodes
+* Floating point drift strictly eliminated
+
+## Traceability & Artifact Links
+* **[Lean Declaration]** `PhaseMirror.Care.Scale` — Canonical fixed-point scale N = 1024
+* **[Source File]** `Care.lean` — Integer fixed-point operations
+
+# ADR-002: Sedona Spine Retention Engine Sole Source of Truth
+
+**Status:** Accepted
+
+## Context
+Decentralized litigation hold rules risk spoliation drift if computed independently by UI or client agents.
+
+## Decision
+All ESI preservation risk logic must route exclusively through the Sedona Spine Rust Engine and WASM SDK.
+
+## Consequences
+* Zero drift in litigation hold calculations
+* Mandatory provenance chain: Policy -> Event -> Kernel -> Witness
+
+## Traceability & Artifact Links
+* **[Specification]** `models/legalese-scopist/CONTRACT.md` — Preservation alert protocol
+* **[Source File]** `models/legalese-scopist/` — Rust Engine Core implementation
+
+# ADR-003: Per-Triad Resonance Floors (Audit v2)
+
+**Status:** Accepted
+
+## Context
+Aggregate mean resonance floor in ADR-001 permitted averaging blind spots where individual triads could fall below viability.
+
+## Decision
+Strengthen viability audit to require every individual triad to meet or exceed ResFloor = 870.
+
+## Consequences
+* Eliminates averaging blind spot proved by averaging_blind_spot theorem
+* Preserves backward compatibility with audit v1
+
+## Traceability & Artifact Links
+* **[Source File]** `ADR/Theorems/CareViability.lean` — Formalization of v2 thresholds and blind spot
+* **[Lean Declaration]** `PhaseMirror.CareViability.phase_mirror_audit_v2` — Per-triad binary audit
+
+# ADR-004: Meet-Semilattice Partition Refinement & LCR Operator
+
+**Status:** Accepted
+
+## Context
+SPMD distributed execution requires a formal refinement order over tensor sharding states (Sharded(d) ≤ Replicated ≤ Unconstrained) that is deterministic, commutative, and fail-closed.
+
+## Decision
+Enforce pointwise meet operator (⊓) over logical mesh axes with idempotent, associative, and commutative semantics. Incompatible assignments evaluate to bottom, raising an immediate ConflictReport.
+
+## Consequences
+* Deterministic least common refinement across distributed execution paths
+* Fail-closed immediate rejection of conflicting sharding schedules
+
+## Traceability & Artifact Links
+* **[Specification]** `specs/p2c_petc_v12.md` — P2C PETC v1.2 Specification Section 2.3
+* **[Source File]** `packages/rust/pirtm-compiler/src/sharding.rs` — LCR Meet Operator Implementation
+
+# ADR-005: BLAKE2b-16 Personalization & Canonical Bytecode Wire Format
+
+**Status:** Accepted
+
+## Context
+Witness bytecode streams require compact, tamper-evident framing with low verification overhead across heterogeneous compiler runtimes (MLIR, XLA, PyTorch).
+
+## Decision
+Standardize binary wire format on header magic 'P2CWITv2', version 0x0102, LEB128/ZigZag varints, trailer 0xAA 0x55, and 16-byte BLAKE2b body digest personalized with b'P2C_V12'.
+
+## Consequences
+* Bit-flip and truncation detection at frame boundary
+* Allocation-free stack-based decoding in high-performance runtimes
+
+## Traceability & Artifact Links
+* **[Specification]** `specs/p2c_petc_v12.md` — P2C PETC v1.2 Binary Wire Format Section 3
+* **[Source File]** `packages/rust/core/src/petc.rs` — Bytecode Frame Parser
+
+# ADR-006: MultiContract Atomic Contraction with PartialSum Tokens
+
+**Status:** Accepted
+
+## Context
+Contraction over sharded tensor dimensions produces partial sums requiring explicit collective reductions before downstream consumption.
+
+## Decision
+Standardize opcode 0x05 (MultiContract) to atomically verify dual signatures and emit PartialSum(mesh_axis) tokens consumed strictly by subsequent Collective operations.
+
+## Consequences
+* Prevents unreduced partial sum escapes in SPMD graphs
+* Simultaneous atomic multi-axis tensor contractions in O(k) time
+
+## Traceability & Artifact Links
+* **[Specification]** `specs/p2c_petc_v12.md` — P2C PETC v1.2 Opcode Semantics Section 4
+* **[Source File]** `packages/rust/engine/src/petc.rs` — MultiContract Evaluator
+
+# ADR-007: Commutative Collective Transformers for Deterministic Sharding Commit
+
+**Status:** Accepted
+
+## Context
+Multi-mesh collective operations (AllReduce, AllGather) must yield identical global sharding states regardless of topological scheduling order.
+
+## Decision
+Define collective transformers T_m that transition axis m to Replicated, and formally verify operator commutativity T_m ∘ T_n = T_n ∘ T_m for all m ≠ n.
+
+## Consequences
+* Topology-invariant global sharding commitment
+* Eliminates deadlocks and non-determinism in multi-axis reduction pipelines
+
+## Traceability & Artifact Links
+* **[Specification]** `specs/p2c_petc_v12.md` — P2C PETC v1.2 Section 2.3 Collective Transformers
+* **[Lean Declaration]** `lean/Multiplicity/PETC.lean` — Collective transformer commutation
+
+# ADR-008: Prime Signature Canonical Monoid as Exclusive Rust Kernel Substrate
+
+**Status:** Accepted
+
+## Context
+All multiplicity computations, spectral analysis, and emission decisions must share a single, deterministic representation to prevent representational drift between Lean formalization and Rust execution.
+
+## Decision
+The only permitted representation of a Multiplicity Signature inside the Rust kernel is a finitely supported map from primes to exponents, equipped with the free commutative monoid structure (pointwise addition of exponents). No alternative encodings (dense vectors, hashed bags, or floating-point approximations) are permitted in the core path.
+
+## Consequences
+* Signature equality is decidable by structural comparison of support and exponents
+* Multiplicity product is strictly associative and commutative
+* Any foreign representation must be converted at the kernel boundary and rejected if conversion is lossy
+
+## Traceability & Artifact Links
+* **[Lean Declaration]** `PhaseMirror.PrimeSignature` — Formal specification of signature monoid
+* **[Source File]** `packages/rust/multiplicity/multiplicity-core/src/signature.rs` — Target Rust implementation site
+
+# ADR-009: Mandatory Contraction Witness & Spectral Radius Verification Before Emission Gate
+
+**Status:** Accepted
+
+## Context
+Unconstrained recurrence or agent emission can produce unbounded Lyapunov drift, violating the sovereign contraction invariant of the Phase Mirror core.
+
+## Decision
+No signal may pass the Emission Gate unless a machine-checkable ContractionWitness is supplied that proves the spectral radius of the current operator is strictly less than 1. The witness must be re-validated on every gate evaluation.
+
+## Consequences
+* EmissionGate returns Suppress or Hold when no valid witness is present
+* SpectralGovernor is the sole authority permitted to mint ContractionWitness values
+* Any bypass of the witness check constitutes a hard kernel violation and aborts the process
+
+## Traceability & Artifact Links
+* **[Lean Declaration]** `PhaseMirror.SpectralGovernor` — Formal contract of spectral governor
+* **[Source File]** `packages/rust/ramanujan-multiplicity` — Witness generation site
+
+# ADR-010: Axiom-Clean Kernel Boundary and Manifested Proof Debt Policy
+
+**Status:** Accepted
+
+## Context
+Unmanifested sorry, todo!, or commented-out critical paths create verification leakage that undermines the honesty guarantee of the entire formal stack.
+
+## Decision
+The kernel boundary (Rust + Lean interface) must be axiom-clean. Every open proof obligation that affects runtime behavior must be either (a) fully discharged or (b) explicitly manifested as a named sorry with a tracking issue and a hard CI failure if the count increases. Zero untracked proof debt is permitted on the main branch.
+
+## Consequences
+* CI rejects any increase in manifested or unmanifested sorry count on protected paths
+* Kernel startup performs a static check that the formal registry and the Rust core share the same honesty manifest
+* Research surfaces (including F1-square) may contain open obligations only when explicitly quarantined outside the kernel boundary
+
+## Traceability & Artifact Links
+* **[Specification]** `.github/workflows/adr-verify.yml` — Honesty audit workflow
+* **[Specification]** `docs/CURRENT_TRUTH.md` — Living honesty ledger
+
+# ADR-0013: UOR Civic Infrastructure
+
+**Status:** Accepted
+
+## Context
+The Foundry DAO progresses through three strategic developmental epochs. PrismPM governs process and packaging law; the UCC governs physical and dynamical law via the universal closure sextuple. PWEH operationalizes contractivity and fail-closed interlocks as an active execution lock, and CRMF envelopes canonicalized under BCS provide tamper-evident attestation. The architecture requires a canonical wire format for cryptographic commitments, a fail-closed governance mechanism, and an integrity chain that binds execution traces to prime-indexed attestations.
+
+## Decision
+Adopt the canonical BCS wire format for the UnsignedCrmfEnvelope, the PWEH integrity binding for execution traces, the contractivity gate for the UCC, and fail-closed interlocks for governance.
+
+## Consequences
+* Deterministic, cross-language canonical byte streams for cryptographic commitments (Rust/Lean reproducible)
+* Path-dependent tamper resistance across the whole PWEH chain
+* Fail-closed governance: any unmodeled defect halts L0 before side effects materialize
+* Poseidon2 sponge absorption is the ZK sealing stage
+* Floating-point is structurally excluded from all wire formats (ADR-0021)
+
+## Traceability & Artifact Links
+* **[Source File]** `docs/papers/UOR Civic Infrastructure_.docx` — UOR Civic Infrastructure (The Triadic Evolution)
+* **[Source File]** `lean/MTPI/ADR0013.lean` — Canonical BCS wire format, fail-closed interlocks, contractivity gate, and PWEH binding formalized as Lean 4 theorems
+* **[Source File]** `lean/MTPI/ADR0013Test.lean` — Runtime witness executing closed-form claims
+* **[Source File]** `packages/rust/crmf/src/canonical.rs` — Canonical BCS wire format (Kani-verified)
+* **[Source File]** `packages/rust/crmf/src/failgate.rs` — Fail-closed interlocks (Kani-verified)
+* **[Source File]** `packages/rust/crmf/src/pweh.rs` — PWEH integrity chain (Kani-verified)
+
+# ADR-0014: UCC as a Service — Year One Roadmap
+
+**Status:** Accepted
+
+## Context
+The year-one window (2 September 2026 – 2 September 2027) needs an operator product that is lawful, deliverable, and free of unimplemented research claims. UAC chemistry (FeMoco, 100-way MA-VQE, 69-qubit concurrency) remains research-path until a partner queue exists.
+
+## Decision
+Adopt the Universal Closure Calculator (UCC) as a hosted kernel service for year one: every call returns Closure (lawful closure under the Dirichlet / union-find kernel), Defect (Δ = 0 or named in English), Receipt (input hash + kernel version + Lean/Kani build id + timestamp), and Levers (Owner — action — metric — horizon).
+
+## Consequences
+* Year-one priority is receipts that change decisions, not revenue
+* Budget $40k low / $180k plausible; treasuries not mixed; Q0 dual-control $2,500
+* SKU line: Community, Pro, Enterprise, PMCP
+* Q0-Q4 exit gates lock each phase; named tensions explicitly bound
+
+## Traceability & Artifact Links
+* **[Source File]** `docs/papers/UCC_Year_One_Roadmap.docx` — Citizen Gardens, UCC as a Service Year One Roadmap
+* **[Source File]** `docs/adr/accepted/0013-UOR Civic Infrastructure.md` — Governing civic model this product plan operationalizes
+* **[Source File]** `lean/MTPI/ADR0013.lean` — Canonical BCS / PWEH substrate underlying receipt integrity
+
+# ADR-0015: Unified Civic Infrastructure Outline
+
+**Status:** Accepted
+
+## Context
+Citizen Gardens needs a legal and operating scaffold that keeps the civic purpose distinct from the commercial operator while remaining lawful under Wyoming law. The governing instruments define purpose and caps; the civic layer must hold the literary/legal definition while the operator hosts the kernel and contracts with strangers.
+
+## Decision
+Adopt the Unified Civic Infrastructure Outline as the operating map for Citizen Gardens: a Wyoming unincorporated nonprofit association (DUNA-ready) under a two-legal-person wall. Four infrastructures: UNA/DUNA, Buurtzorg topology, Bushido, Phase Mirror + Multiplicity Social Physics.
+
+## Consequences
+* Legal identity is honest and forward-compatible: DUNA-ready without overclaiming
+* The wall keeps the kernel off the UNA balance sheet and the purpose off the operator P&L
+* Credit is a recorded, machine-checked accounting unit (ELM credits), not a votable currency
+* Adoption is incremental and gated, so the civic layer never outruns its legal form
+
+## Traceability & Artifact Links
+* **[Source File]** `docs/papers/Unified_Civic_Infrastructure_Outline.docx` — Unified Civic Infrastructure Outline (LawfulRecursionVersion 1.0)
+* **[Source File]** `docs/adr/completed/0013-UOR Civic Infrastructure.md` — Governing civic model
+* **[Source File]** `docs/adr/completed/0014-UCC as a Service Year One Roadmap.md` — The operator product this wall hosts
+
+# ADR-0016: UOR Civic Infrastructure — Three Epochs
+
+**Status:** Accepted
+
+## Context
+The Foundry's roadmap must be presentable as a physically and biologically constrained deployment rather than an abstract idea. The governing civic architecture needs an epochal frame that a board can digest while preserving structural integrity.
+
+## Decision
+Adopt the Triadic Evolution model: the Foundry progresses through three strategic developmental epochs — Foundation (mass density, staking minting, $1.00 anchor, Builders), Projection (thermalization, calibration minting, $2.00 anchor), and Maximum Multiplicity (triadic scaling 3→9→27→81→243, recursion+LifeBushido, $3.00 limit). Epoch transitions gated by 90-day Phase Mirror metric gates.
+
+## Consequences
+* Each epoch has exactly one systemic state, one minting driver, and one economic anchor
+* The $1.00 → $2.00 → $3.00 anchor progression is a policy constraint, not a market forecast
+* Staking, calibration, and recursion+LifeBushido are sequential minting mechanisms
+* Diffusion follows triadic powers of three; saturation at 243 bounds a single locus
+
+## Traceability & Artifact Links
+* **[Source File]** `docs/papers/UOR Civic Infrastructure_.docx` — UOR Civic Infrastructure slide-deck text (Triadic Evolution)
+* **[Source File]** `docs/adr/completed/0013-UOR Civic Infrastructure.md` — Dense civic architecture this deck summarizes
+* **[Source File]** `docs/adr/completed/0015-Unified Civic Infrastructure Outline.md` — Legal/operating scaffold the epochs run on
+
+# ADR-0017: Reinitialization — 90-Day Operating Plan and Volunteer Talent Model
+
+**Status:** Accepted
+
+## Context
+UOR Foundation must reinitialize under volunteer-led, no-funding assumption. Next unit of value is confidence: bounded 13-week cycle producing governed, independently verifiable value-layer baseline.
+
+## Decision
+Adopt 90-Day Operating Plan: one primary objective, Day Zero two-week mobilization with six conditions, five workstreams max, RACI accountability, volunteer talent model, action register A01-A26+.
+
+## Consequences
+* Execution capped by WIP limits — scope cannot expand silently
+* No-funding assumption binding — volunteer capacity is planning envelope
+* Cycle either closes deliverables or fails exit rule loudly
+
+## Traceability & Artifact Links
+* **[Source File]** `docs/papers/UOR_Final_90_Day_Operating_Plan_and_Talent_Model.docx` — 90-Day Operating Plan
+* **[Source File]** `docs/adr/accepted/0018-Executive Decision Brief.md` — Executive decision brief gating this plan
+
+# ADR-0018: Reinitialization — Executive Decision Brief
+
+**Status:** Accepted
+
+## Context
+UOR technology is ahead of operating structure. Missing: public source of truth, approved authority chain, coordinated release ownership, independent implementation evidence.
+
+## Decision
+Adopt CONDITIONAL GO pending board ratification and Day Zero gate. Ten decisions D1-D10 covering authority chain, public source of truth, release custody, volunteer capacity, evidence policy (E0-E6), scope boundary, escalations, maintenance, termination.
+
+## Consequences
+* No ratification = no baseline cycle; portfolio stays in maintenance
+* Public claims bound to evidence grade E0-E6 with dates, owners, limits
+* Decision brief is single ratifying artifact
+
+## Traceability & Artifact Links
+* **[Source File]** `docs/papers/UOR_Final_Executive_Decision_Brief.docx` — Executive Decision Brief
+* **[Source File]** `docs/adr/accepted/0017-90-Day Operating Plan and Talent Model.md` — Operating plan this brief gates
+
+# ADR-0019: Technology Portfolio — Evidence, Risk, and Feasibility
+
+**Status:** Accepted
+
+## Context
+19 internal assets vs 15 public GitHub repositories. Gap between internal claims and externally verifiable evidence is standing risk.
+
+## Decision
+Adopt evidence recut: Observe, Map, Interface method. Every asset classified Normative/Reference/Experimental/Historical. Evidence graded E0-E6 with dates, owners. 19-vs-15 deltas dispositioned with owners.
+
+## Consequences
+* Public claims downgraded to E0-E2 until independently evidenced
+* 19-vs-15 inventory deltas become action items with owners
+* UAC research claims excluded until partner queues exist
+
+## Traceability & Artifact Links
+* **[Source File]** `docs/papers/UOR_Final_Technology_Portfolio_Evidence_Risk_and_Feasibility_Appendix.docx` — Evidence recut appendix
+* **[Source File]** `docs/adr/accepted/0018-Executive Decision Brief.md` — Decision brief ratifying this recut
+
+# ADR-0020: HQ and Sovereign Node Deployment
+
+**Status:** Accepted
+
+## Context
+36.8 acres in Livermore, Larimer County, CO. LifeBushido Retreat, SUG node, civic Sovereignty Node site. Risk mitigated by two-phase gate structure.
+
+## Decision
+Adopt proposal conditioned on $750K board authorization. Phase 1: Circle of 9 (ground-state seeding). Phase 2: Family of 27 (UOR Foundry) gated by Three-Way Test on 90-day metric card.
+
+## Consequences
+* Capital reversible only at preset gates
+* Site bounded at 27 operators — growth proceeds by geographic split
+* Land/structures locked to Foundation — no private-equity route
+
+## Traceability & Artifact Links
+* **[Source File]** `docs/papers/UOR Foundation HQ & Sovereign Node Deployment_.docx` — HQ Executive Proposal
+* **[Source File]** `docs/adr/accepted/0015-Unified Civic Infrastructure Outline.md` — UNA/operator-LLC wall
+
+# ADR-0022: Symmetry-Matched Polarization Analysis in MnF₂
+
+**Status:** Accepted
+
+## Context
+Unpolarized INS reported no resolvable splitting; polarized INS accessed antisymmetric channel. Null in one channel ≠ physical absence in another.
+
+## Decision
+Adopt polarization analysis discipline: Blume-Maleev decomposition into polarization-even/odd; four-null taxonomy; resolvability criterion.
+
+## Consequences
+* Unpolarized nulls no longer overrule polarized signatures
+* Spectral resolution and chiral sensitivity as separate design axes
+* Supports δJ7 readout, reversal tomography, probe-tensor correspondence
+
+## Traceability & Artifact Links
+* **[Source File]** `docs/adr/proposed/Paper1 Symmetry Matched Polarization Analysis in MnF2- Separating Spectral Resolutionfrom Chiral Sensitivity in Altermagnetic Neutron Scattering - JHaines 2026.pdf` — Source paper (JHaines 2026)
+* **[Specification]** `docs/specs/observ_calculus_v1.md` — Measurement-map program wire
+* **[Source File]** `packages/rust/observ` — Observability calculus kernel
+
+# ADR-0023: The δJ7 Principle — Symmetry-Complement Source Sectors in MnF₂
+
+**Status:** Accepted
+
+## Context
+Small imbalance between symmetry-distinct J7a/J7b bonds as candidate source coordinate for chiral response. Statement of 'symmetry complement' relative to declared reference must be fixed.
+
+## Decision
+Adopt δJ7 principle: group averaging defines projector P; V = im P ⊕ ker P; source sector Vₘ = span{λₘ,ₐ}; δJ7 ≡ J7b − J7a; odd-channel expansion F_-(λ) = k·λ + O(‖λ‖³).
+
+## Consequences
+* Source attribution tied to declared reference model
+* Odd-channel expansion fixes chiral response scaling
+* Mathematical substrate for ADR-0024 and ADR-0025
+* Warning against universal weak coordinate export
+
+## Traceability & Artifact Links
+* **[Source File]** `docs/adr/proposed/Paper2 The δJ7 Principle- Symmetry Complement Source Sectors in Altermagnetic MnF2 - JHaines 2026.pdf` — Source paper (JHaines 2026)
+* **[Specification]** `docs/specs/observ_calculus_v1.md` — Measurement-map wire
+* **[Source File]** `packages/rust/observ` — Observability calculus kernel
+
+# ADR-0024: Reversal-Space Tomography of Weak Altermagnetic Exchange in MnF₂
+
+**Status:** Accepted
+
+## Context
+Weak δJ7 at few-µeV scale needs engineered readout multiplication. Signed readout certification requires engineering discipline.
+
+## Decision
+Adopt reversal-space tomography: binary design coordinates of (ℤ₂)^N experiment; Walsh-Hadamard contrast decomposition; path-consistency gate; forbidden-sector coefficients as falsification channels.
+
+## Consequences
+* Weak-exchange readouts become certifiably signed and falsifiable
+* Gain measured in transduction, not coefficient amplification
+* Hysteresis and domain drift explicitly tested
+
+## Traceability & Artifact Links
+* **[Source File]** `docs/adr/proposed/Paper3 Reversal-Space Tomography of Weak Altermagnetic Exchange in MnF2- Path Validated Signed Readout Engineering - JHaines 2026.pdf` — Source paper (JHaines 2026)
+* **[Specification]** `docs/specs/observ_calculus_v1.md` — Measurement-map wire
+* **[Source File]** `packages/rust/observ` — Observability calculus kernel
+
+# ADR-0025: Static Multipolar Order and Dynamical Chiral Response — Probe-Tensor Correspondence
+
+**Status:** Accepted
+
+## Context
+MnF₂ spans elastic multipole reconstruction and inelastic magnon chirality. Whether static multipole can be inferred from dynamical chiral measurement purely from symmetry is central question.
+
+## Decision
+Adopt probe-tensor correspondence: Hamiltonian coordinates, equilibrium tensors, response tensors, correlations, probe/instrument map are distinct objects — never collapsed; no automatic substitution.
+
+## Consequences
+* Static-rank and dynamical-chirality results separate propositions
+* Every multipole reconstruction states conditioning assumptions or not closed
+* K component established for ADR-0026 benchmark
+
+## Traceability & Artifact Links
+* **[Source File]** `docs/adr/proposed/Paper4 Static Multipolar Order and Dynamical Chiral Response in MnF2- Probe Tensor Correspondence and Conditional Rank Identifiability - JHaines 2026.pdf` — Source paper (JHaines 2026)
+* **[Specification]** `docs/specs/observ_calculus_v1.md` — Measurement-map wire
+* **[Source File]** `packages/rust/observ` — Observability calculus kernel
+
+# ADR-0026: Symmetry-Complement Coordinates Across Altermagnets — Cross-Material Falsification
+
+**Status:** Accepted
+
+## Context
+Portable symmetry argument must survive materials with different hierarchy, probe physics, and magnetic state. Must survive adversarial controls (FeF₂, MnSi).
+
+## Decision
+Adopt six-component claim vector c = (M,S,E,χ,R,K); predeclared-reference admissibility A_m,j = A_ind ∧ A_state ∧ A_null ∧ A_no-retune; adversarial controls enforced.
+
+## Consequences
+* Restricted generalization survives — response-specific sectors only
+* Attribution killed by source-state gate before downstream counted
+* MnF₂ near-scalar; MnTe/CrSb require broader sectors
+
+## Traceability & Artifact Links
+* **[Source File]** `docs/adr/proposed/Paper5 Symmetry Complement Coordinates Across Altermagnets- Predeclared References and Cross Material Falsification - JHaines 2026.pdf` — Source paper (JHaines 2026)
+* **[Specification]** `docs/specs/observ_calculus_v1.md` — Measurement-map wire
+* **[Source File]** `packages/rust/observ` — Observability calculus kernel
+
+# ADR-0027: When Null Does Not Mean Absent — Measurement-Map Geometry
+
+**Status:** Accepted
+
+## Context
+A null outcome is not physical absence. Latent state passes through source, response, probe, averaging, transfer, and nuisance stages. Four-null distinction generalized to compositional calculus.
+
+## Decision
+Adopt layered geometry: M = T ∘ A ∘ P ∘ R ∘ S; null-then-witness filtration K_j = ker F_j; refactor attribution; target-specific closure K_j ⊆ ker C; common-state closure by kernel intersection.
+
+## Consequences
+* Every null attributed to specific stage or label withheld
+* Raw signal can be non-identifying; null can coexist with nonzero signal
+* Reversal channels double as obstruction testbeds
+
+## Traceability & Artifact Links
+* **[Source File]** `docs/adr/proposed/Paper6 When Null Does Not Mean Absent- Measurement Map Geometry, Factorization Boundaries, and Null Witness Duality - JHaines 2026.pdf` — Source paper (JHaines 2026)
+* **[Specification]** `docs/specs/observ_calculus_v1.md` — Measurement-map wire
+* **[Source File]** `packages/rust/observ` — Observability calculus kernel
+
+# ADR-0028: Target-First Observability Calculus — Admissible Ambiguity
+
+**Status:** Accepted
+
+## Context
+Design organized around available instrument rather than target claim is flawed. High-amplitude measurement may have zero target design gain; smaller measurement may close target.
+
+## Decision
+Adopt target-first calculus: 13-step protocol. Residual ambiguity O_C(E) = C(ker A_E); design gain Δ_C(B|E) = d_C(E) − d_C(E∪B); practical margin μ_C(J_eff).
+
+## Consequences
+* Experiment selection by Δ_C > 0 or admissible-set contraction
+* Every claim carries declared target, state gate, forward map, nuisance, ambiguity, reversal, diagnostic, falsification
+* Three shortcuts forbidden for MnF₂ named explicitly
+
+## Traceability & Artifact Links
+* **[Source File]** `docs/adr/proposed/Paper7 From Hidden Order to Identifiable Physics- A Target First Observability Calculus with Admissible Ambiguity and Dual Obstructions - JHaines 2026.pdf` — Source paper (JHaines 2026)
+* **[Specification]** `docs/specs/observ_calculus_v1.md` — Measurement-map wire
+* **[Source File]** `packages/rust/observ` — Observability calculus kernel
+
+-----------------------------------
+All proofs checked and tests passed successfully.
+
+# ---- stderr ----
+⚠ [4/22] Replayed ADR.Examples
+warning: ADR/Examples.lean:798:25: This simp argument is unused:
+  ADR.status
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [allAcceptedADRs, adr0013, adr0014, adr0015, adr0016, adr0017, adr0018, adr0019, adr0020, adr0022,
+    adr0023, adr0024, adr0025, adr0026, adr0027, adr0028]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: ADR/Examples.lean:803:8: This simp argument is unused:
+  ADR.id
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [adr0013, adr0014, adr0015, adr0016, adr0017, adr0018, adr0019, adr0020, adr0022, adr0023, adr0024,
+    adr0025, adr0026, adr0027, adr0028]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: ADR/Examples.lean:808:25: This simp argument is unused:
+  ADR.supersedes
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [allAcceptedADRs, adr0013, adr0014, adr0015, adr0016, adr0017, adr0018, adr0019, adr0020, adr0022,
+    adr0023, adr0024, adr0025, adr0026, adr0027, adr0028]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: ADR/Examples.lean:835:10: This simp argument is unused:
+  ADR.id
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [adr0013, adr0014, adr0015, adr0016, adr0017, adr0018, adr0019, adr0020, adr0022, adr0023, adr0024,
+    adr0025, adr0026, adr0027, adr0028]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+⚠ [6/22] Replayed ADR.Prism
+warning: ADR/Prism.lean:185:10: `if_pos` has been deprecated: Use `ite_eq_left` instead
+warning: ADR/Prism.lean:191:12: `if_neg` has been deprecated: Use `ite_eq_right` instead
+warning: ADR/Prism.lean:191:23: `if_pos` has been deprecated: Use `ite_eq_left` instead
+warning: ADR/Prism.lean:197:14: `if_neg` has been deprecated: Use `ite_eq_right` instead
+warning: ADR/Prism.lean:197:25: `if_neg` has been deprecated: Use `ite_eq_right` instead
+warning: ADR/Prism.lean:197:36: `if_pos` has been deprecated: Use `ite_eq_left` instead
+warning: ADR/Prism.lean:244:6: `if_pos` has been deprecated: Use `ite_eq_left` instead
+warning: ADR/Prism.lean:254:6: `if_neg` has been deprecated: Use `ite_eq_right` instead
+warning: ADR/Prism.lean:254:18: `if_pos` has been deprecated: Use `ite_eq_left` instead
+warning: ADR/Prism.lean:265:6: `if_neg` has been deprecated: Use `ite_eq_right` instead
+warning: ADR/Prism.lean:268:6: `if_neg` has been deprecated: Use `ite_eq_right` instead
+warning: ADR/Prism.lean:268:17: `if_pos` has been deprecated: Use `ite_eq_left` instead
+warning: ADR/Prism.lean:279:6: `if_neg` has been deprecated: Use `ite_eq_right` instead
+warning: ADR/Prism.lean:282:6: `if_neg` has been deprecated: Use `ite_eq_right` instead
+warning: ADR/Prism.lean:284:6: `if_neg` has been deprecated: Use `ite_eq_right` instead
+warning: ADR/Prism.lean:305:6: `if_pos` has been deprecated: Use `ite_eq_left` instead
+warning: ADR/Prism.lean:317:6: `if_neg` has been deprecated: Use `ite_eq_right` instead
+⚠ [7/22] Replayed ADR.Archivum
+warning: ADR/Archivum.lean:207:5: `List.getElem?_inj` has been deprecated: Use `List.Nodup.getElem?_inj` instead
+
+Note: The updated constant is in a different namespace. Dot notation may need to be changed (e.g., from `x.getElem?_inj` to `List.Nodup.getElem?_inj x`).
+warning: ADR/Archivum.lean:371:80: `if_neg` has been deprecated: Use `ite_eq_right` instead
+warning: ADR/Archivum.lean:387:10: `if_pos` has been deprecated: Use `ite_eq_left` instead
+warning: ADR/Archivum.lean:387:21: `if_pos` has been deprecated: Use `ite_eq_left` instead
+warning: ADR/Archivum.lean:392:80: `if_neg` has been deprecated: Use `ite_eq_right` instead
+⚠ [9/22] Replayed ADR.TextualTyping
+warning: ADR/TextualTyping.lean:102:6: `if_neg` has been deprecated: Use `ite_eq_right` instead
+✔ [12/22] Built ADR.Proofs:c.o (173ms)
+✔ [13/22] Built ADR.Examples:c.o (490ms)
+✔ [14/22] Built ADR.Prism:c.o (741ms)
+✔ [15/22] Built ADR.Export:c.o (819ms)
+✔ [16/22] Built ADR.OSCAL:c.o (807ms)
+✔ [17/22] Built ADR.Archivum:c.o (873ms)
+✔ [18/22] Built ADR.TextualTyping:c.o (950ms)
+✔ [19/22] Built ADR.Test:c.o (549ms)
+✔ [20/22] Built ADR.Core:c.o (1.3s)
+✔ [21/22] Built ADR.MetaRelativity:c.o (1.2s)
+✔ [22/22] Built adrTest:exe (953ms)

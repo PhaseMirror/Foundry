@@ -3,9 +3,9 @@
 *Formally verified and machine-checked in Lean 4.*
 
 Registry version: 1.0.0
-Total ADRs: 36
+Total ADRs: 41
 - Proposed: 3
-- Accepted: 16
+- Accepted: 21
 - Completed: 16
 - Superseded: 1
 
@@ -30,6 +30,11 @@ Total ADRs: 36
 | [ADR-0061](ADR-0061.md) | Strict Validation & Fail-Closed Errors for Missing Delimiters | Accepted | - |
 | [ADR-0064](ADR-0064.md) | Hundian Social Physics Occupancy Governance & Term-Order Gate | Accepted | - |
 | [ADR-0065](ADR-0065.md) | Formal Verification Completeness for ADR Registry | Accepted | - |
+| [ADR-0066](ADR-0066.md) | PrismPM and Langlands Prism | Accepted | - |
+| [ADR-0067](ADR-0067.md) | PrismPm Archivum | Accepted | - |
+| [ADR-0068](ADR-0068.md) | OSCAL and PrismPM | Accepted | - |
+| [ADR-0069](ADR-0069.md) | Native Textual Typing and Operator-Class Constraint | Accepted | - |
+| [ADR-0070](ADR-0070.md) | Meta-Relativity F1 | Accepted | - |
 | [ADR-0014](completed/ADR-0014.md) | UCC as a Service — Year One Roadmap | Completed | - |
 | [ADR-0015](completed/ADR-0015.md) | Unified Civic Infrastructure Outline | Completed | - |
 | [ADR-0016](completed/ADR-0016.md) | UOR Civic Infrastructure — Three Epochs | Completed | - |

@@ -4,6 +4,7 @@ import ADR.Examples
 import ADR.Export
 import ADR.Test
 import ADR.Migrated
+import ADR.MigratedDocs
 
 /-!
 # ADR Formal Governance Library — Entry Facade

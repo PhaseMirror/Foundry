@@ -86,6 +86,26 @@ directories (`completed/` — 16 markdown, formerly in `accepted/`; `proposed/` 
   `ADR.Core`, `ADR.Proofs`, `ADR.Examples`, `ADR.Export`, and the `adrTest`
   test driver (builds and runs `@[test_driver]` on `lake test`).
 
+### ADR verification results
+
+Per-ADR verification gates are run with
+`scripts/run_adr_tests.py <adr.md>`, which regenerates the ledger index
+(`docs/adr/README.md`), checks for `sorry` debt, builds the Lean library, and
+runs the `adrTest` driver before persisting `summary.json` + `REPORT.md` + raw
+logs under `docs/adr/results/<adr-id>-<slug>/` (a `latest/` mirror plus an
+immutable `run-YYYYMMDD-HHMMSS/` snapshot).
+
+| ADR | Gate | Result | Report |
+| :--- | :--- | :---: | :--- |
+| **ADR-0110 — OSCAL and PrismPM** | `adr-index` · `adr-sorry-check` · `lake build ADR` · `lake test` | `PASS` | [`docs/adr/results/ADR-0110-OSCAL-and-PrismPM/latest/REPORT.md`](docs/adr/results/ADR-0110-OSCAL-and-PrismPM/latest/REPORT.md) |
+
+The ADR-0110 gate passes the full zero-`sorry` OSCAL/Scopist formal model
+(`ADR/OSCAL.lean`, exercised by `testOscalScopistLaw`,
+`testOscalLawConsequences`, `testOscalConsequenceEntailment`,
+`testOscalRegistryInvariants`): Scopist determinism/idempotency, zero-drift
+(`SIG_GOV_KILL ⇒ UNATTESTED`), attestation boundary, packaging-only OSCAL, and
+registry invariants (uniqueIds, acyclic, supersession, traceability, immutability).
+
 ## ADR-0013 Core slice — implementation status
 
 Implemented, and currently the verified ADR-0013 Core-slice baseline:
@@ -182,8 +202,10 @@ lake exe adr0013_test       # 17/17 PASS
 ```
 
 The **root** Lean project (v4.34.0-rc2) builds the `Foundations`, `ADR`
-(`adrTest`), and `WordLove` targets; it was not executed in this session and
-requires the root toolchain. `cargo check --workspace` is not green (see
+(`adrTest`), and `WordLove` targets; `lake build ADR` and `lake test` pass at
+HEAD with the root toolchain (see the per-ADR gate run under
+[ADR verification results](#adr-verification-results)).
+`cargo check --workspace` is not green (see
 [Rust Workspace](#rust-workspace)).
 
 `cargo test -p crmf` and `lake test` remain the local acceptance paths when

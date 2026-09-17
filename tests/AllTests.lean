@@ -9,8 +9,8 @@ import Foundations.Int.Basic
 import Foundations.Rat.Basic
 import Foundations.Bose.Core
 import Foundations.Bose.Proofs
-import Foundations.ADR.Core
-import Foundations.ADR.Proofs
+import ADR.Core
+import ADR.Proofs
 import Foundations.Care.Core
 import Foundations.CSL.Homomorphism
 import Foundations.Goldilocks.Core
@@ -180,12 +180,12 @@ open Foundations.Rat
 
 /-! ## ADR Governance Core Tests -/
 
-#check @Foundations.ADR.ADR
-#check @Foundations.ADR.ADRStatus
-#check @Foundations.ADR.PropTerm.evalB_sound
-#check @Foundations.ADR.accepted_status_immutable
-#check @Foundations.ADR.acyclic_no_self_supersede
-#check @Foundations.ADR.registry_coherent_no_conflicts
+#check @ADR.ADR
+#check @ADR.ADRStatus
+#check @ADR.PropTerm.evalB_sound
+#check @ADR.accepted_status_immutable
+#check @ADR.acyclic_no_self_supersede
+#check @ADR.registry_coherent_no_conflicts
 
 /-! ## Multiplicity Care Physics Tests (Ported from Foundry) -/
 

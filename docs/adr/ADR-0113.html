@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ADR-0113 - Universal Closure Calculator — Unified Kernel Surface</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 40px auto; line-height: 1.6; padding: 0 20px; color: #24292e; }
+    h1 { border-bottom: 1px solid #eaecef; padding-bottom: 0.3em; }
+    .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-weight: bold; background: #e1f5fe; color: #0277bd; }
+    code { background: #f6f8fa; padding: 2px 5px; border-radius: 3px; font-family: monospace; }
+  </style>
+</head>
+<body>
+  <h1>ADR-0113: Universal Closure Calculator — Unified Kernel Surface</h1>
+  <p><span class="badge">Status: Accepted</span></p>
+  
+
+  <h2>Context</h2>
+  <p>The Foundry hosts several independently verified surfaces — ADR governance, Care Circle viability, the Homestead L0 civic-edge gate, Kappa contractivity, and WordLove — each with its own proofs and artifacts. The Universal Closure Calculator (UCC) sextuple (X, ∘, α, μ, F, Δ) is the declared kernel boundary, but no single accepted decision binds those surfaces to it, so traceability, proof debt, and CI enforcement are fragmented across modules.</p>
+
+  <h2>Decision</h2>
+  <p>Adopt the UCC sextuple as the canonical integration surface and wire every verified Foundry surface to it. (1) Edge admission: the L0 fail-closed gate of `Homestead_UCC_Care_Bridge` (Seal ⟹ contractivity Λ_m < 1, entropy non-increase ΔS ≤ 0, Care Phase Mirror v2 viability, Hundian budget). (2) Contractivity evidence for Δ: the Kappa spectral-gap and Lyapunov witnesses. (3) Governance machinery: the ADR-0010 proof-debt manifest, `scripts/check_adr_sorry.py`, `.github/workflows/lean-gate.yml`, `adrExport`, and the property/concurrency tests. (4) Wire contract: the integer-only BCS wire of `docs/specs/ucc_sextuple_v1.md` and `contracts/universal_closure.yaml`. Retire the `ADR/ADR/` and `pirtm/lean/Foundations/ADR/` shadow scaffolds so the surface has one source of truth. No claim is made about the Riemann Hypothesis.</p>
+
+  <h2>Consequences</h2>
+  <ul>
+      <li>Every closure call returns Closure, Defect (Δ named in English), Receipt, and Levers (ADR-0014)</li>
+      <li>Unlawful transitions fail closed at L0; Seal implies contractivity, ΔS ≤ 0, and Care viability</li>
+      <li>Proof debt is explicit and bounded: 13 manifest-authorized Kappa sorries, zero untracked, checker-enforced in CI</li>
+      <li>Shadow scaffolds retired; the ADR.* namespace is the sole governance authority</li>
+      <li>Integer-only wire: floating point remains structurally excluded (ADR-0021)</li>
+  </ul>
+
+  <h2>Traceability & Links</h2>
+  <ul>
+      <li><strong>[Specification]</strong> <code>docs/specs/ucc_sextuple_v1.md</code> &mdash; Canonical sextuple (X, ∘, α, μ, F, Δ) wire format and L0 lawfulness gate</li>
+      <li><strong>[Specification]</strong> <code>contracts/universal_closure.yaml</code> &mdash; Declarative associator tolerance Δ ≤ ε and closure-operator bounds (fail-closed)</li>
+      <li><strong>[Lean Declaration]</strong> <code>ADR/Theorems/Homestead_UCC_Care_Bridge.lean</code> &mdash; L0 gate soundness: Seal ⟹ contractivity, entropy non-increase, Care viability, Hundian budget</li>
+      <li><strong>[Lean Declaration]</strong> <code>Foundations/Kappa/Stability.lean</code> &mdash; Contractivity witnesses: Lyapunov non-negativity, stability decreasing, prime stability advantage</li>
+      <li><strong>[Lean Declaration]</strong> <code>Foundations/Kappa/Spectral.lean</code> &mdash; Spectral gap positivity and finite relaxation time</li>
+      <li><strong>[Lean Declaration]</strong> <code>ADR/Properties.lean</code> &mdash; Property-based concurrency conflict, traceability, and export-determinism tests</li>
+      <li><strong>[Source File]</strong> <code>scripts/check_adr_sorry.py</code> &mdash; Manifest-aware proof-debt gate (ADR-0010)</li>
+      <li><strong>[Source File]</strong> <code>.github/workflows/lean-gate.yml</code> &mdash; CI gate: lake build + lake test + sorry checker on the pinned toolchain</li>
+      <li><strong>[Specification]</strong> <code>state/alp_sorry_manifest.json</code> &mdash; Proof-debt ledger: 13 authorized Kappa sorries, zero drift</li>
+      <li><strong>[Specification]</strong> <code>ADR/README.md</code> &mdash; Single source of truth; records shadow-scaffold retirement</li>
+    </ul>
+</body>
+</html>

@@ -1,5 +1,6 @@
--- NFiber.lean
 import roc_engine.Lyapunov
+
+-- NFiber.lean
 
 /-- We model n-fibres as a List of States. This entirely avoids Mathlib dependency
     while allowing us to reason about an arbitrary, unbounded number of coupled fibres. -/

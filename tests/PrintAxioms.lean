@@ -2,8 +2,8 @@ import Foundations.Bose.Core
 import Foundations.Bose.Proofs
 import Foundations.Care.Core
 import Foundations.CSL.Homomorphism
-import Foundations.ADR.Core
-import Foundations.ADR.Proofs
+import ADR.Core
+import ADR.Proofs
 
 #print axioms Foundations.Bose.boseMultiplicity
 #print axioms Foundations.Bose.encodeBoseState

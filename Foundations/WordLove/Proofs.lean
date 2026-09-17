@@ -364,13 +364,13 @@ theorem sealed_state_108_cycle_permutations_invariant :
 theorem insertDescending_ge (x y : Nat) (ys : List Nat) (h : y ≤ x) :
     PrimeMultiplicity.insertDescending x (y :: ys) = x :: y :: ys := by
   dsimp [PrimeMultiplicity.insertDescending]
-  rw [if_pos h]
+  rw [ite_eq_left h]
 
 @[wordlove_proof]
 theorem insertDescending_lt (x y : Nat) (ys : List Nat) (h : ¬ y ≤ x) :
     PrimeMultiplicity.insertDescending x (y :: ys) = y :: PrimeMultiplicity.insertDescending x ys := by
   dsimp [PrimeMultiplicity.insertDescending]
-  rw [if_neg h]
+  rw [ite_eq_right h]
 
 /-- Commutativity of `insertDescending`: the core algebraic property justifying
     the induction step across `List.Perm.swap`. Inserting two prime factors in

@@ -1,4 +1,3 @@
--- Aggregation of all consolidated Sedona Spine compliant packages
 import Foundations.Operators.AceScnCsc.ACE_SCN_CSC
 import Foundations.Operators.AceScnCsc.AtlasSCNBridge
 import Foundations.Operators.AceScnCsc.KernelTelemetry
@@ -35,3 +34,6 @@ import foundations.UniversalClosure
 import foundations.Attestation
 import foundations.Completion
 import foundations.CompletionAdjunction
+
+-- Aggregation of all consolidated Sedona Spine compliant packages
+

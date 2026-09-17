@@ -1,5 +1,6 @@
--- CrossFiber.lean
 import roc_engine.Lyapunov
+
+-- CrossFiber.lean
 
 /-- Represents the coupled state of two ROC fibres (e.g. Physical and Social) -/
 structure JointState where

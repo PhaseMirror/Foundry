@@ -33,7 +33,7 @@ structure AgencyCertificate where
   unity : alpha_ft01 + alpha_le02 + alpha_commander = 10000
   stability : (alpha_ft01 * 6200 + alpha_le02 * 6000 + alpha_commander * 6500) / 10000 ≤ 7000
 
-def agencyCert : AgencyCertificate := {
+theorem agencyCert : AgencyCertificate := {
   unity := systemic_weight_unity,
   stability := agency_spectral_stability
 }

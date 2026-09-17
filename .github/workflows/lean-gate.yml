@@ -1,0 +1,78 @@
+name: Lean Formal Gate (ADR-0010)
+
+# Every change to the formal governance stack must build, must pass the test
+# harness, and must respect the sorry manifest (zero UNTRACKED proof debt) on
+# the exact toolchain pinned in `lean-toolchain`.
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - "ADR/**"
+      - "Care/**"
+      - "Foundations/**"
+      - "WordLove/**"
+      - "lean/**"
+      - "lakefile.lean"
+      - "lean-toolchain"
+      - "scripts/check_adr_sorry.py"
+      - "state/alp_sorry_manifest.json"
+      - ".github/workflows/lean-gate.yml"
+  pull_request:
+    paths:
+      - "ADR/**"
+      - "Care/**"
+      - "Foundations/**"
+      - "WordLove/**"
+      - "lean/**"
+      - "lakefile.lean"
+      - "lean-toolchain"
+      - "scripts/check_adr_sorry.py"
+      - "state/alp_sorry_manifest.json"
+      - ".github/workflows/lean-gate.yml"
+  workflow_dispatch:
+
+jobs:
+  lean-gate:
+    name: lake build + lake test + sorry manifest check
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install elan + Lean toolchain (lean-toolchain)
+        run: |
+          curl -sSfL https://github.com/leanprover/elan/releases/download/v4.0.6/elan-x86_64-unknown-linux-gnu.tar.gz \
+            -o /tmp/elan.tar.gz
+          tar -xzf /tmp/elan.tar.gz -C /tmp
+          /tmp/elan-init -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+        env:
+          ELAN_NO_SELF_UPDATE: "1"
+
+      - name: Cache Lake build artifacts
+        uses: actions/cache@v4
+        with:
+          path: .lake/build
+          key: lean-${{ runner.os }}-${{ hashFiles('lean-toolchain', 'lakefile.lean') }}-${{ hashFiles('**/*.lean') }}
+          restore-keys: |
+            lean-${{ runner.os }}-${{ hashFiles('lean-toolchain', 'lakefile.lean') }}-
+
+      - name: lake build
+        run: lake build
+        env:
+          LEAN_ABORT_ON_PANIC: "1"
+
+      - name: lake test
+        run: lake test
+
+      - name: ADR-0010 sorry manifest check
+        run: python3 scripts/check_adr_sorry.py
+
+      - name: Upload build log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lake-build-log
+          path: ${{ runner.temp }}
+          if-no-files-found: ignore

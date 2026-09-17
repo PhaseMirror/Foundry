@@ -1,6 +1,7 @@
+import Foundations.LinearAlgebra.Matrix
+
 -- lean/Core/Drift.lean
 -- Production-grade formalisation of drift for square matrices.
-import Foundations.LinearAlgebra.Matrix
 
 
 open Multiplicity.Core
@@ -54,14 +55,14 @@ def drift {n : Nat} (A B : Matrix n) : Nat :=
         have : C i j - A i j ≤ (B i j - A i j) + (C i j - B i j) := by
           rw [← Nat.sub_add_sub_cancel hAB hBC]
           exact Nat.le_add_right _ _
-        simpa [if_pos hAC, if_pos hAB, if_pos hBC] using this
+        simpa [ite_eq_left hAC, ite_eq_left hAB, ite_eq_left hBC] using this
       · have hCB : C i j ≤ B i j := le_of_not_ge hBC
         have : B i j - A i j ≤ (B i j - A i j) + (B i j - C i j) := Nat.le_add_right _ _
         have : C i j - A i j ≤ (B i j - A i j) + (B i j - C i j) := by
           have : C i j ≤ B i j := hCB
           have : C i j - A i j ≤ B i j - A i j := Nat.sub_le_sub_right this _
           exact Nat.le_trans this (Nat.le_of_eq rfl)
-        simpa [if_pos hAB, if_neg hCB] using this
+        simpa [ite_eq_left hAB, ite_eq_right hCB] using this
     · have hBA : B i j < A i j := Nat.lt_of_not_ge hAB
       by_cases hBC : B i j ≤ C i j
       · have hAC : C i j ≤ A i j := le_trans (le_of_lt hBA) hBC
@@ -73,7 +74,7 @@ def drift {n : Nat} (A B : Matrix n) : Nat :=
                   = (A i j - B i j) + (B i j - C i j) := by
                     rw [Nat.sub_sub, Nat.sub_eq_iff_eq_add (le_of_lt hBA), Nat.add_comm]
           simpa [this] using Nat.le_add_right _ _
-        simpa [if_neg hBA, if_pos hBC, if_pos hAC] using this
+        simpa [ite_eq_right hBA, ite_eq_left hBC, ite_eq_left hAC] using this
       · have hCB : C i j < B i j := Nat.lt_of_not_ge hBC
         have hAC : C i j ≤ A i j := le_trans (le_of_lt hCB) (le_of_lt hBA)
         have : A i j - C i j ≤ (A i j - B i j) + (B i j - C i j) := by
@@ -84,7 +85,7 @@ def drift {n : Nat} (A B : Matrix n) : Nat :=
                   = (A i j - B i j) + (B i j - C i j) := by
                     rw [Nat.sub_sub, Nat.sub_eq_iff_eq_add (le_of_lt hBA), Nat.add_comm]
           simpa [this] using Nat.le_add_right _ _
-        simpa [if_neg hBA, if_neg hCB, if_pos hAC] using this
+        simpa [ite_eq_right hBA, ite_eq_right hCB, ite_eq_left hAC] using this
   exact Nat.le_trans htri (Nat.le_add_right _ _)
 
 

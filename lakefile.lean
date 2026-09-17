@@ -29,6 +29,11 @@ lean_lib ADR where
 @[test_driver]
 lean_exe adrTest where root := `ADR.Test
 
+-- Regenerate `docs/adr/` (Markdown + HTML + JSON + registry index) from the
+-- machine-checked ADR set. Deterministic: `lake build adrExport && ./.lake/build/bin/adrExport`.
+@[default_target]
+lean_exe adrExport where root := `ADR.Main
+
 -- Word Love hybrid primality + certified coupling (ADR-0031 §6, ADR-0033 P5).
 -- Roots map to the `Foundations.WordLove` namespace; built as `libFoundations_WordLove.so`
 -- for the `wordlove-ffi` Rust binding (`lake build WordLove:shared`).

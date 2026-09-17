@@ -1,8 +1,8 @@
+import Lean
+
 -- lean/ExportThresholds.lean
 -- Auto-generates Rust structs from verified Lean theorems.
 -- Invoked via `lake run export_thresholds -- --out-dir <path>`
-
-import Lean
 
 open Lean
 

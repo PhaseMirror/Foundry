@@ -1,4 +1,14 @@
-import Foundations.ADR.Core
+import ADR.Core
+
+/-!
+# Governance Core — canonical ADR model integration
+
+The retired `Foundations.ADR.*` shadow namespace (see `ADR/README.md`) was
+deleted in the ADR consolidation. This module now imports the canonical
+`ADR.Core` model directly; the single source of truth for the ADR structure,
+`ADRStatus`, and lifecycle semantics lives in `ADR/`.
+-/
+open ADR
 
 /-!
 # Foundations.Governance.Core — ADR Lifecycle State Machine & Immutability Governance
@@ -8,8 +18,6 @@ enforcing the immutability theorem, link requirements, and non-reentrant accepta
 -/
 
 namespace Foundations.Governance
-
-open Foundations.ADR
 
 /-- Permitted status transitions in the ADR governance state machine. -/
 def canTransition (old new_st : ADRStatus) : Bool :=
@@ -40,7 +48,7 @@ theorem no_reentrant_acceptance (old new_st : ADRStatus) :
 
 /-- Theorem: Every valid transition preserves the ADR's identity. -/
 theorem valid_transition_preserves_id (old new_st : ADRStatus) (a b : ADR)
-    (h_trans : ValidTransition old new_st a) (h_id : a.id = b.id) :
+    (_h_trans : ValidTransition old new_st a) (h_id : a.id = b.id) :
     b.id = a.id := by
   exact h_id.symm
 

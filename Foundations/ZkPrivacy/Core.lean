@@ -25,7 +25,7 @@ structure ZkProof where
   verified   : Bool
   deriving Repr, DecidableEq
 
-def isSoundProof (proof : ZkProof) (input : PublicInput) : Bool :=
+def isSoundProof (proof : ZkProof) (_input : PublicInput) : Bool :=
   proof.verified && proof.proofBytes.size > 0
 
 theorem sound_proof_verified (proof : ZkProof) (input : PublicInput)

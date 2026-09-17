@@ -90,8 +90,8 @@ theorem certified_gamma_zero_on_inadmissible (p n trust : Nat)
     FFI.gammaCertified p n trust certP certN = 0 := by
   unfold FFI.gammaCertified
   rcases h with hp | hn
-  · exact if_pos (by rw [hp, Bool.not_false, Bool.true_or])
-  · exact if_pos (by rw [hn, Bool.not_false, Bool.or_true])
+  · exact ite_eq_left (by rw [hp, Bool.not_false, Bool.true_or])
+  · exact ite_eq_left (by rw [hn, Bool.not_false, Bool.or_true])
 
 /-- **Gate inertness.** When both orbitals are admissible, the certified
 coupling agrees exactly with the ungated reference model: certification adds
@@ -151,8 +151,8 @@ theorem joint_admissible_multiplicity (p n trust : Nat)
       FFI.gammaCertified p n trust certP certN = couplingRaw p n trust := by
   refine ⟨?_, certified_gamma_agrees_when_admissible p n trust certP certN hp hn⟩
   unfold certifiedMultiplicity
-  have h1 : (if isHybridPrime p certP then (1 : Nat) else 0) = 1 := if_pos hp
-  have h2 : (if isHybridPrime n certN then (1 : Nat) else 0) = 1 := if_pos hn
+  have h1 : (if isHybridPrime p certP then (1 : Nat) else 0) = 1 := ite_eq_left hp
+  have h2 : (if isHybridPrime n certN then (1 : Nat) else 0) = 1 := ite_eq_left hn
   rw [h1, h2]
   try rfl
 

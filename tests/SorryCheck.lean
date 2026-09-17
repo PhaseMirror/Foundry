@@ -6,10 +6,10 @@ import Foundations.PeanoN.Div
 import Foundations.Bose.Core
 import Foundations.Bose.Proofs
 import Foundations.Bose.Examples
-import Foundations.ADR.Core
-import Foundations.ADR.Proofs
-import Foundations.ADR.Examples
-import Foundations.ADR.Export
+import ADR.Core
+import ADR.Proofs
+import ADR.Examples
+import ADR.Export
 import Foundations.Care.Core
 import Foundations.CSL.Homomorphism
 import Foundations.Goldilocks.Core

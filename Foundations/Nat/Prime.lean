@@ -75,7 +75,7 @@ theorem not_prime_zero : ¬ IsPrime 0 := fun h => by have := h.1; omega
 theorem prime_dvd_eq_one_or_self {p d : Nat} (hp : IsPrime p) (h : d ∣ p) : d = 1 ∨ d = p :=
   hp.2 d h
 
-theorem prime_only_proper_divisor {p d : Nat} (hp : IsPrime p) (hd : 0 < d) (hdlt : d < p) (h : d ∣ p) : d = 1 := by
+theorem prime_only_proper_divisor {p d : Nat} (hp : IsPrime p) (_hd : 0 < d) (hdlt : d < p) (h : d ∣ p) : d = 1 := by
   have h2 := hp.2 d h
   cases h2 with
   | inl h => exact h

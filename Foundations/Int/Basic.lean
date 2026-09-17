@@ -34,7 +34,7 @@ theorem add_sub_cancel (a b : Int) : a + b - b = a := by exact _root_.Int.add_su
 
 theorem neg_neg (a : Int) : -(-a) = a := by exact _root_.Int.neg_neg a
 theorem neg_zero : -(0 : Int) = 0 := by exact _root_.Int.neg_zero
-theorem neg_add : ∀ (a b : Int), -(a + b) = -a + -b := fun a b => _root_.Int.neg_add
+theorem neg_add : ∀ (a b : Int), -(a + b) = -a + -b := fun _ _ => _root_.Int.neg_add
 theorem neg_sub : ∀ (a b : Int), -(a - b) = b - a := fun a b => _root_.Int.neg_sub a b
 
 theorem le_refl : ∀ (a : Int), a ≤ a := fun a => _root_.Int.le_refl a

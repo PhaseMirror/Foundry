@@ -2,6 +2,17 @@ import Foundations.ADR.Core
 import Foundations.ADR.Proofs
 import Foundations.ADR.PrimeRecursive
 
+
+/-!
+# DEPRECATED — retired `Foundations.ADR.*` shadow scaffold
+
+Legacy parallel copy of the canonical `ADR.*` governance model (see
+`packages/Foundry/ADR/README.md`). It is **not** part of the Foundry Lake
+project, is never synced with the canonical type, and must not be imported.
+Retained for historical reference only; slated for removal.
+-/
+
+
 /-!
 # ADR Foundations Examples
 

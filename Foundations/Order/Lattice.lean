@@ -42,6 +42,7 @@ class BoundedLattice (α : Type) extends Lattice α where
 
 /-! ## Nat as a lattice -/
 
+@[instance_reducible]
 def natLattice : Lattice Nat where
   le := Nat.le
   lt := Nat.lt
@@ -49,7 +50,7 @@ def natLattice : Lattice Nat where
   le_antisymm _ _ := Nat.le_antisymm
   le_trans _ _ _ := Nat.le_trans
   lt_iff_le_not_le _ _ := ⟨fun h => ⟨Nat.le_of_lt h, Nat.not_le.mpr h⟩,
-    fun ⟨h₁, h₂⟩ => Nat.not_le.mp h₂⟩
+    fun ⟨_h₁, h₂⟩ => Nat.not_le.mp h₂⟩
   sup := Nat.max
   inf := Nat.min
   le_sup_left := Nat.le_max_left

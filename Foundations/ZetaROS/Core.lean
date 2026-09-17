@@ -25,7 +25,7 @@ structure BrokerState where
   msgCount : Nat
   deriving Repr, DecidableEq
 
-def publish (state : BrokerState) (msg : Message) : BrokerState :=
+def publish (state : BrokerState) (_msg : Message) : BrokerState :=
   { state with msgCount := state.msgCount + 1 }
 
 theorem publish_increments_count (state : BrokerState) (msg : Message) :

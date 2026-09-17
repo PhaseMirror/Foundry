@@ -222,9 +222,9 @@ theorem countGen_append (l₁ l₂ : List Nat) (p : Nat) :
   | nil => simp [countGen]
   | cons q rest ih =>
       by_cases h : q = p
-      · simp only [List.cons_append, countGen, if_pos h, ih]
+      · simp only [List.cons_append, countGen, ite_eq_left h, ih]
         omega
-      · simp only [List.cons_append, countGen, if_neg h, ih]
+      · simp only [List.cons_append, countGen, ite_eq_right h, ih]
 
 /-- Absence forces a zero exponent. -/
 theorem countGen_eq_zero_of_not_mem {l : List Nat} {p : Nat} (h : p ∉ l) :
@@ -260,7 +260,7 @@ theorem nuList_cons_tail_zero {p : Nat} {l : List Nat}
     (h : countGen l p = 0) : nuList (p :: l) = 2 * nuList l := by
   show (if countGen l p > 0 then nuList l
         else (countGen (p :: l) p + 1) * nuList l) = _
-  rw [if_neg (by rw [h]; omega)]
+  rw [ite_eq_right (by rw [h]; omega)]
   have hf : countGen (p :: l) p + 1 = 2 := by simp [countGen, h]
   rw [hf]
 
@@ -270,7 +270,7 @@ theorem nuList_cons_tail_pos {p : Nat} {l : List Nat}
     (h : 0 < countGen l p) : nuList (p :: l) = nuList l := by
   show (if countGen l p > 0 then nuList l
         else (countGen (p :: l) p + 1) * nuList l) = _
-  rw [if_pos h]
+  rw [ite_eq_left h]
 
 /-- **ν multiplies over disjoint (coprime) supports:** if no mode of `l₁`
 occurs in `l₂`, the divisor-like sub-history count of the concatenation is

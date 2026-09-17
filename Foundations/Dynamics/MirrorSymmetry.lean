@@ -27,7 +27,7 @@ structure DerivedModuliStack where
 def homotopy_cardinality (stack : DerivedModuliStack) : Float :=
   Float.ofNat stack.homotopy_card / Float.ofNat stack.automorphism_group_size
 
-theorem enumerative_is_homotopy (stack : DerivedModuliStack) (degree : Nat) (g : Nat)
+theorem enumerative_is_homotopy (_stack : DerivedModuliStack) (degree : Nat) (g : Nat)
     (h_ident : gromov_witten_invariant degree g = 1) :
   gromov_witten_invariant degree g = 1 := h_ident
 

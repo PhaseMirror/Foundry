@@ -42,10 +42,10 @@ theorem dist_mul_right (a b c : Nat) : dist (a * c) (b * c) = dist a b * c := by
   unfold dist
   by_cases h : a ≥ b
   · have h2 : a * c ≥ b * c := Nat.mul_le_mul_right c h
-    have h1 : (if a * c ≥ b * c then a * c - b * c else b * c - a * c) = a * c - b * c := if_pos h2
-    have h3 : (if a ≥ b then a - b else b - a) = a - b := if_pos h
+    have h1 : (if a * c ≥ b * c then a * c - b * c else b * c - a * c) = a * c - b * c := ite_eq_left h2
+    have h3 : (if a ≥ b then a - b else b - a) = a - b := ite_eq_left h
     rw [h1, h3, Nat.mul_sub_right_distrib]
-  · have h4 : (if a ≥ b then a - b else b - a) = b - a := if_neg h
+  · have h4 : (if a ≥ b then a - b else b - a) = b - a := ite_eq_right h
     by_cases hc : c = 0
     · subst hc
       simp
@@ -54,7 +54,7 @@ theorem dist_mul_right (a b c : Nat) : dist (a * c) (b * c) = dist a b * c := by
         have hlt : a < b := by omega
         have : a * c < b * c := Nat.mul_lt_mul_of_pos_right hlt (Nat.pos_of_ne_zero hc)
         omega
-      have h1 : (if a * c ≥ b * c then a * c - b * c else b * c - a * c) = b * c - a * c := if_neg h2
+      have h1 : (if a * c ≥ b * c then a * c - b * c else b * c - a * c) = b * c - a * c := ite_eq_right h2
       rw [h1, h4, Nat.mul_sub_right_distrib]
 
 /-- Theorem: Distance distributes with multiplication on the left. -/

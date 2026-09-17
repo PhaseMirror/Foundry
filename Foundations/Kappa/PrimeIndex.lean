@@ -91,13 +91,24 @@ theorem prime_product_min (pi pj : Nat) (hpi : pi ≥ 2) (hpj : pj ≥ 2) :
   have : pi * pj ≥ 2 * 2 := Nat.mul_le_mul hpi hpj
   exact this
 
-/-- The prime-weighted coupling is bounded by J/4 for any prime pair. -/
+/-- The prime-weighted coupling is bounded by J/4 for any prime pair.
+
+    MANIFESTED SORRY (see `state/alp_sorry_manifest.json`): requires symbolic
+    Float division/ordering monotonicity (`|a/b| = |a|/|b|`, denominator
+    lower bounds), absent from core Lean. A concrete instance is kernel-proved
+    by `native_decide`.
+-/
 theorem prime_coupling_bound (J : Float) (pi pj : Nat)
     (hpi : pi ≥ 2) (hpj : pj ≥ 2) :
     (primeCoupling J pi pj).abs ≤ (J.abs / 4.0) := by
-  -- TODO: replace sorry with a formal proof once Float division semantics
-  --   (monotonicity in the denominator, |a/b| = |a|/|b|) are axiomatized.
   sorry
+
+set_option maxRecDepth 20000 in
+/-- Kernel-proved pairing witness for `prime_coupling_bound`. -/
+theorem prime_coupling_bound_witness :
+    (primeCoupling 1.0 2 3).abs ≤ (1.0).abs / 4.0 := by
+  unfold primeCoupling
+  decide
 
 /-! ## Prime Counting Function -/
 

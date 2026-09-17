@@ -25,7 +25,7 @@ def sum (s : Multiset) : Nat := s.sum
 
 theorem sum_empty : (empty : Multiset).sum = 0 := rfl
 theorem sum_cons (a : Nat) (s : Multiset) : (a :: s).sum = a + s.sum := by
-  simp [sum, List.sum]
+  simp [List.sum]
 
 theorem elem_nonneg (s : Multiset) (a : Nat) (_h : a ∈ s) : 0 ≤ a := Nat.zero_le a
 

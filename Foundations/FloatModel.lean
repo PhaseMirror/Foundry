@@ -1,11 +1,11 @@
+import Foundations.Init.Core
+
 /-!
   FloatModel – a concrete, executable implementation of the abstract
   arithmetic layer used by the analytic scaffold.  All core operations are
   defined in terms of Lean's built‑in `Float` type, and the usual ring
   and order axioms are proved by `simp`.
 -/
-
-import Foundations.Init.Core
 
 namespace Multiplicity.FloatModel
 

@@ -1,16 +1,17 @@
-import Foundations.ADR.Core
+import ADR.Core
 import Foundations.Governance.Core
 
 /-!
-# Foundations.ControlSurface.Core — Shared Control Surface Contract
+# ControlSurface Core — canonical ADR model integration
 
-Formalizes the cross-layer control-surface contract schema mirroring Rust runtime structures,
-verifying non-reentrant acceptance, acyclic supersession, and link integrity.
+The retired `Foundations.ADR.*` shadow namespace (see `ADR/README.md`) was
+deleted in the ADR consolidation. This module now imports the canonical
+`ADR.Core` model directly.
 -/
 
 namespace Foundations.ControlSurface
 
-open Foundations.ADR
+open ADR
 open Foundations.Governance
 
 /-- Mirror of Rust CircuitBreakerState. -/

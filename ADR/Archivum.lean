@@ -204,7 +204,7 @@ theorem uniqueness_distinct_hashes {L : List SealedEnvelope}
     simp [List.getElem?_map, hj]
   intro hsame
   have hij : i = j :=
-    (List.getElem?_inj (by simpa using hi_len) hN).mp (by
+    (List.Nodup.getElem?_inj (by simpa using hi_len) hN).mp (by
       rw [hmap_i, hmap_j, hsame])
   subst j
   have hsa : some a = some b := hi.symm.trans hj
@@ -368,7 +368,7 @@ theorem admitted_implies_compatible {storeDomain : String} {chain : List SealedE
   · exact ht
   · have hrej : (if e.domainTag = storeDomain then
                    (if e.sealHash ∈ sealHashes chain then IngestVerdict.RejectedDup else IngestVerdict.Admitted)
-                 else IngestVerdict.RejectedTag) = IngestVerdict.RejectedTag := if_neg ht
+                 else IngestVerdict.RejectedTag) = IngestVerdict.RejectedTag := ite_eq_right ht
     rw [hrej] at had
     cases had
 
@@ -384,12 +384,12 @@ theorem admitted_implies_fresh {storeDomain : String} {chain : List SealedEnvelo
   · have hd : (if e.domainTag = storeDomain then
                  (if e.sealHash ∈ sealHashes chain then IngestVerdict.RejectedDup else IngestVerdict.Admitted)
                else IngestVerdict.RejectedTag) = IngestVerdict.RejectedDup := by
-      rw [if_pos ht, if_pos hdup]
+      rw [ite_eq_left ht, ite_eq_left hdup]
     rw [hd] at had
     cases had
   · have hrej : (if e.domainTag = storeDomain then
                    (if e.sealHash ∈ sealHashes chain then IngestVerdict.RejectedDup else IngestVerdict.Admitted)
-                 else IngestVerdict.RejectedTag) = IngestVerdict.RejectedTag := if_neg ht
+                 else IngestVerdict.RejectedTag) = IngestVerdict.RejectedTag := ite_eq_right ht
     rw [hrej] at had
     cases had
 

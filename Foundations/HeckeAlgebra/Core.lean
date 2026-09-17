@@ -34,6 +34,6 @@ theorem hecke_op_zero (p n : Nat) : hecke_op p (fun _ => 0) n = 0 := by
 theorem hecke_op_const (p n c : Nat) (h_div : p ∣ n) :
     hecke_op p (fun _ => c) n = c + p * c := by
   dsimp [hecke_op]
-  rw [if_pos h_div]
+  rw [ite_eq_left h_div]
 
 end Foundations.HeckeAlgebra

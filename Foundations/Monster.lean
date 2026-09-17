@@ -279,7 +279,15 @@ def level_from_cycle_shape (cs : CycleShape) : Nat :=
 -/
 theorem q_expansion_well_formed (mt : McKayThompson) (n : Int) (h : n < -1) :
   qExpansion mt n = mt.coefficients 0 := by
-  admit
+  have hne : n ≠ -1 := by
+    intro heq
+    have : (-1 : Int) < -1 := by simpa [heq] using h
+    exact (lt_irrefl (-1)) this
+  unfold qExpansion
+  rw [ite_eq_right hne]
+  have htoNat : n.toNat = 0 := by
+    exact Int.toNat_eq_zero.2 (le_trans (le_of_lt h) (by decide : (-1 : Int) ≤ 0))
+  rw [htoNat]
 
 /-!
   ### Theorem D: Hodge-Contraction Implication (Conditional Stub)

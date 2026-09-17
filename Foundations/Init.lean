@@ -1,5 +1,6 @@
-import Foundations.ADR
+import ADR
 import Foundations.ALP
+import Foundations.Governance.Core
 import Foundations.AffineCore
 import Foundations.CRMF
 import Foundations.CertificationGate
@@ -7,7 +8,6 @@ import Foundations.ConstraintNerve
 import Foundations.Drift
 import Foundations.ExportThresholds
 import Foundations.GOLDILOCKS
-import Foundations.Governance
 import Foundations.LinearAlgebra.Matrix
 import Foundations.MOC
 import Foundations.Multiset
@@ -23,6 +23,18 @@ import Foundations.UOR
 import Foundations.Widgets
 import Foundations.XI_FORMAL
 import Foundations.ZMOD
+
+/-!
+# Foundations.Init — legacy mono aggregator (RETIRED)
+This top-level aggregator predates the `Foundations.*.Core` module split and
+the ADR consolidation. It is **not** part of any `lake` build target and is
+kept only for legacy leaf lookups. The canonical ADR model is `ADR.*`
+(single source of truth, see `ADR/README.md`); the canonical governance
+state machine is `Foundations.Governance.Core`.
+Shadow-only imports (`Foundations.ADR`, `Foundations.Governance`, and the
+old `Core.ADR` exports below) can no longer resolve and are documented as
+retired.
+-/
 
 -- Export selected symbols for convenience
 export Core.ADR (ADRStatus ADR ArtifactLink is_valid_entailment checkAcyclic)

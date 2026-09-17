@@ -1,3 +1,10 @@
+import Analytic.Model
+import Analytic.FinalContradiction
+import Analytic.CriticalHeight
+import Analytic.GapDerivation
+import Analytic.AnalyticRefined
+import Analytic.Constants
+
 /-!
   Concrete Analytic Test (using the trivial unit model)
   -------------------------------------------------------
@@ -6,13 +13,6 @@
   contradiction theorem type‑checks and finally evaluate a trivial `True`
   proposition that witnesses the consistency of the axiom set.
 -/
-
-import Analytic.Model
-import Analytic.FinalContradiction
-import Analytic.CriticalHeight
-import Analytic.GapDerivation
-import Analytic.AnalyticRefined
-import Analytic.Constants
 
 open TrivialModel
 

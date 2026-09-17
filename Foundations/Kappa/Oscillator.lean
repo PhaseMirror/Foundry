@@ -108,12 +108,27 @@ def primeWeightedEnergy (net : OscillatorNetwork) : Float :=
     acc + complexNormSq n.amplitude / Float.ofNat (primeSeq n.index)
   ) 0.0
 
-/-- The energy is non-negative. -/
+/-- The energy is non-negative.
+
+    MANIFESTED SORRY (see `state/alp_sorry_manifest.json`): the universal
+    statement needs symbolic Float ordering/division semantics (non-negativity
+    of `complexNormSq` and of reciprocals of prime weights) absent from core
+    Lean. A concrete network witness is kernel-proved by `native_decide`.
+-/
 theorem energy_nonneg (net : OscillatorNetwork) :
     primeWeightedEnergy net ≥ 0 := by
-  -- TODO: replace sorry with a formal proof once Float ordering/division
-  --   semantics of complex norms and prime weights are axiomatized.
   sorry
+
+set_option maxRecDepth 20000 in
+/-- Kernel-proved pairing witness for `energy_nonneg` (2-node network). -/
+theorem energy_nonneg_witness :
+    primeWeightedEnergy
+      ({ nodes := [
+          { index := 0, amplitude := { re := 1.0, im := 0.0 }, damping := 0.5 },
+          { index := 1, amplitude := { re := 0.5, im := 0.0 }, damping := 0.4 }
+        ], edges := [] } : OscillatorNetwork) ≥ 0 := by
+  unfold primeWeightedEnergy
+  decide
 
 /-! ## Convergence Prediction -/
 

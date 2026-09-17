@@ -147,14 +147,14 @@ theorem classifyBand_cases (k : Nat) :
     ∨ (classifyBand k = .resonant ∧ 2 * Scale ≤ 2 * k) := by
   unfold classifyBand
   by_cases h1 : 2 * k < Scale
-  · rw [if_pos h1]
+  · rw [ite_eq_left h1]
     exact Or.inl ⟨rfl, h1⟩
-  · rw [if_neg h1]
+  · rw [ite_eq_right h1]
     by_cases h2 : 2 * k < 2 * Scale
-    · rw [if_pos h2]
+    · rw [ite_eq_left h2]
       refine Or.inr (Or.inl ⟨rfl, ?_, h2⟩)
       omega
-    · rw [if_neg h2]
+    · rw [ite_eq_right h2]
       refine Or.inr (Or.inr ⟨rfl, ?_⟩)
       omega
 

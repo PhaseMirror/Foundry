@@ -1,5 +1,6 @@
--- PIRTM Signatures.lean - Prime signatures and monoidal structure
 import Foundations.PIRTM.Init
+
+-- PIRTM Signatures.lean - Prime signatures and monoidal structure
 
 namespace Multiplicity.PIRTM
 

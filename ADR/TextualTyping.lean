@@ -99,7 +99,7 @@ per-mille ratio never exceeds the unit scale `1.0 = MILLE`. -/
 theorem ratio_within_mille {capture occurs : Nat} (hc : capture ≤ occurs) (ho : 0 < occurs) :
     ratioPerMille capture occurs ≤ MILLE := by
   unfold ratioPerMille
-  rw [if_neg]
+  rw [ite_eq_right]
   have hmul : capture * MILLE ≤ occurs * MILLE := Nat.mul_le_mul_right MILLE hc
   have hdiv : (capture * MILLE) / occurs ≤ (occurs * MILLE) / occurs :=
     Nat.div_le_div_right (c := occurs) hmul

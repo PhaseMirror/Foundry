@@ -46,7 +46,7 @@ def singleton (p : Nat) (hp : Prime p) : Multiset :=
       · have hp_absurd : p ≥ p + 1 := by rw [hne] at hn; exact hn
         have h_absurd : p < p := Nat.lt_of_lt_of_le (Nat.lt_succ_self p) hp_absurd
         exact False.elim (Nat.lt_irrefl p h_absurd)
-      · have : (if n = p then 1 else 0) = 0 := if_neg hne
+      · have : (if n = p then 1 else 0) = 0 := ite_eq_right hne
         exact this⟩ }
 
 /-- Union of two multisets corresponds to pointwise addition of exponents. -/

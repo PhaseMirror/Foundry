@@ -1,5 +1,7 @@
--- import ProofWidgets.Component.Html
 import Foundations.CertificationGate
+
+-- import ProofWidgets.Component.Html
+
 -- import Core.AdelicBorn
 -- import Core.EthicalConvergence
 

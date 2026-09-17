@@ -98,7 +98,7 @@ theorem valuation_pow_self {p k : Nat} (hp : 2 ≤ p) : valuation p (p ^ k) = k 
   unfold valuation
   have hp_pos : 0 < p ^ k := Nat.pow_pos (by omega)
   have hp_ne : p ^ k ≠ 0 := Nat.ne_of_gt hp_pos
-  have h_if : (if p ^ k = 0 then 0 else valuationAux p (p ^ k) (p ^ k)) = valuationAux p (p ^ k) (p ^ k) := if_neg hp_ne
+  have h_if : (if p ^ k = 0 then 0 else valuationAux p (p ^ k) (p ^ k)) = valuationAux p (p ^ k) (p ^ k) := ite_eq_right hp_ne
   rw [h_if]
   apply valuationAux_pow_of_gt hp (pow_gt_self hp)
 

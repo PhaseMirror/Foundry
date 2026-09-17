@@ -250,6 +250,13 @@ def adr010_claim : PropTerm :=
   .and (.atom "KernelBoundaryAxiomClean")
        (.atom "ZeroUntrackedProofDebtEnforced")
 
+/-- Embedded claim of **ADR-0113** (UCC unified kernel surface). -/
+def adr0113_claim : PropTerm :=
+  .and (.atom "UniversalClosureSextupleCanonical")
+       (.and (.atom "L0GateFailClosed")
+             (.and (.atom "GovernanceMachineryWired")
+                   (.not (.atom "FloatArithmeticAtKernelBoundary"))))
+
 /-- Claims asserted by all accepted records in the governance registry. -/
 def sampleClaims : List Claim :=
   [ ⟨"ADR-002", adr002_claim⟩
@@ -262,6 +269,11 @@ def sampleClaims : List Claim :=
   , ⟨"ADR-009", adr009_claim⟩
   , ⟨"ADR-010", adr010_claim⟩
   ]
+
+/-- Claims asserted by the unified registry: the sample claims plus the UCC
+integration claim owned by ADR-0113. -/
+def unifiedClaims : List Claim :=
+  sampleClaims ++ [⟨"ADR-0113", adr0113_claim⟩]
 
 /-- Valuation environment witnessing joint satisfiability of all accepted claims in the registry. -/
 def envP2C : String → Bool
@@ -282,6 +294,9 @@ def envP2C : String → Bool
   | "SpectralRadiusStrictlyBelowUnity" => true
   | "KernelBoundaryAxiomClean" => true
   | "ZeroUntrackedProofDebtEnforced" => true
+  | "UniversalClosureSextupleCanonical" => true
+  | "L0GateFailClosed" => true
+  | "GovernanceMachineryWired" => true
   | _ => false
 
 /-- All registered claims evaluate to `true` under `envP2C`. -/
@@ -785,27 +800,55 @@ def adr0016 : ADR where
   ]
 
 
-/-- All 15 Accepted ADRs in ascending ID order. -/
+/-- **ADR-0113:** Universal Closure Calculator — Unified Kernel Surface. -/
+def adr0113 : ADR where
+  id := "ADR-0113"
+  title := "Universal Closure Calculator — Unified Kernel Surface"
+  status := .Accepted
+  context := "The Foundry hosts several independently verified surfaces — ADR governance, Care Circle viability, the Homestead L0 civic-edge gate, Kappa contractivity, and WordLove — each with its own proofs and artifacts. The Universal Closure Calculator (UCC) sextuple (X, ∘, α, μ, F, Δ) is the declared kernel boundary, but no single accepted decision binds those surfaces to it, so traceability, proof debt, and CI enforcement are fragmented across modules."
+  decision := "Adopt the UCC sextuple as the canonical integration surface and wire every verified Foundry surface to it. (1) Edge admission: the L0 fail-closed gate of `Homestead_UCC_Care_Bridge` (Seal ⟹ contractivity Λ_m < 1, entropy non-increase ΔS ≤ 0, Care Phase Mirror v2 viability, Hundian budget). (2) Contractivity evidence for Δ: the Kappa spectral-gap and Lyapunov witnesses. (3) Governance machinery: the ADR-0010 proof-debt manifest, `scripts/check_adr_sorry.py`, `.github/workflows/lean-gate.yml`, `adrExport`, and the property/concurrency tests. (4) Wire contract: the integer-only BCS wire of `docs/specs/ucc_sextuple_v1.md` and `contracts/universal_closure.yaml`. Retire the `ADR/ADR/` and `pirtm/lean/Foundations/ADR/` shadow scaffolds so the surface has one source of truth. No claim is made about the Riemann Hypothesis."
+  consequences := [
+    "Every closure call returns Closure, Defect (Δ named in English), Receipt, and Levers (ADR-0014)",
+    "Unlawful transitions fail closed at L0; Seal implies contractivity, ΔS ≤ 0, and Care viability",
+    "Proof debt is explicit and bounded: 13 manifest-authorized Kappa sorries, zero untracked, checker-enforced in CI",
+    "Shadow scaffolds retired; the ADR.* namespace is the sole governance authority",
+    "Integer-only wire: floating point remains structurally excluded (ADR-0021)"
+  ]
+  supersedes := none
+  links := [
+    ⟨"docs/specs/ucc_sextuple_v1.md", .SpecificationDoc, "Canonical sextuple (X, ∘, α, μ, F, Δ) wire format and L0 lawfulness gate"⟩,
+    ⟨"contracts/universal_closure.yaml", .SpecificationDoc, "Declarative associator tolerance Δ ≤ ε and closure-operator bounds (fail-closed)"⟩,
+    ⟨"ADR/Theorems/Homestead_UCC_Care_Bridge.lean", .LeanDeclaration, "L0 gate soundness: Seal ⟹ contractivity, entropy non-increase, Care viability, Hundian budget"⟩,
+    ⟨"Foundations/Kappa/Stability.lean", .LeanDeclaration, "Contractivity witnesses: Lyapunov non-negativity, stability decreasing, prime stability advantage"⟩,
+    ⟨"Foundations/Kappa/Spectral.lean", .LeanDeclaration, "Spectral gap positivity and finite relaxation time"⟩,
+    ⟨"ADR/Properties.lean", .LeanDeclaration, "Property-based concurrency conflict, traceability, and export-determinism tests"⟩,
+    ⟨"scripts/check_adr_sorry.py", .SourceFile, "Manifest-aware proof-debt gate (ADR-0010)"⟩,
+    ⟨".github/workflows/lean-gate.yml", .SourceFile, "CI gate: lake build + lake test + sorry checker on the pinned toolchain"⟩,
+    ⟨"state/alp_sorry_manifest.json", .SpecificationDoc, "Proof-debt ledger: 13 authorized Kappa sorries, zero drift"⟩,
+    ⟨"ADR/README.md", .SpecificationDoc, "Single source of truth; records shadow-scaffold retirement"⟩
+  ]
+
+/-- All 16 Accepted ADRs in ascending ID order. -/
 def allAcceptedADRs : List ADR := [
   adr0013, adr0014, adr0015, adr0016,
   adr0017, adr0018, adr0019, adr0020,
   adr0022, adr0023, adr0024, adr0025,
-  adr0026, adr0027, adr0028
+  adr0026, adr0027, adr0028, adr0113
 ]
 
 /-- All accepted ADRs have status Accepted. -/
 theorem all_accepted : ∀ a ∈ allAcceptedADRs, a.status = .Accepted := by
-  simp [allAcceptedADRs, ADR.status, adr0013, adr0014, adr0015, adr0016, adr0017, adr0018, adr0019, adr0020, adr0022, adr0023, adr0024, adr0025, adr0026, adr0027, adr0028]
+  simp [allAcceptedADRs, adr0013, adr0014, adr0015, adr0016, adr0017, adr0018, adr0019, adr0020, adr0022, adr0023, adr0024, adr0025, adr0026, adr0027, adr0028, adr0113]
 
 /-- Identifiers in `allAcceptedADRs` are unique. -/
 theorem all_accepted_unique_ids : (allAcceptedADRs.map ADR.id).Nodup := by
   unfold allAcceptedADRs
-  simp [ADR.id, adr0013, adr0014, adr0015, adr0016, adr0017, adr0018, adr0019, adr0020, adr0022, adr0023, adr0024, adr0025, adr0026, adr0027, adr0028]
+  simp [adr0013, adr0014, adr0015, adr0016, adr0017, adr0018, adr0019, adr0020, adr0022, adr0023, adr0024, adr0025, adr0026, adr0027, adr0028, adr0113]
 
 /--- No supersedes declarations in combined set. -/
 theorem all_accepted_no_supersedes :
     ∀ a ∈ allAcceptedADRs, a.supersedes = none := by
-  simp [allAcceptedADRs, ADR.supersedes, adr0013, adr0014, adr0015, adr0016, adr0017, adr0018, adr0019, adr0020, adr0022, adr0023, adr0024, adr0025, adr0026, adr0027, adr0028]
+  simp [allAcceptedADRs, adr0013, adr0014, adr0015, adr0016, adr0017, adr0018, adr0019, adr0020, adr0022, adr0023, adr0024, adr0025, adr0026, adr0027, adr0028, adr0113]
 
 /-- The combined set is strictly acyclic. -/
 theorem all_accepted_acyclic : StrictAcyclic allAcceptedADRs := by
@@ -832,7 +875,7 @@ def allAcceptedRegistry : ADRRegistry where
   adrs := allAcceptedADRs
   uniqueIds := by
     unfold allAcceptedADRs
-    simp [ADR.id, adr0013, adr0014, adr0015, adr0016, adr0017, adr0018, adr0019, adr0020, adr0022, adr0023, adr0024, adr0025, adr0026, adr0027, adr0028]
+    simp [adr0013, adr0014, adr0015, adr0016, adr0017, adr0018, adr0019, adr0020, adr0022, adr0023, adr0024, adr0025, adr0026, adr0027, adr0028, adr0113]
   acyclic := all_accepted_acyclic
   supersedesExist := by
     intro a ha sid hsup
@@ -900,15 +943,37 @@ theorem unified_no_conflicts :
     unfold unifiedADRList
     decide)
 
-/-- Claims in `sampleClaims` are owned by accepted ADRs in `unifiedADRList`. -/
+/-- Claims in `unifiedClaims` are owned by accepted ADRs in `unifiedADRList`. -/
 theorem unified_claims_owned_by_accepted :
-    ∀ c ∈ sampleClaims, ∃ a ∈ unifiedADRList, a.id = c.owner ∧ a.status = ADRStatus.Accepted := by
+    ∀ c ∈ unifiedClaims, ∃ a ∈ unifiedADRList, a.id = c.owner ∧ a.status = ADRStatus.Accepted := by
   intro c hc
-  have h := sample_claims_owned_by_accepted c hc
-  rcases h with ⟨a, ha, ha_id, ha_status⟩
-  have hmem : a ∈ unifiedADRList := by
-    simp [unifiedADRList, ha]
-  exact ⟨a, hmem, ha_id, ha_status⟩
+  simp only [unifiedClaims, List.mem_append, List.mem_singleton] at hc
+  rcases hc with hc | rfl
+  · have h := sample_claims_owned_by_accepted c hc
+    rcases h with ⟨a, ha, ha_id, ha_status⟩
+    exact ⟨a, by simp [unifiedADRList, ha], ha_id, ha_status⟩
+  · exact ⟨adr0113, by simp [unifiedADRList, allAcceptedADRs], rfl, rfl⟩
+
+/-- Every claim in the unified registry evaluates to `true` under `envP2C`. -/
+theorem unified_claim_eval_true (c : Claim) (hc : c ∈ unifiedClaims) :
+    c.claim.evalB envP2C = true := by
+  simp only [unifiedClaims, List.mem_append, List.mem_singleton] at hc
+  rcases hc with hc | rfl
+  · exact sample_claim_eval_true c hc
+  · decide
+
+/-- Semantic coherence of the unified registry: no pair of distinct-owner claims
+is contradictory. Discharged constructively via the jointly satisfying
+environment `envP2C`. -/
+theorem unified_no_claim_conflicts :
+    ∀ c₁ ∈ unifiedClaims, ∀ c₂ ∈ unifiedClaims,
+      c₁.owner ≠ c₂.owner → ¬ Contradictory c₁.claim c₂.claim := by
+  intro c₁ hc₁ c₂ hc₂ _ hcon
+  have h1 : c₁.claim.evalB envP2C = true := unified_claim_eval_true c₁ hc₁
+  have h2 : c₂.claim.evalB envP2C = true := unified_claim_eval_true c₂ hc₂
+  have hJoint : (c₁.claim.evalB envP2C && c₂.claim.evalB envP2C) = true := by
+    simp [h1, h2]
+  exact hcon envP2C hJoint
 
 /-- Verified unified ADR registry. -/
 def unifiedRegistry : ADRRegistry where
@@ -924,9 +989,9 @@ def unifiedRegistry : ADRRegistry where
     have hnone : a.supersedes = none := unified_no_supersedes a ha
     exact absurd hsup (by simp [hnone])
   noConflicts := unified_no_conflicts
-  claims := ADR.Examples.sampleClaims
+  claims := ADR.Examples.unifiedClaims
   claimsOwnedByAccepted := unified_claims_owned_by_accepted
-  noClaimConflicts := ADR.Examples.sample_no_claim_conflicts
+  noClaimConflicts := unified_no_claim_conflicts
 
 /-- Claim entailment template. -/
 theorem claim_entailment_template (P Q : PropTerm) :

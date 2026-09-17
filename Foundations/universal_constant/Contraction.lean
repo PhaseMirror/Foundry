@@ -11,26 +11,26 @@ theorem dist_mul_right (a b c : Nat) : dist (a * c) (b * c) = dist a b * c := by
   split
   · next h =>
     have h2 : b * c ≤ a * c := Nat.mul_le_mul_right c h
-    rw [if_pos h2, Nat.mul_sub_right_distrib]
+    rw [ite_eq_left h2, Nat.mul_sub_right_distrib]
   · next h =>
     have h2 : ¬(a * c ≥ b * c) := by
       intro h_contra
       have h3 : a * c < b * c := Nat.mul_lt_mul_of_lt_of_pos (Nat.lt_of_not_ge h) (by omega)
       omega
-    rw [if_neg h2, Nat.mul_sub_right_distrib]
+    rw [ite_eq_right h2, Nat.mul_sub_right_distrib]
 
 theorem dist_mul_left (a b c : Nat) : dist (c * a) (c * b) = c * dist a b := by
   unfold dist
   split
   · next h =>
     have h2 : c * b ≤ c * a := Nat.mul_le_mul_left c h
-    rw [if_pos h2, Nat.mul_sub_left_distrib]
+    rw [ite_eq_left h2, Nat.mul_sub_left_distrib]
   · next h =>
     have h2 : ¬(c * a ≥ c * b) := by
       intro h_contra
       have h3 : c * a < c * b := Nat.mul_lt_mul_of_lt_of_pos (Nat.lt_of_not_ge h) (by omega)
       omega
-    rw [if_neg h2, Nat.mul_sub_left_distrib]
+    rw [ite_eq_right h2, Nat.mul_sub_left_distrib]
 
 theorem dist_add_add_le (a b c d : Nat) : dist (a + c) (b + d) ≤ dist a b + dist c d := by
   unfold dist

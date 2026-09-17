@@ -1,12 +1,11 @@
+import "Analytic/AnalyticRefined.lean"
+
 /-!
 # Algebra helper lemmas
-
 This module provides small, provable lemmas about the ring and order structure that are used throughout the
 ADR formalisation. All lemmas are derived from the axioms declared in `Analytic/AnalyticRefined.lean`
 without importing any external library.
 -/
-
-import "Analytic/AnalyticRefined.lean"
 
 open AnalyticRefined
 

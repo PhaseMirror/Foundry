@@ -7,6 +7,7 @@ import ADR.Archivum
 import ADR.OSCAL
 import ADR.TextualTyping
 import ADR.MetaRelativity
+import ADR.Properties
 
 
 open ADR
@@ -455,10 +456,12 @@ def main : IO Unit := do
   testMrBoundariesAndComposition
   testMrConsequenceEntailment
   testMrRegistryInvariants
+  ADR.Properties.testProperties
 
   IO.println "\nExporting all ADRs to Markdown..."
   IO.println "-----------------------------------"
   for adr in unifiedADRList do
     IO.println (adrToMarkdown adr)
+  exportADRSet unifiedRegistry (System.FilePath.mk "docs" / "adr")
   IO.println "-----------------------------------"
   IO.println "All proofs checked and tests passed successfully."

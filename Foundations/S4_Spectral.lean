@@ -1,5 +1,6 @@
--- import Core.Basic
 import Foundations.SpectralCert
+
+-- import Core.Basic
 
 namespace Multiplicity.AffineCore.S4
 

@@ -18,7 +18,7 @@ def stepInteraction (grad p : Nat) : Nat :=
 theorem step_interaction_eq_zero (grad p : Nat) (h : ¬(p > 0 ∧ grad % p = 0)) :
     stepInteraction grad p = 0 := by
   dsimp [stepInteraction]
-  rw [if_neg h]
+  rw [ite_eq_right h]
 
 /-- Lemma: Step interaction is strictly bounded by the discrete scale. -/
 theorem step_interaction_bounded (grad p : Nat) : stepInteraction grad p ≤ scale := by

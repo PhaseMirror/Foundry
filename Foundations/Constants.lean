@@ -1,10 +1,10 @@
+import Analytic.ExtractedValues
+
 /-!
   Analytic constant wrapper.
   Imports the generated `ExtractedValues` module and re‑exports the numerical
   constants under the names expected by the analytic scaffold.
 -/
-
-import Analytic.ExtractedValues
 
 open ExtractedValues
 

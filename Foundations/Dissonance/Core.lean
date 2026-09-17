@@ -1,15 +1,16 @@
-import Foundations.ADR.Core
+import ADR.Core
 
 /-!
-# Foundations.Dissonance.Core — Phase Mirror Dissonance & Circuit Breaker Tracking
+# Dissonance Core — canonical ADR model integration
 
-Formalizes dissonance severity levels, conflict log entries, circuit-breaker state machines,
-and ADR immutability preservation theorems under dissonance attachments (ADR-402).
+The retired `Foundations.ADR.*` shadow namespace (see `ADR/README.md`) was
+deleted in the ADR consolidation. This module now imports the canonical
+`ADR.Core` model directly.
 -/
 
 namespace Foundations.Dissonance
 
-open Foundations.ADR
+open ADR
 
 /-- Severity levels for dissonance violations. -/
 inductive Severity where

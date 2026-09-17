@@ -99,6 +99,6 @@ theorem rootMultiplicity_of_not_root {cs : List Int} {r : Int} (h : polyEval cs 
       exact h
     dsimp [rootMultiplicityAux]
     have hcond : ¬((quotientRemainder cs r).2 = 0) := hrem
-    rw [if_neg hcond]
+    rw [ite_eq_right hcond]
 
 end Foundations.RootMultiplicity

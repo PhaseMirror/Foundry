@@ -147,7 +147,7 @@ theorem dirichlet_convolve_comm (f g : ArithFunc) :
       have h1 : n / (i + 1) - 1 + 1 = n / (i + 1) := by omega
       have h2 : n % (n / (i + 1)) = 0 := div_dvd_self hn hdvd
       have h3 : n / (n / (i + 1)) = i + 1 := div_double_div hn hdvd
-      rw [h1, h2, if_pos rfl, h3]
+      rw [h1, h2, ite_eq_left rfl, h3]
       exact Rmul_comm (f (n / (i + 1))) (g (i + 1))
     · next hndvd =>
       exact Req_refl zero

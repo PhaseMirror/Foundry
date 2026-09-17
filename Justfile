@@ -3,8 +3,22 @@
 default: vv
 
 # The whole gate.
-vv: template-check fmt-check model lint test features bdd deny
+vv: template-check fmt-check model lint test features bdd deny lean-build lean-test lean-sorry-check
     @echo "vv: the acceptance gate passed"
+
+# Lean formal stack: builds on the pinned toolchain (lean-toolchain), runs the
+# ADR test harness, and enforces ADR-0010 (zero untracked proof debt).
+# `lean-env` keeps `lake` on the toolchain managed by elan.
+lean-env := "$HOME/.elan/bin"
+
+lean-build:
+    {{lean-env}}/lake build
+
+lean-test:
+    {{lean-env}}/lake test
+
+lean-sorry-check:
+    python3 scripts/check_adr_sorry.py
 
 # R1, R4, R5 --- the repository gates, each falsifiable.
 model:

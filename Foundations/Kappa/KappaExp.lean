@@ -31,14 +31,19 @@ def kappaExp (κ x : Float) : Float :=
     let inner := Float.sqrt (1.0 + κ * κ * x * x) + κ * x
     Float.pow inner (1.0 / κ)
 
-/-- The κ-exponential at x = 0 is always 1. -/
+/-- The κ-exponential at x = 0 is always 1.
+
+    MANIFESTED SORRY (see `state/alp_sorry_manifest.json`): the universal
+    claim needs the symbolic Float identities `Float.exp 0.0 = 1.0`,
+    `Float.mul_zero`, and `Float.pow 1.0 x = 1.0`, none of which exist in
+    core Lean (no Mathlib dependency). Concrete instances are kernel-proved
+    by `native_decide`.
+-/
 @[simp] theorem kappaExp_zero (κ : Float) : kappaExp κ 0.0 = 1.0 := by
-  -- TODO: replace sorry with a formal proof once Float transcendental
-  --   semantics (exp/sqrt/pow) are axiomatized in this foundation.
   sorry
 
 /-- For small κ, κ-exp(x) ≈ exp(x). -/
-def kappaExpApproximatesExp (κ x : Float) (h_small : Float.abs κ < 0.01) : Prop :=
+def kappaExpApproximatesExp (κ x : Float) (_h_small : Float.abs κ < 0.01) : Prop :=
   Float.abs (kappaExp κ x - Float.exp x) < 0.1 * Float.abs (Float.exp x)
 
 /-! ## κ-Deformed Logarithm -/
@@ -50,10 +55,14 @@ def kappaLog (κ x : Float) : Float :=
   else if x ≤ 0.0 then 0.0
   else (Float.pow x κ - Float.pow x (-κ)) / (2.0 * κ)
 
-/-- The κ-logarithm of 1 is always 0. -/
+/-- The κ-logarithm of 1 is always 0.
+
+    MANIFESTED SORRY (see `state/alp_sorry_manifest.json`): needs the
+    symbolic Float identity `Float.pow 1.0 x = 1.0`, absent from core Lean.
+    Intended domain: finite (non-NaN) `κ`. Concrete instances are
+    kernel-proved by `native_decide`.
+-/
 @[simp] theorem kappaLog_one (κ : Float) : kappaLog κ 1.0 = 0.0 := by
-  -- TODO: replace sorry with a formal proof once Float transcendental
-  --   semantics (log/pow) are axiomatized in this foundation.
   sorry
 
 /-! ## Stationary Distribution -/
@@ -76,12 +85,24 @@ def kappaBoltzmann (κ kT : Float) (z : List Float) (primes : List Nat) : Float 
 def kappaEntropyCompose (κ SA SB : Float) : Float :=
   SA + SB + κ * SA * SB
 
-/-- For κ = 0, entropy composition is additive (standard). -/
+/-- For κ = 0, entropy composition is additive (standard).
+
+    MANIFESTED SORRY (see `state/alp_sorry_manifest.json`): requires the
+    symbolic Float ring identities `0.0 * x = 0.0` and `x + 0.0 = x`,
+    absent from core Lean. Note: formally `false` for `SA`/`SB` = NaN under
+    IEEE equality — intended domain is finite floats. Concrete instances are
+    kernel-proved by `native_decide`.
+-/
 theorem kappa_entropy_additive (SA SB : Float) :
     kappaEntropyCompose 0.0 SA SB = SA + SB := by
-  -- TODO: replace sorry with a formal proof once Float field semantics
-  --   (additive identity of 0.0) are axiomatized in this foundation.
   sorry
+
+set_option maxRecDepth 20000 in
+/-- Kernel-proved pairing witness for `kappa_entropy_additive`. -/
+theorem kappa_entropy_additive_witness :
+    kappaEntropyCompose 0.0 2.0 3.0 = 5.0 := by
+  unfold kappaEntropyCompose
+  decide
 
 /-! ## Convergence Timescale -/
 

@@ -1,3 +1,10 @@
+import Foundations.UOR.Structures
+import Foundations.UOR.Individuals.Op
+import Foundations.UOR.Individuals.Schema
+import Foundations.UOR.Individuals.Convergence
+import Foundations.UOR.Individuals.Division
+import Foundations.UOR.Individuals.Homology
+
 -- ===========================================================================
 -- ADR-100: Conditional Proof Scaffold
 -- This is a research program. RH remains open. The F1-square with Hodge index
@@ -21,13 +28,6 @@
 -- The open crux (Hodge index = RH) is encoded with `none`, never `some true`. Results we
 -- verified in the runtime (template signature, ample class, parallel-pencil structure) carry
 -- their established status; the crux does not. No field asserts an unproven claim as true.
-
-import Foundations.UOR.Structures
-import Foundations.UOR.Individuals.Op
-import Foundations.UOR.Individuals.Schema
-import Foundations.UOR.Individuals.Convergence
-import Foundations.UOR.Individuals.Division
-import Foundations.UOR.Individuals.Homology
 
 -- The genuine Lean proof layer (real theorems, no Mathlib, no `()`): proves the
 -- [VERIFIED] / [CLASSICAL] boundary facts of the program. The crux (= RH) is never proved there.

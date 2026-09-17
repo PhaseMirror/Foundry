@@ -1,5 +1,6 @@
--- ZChaos.lean
 import roc_engine.Lyapunov
+
+-- ZChaos.lean
 
 /-- We model discrete phases as an enum to strictly avoid Mathlib. -/
 inductive Phase where

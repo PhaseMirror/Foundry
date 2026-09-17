@@ -1,5 +1,6 @@
--- PIRTM Multiplicity.lean - Multiplicity Functor Laws
 import Foundations.PIRTM.Signatures
+
+-- PIRTM Multiplicity.lean - Multiplicity Functor Laws
 
 namespace Multiplicity.PIRTM
 

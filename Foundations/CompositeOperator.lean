@@ -1,9 +1,9 @@
+import Foundations.Init.Data.Nat.Basic
+import Foundations.Init.Data.List.Basic
+
 -- CompositeOperator.lean - Machine-Checked Constitutional Invariant
 -- Sealed two-layer operator Φ_t = Ξ(t) + M(Λ_inner(t))
 -- Core-only Lean 4, zero sorries, no Mathlib
-
-import Foundations.Init.Data.Nat.Basic
-import Foundations.Init.Data.List.Basic
 
 namespace Multiplicity.CompositeOperator
 

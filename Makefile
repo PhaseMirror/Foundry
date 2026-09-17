@@ -1,4 +1,11 @@
-.PHONY: all clean lean rust kani test verify docs help fpes-gate fpes-test kani-full
+.PHONY: all clean lean rust kani test verify docs help fpes-gate fpes-test kani-full adr-index adr-sorry-check adr-verify check-toolchain
+
+# Prefer the elan toolchain-resolving `lake`/`lean` over any standalone
+# binaries earlier on PATH (e.g. ~/.local/bin/lake pinned to an older Lean).
+# Preceding with a non-existent directory is harmless: shells fall through
+# to the next PATH entry.
+ELAN_BIN ?= $(HOME)/.elan/bin
+export PATH := $(ELAN_BIN):$(PATH)
 
 # Default target
 all: lean rust
@@ -71,10 +78,15 @@ adr-index:
 adr-sorry-check:
 	python3 scripts/check_adr_sorry.py
 
-# Unified ADR verification gate: index + sorry check + lean build + test
-adr-verify: adr-index adr-sorry-check
+# Preflight: fail loudly if the active lake/lean binary disagrees with the
+# pinned lean-toolchain revision (protects against PATH shadowing).
+check-toolchain:
+	@bash scripts/check_lake_toolchain.sh
+
+# Unified ADR verification gate: index + sorry check + toolchain + lean build/test
+adr-verify: check-toolchain adr-index adr-sorry-check
 	lake build ADR
-	lake test adrTest
+	lake test
 
 # Run the full ADR verification gate for one ADR and propagate the results into
 # docs/adr/results/<adr-id>-<slug>/ (runs index + sorry check + lake build/test +

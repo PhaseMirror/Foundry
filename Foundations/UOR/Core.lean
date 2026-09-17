@@ -27,6 +27,7 @@ def Standard : Primitives where
   Boolean            := Bool
 
 /-- Proof that the canonical standard instance satisfies the ontology contract. -/
+@[instance_reducible]
 def standard_instance_sound : Primitives := Standard
 
 end Foundations.UOR

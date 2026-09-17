@@ -70,8 +70,8 @@ def pi : Float := 3.141592653589793
 def gue_pair_correlation (s : Float) : Float :=
   1.0 - (Float.sin (pi * s) / (pi * s)) ^ 2.0
 
-theorem quantum_multiplicity_principle (n : Nat) (h : 0 < n) :
-  ∃ (H : State n), True :=
+theorem quantum_multiplicity_principle (n : Nat) (_h : 0 < n) :
+  ∃ (_H : State n), True :=
   ⟨fun _ => 1.0 / Float.sqrt (Float.ofNat n), trivial⟩
 
 end Foundations.Dynamics.Quantum

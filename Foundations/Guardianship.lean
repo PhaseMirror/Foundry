@@ -1,11 +1,12 @@
-/-!
-  Guardianship module with DualWitness and CRMF integration.
-  Provides unified witness definitions and triple‑lock theorem.
--/
 import prime_tensors.Stability
 import prime_tensors.Authority
 import prime_tensors.Agency
 import Foundations..CRMF
+
+/-!
+  Guardianship module with DualWitness and CRMF integration.
+  Provides unified witness definitions and triple‑lock theorem.
+-/
 
 namespace Multiplicity.PIRTM.Guardianship
 

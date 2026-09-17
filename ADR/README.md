@@ -56,3 +56,17 @@ make adr-verify      # unified gate: adr-index + adr-sorry-check + lean build + 
 3. Re-run `lake test`. All invariants are discharged over `unifiedRegistry` (25 records).
 4. Re-run `make adr-index` to regenerate `docs/adr/README.md` from `registry.json`.
 5. Re-run `make adr-verify` for the full gate.
+
+## Deprecated Shadow Scaffolds
+
+Two legacy copies of the ADR model must **not** be used and are slated for
+removal. They carry deprecation banners and are excluded from the CI gate:
+
+| Path | Status | Why it is dangerous |
+|---|---|---|
+| `ADR/ADR/` | Deprecated (retained for reference) | Declares the *same* `ADR.*` namespace — importing it alongside the canonical modules causes duplicate-declaration clashes. Unreferenced by the build graph. |
+| `pirtm/lean/Foundations/ADR/` | Deprecated (separate pirtm project) | Stale parallel stub layer; never synced with the canonical type. Not part of the Foundry Lake project. |
+
+Canonical model: `ADR/Core.lean` (types + invariants), `ADR/Proofs.lean`
+(registry theorems), `ADR/Properties.lean` (property-based/concurrency tests),
+`ADR/Examples.lean` (records), `ADR/Export.lean` (Markdown/HTML).

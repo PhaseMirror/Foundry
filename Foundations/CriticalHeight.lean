@@ -1,8 +1,8 @@
+import "./Analytic/AnalyticRefined"
+
 /-!
 Critical height definition and growth axiom for analytic contradiction.
 -/
-
-import "./Analytic/AnalyticRefined"
 
 open AnalyticRefined
 

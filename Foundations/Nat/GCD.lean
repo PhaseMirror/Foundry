@@ -76,12 +76,12 @@ decreasing_by all_goals omega
 theorem extgcdAux_eq_lt (a b : Nat) (h : a < b) (ha : a ≠ 0) :
     extgcdAux a b = let ⟨s, t, g⟩ := extgcdAux (b - a) a; (t - s, s, g) := by
   have hbne : b ≠ 0 := by omega
-  rw [extgcdAux.eq_def, if_neg ha, if_neg hbne, if_pos h]
+  rw [extgcdAux.eq_def, ite_eq_right ha, ite_eq_right hbne, ite_eq_left h]
 
 theorem extgcdAux_eq_ge (a b : Nat) (h : ¬ a < b) (hb : b ≠ 0) :
     extgcdAux a b = let ⟨s, t, g⟩ := extgcdAux (a - b) b; (s, t - s, g) := by
   have hane : a ≠ 0 := by omega
-  rw [extgcdAux.eq_def, if_neg hane, if_neg hb, if_neg h]
+  rw [extgcdAux.eq_def, ite_eq_right hane, ite_eq_right hb, ite_eq_right h]
 
 theorem lt_bezout_step (a b : Nat) (_ : a < b) (s t : Int) (g : Nat)
     (ih : s * ↑(b - a) + t * ↑a = ↑g) :

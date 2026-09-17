@@ -182,19 +182,19 @@ theorem evalGate_cert_of_ok (M : GainMatrix) (d : Nat) (sp : Bool)
   by_cases h1 : CONTRACTIVITY_SCALE ≤ rowSumInf M
   · have hk : evalGate M d sp = GateOutcome.kill SigGovKill.ExpansiveState := by
       unfold evalGate
-      rw [if_pos h1]
+      rw [ite_eq_left h1]
     rw [hk] at hok
     contradiction
   · by_cases h2 : CONTRACTIVITY_LIMIT_SCALED ≤ rowSumInf M
     · have hk : evalGate M d sp = GateOutcome.kill SigGovKill.NonContractiveLambda := by
         unfold evalGate
-        rw [if_neg h1, if_pos h2]
+        rw [ite_eq_right h1, ite_eq_left h2]
       rw [hk] at hok
       contradiction
     · by_cases h3 : DRIFT_LIMIT_SCALED < d
       · have hk : evalGate M d sp = GateOutcome.kill SigGovKill.DriftBreach := by
           unfold evalGate
-          rw [if_neg h1, if_neg h2, if_pos h3]
+          rw [ite_eq_right h1, ite_eq_right h2, ite_eq_left h3]
         rw [hk] at hok
         contradiction
       · by_cases h4 : sp = true
@@ -241,7 +241,7 @@ theorem expansive_killed (M : GainMatrix) (d : Nat) (sp : Bool)
     (h : CONTRACTIVITY_SCALE ≤ rowSumInf M) :
     evalGate M d sp = GateOutcome.kill SigGovKill.ExpansiveState := by
   unfold evalGate
-  rw [if_pos h]
+  rw [ite_eq_left h]
 
 /-- The contractivity band case (`1 − ε ≤ ρ < 1` in scaled units): not provably
 below the `1 − ε` limit, fail-closed to `NonContractiveLambda`. -/
@@ -251,7 +251,7 @@ theorem non_contractive_killed (M : GainMatrix) (d : Nat) (sp : Bool)
     evalGate M d sp = GateOutcome.kill SigGovKill.NonContractiveLambda := by
   unfold evalGate
   have hn1 : ¬ CONTRACTIVITY_SCALE ≤ rowSumInf M := Nat.not_le_of_gt h2
-  rw [if_neg hn1, if_pos h1]
+  rw [ite_eq_right hn1, ite_eq_left h1]
 
 /-- A drift breach (`drift > DRIFT_LIMIT_SCALED`) is vetoed, independently of how
 well-contracted the manifold is. -/
@@ -262,10 +262,10 @@ theorem drift_killed (M : GainMatrix) (d : Nat) (sp : Bool)
   unfold ContractiveCert at hcert
   have h1 : ¬ CONTRACTIVITY_SCALE ≤ rowSumInf M :=
     Nat.not_le_of_gt (Nat.lt_trans hcert limit_lt_scale)
-  rw [if_neg h1]
+  rw [ite_eq_right h1]
   have h2 : ¬ CONTRACTIVITY_LIMIT_SCALED ≤ rowSumInf M :=
     Nat.not_le_of_gt hcert
-  rw [if_neg h2, if_pos h]
+  rw [ite_eq_right h2, ite_eq_left h]
 
 /-- An undischargeable semantic proof is vetoed even when the manifold is
 contractive and drift is within bounds (PrismPM's process law, fail-closed). -/
@@ -276,12 +276,12 @@ theorem semantic_proof_killed (M : GainMatrix) (d : Nat)
   unfold ContractiveCert at hcert
   have h1 : ¬ CONTRACTIVITY_SCALE ≤ rowSumInf M :=
     Nat.not_le_of_gt (Nat.lt_trans hcert limit_lt_scale)
-  rw [if_neg h1]
+  rw [ite_eq_right h1]
   have h2 : ¬ CONTRACTIVITY_LIMIT_SCALED ≤ rowSumInf M :=
     Nat.not_le_of_gt hcert
-  rw [if_neg h2]
+  rw [ite_eq_right h2]
   have h3 : ¬ DRIFT_LIMIT_SCALED < d := Nat.not_lt_of_ge hd
-  rw [if_neg h3]
+  rw [ite_eq_right h3]
   rfl
 
 /-! ### 4.2 `verifyTransition` (Pipeline Veto Gate) -/
@@ -302,7 +302,7 @@ theorem verify_kills_expansive (M : GainMatrix)
   change (if CONTRACTIVITY_LIMIT_SCALED ≤ rowSumInf M then
             GateOutcome.kill SigGovKill.ExpansiveState else GateOutcome.ok) =
           GateOutcome.kill SigGovKill.ExpansiveState
-  rw [if_pos h]
+  rw [ite_eq_left h]
 
 /-- `verifyTransition` admits a contractive manifold with valid semantics. -/
 theorem verify_ok_of_contractive (M : GainMatrix) (sp : Bool) (hsp : sp = true)
@@ -314,7 +314,7 @@ theorem verify_ok_of_contractive (M : GainMatrix) (sp : Bool) (hsp : sp = true)
   change (if CONTRACTIVITY_LIMIT_SCALED ≤ rowSumInf M then
             GateOutcome.kill SigGovKill.ExpansiveState else GateOutcome.ok) =
           GateOutcome.ok
-  rw [if_neg (Nat.not_le_of_gt hcert)]
+  rw [ite_eq_right (Nat.not_le_of_gt hcert)]
 
 /-! ### 4.3 Contractivity Certificate Properties (Property-Based) -/
 
